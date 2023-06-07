@@ -60,7 +60,7 @@ public class PmsReportWorkFeignController {
 
     @ApiOperation("获取车间班次日期中班次报工最多的班组")
     @PostMapping("/workshop/class/group")
-    R<Map<String, Long>> workshopClassGroupMap(TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO){
+    R<Map<String, Long>> workshopClassGroupMap(@RequestBody TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO){
        return R.success(pmsReportWorkService.workshopClassGroupMap(tupleDTO.getField1(),tupleDTO.getField2()));
     }
 }

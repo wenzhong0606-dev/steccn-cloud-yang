@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -741,6 +742,36 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Override
     public Map<String, Long> workshopClassGroupMap(Set<LocalDate> dateSet, Map<Integer, Set<Integer>> workshopStationMap) {
         Map<String, Long> resMap = Maps.newHashMap();
+        List<Integer> stationIdList = workshopStationMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+
+        List<PmsReportWork> dbList = list(new QueryWrapper<PmsReportWork>().select(" class_date , classes_id, station_id , class_group_id , count(class_group_id) as create_by")
+                .lambda()
+                .in(PmsReportWork::getClassDate, dateSet)
+                .in(PmsReportWork::getStationId, stationIdList)
+                .groupBy(Lists.newArrayList(PmsReportWork::getStationId, PmsReportWork::getClassDate, PmsReportWork::getClassesId, PmsReportWork::getClassGroupId)));
+
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取早班和晚班
+            List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for (LocalDate date : dateSet) {
+                workshopStationMap.forEach((k, v) -> {
+                    //遍历早班和晚班
+                    for (SysDictVO classIdVo : sysDictVOList) {
+                        Map<Long, List<PmsReportWork>> groupMap = dbList.stream().filter(ele -> v.contains(ele.getStationId()) && classIdVo.getId().equals(ele.getClassesId()) && date.isEqual(ele.getClassDate())).collect(Collectors.groupingBy(a -> a.getClassGroupId()));
+                        Long groupId = null;
+                        Long groupSum = 0L;
+                        for (Map.Entry<Long, List<PmsReportWork>> entry : groupMap.entrySet()) {
+                            long sum = entry.getValue().stream().mapToLong(PmsReportWork::getCreateBy).sum();
+                            if (Objects.isNull(groupId) || groupSum < sum) {
+                                groupId = entry.getKey();
+                                groupSum = sum;
+                            }
+                        }
+                        resMap.put(date + "_" + classIdVo.getCode() + "_" + k, groupId);
+                    }
+                });
+            }
+        }
         return resMap;
     }
 
