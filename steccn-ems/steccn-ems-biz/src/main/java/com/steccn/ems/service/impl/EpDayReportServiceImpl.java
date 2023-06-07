@@ -16,12 +16,13 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -47,9 +48,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpHeatPowerService epHeatPowerService;
     private final EpMeterReadService meterReadService;
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
-    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
@@ -85,8 +87,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<EpDayReportCountRowVO> dataList = Lists.newArrayList();
         //获取全部厚度
         List<BigDecimal> allThickList = epMeterReadDistantService.selectAllThick(start, end);
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+
         CompletableFuture<List<EpDayReportCountRowVO>> elecFuture = CompletableFuture.supplyAsync(() -> {
             try {
+                RequestContextHolder.setRequestAttributes(attributes);
                 //计算电耗
                 Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
                 EpEnergyTypeVO elecEnergy = eleOp.get();
@@ -106,6 +111,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         CompletableFuture<List<EpDayReportCountRowVO>> oilFuture = CompletableFuture.supplyAsync(() -> {
             try {
+                RequestContextHolder.setRequestAttributes(attributes);
                 //获取用油量数据
                 Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
                 List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
@@ -118,6 +124,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         CompletableFuture<List<EpDayReportCountRowVO>> gasFuture = CompletableFuture.supplyAsync(() -> {
             try {
+                RequestContextHolder.setRequestAttributes(attributes);
                 //获取用气量
                 Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
                 return consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS), allThickList);
@@ -129,6 +136,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         CompletableFuture<List<EpDayReportCountRowVO>> waterFuture = CompletableFuture.supplyAsync(() -> {
             try {
+                RequestContextHolder.setRequestAttributes(attributes);
                 //获取用水量
                 Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
                 return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER), allThickList);
@@ -227,26 +235,28 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      */
     private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
         List<EpDayReportCountRowVO> resList = Lists.newArrayList();
+        //获取配置map
+        Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //基片制造部
+        List<Integer> jpzzbList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JPZZB_LIST.toString(), Lists.newArrayList());
         //深加工四条产线【一二三四】
-        List<Integer> sjgLine14List = Lists.newArrayList(176, 185, 186, 187);
+        List<Integer> sjgLine14List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
         //深加工四条产线【五六七八】
-        List<Integer> sjgLine58List = Lists.newArrayList(181, 182, 183, 184);
+        List<Integer> sjgLine58List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
         //员工餐厅和宿舍】
-        List<Integer> diningList = Lists.newArrayList(652, 653);
+        List<Integer> diningList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DINING_AND_ROOM_LIST.toString(), Lists.newArrayList());
         //公用电【深加工二车间（东线）->公用电,深加工二车间（西线）->公用电】
-        List<Integer> gydList = Lists.newArrayList(633, 3653);
+        List<Integer> gydList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.GYD_LIST.toString(), Lists.newArrayList());
         //风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
-        List<Integer> fl610List = Lists.newArrayList(666, 667, 668, 669, 670, 673);
+        List<Integer> fl610List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.FL610_LIST.toString(), Lists.newArrayList());
         //风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
-        List<Integer> fl15List = Lists.newArrayList(661, 662, 663, 664, 665, 671, 672);
+        List<Integer> fl15List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.FL15_LIST.toString(), Lists.newArrayList());
         //大数据控制中心
-        List<Integer> dsjList = Lists.newArrayList(654);
-
+        List<Integer> dsjList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DSJ_LIST.toString(), Lists.newArrayList());
         //深加工8条产线
         List<Integer> sjgLineList = Lists.newArrayList();
         sjgLine14List.forEach(ele -> sjgLineList.add(ele));
         sjgLine58List.forEach(ele -> sjgLineList.add(ele));
-
 
         LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
         LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
@@ -258,7 +268,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
         //每个节点，每天的数据
         //基片制造部=b1+b2+b3
-        List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> v.getOfficeName().equals("基片制造部")).collect(Collectors.toList());
+        List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> jpzzbList.contains(v.getSysOfficeId())).collect(Collectors.toList());
         List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
         //构建基片制造部
         EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();

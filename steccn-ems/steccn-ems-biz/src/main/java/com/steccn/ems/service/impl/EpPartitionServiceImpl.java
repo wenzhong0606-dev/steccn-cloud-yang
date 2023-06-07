@@ -26,7 +26,7 @@ import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +53,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     private EpInstrumentAccountService epInstrumentAccountService;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     /**
      * 默认能源类型
@@ -600,16 +602,24 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode() {
-        //需要切换成 根据code获取officeName
+        //电
+        Map<String, List<Integer>> eleConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> eleConfList = eleConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //水
+        Map<String, List<Integer>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> waterConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //气
+        Map<String, List<Integer>> gasConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_GAS, Sets.newHashSet(EpManagerConstant.CONF_EMS_GAS_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> gasConfList = gasConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //油
+        Map<String, List<Integer>> oilConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_OIL, Sets.newHashSet(EpManagerConstant.CONF_EMS_OIL_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> oilConfList = oilConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+
         Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
-        resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, Arrays.asList("基片制造部", "员工餐厅", "员工宿舍"
-                ,"深加工二车间一产线", "深加工二车间二产线","深加工二车间三产线","深加工二车间四产线","深加工三车间一产线","深加工三车间二产线","深加工三车间三产线","深加工三车间四产线","公用电"
-                ,"风冷螺杆式空压机6","风冷螺杆式空压机7","风冷螺杆式空压机8","风冷螺杆式空压机9","风冷螺杆式空压机10","微热吸附式干燥器3"
-                ,"风冷螺杆式空压机1","风冷螺杆式空压机2","风冷螺杆式空压机3","风冷螺杆式空压机4","风冷螺杆式空压机5","微热吸附式干燥器1","微热吸附式干燥器2"
-                ,"大数据控制中心")));
-        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, Arrays.asList("基片制造部", "深加工二车间（东线）", "深加工三车间（西线）", "脱硫脱硝")));
-        resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, Arrays.asList("基片二车间")));
-        resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, Arrays.asList("基片二车间")));
+        resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, eleConfList));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterConfList));
+        resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, gasConfList));
+        resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, oilConfList));
         return resMap;
     }
 
@@ -620,9 +630,9 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param officeNameList 组织结构名称集合
      * @return
      */
-    private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<String> officeNameList) {
+    private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<Integer> officeIdList) {
         List<TripleDTO<Long, Integer, String>> resList = Lists.newArrayList();
-        List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeName, officeNameList));
+        List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeId, officeIdList));
         if (CollUtil.isNotEmpty(dbList)) {
             for (EpPartition epPartition : dbList) {
                 resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), epPartition.getOfficeName()));
