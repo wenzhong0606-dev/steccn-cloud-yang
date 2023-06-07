@@ -6,6 +6,7 @@ import lombok.Data;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -47,5 +48,9 @@ public class ConnectLineStorageDTO implements Serializable {
     @ApiModelProperty("班组id")
     @NotNull(message = "班组信息不能为空")
     private Long classGroupId;
+
+    @NotNull(message = "入库时间不能为空")
+    @ApiModelProperty("入库时间")
+    private LocalDateTime enterTime;
 
 }
