@@ -245,28 +245,27 @@ public class QtCheckTask implements Serializable {
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
-
     private LocalDateTime createTime;
 
     /**
      * 更新人id
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-//    @TableField(exist = false)
+//    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(exist = false)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-//    @TableField(exist = false)
+//    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(exist = false)
     private String updateName;
 
     /**
      * 更新人时间
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-//    @TableField(exist = false)
+//    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(exist = false)
     private LocalDateTime updateTime;
 
     /**

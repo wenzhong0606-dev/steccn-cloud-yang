@@ -104,6 +104,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -1235,6 +1236,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(rollbackFor = Exception.class)
     public Boolean refreshGroupClass() {
         List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
+                .select(QtCheckTask::getId)
+                .and(v->v.between(QtCheckTask::getId,1,5000))
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                 .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                 .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()));

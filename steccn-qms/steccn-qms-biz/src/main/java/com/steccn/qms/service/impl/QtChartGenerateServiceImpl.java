@@ -1169,6 +1169,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
             data = data.stream().filter(v->dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
         }
+        //过滤班组
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())){
+            data = data.stream().filter(v->StrUtil.isNotBlank(v.getClassGroupName())&&dto.getFilters().contains(v.getClassGroupName())).collect(Collectors.toList());
+        }
         SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
         //stream流合并所有名字相同值的拉引量
         Map<String, BigDecimal> laAmountMap = data.stream().collect(Collectors.groupingBy(
@@ -1236,6 +1240,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //根据key排序
                         groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
                     }
+                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())) {
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getProductWorkShopName));
+                        //根据key排序,甲班乙班丙班排序
+                        groupByCompare.entrySet().stream().sorted(Comparator.comparingInt(QtChartGenerateServiceImpl::getClassGroupOrder)).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
                     //一根柱子
                     StackGraphDTO graphDTO = new StackGraphDTO();
                     graphDTO.setXAxis(reasonEntry.getKey());
@@ -1272,6 +1281,60 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         tupleDTOWAN.setField2(wanAmount);
                         tupleDTOList.add(tupleDTOWAN);
+                        graphDTO.setData(tupleDTOList);
+                        //算折线图
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        legend.add(sunRate.toString());
+                    }
+
+                    //若按照班组堆叠
+                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())) {
+                        List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                        TupleDTO<String, BigDecimal> tupleDTOJIA = new TupleDTO();
+                        tupleDTOJIA.setField1("甲班");
+                        //甲班损耗
+                        BigDecimal jiaAmount = BigDecimal.ZERO;
+                        //乙班损耗
+                        BigDecimal yiAmount = BigDecimal.ZERO;
+                        //丙班损耗
+                        BigDecimal binAmount = BigDecimal.ZERO;
+                        //总共损耗
+                        BigDecimal sunAmount = BigDecimal.ZERO;
+
+                        //甲班损耗
+                        if (orderCompare.get("甲班") != null) {
+                            for (QtChartSubDetailDTO tmp : orderCompare.get("甲班")) {
+                                jiaAmount = BigDecimalUtil.add(jiaAmount, tmp.getLossWeight());
+                                sunAmount = BigDecimalUtil.add(jiaAmount, sunAmount);
+                            }
+                        }
+                        tupleDTOJIA.setField2(jiaAmount);
+                        tupleDTOList.add(tupleDTOJIA);
+
+                        //乙班损耗
+                        TupleDTO<String, BigDecimal> tupleDTOYI = new TupleDTO();
+                        tupleDTOYI.setField1("乙班");
+                        if (orderCompare.get("乙班") != null) {
+                            for (QtChartSubDetailDTO tmp : orderCompare.get("乙班")) {
+                                yiAmount = BigDecimalUtil.add(yiAmount, tmp.getLossWeight());
+                                sunAmount = BigDecimalUtil.add(yiAmount, sunAmount);
+                            }
+                        }
+                        tupleDTOYI.setField2(yiAmount);
+                        tupleDTOList.add(tupleDTOYI);
+                        graphDTO.setData(tupleDTOList);
+
+                        //丙班损耗
+                        TupleDTO<String, BigDecimal> tupleDTOBING = new TupleDTO();
+                        tupleDTOBING.setField1("丙班");
+                        if (orderCompare.get("丙班") != null) {
+                            for (QtChartSubDetailDTO tmp : orderCompare.get("丙班")) {
+                                binAmount = BigDecimalUtil.add(binAmount, tmp.getLossWeight());
+                                sunAmount = BigDecimalUtil.add(binAmount, sunAmount);
+                            }
+                        }
+                        tupleDTOBING.setField2(binAmount);
+                        tupleDTOList.add(tupleDTOBING);
                         graphDTO.setData(tupleDTOList);
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
@@ -1828,5 +1891,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
         }
         return materialProduceTime;
+    }
+
+    //自定义甲乙丙班的排序
+    private static int getClassGroupOrder(Map.Entry<String,List<QtChartSubDetailDTO>> entry){
+        List<String> order = Lists.newArrayList("甲班","乙班","丙班");
+        return order.indexOf(entry.getKey());
     }
 }

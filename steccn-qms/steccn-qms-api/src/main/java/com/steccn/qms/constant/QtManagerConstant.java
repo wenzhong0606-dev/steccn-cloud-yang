@@ -1007,7 +1007,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtChartCompareEnum {
         //班次 产线 车间 缺陷类别
-        ALL(-1, "不对比"), WORK(0, "班次"), PRODUCTLINE(1, "产线"), WORKSHOP(2, "车间"), DEFECTCATEGORY(3, "缺陷类别"), SAMPLINGTIME(4, "取样日期"), MATERIALWORKSHOP(5, "物料使用车间"), SUPPLIER(6, "供应商"), MATERIAL(7, "物料名称");
+        ALL(-1, "不对比"), WORK(0, "班次"), PRODUCTLINE(1, "产线"), WORKSHOP(2, "车间"), DEFECTCATEGORY(3, "缺陷类别"), SAMPLINGTIME(4, "取样日期"), MATERIALWORKSHOP(5, "物料使用车间"), SUPPLIER(6, "供应商"), MATERIAL(7, "物料名称"), CLASSGROUP(8, "班组");
 
         private Integer code;
         private String name;
