@@ -85,7 +85,7 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         if (Objects.nonNull(start) && Objects.nonNull(end)) {
             //考虑当前数据断传了， 前一天未断传，则会出现负数
             BigDecimal subtract = BigDecimalUtil.subtract(end.getValue(), start.getValue());
-            return BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
+            return Objects.nonNull(subtract) && BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
         }
         return null;
     }

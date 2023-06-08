@@ -767,7 +767,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                                 groupSum = sum;
                             }
                         }
-                        resMap.put(date + "_" + classIdVo.getCode() + "_" + k, groupId);
+                        if (Objects.nonNull(groupId)) {
+                            resMap.put(date + "_" + classIdVo.getCode() + "_" + k, groupId);
+                        }
                     }
                 });
             }
