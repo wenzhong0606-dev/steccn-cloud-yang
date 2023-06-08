@@ -24,6 +24,12 @@ public class QtCheckTaskDestoryOnlineVO implements Serializable {
     @ApiModelProperty("班次名称")
     private String className;
 
+    @ApiModelProperty("班组id 0甲班 1乙班 2丙班")
+    private Integer classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private Integer classGroupName;
+
     @ApiModelProperty("落板原因")
     private String destoryReason;
 
