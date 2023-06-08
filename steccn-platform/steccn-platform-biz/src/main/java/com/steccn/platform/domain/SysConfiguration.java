@@ -36,6 +36,11 @@ public class SysConfiguration implements Serializable {
     private String refContent;
 
     /**
+     * 其余内容
+     */
+    private String otherContent;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
