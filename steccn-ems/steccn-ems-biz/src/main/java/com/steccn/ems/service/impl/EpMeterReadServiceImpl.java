@@ -275,7 +275,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     }
                 }
                 BigDecimal subtract = BigDecimalUtil.subtract(currentValue, preReadValue);
-                if (BigDecimalUtil.ge(subtract, BigDecimal.ZERO)) {
+                if (Objects.nonNull(subtract) && BigDecimalUtil.ge(subtract, BigDecimal.ZERO)) {
                     readValueListVO.setReadValue(subtract);
                     sum = BigDecimalUtil.add(sum, subtract);
                 }
