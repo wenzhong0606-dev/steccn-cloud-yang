@@ -1059,21 +1059,12 @@ public class ReportServiceImpl implements ReportService {
         //缺陷数量根据班组拆分
         Map<String, List<OutputQualityDetailVO>> groupQualityMap = defectiveData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
         //甲班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS))
-                .orElse(Collections.emptyList())
-                .stream()
-                .collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
 
         //乙班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS))
-                .orElse(Collections.emptyList())
-                .stream()
-                .collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
         //丙班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS))
-                .orElse(Collections.emptyList())
-                .stream()
-                .collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
 
         //获取平均厚度数据
         List<OutputQualityDetailVO> plyData = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.listPollingDate(outputQualityDetailDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
@@ -1335,6 +1326,19 @@ public class ReportServiceImpl implements ReportService {
                                 variant = variant + outputQualityDetailVO.getDefectNum();
                             }
                         }
+                        outputQualityDataVO.setAverageThickness(averageThickness);
+                        outputQualityDataVO.setShutUp(shutUp);
+                        outputQualityDataVO.setStartToTalk(startToTalk);
+                        outputQualityDataVO.setStone(stone);
+                        outputQualityDataVO.setVariant(variant);
+                        //总疵点
+                        outputQualityDataVO.setFlaw(shutUp + startToTalk + stone + variant);
+                    } else {
+                        outputQualityDataVO.setShutUp(null);
+                        outputQualityDataVO.setStartToTalk(null);
+                        outputQualityDataVO.setStone(null);
+                        outputQualityDataVO.setVariant(null);
+                        outputQualityDataVO.setFlaw(null);
                     }
                     //平均厚度
                     if (CollUtil.isNotEmpty(plyDataList)) {
@@ -1342,13 +1346,7 @@ public class ReportServiceImpl implements ReportService {
                             averageThickness = averageThickness.add(new BigDecimal(outputQualityDetailVO.getCheckResult()));
                         }
                     }
-                    outputQualityDataVO.setAverageThickness(averageThickness);
-                    outputQualityDataVO.setShutUp(shutUp);
-                    outputQualityDataVO.setStartToTalk(startToTalk);
-                    outputQualityDataVO.setStone(stone);
-                    outputQualityDataVO.setVariant(variant);
-                    //总疵点
-                    outputQualityDataVO.setFlaw(shutUp + startToTalk + stone + variant);
+
                     //根据报工数量计算产量 吨/平方米
                     BigDecimal value1 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 1);
                     BigDecimal value2 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 2);
@@ -1358,7 +1356,7 @@ public class ReportServiceImpl implements ReportService {
                     outputQualityDataVO.setProductLine(lineNameMap.get(reportWork.getProductLineId()));
                     //当班拉引量
                     List<PmsPullForce> pmsPullForces = pullForceMap.get(reportWork.getProductLineId());
-                    if (CollUtil.isNotEmpty(pmsPullForces)){
+                    if (CollUtil.isNotEmpty(pmsPullForces)) {
                         PmsPullForce pmsPullForce = pmsPullForces.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId)).get(reportWork.getClassesId()).get(0);
                         outputQualityDataVO.setCurrentClass(pmsPullForce.getQuantity());
                         //计算成品率
@@ -1412,8 +1410,7 @@ public class ReportServiceImpl implements ReportService {
                 Long classId = classNameMap.get(PmManagerConstant.NIGHT_SHIFT);
                 for (PmsReportWorkVO pmsReportWorkVO : reportWorkDataList) {
                     quantity = quantity.add(pmsReportWorkVO.getProcessQuantity());
-                    if (LocalDateUtil.isRange(start, pmsReportWorkVO.getStartTime(), pmsReportWorkVO.getEndTime(), false, false)
-                            && classId.equals(pmsReportWorkVO.getClassesId())) {
+                    if (LocalDateUtil.isRange(start, pmsReportWorkVO.getStartTime(), pmsReportWorkVO.getEndTime(), false, false) && classId.equals(pmsReportWorkVO.getClassesId())) {
                         //截至日期的夜班产量
                         nightQuantity = nightQuantity.add(pmsReportWorkVO.getProcessQuantity());
                     }
@@ -1488,11 +1485,19 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal outputSq = BigDecimal.ZERO;
         BigDecimal finishedProduct = BigDecimal.ZERO;
         for (OutputQualityDataVO foreDatum : data) {
-            shutUp = shutUp + foreDatum.getShutUp();
-            startToTalk = startToTalk + foreDatum.getStartToTalk();
-            stone = stone + foreDatum.getStone();
-            variant = variant + foreDatum.getVariant();
-            if (Objects.nonNull(foreDatum.getCurrentClass())){
+            if (Objects.nonNull(foreDatum.getShutUp())) {
+                shutUp = shutUp + foreDatum.getShutUp();
+            }
+            if (Objects.nonNull(foreDatum.getStartToTalk())) {
+                startToTalk = startToTalk + foreDatum.getStartToTalk();
+            }
+            if (Objects.nonNull(foreDatum.getStone())) {
+                stone = stone + foreDatum.getStone();
+            }
+            if (Objects.nonNull(foreDatum.getVariant())) {
+                variant = variant + foreDatum.getVariant();
+            }
+            if (Objects.nonNull(foreDatum.getCurrentClass())) {
                 currentClass = currentClass.add(foreDatum.getCurrentClass());
             }
             averageThickness = averageThickness.add(foreDatum.getAverageThickness());
@@ -1506,9 +1511,9 @@ public class ReportServiceImpl implements ReportService {
         outputQualityDataVO.setStone(stone);
         outputQualityDataVO.setVariant(variant);
         outputQualityDataVO.setFlaw(shutUp + startToTalk + stone + variant);
-        if (BigDecimal.ZERO.compareTo(currentClass)==0) {
+        if (BigDecimal.ZERO.compareTo(currentClass) == 0) {
             outputQualityDataVO.setCurrentClass(null);
-        }else {
+        } else {
             outputQualityDataVO.setCurrentClass(currentClass);
         }
         outputQualityDataVO.setAverageThickness(averageThickness.divide(new BigDecimal(size)));
