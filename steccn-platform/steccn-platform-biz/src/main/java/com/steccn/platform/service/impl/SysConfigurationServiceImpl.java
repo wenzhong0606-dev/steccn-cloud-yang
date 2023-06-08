@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.platform.domain.SysConfiguration;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.service.SysConfigurationService;
 import com.steccn.platform.mapper.SysConfigurationMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,7 +48,7 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
     }
 
     @Override
-    public <T> Map<String, List<T>> confList(String type, Set<String> contentList, Function<String, T> function) {
+    public <T> Map<String, List<T>> confList(String type, Set<String> contentList, Function<SysConfigurationDTO, T> function) {
         Map<String, List<T>> resMap = Maps.newHashMap();
         List<SysConfiguration> dbList = list(new LambdaQueryWrapper<SysConfiguration>().eq(SysConfiguration::getType, type)
                 .in(SysConfiguration::getContent, contentList));
@@ -56,8 +58,9 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
                 List<T> resList = Lists.newArrayList();
                 v.forEach(ele -> {
                     try {
-                        String content = ele.getRefContent();
-                        T apply = function.apply(content);
+                        SysConfigurationDTO configurationDTO = new SysConfigurationDTO();
+                        BeanUtils.copyProperties(ele, configurationDTO);
+                        T apply = function.apply(configurationDTO);
                         resList.add(apply);
                     } catch (Exception e) {
                        log.error("function 执行异常 {}",e.getLocalizedMessage());

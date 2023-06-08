@@ -3,10 +3,13 @@ package com.steccn.platform.controller.feign;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.platform.domain.SysConfiguration;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.service.SysConfigurationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,8 +39,24 @@ public class SysConfigurationFeignController {
     }
 
     @ApiOperation(value = "根据code获取list的配置")
+    @PostMapping("/list/integer")
+    public R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,Integer>> dto) {
+        return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
+
+    @ApiOperation(value = "根据code获取list的配置")
+    @PostMapping("/list/string")
+    public R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,String>> dto) {
+        return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
+
+    @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/list")
-    public R<Map<String, List<Integer>>> confListInteger(@RequestBody TupleDTO<String, Set<String>> dto) {
-        return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), (x) -> Integer.parseInt(x)));
+    public R<Map<String, List<SysConfigurationDTO>>> confList(@RequestBody TupleDTO<String, Set<String>> dto) {
+        return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), (x) -> {
+            SysConfigurationDTO configurationDTO = new SysConfigurationDTO();
+            BeanUtils.copyProperties(x, configurationDTO);
+            return configurationDTO;
+        }));
     }
 }

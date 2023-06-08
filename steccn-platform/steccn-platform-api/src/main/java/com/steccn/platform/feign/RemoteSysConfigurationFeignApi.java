@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,25 @@ public interface RemoteSysConfigurationFeignApi {
      * @return list
      */
     @ApiOperation(value = "根据code获取list的配置")
+    @PostMapping("/feign/platform/sys/conf/list/integer")
+    R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,Integer>> dto);
+
+    /**
+     * 根据code获取list的配置
+     * @param tupleDTO type content
+     * @return list
+     */
+    @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/feign/platform/sys/conf/list")
-    R<Map<String, List<Integer>>> confListInteger(@RequestBody TupleDTO<String,Set<String>> tupleDTO);
+    R<Map<String, List<SysConfigurationDTO>>> confList(@RequestBody TupleDTO<String,Set<String>> tupleDTO);
+
+    /**
+     * 根据code获取list的配置
+     *
+     * @param tupleDTO type content
+     * @return list
+     */
+    @ApiOperation(value = "根据code获取list的配置")
+    @PostMapping("/feign/platform/sys/conf/list/string")
+    R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,String>> dto);
 }
