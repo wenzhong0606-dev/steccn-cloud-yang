@@ -237,11 +237,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     for (Map.Entry<Integer, List<QtCheckTask>> entry3 : groupByProductLine.entrySet()) {
                         //产线名字
                         String productLineName = remoteOfficeFeign.getNameById(entry3.getKey()).getData();
+                        //产线id
+                        Integer productLineId = entry3.getKey();
                         //车间名字
                         String productWorkShopName = "";
+                        Integer productWorkShopId = -1;
                         R<SysOfficeVO> parent = remoteOfficeFeign.parent(entry3.getKey());
                         if (parent.getData() != null) {
                             productWorkShopName = parent.getData().getOfficeName();
+                            productWorkShopId = parent.getData().getId();
                         }
                         //拉引量
                         BigDecimal laQuantity = BigDecimal.ZERO;
@@ -686,7 +690,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             baiResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                         }
                         baiResult.setProductLineName(productLineName);
+                        baiResult.setProductLineId(productLineId);
                         baiResult.setProductWorkShopName(productWorkShopName);
+                        baiResult.setProductWorkShopId(productWorkShopId);
                         resultList.add(baiResult);
 
                         //缺陷总数
@@ -703,7 +709,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 defectResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                             }
                             defectResult.setProductLineName(productLineName);
+                            defectResult.setProductLineId(productLineId);
                             defectResult.setProductWorkShopName(productWorkShopName);
+                            defectResult.setProductWorkShopId(productWorkShopId);
                             resultList.add(defectResult);
                         }
 
@@ -720,7 +728,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 luoResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                             }
                             luoResult.setProductLineName(productLineName);
+                            luoResult.setProductLineId(productLineId);
                             luoResult.setProductWorkShopName(productWorkShopName);
+                            luoResult.setProductWorkShopId(productWorkShopId);
                             resultList.add(luoResult);
                         }
                     }
@@ -731,7 +741,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //            Assert.notEmpty(resultList, "数据为空，暂无报表");
             return resultList;
         }
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(LocalDate.parse(resultList.get(0).getWorkOrderTime()), LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime()), LocalDate.parse(resultList.get(0).getWorkOrderTime())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         resultList.forEach(tmp->{
             OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(tmp.getWorkOrderTime() + ":" + tmp.getWorkOrder());
             if(Objects.nonNull(oaGroupCountDTO)){

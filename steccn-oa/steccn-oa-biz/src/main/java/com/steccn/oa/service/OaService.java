@@ -9,7 +9,11 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.yulichang.base.MPJBaseMapper;
+import com.github.yulichang.query.MPJQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
+import com.github.yulichang.wrapper.enums.BaseFuncEnum;
+import com.github.yulichang.wrapper.enums.DefaultFuncEnum;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
@@ -589,9 +593,12 @@ public class OaService {
                     .collect(Collectors.toList());
             //拿到对应的userid
             List<Hrmresource> hrmresourceList = hrmresourceService.list(new LambdaQueryWrapper<Hrmresource>()
-                    .select(Hrmresource::getId)
+                    .select(Hrmresource::getId,Hrmresource::getWorkcode)
                     .in(Hrmresource::getWorkcode, workCodes));
-            Map<String, Integer> workCodeIdMap = hrmresourceList.stream().collect(Collectors.toMap(Hrmresource::getWorkcode, Hrmresource::getId));
+            Map<String, Integer> workCodeIdMap = hrmresourceList.stream().collect(Collectors.toMap(
+                    Hrmresource::getWorkcode,
+                    Hrmresource::getId,
+                    ((existingValue, newValue) -> existingValue)));
             //把白班和夜班改成早班晚班
             rosterRecord.stream().forEach(tmp->{
                 tmp.setUserId(workCodeIdMap.get(tmp.getWorkcode()));
@@ -609,16 +616,15 @@ public class OaService {
             //查询数据库找到人最多的班组
             for(Map.Entry<String,List<Integer>> entry:dateUserIdMap.entrySet()){
                 if(CollUtil.isNotEmpty(entry.getValue())){
-                    MPJLambdaWrapper mpjLambdaWrapper = new MPJLambdaWrapper<OaGroupCountDTO>()
-                            .selectCount(KqGroupmember::getGroupid,OaGroupCountDTO::getCount)
-                            .selectAs(KqGroupmember::getGroupid,OaGroupCountDTO::getGroupId)
-                            .selectAs(KqGroup::getGroupname,OaGroupCountDTO::getGroupName)
-                            .leftJoin(KqGroup.class,KqGroup::getId,KqGroupmember::getGroupid)
-                            .isNull(KqGroupmember::getIsdelete)
-                            .in(KqGroupmember::getTypevalue,entry.getValue())
-                            .orderByDesc(OaGroupCountDTO::getCount)
+                    MPJQueryWrapper mpjQueryWrapper = new MPJQueryWrapper<OaGroupCountDTO>()
+                            .select("groupid AS groupId,groupname As groupName,Count(typevalue) AS count")
+                            .leftJoin("kq_group t1 on t1.id = t.groupid")
+                            .isNull("t.isDelete")
+                            .in("typevalue",entry.getValue())
+                            .groupBy("groupid")
+                            .orderByDesc("count")
                             .last("LIMIT 1");
-                    OaGroupCountDTO groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjLambdaWrapper);
+                    OaGroupCountDTO groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjQueryWrapper);
                     if(Objects.nonNull(groupCountDTO)){
                         groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.getNameByOaName(groupCountDTO.getGroupName()));
                         resultMap.put(entry.getKey(),groupCountDTO);
