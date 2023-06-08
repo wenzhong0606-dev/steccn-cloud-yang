@@ -46,4 +46,14 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("获取指定日期，指定产线的所有产量")
     @PostMapping("/feign/pms/report/work/num/line/date")
     R<Map<String, BigDecimal>> classDateProductNum(@RequestBody TripleDTO<Set<Integer>, LocalDate, LocalDate> dto);
+
+    /**
+     * 获取车间班次日期中班次报工最多的班组
+     *
+     * @param tupleDTO
+     * @return
+     */
+    @ApiOperation("获取车间班次日期中班次报工最多的班组")
+    @PostMapping("/feign/pms/report/work/workshop/class/group")
+    R<Map<String, Long>> workshopClassGroupMap(TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO);
 }

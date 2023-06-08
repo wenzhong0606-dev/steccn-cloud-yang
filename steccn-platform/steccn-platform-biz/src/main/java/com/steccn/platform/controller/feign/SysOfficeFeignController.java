@@ -1,7 +1,9 @@
 package com.steccn.platform.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -208,5 +210,12 @@ public class SysOfficeFeignController {
     @ApiOperation("查询一个节点指定类型的父节点-产线")
     public R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet) {
         return R.success(sysOfficeService.parentType(officeIdSet, SysOfficeConstant.PRODUCT_LINE));
+    }
+
+    @PostMapping("/parent/type")
+    @ApiOperation("查询一个节点指定类型的父节点-指定类型")
+    public R<Map<Integer, Integer>> parentType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
+        Assert.notNull(tupleDTO.getField1(), "指定类型不能为空");
+        return R.success(sysOfficeService.parentType(tupleDTO.getField2(), tupleDTO.getField1()));
     }
 }

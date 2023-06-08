@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -17,6 +18,7 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
@@ -57,14 +59,14 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
     @Override
     public List<EpProduceDetailVO> getProduceDetailList(LocalDate startDate, LocalDate endDate) {
         LocalTime localTime = LocalTime.of(8, 0, 0);
-        LocalDateTime startDateTime = LocalDateTime.of(startDate, localTime);
-        LocalDateTime endDateTime = LocalDateTime.of(endDate, localTime).plusDays(1);
+        LocalDateTime startDateTime = LocalDateUtil.getMorning(startDate);
+        LocalDateTime endDateTime = LocalDateUtil.getMorning(endDate.plusDays(1));
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startDate, endDate);
         List<PmsReportWorkVO> reportWorkVOList = FeignOptional.of(() -> remoteReportWorkFeignApi.listByClassTime(new TupleDTO<>(startDateTime, endDateTime)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
         List<QtCheckTaskDetailItemMaterialVO> detailItemMaterialVOList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.getByClassTime(new TupleDTO<>(startDateTime, endDateTime)), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_shift").getData();
-        SysDictVO unit = remoteDictFeignApi.getByCode("m²", "measure_unit").getData();
+        List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO unit = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_PFM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Long> materialIdSet = reportWorkVOList.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, List<SysSpareUnitConversionVO>> spareUnitMap = remoteSpareUnitConvertFeignApi.convert(materialIdSet).getData();
         Map<Long, EqpSpareVO> spareMap = remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)).getData();
