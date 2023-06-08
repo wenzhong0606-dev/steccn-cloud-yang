@@ -544,10 +544,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             if (account.getEntityTable() == 0) {
                                 //远传仪表
                                 consumeMap.put(k, remoteDataMap.get(account.getId() + "_" + date + "_" + classes + "_" + thick));
-                            } else if (account.getEntityTable() == 1 && classes == -1 && noThick.equals(thick)) {
+                            } else if (account.getEntityTable() == 1 && noThickAndClass(classes, thick)) {
                                 //表读数来自人工抄表，每天抄一次）：仅统计每日能耗（类型II）
                                 consumeMap.put(k, handReadDataMap.get(account.getId() + "_" + date));
-                            } else if (v.getAccount().getEntityTable() == 2) {
+                            } else if (account.getEntityTable() == 2) {
                                 //虚拟仪表
                                 if (Integer.valueOf(0).equals(v.getType())) {
                                     //统计能耗考虑班次、产品厚度（类型I）
@@ -556,14 +556,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                         value = BigDecimalUtil.add(value, consumeMap.get(child));
                                     }
                                     consumeMap.put(k, value);
-                                } else if (Integer.valueOf(1).equals(v.getType()) && classes == -1 && noThick.equals(thick)) {
+                                } else if (Integer.valueOf(1).equals(v.getType()) && noThickAndClass(classes, thick)) {
                                     //都是实体非远传仪表
                                     BigDecimal value = BigDecimal.ZERO;
                                     for (Long child : v.getChildren()) {
                                         value = BigDecimalUtil.add(value, consumeMap.get(child));
                                     }
                                     consumeMap.put(k, value);
-                                } else if (Integer.valueOf(2).equals(v.getType()) && classes == -1 && noThick.equals(thick)) {
+                                } else if (Integer.valueOf(2).equals(v.getType()) && noThickAndClass(classes, thick)) {
                                     //既有实体远传仪表，又有虚拟仪表，还有非实体远传仪表
                                     BigDecimal value = BigDecimal.ZERO;
                                     for (Long child : v.getChildren()) {
@@ -998,7 +998,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @return
      */
     private boolean noThickAndClass(Integer classId, BigDecimal thick) {
-        BigDecimal noThick = new BigDecimal(-1);
+        BigDecimal noThick = BigDecimalUtil.MINUS_ONE;
         return classId == -1 && noThick.equals(thick);
     }
 
