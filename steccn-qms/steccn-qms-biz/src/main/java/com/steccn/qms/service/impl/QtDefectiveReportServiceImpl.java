@@ -971,7 +971,26 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, QtItemCategory> defectMap = qtItemCategoryService.listById(categoryIdSet);
         Map<Integer, String> idNameMap = defectCategorySort(defectMap);
-        return commonLine(0, dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()));
+        QtLineChartBarDTO qtLineChartBarDTO = commonLine(0, dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()));
+
+        //深加工缺陷类别趋势 - 折线图 全量数据表查询车间，产线，班次，缺陷类别
+        Set<Integer> classIdSet = Sets.newTreeSet();
+        Set<Integer> workShopIdSet = Sets.newTreeSet();
+        Set<Integer> lineIdSet = Sets.newTreeSet();
+        Set<Integer> defectCategorySet = Sets.newTreeSet();
+        for (QtCheckTaskDetailReportVO data : flatDataList) {
+            defectCategorySet.add(data.getDefectCategory());
+            classIdSet.add(data.getClassId());
+            workShopIdSet.add(data.getProductWorkshopId());
+            lineIdSet.add(data.getProductLineId());
+        }
+        BaseScreenVO baseScreenVO = new BaseScreenVO();
+        baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
+        baseScreenVO.setCategoryScreen(conditionData(idNameMap.keySet(), idNameMap));
+        baseScreenVO.setProductWorkShopScreen(conditionData(workShopIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(workShopIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setProductLineScreen(conditionData(lineIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        qtLineChartBarDTO.setOther(baseScreenVO);
+        return qtLineChartBarDTO;
     }
 
     @Override
@@ -1203,7 +1222,28 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         for (QtDefectiveItem ele : collect) {
             defectIdNameMap.put(ele.getId(), ele.getName());
         }
-        return commonLine(1, dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
+        QtLineChartBarDTO qtLineChartBarDTO = commonLine(1, dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
+
+        //深加工缺陷项趋势 - 折线图 全量数据表查询车间，产线，班次，缺陷类别，，缺陷项
+        Set<Integer> classIdSet = Sets.newTreeSet();
+        Set<Integer> workShopIdSet = Sets.newTreeSet();
+        Set<Integer> lineIdSet = Sets.newTreeSet();
+        Set<Integer> defectCategorySet = Sets.newTreeSet();
+        for (QtCheckTaskDetailReportVO data : flatDataList) {
+            defectCategorySet.add(data.getDefectCategory());
+            classIdSet.add(data.getClassId());
+            workShopIdSet.add(data.getProductWorkshopId());
+            lineIdSet.add(data.getProductLineId());
+        }
+        BaseScreenVO baseScreenVO = new BaseScreenVO();
+        baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
+        baseScreenVO.setCategoryScreen(conditionData(defectCategorySet, qtItemCategoryService.listByIdCh(defectCategorySet)));
+        baseScreenVO.setProductWorkShopScreen(conditionData(workShopIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(workShopIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setProductLineScreen(conditionData(lineIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setDefectItemScreen(conditionData(defectIdNameMap.keySet(), defectIdNameMap));
+        qtLineChartBarDTO.setOther(baseScreenVO);
+
+        return qtLineChartBarDTO;
     }
 
     /**
