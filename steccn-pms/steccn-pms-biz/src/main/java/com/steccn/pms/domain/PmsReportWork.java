@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -30,6 +31,11 @@ public class PmsReportWork implements Serializable {
      * 工序id
      */
     private Long processId;
+
+    /**
+     * 班次日期
+     */
+    private LocalDate classDate;
 
     /**
      * 开始时间

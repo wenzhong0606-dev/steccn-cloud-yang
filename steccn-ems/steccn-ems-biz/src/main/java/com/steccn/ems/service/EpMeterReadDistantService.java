@@ -1,7 +1,12 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.ems.domain.EpMeterReadDistant;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +15,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpMeterReadDistantService extends IService<EpMeterReadDistant> {
 
+    /**
+     * 获取时间范围内的全部厚度
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    List<BigDecimal> selectAllThick(LocalDate start, LocalDate end);
 }

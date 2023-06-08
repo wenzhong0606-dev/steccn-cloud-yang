@@ -40,4 +40,10 @@ public class EpDwController {
     public R<Boolean> meterChao(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.read(date));
     }
+
+    @GetMapping("/heat/power")
+    @ApiOperation(value = "余热发电")
+    public R<Boolean> heatPower(@RequestParam("date") LocalDate date) {
+        return R.success(epDwService.heatPower(date));
+    }
 }

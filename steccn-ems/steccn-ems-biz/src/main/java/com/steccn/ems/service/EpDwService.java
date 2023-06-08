@@ -30,4 +30,11 @@ public interface EpDwService {
      * @return 是否成功
      */
     Boolean read(LocalDate date);
+
+    /**
+     * 余热发电
+     * @param date 班次日期
+     * @return
+     */
+    Boolean heatPower(LocalDate date);
 }

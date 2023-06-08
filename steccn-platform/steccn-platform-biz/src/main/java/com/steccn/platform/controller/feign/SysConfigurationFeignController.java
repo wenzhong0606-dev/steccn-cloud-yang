@@ -1,5 +1,6 @@
 package com.steccn.platform.controller.feign;
 
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysConfigurationService;
@@ -11,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author yequan
@@ -28,7 +31,13 @@ public class SysConfigurationFeignController {
 
     @ApiOperation(value = "获取根据ref内容提供获取映射配置")
     @PostMapping("/ref")
-    R<Map<String, String>> sysConfRef(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
+    public R<Map<String, String>> sysConfRef(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
         return R.success(sysConfigurationService.sysConfRef(tupleDTO.getField1(), tupleDTO.getField2()));
+    }
+
+    @ApiOperation(value = "根据code获取list的配置")
+    @PostMapping("/list")
+    public R<Map<String, List<Integer>>> confListInteger(@RequestBody TupleDTO<String, Set<String>> dto) {
+        return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), (x) -> Integer.parseInt(x)));
     }
 }

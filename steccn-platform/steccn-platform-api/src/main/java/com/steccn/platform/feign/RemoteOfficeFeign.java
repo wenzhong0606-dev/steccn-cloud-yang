@@ -1,6 +1,7 @@
 package com.steccn.platform.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -258,6 +259,14 @@ public interface RemoteOfficeFeign {
     @ApiOperation("查询一个节点指定类型的父节点-产线")
     R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet);
 
+    /**
+     * 查询一个节点指定类型的父节点
+     * @param tupleDTO 指定类型 孩子节点集合
+     * @return list
+     */
+    @PostMapping("/feign/platform/sys/office/parent/type")
+    @ApiOperation("查询一个节点指定类型的父节点")
+    R<Map<Integer, Integer>> parentType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO);
 
     @PostMapping("/feign/platform/sys/office/child/workshop")
     @ApiOperation("查询节点的子节点-车间")

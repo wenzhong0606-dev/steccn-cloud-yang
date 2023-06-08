@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.PmsReportWorkVO;
@@ -132,6 +133,23 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return list
      */
     List<EpMeterReadRowDTO> sjgOrderRw(List<EpMeterReadRowDTO> sjgDataList);
+
+    /**
+     * 获取指定日期，指定产线的所有产量
+     * @param lineSet 产线集合
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    Map<String, BigDecimal> classDateProductNum(Set<Integer> lineSet, LocalDate start, LocalDate end);
+
+    /**
+     * 车间-班次日期，班次对应的班组
+     * @param field1
+     * @param field2
+     * @return
+     */
+    Map<String, Long> workshopClassGroupMap(Set<LocalDate> field1, Map<Integer, Set<Integer>> field2);
 
     /**
      * 根据产线以及时间获取报工记录

@@ -12,6 +12,8 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
@@ -24,7 +26,7 @@ import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +53,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     private EpInstrumentAccountService epInstrumentAccountService;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     /**
      * 默认能源类型
@@ -596,6 +600,48 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode() {
+        //电
+        Map<String, List<Integer>> eleConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> eleConfList = eleConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //水
+        Map<String, List<Integer>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> waterConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //气
+        Map<String, List<Integer>> gasConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_GAS, Sets.newHashSet(EpManagerConstant.CONF_EMS_GAS_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> gasConfList = gasConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //油
+        Map<String, List<Integer>> oilConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_OIL, Sets.newHashSet(EpManagerConstant.CONF_EMS_OIL_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> oilConfList = oilConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
+        resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, eleConfList));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterConfList));
+        resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, gasConfList));
+        resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, oilConfList));
+        return resMap;
+    }
+
+    /**
+     * 根据officeName获取指定能源类型的节点id和节点名称
+     *
+     * @param energyType     能源类型
+     * @param officeNameList 组织结构名称集合
+     * @return
+     */
+    private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<Integer> officeIdList) {
+        List<TripleDTO<Long, Integer, String>> resList = Lists.newArrayList();
+        List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeId, officeIdList));
+        if (CollUtil.isNotEmpty(dbList)) {
+            for (EpPartition epPartition : dbList) {
+                resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), epPartition.getOfficeName()));
+            }
+        }
+        return resList;
+    }
+
+
     /**
      * 获取当前节点的所有孩子节点
      * @param cur
@@ -778,70 +824,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         }
         return resMap;
     }
-
-    /**
-     * 根据全量数据递归构造一棵树
-     * @param dataList
-     * @return
-     */
-//    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList,Integer energyType){
-//        //定义返回数据集合
-//        List<EpPartitionVO> epPartitionVOS = Lists.newArrayList();
-//        //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
-//        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
-//        //获取所有根节点
-//        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
-//        if (CollUtil.isNotEmpty(rootList)){
-//            rootList.sort(Comparator.comparing(EpPartition::getSort));
-//            //把根节点从全量数据集合中删除
-//            dataList.removeAll(rootList);
-//            //遍历根节点
-//            for (EpPartition root : rootList) {
-//                EpPartitionVO parent = new EpPartitionVO();
-//                BeanUtils.copyProperties(root,parent);
-//                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(root.getId())){
-//                    parent.setIsLinkTable(MpConstant.YES);
-//                }else {
-//                    parent.setIsLinkTable(MpConstant.NO);
-//                }
-//                epPartitionVOS.add(parent);
-//                //查询vo的子级,并将子级放到vo
-//                searchSysDictCh(parent, dataList,partitionNodes);
-//
-//            }
-//        }
-//        return epPartitionVOS;
-//    }
-
-    /**
-     * 递归查询
-     * @param parentVO
-     * @param dataList
-     */
-//    private void searchSysDictCh(EpPartitionVO parentVO, List<EpPartition> dataList,List<Long> partitionNodes) {
-//        //获取当前节点的子级
-//        List<EpPartition> children = dataList.stream().filter(v -> Objects.nonNull(parentVO.getId())
-//                && parentVO.getId() .equals(v.getParentId()) ).collect(Collectors.toList());
-//        if (CollUtil.isNotEmpty(children)){
-//            children.sort(Comparator.comparing(EpPartition::getSort));
-//            List<EpPartitionVO> childrenVoList = BeanUtil.copyToList(children, EpPartitionVO.class);
-//            childrenVoList.forEach(v->{
-//                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(v.getId())){
-//                    v.setIsLinkTable(MpConstant.YES);
-//                }else {
-//                    v.setIsLinkTable(MpConstant.NO);
-//                }
-//            });
-//            //父亲结点挂孩子
-//            parentVO.setChildren(childrenVoList);
-//            //从集合中删除孩子
-//            dataList.removeAll(children);
-//            //孩子结点继续去挂自己的孩子
-//            for (EpPartitionVO item : childrenVoList) {
-//                searchSysDictCh(item, dataList,partitionNodes);
-//            }
-//        }
-//    }
 
     /**
      * 获取子树

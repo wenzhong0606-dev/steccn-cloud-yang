@@ -24,6 +24,7 @@ import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.common.vo.R;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.*;
@@ -262,6 +263,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
             BigDecimal preReadValue = null;
             BigDecimal currentValue = null;
+            BigDecimal sum = null;
             for (LocalDate localDate : localDateList) {
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
@@ -280,6 +282,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 BigDecimal subtract = BigDecimalUtil.subtract(currentValue, preReadValue);
                 if(BigDecimalUtil.ge(subtract,BigDecimal.ZERO)){
                     readValueListVO.setReadValue(subtract);
+                    sum = BigDecimalUtil.add(sum, subtract);
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
@@ -290,6 +293,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     readValueListVOList.add(readValueListVO);
                 }
             }
+            meterReadListVO.setSum(sum);
             meterReadListVO.setReadValueList(readValueListVOList);
             meterReadListVOList.add(meterReadListVO);
         }
@@ -307,6 +311,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
+                    //求和
+                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    meterReadListVO.setSum(sum);
                 }
         ).collect(Collectors.toList());
 
@@ -522,7 +529,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().filter(v -> Objects.nonNull(v.getThick())).map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
         //如果厚度集合不包含无厚度，则加入无厚度
-        BigDecimal noThick = new BigDecimal("-1");
+        BigDecimal noThick = BigDecimalUtil.MINUS_ONE;
         if (!thickList.contains(noThick)) {
             thickList.add(noThick);
         }
@@ -620,8 +627,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     resVo.setSysOfficeId(epPartition.getOfficeId());
                     resVo.setOfficeName(epPartition.getOfficeName());
                     resVo.setProductNum(yieldMap.get(key));
-                    //设置班组
-
                     resList.add(resVo);
                 }
             });
@@ -690,6 +695,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     .in(EpMeterReadDistant::getMeterId, meterIdSet)
                     .in(EpMeterReadDistant::getReadDate, dateSet));
             if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele ->{
+                    if(Objects.isNull(ele.getClassId())){
+                        ele.setClassId(-1);
+                    }
+                    if(Objects.isNull(ele.getThick())){
+                        ele.setThick(BigDecimalUtil.MINUS_ONE);
+                    }
+                });
+
                 Map<String, List<EpMeterReadDistant>> groupData = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getReadDate() + "_"+ v.getClassId() + "_" + v.getThick()));
                 groupData.forEach((k, v) -> {
                     BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -737,6 +751,38 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取每个节点的office信息
         Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
         List<EpEnergyConsumeDTO> consumeTable = unitTable(dateSet, energyType, nodeLinkMeterMap);
+
+
+        //结合排班表结合报工时填报的班组，在【单耗全量数据表】中加入班组维度，右侧增加三列，每格代表本行的班次是本列的车间的哪个班组（本列的车间所有工位在本行的班次报工时填报的班组中，取填报次数最多的一个班组）
+        //获取所有的工位节点
+
+        List<SysOfficeVO> stationList = FeignOptional.of(() -> remoteOfficeFeign.flatData(SysOfficeConstant.STATION), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取所有的车间
+        List<SysOfficeVO> workshopList = FeignOptional.of(() -> remoteOfficeFeign.flatData(SysOfficeConstant.WORKSHOP), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> stationIdSet = stationList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        Set<Integer> workshopIdSet = workshopList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取所有工位节点的车间父节点
+        Map<Integer, Integer> parentWorkshop = FeignOptional.of(() -> remoteOfficeFeign.parentType(new TupleDTO<>(SysOfficeConstant.WORKSHOP, stationIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> wsSet = Sets.newHashSet();
+        partitionIdList.forEach(ele ->{
+            EpPartition epPartition = partitionMap.get(ele);
+            if(Objects.nonNull(epPartition) && workshopIdSet.contains(epPartition.getOfficeId())){
+                wsSet.add(epPartition.getOfficeId());
+            }
+        });
+
+        Map<Integer,Set<Integer>> shopStationMap = Maps.newHashMap();
+        //查询车间的工位
+        parentWorkshop.forEach((k,v) ->{
+            if(wsSet.contains(v)){
+               MapUtil.computeSet(shopStationMap,v,k);
+            }
+        });
+        //根据工位+时间获取车间班次报工最多的班组
+
+        R<Map<String,Long>> workShopClassMap = remoteReportWorkFeignApi.workshopClassGroupMap(new TupleDTO<>(dateSet,shopStationMap));
+
+
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable);
     }
 
@@ -1066,6 +1112,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
+                    //求和
+                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    meterReadListVO.setSum(sum);
                 }
         ).collect(Collectors.toList());
     }

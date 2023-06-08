@@ -2,9 +2,12 @@ package com.steccn.platform.service;
 
 import com.steccn.platform.domain.SysConfiguration;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.apache.poi.ss.formula.functions.T;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
 * @author yequan
@@ -20,4 +23,12 @@ public interface SysConfigurationService extends IService<SysConfiguration> {
      * @return map
      */
     Map<String, String> sysConfRef(String type, Set<Integer> refContentSet);
+
+    /**
+     * 根据codelist返回集合
+     * @param type 类型
+     * @param contentList 类型集合
+     * @return
+     */
+    <T> Map<String, List<T>> confList(String type, Set<String> contentList,Function<String, T> function);
 }

@@ -1,5 +1,7 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -132,4 +134,10 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<Long, EpChildTypeDTO> childTypeMap(Integer energyType);
+
+    /**
+     * 获取不同能源 日报表默认的统计节点
+     * @return
+     */
+    Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode();
 }
