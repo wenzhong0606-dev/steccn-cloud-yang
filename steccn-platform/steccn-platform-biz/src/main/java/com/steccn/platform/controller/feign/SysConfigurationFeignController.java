@@ -1,5 +1,6 @@
 package com.steccn.platform.controller.feign;
 
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
@@ -40,13 +41,13 @@ public class SysConfigurationFeignController {
 
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/list/integer")
-    public R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,Integer>> dto) {
+    public R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>, SFunction<SysConfigurationDTO,Integer>> dto) {
         return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), dto.getField3()));
     }
 
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/list/string")
-    public R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,String>> dto) {
+    public R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>, SFunction<SysConfigurationDTO,String>> dto) {
         return R.success(sysConfigurationService.confList(dto.getField1(), dto.getField2(), dto.getField3()));
     }
 
