@@ -152,6 +152,10 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-zipkin</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-qms-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

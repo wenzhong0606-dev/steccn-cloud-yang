@@ -55,6 +55,15 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      */
     Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date, List<Long> classGroupIdList);
 
+
+    /**
+     * 获取多个车间下的拉引量
+     * @param date 日期
+     * @param productWorkshopIds 车间id集合
+     * @return 一个产线下的拉引量信息
+     */
+    Map<Integer, List<PmsPullForce>> pullForceDayByWorkshop(LocalDate date,List<Integer> productWorkshopIds);
+
     /**
      * 根据班次日期+产线+班次查询拉引量
      * @param pfSet 条件集合
@@ -68,4 +77,13 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Boolean edit(List<PmsPullForceEditDTO> list);
+
+
+    /**
+     * 获取截至日期的当月拉引量数据
+     * @param date
+     * @param productWorkshop
+     * @return
+     */
+    List<PmsPullForce> monthlyData(LocalDate date, List<Integer> productWorkshop);
 }

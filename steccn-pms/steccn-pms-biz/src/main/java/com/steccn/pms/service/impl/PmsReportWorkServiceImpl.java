@@ -713,6 +713,37 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return sjgDataList;
     }
 
+    @Override
+    public List<PmsReportWorkVO> listBylineIds(List<Integer> lineIds, LocalDate date) {
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = LocalDateUtil.getMorning(date.plusDays(1));
+        List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineIds).ge(PmsReportWork::getStartTime, start)
+                .le(PmsReportWork::getEndTime, end));
+        List<PmsReportWorkVO> resList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(list)) {
+            List<Long> collect = new ArrayList<>(list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet()));
+            Map<Long, PmsProduceOrder> orderMap = produceOrderService.orderList(collect);
+            for (PmsReportWork pmsReportWork : list) {
+                PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
+                BeanUtil.copyProperties(pmsReportWork,pmsReportWorkVO);
+                pmsReportWorkVO.setMaterialId(orderMap.get(pmsReportWork.getProduceOrderId()).getMaterialId());
+                pmsReportWorkVO.setProduceOrder(orderMap.get(pmsReportWork.getProduceOrderId()).getCode());
+                pmsReportWorkVO.setClassGroupId(pmsReportWork.getClassGroupId());
+                resList.add(pmsReportWorkVO);
+            }
+        }
+        return resList;
+    }
+
+    @Override
+    public List<PmsReportWorkVO> monthlyData(LocalDate date, List<Integer> lineIds) {
+        LocalDateTime endTime = date.atStartOfDay();
+        LocalDateTime startTime = date.withDayOfMonth(1).atStartOfDay();
+        List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineIds).ge(PmsReportWork::getStartTime, startTime)
+                .le(PmsReportWork::getEndTime, endTime));
+        return BeanUtil.copyToList(list, PmsReportWorkVO.class);
+    }
+
     /**
      * 更新物料消耗
      * @param dto dto信息

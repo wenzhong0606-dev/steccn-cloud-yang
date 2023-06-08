@@ -15,6 +15,72 @@ import java.util.List;
  */
 public interface PmManagerConstant {
 
+
+    /**
+     * 开口泡
+     */
+    String QMS_TASK_ITEM_SHUT_UP = "开口泡";
+
+    /**
+     * 闭口泡
+     */
+    String QMS_TASK_ITEM_START_TO_TALK ="闭口泡";
+
+    /**
+     * 闭口泡
+     */
+    String QMS_TASK_ITEM_STONE ="结石掉落物";
+
+    /**
+     * 白班
+     */
+    String FORE_SHIFT = "早班";
+
+    /**
+     * 夜班
+     */
+    String NIGHT_SHIFT ="晚班";
+
+    /**
+     * 甲班
+     */
+    String METHYL_CLASS = "车间倒班-甲班";
+
+    /**
+     * 甲班
+     */
+    String METHYL_CLASS_NAME = "甲班";
+
+    /**
+     * 乙班
+     */
+    String ETHYL_CLASS_NAME = "乙班";
+
+    /**
+     * 丙班
+     */
+    String PROPYLENE_CLASS_NAME = "丙班";
+
+
+
+    /**
+     * 乙班
+     */
+    String ETHYL_CLASS = "车间倒班-乙班";
+
+    /**
+     * 丙班
+     */
+    String PROPYLENE_CLASS = "车间倒班-丙班";
+
+
+
+    /**
+     * 闭口泡
+     */
+    String QMS_TASK_ITEM_VARIANT="辊印变形";
+
+
     /**
      * 测量单位
      */

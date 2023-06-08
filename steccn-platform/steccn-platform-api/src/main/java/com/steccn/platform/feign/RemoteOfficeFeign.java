@@ -258,4 +258,8 @@ public interface RemoteOfficeFeign {
     @ApiOperation("查询一个节点指定类型的父节点-产线")
     R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet);
 
+
+    @PostMapping("/feign/platform/sys/office/child/workshop")
+    @ApiOperation("查询节点的子节点-车间")
+    R<Map<Integer,List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet);
 }

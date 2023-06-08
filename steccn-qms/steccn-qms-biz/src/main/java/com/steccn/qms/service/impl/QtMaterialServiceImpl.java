@@ -49,9 +49,8 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
 
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
 
-    private final RemoteOfficeFeign remoteOfficeFeign;
-
-    private final QtCheckPlanService qtCheckPlanService;
+    @Autowired
+    private  QtCheckPlanService qtCheckPlanService;
 
     private final QtCheckTaskMapper qtCheckTaskMapper;
 

@@ -68,4 +68,10 @@ public class PmsReportWorkVO {
     @ApiModelProperty("生产时长（小时）")
     private BigDecimal duration;
 
+    @ApiModelProperty("生产订单编码")
+    private String produceOrder;
+
+    @ApiModelProperty("班组id")
+    private Long classGroupId;
+
 }

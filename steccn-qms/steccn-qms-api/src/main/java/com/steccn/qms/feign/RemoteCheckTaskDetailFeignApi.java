@@ -4,7 +4,9 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
+import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
+import com.steccn.qms.vo.OutputQualityDetailVO;
 import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -31,4 +33,14 @@ public interface RemoteCheckTaskDetailFeignApi {
     @ApiOperation("ems获取拉引量")
     @PostMapping("/feign/qms/task/detail/ems/getPullAmount")
     R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody ValidList<QtEmsPullAmountDTO> dto);
+
+
+    @ApiOperation("根据条件获取在线检缺陷信息")
+    @PostMapping("/feign/qms/task/detail/list/defective")
+    R<List<OutputQualityDetailVO>> listDefectiveData(@RequestBody OutputQualityDetailDTO outputQualityDetailDTO);
+
+    @ApiOperation("根据条件获取巡检平均厚度数据")
+    @PostMapping("/feign/qms/task/detail/list/polling")
+    R<List<OutputQualityDetailVO>> listPollingDate(@RequestBody OutputQualityDetailDTO outputQualityDetailDTO);
+
 }

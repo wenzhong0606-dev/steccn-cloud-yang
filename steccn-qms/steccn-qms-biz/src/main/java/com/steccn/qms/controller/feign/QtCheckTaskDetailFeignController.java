@@ -6,10 +6,12 @@ import com.google.common.collect.Lists;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
+import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.dto.QtPullAmountDTO;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.service.QtCheckTaskDetailService;
+import com.steccn.qms.vo.OutputQualityDetailVO;
 import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,9 +39,9 @@ public class QtCheckTaskDetailFeignController {
 
     @ApiOperation("根据班次日期查询单片掰边重量、单片重量、拉引速度")
     @PostMapping("/getByClassTime")
-    public R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO){
-        Assert.notNull(tupleDTO.getField1(),"开始时间不能为空");
-        Assert.notNull(tupleDTO.getField2(),"结束时间不能为空");
+    public R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(@RequestBody TupleDTO<LocalDateTime, LocalDateTime> tupleDTO) {
+        Assert.notNull(tupleDTO.getField1(), "开始时间不能为空");
+        Assert.notNull(tupleDTO.getField2(), "结束时间不能为空");
         return R.success(qtCheckTaskDetailService.getByClassTime(tupleDTO.getField1(), tupleDTO.getField2()));
     }
 
@@ -51,4 +53,18 @@ public class QtCheckTaskDetailFeignController {
         }
         return R.success(qtChartGenerateService.calculateEmsPullAmount(dto));
     }
+
+    @ApiOperation("根据条件获取在线检缺陷信息")
+    @PostMapping("/list/defective")
+    public R<List<OutputQualityDetailVO>> listDefectiveData(@RequestBody OutputQualityDetailDTO outputQualityDetailDTO) {
+        return R.success(qtCheckTaskDetailService.listDefectiveData(outputQualityDetailDTO));
+    }
+
+    @ApiOperation("根据条件获取巡检平均厚度数据")
+    @PostMapping("/list/polling")
+    public R<List<OutputQualityDetailVO>> listPollingDate(@RequestBody OutputQualityDetailDTO outputQualityDetailDTO) {
+        return R.success(qtCheckTaskDetailService.listPollingDate(outputQualityDetailDTO));
+    }
+
+
 }

@@ -209,4 +209,11 @@ public class SysOfficeFeignController {
     public R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet) {
         return R.success(sysOfficeService.parentType(officeIdSet, SysOfficeConstant.PRODUCT_LINE));
     }
+
+
+    @PostMapping("/child/workshop")
+    @ApiOperation("查询节点的子节点-车间")
+    public R<Map<Integer,List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet){
+        return R.success(sysOfficeService.childWorkshop(officeIdSet));
+    }
 }
