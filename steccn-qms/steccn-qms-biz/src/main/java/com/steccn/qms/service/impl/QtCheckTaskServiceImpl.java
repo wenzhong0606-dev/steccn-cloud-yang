@@ -1919,9 +1919,40 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //自定义转换工具
         QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
-        //获取所有的下拉选项
-        qtLineChartBiBarDTO.setOther(materialSelect(allSelectList));
+
+        //基片巡检合格率趋势-柱状图 全量数据表查询车间，产线，班次，物料
+        Set<Integer> classIdSet = Sets.newTreeSet();
+        Set<Integer> workShopIdSet = Sets.newTreeSet();
+        Set<Integer> lineIdSet = Sets.newTreeSet();
+        Set<Long> materialIdSet = Sets.newHashSet();
+        for (QtCheckTaskReportVO data : flatDataList) {
+            classIdSet.add(data.getClassesId());
+            workShopIdSet.add(data.getProductWorkshopId());
+            lineIdSet.add(data.getProductLineId());
+            materialIdSet.add(data.getMaterialId());
+        }
+        BaseScreenVO baseScreenVO = new BaseScreenVO();
+        baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
+        baseScreenVO.setProductWorkShopScreen(conditionData(workShopIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(workShopIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setProductLineScreen(conditionData(lineIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setMaterialScreen(conditionData(materialIdSet, FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        qtLineChartBiBarDTO.setOther(baseScreenVO);
         return qtLineChartBiBarDTO;
+    }
+
+    /**
+     * 获取全量数据表的条件集合
+     * @param idSet
+     * @param idNameMap
+     * @param <T>
+     * @return
+     */
+    private <T> List<BaseSelectVO<T>> conditionData(Set<T> idSet, Map<T, String> idNameMap) {
+        List<BaseSelectVO<T>> resList = org.apache.commons.compress.utils.Lists.newArrayList();
+        for (T id : idSet) {
+            resList.add(new BaseSelectVO<T>(id, idNameMap.get(id)));
+        }
+        return resList;
     }
 
     /**
@@ -2325,16 +2356,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         Set<Long> taskIds = flatDataList.stream().map(QtCheckTaskReportVO::getId).collect(Collectors.toSet());
         Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
-
-        //分页
-//        int pageSize = dto.getSize();
-//        int current = dto.getCurrent() - 1;
-//        flatDataList = flatDataList.stream().skip(current * pageSize)
-//                .limit(dto.getSize())
-//                .collect(Collectors.toList());
-//        Page<QtCheckTaskReportVO> page = new Page<>(dto.getCurrent(), dto.getSize());
-//        page.setRecords(flatDataList);
-//        page.setTotal(flatDataList.size());
         Page<QtCheckTaskReportVO> page = LogicalPageUtil.page(flatDataList, dto.getCurrent(), dto.getSize());
         page.getRecords().forEach(flatData ->{
             flatData.setList(taskInfoMap.get(flatData.getId()));
