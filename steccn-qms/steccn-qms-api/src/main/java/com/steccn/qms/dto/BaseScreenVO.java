@@ -35,4 +35,7 @@ public class BaseScreenVO implements Serializable {
     @ApiModelProperty("班组筛选")
     private List<BaseSelectVO<Integer>> classGroupScreen;
 
+    @ApiModelProperty("缺陷类别筛选")
+    private List<BaseSelectVO<Integer>> categoryScreen;
+
 }

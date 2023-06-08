@@ -1,5 +1,6 @@
 package com.steccn.qms.constant;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.qms.dto.QtImproveRecordDetailDTO;
 import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -1060,6 +1062,19 @@ public interface QtManagerConstant {
                 }
             }
             return null;
+        }
+
+        /**
+         * 获取所有班次
+         *
+         * @return
+         */
+        public static Map<Integer, String> allClass() {
+            Map<Integer, String> resMap = Maps.newHashMap();
+            for (QtClassesEnum ele : QtClassesEnum.values()) {
+                resMap.put(ele.getCode(), ele.getName());
+            }
+            return resMap;
         }
 
         /**
