@@ -786,6 +786,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.SUB_OFFICE_NAME);
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无明细");
 
+        //基片缺陷分布-柱状图 全量数据表查询车间，产线，班次，缺陷类别
+
+
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);

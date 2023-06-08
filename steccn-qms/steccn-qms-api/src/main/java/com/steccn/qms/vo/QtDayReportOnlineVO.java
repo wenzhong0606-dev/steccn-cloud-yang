@@ -24,7 +24,4 @@ public class QtDayReportOnlineVO implements Serializable {
     @ApiModelProperty("落板时段")
     private List<QtCheckTaskDestoryOnlineVO> fallList;
 
-
-
-
 }
