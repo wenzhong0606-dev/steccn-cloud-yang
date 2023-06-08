@@ -1,5 +1,6 @@
 package com.steccn.platform.feign;
 
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -40,7 +41,7 @@ public interface RemoteSysConfigurationFeignApi {
      */
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/feign/platform/sys/conf/list/integer")
-    R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,Integer>> dto);
+    R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>, Integer> dto);
 
     /**
      * 根据code获取list的配置
@@ -59,5 +60,5 @@ public interface RemoteSysConfigurationFeignApi {
      */
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/feign/platform/sys/conf/list/string")
-    R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Function<SysConfigurationDTO,String>> dto);
+    R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Integer> dto);
 }
