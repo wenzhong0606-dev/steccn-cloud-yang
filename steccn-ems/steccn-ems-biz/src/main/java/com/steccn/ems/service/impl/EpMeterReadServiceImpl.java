@@ -24,7 +24,6 @@ import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
-import com.steccn.common.vo.R;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.*;
@@ -48,7 +47,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -78,8 +76,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Autowired
     private EpEnergyTypeService epEnergyTypeService;
     @Autowired
-    private EpComputeProduceDetailService epComputeProduceDetailService;
-    @Autowired
     private RemoteReportWorkFeignApi remoteReportWorkFeignApi;
     @Autowired
     private EpMeterReadDistantService readDistantService;
@@ -87,8 +83,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
-    @Autowired
-    private RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
