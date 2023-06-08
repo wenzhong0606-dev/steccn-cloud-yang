@@ -906,6 +906,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         if (CollUtil.isNotEmpty(rResult.getData())) {
             List<ProducePassRateVO> rList = rResult.getData();
+            List<ProducePassRateVO> finalRList = rList;
+            Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(finalRList.get(0).getDate(), finalRList.get(finalRList.size()-1).getDate()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            //加入班组
+            rList.forEach(tmp->{
+                OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(tmp.getDate() + ":" + tmp.getClassesName());
+                if(Objects.nonNull(oaGroupCountDTO)){
+                    tmp.setClassGroupId(oaGroupCountDTO.getGroupId());
+                    tmp.setClassGroupName(oaGroupCountDTO.getGroupName());
+                }
+            });
             //先过滤数据
             rList = this.rListFilter(rList, dto);
             //根据日期分组
@@ -924,6 +934,23 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 bar2.setName(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                 barMap.put(QtManagerConstant.QtClassesEnum.DAY.getName(), bar1);
                 barMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getName(), bar2);
+            } else if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())){
+                QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
+                List<String> bar1Data = Lists.newArrayList();
+                bar1.setData(bar1Data);
+                bar1.setName("甲班");
+                QtChartBarSeriesVO<String> bar2 = new QtChartBarSeriesVO<>();
+                List<String> bar2Data = Lists.newArrayList();
+                bar2.setData(bar2Data);
+                bar2.setName("乙班");
+                QtChartBarSeriesVO<String> bar3 = new QtChartBarSeriesVO<>();
+                List<String> bar3Data = Lists.newArrayList();
+                bar3.setData(bar3Data);
+                bar3.setName("丙班");
+                barMap.put("甲班", bar1);
+                barMap.put("乙班", bar2);
+                barMap.put("丙班", bar3);
+
             } else if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())) {
                 //不对比则是全部
                 QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
@@ -943,13 +970,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 }
                 R<List<SysOfficeVO>> rSysOfficeResult = remoteOfficeFeign.getByTypeAndLine(officeDTO);
                 if (CollUtil.isNotEmpty(rSysOfficeResult.getData())) {
-                    rSysOfficeResult.getData().forEach(tmp -> {
+                    for (SysOfficeVO tmp : rSysOfficeResult.getData()) {
                         QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
                         List<String> bar1Data = Lists.newArrayList();
                         bar1.setData(bar1Data);
                         bar1.setName(tmp.getOfficeName());
                         barMap.put(tmp.getOfficeName(), bar1);
-                    });
+                    }
                 }
             }
             //先放入x轴的数据和y轴数据
@@ -973,6 +1000,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())) {
                         dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
                     }
+                    //对比维度为班组
+                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())) {
+                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassGroupName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                    }
+
                     //对比维度为产线
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())) {
                         Map<String, List<ProducePassRateVO>> groupByProductLine = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getProductLineName));
@@ -1035,7 +1067,18 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
                 } else {
                     //对key值进行排序
-                    barMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEachOrdered(e -> barMap.put(e.getKey(), e.getValue()));
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())){
+                        barMap.entrySet()
+                                .stream()
+                                .sorted(Comparator.comparing(QtChartGenerateServiceImpl::getClassGroupOrder2))
+                                .forEachOrdered(e -> {
+                                    barMap.put(e.getKey(), e.getValue());
+                                });
+                    }else {
+                        barMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEachOrdered(e -> {
+                            barMap.put(e.getKey(), e.getValue());
+                        });
+                    }
                     for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
                         if (dataMap.get(entry.getKey()) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
@@ -1049,6 +1092,52 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
                 series.add(entry.getValue());
             }
+            BaseScreenVO baseScreenVO = new BaseScreenVO();
+            //产线
+            List<BaseSelectVO<Integer>> productLineSelectList = rList.stream()
+                    .collect(Collectors.toMap(
+                            ProducePassRateVO::getProductLineId,
+                            tmp -> new BaseSelectVO<>(tmp.getProductLineId(), tmp.getProductLineName()),
+                            (existing, replacement) -> existing // 处理重复键的情况
+                    ))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+            baseScreenVO.setProductLineScreen(productLineSelectList);
+            //车间
+            List<BaseSelectVO<Integer>> productWorkShopSelectList = rList.stream()
+                    .collect(Collectors.toMap(
+                            ProducePassRateVO::getWorkshopId,
+                            tmp -> new BaseSelectVO<>(tmp.getWorkshopId(), tmp.getWorkshopName()),
+                            (existing, replacement) -> existing // 处理重复键的情况
+                    ))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+            baseScreenVO.setProductWorkShopScreen(productWorkShopSelectList);
+            //班次
+            List<BaseSelectVO<Integer>> workingOrderSelectList = rList.stream()
+                    .collect(Collectors.toMap(
+                            ProducePassRateVO::getClassesName,
+                            tmp -> new BaseSelectVO<>(QtManagerConstant.QtClassesEnum.name(tmp.getClassesName()).getCode(),tmp.getClassesName()),
+                            (existing, replacement) -> existing // 处理重复键的情况
+                    ))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+            baseScreenVO.setWorkingOrderScreen(workingOrderSelectList);
+            //班组
+            List<BaseSelectVO<Integer>> classGroupSelectList = rList.stream()
+                    .collect(Collectors.toMap(
+                            ProducePassRateVO::getClassGroupId,
+                            tmp -> new BaseSelectVO<>(tmp.getClassGroupId(),tmp.getClassGroupName()),
+                            (existing, replacement) -> existing // 处理重复键的情况
+                    ))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+            baseScreenVO.setClassGroupScreen(classGroupSelectList);
+            vo.setOther(baseScreenVO);
         }
         markLine.setData(markLineDataList);
         vo.setXAis(xAis);
@@ -1151,6 +1240,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).collect(Collectors.toList());
             }
 
+        }
+        //班组
+        if(dto.getClassGroupId() != null){
+            rList = rList.stream().filter(s->s.getClassGroupId()!=null&&s.getClassGroupId().equals(dto.getClassGroupId())).collect(Collectors.toList());
         }
         return rList;
     }
@@ -1956,5 +2049,19 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private static int getClassGroupOrder(Map.Entry<String,List<QtChartSubDetailDTO>> entry){
         List<String> order = Lists.newArrayList("甲班","乙班","丙班");
         return order.indexOf(entry.getKey());
+    }
+
+    //成品率自定义
+    private static int getClassGroupOrder2(Map.Entry<String, QtChartBarSeriesVO> entry) {
+        String key = entry.getKey();
+        if (key.equals("甲班")) {
+            return 0;
+        } else if (key.equals("乙班")) {
+            return 1;
+        } else if (key.equals("丙班")) {
+            return 2;
+        } else {
+            return Integer.MAX_VALUE;
+        }
     }
 }

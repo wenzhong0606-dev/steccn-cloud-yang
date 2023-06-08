@@ -231,7 +231,7 @@ public interface OaInfoService {
     R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds);
 
     /**
-     * 键为2023-06-06:早班 值为晚班
+     * 键为2023-06-06:早班 值为甲班
      * @param startDate
      * @param endDate
      * @return
