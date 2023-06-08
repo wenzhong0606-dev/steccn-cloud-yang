@@ -21,6 +21,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
@@ -38,6 +39,7 @@ import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtItemCategory;
+import com.steccn.qms.dto.BaseScreenVO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
@@ -785,14 +787,44 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.SUB_OFFICE_NAME);
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无明细");
-
-        //基片缺陷分布-柱状图 全量数据表查询车间，产线，班次，缺陷类别
-
-
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        return compareCategoryAndItem(dto.getCompare(), flatDataList, idNameMap, (tDataList, key) -> tDataList.stream().filter(v -> v.getDefectId().equals(key)).collect(Collectors.toList()));
+        QtLineChartBarDTO qtLineChartBarDTO = compareCategoryAndItem(dto.getCompare(), flatDataList, idNameMap, (tDataList, key) -> tDataList.stream().filter(v -> v.getDefectId().equals(key)).collect(Collectors.toList()));
+
+        //基片缺陷分布-柱状图 全量数据表查询车间，产线，班次，缺陷类别
+        Set<Integer> classIdSet = Sets.newTreeSet();
+        Set<Integer> defectCategorySet = Sets.newTreeSet();
+        Set<Integer> workShopIdSet = Sets.newTreeSet();
+        Set<Integer> lineIdSet = Sets.newTreeSet();
+        for (QtCheckTaskDetailReportVO data : flatDataList) {
+            defectCategorySet.add(data.getDefectCategory());
+            classIdSet.add(data.getClassId());
+            workShopIdSet.add(data.getProductWorkshopId());
+            lineIdSet.add(data.getProductLineId());
+        }
+        BaseScreenVO baseScreenVO = new BaseScreenVO();
+        baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
+        baseScreenVO.setCategoryScreen(conditionData(defectCategorySet, qtItemCategoryService.listByIdCh(defectCategorySet)));
+        baseScreenVO.setProductWorkShopScreen(conditionData(workShopIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(workShopIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setProductLineScreen(conditionData(lineIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        qtLineChartBarDTO.setOther(baseScreenVO);
+        return qtLineChartBarDTO;
+    }
+
+    /**
+     * 获取全量数据表的条件集合
+     * @param idSet
+     * @param idNameMap
+     * @param <T>
+     * @return
+     */
+    private <T> List<BaseSelectVO<T>> conditionData(Set<T> idSet, Map<T, String> idNameMap) {
+        List<BaseSelectVO<T>> resList = Lists.newArrayList();
+        for (T id : idSet) {
+            resList.add(new BaseSelectVO<T>(id, idNameMap.get(id)));
+        }
+        return resList;
     }
 
     /**
