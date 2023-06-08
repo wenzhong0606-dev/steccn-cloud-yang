@@ -70,7 +70,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             log.error("{}", e.getLocalizedMessage());
         }
         //提示产线
-        Map<String, List<String>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, Sets.newHashSet(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString()), x -> x.getRefContent())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, List<String>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, Sets.newHashSet(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString()), 3)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<String> hintList1 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
         List<String> hintList2 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
         hintList1.addAll(hintList2);
@@ -241,7 +241,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
         List<EpDayReportCountRowVO> resList = Lists.newArrayList();
         //获取配置map
-        Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), x-> Integer.parseInt(x.getRefContent()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //基片制造部
         List<Integer> jpzzbList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JPZZB_LIST.toString(), Lists.newArrayList());
         //深加工四条产线【一二三四】

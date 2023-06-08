@@ -41,7 +41,7 @@ public interface RemoteSysConfigurationFeignApi {
      */
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/feign/platform/sys/conf/list/integer")
-    R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>, SFunction<SysConfigurationDTO,Integer>> dto);
+    R<Map<String, List<Integer>>> confListInteger(@RequestBody TripleDTO<String, Set<String>, Integer> dto);
 
     /**
      * 根据code获取list的配置
@@ -60,5 +60,5 @@ public interface RemoteSysConfigurationFeignApi {
      */
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/feign/platform/sys/conf/list/string")
-    R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,SFunction<SysConfigurationDTO,String>> dto);
+    R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Integer> dto);
 }
