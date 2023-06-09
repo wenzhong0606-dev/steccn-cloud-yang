@@ -120,8 +120,14 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/listByParentId")
     R<List<SysOfficeVO>> listByParentId(@RequestBody SysOfficeParentDTO dto);
 
+    @ApiOperation("根据父id获取下级节点数据")
+    @GetMapping("/feign/platform/sys/office/listByParentIdAndType")
+    R<List<SysOfficeVO>> listByParentIdAndType(@RequestParam("parentIds") Set<Integer> parentIds, @RequestParam("type") String type);
+
+
     /**
      * 获取货架的id仓库信息
+     *
      * @param id
      * @return
      */
@@ -131,14 +137,17 @@ public interface RemoteOfficeFeign {
 
     /**
      * 获取货架的id仓库信息 2.0
+     *
      * @param id
      * @return
      */
     @ApiOperation("货架的仓库")
     @GetMapping("/feign/platform/sys/office/shelf/shelfWarehouseInfo/{id}")
     R<SysOfficeVO> shelfWarehouseInfo(@PathVariable("id") Integer id);
+
     /**
      * 根据孩子id获取父亲节点数据
+     *
      * @param id 孩子id
      * @return
      */
@@ -148,6 +157,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 查询工位列表
+     *
      * @param typeList
      * @return
      */
@@ -188,7 +198,7 @@ public interface RemoteOfficeFeign {
 
     @PostMapping("/feign/platform/sys/office/list/listByTypeAndKey")
     @ApiOperation("根据机构类型以及关键字名称返回SysOffice列表信息")
-     R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto);
+    R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto);
 
     @PostMapping("/list/parentIds")
     @ApiOperation("根据车间编码列表选择产线")
@@ -204,6 +214,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 查询指定机构类型，及机构类型的孩子节点，返回平铺数据
+     *
      * @param officeType 组织机构类型
      * @return
      */
@@ -214,6 +225,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 保存机构信息
+     *
      * @param sysOfficeDTO
      * @return
      */
@@ -223,6 +235,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 根据机构编码修改机构信息
+     *
      * @param sysOfficeDTO
      * @return
      */
@@ -233,6 +246,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 根据机构编码删除机构信息
+     *
      * @param sysOfficeDTO
      * @return
      */
@@ -243,6 +257,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 根据机构类型以及多关键字名称返回SysOffice列表信息
+     *
      * @param dto
      * @return
      */
@@ -252,6 +267,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 查询一个节点指定类型的父节点-产线
+     *
      * @param officeIdSet 组织机构id集合
      * @return
      */
@@ -261,6 +277,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 查询一个节点指定类型的父节点
+     *
      * @param tupleDTO 指定类型 孩子节点集合
      * @return list
      */
@@ -270,5 +287,5 @@ public interface RemoteOfficeFeign {
 
     @PostMapping("/feign/platform/sys/office/child/workshop")
     @ApiOperation("查询节点的子节点-车间")
-    R<Map<Integer,List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet);
+    R<Map<Integer, List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet);
 }

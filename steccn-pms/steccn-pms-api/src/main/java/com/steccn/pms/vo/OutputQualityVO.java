@@ -12,9 +12,16 @@ public class OutputQualityVO {
 
 
     /**
+     * 从表数据集合
+     */
+    private List<OutputQualityFromDataVO> fromTableList;
+
+
+    /**
      * 数据集合
      */
     private List<OutputQualityDataVO>  tableList;
+
 
 
     /**

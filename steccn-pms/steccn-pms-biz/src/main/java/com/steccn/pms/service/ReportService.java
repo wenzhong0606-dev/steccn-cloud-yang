@@ -78,7 +78,7 @@ public interface ReportService {
 
     /**
      * 订单进度跟踪图表
-     * @param productLineId
+     * @param workshopId
      * @return
      */
     QtLineChartBarDTO orderProgress(Integer workshopId);
@@ -90,4 +90,6 @@ public interface ReportService {
      * @return
      */
     List<OutputQualityVO> outputQualityJp(OutputQualityDTO outputQualityDTO);
+
+    List<OutputQualitySjgVO> outputQualitySjg(OutputQualityDTO outputQualityDTO);
 }

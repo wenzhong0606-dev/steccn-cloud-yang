@@ -24,7 +24,7 @@ public class OutputQualityDataVO {
     private String monitor;
 
     @ApiModelProperty("产线")
-    private String productLine;
+    private String productionLine;
 
     @ApiModelProperty("厚度")
     private BigDecimal thickQuantity;
