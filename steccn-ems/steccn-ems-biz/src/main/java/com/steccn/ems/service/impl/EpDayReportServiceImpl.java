@@ -674,7 +674,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         head.setUnit("单位");
         head.setDepartmentName("部门");
         List<String> dateStrList = Lists.newArrayList();
-        dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM月dd日")));
+        //年月日 eg. 2023-06-06
+        //月日 eg.06-06
+        dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM-dd")));
         head.setConsumeList(dateStrList);
         head.setSumStr("总计");
         return head;

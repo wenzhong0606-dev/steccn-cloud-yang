@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.RandomUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
@@ -187,7 +188,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         if (!selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
             localDateList.remove(localDateList.size() - 1);
         }
-        eqMeterReadVO.setLabelList(localDateList);
+
+        //日期格式固定为MM-dd
+        List<String> collect = localDateList.stream().map(ele -> LocalDateTimeUtil.format(ele, "MM-dd")).collect(Collectors.toList());
+        eqMeterReadVO.setLabelList(collect);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
     }
@@ -278,7 +282,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
-                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(firstDayOfMonth.plusDays(1)) && !localDate.isEqual(localDateList.get(localDateList.size()-1))) {
+                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(localDateList.get(localDateList.size()-1))) {
                     readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
                     readValueListVO.setReadDate(localDate);
                     readValueListVO.setMeterId(meterReadListVO.getMeterId());
@@ -314,7 +318,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 //        if (!selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
             localDateList.remove(localDateList.size() - 1);
 //        }
-        eqMeterReadVO.setLabelList(localDateList);
+
+        //时间格式化为MM-dd
+        List<String> collect = localDateList.stream().map(ele -> LocalDateTimeUtil.format(ele, "MM-dd")).collect(Collectors.toList());
+        eqMeterReadVO.setLabelList(collect);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
     }
