@@ -162,16 +162,18 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
     /**
      * 根据开始时间获取结束时间
+     * 当前班次日期-1
      *
      * @param start 开始时间
      * @return
      */
-    private LocalDate getEndDate(LocalDate start) {
+    private static LocalDate getEndDate(LocalDate start) {
         LocalDateTime endLdt = LocalDateUtil.getLastDayOfMonthStr(start);
         LocalDate end = endLdt.toLocalDate();
-        LocalDate now = LocalDate.now();
-        if (end.isAfter(now)) {
-            end = now;
+        LocalDate classDate = LocalDateUtil.getClassDate(LocalDateTime.now(), Boolean.TRUE);
+        classDate = classDate.minusDays(1);
+        if (end.isAfter(classDate)) {
+            end = classDate;
         }
         return end;
     }

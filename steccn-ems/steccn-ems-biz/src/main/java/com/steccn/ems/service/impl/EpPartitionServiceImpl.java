@@ -533,14 +533,14 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             List<EpPartition> epPartitions = listByIds(allPartitionIdSet);
             if (CollUtil.isNotEmpty(epPartitions)) {
                 Set<Integer> officeIdSet = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
-                //查询产线和产线孩子节点
-                Set<Integer> productLineAndChildren = FeignOptional.of(() -> remoteOfficeFeign.typeAndChildrenFlat(SysOfficeConstant.PRODUCT_LINE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                //获取其余节点
-                officeIdSet.removeAll(productLineAndChildren);
-                if(CollUtil.isNotEmpty(officeIdSet)){
+                //查询所有节点的产线父节点
+                Map<Integer, Integer> parentLineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //如果是产线父节点，则留下，不然视为其余节点
+                Set<Integer> newOfficeIdSet = officeIdSet.stream().filter(v -> Objects.isNull(parentLineMap.get(v))).collect(Collectors.toSet());
+                if(CollUtil.isNotEmpty(newOfficeIdSet)){
                     //获取剩下的节点数据
                     List<EpPartition> other = list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getId, allPartitionIdSet)
-                            .in(EpPartition::getOfficeId, officeIdSet).select(EpPartition::getId));
+                            .in(EpPartition::getOfficeId, newOfficeIdSet).select(EpPartition::getId));
                     if(CollUtil.isNotEmpty(other)){
                         Set<Long> otherPartitionIdSet = other.stream().map(EpPartition::getId).collect(Collectors.toSet());
                         resSet.addAll(otherPartitionIdSet);
