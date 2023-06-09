@@ -10,8 +10,12 @@ import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
+import com.steccn.data.domain.PmStationCollect;
+import com.steccn.data.dto.DwMeterReadDiffDTO;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
@@ -53,6 +57,29 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
             BeanUtils.copyProperties(one, resVo);
         }
         return resVo;
+    }
+
+    @Override
+    public BigDecimal meterReadDiff(DwMeterReadDiffDTO dto) {
+        //根据条件获取出站采集点的采集数据
+        LocalDateTime startTime = dto.getStart().minusDays(1);
+        LocalDateTime endTime = dto.getEnd().minusDays(1);
+        EpMeterCollect start = getOne(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, dto.getCode())
+                .between(EpMeterCollect::getRecordTime, startTime, dto.getStart())
+                .orderByDesc(EpMeterCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        EpMeterCollect end = getOne(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, dto.getCode())
+                .between(EpMeterCollect::getRecordTime, endTime, dto.getEnd())
+                .orderByDesc(EpMeterCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(start) && Objects.nonNull(end)) {
+            //考虑当前数据断传了， 前一天未断传，则会出现负数
+            BigDecimal subtract = BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            return BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
+        }
+        return null;
     }
 
     @Override

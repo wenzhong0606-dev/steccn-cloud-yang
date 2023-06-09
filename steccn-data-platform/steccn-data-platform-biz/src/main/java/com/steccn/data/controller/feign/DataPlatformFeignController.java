@@ -33,7 +33,7 @@ import java.util.Set;
 @Api("数据中台服务")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("feign/data/warehouse")
+@RequestMapping("/feign/data/warehouse")
 public class DataPlatformFeignController {
 
     private final EpMeterCollectService epMeterCollectService;
@@ -44,6 +44,12 @@ public class DataPlatformFeignController {
     @ApiOperation(value = "数仓条件列表")
     public R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto) {
         return R.success(epMeterCollectService.meterRead(dto));
+    }
+
+    @PostMapping("/meter/read/diff")
+    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
+    public R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto) {
+        return R.success(epMeterCollectService.meterReadDiff(dto));
     }
 
     @PostMapping("/meter/read/seValue")

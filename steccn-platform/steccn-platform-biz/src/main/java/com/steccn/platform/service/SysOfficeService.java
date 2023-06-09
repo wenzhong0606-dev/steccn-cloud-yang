@@ -216,4 +216,13 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Boolean updateOffice(SysOfficeDTO sysOfficeDTO);
+
+    /**
+     * 查询一个节点指定类型的父节点
+     *
+     * @param officeIdSet 节点集合
+     * @param type        指定类型
+     * @return
+     */
+    Map<Integer, Integer> parentType(Set<Integer> officeIdSet, String type);
 }

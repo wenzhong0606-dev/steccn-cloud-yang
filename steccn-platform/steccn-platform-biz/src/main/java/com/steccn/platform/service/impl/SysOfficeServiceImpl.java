@@ -10,9 +10,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.steccn.common.constant.MpConstant;
-import com.steccn.common.constant.ResultCode;
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
@@ -410,6 +407,58 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
+    public Map<Integer, Integer> parentType(Set<Integer> officeIdSet, String type) {
+        //定义返回集合
+        Map<Integer, Integer> resMap = Maps.newHashMap();
+        //如果组织机构id为空，则直接返回空map
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            //查询出所有的组织机构数据
+            List<SysOffice> dbList = list();
+            //定义组织机构的idMap
+            Map<Integer, SysOffice> idMap = Maps.newHashMap();
+            //定义组织机构的codeMap
+            Map<String, SysOffice> codeMap = Maps.newHashMap();
+            //往idMap和codeMap里面插入数据
+            dbList.forEach(v -> {
+                idMap.put(v.getId(), v);
+                codeMap.put(v.getOfficeCode(), v);
+            });
+            //逐个遍历，查询每个officeId产线父节点
+            for (Integer officeId : officeIdSet) {
+                //获取当前officeId的节点数据
+                SysOffice sysOffice = idMap.get(officeId);
+                //如果节点数据不为空
+                if (Objects.nonNull(sysOffice)) {
+                    Integer parentLineId = getParentType(type,sysOffice, codeMap);
+                    resMap.put(officeId, parentLineId);
+                }
+            }
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取产线父节点
+     * @param type 类型
+     * @param current 当前节点
+     * @param codeMap 所有节点的数据
+     * @return list
+     */
+    private Integer getParentType(String type, SysOffice current, Map<String, SysOffice> codeMap) {
+        //如果是产线节点，则直接返回
+        if (type.equals(current.getOfficeType())) {
+            return current.getId();
+        } else {
+            //如果当前节点的父亲节点为空，则表示查询到底了，没有
+            SysOffice parent = codeMap.get(current.getParentCode());
+            if (Objects.nonNull(parent)) {
+                return getParentType(type, parent, codeMap);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
         if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {
@@ -511,7 +560,10 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto) {
         List<SysOfficeVO> vos = new ArrayList<>();
-        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).in(SysOffice::getOfficeType, dto.getType()).like(SysOffice::getOfficeName, dto.getKey()));
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getOfficeType, dto.getType())
+                .like(StrUtil.isNotBlank(dto.getKey()), SysOffice::getOfficeName, dto.getKey()));
         if (CollUtil.isNotEmpty(officeList)) {
             officeList.forEach(tmp -> {
                 SysOfficeVO vo = new SysOfficeVO();

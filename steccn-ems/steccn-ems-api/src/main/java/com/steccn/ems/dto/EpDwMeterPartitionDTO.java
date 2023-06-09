@@ -28,4 +28,7 @@ public class EpDwMeterPartitionDTO implements Serializable {
 
     @ApiModelProperty("仪表id")
     private Integer meterId;
+
+    @ApiModelProperty("产线id-可能是父节点也可能是自己")
+    private Integer lineOfficeId;
 }

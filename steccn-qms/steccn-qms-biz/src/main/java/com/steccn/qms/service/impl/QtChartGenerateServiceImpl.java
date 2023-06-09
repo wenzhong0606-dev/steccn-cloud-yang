@@ -1692,6 +1692,38 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         return true;
     }
 
+    @Override
+    public List<QtEmsPullAmountDTO> calculateEmsPullAmount(ValidList<QtEmsPullAmountDTO> dto) {
+        List<QtEmsPullAmountDTO> resultList = dto.getList();
+        //拿到所有班次日期
+        resultList = resultList.stream().sorted(Comparator.comparing(QtEmsPullAmountDTO::getClassDate)).collect(Collectors.toList());
+        LocalDate startDate = resultList.get(0).getClassDate();
+        LocalDate endDate = resultList.get(resultList.size()-1).getClassDate();
+        //拿到所有产线的班次日期
+        List<QtPullAmountDTO> qtPullAmountDTOS = calculatePullAmount(startDate, endDate);
+        resultList.forEach(tmp->{
+            BigDecimal pullAmount = BigDecimal.ZERO;
+            if(tmp.getEndTime().isAfter(tmp.getStartTime())){
+                //12小时做比较
+                BigDecimal hour12 = new BigDecimal(43200);
+                Duration dr = Duration.between(tmp.getStartTime(),tmp.getEndTime());
+                BigDecimal period = new BigDecimal(dr.getSeconds());
+                if(hour12.compareTo(period)==1){
+                    //找到满足条件的产线
+                    QtPullAmountDTO qtPullAmountDTO = qtPullAmountDTOS.stream().filter(v -> v.getClassDate().equals(tmp.getClassDate())
+                            && v.getProductLineId().equals(tmp.getProductLineId())
+                            && v.getClassId().equals(tmp.getClassId())).findFirst().orElse(null);
+                    if(Objects.nonNull(qtPullAmountDTO)){
+                        BigDecimal percent = BigDecimalUtil.divide(period,hour12);
+                        pullAmount = BigDecimalUtil.multiply(qtPullAmountDTO.getPullAmount(),percent);
+                    }
+                }
+            }
+            tmp.setPullAmount(pullAmount);
+        });
+        return resultList;
+    }
+
     /**
      * 抽取计算生产时长
      * @return
