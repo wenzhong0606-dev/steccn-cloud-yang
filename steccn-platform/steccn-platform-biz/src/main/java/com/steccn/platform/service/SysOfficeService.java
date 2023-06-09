@@ -228,10 +228,17 @@ public interface SysOfficeService extends IService<SysOffice> {
 
     /**
      * 模糊查询客户
-     * @param sysOfficeDTO
+     * @param name
      * @return
      */
     List<SysOfficeVO> getCustomer(String name);
 
     Map<Integer,List<Integer>> childWorkshop(List<Integer> officeIdSet);
+
+    /**
+     * 获取基片、深加工所有车间和产线
+     * @param type
+     * @return
+     */
+    List<SysOfficeVO> getWorkShopChildren(Integer type);
 }

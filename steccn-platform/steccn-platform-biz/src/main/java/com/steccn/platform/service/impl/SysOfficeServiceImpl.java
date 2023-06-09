@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author MongKnife
@@ -493,6 +494,43 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             }
         }
         return map;
+    }
+
+    @Override
+    public List<SysOfficeVO> getWorkShopChildren(Integer type) {
+        //0表示基片
+        String workshop = "";
+        if(type.equals(0)){
+            workshop = "基片";
+        }else {
+            workshop = "深加工";
+        }
+        List<SysOffice> workShopList = list(new LambdaQueryWrapper<SysOffice>()
+                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getOfficeCode)
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.WORKSHOP)
+                .like(SysOffice::getOfficeName, workshop));
+        List<String> parentCodes = workShopList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+        List<SysOffice> productList = list(new LambdaQueryWrapper<SysOffice>()
+                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getOfficeCode)
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.PRODUCT_LINE)
+                .in(SysOffice::getParentCode,parentCodes));
+        Map<String, List<SysOffice>> productLineCollect = productList.stream().collect(Collectors.groupingBy(SysOffice::getParentCode));
+        List<SysOfficeVO> result = Lists.newArrayList();
+        workShopList.forEach(tmp->{
+            SysOfficeVO vo = new SysOfficeVO();
+            vo.setId(tmp.getId());
+            vo.setOfficeName(tmp.getOfficeName());
+            List<SysOfficeVO> children = Lists.newArrayList();
+            productLineCollect.get(tmp.getOfficeCode()).forEach(childrenTmp -> {
+                SysOfficeVO childrenVo = new SysOfficeVO();
+                childrenVo.setId(tmp.getId());
+                childrenVo.setOfficeName(tmp.getOfficeName());
+                children.add(childrenVo);
+            });
+            vo.setChildren(children);
+            result.add(vo);
+        });
+        return result;
     }
 
 
