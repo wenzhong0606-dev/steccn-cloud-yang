@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -28,6 +29,9 @@ public class QtDaySamplingDataVO implements Serializable {
 
     @ApiModelProperty("取样日时间")
     private String samplingTime;
+
+    @ApiModelProperty("取样日时间")
+    private LocalDateTime samplingTimeLdt;
 
     @ApiModelProperty("配料附数")
     private Integer ingredientNum;

@@ -290,7 +290,7 @@ public class EpDwServiceImpl implements EpDwService {
         }
         DwMeterReadDTO end = new DwMeterReadDTO();
         end.setCode(meter.getDistantMapCode());
-        end.setRecordTime(LocalDateUtil.getMorning(date));
+        end.setRecordTime(LocalDateUtil.getMorning(date.plusDays(1)));
         DwEpMeterCollectVO endVo = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(end), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
 
         if (Objects.nonNull(endVo)) {
