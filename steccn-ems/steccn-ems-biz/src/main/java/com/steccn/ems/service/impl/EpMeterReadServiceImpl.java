@@ -159,7 +159,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     }
                 }
                 readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
-                readValueListVO.setReadDate(localDate);
+                readValueListVO.setReadDate(LocalDateTimeUtil.format(localDate, "MM-dd"));
                 readValueListVO.setMeterId(meterReadListVO.getMeterId());
                 readValueListVOList.add(readValueListVO);
             }
@@ -284,7 +284,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //多获取一天的数据 仅仅用于做差值
                 if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(localDateList.get(localDateList.size()-1))) {
                     readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
-                    readValueListVO.setReadDate(localDate);
+                    readValueListVO.setReadDate(LocalDateTimeUtil.format(localDate, "MM-dd"));
                     readValueListVO.setMeterId(meterReadListVO.getMeterId());
                     readValueListVOList.add(readValueListVO);
                 }

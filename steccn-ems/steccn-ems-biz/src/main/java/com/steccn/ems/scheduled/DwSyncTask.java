@@ -46,13 +46,35 @@ public class DwSyncTask {
     private final EpTaskExecuteService epTaskExecuteService;
     private final EpEnergyMoneyService epEnergyMoneyService;
 
+
+    @Async
+    @Scheduled(cron = "0 15 8 * * ?")
+    public void heatPower() {
+        RLock lock = redissonClient.getLock(LockConstant.DW_HEAT_POWER_TASK);
+        boolean b = lock.tryLock();
+        if (!b) {
+            log.info("获取锁失败");
+            return;
+        }
+        log.info("抄表归档-读数开始");
+        try {
+            epDwService.heatPower(LocalDate.now().minusDays(1));
+        } catch (Exception e) {
+            log.error("抄表归档-读数异常", e);
+        } finally {
+            log.info("抄表归档-读数结束");
+            lock.unlock();
+        }
+    }
+
+
     /**
-     * 每天8点05分执行
+     * 每天8点40分执行
      */
     @Async
-    @Scheduled(cron = "0 5 8 * * ?")
-    public void meterRead() {
-        RLock lock = redissonClient.getLock(LockConstant.DW_METER_READ_SCHEDULED_TASK);
+    @Scheduled(cron = "0 40 8 * * ?")
+    public void meterReadDistant() {
+        RLock lock = redissonClient.getLock(LockConstant.DW_METER_READ_DISTANT_TASK);
         boolean b = lock.tryLock();
         if (!b) {
             log.info("获取锁失败");
@@ -70,13 +92,12 @@ public class DwSyncTask {
     }
 
     /**
-     * 2023-04-12 08:20:00
-     * 2023-04-13 08:20:00
-     * 2023-04-14 08:20:00
-     * 2023-04-15 08:20:00
+     * 2023-06-10 00:30:00
+     * 2023-06-11 00:30:00
+     * 2023-06-12 00:30:00
      */
     @Async
-    @Scheduled(cron = "0 20 8 * * ?")
+    @Scheduled(cron = "0 30 0 * * ? ")
     public void electricMoney() {
         RLock lock = redissonClient.getLock(LockConstant.DW_ELECTRIC_MONEY_SCHEDULED_TASK);
         boolean b = lock.tryLock();
@@ -148,7 +169,7 @@ public class DwSyncTask {
      * 表读数-用于抄表管理
      */
     @Async
-    @Scheduled(cron = "0 5 8 * * ?")
+    @Scheduled(cron = "0 20 8 * * ?")
     public void read() {
         RLock lock = redissonClient.getLock(LockConstant.DW_READ_SCHEDULED_TASK);
         boolean b = lock.tryLock();

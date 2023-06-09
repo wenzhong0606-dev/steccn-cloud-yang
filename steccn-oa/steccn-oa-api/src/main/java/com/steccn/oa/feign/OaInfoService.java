@@ -109,6 +109,16 @@ public interface OaInfoService {
     R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto);
 
     /**
+     * 根据岗位和部门查询
+     * @param departmentId
+     * @param jobTitle
+     * @return
+     */
+    @GetMapping("/oa/user/jobTitle/department")
+    @ApiOperation("根据岗位和部门查询")
+    R<List<OaUserIdAndName>> getUserByIdByJobTitleAndDepartmentId(@RequestParam("departmentId") Integer departmentId,@RequestParam("jobTitle") Integer jobTitle );
+
+    /**
      * 查询排班信息
      * @param dto
      * @return

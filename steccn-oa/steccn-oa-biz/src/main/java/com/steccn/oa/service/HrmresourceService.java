@@ -36,6 +36,14 @@ public interface HrmresourceService extends IService<Hrmresource> {
     List<OaUserIdAndName> getUserByName(String userName);
 
     /**
+     * 根据部门和岗位查询人
+     * @param departmentId
+     * @param jobTitle
+     * @return
+     */
+    List<OaUserIdAndName> getUserByDepartmentIdAndJobTitle(Integer departmentId,Integer jobTitle);
+
+    /**
      * 根据id获取用户的中文名称
      * @param idList
      * @return

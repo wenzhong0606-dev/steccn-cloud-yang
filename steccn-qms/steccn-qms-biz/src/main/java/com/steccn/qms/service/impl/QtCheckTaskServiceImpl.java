@@ -3286,6 +3286,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             }
         }
+        //发给岗位为二线配料副段长
+        OaHrmDTO hrm = new OaHrmDTO();
+        hrm.setJobtitle(PmManagerConstant.PEILIAO_DUANZHANG);
+        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(oaEmpVOS)) {
+            oaEmpVOS.forEach(tmp -> {
+                longIds.add(tmp.getId().longValue());
+            });
+        }
         if (CollUtil.isNotEmpty(longIds)) {
             SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
             sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getCode());
