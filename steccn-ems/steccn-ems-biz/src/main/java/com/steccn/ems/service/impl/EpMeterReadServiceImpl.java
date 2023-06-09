@@ -278,9 +278,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
-                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(firstDayOfMonth.plusDays(1))) {
+                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(firstDayOfMonth.plusDays(1)) && !localDate.isEqual(localDateList.get(localDateList.size()-1))) {
                     readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
-                    readValueListVO.setReadDate(localDate.minusDays(1));
+                    readValueListVO.setReadDate(localDate);
                     readValueListVO.setMeterId(meterReadListVO.getMeterId());
                     readValueListVOList.add(readValueListVO);
                 }

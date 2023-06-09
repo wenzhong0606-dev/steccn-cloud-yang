@@ -820,6 +820,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
             String format = dateTimeFormatter.format(samplingTime.toLocalTime());
             data.setSamplingTime(format);
+            data.setSamplingTimeLdt(samplingDTO.getSamplingTime());
             data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
             //配料付数
@@ -864,7 +865,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             if(!o1.getClassId().equals(o2.getClassId())){
                 return o1.getClassId().compareTo(o2.getClassId());
             }
-            return o1.getSamplingTime().compareTo(o2.getSamplingTime());
+            return o1.getSamplingTimeLdt().compareTo(o2.getSamplingTimeLdt());
         });
         resVo.setDataList(dataList);
         return resVo;
