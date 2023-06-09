@@ -225,7 +225,11 @@ public interface QtManagerConstant {
     String DAY_REPORT_FIELD_NOTE_VALUE = "note";
     String DAY_REPORT_FIELD_ORDER = "班次";
     String DAY_REPORT_FIELD_ORDER_VALUE = "className";
+    String DAY_REPORT_FIELD_GROUP = "班组";
+    String DAY_REPORT_FIELD_GROUP_VALUE = "classGroupName";
     String DAY_REPORT_FIELD_APPARENT_CONDITION = "外观状态";
+    String DAY_REPORT_FIELD_CUSTOMER = "客户";
+    String DAY_REPORT_FIELD_CUSTOMER_VALUE = "customerName";
 
     /**
      * 车间名称
