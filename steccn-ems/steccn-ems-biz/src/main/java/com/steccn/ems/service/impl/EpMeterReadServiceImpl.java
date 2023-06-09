@@ -205,9 +205,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //查询的第一天
         LocalDate firstDayOfMonth = selectMonth.with(TemporalAdjusters.firstDayOfMonth()).minusDays(1);
 
-        //多获取一天的数据-用于计算差值
-        firstDayOfMonth = firstDayOfMonth.minusDays(1);
-
         //查询的最后一天
         LocalDate endDay = currentLocalDate;
         //获取需要查询的日期
@@ -281,9 +278,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
-                if (!localDate.isEqual(firstDayOfMonth)) {
+                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(firstDayOfMonth.plusDays(1))) {
                     readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
-                    readValueListVO.setReadDate(localDate);
+                    readValueListVO.setReadDate(localDate.minusDays(1));
                     readValueListVO.setMeterId(meterReadListVO.getMeterId());
                     readValueListVOList.add(readValueListVO);
                 }
@@ -314,9 +311,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
         localDateList.remove(0);
-        if (!selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+//        if (!selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
             localDateList.remove(localDateList.size() - 1);
-        }
+//        }
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
