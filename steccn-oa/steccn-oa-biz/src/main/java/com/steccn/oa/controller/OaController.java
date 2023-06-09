@@ -188,6 +188,12 @@ public class OaController {
         return R.success(oaService.getHrmSearchResult(dto));
     }
 
+    @ApiOperation("根据岗位和部门查询人")
+    @GetMapping("/user/jobTitle/department")
+    public R<List<OaUserIdAndName>> getUserByIdByJobTitleAndDepartmentId(@RequestParam("departmentId") Integer departmentId,@RequestParam("jobTitle") Integer jobTitle ){
+        return R.success(hrmresourceService.getUserByDepartmentIdAndJobTitle(departmentId,jobTitle));
+    }
+
     @ApiOperation("根据userId查询考勤组")
     @PostMapping("/user/group")
     public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){

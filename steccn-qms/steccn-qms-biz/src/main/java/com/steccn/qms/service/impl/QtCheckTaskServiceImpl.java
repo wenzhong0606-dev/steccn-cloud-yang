@@ -1015,7 +1015,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
 
         //如果是配料抽检，则pushtype为SPOT_CHECK
-        if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(tasKDetail.getTaskType())){
+        if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(tasKDetail.getTaskType())&&dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
             //推送刷新消息
             MsgPushDTO msgPushDTO = new MsgPushDTO();
             msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
@@ -3131,9 +3131,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //过滤当前班次
         String classStr = "";
         if (qtTaskClassCalculate.getClassType().equals(0)) {
-            classStr = "早班";
+            classStr = "白班";
         } else {
-            classStr = "晚班";
+            classStr = "夜班";
         }
         String finalClassStr = classStr;
         oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
@@ -3151,6 +3151,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     });
                 }
             }
+        }
+        //发给岗位为二线配料副段长
+        OaHrmDTO hrm = new OaHrmDTO();
+        hrm.setJobtitle(PmManagerConstant.PEILIAO_DUANZHANG);
+        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(oaEmpVOS)) {
+            oaEmpVOS.forEach(tmp -> {
+                longIds.add(tmp.getId().longValue());
+            });
         }
         if (CollUtil.isNotEmpty(longIds)) {
             SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();

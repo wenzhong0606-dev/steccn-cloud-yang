@@ -249,6 +249,16 @@ public interface PmManagerConstant {
 
     String LABORATORY_DIRECTOR = "化验室副主任";
 
+    String PEILIAO_DUANZHANG ="二线配料副段长";
+    /**
+     * 副主任id
+     */
+    Integer DIRECTOR_ID = 151;
+    /**
+     * 原料车间id
+     */
+    Integer DEPARTMENT_YUANLIAO_ID = 37;
+
     /**
      * 流程字段-申请人岗位
      */

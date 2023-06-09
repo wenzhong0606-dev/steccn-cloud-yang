@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -907,7 +908,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         allData.forEach(v->v.setWorkOrderDate(LocalDate.parse(v.getWorkOrderTime(),DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
         int dayCount;
         if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
-            dayCount = dto.getEndDate().getDayOfMonth() - dto.getStartDate().getDayOfMonth();
+            dayCount = LocalDateTimeUtil.betweenPeriod(dto.getStartDate(),dto.getEndDate()).getDays();
         }else {
             dayCount = dto.getEndDate().getMonthValue() - dto.getStartDate().getMonthValue();
         }
@@ -1007,13 +1008,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         head.add("损耗率");
         if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
             for(int i = 0; i <= dayCount; i++){
-                int day = dto.getStartDate().getDayOfMonth() + i;
-                module.add(new BaseReportHeaderVO(dto.getStartDate().getMonthValue() + "月" + day + "日",head));
+                LocalDate date = dto.getStartDate().plusDays(i);
+                module.add(new BaseReportHeaderVO(date.getMonthValue() + "月" + date.getDayOfMonth()+ "日",head));
             }
         }else {
             for(int i = 0; i <= dayCount; i++){
-                int month = dto.getStartDate().getMonthValue() + i;
-                module.add(new BaseReportHeaderVO(dto.getStartDate().getYear() + "年" + month + "月",head));
+                LocalDate date = dto.getStartDate().plusMonths(i);
+                module.add(new BaseReportHeaderVO(date.getYear() + "年" + date.getMonthValue() + "月",head));
             }
         }
         //小计
@@ -1259,7 +1260,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //把拉引量和小计数据放入
                 tableDataTmp = tableData.stream().filter(v->(v.getDefectName()!=null&&v.getDefectName().equals("拉引量"))
                         &&(v.getProductLineName()!=null&&v.getProductLineName().equals(productLine.getOfficeName()))
-                        || (v.getType().equals(QtManagerConstant.NUM_1))).collect(Collectors.toList());
+                        || (v.getType().equals(QtManagerConstant.NUM_1)
+                        &&(v.getProductLineName()!=null&&v.getProductLineName().equals(productLine.getOfficeName())))).collect(Collectors.toList());
                 //size小于2说明没有数据
                 if(tableDataTmp.size() > QtManagerConstant.NUM_2){
                     QtDayReportLossDataVO lossLine = countAmount(tableDataTmp);

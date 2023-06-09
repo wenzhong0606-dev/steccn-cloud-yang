@@ -3,6 +3,7 @@ package com.steccn.pms.vo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,8 +35,11 @@ public class CompleteStoragePageVO implements Serializable {
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
 
-    @ApiModelProperty("入库时间")
+    @ApiModelProperty("入库确认时间")
     private LocalDateTime inStorageTime;
+
+    @ApiModelProperty("入库时间")
+    private LocalDateTime enterTime;
 
     @ApiModelProperty("状态")
     private Integer state;
