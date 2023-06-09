@@ -154,7 +154,7 @@ public class SysOfficeController {
      * @param type
      * @return
      */
-    @GetMapping
+    @GetMapping("/workshop/children")
     @ApiOperation("根据类型获取基片或者深加工的车间和产线")
     public R<List<SysOfficeVO>> listWorkshop(@RequestParam("type") Integer type) {
         return R.success(sysOfficeService.getWorkShopChildren(type));

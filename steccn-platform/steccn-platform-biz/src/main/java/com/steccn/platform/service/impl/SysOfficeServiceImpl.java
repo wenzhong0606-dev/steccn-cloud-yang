@@ -467,6 +467,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return resultList;
     }
 
+    @Override
     public Map<Integer, List<Integer>> childWorkshop(List<Integer> officeIdSet) {
         Map<Integer, List<Integer>> map = new HashMap<>();
         if (CollUtil.isNotEmpty(officeIdSet)) {
@@ -501,7 +502,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                 .like(SysOffice::getOfficeName, workshop));
         List<String> parentCodes = workShopList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
         List<SysOffice> productList = list(new LambdaQueryWrapper<SysOffice>()
-                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getOfficeCode)
+                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getParentCode)
                 .eq(SysOffice::getOfficeType, SysOfficeConstant.PRODUCT_LINE)
                 .in(SysOffice::getParentCode,parentCodes));
         Map<String, List<SysOffice>> productLineCollect = productList.stream().collect(Collectors.groupingBy(SysOffice::getParentCode));
@@ -513,8 +514,8 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             List<SysOfficeVO> children = Lists.newArrayList();
             productLineCollect.get(tmp.getOfficeCode()).forEach(childrenTmp -> {
                 SysOfficeVO childrenVo = new SysOfficeVO();
-                childrenVo.setId(tmp.getId());
-                childrenVo.setOfficeName(tmp.getOfficeName());
+                childrenVo.setId(childrenTmp.getId());
+                childrenVo.setOfficeName(childrenTmp.getOfficeName());
                 children.add(childrenVo);
             });
             vo.setChildren(children);
