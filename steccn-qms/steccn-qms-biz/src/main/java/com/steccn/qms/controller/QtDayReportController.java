@@ -34,7 +34,7 @@ public class QtDayReportController {
         return R.success(qtDayReportService.online(date, productLineId));
     }
 
-    @GetMapping("/first")
+    @PostMapping("/first")
     @ApiOperation("质量日报表-首检2/巡检4")
     public R<QtDayReportFirstVO> first(@RequestBody @Validated QtReportFirstPatrolDTO dto) {
         return R.success(qtDayReportService.first(dto));

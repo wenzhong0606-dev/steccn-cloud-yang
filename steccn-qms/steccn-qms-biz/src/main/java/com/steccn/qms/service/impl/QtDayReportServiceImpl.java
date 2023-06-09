@@ -346,11 +346,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         QtCheckTask::getCode, QtCheckTask::getProductWorkshop, QtCheckTask::getStartBy, QtCheckTask::getStartName,
                         QtCheckTask::getCancelBy, QtCheckTask::getCancelName, QtCheckTask::getFinishedBy, QtCheckTask::getFinishedName,
                         QtCheckTask::getCancelTime, QtCheckTask::getSendOrder, QtCheckTask::getDefectNum, QtCheckTask::getClassesId, QtCheckTask::getStationId,
-                        QtCheckTask::getClassTime, QtCheckTask::getSpotTime, QtCheckTask::getStation)
+                        QtCheckTask::getClassTime, QtCheckTask::getSpotTime, QtCheckTask::getStation,QtCheckTask::getClassGroupName)
                 //关联物料表
                 .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
                 //json映射
                 .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
+                .selectAs(QtCheckTask::getProductLineId, QtCheckTaskListVO::getProductLineId)
+                .selectAs(QtCheckTask::getCustomerName,QtCheckTaskListVO::getCustomerName)
                 //关联
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
@@ -539,11 +541,49 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         result.setHeaders(headersVO);
         //设置数据
         List<QtDayReportFirstDataVO> tableData = Lists.newArrayList();
+        List<QtCheckTaskDestoryOnlineVO> luoData = Lists.newArrayList();
         //根据产线循环
         for(SysOfficeVO productLine:productLineList){
             //先获取产线下的任务
-            List<QtCheckTaskListVO> productLineTaskList = taskList.stream().filter(v->v.getProductLineId().equals(productLine.getId())).collect(Collectors.toList());
-            //如果为空则表示该产线下没有
+            List<QtCheckTaskListVO> productLineTaskList = taskList.stream().filter(v->v.getProductLineId().equals(productLine.getId().toString())).collect(Collectors.toList());
+            //如果为空则表示该产线下没有数据,跳过循环
+            if(CollUtil.isEmpty(productLineTaskList)){
+                //组合数据
+                QtDayReportFirstDataVO column = new QtDayReportFirstDataVO();
+                //具体data
+                column.setProductLine(productLine.getOfficeName());
+                //动态data
+                List<FurtherValueObjVO> moduleData = Lists.newArrayList();
+                //找到动态表头
+                for (BaseReportHeaderVO headModule : module) {
+                    List<ColorValueVO> colorValueList = Lists.newArrayList();
+                    for (String headValue : headModule.getValue()) {
+                        ColorValueVO colorValue = new ColorValueVO();
+                        colorValue.setValue("");
+                        colorValue.setColor(0);
+                        colorValueList.add(colorValue);
+                    }
+                    FurtherValueObjVO valueObjVO = new FurtherValueObjVO();
+                    valueObjVO.setValue(colorValueList);
+                    moduleData.add(valueObjVO);
+                }
+                column.setModule(moduleData);
+                tableData.add(column);
+                continue;
+            }
+            //班组map
+            Map<Integer,String> classGroupMap = Maps.newHashMap();
+            //早班晚班对应的班组
+            for(int i = 0; i < QtManagerConstant.NUM_2; i++){
+                int finalI = i;
+                List<QtCheckTaskListVO> morningCollect = productLineTaskList
+                        .stream()
+                        .filter(v -> v.getClassesId() != null && v.getClassesId().equals(finalI))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(morningCollect)){
+                    classGroupMap.put(i,morningCollect.get(0).getClassGroupName());
+                }
+            }
             //过滤产线下的任务详情
             List<Long> productLineTaskIdList = productLineTaskList.stream()
                     .map(QtCheckTaskListVO::getId)
@@ -583,6 +623,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     column.setMaterialName(task.getMaterialName());
                     column.setFinishedTime(task.getFinishedTime());
                     column.setSpotTime(task.getSpotTime());
+                    column.setCustomerName(task.getCustomerName());
                     if (Objects.nonNull(task.getStationId())) {
                         column.setStation(officeMap.get(task.getStationId()));
                     }
@@ -590,6 +631,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     column.setCopy(copyEntry.getKey());
                     column.setNote(task.getNote());
                     column.setClassName(QtManagerConstant.QtClassesEnum.code(task.getClassesId()).getName());
+                    column.setClassGroupName(classGroupMap.get(task.getClassesId()));
                     column.setProductLine(task.getProductLineName());
                     column.setCustomerName(task.getCustomerName());
                     //动态data
@@ -682,7 +724,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     tableData.add(column);
                 }
             }
-            result.setTableData(tableData);
+
             //如果所有的工位都为空，则表头不需要工位那一列
             long count = tableData.stream().filter(v -> StrUtil.isNotBlank(v.getStation())).count();
             if (count == 0) {
@@ -693,11 +735,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
             if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
                 //落板原因
-                result.setFallList(fallList(manData, "productLineName"));
+                luoData.addAll(fallList(manData, productLine.getOfficeName()));
                 //缺陷表格
             }
 
         }
+        result.setFallList(luoData);
+        result.setTableData(tableData);
         return result;
     }
 
