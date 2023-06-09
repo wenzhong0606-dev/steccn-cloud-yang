@@ -330,9 +330,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
 
     @Override
-    public QtDayReportFirstVO first(LocalDate date, Integer productLineId, Integer checkTaskType) {
-        LocalDateTime startTime = LocalDateUtil.getMorning(date);
-        LocalDateTime endTime = LocalDateUtil.getMorning(date.plusDays(1));
+    public QtDayReportFirstVO first(QtReportFirstPatrolDTO dto) {
+        LocalDateTime startTime = LocalDateUtil.getMorning(dto.getDate());
+        LocalDateTime endTime = LocalDateUtil.getMorning(dto.getDate().plusDays(1));
         //关联查询
         MPJLambdaWrapper<QtCheckTask> taskCondition = new MPJLambdaWrapper<QtCheckTask>()
                 .select(QtCheckTask::getId, QtCheckTask::getType, QtCheckTask::getMaterialId, QtCheckTask::getMaterialWorkshop,
@@ -354,11 +354,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //关联
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                .eq(QtCheckTask::getTaskType, checkTaskType)
+                .eq(QtCheckTask::getTaskType, dto.getCheckTaskType())
                 //产线
-                .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
+                .apply("JSON_EXTRACT(product_line, '$.id') IN (" + StrUtil.join(",",dto.getProductLineId()) + ")");
 
-        if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(checkTaskType)) {
+        if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(dto.getCheckTaskType())) {
             //大于等于开始   小于结束
             taskCondition.ge(QtCheckTask::getFinishedTime, startTime).lt(QtCheckTask::getFinishedTime, endTime);
         } else {
@@ -376,9 +376,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             qtCheckTaskDetailReportVO.setTaskId(task.getId());
             manData.add(qtCheckTaskDetailReportVO);
         });
-        officeIds.add(productLineId);
+        officeIds.addAll(dto.getProductLineId());
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        String productLineName = officeMap.get(productLineId);
+        //把深加工或者基片的值取出
+        List<String> productLineNames = Lists.newArrayList();
+        dto.getProductLineId().forEach(tmp->{
+            productLineNames.add(officeMap.get(tmp));
+        });
         List<Long> taskIdList = Lists.newArrayList();
         if (CollUtil.isEmpty(taskList)) {
             log.info("任务为空(质量日报表-首检)");
@@ -427,7 +431,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //静态表头
         List<QtSpcHeadTitleVO> common = Lists.newArrayList();
 
-        if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(checkTaskType)) {
+        if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(dto.getCheckTaskType())) {
             //首检表头
             QtSpcHeadTitleVO staticHead1 = new QtSpcHeadTitleVO();
             staticHead1.setLabel(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
@@ -658,9 +662,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             result.getHeaders().setCommon(newCommon);
         }
 
-        if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(checkTaskType)) {
+        if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
             //落板原因
-            result.setFallList(fallList(manData, productLineName));
+            result.setFallList(fallList(manData, "productLineName"));
             //缺陷表格
         }
         return result;
