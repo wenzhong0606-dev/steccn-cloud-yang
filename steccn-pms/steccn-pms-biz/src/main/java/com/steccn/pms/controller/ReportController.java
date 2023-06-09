@@ -77,4 +77,10 @@ public class ReportController {
     public R<List<OutputQualityVO>> outputQualityJp(@RequestBody OutputQualityDTO outputQualityDTO){
         return R.success(reportService.outputQualityJp(outputQualityDTO));
     }
+
+    @PostMapping("/output/quality/sjg")
+    @ApiOperation("产量质量报表-深加工")
+    public R<List<OutputQualitySjgVO>> outputQualitySjg(@RequestBody OutputQualityDTO outputQualityDTO){
+        return R.success(reportService.outputQualitySjg(outputQualityDTO));
+    }
 }

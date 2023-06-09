@@ -51,7 +51,8 @@ public class SysOfficeCollectFeignController {
      */
     @GetMapping("/station/list")
     @ApiOperation("查询工位的进/出站的采集点编码")
-    R<Map<Integer,List<String>>> listByStation(@RequestParam("stationIdSet") Set<Integer> stationIdSet, @RequestParam("type") Integer type){
+    R<Map<Integer,List<String>>>
+    listByStation(@RequestParam("stationIdSet") Set<Integer> stationIdSet, @RequestParam("type") Integer type){
         return R.success(sysOfficeCollectService.listByStation(stationIdSet,type));
     }
 }

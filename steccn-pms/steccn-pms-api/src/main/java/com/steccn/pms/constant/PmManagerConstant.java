@@ -1,13 +1,7 @@
 package com.steccn.pms.constant;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.collect.Lists;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.List;
 
 /**
  * @author W10
@@ -24,12 +18,12 @@ public interface PmManagerConstant {
     /**
      * 闭口泡
      */
-    String QMS_TASK_ITEM_START_TO_TALK ="闭口泡";
+    String QMS_TASK_ITEM_START_TO_TALK = "闭口泡";
 
     /**
      * 闭口泡
      */
-    String QMS_TASK_ITEM_STONE ="结石掉落物";
+    String QMS_TASK_ITEM_STONE = "结石掉落物";
 
     /**
      * 白班
@@ -39,7 +33,7 @@ public interface PmManagerConstant {
     /**
      * 夜班
      */
-    String NIGHT_SHIFT ="晚班";
+    String NIGHT_SHIFT = "晚班";
 
     /**
      * 甲班
@@ -62,7 +56,6 @@ public interface PmManagerConstant {
     String PROPYLENE_CLASS_NAME = "丙班";
 
 
-
     /**
      * 乙班
      */
@@ -74,11 +67,10 @@ public interface PmManagerConstant {
     String PROPYLENE_CLASS = "车间倒班-丙班";
 
 
-
     /**
      * 闭口泡
      */
-    String QMS_TASK_ITEM_VARIANT="辊印变形";
+    String QMS_TASK_ITEM_VARIANT = "辊印变形";
 
 
     /**
@@ -90,8 +82,8 @@ public interface PmManagerConstant {
      * 单位转换
      */
     String MEASURE_UNIT_PIECE = "片";
-    String MEASURE_UNIT_TON ="ton";
-    String MEASURE_UNIT_SM ="m²";
+    String MEASURE_UNIT_TON = "ton";
+    String MEASURE_UNIT_SM = "m²";
 
     /**
      * 数字
@@ -191,7 +183,7 @@ public interface PmManagerConstant {
     /**
      * 生产订单
      */
-    String MRP_PRODUCE_ORDER ="mrp_produce_order";
+    String MRP_PRODUCE_ORDER = "mrp_produce_order";
 
     /**
      * 班组
@@ -201,12 +193,12 @@ public interface PmManagerConstant {
     /**
      * 领料类型
      */
-    String MATERIAL_REQUISITION =  "material_requisition";
+    String MATERIAL_REQUISITION = "material_requisition";
 
     /**
      * 生产领料
      */
-    String PRODUCE_PICK =  "produce_pick";
+    String PRODUCE_PICK = "produce_pick";
     /**
      * 班次
      */
@@ -315,7 +307,7 @@ public interface PmManagerConstant {
 
     String LABORATORY_DIRECTOR = "化验室副主任";
 
-    String PEILIAO_DUANZHANG ="二线配料副段长";
+    String PEILIAO_DUANZHANG = "二线配料副段长";
     /**
      * 副主任id
      */
@@ -418,7 +410,7 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum InVouchEnum {
-        CREATE(0, "已创建"), FINISH(1, "已完成"),CHARGE(2,"已冲销");
+        CREATE(0, "已创建"), FINISH(1, "已完成"), CHARGE(2, "已冲销");
 
         private final Integer code;
 
@@ -445,14 +437,7 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum OrderStateEnum {
-        ZERO(0, "已创建"),
-        ONE(1, "已下单"),
-        TWO(2, "执行中"),
-        THREE(3, "暂停中"),
-        FOUR(4, "已暂停"),
-        FIVE(5, "完成中"),
-        SIX(6, "已完成"),
-        SEVEN(7, "已关闭");
+        ZERO(0, "已创建"), ONE(1, "已下单"), TWO(2, "执行中"), THREE(3, "暂停中"), FOUR(4, "已暂停"), FIVE(5, "完成中"), SIX(6, "已完成"), SEVEN(7, "已关闭");
 
         private final Integer code;
 
@@ -466,15 +451,7 @@ public interface PmManagerConstant {
     @AllArgsConstructor
     enum QtChartCompareEnum {
         //班次 产线 车间 缺陷类别
-        ALL(-1, "不对比"),
-        WORK(0, "班次"),
-        PRODUCTLINE(1, "产线"),
-        WORKSHOP(2, "车间"),
-        DEFECTCATEGORY(3, "缺陷类别"),
-        SAMPLINGTIME(4, "取样日期"),
-        MATERIALWORKSHOP(5, "物料使用车间"),
-        SUPPLIER(6, "供应商"),
-        MATERIAL(7, "物料名称");
+        ALL(-1, "不对比"), WORK(0, "班次"), PRODUCTLINE(1, "产线"), WORKSHOP(2, "车间"), DEFECTCATEGORY(3, "缺陷类别"), SAMPLINGTIME(4, "取样日期"), MATERIALWORKSHOP(5, "物料使用车间"), SUPPLIER(6, "供应商"), MATERIAL(7, "物料名称");
 
         private Integer code;
         private String name;
@@ -495,10 +472,7 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum PmRequisitionWorkFlow {
-        PRODUCT(0,"生产领料"),
-        MAINTAIN(1,"部门领料"),
-        OTHER(2,"其他领料"),
-        DEPARTMENT(3,"维修领料");
+        PRODUCT(0, "生产领料"), MAINTAIN(1, "部门领料"), OTHER(2, "其他领料"), DEPARTMENT(3, "维修领料");
 
         private Integer code;
         private String name;
@@ -511,5 +485,17 @@ public interface PmManagerConstant {
             }
             return null;
         }
+    }
+    @Getter
+    @AllArgsConstructor
+    enum BadnessType {
+        RAW_CLASS("原片不良"),
+        EDGING("磨边不良"),
+        PUNCHING("打孔不良"),
+        SILK_SCREEN("丝印不良"),
+        TEMPERING("钢化不良");
+
+        private  String name;
+
     }
 }

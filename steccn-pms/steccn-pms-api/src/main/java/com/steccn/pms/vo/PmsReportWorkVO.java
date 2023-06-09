@@ -1,11 +1,13 @@
 package com.steccn.pms.vo;
 
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 生产订单工艺报工信息
@@ -71,7 +73,13 @@ public class PmsReportWorkVO {
     @ApiModelProperty("生产订单编码")
     private String produceOrder;
 
+    @ApiModelProperty("生产订单id")
+    private Long produceOrderId;
+
     @ApiModelProperty("班组id")
     private Long classGroupId;
+
+    @ApiModelProperty("报工工时")
+    private List<PmsReportWorkHourVO> list;
 
 }
