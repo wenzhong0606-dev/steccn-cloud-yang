@@ -2,6 +2,7 @@ package com.steccn.data.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,8 +10,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
@@ -20,6 +23,8 @@ import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
+import com.steccn.qms.util.ShardTimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -28,8 +33,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -37,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @createDate 2022-12-16 13:23:55
  */
 @Service
+@Slf4j
 public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper, EpMeterCollect>
         implements EpMeterCollectService {
 
@@ -77,7 +85,7 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         if (Objects.nonNull(start) && Objects.nonNull(end)) {
             //考虑当前数据断传了， 前一天未断传，则会出现负数
             BigDecimal subtract = BigDecimalUtil.subtract(end.getValue(), start.getValue());
-            return BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
+            return Objects.nonNull(subtract) && BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
         }
         return null;
     }
@@ -141,4 +149,72 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         resList.add(value2);
         return resList;
     }
+
+    @Override
+    public BigDecimal heatPower(LocalDate date) {
+        //考虑做缓存
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = LocalDateUtil.getMorning(date.plusDays(1));
+        List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 300);
+
+        List<EpMeterCollect> dbList1 = list(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, "LL1003_P_ER")
+                .in(EpMeterCollect::getRecordTime, shardList)
+                .gt(EpMeterCollect::getValue, 0)
+                .orderByAsc(EpMeterCollect::getRecordTime));
+
+        List<EpMeterCollect> dbList2 = list(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, "LL1023_P_ER")
+                .in(EpMeterCollect::getRecordTime, shardList)
+                .gt(EpMeterCollect::getValue, 0)
+                .orderByAsc(EpMeterCollect::getRecordTime));
+        //根据时间取2个集合的交集
+        List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection = intersection(dbList1, dbList2);
+
+        BigDecimal resValue = BigDecimal.ZERO;
+        if(CollUtil.isNotEmpty(intersection)){
+            //根据班次日期查询
+            LocalDateTime preLdt = LocalDateUtil.getMorning(intersection.get(0).getField1());
+            for (int i = 0; i < intersection.size(); i++) {
+                TripleDTO<LocalDateTime, BigDecimal, BigDecimal> ele = intersection.get(i);
+                //和班次开始时间差值
+                long between = LocalDateTimeUtil.between(preLdt, ele.getField1(), ChronoUnit.MINUTES);
+                //求均值
+                BigDecimal sum = BigDecimalUtil.add(ele.getField2(), ele.getField3());
+                BigDecimal multiply = BigDecimalUtil.multiply(sum, BigDecimal.valueOf(between));
+                BigDecimal val = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(60));
+                //计算当前节点属于什么班次日期
+                resValue = BigDecimalUtil.add(resValue, val);
+                preLdt = ele.getField1();
+            }
+        }
+        return resValue;
+    }
+
+    /**
+     * 获取两个集合的时间交集值
+     * @param dbList1 集合1
+     * @param dbList2 集合2
+     * @return
+     */
+    public List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection(List<EpMeterCollect> dbList1, List<EpMeterCollect> dbList2) {
+        int i = 0, j = 0;
+        List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> resList = Lists.newArrayList();
+        while (i < dbList1.size() && j < dbList2.size()) {
+            EpMeterCollect one = dbList1.get(i);
+            EpMeterCollect two = dbList2.get(j);
+
+            if (one.getRecordTime().isEqual(two.getRecordTime())) {
+                resList.add(new TripleDTO<>(one.getRecordTime(), one.getValue(), two.getValue()));
+                i++;
+                j++;
+            }else if(one.getRecordTime().isBefore(two.getRecordTime())){
+                i++;
+            }else {
+                j++;
+            }
+        }
+        return resList;
+    }
+
 }

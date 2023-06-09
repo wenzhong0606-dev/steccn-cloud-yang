@@ -7,8 +7,10 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.PmsReportWorkVO;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -115,6 +118,16 @@ public class ProcessReportWorkController {
     @SysLog("报工删除")
     public R<Boolean> delete(@PathVariable("id") Long id){
         return R.success(pmsReportWorkService.delete(id));
+    }
+
+    @GetMapping("/refresh/data")
+    public R<Boolean> refreshReportWork(){
+        List<PmsReportWork> list = pmsReportWorkService.list();
+        list.forEach(ele ->{
+            ele.setClassDate(LocalDateUtil.getClassDate(ele.getStartTime(),Boolean.FALSE));
+            pmsReportWorkService.updateById(ele);
+        });
+        return R.success(Boolean.TRUE);
     }
 
 }

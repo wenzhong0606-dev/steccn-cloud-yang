@@ -42,6 +42,9 @@ public class EpMeterReadRowDTO implements Serializable {
     @ApiModelProperty("生产订单主键")
     private Long produceOrderId;
 
+    @ApiModelProperty("产线主键")
+    private Integer productLineId;
+
     @ApiModelProperty("开始时间")
     private LocalDateTime start;
 

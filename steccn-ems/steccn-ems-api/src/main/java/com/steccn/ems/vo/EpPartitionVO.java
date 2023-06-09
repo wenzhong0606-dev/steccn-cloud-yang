@@ -76,6 +76,9 @@ public class EpPartitionVO implements Serializable {
     @ApiModelProperty("远传仪表编码")
     private String distantMapCode;
 
+    @ApiModelProperty("树的层级")
+    private Integer level;
+
     /**
      * 0停用 1启用
      */

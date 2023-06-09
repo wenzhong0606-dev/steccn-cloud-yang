@@ -39,6 +39,7 @@ public interface LockConstant {
      */
     String DW_METER_READ_SCHEDULED_TASK = "DW_METER_READ_SCHEDULED_TASK";
     String DW_ELECTRIC_MONEY_SCHEDULED_TASK = "DW_ELECTRIC_MONEY_SCHEDULED_TASK";
+    String DW_READ_SCHEDULED_TASK = "DW_READ_SCHEDULED_TASK";
 
     /**
      * 单耗告警定时任务

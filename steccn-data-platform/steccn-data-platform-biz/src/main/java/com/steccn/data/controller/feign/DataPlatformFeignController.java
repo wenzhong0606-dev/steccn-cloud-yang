@@ -2,6 +2,7 @@ package com.steccn.data.controller.feign;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,16 +48,16 @@ public class DataPlatformFeignController {
         return R.success(epMeterCollectService.meterRead(dto));
     }
 
-    @PostMapping("/meter/read/diff")
-    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
-    public R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto) {
-        return R.success(epMeterCollectService.meterReadDiff(dto));
-    }
-
     @PostMapping("/meter/read/seValue")
     @ApiOperation("能源绩效系统-抄表归档-差值")
     R<List<BigDecimal>> seValue(@RequestBody TripleDTO<String, LocalDateTime, LocalDateTime> tripleDTO) {
         return R.success(epMeterCollectService.seValue(tripleDTO));
+    }
+
+    @PostMapping("/meter/read/diff")
+    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
+    public R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto) {
+        return R.success(epMeterCollectService.meterReadDiff(dto));
     }
 
     @PostMapping("/meter/last/read/time")
@@ -102,5 +104,11 @@ public class DataPlatformFeignController {
     @ApiOperation("生产管理-进出站计数信息")
     R<List<DwStationCollectVO>> stationInfo(@RequestBody DwStationInfoDTO dto) {
         return R.success(pmStationCollectService.stationInfo(dto));
+    }
+
+    @PostMapping("/heat/power")
+    @ApiOperation("计算余热发电")
+    R<BigDecimal> heatPower(@RequestBody LocalDate date){
+        return R.success(epMeterCollectService.heatPower(date));
     }
 }

@@ -5,6 +5,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -80,6 +81,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
 
         classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
@@ -125,8 +127,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 for (BigDecimal thick : dto.getThick()) {
                     String thickName = null;
                     List<EpMeterReadAllDataVO> thickData;
-                    if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
-                        thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick()) || v.getThick().equals(new BigDecimal("-1"))).collect(Collectors.toList());
+                    if (Objects.isNull(thick) || thick.compareTo(BigDecimalUtil.MINUS_ONE) == 0) {
+                        thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick()) || v.getThick().equals(BigDecimalUtil.MINUS_ONE)).collect(Collectors.toList());
                         thickName = "无";
                     } else {
                         thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
@@ -197,7 +199,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (!"null".equals(s[1])) {
                     rowVO.setThick(new BigDecimal(s[1]).setScale(1));
                     rowVO.setThickStr(rowVO.getThick() + "mm");
-                    if (BigDecimalUtil.equals(rowVO.getThick(), new BigDecimal("-1"))) {
+                    if (BigDecimalUtil.equals(rowVO.getThick(), BigDecimalUtil.MINUS_ONE)) {
                         rowVO.setThickStr("无");
                     }
                 }
@@ -259,7 +261,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             StringBuilder sb = new StringBuilder();
             dto.getThick().forEach(tmp -> {
                String data =  tmp.toString()+ "mm ";
-                if(BigDecimalUtil.equals(tmp,new BigDecimal("-1"))){
+                if(BigDecimalUtil.equals(tmp,BigDecimalUtil.MINUS_ONE)){
                     data = "无 ";
                 }
                 sb.append(data);
@@ -361,8 +363,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             for (BigDecimal thick : dto.getThick()) {
                 String thickName = null;
                 List<EpMeterReadAllDataVO> thickData;
-                if (Objects.isNull(thick) || thick.compareTo(new BigDecimal("-1")) == 0) {
-                    thickData = dataVOList.stream().filter(v -> Objects.isNull(v.getThick()) || v.getThick().equals(new BigDecimal("-1"))).collect(Collectors.toList());
+                if (Objects.isNull(thick) || thick.compareTo(BigDecimalUtil.MINUS_ONE) == 0) {
+                    thickData = dataVOList.stream().filter(v -> Objects.isNull(v.getThick()) || v.getThick().equals(BigDecimalUtil.MINUS_ONE)).collect(Collectors.toList());
                     thickName = "无";
                 } else {
                     thickData = dataVOList.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
@@ -421,7 +423,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (!"null".equals(s[1])) {
                     rowVO.setThick(new BigDecimal(s[1]).setScale(1));
                     rowVO.setThickStr(rowVO.getThick() +"mm");
-                    if(BigDecimalUtil.equals(rowVO.getThick(),new BigDecimal("-1"))){
+                    if(BigDecimalUtil.equals(rowVO.getThick(),BigDecimalUtil.MINUS_ONE)){
                         rowVO.setThickStr("无");
                     }
                 }
@@ -474,7 +476,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             StringBuilder sb = new StringBuilder();
             dto.getThick().forEach(tmp -> {
                 String data = tmp.toString() + "mm ";
-                if (BigDecimalUtil.equals(tmp, new BigDecimal("-1"))) {
+                if (BigDecimalUtil.equals(tmp, BigDecimalUtil.MINUS_ONE)) {
                     data = "无 ";
                 }
                 sb.append(data);
@@ -503,9 +505,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
         for (BigDecimal thick : sort) {
-            String name = null;
-            if (Objects.isNull(thick) || BigDecimalUtil.equals(thick, BigDecimal.valueOf(-1))) {
-                thick = BigDecimal.valueOf(-1);
+            String name;
+            if (Objects.isNull(thick) || BigDecimalUtil.equals(thick, BigDecimalUtil.MINUS_ONE)) {
+                thick = BigDecimalUtil.MINUS_ONE;
                 name = "无";
             } else {
                 thick = thick.setScale(1);
@@ -525,8 +527,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
-
+        List<EpMeterReadAllDataVO> classDateAllData = null;
+        if (dto.getEnergyType() != 5) {
+            classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else {
+            //燃料(气+油)的单耗
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+        }
         classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
@@ -590,7 +597,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //部门行业的单耗标准
         List<StandardVO<BigDecimal>> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
         standardVOList = standardVOList.stream().filter(v -> {
-            if (BigDecimalUtil.equals(dto.getThick().get(0), new BigDecimal("-1"))) {
+            if (BigDecimalUtil.equals(dto.getThick().get(0), BigDecimalUtil.MINUS_ONE)) {
                 return BigDecimalUtil.equals(null, v.getThick());
             }
             return BigDecimalUtil.equals(dto.getThick().get(0), v.getThick());
@@ -650,7 +657,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                         rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
                         if (!"null".equals(s[1])) {
                             rowVO.setThick(new BigDecimal(s[1]).setScale(1));
-                            if (BigDecimalUtil.equals(rowVO.getThick(), new BigDecimal("-1"))) {
+                            if (BigDecimalUtil.equals(rowVO.getThick(), BigDecimalUtil.MINUS_ONE)) {
                                 rowVO.setThickStr("无");
                             } else {
                                 rowVO.setThickStr(rowVO.getThick() + "mm");
@@ -918,7 +925,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         //部门行业的单耗标准
         left = left.stream().filter(v -> {
-            if (BigDecimalUtil.equals(dto.getThick().get(0), new BigDecimal("-1"))) {
+            if (BigDecimalUtil.equals(dto.getThick().get(0), BigDecimalUtil.MINUS_ONE)) {
                 return BigDecimalUtil.equals(null, v.getThick());
             }
             return BigDecimalUtil.equals(dto.getThick().get(0), v.getThick());
@@ -971,7 +978,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (!"null".equals(s[1])) {
                     rowVO.setThick(new BigDecimal(s[1]).setScale(1));
                     rowVO.setThickStr(rowVO.getThick() + "mm");
-                    if(BigDecimalUtil.equals(rowVO.getThick(),new BigDecimal("-1"))){
+                    if(BigDecimalUtil.equals(rowVO.getThick(),BigDecimalUtil.MINUS_ONE)){
                         rowVO.setThickStr("无");
                     }
                 }
@@ -1340,7 +1347,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         });
         queryWrapper.le(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).ge(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd());
         queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType());
-        if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
+        if (dto.getThick().contains(BigDecimalUtil.MINUS_ONE)) {
             queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
         } else if(Objects.nonNull(sysDictVO)){
             queryWrapper.eq(Objects.nonNull(sysDictVO.getId()), EpProductUnitConsumeStandard::getProductThick, sysDictVO.getId());
@@ -1363,7 +1370,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             //根据厚度遍历
             for (BigDecimal thick : dto.getThick()) {
                 List<EpMeterReadAllDataVO> thickData;
-                if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
+                if (Objects.isNull(thick) || thick.compareTo(BigDecimalUtil.MINUS_ONE) == 0) {
                     thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
                 } else {
                     thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());

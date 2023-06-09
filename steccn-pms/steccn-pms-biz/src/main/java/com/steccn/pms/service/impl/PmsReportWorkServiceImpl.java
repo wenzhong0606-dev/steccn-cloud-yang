@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,6 +18,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
@@ -38,6 +40,7 @@ import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.tomcat.jni.Local;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -209,6 +212,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 pmsReportWork.setProduceOrderNo(pmsProduceOrder.getCode());
                 pmsReportWork.setBatchNo(pmsWorkOrderBatch.getCode());
                 pmsReportWork.setId(IdUtil.getSnowflake().nextId());
+                pmsReportWork.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(), Boolean.FALSE));
                 save(pmsReportWork);
                 //保存工时信息
                 reportWorkHourService.saveHourList(pmsReportWork.getId(), dto.getHourDTOList());
@@ -608,6 +612,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         PmsReportWork model = getById(dto);
         Assert.notNull(model, "编辑的报工记录不存在");
         getReportWork(dto, model);
+        //设置报工的班次日期
+        model.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(),Boolean.FALSE));
         updateById(model);
         //更新报工工时信息
         reportWorkHourService.updateHour(dto.getId(), dto.getHourDTOList());
@@ -711,6 +717,65 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return sjgDataList;
+    }
+
+    @Override
+    public Map<String, BigDecimal> classDateProductNum(Set<Integer> lineSet, LocalDate startLd, LocalDate endLd) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(lineSet) && Objects.nonNull(startLd) && Objects.nonNull(endLd)) {
+            LocalDateTime start = LocalDateUtil.getMorning(startLd);
+            LocalDateTime end = LocalDateUtil.getMorning(endLd.plusDays(1));
+            List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineSet)
+                    .ge(PmsReportWork::getStartTime, start)
+                    .le(PmsReportWork::getEndTime, end));
+            if (CollUtil.isNotEmpty(dbList)) {
+                Map<String, List<PmsReportWork>> dbMap = dbList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + LocalDateUtil.getClassDate(v.getStartTime(), Boolean.FALSE)));
+                for (Map.Entry<String, List<PmsReportWork>> entry : dbMap.entrySet()) {
+                    BigDecimal sumNum = entry.getValue().stream().filter(v -> Objects.nonNull(v.getProcessQuantity())).map(v -> v.getProcessQuantity()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    resMap.put(entry.getKey(), sumNum);
+                }
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, Long> workshopClassGroupMap(Set<LocalDate> dateSet, Map<Integer, Set<Integer>> workshopStationMap) {
+        Map<String, Long> resMap = Maps.newHashMap();
+        List<Integer> stationIdList = workshopStationMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(stationIdList) && CollUtil.isNotEmpty(dateSet)) {
+            List<PmsReportWork> dbList = list(new QueryWrapper<PmsReportWork>().select(" class_date , classes_id, station_id , class_group_id , count(class_group_id) as create_by")
+                    .lambda()
+                    .in(PmsReportWork::getClassDate, dateSet)
+                    .in(PmsReportWork::getStationId, stationIdList)
+                    .groupBy(Lists.newArrayList(PmsReportWork::getStationId, PmsReportWork::getClassDate, PmsReportWork::getClassesId, PmsReportWork::getClassGroupId)));
+
+            if (CollUtil.isNotEmpty(dbList)) {
+                //获取早班和晚班
+                List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                for (LocalDate date : dateSet) {
+                    workshopStationMap.forEach((k, v) -> {
+                        //遍历早班和晚班
+                        for (SysDictVO classIdVo : sysDictVOList) {
+                            Map<Long, List<PmsReportWork>> groupMap = dbList.stream().filter(ele -> v.contains(ele.getStationId()) && classIdVo.getId().equals(ele.getClassesId()) && date.isEqual(ele.getClassDate())).collect(Collectors.groupingBy(a -> a.getClassGroupId()));
+                            Long groupId = null;
+                            Long groupSum = 0L;
+                            for (Map.Entry<Long, List<PmsReportWork>> entry : groupMap.entrySet()) {
+                                long sum = entry.getValue().stream().mapToLong(PmsReportWork::getCreateBy).sum();
+                                if (Objects.isNull(groupId) || groupSum < sum) {
+                                    groupId = entry.getKey();
+                                    groupSum = sum;
+                                }
+                            }
+                            if (Objects.nonNull(groupId)) {
+                                resMap.put(date + "_" + classIdVo.getCode() + "_" + k, groupId);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        return resMap;
     }
 
     /**

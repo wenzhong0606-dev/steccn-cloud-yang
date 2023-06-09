@@ -6,6 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
@@ -13,9 +14,7 @@ import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.domain.EpEnergyMoney;
-import com.steccn.ems.domain.EpMeterReadDistant;
-import com.steccn.ems.domain.EpTaskExecute;
+import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.DwEpEnergyMoneyDTO;
 import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
@@ -29,15 +28,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,13 +58,8 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpPartitionService epPartitionService;
     private final EpTaskExecuteService epTaskExecuteService;
     private final RemoteOfficeFeign remoteOfficeFeign;
-
-    private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
-
-    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
-
+    private final EpMeterReadService epMeterReadService;
+    private final EpHeatPowerService epHeatPowerService;
 
     @Override
     public Boolean meterRead(LocalDate date) {
@@ -79,15 +74,19 @@ public class EpDwServiceImpl implements EpDwService {
         //5.查询所有仪表的产线父节点
         Set<Integer> officeIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getOfficeId).collect(Collectors.toSet());
         Map<Integer, Integer> lineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //防止fegin获取不到当前请求
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         //6.遍历所有的远传仪表
         for (EpDwMeterPartitionDTO meter : meterList) {
             //一开始 应该划分好任务，然后插入数据库中，加上标识
             //子任务执行好插入数据，更新标识
             //避免重复执行
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList, lineMap);
+            log.info("{}", taskList);
             for (DwConditionDTO task : taskList) {
-                readPool.submit(() -> {
+                CompletableFuture.runAsync(() ->{
                     try {
+                        RequestContextHolder.setRequestAttributes(attributes);
                         //执行任务
                         doMeterRead(task);
                     }catch (Exception e){
@@ -140,11 +139,11 @@ public class EpDwServiceImpl implements EpDwService {
     /**
      * 分解小任务
      *
-     * @param date                 当前日期
-     * @param meter                当前仪表
-     * @param otherNodeSet         仅统计每日能耗（类型II）的节点
-     * @param orderList            所有生产订单的信息
-     * @param lineMap              产线map
+     * @param date         当前日期
+     * @param meter        当前仪表
+     * @param otherNodeSet 仅统计每日能耗（类型II）的节点
+     * @param orderList    所有生产订单的信息
+     * @param lineMap      产线map
      * @return
      */
     private List<DwConditionDTO> read(LocalDate date, EpDwMeterPartitionDTO meter, Set<Long> otherNodeSet, List<DwProduceOrderDTO> orderList, Map<Integer, Integer> lineMap) {
@@ -173,7 +172,7 @@ public class EpDwServiceImpl implements EpDwService {
                 List<DwProduceOrderDTO> subOrderList = orderList.stream().filter(v -> v.getProductLineId().equals(line)).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(subOrderList)) {
                     //有生产订单
-                    subOrderList.forEach(ele ->{
+                    subOrderList.forEach(ele -> {
                         DwConditionDTO dwConditionDTO = getDwConditionDTO(meter, ele);
                         taskList.add(dwConditionDTO);
                     });
@@ -208,14 +207,22 @@ public class EpDwServiceImpl implements EpDwService {
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         //当前有效的计划
         List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
-        Integer sum = 0 ;
+        Integer sum = 0;
+        //防止fegin获取不到当前请求
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         for (EpDwMeterPartitionDTO meter : meterList) {
             //分解出task
             List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter, priceList);
             for (DwEpEnergyMoneyDTO ele : taskList) {
-                sum ++;
-                moneyPool.submit(() ->{
-                    doMoney(ele);
+                sum++;
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        RequestContextHolder.setRequestAttributes(attributes);
+                        doMoney(ele);
+                    } catch (Exception e) {
+                        log.error("计算money异常 {}", e.getLocalizedMessage());
+                    }
+
                 });
             }
         }
@@ -230,6 +237,75 @@ public class EpDwServiceImpl implements EpDwService {
         oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
         epTaskExecuteService.saveOrUpdate(oldTask);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean read(LocalDate date) {
+        //1.获取所有的远传仪表+挂载的分区节点
+        List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
+        //2.获取当前日期的任务
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        meterList.forEach(meter -> {
+            //防止fegin获取不到当前请求
+            CompletableFuture.runAsync(() -> {
+                try {
+                    RequestContextHolder.setRequestAttributes(attributes);
+                    saveReadMeter(date, meter);
+                } catch (Exception e) {
+                    log.error("插入抄表数据失败 {}", e.getLocalizedMessage());
+                }
+            });
+        });
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean heatPower(LocalDate date) {
+        BigDecimal value = FeignOptional.of(() -> remoteDataPlatformFeignApi.heatPower(date), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        epHeatPowerService.remove(new LambdaQueryWrapper<EpHeatPower>().eq(EpHeatPower::getClassDate, date));
+        EpHeatPower model = new EpHeatPower();
+        model.setValue(value);
+        model.setClassDate(date);
+        return epHeatPowerService.save(model);
+    }
+
+    /**
+     * 插入抄表数据
+     *
+     * @param date
+     * @param meter
+     * @return
+     */
+    private boolean saveReadMeter(LocalDate date, EpDwMeterPartitionDTO meter) {
+        //避免重复插入
+        EpMeterRead one = epMeterReadService.getOne(new LambdaQueryWrapper<EpMeterRead>()
+                .eq(EpMeterRead::getMeterId, meter.getMeterId())
+                .eq(EpMeterRead::getReadDate, date)
+                .eq(EpMeterRead::getDistantMapCode, meter.getDistantMapCode())
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)) {
+            log.info("远传仪表{} 抄表数据已插入", one.getDistantMapCode());
+            return Boolean.TRUE;
+        }
+        DwMeterReadDTO end = new DwMeterReadDTO();
+        end.setCode(meter.getDistantMapCode());
+        end.setRecordTime(LocalDateUtil.getMorning(date));
+        DwEpMeterCollectVO endVo = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(end), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+
+        if (Objects.nonNull(endVo)) {
+            EpMeterRead ele = new EpMeterRead();
+            ele.setAdminValue(endVo.getValue());
+            ele.setReadValue(endVo.getValue());
+            ele.setAdminFlag(MpConstant.NO);
+            ele.setStart(endVo.getRecordTime());
+            ele.setEnd(end.getRecordTime());
+            ele.setReadDate(date);
+            ele.setMeterId(meter.getMeterId());
+            ele.setDistantMapCode(meter.getDistantMapCode());
+            return epMeterReadService.save(ele);
+        }
+        return Boolean.FALSE;
     }
 
     /**
@@ -272,7 +348,7 @@ public class EpDwServiceImpl implements EpDwService {
      * @param meter
      * @return
      */
-    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter,List<EpDwEnergyPricePlanDTO> priceList) {
+    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter, List<EpDwEnergyPricePlanDTO> priceList) {
         List<DwEpEnergyMoneyDTO> taskList = Lists.newArrayList();
         if (Objects.nonNull(meter) && Objects.nonNull(date)) {
             //查询当前班次日期有效的能源计费方案明细

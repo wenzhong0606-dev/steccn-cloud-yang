@@ -1,6 +1,7 @@
 package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
@@ -9,6 +10,9 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -38,4 +42,18 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("获取深加工产线-订单的报工记录")
     @PostMapping("/feign/pms/report/work/sjg/order/rw")
     R<List<EpMeterReadRowDTO>> sjgOrderRw(@RequestBody List<EpMeterReadRowDTO> sjgDataList);
+
+    @ApiOperation("获取指定日期，指定产线的所有产量")
+    @PostMapping("/feign/pms/report/work/num/line/date")
+    R<Map<String, BigDecimal>> classDateProductNum(@RequestBody TripleDTO<Set<Integer>, LocalDate, LocalDate> dto);
+
+    /**
+     * 获取车间班次日期中班次报工最多的班组
+     *
+     * @param tupleDTO
+     * @return
+     */
+    @ApiOperation("获取车间班次日期中班次报工最多的班组")
+    @PostMapping("/feign/pms/report/work/workshop/class/group")
+    R<Map<String, Long>> workshopClassGroupMap(TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO);
 }

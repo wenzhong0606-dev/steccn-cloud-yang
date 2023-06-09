@@ -30,5 +30,5 @@ public interface RemoteCheckTaskDetailFeignApi {
 
     @ApiOperation("ems获取拉引量")
     @PostMapping("/feign/qms/task/detail/ems/getPullAmount")
-    R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody @Valid ValidList<QtEmsPullAmountDTO> dto);
+    R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody ValidList<QtEmsPullAmountDTO> dto);
 }

@@ -1,6 +1,7 @@
 package com.steccn.common.util;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
 import io.swagger.models.auth.In;
@@ -9,9 +10,11 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -28,6 +31,7 @@ public class BigDecimalUtil {
 
     public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     public static final BigDecimal THOUSAND = BigDecimal.valueOf(1000);
+    public static final BigDecimal MINUS_ONE = new BigDecimal("-1");
 
     /**
      * 格式化val 指定scale
@@ -51,12 +55,16 @@ public class BigDecimalUtil {
      * @param val2 val2
      * @return 和
      */
-    public static BigDecimal add(BigDecimal val1, BigDecimal val2,int scale) {
+    public static BigDecimal add(BigDecimal val1, BigDecimal val2, int scale) {
+        //如果2个都为null则返回null
+        if (Objects.isNull(val1) && Objects.isNull(val2)) {
+            return null;
+        }
         if (Objects.isNull(val1)) {
-            val1 = BigDecimal.ZERO;
+            return val2;
         }
         if (Objects.isNull(val2)) {
-            val2 = BigDecimal.ZERO;
+            return val1;
         }
         BigDecimal res = val1.add(val2);
         res = res.setScale(scale, RoundingMode.HALF_UP);
@@ -65,11 +73,12 @@ public class BigDecimalUtil {
 
     /**
      * 将val1 + val2
+     *
      * @param val1
      * @param val2
      * @return 和
      */
-    public static BigDecimal add(BigDecimal val1, BigDecimal val2){
+    public static BigDecimal add(BigDecimal val1, BigDecimal val2) {
         return add(val1, val2, DEFAULT_SCALE);
     }
 
@@ -86,6 +95,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 > val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -96,6 +106,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 >= val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -106,6 +117,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 < val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -116,6 +128,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 <= val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -127,6 +140,7 @@ public class BigDecimalUtil {
     /**
      * 如果equalsFlag == false left > right
      * 如果equalsFlag == true  left >= right
+     *
      * @param left
      * @param right
      * @param equalsFlag
@@ -140,12 +154,20 @@ public class BigDecimalUtil {
 
     /**
      * 将val1 - val2
+     * null -  null = null
+     * x    -  null = x
+     * null -  y = -y
+     * x    -  y = z
      *
      * @param val1 val1
      * @param val2 val2
      * @return 和
      */
     public static BigDecimal subtract(BigDecimal val1, BigDecimal val2, int scale) {
+        //如果2个值为null，则返回null
+        if (Objects.isNull(val1) && Objects.isNull(val2)) {
+            return null;
+        }
         if (Objects.isNull(val1)) {
             val1 = BigDecimal.ZERO;
         }
@@ -167,15 +189,13 @@ public class BigDecimalUtil {
      * @return 数值，四舍五入模式下保留scale位小数
      */
     public static BigDecimal divide(BigDecimal val1, BigDecimal val2, int scale) {
-        if (Objects.isNull(val1)) {
-            val1 = BigDecimal.ZERO;
-        }
-        if (Objects.isNull(val2)) {
-            val2 = BigDecimal.ZERO;
+        if (Objects.isNull(val1) || Objects.isNull(val2)) {
+            return null;
         }
         if (BigDecimal.ZERO.compareTo(val2) != 0) {
             return val1.divide(val2, scale, RoundingMode.HALF_UP);
         }
+        //除数为0 返回空
         return BigDecimal.ZERO;
     }
 
@@ -251,7 +271,7 @@ public class BigDecimalUtil {
      */
     public static String format(BigDecimal value) {
         if (Objects.isNull(value)) {
-            value = BigDecimal.ZERO;
+            return null;
         }
         return value.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
@@ -264,11 +284,9 @@ public class BigDecimalUtil {
      * @return
      */
     public static BigDecimal multiply(BigDecimal val1, BigDecimal val2) {
-        if (Objects.isNull(val1)) {
-            val1 = BigDecimal.ZERO;
-        }
-        if (Objects.isNull(val2)) {
-            val2 = BigDecimal.ZERO;
+        //乘法 有一个为null，则为null
+        if (Objects.isNull(val1) || Objects.isNull(val2)) {
+            return null;
         }
         BigDecimal res = val1.multiply(val2);
         res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
@@ -289,6 +307,27 @@ public class BigDecimalUtil {
             return val1.compareTo(val2) == 0;
         }
         return Boolean.FALSE;
+    }
+
+    /**
+     * 求和
+     *
+     * @param valueList 值集合
+     * @return
+     */
+    public static BigDecimal sum(List<BigDecimal> valueList) {
+        //集合为空，则返回null
+        if (CollUtil.isEmpty(valueList)) {
+            return null;
+        }
+        //如果全为空值，则返回null
+        List<BigDecimal> collect = valueList.stream().filter(v -> Objects.nonNull(v)).collect(Collectors.toList());
+        if (CollUtil.isEmpty(collect)) {
+            return null;
+        }
+        //求和，返回结果
+        BigDecimal sumValue = collect.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sumValue;
     }
 
 }
