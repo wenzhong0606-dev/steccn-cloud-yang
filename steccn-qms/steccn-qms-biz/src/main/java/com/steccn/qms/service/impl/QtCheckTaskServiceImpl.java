@@ -2037,7 +2037,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(classId);
                 idNameMap.put(code.getCode(), code.getName());
             }
-        }else{
+        }else if(QtManagerConstant.QtChartCompareEnum.CUSTOMER.getCode().equals(compare)){
+          //对比客户
+            flatDataCopyList = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).collect(Collectors.toList());
+            flatDataList.clear();
+            flatDataList.addAll(flatDataCopyList);
+            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
+            Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).map(QtCheckTaskReportVO::getCustomerId).collect(Collectors.toSet());
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(() -> remoteOfficeFeign.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            idNameMap =  officeContrastSort(dataMap);
+        } else{
             //不对比
             targetMap = Maps.newHashMap();
             targetMap.put(0, flatDataList);
