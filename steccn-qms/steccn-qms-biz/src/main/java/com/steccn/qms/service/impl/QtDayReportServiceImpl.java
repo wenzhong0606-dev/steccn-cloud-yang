@@ -135,7 +135,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(date + ":" + name, defaultOaGroupCountDTO);
                         vo.setClassGroupName(oaGroupCountDTO.getGroupName());
                         vo.setClassGroupId(oaGroupCountDTO.getGroupId());
-                        vo.setClassName(QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName());
                         String[] split = defectTimeEntry.getKey().split("~");
                         vo.setDefectStartTime(LocalDateTime.parse(split[0]));
                         vo.setDefectEndTime(LocalDateTime.parse(split[1]));
@@ -202,7 +201,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead());
         //落板原因
-        resVo.setFallList(fallList(manData, productLineName));
+        resVo.setFallList(fallList(date, manData, productLineName));
         return resVo;
     }
 
@@ -212,9 +211,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param manDataList 人工检测数据
      * @return 落板原因集合
      */
-    private List<QtCheckTaskDestoryOnlineVO> fallList(List<QtCheckTaskDetailReportVO> manDataList, String productLineName) {
+    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList, String productLineName) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
+            Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(curDate, curDate), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(manDataList)) {
                 //先根据人工数据查询所有的taskId
@@ -233,6 +234,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             BeanUtils.copyProperties(destroy, vo);
                             vo.setFirstTime(min.get().getDestoryStartTime());
                             vo.setClassId(taskClassMap.get(entry.getKey()));
+                            String name = QtManagerConstant.QtClassesEnum.code(vo.getClassId()).getName();
+                            vo.setClassName(name);
+                            OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(curDate + ":" + name, defaultOaGroupCountDTO);
+                            vo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            vo.setClassGroupId(oaGroupCountDTO.getGroupId());
                             QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
                             if (Objects.nonNull(classEnum)) {
                                 vo.setClassName(classEnum.getName());
@@ -746,7 +752,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
             if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
                 //落板原因
-                luoData.addAll(fallList(manData, productLine.getOfficeName()));
+                luoData.addAll(fallList(dto.getDate(), manData, productLine.getOfficeName()));
                 //缺陷表格
             }
 
