@@ -112,6 +112,12 @@ public class QtCheckTaskReportVO implements Serializable {
     @ApiModelProperty("班次 早班 0 晚班 1")
     private Integer classesId;
 
+    @ApiModelProperty("班组id 0甲班 1乙班 2丙班")
+    private Integer classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
+
     @ApiModelProperty("班次时间")
     private LocalDateTime classTime;
 

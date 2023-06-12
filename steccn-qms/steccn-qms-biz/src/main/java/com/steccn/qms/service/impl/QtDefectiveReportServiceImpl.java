@@ -27,6 +27,9 @@ import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwDefectCollectVO;
+import com.steccn.oa.constant.OaManagerConstant;
+import com.steccn.oa.dto.OaGroupCountDTO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -84,6 +87,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+    private final OaInfoService oaInfoService;
 
     /**
      * 深加工缺陷类别分布
@@ -140,7 +144,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             StackGraphDTO stackGraphDTO = new StackGraphDTO();
             stackGraphDTO.setData(Lists.newArrayList());
             stackGraphDTO.setXAxis(categoryEntry.getValue());
-            //考虑对比分组，也可能不分组
+            //考虑对比分组【】，也可能不分组
             for (Map.Entry<Integer, String> contrastEntry : idNameMap.entrySet()) {
                 List<QtCheckTaskDetailReportVO> tDataList = targetMap.getOrDefault(contrastEntry.getKey(), defaultReportVoList);
                 List<QtCheckTaskDetailReportVO> xDataList = function.apply(tDataList, categoryEntry.getKey());
@@ -191,6 +195,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             for (Integer classId : classIdSet) {
                 QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(classId);
                 idNameMap.put(code.getCode(), code.getName());
+            }
+        } else if(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode().equals(compare)){
+            //对比班组
+            targetMap = flatDataList.stream().filter(v ->Objects.nonNull(v.getClassGroupId())).collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassGroupId));
+            Set<Integer> groupIdSet = flatDataList.stream().filter(v ->Objects.nonNull(v.getClassGroupId())).map(QtCheckTaskDetailReportVO::getClassGroupId).collect(Collectors.toSet());
+            idNameMap = Maps.newHashMap();
+            List<Integer> groupIdList = groupIdSet.stream().sorted(Comparator.comparingInt(x -> x)).collect(Collectors.toList());
+            for (Integer groupId : groupIdList) {
+                OaManagerConstant.OaTeamGroupMapping code = OaManagerConstant.OaTeamGroupMapping.code(groupId);
+                if (Objects.nonNull(code)) {
+                    idNameMap.put(code.getCode(), code.getName());
+                }
             }
         } else {
             //不对比
@@ -288,6 +304,20 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         SteccnTableAssertUtil.notEmpty(qtDefectiveItemList, "深加工缺陷集合为空，暂无报表");
         qtDefectiveItemList.forEach(ele -> categoryMap.put(ele.getId(), ele.getCategoryId()));
+
+        //获取最大缺陷记录时间和最小缺陷记录时间，用来查询班组
+        Optional<QtCheckTask> minOp = qtCheckTasks.stream().min(Comparator.comparing(QtCheckTask::getDefectStartTime));
+        Optional<QtCheckTask> maxOp = qtCheckTasks.stream().max(Comparator.comparing(QtCheckTask::getDefectStartTime));
+        Map<String, OaGroupCountDTO> groupMap;
+        OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
+        if (minOp.isPresent() && maxOp.isPresent()) {
+            LocalDate startLdt = LocalDateUtil.getClassDate(minOp.get().getDefectStartTime(), Boolean.FALSE);
+            LocalDate endLdt = LocalDateUtil.getClassDate(maxOp.get().getDefectStartTime(), Boolean.TRUE);
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(startLdt, endLdt), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        } else {
+            groupMap = Maps.newHashMap();
+        }
+
         //遍历缺陷项集合
         List<QtCheckTaskDetailReportVO> flatDefectiveList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(detailList)) {
@@ -329,6 +359,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             vo.setClassTime(qtTaskClassCalculate.getClassDate());
                             vo.setClassId(qtTaskClassCalculate.getClassType());
                             vo.setClassesDate(qtTaskClassCalculate.getClassDate().toLocalDate());
+                            //班組
+                            QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
+                            if (Objects.nonNull(code)) {
+                                OaGroupCountDTO oaGroupCountDTO = groupMap.getOrDefault(vo.getClassesDate() + ":" + code.getName(), defaultOaGroupCountDTO);
+                                vo.setClassGroupId(oaGroupCountDTO.getGroupId());
+                                vo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            }
                             vo.setDataSource(QtManagerConstant.QtDefectDataSource.MAN.getCode());
                             vo.setMaterialId(qtCheckTask.getMaterialId());
                             vo.setMaterialName(qtCheckTask.getMaterialName());

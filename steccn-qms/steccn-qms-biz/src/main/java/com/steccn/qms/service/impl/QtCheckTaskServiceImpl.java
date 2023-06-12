@@ -46,6 +46,8 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaManagerConstant;
+import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.dto.OaHrmDTO;
 import com.steccn.oa.dto.OaRosterRecordDTO;import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
@@ -1962,7 +1964,21 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     private List<QtCheckTaskReportVO> copyQtCheckTask(List<QtCheckTask> sourceData) {
+        //班組信息
+        Optional<QtCheckTask> minOp = sourceData.stream().min(Comparator.comparing(QtCheckTask::getSpotTime));
+        Optional<QtCheckTask> maxOp = sourceData.stream().max(Comparator.comparing(QtCheckTask::getSpotTime));
+        Map<String, OaGroupCountDTO> groupMap;
+        if(minOp.isPresent() && maxOp.isPresent()){
+            LocalDate start = LocalDateUtil.getClassDate(minOp.get().getSpotTime(), Boolean.FALSE);
+            LocalDate end = LocalDateUtil.getClassDate(maxOp.get().getSpotTime(), Boolean.TRUE);
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(start, end), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }else{
+            groupMap = Maps.newHashMap();
+        }
+
         List<QtCheckTaskReportVO> resList = Lists.newArrayList();
+        Map<String, OaGroupCountDTO> finalGroupMap = groupMap;
+        OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
         sourceData.forEach(ele -> {
             QtCheckTaskReportVO vo = new QtCheckTaskReportVO();
             BeanUtils.copyProperties(ele, vo);
@@ -1986,6 +2002,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getSpotTime());
                 vo.setClassesId(qtTaskClassCalculate.getClassType());
                 vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                //班組信息
+                QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(vo.getClassesId());
+                if (Objects.nonNull(code)) {
+                    OaGroupCountDTO oaGroupCountDTO = finalGroupMap.getOrDefault(vo.getClassTime() + ":" + code.getName(), defaultOaGroupCountDTO);
+                    vo.setClassGroupId(oaGroupCountDTO.getGroupId());
+                    vo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                }
             }
             resList.add(vo);
         });
@@ -2046,6 +2069,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).map(QtCheckTaskReportVO::getCustomerId).collect(Collectors.toSet());
             Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(() -> remoteOfficeFeign.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             idNameMap =  officeContrastSort(dataMap);
+        }else if(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode().equals(compare)){
+            //对比班组
+            targetMap = flatDataList.stream().filter(v ->Objects.nonNull(v.getClassGroupId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getClassGroupId));
+            Set<Integer> groupIdSet = flatDataList.stream().filter(v ->Objects.nonNull(v.getClassGroupId())).map(QtCheckTaskReportVO::getClassGroupId).collect(Collectors.toSet());
+            idNameMap = Maps.newHashMap();
+            List<Integer> groupIdList = groupIdSet.stream().sorted(Comparator.comparingInt(x -> x)).collect(Collectors.toList());
+            for (Integer groupId : groupIdList) {
+                OaManagerConstant.OaTeamGroupMapping code = OaManagerConstant.OaTeamGroupMapping.code(groupId);
+                if (Objects.nonNull(code)) {
+                    idNameMap.put(code.getCode(), code.getName());
+                }
+            }
         } else{
             //不对比
             targetMap = Maps.newHashMap();

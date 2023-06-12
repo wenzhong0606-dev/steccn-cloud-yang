@@ -85,4 +85,12 @@ public class QtCheckTaskDetailReportVO implements Serializable {
 
     @ApiModelProperty("客户主键")
     private Integer customerId;
+
+    @ApiModelProperty("班组id")
+    private Integer classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
+
+
 }
