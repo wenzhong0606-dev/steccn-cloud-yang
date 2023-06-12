@@ -1131,13 +1131,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             int finalI = i;
                             List<List<ReadValueListVO>> readValueAllList = new ArrayList<>();
                             reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
-                            BigDecimal sumReduce = readValueAllList.stream().filter(v -> Objects.nonNull(v.get(finalI).getReadValue())).map(v -> v.get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
+                            List<BigDecimal> bdList = readValueAllList.stream().filter(v -> Objects.nonNull(v.get(finalI).getReadValue())).map(v -> v.get(finalI).getReadValue()).collect(Collectors.toList());
+                            meterReadListVO.getReadValueList().get(i).setReadValue(BigDecimalUtil.sum(bdList));
                         }
                     }
                     //求和
-                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    meterReadListVO.setSum(sum);
+                    List<BigDecimal> bdList = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).collect(Collectors.toList());
+                    meterReadListVO.setSum(BigDecimalUtil.sum(bdList));
                 }
         ).collect(Collectors.toList());
     }
