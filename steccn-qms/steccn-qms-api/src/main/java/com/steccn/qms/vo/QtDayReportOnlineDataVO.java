@@ -49,7 +49,7 @@ public class QtDayReportOnlineDataVO implements Serializable {
     private Integer classGroupId;
 
     @ApiModelProperty("班组名称")
-    private Integer classGroupName;
+    private String classGroupName;
 
     @ApiModelProperty("缺陷记录时段-开始")
     private LocalDateTime defectStartTime;

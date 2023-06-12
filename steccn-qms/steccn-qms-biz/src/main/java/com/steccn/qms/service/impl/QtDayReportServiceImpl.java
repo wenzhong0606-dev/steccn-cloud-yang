@@ -17,6 +17,8 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaGroupCountDTO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -75,6 +77,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtCheckItemService qtCheckItemService;
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final OaInfoService oaInfoService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
@@ -109,6 +112,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
         String productLineName = sysOfficeMap.get(dto.getProductLineId());
 
+        //根据时间获取班组
+        Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(date, date), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
         for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
             //根据班次分组
             Map<Integer, BigDecimal> classCountMap = Maps.newHashMap();
@@ -124,6 +130,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         vo.setDataSource(dataSourceEntry.getKey());
                         vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
                         vo.setClassId(classEntry.getKey());
+                        String name = QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName();
+                        vo.setClassName(name);
+                        OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(date + ":" + name, defaultOaGroupCountDTO);
+                        vo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                        vo.setClassGroupId(oaGroupCountDTO.getGroupId());
                         vo.setClassName(QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName());
                         String[] split = defectTimeEntry.getKey().split("~");
                         vo.setDefectStartTime(LocalDateTime.parse(split[0]));
