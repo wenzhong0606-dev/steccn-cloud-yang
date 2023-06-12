@@ -870,7 +870,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     public QtDaySamplingVO sampling(LocalDate date) {
         //1.获取早班和晚班时间
         LocalDateTime morning = LocalDateUtil.getMorning(date);
-        LocalDateTime night = LocalDateUtil.getNight(date).plusDays(1);
+//        LocalDateTime night = LocalDateUtil.getNight(date).plusDays(1);
+//        1）查询已检验的配料抽检任务中，取样时间在区间 [查询日期8:00:00, 查询日期20:00:00] 内的所有样本，记为集合T1（早班）
+//        2）查询已检验的配料抽检任务中，取样时间在区间 [查询日期20:00:00, 查询日期+1 8:00:00] 内的所有样本，记为集合T2（晚班）
+        LocalDateTime night = morning.plusDays(1);
         //2.获取原始数据
         List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingList(morning, night);
         //3.如果原始数据集合不为空，则继续执行
@@ -920,6 +923,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
             String format = dateTimeFormatter.format(samplingTime.toLocalTime());
             data.setSamplingTime(format);
+            data.setSamplingTimeLdt(samplingDTO.getSamplingTime());
             data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
             //配料付数
@@ -964,7 +968,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             if(!o1.getClassId().equals(o2.getClassId())){
                 return o1.getClassId().compareTo(o2.getClassId());
             }
-            return o1.getSamplingTime().compareTo(o2.getSamplingTime());
+            return o1.getSamplingTimeLdt().compareTo(o2.getSamplingTimeLdt());
         });
         resVo.setDataList(dataList);
         return resVo;

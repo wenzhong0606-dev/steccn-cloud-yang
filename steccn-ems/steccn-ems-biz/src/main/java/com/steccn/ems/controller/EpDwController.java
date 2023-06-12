@@ -5,11 +5,10 @@ import com.steccn.ems.service.EpDwService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author yequan
@@ -24,9 +23,18 @@ public class EpDwController {
     private final EpDwService epDwService;
 
     @GetMapping("/meter/read")
-    @ApiOperation(value = "抄表归档")
+    @ApiOperation(value = "抄表归档-ep_meter_read_distant")
     public R<Boolean> meterRead(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.meterRead(date));
+    }
+
+    @PostMapping("/meter/read")
+    @ApiOperation(value = "抄表归档-ep_meter_read_distant")
+    public R<Boolean> meterRead(@RequestBody List<LocalDate> date) {
+        for (LocalDate ele : date) {
+            epDwService.meterRead(ele);
+        }
+        return R.success(Boolean.TRUE);
     }
 
     @GetMapping("/electric/money")
@@ -36,9 +44,18 @@ public class EpDwController {
     }
 
     @GetMapping("/meter/chao")
-    @ApiOperation(value = "抄表")
+    @ApiOperation(value = "抄表-ep_meter_read")
     public R<Boolean> meterChao(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.read(date));
+    }
+
+    @PostMapping("/meter/chao")
+    @ApiOperation(value = "抄表-ep_meter_read")
+    public R<Boolean> meterChao(@RequestBody List<LocalDate> date) {
+        for (LocalDate ele : date) {
+            epDwService.read(ele);
+        }
+        return R.success(Boolean.TRUE);
     }
 
     @GetMapping("/heat/power")

@@ -337,7 +337,6 @@ public interface EpManagerConstant {
     String CONF_EMS_GAS_CONTENT = "EMS_GAS_CONTENT";
     String CONF_EMS_OIL_CONTENT = "EMS_OIL_CONTENT";
 
-
     /**
      * 配置EMS_DAY_COUNT 的content映射
      */

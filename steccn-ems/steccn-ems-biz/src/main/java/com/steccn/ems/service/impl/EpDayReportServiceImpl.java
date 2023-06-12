@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 public class EpDayReportServiceImpl implements EpDayReportService {
 
     private final EpEnergyTypeService epEnergyTypeService;
-    private final EpMeterReadDistantService epMeterReadDistantService;
     private final EpPartitionService epPartitionService;
     private final EpHeatPowerService epHeatPowerService;
     private final EpMeterReadService meterReadService;
@@ -70,6 +69,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         } catch (Exception e) {
             log.error("{}", e.getLocalizedMessage());
         }
+        //提示产线
+        Map<String, List<String>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, Sets.newHashSet(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString()), 3)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<String> hintList1 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
+        List<String> hintList2 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
+        hintList1.addAll(hintList2);
+        resVo.setHintLineList(hintList1);
         return resVo;
     }
 
@@ -87,7 +92,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private List<EpDayReportCountRowVO> asyncTask(LocalDate start, LocalDate end, List<EpEnergyTypeVO> energyTypeList, Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap) throws ExecutionException, InterruptedException {
         List<EpDayReportCountRowVO> dataList = Lists.newArrayList();
         //获取全部厚度
-        List<BigDecimal> allThickList = epMeterReadDistantService.selectAllThick(start, end);
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
 
         CompletableFuture<List<EpDayReportCountRowVO>> elecFuture = CompletableFuture.supplyAsync(() -> {
@@ -115,7 +119,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用油量数据
                 Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
-                List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
+                List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL));
                 return oilRowList;
             } catch (Exception e) {
                 log.error("oil -> {}", e.getLocalizedMessage());
@@ -128,7 +132,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用气量
                 Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
-                return consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS), allThickList);
+                return consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS));
             } catch (Exception e) {
                 log.error("gas -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
@@ -140,7 +144,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用水量
                 Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
-                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER), allThickList);
+                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER));
             } catch (Exception e) {
                 log.error("water -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
@@ -150,24 +154,26 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture);
         completableFuture.isDone();
         dataList.addAll(elecFuture.get());
-        dataList.addAll(oilFuture.get());
-        dataList.addAll(gasFuture.get());
         dataList.addAll(waterFuture.get());
+        dataList.addAll(gasFuture.get());
+        dataList.addAll(oilFuture.get());
         return dataList;
     }
 
     /**
      * 根据开始时间获取结束时间
+     * 当前班次日期-1
      *
      * @param start 开始时间
      * @return
      */
-    private LocalDate getEndDate(LocalDate start) {
+    private static LocalDate getEndDate(LocalDate start) {
         LocalDateTime endLdt = LocalDateUtil.getLastDayOfMonthStr(start);
         LocalDate end = endLdt.toLocalDate();
-        LocalDate now = LocalDate.now();
-        if (end.isAfter(now)) {
-            end = now;
+        LocalDate classDate = LocalDateUtil.getClassDate(LocalDateTime.now(), Boolean.TRUE);
+        classDate = classDate.minusDays(1);
+        if (end.isAfter(classDate)) {
+            end = classDate;
         }
         return end;
     }
@@ -237,7 +243,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
         List<EpDayReportCountRowVO> resList = Lists.newArrayList();
         //获取配置map
-        Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //基片制造部
         List<Integer> jpzzbList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JPZZB_LIST.toString(), Lists.newArrayList());
         //深加工四条产线【一二三四】
@@ -611,12 +617,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param partitionList 节点集合
      * @return
      */
-    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList, List<BigDecimal> allThickList) {
+    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
         List<EpDayReportCountRowVO> rowList = Lists.newArrayList();
         if (CollUtil.isEmpty(partitionList) || Objects.isNull(epEnergy)) {
             return rowList;
         }
-
         //查询全量数据表
         LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
         LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
@@ -669,7 +674,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         head.setUnit("单位");
         head.setDepartmentName("部门");
         List<String> dateStrList = Lists.newArrayList();
-        dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM月dd日")));
+        //年月日 eg. 2023-06-06
+        //月日 eg.06-06
+        dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM-dd")));
         head.setConsumeList(dateStrList);
         head.setSumStr("总计");
         return head;

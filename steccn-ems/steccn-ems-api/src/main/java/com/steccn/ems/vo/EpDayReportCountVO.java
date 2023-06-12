@@ -24,5 +24,6 @@ public class EpDayReportCountVO implements Serializable {
     @ApiModelProperty("数据汇总")
     private List<EpDayReportCountRowVO> dataList;
 
-
+    @ApiModelProperty("提示产线集合")
+    private List<String> hintLineList;
 }

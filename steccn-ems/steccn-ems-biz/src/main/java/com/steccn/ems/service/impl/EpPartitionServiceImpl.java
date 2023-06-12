@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -25,6 +26,7 @@ import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.extern.slf4j.Slf4j;
@@ -531,14 +533,14 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             List<EpPartition> epPartitions = listByIds(allPartitionIdSet);
             if (CollUtil.isNotEmpty(epPartitions)) {
                 Set<Integer> officeIdSet = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
-                //查询产线和产线孩子节点
-                Set<Integer> productLineAndChildren = FeignOptional.of(() -> remoteOfficeFeign.typeAndChildrenFlat(SysOfficeConstant.PRODUCT_LINE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                //获取其余节点
-                officeIdSet.removeAll(productLineAndChildren);
-                if(CollUtil.isNotEmpty(officeIdSet)){
+                //查询所有节点的产线父节点
+                Map<Integer, Integer> parentLineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //如果是产线父节点，则留下，不然视为其余节点
+                Set<Integer> newOfficeIdSet = officeIdSet.stream().filter(v -> Objects.isNull(parentLineMap.get(v))).collect(Collectors.toSet());
+                if(CollUtil.isNotEmpty(newOfficeIdSet)){
                     //获取剩下的节点数据
                     List<EpPartition> other = list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getId, allPartitionIdSet)
-                            .in(EpPartition::getOfficeId, officeIdSet).select(EpPartition::getId));
+                            .in(EpPartition::getOfficeId, newOfficeIdSet).select(EpPartition::getId));
                     if(CollUtil.isNotEmpty(other)){
                         Set<Long> otherPartitionIdSet = other.stream().map(EpPartition::getId).collect(Collectors.toSet());
                         resSet.addAll(otherPartitionIdSet);
@@ -603,17 +605,17 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     @Override
     public Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode() {
         //电
-        Map<String, List<Integer>> eleConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> eleConfList = eleConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        Map<String, List<SysConfigurationDTO>> eleConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleConfList = eleConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         //水
-        Map<String, List<Integer>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> waterConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        Map<String, List<SysConfigurationDTO>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> waterConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         //气
-        Map<String, List<Integer>> gasConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_GAS, Sets.newHashSet(EpManagerConstant.CONF_EMS_GAS_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> gasConfList = gasConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        Map<String, List<SysConfigurationDTO>> gasConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_GAS, Sets.newHashSet(EpManagerConstant.CONF_EMS_GAS_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> gasConfList = gasConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         //油
-        Map<String, List<Integer>> oilConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_OIL, Sets.newHashSet(EpManagerConstant.CONF_EMS_OIL_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> oilConfList = oilConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        Map<String, List<SysConfigurationDTO>> oilConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_OIL, Sets.newHashSet(EpManagerConstant.CONF_EMS_OIL_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> oilConfList = oilConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 
         Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, eleConfList));
@@ -630,12 +632,24 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param officeNameList 组织结构名称集合
      * @return
      */
-    private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<Integer> officeIdList) {
+    private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<SysConfigurationDTO> configurationDTOList) {
         List<TripleDTO<Long, Integer, String>> resList = Lists.newArrayList();
-        List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeId, officeIdList));
-        if (CollUtil.isNotEmpty(dbList)) {
-            for (EpPartition epPartition : dbList) {
-                resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), epPartition.getOfficeName()));
+        if(CollUtil.isNotEmpty(configurationDTOList)){
+            Map<Integer,String> idNameMap = Maps.newHashMap();
+            for (SysConfigurationDTO configurationDTO : configurationDTOList) {
+                try {
+                    int id = Integer.parseInt(configurationDTO.getRefContent());
+                    idNameMap.put(id, configurationDTO.getOtherContent());
+                }catch (Exception e){
+                    log.error("{}",e.getLocalizedMessage());
+                }
+            }
+            List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeId, idNameMap.keySet()));
+            if (CollUtil.isNotEmpty(dbList)) {
+                for (EpPartition epPartition : dbList) {
+                    String officeName = idNameMap.get(epPartition.getOfficeId());
+                    resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), StrUtil.isNotBlank(officeName) ? officeName : epPartition.getOfficeName()));
+                }
             }
         }
         return resList;

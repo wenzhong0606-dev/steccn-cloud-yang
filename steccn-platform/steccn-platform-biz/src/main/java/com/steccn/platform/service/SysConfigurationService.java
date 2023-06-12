@@ -2,6 +2,7 @@ package com.steccn.platform.service;
 
 import com.steccn.platform.domain.SysConfiguration;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.util.List;
@@ -30,5 +31,5 @@ public interface SysConfigurationService extends IService<SysConfiguration> {
      * @param contentList 类型集合
      * @return
      */
-    <T> Map<String, List<T>> confList(String type, Set<String> contentList,Function<String, T> function);
+    <T> Map<String, List<T>> confList(String type, Set<String> contentList,Function<SysConfigurationDTO, T> function);
 }
