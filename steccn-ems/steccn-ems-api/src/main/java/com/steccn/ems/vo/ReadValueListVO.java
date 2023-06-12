@@ -15,7 +15,7 @@ public class ReadValueListVO {
      * 仪表id
      */
     private Integer meterId;
-    private LocalDate readDate;
+    private String readDate;
     private BigDecimal readValue;
     /**
      * 0实体远传仪表、1实体非远传仪表、2虚拟仪表

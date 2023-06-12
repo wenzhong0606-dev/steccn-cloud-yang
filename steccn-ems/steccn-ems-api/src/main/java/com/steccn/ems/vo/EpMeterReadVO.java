@@ -12,5 +12,5 @@ import java.util.List;
 @Data
 public class EpMeterReadVO {
     private List<MeterReadListVO> meterReadListVOList;
-    private List<LocalDate> labelList;
+    private List<String> labelList;
 }
