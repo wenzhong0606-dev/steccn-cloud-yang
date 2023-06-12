@@ -1454,22 +1454,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 for (Map.Entry<Integer, List<QtCheckTask>> entry2 : groupByWorkOrder.entrySet()) {
                     //根据时间排序
                     List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
-                    //查看是否是一种物料
-                    HashSet<Long> materialIdSet = new HashSet<>();
-                    //物料id集合
-                    List<Long> materialList = Lists.newArrayList();
-                    checkTaskWorkOrderList.forEach(tmp -> {
-                        materialIdSet.add(tmp.getMaterialId());
-                        if (!materialList.contains(tmp.getMaterialId())) {
-                            materialList.add(tmp.getMaterialId());
-                        }
-                    });
-                    Boolean flag = true;
-                    if (materialIdSet.size() > 1) {
-                        flag = false;
-                    }
-                    //计算生产时长
-                    Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList, flag, entry2);
+
                     //查询单片掰边重量(改成了掰边重量)
                     //把掰边，样品，拉引时速加入
                     List<String> bdlTmp = Lists.newArrayList();
@@ -1501,6 +1486,25 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     //根据产线进行分组
                     Map<Integer, List<QtCheckTask>> groupByProductLine = checkTaskWorkOrderList.stream().collect(Collectors.groupingBy(QtCheckTask::getProductLineId));
                     for (Map.Entry<Integer, List<QtCheckTask>> entry3 : groupByProductLine.entrySet()) {
+                        //查看是否是一种物料
+                        HashSet<Long> materialIdSet = new HashSet<>();
+                        //物料id集合
+                        List<Long> materialList = Lists.newArrayList();
+                        if(CollUtil.isNotEmpty(entry3.getValue())){
+                            entry3.getValue().forEach(tmp -> {
+                                materialIdSet.add(tmp.getMaterialId());
+                                if (!materialList.contains(tmp.getMaterialId())) {
+                                    materialList.add(tmp.getMaterialId());
+                                }
+                            });
+                        }
+                        Boolean flag = true;
+                        if (materialIdSet.size() > 1) {
+                            flag = false;
+                        }
+                        //计算生产时长
+                        Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList, flag, entry2);
+
                         QtPullAmountDTO resultTmp = new QtPullAmountDTO();
                         //产线名字
                         String productLineName = remoteOfficeFeign.getNameById(entry3.getKey()).getData();
@@ -1619,7 +1623,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //拉引量
                             if (flag) {
                                 //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(2));
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(1));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -1628,7 +1632,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
                                 //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(2));
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(1));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             }
                         }
