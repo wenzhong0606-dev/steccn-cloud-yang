@@ -80,7 +80,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final OaInfoService oaInfoService;
 
     @Override
-    public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
+    public QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId) {
         QtDayReportOnlineVO resVo = new QtDayReportOnlineVO();
         List<QtDayReportOnlineDataVO> tableData = Lists.newArrayList();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("HH:mm");
@@ -89,7 +89,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         QtChartParamDTO dto = new QtChartParamDTO();
         dto.setDateStart(date);
         dto.setDateEnd(date);
-        dto.setProductLineId(productLineId);
+        dto.setProductLineIdList(productLineId);
         //获取人工采集的缺陷集合+获取机器采集的缺陷集合
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);

@@ -7,6 +7,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -36,6 +37,9 @@ public class QtCheckTaskConditionDTO implements Serializable {
 
     @ApiModelProperty("产线id")
     private Integer productLineId;
+
+    @ApiModelProperty("产线id集合")
+    private List<Integer> productLineIdList;
 
     @ApiModelProperty("类型:0柱状图,1饼状图")
     private Integer type;

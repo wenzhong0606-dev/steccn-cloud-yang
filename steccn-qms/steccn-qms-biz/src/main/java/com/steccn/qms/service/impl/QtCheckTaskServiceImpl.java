@@ -2173,6 +2173,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto) {
         //根据已知条件查询任务表
+
+        String join = String.join(",", dto.getProductLineIdList().stream().map(Object::toString).collect(Collectors.toList()));
+
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
@@ -2181,12 +2184,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .le(Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getEndTime())
                 //班次
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
-                //只要巡检
+                //检验类型
                 .eq(Objects.nonNull(dto.getTaskType()), QtCheckTask::getTaskType, dto.getTaskType())
                 //车间
                 .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线
                 .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
+                .apply(CollUtil.isNotEmpty(dto.getProductLineIdList()), "JSON_CONTAINS( JSON_ARRAY(" + join + ") ,product_line->'$.id')", dto.getProductLineIdList())
                 .orderByAsc(QtCheckTask::getFinishedTime);
         return list(taskCondition);
     }
@@ -2202,8 +2206,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //查询时间范围为当天的8点到晚上八点
         LocalDateTime start = LocalDateTime.of(dto.getDateTime(), LocalTime.of(8, 0, 0));
         LocalDateTime end = LocalDateTime.of(dto.getDateTime(), LocalTime.of(20, 0, 0));
-//        LambdaQueryWrapper<QtCheckTask> condition = accessoryAcceptabilityQtCheckTasks(dto, start, end);
-
 
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
