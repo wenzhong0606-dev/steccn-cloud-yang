@@ -2,6 +2,7 @@ package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtLossReportDTO;
+import com.steccn.qms.dto.QtReportFirstPatrolDTO;
 import com.steccn.qms.service.QtDayReportService;
 import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiModel;
@@ -33,12 +34,10 @@ public class QtDayReportController {
         return R.success(qtDayReportService.online(date, productLineId));
     }
 
-    @GetMapping("/first")
+    @PostMapping("/first")
     @ApiOperation("质量日报表-首检2/巡检4")
-    public R<QtDayReportFirstVO> first(@RequestParam("date") LocalDate date,
-                                       @RequestParam("productLineId") Integer productLineId,
-                                       @RequestParam("checkTaskType") Integer checkTaskType) {
-        return R.success(qtDayReportService.first(date,productLineId,checkTaskType));
+    public R<QtDayReportFirstVO> first(@RequestBody @Validated QtReportFirstPatrolDTO dto) {
+        return R.success(qtDayReportService.first(dto));
     }
 
 

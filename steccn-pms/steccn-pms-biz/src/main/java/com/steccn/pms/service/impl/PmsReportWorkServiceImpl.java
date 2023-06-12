@@ -18,7 +18,6 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
@@ -33,14 +32,13 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.vo.PmsReportWorkHourVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.apache.tomcat.jni.Local;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -56,7 +54,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -776,6 +773,49 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<PmsReportWorkVO> listBylineIds(List<Integer> lineIds, LocalDate date) {
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = LocalDateUtil.getMorning(date.plusDays(1));
+        List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineIds).ge(PmsReportWork::getStartTime, start)
+                .le(PmsReportWork::getEndTime, end));
+        List<PmsReportWorkVO> resList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(list)) {
+            List<Long> collect = new ArrayList<>(list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet()));
+            Set<Long> workIds = list.stream().map(PmsReportWork::getId).collect(Collectors.toSet());
+            //获取报工工时信息
+            List<PmsReportWorkHour> pmsReportWorkHours = reportWorkHourService.list(new LambdaQueryWrapper<PmsReportWorkHour>().in(PmsReportWorkHour::getReportWorkId, workIds));
+            Map<Long, List<PmsReportWorkHour>> reportWorkHoursMap = pmsReportWorkHours.stream().collect(Collectors.groupingBy(PmsReportWorkHour::getReportWorkId));
+            Map<Long, PmsProduceOrder> orderMap = produceOrderService.orderList(collect);
+            for (PmsReportWork pmsReportWork : list) {
+                PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
+                BeanUtil.copyProperties(pmsReportWork,pmsReportWorkVO);
+                pmsReportWorkVO.setMaterialId(orderMap.get(pmsReportWork.getProduceOrderId()).getMaterialId());
+                pmsReportWorkVO.setProduceOrder(orderMap.get(pmsReportWork.getProduceOrderId()).getCode());
+                pmsReportWorkVO.setProduceOrderId(orderMap.get(pmsReportWork.getProduceOrderId()).getId());
+                pmsReportWorkVO.setClassGroupId(pmsReportWork.getClassGroupId());
+                resList.add(pmsReportWorkVO);
+                List<PmsReportWorkHour> pmsReportWorkHours1 = reportWorkHoursMap.get(pmsReportWork.getId());
+                if (CollUtil.isNotEmpty(pmsReportWorkHours1)){
+                    pmsReportWorkVO.setList(BeanUtil.copyToList(pmsReportWorkHours1, PmsReportWorkHourVO.class));
+                }
+            }
+        }
+        return resList;
+    }
+
+    @Override
+    public List<PmsReportWorkVO> monthlyData(LocalDate date, List<Integer> lineIds) {
+
+        //当前日期的一号早八点
+        LocalDateTime start = LocalDateUtil.getMorning(date.withDayOfMonth(1));
+        //当前日期的晚班结束时间
+        LocalDateTime end = LocalDateUtil.getMorning(date).plusDays(1);
+        List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineIds).ge(PmsReportWork::getStartTime, start)
+                .le(PmsReportWork::getEndTime, end));
+        return BeanUtil.copyToList(list, PmsReportWorkVO.class);
     }
 
     /**

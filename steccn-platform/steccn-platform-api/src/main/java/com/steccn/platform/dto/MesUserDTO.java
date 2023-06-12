@@ -14,8 +14,9 @@ import java.io.Serializable;
 public class MesUserDTO implements Serializable {
     private String loginCode;
     private String userName;
-    private String userRoleString;
-    private String userType;
-    private MesEmployeeDTO mesEmployeeDTO;
     private Boolean isNewRecord;
+    private String companyCode;
+    private String companyName;
+    private String officeCode;
+    private String officeName;
 }

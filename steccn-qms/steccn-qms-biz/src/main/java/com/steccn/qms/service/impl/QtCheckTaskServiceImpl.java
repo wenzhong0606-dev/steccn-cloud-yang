@@ -46,6 +46,8 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaManagerConstant;
+import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.dto.OaHrmDTO;
 import com.steccn.oa.dto.OaRosterRecordDTO;import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
@@ -88,6 +90,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,6 +107,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -122,11 +126,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     private final RemoteOfficeFeign remoteOfficeFeign;
 
-    private final QtMaterialService qtMaterialService;
+    @Autowired
+    private  QtMaterialService qtMaterialService;
 
-    private final QtCheckPlanService qtCheckPlanService;
+    @Autowired
+    private QtCheckPlanService qtCheckPlanService;
 
-    private final QtCheckTaskDetailService qtCheckTaskDetailService;
+    @Autowired
+    private QtCheckTaskDetailService qtCheckTaskDetailService;
 
     private final QtRecheckTaskService qtRecheckTaskService;
 
@@ -1235,29 +1242,32 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(rollbackFor = Exception.class)
     public Boolean refreshGroupClass() {
         List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
-                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
-                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
-                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()));
-        taskList.forEach(tmp->{
+                .select(QtCheckTask::getId,QtCheckTask::getStartBy)
+                .and(v->v.between(QtCheckTask::getId,15000,16935))
+                .and(v->v.eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                        .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                        .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())));
+        for(QtCheckTask tmp:taskList){
             QtCheckTask taskModel = new QtCheckTask();
             taskModel.setId(tmp.getId());
             if(tmp.getStartBy()==null){
-                taskModel.setClassGroupName("甲班");
+                taskModel.setClassGroupName("车间倒班-甲班");
                 taskModel.setClassesId(1);
             }else {
                 Set<Long> idList = Sets.newHashSet();
                 idList.add(tmp.getStartBy());
                 List<OaGroupIdAndNameVO> groupByUser = oaInfoService.getGroupByUser(idList).getData();
                 if(CollUtil.isEmpty(groupByUser)){
-                    taskModel.setClassGroupName("甲班");
+                    taskModel.setClassGroupName("车间倒班-甲班");
                     taskModel.setClassesId(1);
                 }else {
                     taskModel.setClassGroupId(groupByUser.get(0).getClassGroupId());
                     taskModel.setClassGroupName(groupByUser.get(0).getClassGroupName());
                 }
-                updateById(taskModel);
             }
-        });
+            updateById(taskModel);
+
+        }
         return true;
     }
 
@@ -1911,9 +1921,40 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //自定义转换工具
         QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
-        //获取所有的下拉选项
-        qtLineChartBiBarDTO.setOther(materialSelect(allSelectList));
+
+        //基片巡检合格率趋势-柱状图 全量数据表查询车间，产线，班次，物料
+        Set<Integer> classIdSet = Sets.newTreeSet();
+        Set<Integer> workShopIdSet = Sets.newTreeSet();
+        Set<Integer> lineIdSet = Sets.newTreeSet();
+        Set<Long> materialIdSet = Sets.newHashSet();
+        for (QtCheckTaskReportVO data : flatDataList) {
+            classIdSet.add(data.getClassesId());
+            workShopIdSet.add(data.getProductWorkshopId());
+            lineIdSet.add(data.getProductLineId());
+            materialIdSet.add(data.getMaterialId());
+        }
+        BaseScreenVO baseScreenVO = new BaseScreenVO();
+        baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
+        baseScreenVO.setProductWorkShopScreen(conditionData(workShopIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(workShopIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setProductLineScreen(conditionData(lineIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setMaterialScreen(conditionData(materialIdSet, FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        qtLineChartBiBarDTO.setOther(baseScreenVO);
         return qtLineChartBiBarDTO;
+    }
+
+    /**
+     * 获取全量数据表的条件集合
+     * @param idSet
+     * @param idNameMap
+     * @param <T>
+     * @return
+     */
+    private <T> List<BaseSelectVO<T>> conditionData(Set<T> idSet, Map<T, String> idNameMap) {
+        List<BaseSelectVO<T>> resList = org.apache.commons.compress.utils.Lists.newArrayList();
+        for (T id : idSet) {
+            resList.add(new BaseSelectVO<T>(id, idNameMap.get(id)));
+        }
+        return resList;
     }
 
     /**
@@ -1923,7 +1964,21 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     private List<QtCheckTaskReportVO> copyQtCheckTask(List<QtCheckTask> sourceData) {
+        //班組信息
+        Optional<QtCheckTask> minOp = sourceData.stream().min(Comparator.comparing(QtCheckTask::getSpotTime));
+        Optional<QtCheckTask> maxOp = sourceData.stream().max(Comparator.comparing(QtCheckTask::getSpotTime));
+        Map<String, OaGroupCountDTO> groupMap;
+        if(minOp.isPresent() && maxOp.isPresent()){
+            LocalDate start = LocalDateUtil.getClassDate(minOp.get().getSpotTime(), Boolean.FALSE);
+            LocalDate end = LocalDateUtil.getClassDate(maxOp.get().getSpotTime(), Boolean.TRUE);
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(start, end), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }else{
+            groupMap = Maps.newHashMap();
+        }
+
         List<QtCheckTaskReportVO> resList = Lists.newArrayList();
+        Map<String, OaGroupCountDTO> finalGroupMap = groupMap;
+        OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
         sourceData.forEach(ele -> {
             QtCheckTaskReportVO vo = new QtCheckTaskReportVO();
             BeanUtils.copyProperties(ele, vo);
@@ -1947,6 +2002,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getSpotTime());
                 vo.setClassesId(qtTaskClassCalculate.getClassType());
                 vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                //班組信息
+                QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(vo.getClassesId());
+                if (Objects.nonNull(code)) {
+                    OaGroupCountDTO oaGroupCountDTO = finalGroupMap.getOrDefault(vo.getClassTime() + ":" + code.getName(), defaultOaGroupCountDTO);
+                    vo.setClassGroupId(oaGroupCountDTO.getGroupId());
+                    vo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                }
             }
             resList.add(vo);
         });
@@ -1998,7 +2060,28 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(classId);
                 idNameMap.put(code.getCode(), code.getName());
             }
-        }else{
+        }else if(QtManagerConstant.QtChartCompareEnum.CUSTOMER.getCode().equals(compare)){
+          //对比客户
+            flatDataCopyList = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).collect(Collectors.toList());
+            flatDataList.clear();
+            flatDataList.addAll(flatDataCopyList);
+            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
+            Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getCustomerId())).map(QtCheckTaskReportVO::getCustomerId).collect(Collectors.toSet());
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(() -> remoteOfficeFeign.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            idNameMap =  officeContrastSort(dataMap);
+        }else if(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode().equals(compare)){
+            //对比班组
+            targetMap = flatDataList.stream().filter(v ->Objects.nonNull(v.getClassGroupId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getClassGroupId));
+            Set<Integer> groupIdSet = flatDataList.stream().filter(v ->Objects.nonNull(v.getClassGroupId())).map(QtCheckTaskReportVO::getClassGroupId).collect(Collectors.toSet());
+            idNameMap = Maps.newHashMap();
+            List<Integer> groupIdList = groupIdSet.stream().sorted(Comparator.comparingInt(x -> x)).collect(Collectors.toList());
+            for (Integer groupId : groupIdList) {
+                OaManagerConstant.OaTeamGroupMapping code = OaManagerConstant.OaTeamGroupMapping.code(groupId);
+                if (Objects.nonNull(code)) {
+                    idNameMap.put(code.getCode(), code.getName());
+                }
+            }
+        } else{
             //不对比
             targetMap = Maps.newHashMap();
             targetMap.put(0, flatDataList);
@@ -2317,16 +2400,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         Set<Long> taskIds = flatDataList.stream().map(QtCheckTaskReportVO::getId).collect(Collectors.toSet());
         Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
-
-        //分页
-//        int pageSize = dto.getSize();
-//        int current = dto.getCurrent() - 1;
-//        flatDataList = flatDataList.stream().skip(current * pageSize)
-//                .limit(dto.getSize())
-//                .collect(Collectors.toList());
-//        Page<QtCheckTaskReportVO> page = new Page<>(dto.getCurrent(), dto.getSize());
-//        page.setRecords(flatDataList);
-//        page.setTotal(flatDataList.size());
         Page<QtCheckTaskReportVO> page = LogicalPageUtil.page(flatDataList, dto.getCurrent(), dto.getSize());
         page.getRecords().forEach(flatData ->{
             flatData.setList(taskInfoMap.get(flatData.getId()));

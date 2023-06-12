@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -218,7 +219,7 @@ public interface OaInfoService {
     R<OaSaveDocVO> saveDoc(@RequestParam("url") String url,@RequestParam("docName") String docName);
 
     @ApiOperation("根据部门id获取信息")
-    @GetMapping("/department/info")
+    @GetMapping("/feign/oa/department/info")
     R<OaDepartmentVO> getDepartmentInfoById(@RequestParam("id") Integer id);
 
     @ApiOperation("根据岗位id获取岗位信息")
@@ -228,4 +229,14 @@ public interface OaInfoService {
     @ApiOperation("获取班组长信息")
     @PostMapping("/feign/oa/group/leader")
     R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds);
+
+    /**
+     * 键为2023-06-06:早班 值为甲班
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    @ApiOperation("获取班次对应的班组")
+    @GetMapping("/feign/oa/group/count")
+    R<Map<String,OaGroupCountDTO>> getGroupInfo(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate);
 }

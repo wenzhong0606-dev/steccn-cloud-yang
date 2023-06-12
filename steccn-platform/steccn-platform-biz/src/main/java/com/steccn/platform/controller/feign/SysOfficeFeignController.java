@@ -99,6 +99,12 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.listByParentId(dto));
     }
 
+    @ApiOperation("根据父节点以及子节点类型获取下级子节点数据")
+    @GetMapping("/listByParentIdAndType")
+    public R<List<SysOfficeVO>> listByParentIdAndType(Set<Integer> parentIds,String type ){
+        return R.success(sysOfficeService.listByParentIdAndType(parentIds,type));
+    }
+
     @ApiOperation("货架的仓库")
     @GetMapping("/shelf/warehouse/{id}")
     public R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id) {
@@ -217,5 +223,12 @@ public class SysOfficeFeignController {
     public R<Map<Integer, Integer>> parentType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
         Assert.notNull(tupleDTO.getField1(), "指定类型不能为空");
         return R.success(sysOfficeService.parentType(tupleDTO.getField2(), tupleDTO.getField1()));
+    }
+
+
+    @PostMapping("/child/workshop")
+    @ApiOperation("查询节点的子节点-车间")
+    public R<Map<Integer,List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet){
+        return R.success(sysOfficeService.childWorkshop(officeIdSet));
     }
 }

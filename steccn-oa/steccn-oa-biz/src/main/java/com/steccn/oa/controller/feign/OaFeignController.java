@@ -3,6 +3,7 @@ package com.steccn.oa.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,5 +97,11 @@ public class OaFeignController {
     @PostMapping("/group/leader")
     public R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds){
         return R.success(kqGroupmemberService.getLeaderByGroupId(groupIds));
+    }
+
+    @ApiOperation("获取班次对应的班组")
+    @GetMapping("/group/count")
+    public R<Map<String, OaGroupCountDTO>> getGroupInfo(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate){
+        return R.success(oaService.getClassGroupMap(startDate,endDate));
     }
 }

@@ -13,14 +13,11 @@ import com.steccn.flinkcdc.dto.HrmresourceDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaJobTitleVO;
-import com.steccn.platform.dto.MesCompanyDTO;
-import com.steccn.platform.dto.MesEmployeeDTO;
 import com.steccn.platform.dto.MesOfficeDTO;
 import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,7 +52,12 @@ public class HrmresourceService {
         //新增
         if(operatorType.equals(CdcConstant.OperateType.INSERT.getNum())){
             MesUserDTO mesUserDTO = setUserDTO(hrmresourceDTO,true);
-            String s = FeignOptional.of(() -> remoteMesFeignApi.saveUser(mesUserDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            String s = "";
+            try {
+                s = remoteMesFeignApi.saveUser(mesUserDTO);
+            } catch (Exception e) {
+                log.error("mes调用异常",e);
+            }
             log.info("mes返回:",s);
         }else if(operatorType.equals(CdcConstant.OperateType.UPDATE.getNum())){
             //离职同步
@@ -63,12 +65,22 @@ public class HrmresourceService {
             HrmresourceDTO beforeDTO = JSONObject.parseObject(dataChangeInfo.getBeforeData(), HrmresourceDTO.class);
             if(!beforeDTO.getStatus().equals(hrmresourceDTO.getStatus())&&hrmresourceDTO.getStatus().equals(CdcConstant.NUM_5)){
                 //调用mes接口停用
-                String s = FeignOptional.of(() -> remoteMesFeignApi.disableUser(hrmresourceDTO.getLoginid()), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+                String s = "";
+                try {
+                    s = FeignOptional.of(() -> remoteMesFeignApi.disableUser(beforeDTO.getLoginid()), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+                } catch (Exception e) {
+                    log.error("mes调用异常",e);
+                }
                 log.info("mes返回:",s);
             }else if(!beforeDTO.getDepartmentid().equals(hrmresourceDTO.getDepartmentid())||!beforeDTO.getJobtitle().equals(hrmresourceDTO.getJobtitle())){
                 //部门有所改动或者岗位有所改动
                 MesUserDTO mesUserDTO = setUserDTO(hrmresourceDTO,false);
-                String s = FeignOptional.of(() -> remoteMesFeignApi.saveUser(mesUserDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                String s = "";
+                try {
+                    s = remoteMesFeignApi.saveUser(mesUserDTO);
+                } catch (Exception e) {
+                    log.error("mes调用异常",e);
+                }
                 log.info("mes返回:",s);
             }
         }
@@ -93,7 +105,7 @@ public class HrmresourceService {
         //查看是否为2级节点
         while(!departmentVO.getTLevel().equals(CdcConstant.NUM_2)){
             departmentVO = oaInfoService.getDepartmentInfoById(departmentVO.getSuperId()).getData();
-            if(Objects.isNull(departmentVO)){
+            if(Objects.isNull(departmentVO.getTLevel())){
                 return mesOfficeDTO;
             }
         }
@@ -134,15 +146,11 @@ public class HrmresourceService {
         MesUserDTO mesUserDTO = new MesUserDTO();
         mesUserDTO.setLoginCode(hrmresourceDTO.getLoginid());
         mesUserDTO.setUserName(hrmresourceDTO.getLastname());
-        mesUserDTO.setUserRoleString("");
-        mesUserDTO.setUserType("employee");
         mesUserDTO.setIsNewRecord(isNewRecord);
-        MesEmployeeDTO mesEmployeeDTO = new MesEmployeeDTO();
-        mesEmployeeDTO.setOffice(mesOfficeDTO);
-        mesEmployeeDTO.setCompany(new MesCompanyDTO("CUCC","中国建材桐城新能源材料有限公司"));
-        mesEmployeeDTO.setEmployeePosts("");
-        mesEmployeeDTO.setEmployeeOfficeList(Lists.newArrayList());
-        mesUserDTO.setMesEmployeeDTO(mesEmployeeDTO);
+        mesUserDTO.setOfficeCode(mesOfficeDTO.getOfficeCode());
+        mesUserDTO.setOfficeName(mesOfficeDTO.getOfficeName());
+        mesUserDTO.setCompanyName("中国建材桐城新能源材料有限公司");
+        mesUserDTO.setCompanyCode("CUCC");
         return mesUserDTO;
     }
 }

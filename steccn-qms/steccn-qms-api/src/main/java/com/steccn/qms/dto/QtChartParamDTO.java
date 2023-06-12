@@ -27,7 +27,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("结束时间")
     private LocalDate dateEnd;
 
-    @ApiModelProperty("对比 0为班次 1为产线 2为车间")
+    @ApiModelProperty("对比 0为班次 1为产线 2为车间 8为班组")
     private Integer compare;
 
     @ApiModelProperty("产线id")
@@ -76,4 +76,10 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private List<String> guaFilters;
 
     private String base64;
+
+    @ApiModelProperty(value = "班组名称")
+    private String classGroupName;
+
+    @ApiModelProperty(value = "班组id")
+    private Integer classGroupId;
 }

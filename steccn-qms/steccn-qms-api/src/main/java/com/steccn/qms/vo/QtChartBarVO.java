@@ -12,7 +12,7 @@ import java.util.List;
  * @date 2022/11/09
  */
 @Data
-public class QtChartBarVO implements Serializable {
+public class QtChartBarVO<Q> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -29,6 +29,11 @@ public class QtChartBarVO implements Serializable {
      * 柱状图
      */
     private List<QtChartBarSeriesVO> series;
+
+    /**
+     * 其余冗余数据
+     */
+    private Q other;
 
 
 }

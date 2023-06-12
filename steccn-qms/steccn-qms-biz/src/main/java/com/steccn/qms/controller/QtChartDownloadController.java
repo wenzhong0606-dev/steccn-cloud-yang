@@ -17,6 +17,7 @@ import com.steccn.qms.vo.QtCheckTaskReportVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,9 @@ import java.util.Map;
 @RequestMapping("/qms/chart/download")
 @Slf4j
 public class QtChartDownloadController {
-    private final QtChartDownloadService qtChartDownloadService;
+
+    @Autowired
+    private QtChartDownloadService qtChartDownloadService;
 
     @PostMapping("/substrate")
     @ApiOperation(value = "下载基片成品率数据")

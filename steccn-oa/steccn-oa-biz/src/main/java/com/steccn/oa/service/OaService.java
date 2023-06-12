@@ -9,6 +9,11 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.yulichang.base.MPJBaseMapper;
+import com.github.yulichang.query.MPJQueryWrapper;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
+import com.github.yulichang.wrapper.enums.BaseFuncEnum;
+import com.github.yulichang.wrapper.enums.DefaultFuncEnum;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
@@ -18,8 +23,9 @@ import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
-import com.steccn.oa.domain.Docdetaillog;
+import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.*;
+import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
 import com.steccn.oa.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +50,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +70,7 @@ public class OaService {
 	private final HrmresourceService hrmresourceService;
     private final OaWorkflowDeleteDetailMapper oaWorkflowDeleteDetailMapper;
     private final DocdetaillogService docdetaillogService;
+    private final KqGroupmemberMapper kqGroupmemberMapper;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -564,6 +569,70 @@ public class OaService {
         }
         vos = jsonArray.toJavaList(OaRosterRecordVO.class);
         return vos;
+    }
+
+    /**
+     * 获取质检岗位的map
+     * @return
+     */
+    public Map<String,OaGroupCountDTO> getClassGroupMap(LocalDate startDate,LocalDate endDate){
+//        调用OA接口返回在本行班次日期&班次”质检“岗位上的所有人员
+//        每个人员属于1个或多于1个班组，取人数最多的班组（班组简写为甲班、乙班、丙班）。例如4个人属于甲班，1个人属于乙班，则取甲班
+//        取不到人数最多的班组的情况，均取空值
+        Map<String,OaGroupCountDTO> resultMap = MapUtil.newHashMap();
+        OaRosterRecordDTO dto = new OaRosterRecordDTO();
+        dto.setStartdate(startDate.toString());
+        dto.setEnddate(endDate.toString());
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN);
+        List<OaRosterRecordVO> rosterRecord = getRosterRecord(dto);
+        if(CollUtil.isNotEmpty(rosterRecord)){
+            //拿到所有workCode对应的userCode
+            List<String> workCodes = rosterRecord.stream()
+                    .map(OaRosterRecordVO::getWorkcode)
+                    .distinct()
+                    .collect(Collectors.toList());
+            //拿到对应的userid
+            List<Hrmresource> hrmresourceList = hrmresourceService.list(new LambdaQueryWrapper<Hrmresource>()
+                    .select(Hrmresource::getId,Hrmresource::getWorkcode)
+                    .in(Hrmresource::getWorkcode, workCodes));
+            Map<String, Integer> workCodeIdMap = hrmresourceList.stream().collect(Collectors.toMap(
+                    Hrmresource::getWorkcode,
+                    Hrmresource::getId,
+                    ((existingValue, newValue) -> existingValue)));
+            //把白班和夜班改成早班晚班
+            rosterRecord.stream().forEach(tmp->{
+                tmp.setUserId(workCodeIdMap.get(tmp.getWorkcode()));
+                if(tmp.getSerial().equals("白班")){
+                    tmp.setSerial("早班");
+                }
+                if(tmp.getSerial().equals("夜班")){
+                    tmp.setSerial("晚班");
+                }
+            });
+            //根据日期和班次确定list
+            Map<String, List<Integer>> dateUserIdMap = rosterRecord.stream()
+                    .collect(Collectors.groupingBy(record -> record.getKqdate() + ":" + record.getSerial(),
+                            Collectors.mapping(OaRosterRecordVO::getUserId, Collectors.toList())));
+            //查询数据库找到人最多的班组
+            for(Map.Entry<String,List<Integer>> entry:dateUserIdMap.entrySet()){
+                if(CollUtil.isNotEmpty(entry.getValue())){
+                    MPJQueryWrapper mpjQueryWrapper = new MPJQueryWrapper<OaGroupCountDTO>()
+                            .select("groupid AS groupId,groupname As groupName,Count(typevalue) AS count")
+                            .leftJoin("kq_group t1 on t1.id = t.groupid")
+                            .isNull("t.isDelete")
+                            .in("typevalue",entry.getValue())
+                            .groupBy("groupid")
+                            .orderByDesc("count")
+                            .last("LIMIT 1");
+                    OaGroupCountDTO groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjQueryWrapper);
+                    if(Objects.nonNull(groupCountDTO)){
+                        groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.getNameByOaName(groupCountDTO.getGroupName()));
+                        resultMap.put(entry.getKey(),groupCountDTO);
+                    }
+                }
+            }
+        }
+        return resultMap;
     }
 
     /**

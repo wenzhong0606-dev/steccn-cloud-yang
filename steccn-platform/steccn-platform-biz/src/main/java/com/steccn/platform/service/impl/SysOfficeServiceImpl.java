@@ -168,10 +168,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> warehouseAndShelf(List<String> typeList) {
         //根据前端传过来的机构类型获取组织机构列表
-        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>()
-                .in(CollUtil.isNotEmpty(typeList), SysOffice::getOfficeType, typeList)
-                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
-                .orderByAsc(SysOffice::getTreeSort));
+        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(CollUtil.isNotEmpty(typeList), SysOffice::getOfficeType, typeList).eq(SysOffice::getStatus, SysOfficeConstant.normal).orderByAsc(SysOffice::getTreeSort));
         List<SysOfficeVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dbList)) {
 
@@ -191,10 +188,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> workShopLineStation(List<String> typeList) {
         //根据前端传过来的机构类型获取组织机构列表
-        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>()
-                .in(SysOffice::getOfficeType, typeList)
-                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
-                .orderByAsc(SysOffice::getTreeSort));
+        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, typeList).eq(SysOffice::getStatus, SysOfficeConstant.normal).orderByAsc(SysOffice::getTreeSort));
         List<SysOfficeVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dbList)) {
             //复制查询结果到新的集合
@@ -266,10 +260,10 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
      */
     /**
      * @param childrenList
-     * @param parent 父节点
+     * @param parent       父节点
      * @return
      */
-    public List<SysOfficeVO> getChildrenStrict(Map<String,String> relationMap, List<SysOfficeVO> childrenList,SysOfficeVO parent) {
+    public List<SysOfficeVO> getChildrenStrict(Map<String, String> relationMap, List<SysOfficeVO> childrenList, SysOfficeVO parent) {
         ArrayList<SysOfficeVO> result = new ArrayList<>();
         //遍历集合设置子节点
         for (SysOfficeVO sysOfficeVO : childrenList) {
@@ -429,7 +423,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                 SysOffice sysOffice = idMap.get(officeId);
                 //如果节点数据不为空
                 if (Objects.nonNull(sysOffice)) {
-                    Integer parentLineId = getParentType(type,sysOffice, codeMap);
+                    Integer parentLineId = getParentType(type, sysOffice, codeMap);
                     resMap.put(officeId, parentLineId);
                 }
             }
@@ -439,7 +433,8 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     /**
      * 获取产线父节点
-     * @param type 类型
+     *
+     * @param type    类型
      * @param current 当前节点
      * @param codeMap 所有节点的数据
      * @return list
@@ -461,14 +456,11 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> getCustomer(String name) {
         List<SysOfficeVO> resultList = Lists.newArrayList();
-        List<SysOffice> list = list(new LambdaUpdateWrapper<SysOffice>()
-                .eq(SysOffice::getOfficeType, SysOfficeConstant.CUSTOMER)
-                .like(StrUtil.isNotBlank(name), SysOffice::getOfficeName, name)
-                .last("LIMIT 100"));
-        if(CollUtil.isNotEmpty(list)){
-            list.forEach(tmp->{
+        List<SysOffice> list = list(new LambdaUpdateWrapper<SysOffice>().eq(SysOffice::getOfficeType, SysOfficeConstant.CUSTOMER).like(StrUtil.isNotBlank(name), SysOffice::getOfficeName, name).last("LIMIT 100"));
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(tmp -> {
                 SysOfficeVO vo = new SysOfficeVO();
-                BeanUtil.copyProperties(tmp,vo);
+                BeanUtil.copyProperties(tmp, vo);
                 resultList.add(vo);
             });
         }
@@ -476,10 +468,78 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
+    public Map<Integer, List<Integer>> childWorkshop(List<Integer> officeIdSet) {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, officeIdSet));
+            if (CollUtil.isNotEmpty(list)) {
+                List<String> codes = list.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+                Map<String, List<SysOffice>> collect = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getParentCode, codes)).stream().collect(Collectors.groupingBy(SysOffice::getParentCode));
+                for (SysOffice sysOffice : list) {
+                    List<SysOffice> childList = collect.get(sysOffice.getOfficeCode());
+                    if (CollUtil.isNotEmpty(childList)) {
+                        List<Integer> ids = childList.stream().map(SysOffice::getId).collect(Collectors.toList());
+                        map.put(sysOffice.getId(), ids);
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public List<SysOfficeVO> getWorkShopChildren(Integer type) {
+        //0表示基片
+        String workshop = "";
+        if(type.equals(0)){
+            workshop = "基片";
+        }else {
+            workshop = "深加工";
+        }
+        List<SysOffice> workShopList = list(new LambdaQueryWrapper<SysOffice>()
+                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getOfficeCode)
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.WORKSHOP)
+                .like(SysOffice::getOfficeName, workshop));
+        List<String> parentCodes = workShopList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+        List<SysOffice> productList = list(new LambdaQueryWrapper<SysOffice>()
+                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getParentCode)
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.PRODUCT_LINE)
+                .in(SysOffice::getParentCode,parentCodes));
+        Map<String, List<SysOffice>> productLineCollect = productList.stream().collect(Collectors.groupingBy(SysOffice::getParentCode));
+        List<SysOfficeVO> result = Lists.newArrayList();
+        workShopList.forEach(tmp->{
+            SysOfficeVO vo = new SysOfficeVO();
+            vo.setId(tmp.getId());
+            vo.setOfficeName(tmp.getOfficeName());
+            List<SysOfficeVO> children = Lists.newArrayList();
+            productLineCollect.get(tmp.getOfficeCode()).forEach(childrenTmp -> {
+                SysOfficeVO childrenVo = new SysOfficeVO();
+                childrenVo.setId(childrenTmp.getId());
+                childrenVo.setOfficeName(childrenTmp.getOfficeName());
+                children.add(childrenVo);
+            });
+            vo.setChildren(children);
+            result.add(vo);
+        });
+        return result;
+    }
+
+    @Override
+    public List<SysOfficeVO> listByParentIdAndType(Set<Integer> parentIds, String type) {
+        List<SysOfficeVO> list = new ArrayList<>();
+        if (CollUtil.isNotEmpty(list)) {
+            List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, parentIds).eq(SysOffice::getOfficeType, type));
+            list = BeanUtil.copyToList(officeList, SysOfficeVO.class);
+        }
+        return list;
+    }
+
+
+    @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
         if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {
-            SysOffice parent = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).eq(SysOffice::getOfficeCode, child.getParentCode()),false);
+            SysOffice parent = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).eq(SysOffice::getOfficeCode, child.getParentCode()), false);
             if (Objects.nonNull(parent)) {
                 SysOfficeVO sysOfficeVO = new SysOfficeVO();
                 BeanUtils.copyProperties(parent, sysOfficeVO);
@@ -577,10 +637,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto) {
         List<SysOfficeVO> vos = new ArrayList<>();
-        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
-                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
-                .in(SysOffice::getOfficeType, dto.getType())
-                .like(StrUtil.isNotBlank(dto.getKey()), SysOffice::getOfficeName, dto.getKey()));
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).in(SysOffice::getOfficeType, dto.getType()).like(StrUtil.isNotBlank(dto.getKey()), SysOffice::getOfficeName, dto.getKey()));
         if (CollUtil.isNotEmpty(officeList)) {
             officeList.forEach(tmp -> {
                 SysOfficeVO vo = new SysOfficeVO();

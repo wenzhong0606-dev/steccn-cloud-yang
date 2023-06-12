@@ -72,6 +72,16 @@ public class QtDayReportFirstDataVO {
     private String productLine;
 
     /**
+     * 班组
+     */
+    private String classGroupName;
+
+    /**
+     * 客户名字
+     */
+    private String customerName;
+
+    /**
      * 数据module对象
      */
     private List<FurtherValueObjVO> module;

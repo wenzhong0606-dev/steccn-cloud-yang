@@ -45,6 +45,12 @@ public class QtDayReportOnlineDataVO implements Serializable {
     @ApiModelProperty("班次名称")
     private String className;
 
+    @ApiModelProperty("班组id 0甲班 1乙班 2丙班")
+    private Integer classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
+
     @ApiModelProperty("缺陷记录时段-开始")
     private LocalDateTime defectStartTime;
 
@@ -56,6 +62,12 @@ public class QtDayReportOnlineDataVO implements Serializable {
 
     @ApiModelProperty("备注")
     private String note;
+
+    @ApiModelProperty("客户名称")
+    private String customerName;
+
+    @ApiModelProperty("客户主键")
+    private Integer customerId;
 
     @ApiModelProperty("数据")
     private List<FurtherValueStrVO> module;

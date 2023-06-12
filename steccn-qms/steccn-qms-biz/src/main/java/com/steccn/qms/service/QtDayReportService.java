@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.dto.QtLossReportDTO;
+import com.steccn.qms.dto.QtReportFirstPatrolDTO;
 import com.steccn.qms.vo.*;
 
 import java.time.LocalDate;
@@ -23,12 +24,10 @@ public interface QtDayReportService {
 
     /**
      * 质量日报表-首检2/巡检4
-     * @param date 指定日期
-     * @param productLineId 产线id
-     * @param checkTaskType 检验类型：首检2/巡检4
+     * @param dto
      * @return
      */
-    QtDayReportFirstVO first(LocalDate date,Integer productLineId,Integer checkTaskType);
+    QtDayReportFirstVO first(QtReportFirstPatrolDTO dto);
 
 
     /**

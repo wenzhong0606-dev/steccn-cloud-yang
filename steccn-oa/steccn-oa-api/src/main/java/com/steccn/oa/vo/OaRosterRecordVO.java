@@ -41,4 +41,9 @@ public class OaRosterRecordVO implements Serializable {
      * 员工姓名
      */
     private String lastname;
+
+    /**
+     * 用户id
+     */
+    private Integer userId;
 }

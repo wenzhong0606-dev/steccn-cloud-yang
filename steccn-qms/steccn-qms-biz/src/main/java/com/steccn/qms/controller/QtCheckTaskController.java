@@ -183,7 +183,7 @@ public class QtCheckTaskController {
     }
 
     @PostMapping("/sub/acceptability/chart")
-    @ApiOperation(value = "基片合格率趋势柱状图")
+    @ApiOperation(value = "基片巡检合格率趋势")
     public R<QtLineChartBiBarDTO> getQtChartSubBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(QtManagerConstant.SUB_OFFICE_NAME, dto));

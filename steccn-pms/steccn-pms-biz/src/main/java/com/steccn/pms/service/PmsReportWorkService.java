@@ -150,4 +150,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, Long> workshopClassGroupMap(Set<LocalDate> field1, Map<Integer, Set<Integer>> field2);
+
+    /**
+     * 根据产线以及时间获取报工记录
+     */
+    List<PmsReportWorkVO> listBylineIds(List<Integer> lineIds,LocalDate date);
+
+    /**
+     * 获取截至当前日期的报工数据
+     * @param date
+     * @param lineIds
+     * @return
+     */
+    List<PmsReportWorkVO> monthlyData(LocalDate date, List<Integer> lineIds);
 }

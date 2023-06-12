@@ -1,5 +1,6 @@
 package com.steccn.qms.constant;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.qms.dto.QtImproveRecordDetailDTO;
 import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -170,6 +172,8 @@ public interface QtManagerConstant {
     String ZONGXIANG = "纵向厚度";
     String MAOBAN = "毛板宽";
 
+    String AVERAGE_THICKNESS = "厚度平均值";
+
     /**
      * 机构类型编码
      */
@@ -221,7 +225,11 @@ public interface QtManagerConstant {
     String DAY_REPORT_FIELD_NOTE_VALUE = "note";
     String DAY_REPORT_FIELD_ORDER = "班次";
     String DAY_REPORT_FIELD_ORDER_VALUE = "className";
+    String DAY_REPORT_FIELD_GROUP = "班组";
+    String DAY_REPORT_FIELD_GROUP_VALUE = "classGroupName";
     String DAY_REPORT_FIELD_APPARENT_CONDITION = "外观状态";
+    String DAY_REPORT_FIELD_CUSTOMER = "客户";
+    String DAY_REPORT_FIELD_CUSTOMER_VALUE = "customerName";
 
     /**
      * 车间名称
@@ -1007,7 +1015,17 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtChartCompareEnum {
         //班次 产线 车间 缺陷类别
-        ALL(-1, "不对比"), WORK(0, "班次"), PRODUCTLINE(1, "产线"), WORKSHOP(2, "车间"), DEFECTCATEGORY(3, "缺陷类别"), SAMPLINGTIME(4, "取样日期"), MATERIALWORKSHOP(5, "物料使用车间"), SUPPLIER(6, "供应商"), MATERIAL(7, "物料名称");
+        ALL(-1, "不对比"),
+        WORK(0, "班次"),
+        PRODUCTLINE(1, "产线"),
+        WORKSHOP(2, "车间"),
+        DEFECTCATEGORY(3, "缺陷类别"),
+        SAMPLINGTIME(4, "取样日期"),
+        MATERIALWORKSHOP(5, "物料使用车间"),
+        SUPPLIER(6, "供应商"),
+        MATERIAL(7, "物料名称"),
+        CLASSGROUP(8, "班组"),
+        CUSTOMER(9, "客户");
 
         private Integer code;
         private String name;
@@ -1054,6 +1072,34 @@ public interface QtManagerConstant {
         public static QtClassesEnum code(Integer code) {
             for (QtClassesEnum ele : QtClassesEnum.values()) {
                 if (ele.getCode().equals(code)) {
+                    return ele;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * 获取所有班次
+         *
+         * @return
+         */
+        public static Map<Integer, String> allClass() {
+            Map<Integer, String> resMap = Maps.newHashMap();
+            for (QtClassesEnum ele : QtClassesEnum.values()) {
+                resMap.put(ele.getCode(), ele.getName());
+            }
+            return resMap;
+        }
+
+        /**
+         * 根据name筛选code
+         *
+         * @param name
+         * @return
+         */
+        public static QtClassesEnum name(String name) {
+            for (QtClassesEnum ele : QtClassesEnum.values()) {
+                if (ele.getName().equals(name)) {
                     return ele;
                 }
             }

@@ -148,4 +148,15 @@ public class SysOfficeController {
     public R<Map<Integer, Integer>> parentWarehouse(@RequestBody Set<Integer> officeIdSet) {
         return R.success(sysOfficeService.parentType(officeIdSet, SysOfficeConstant.WAREHOUSE_TYPE));
     }
+
+    /**
+     * 0基片 1车间
+     * @param type
+     * @return
+     */
+    @GetMapping("/workshop/children")
+    @ApiOperation("根据类型获取基片或者深加工的车间和产线")
+    public R<List<SysOfficeVO>> listWorkshop(@RequestParam("type") Integer type) {
+        return R.success(sysOfficeService.getWorkShopChildren(type));
+    }
 }

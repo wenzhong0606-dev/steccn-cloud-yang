@@ -37,9 +37,8 @@ public interface RemoteMesFeignApi {
      * @return
      */
     @PostMapping(value = "/web/user/save")
-    @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    R<String> saveUser(@RequestBody MesUserDTO mesUserDTO);
+    String saveUser(@RequestBody MesUserDTO mesUserDTO);
 
     /**
      * 根据用户名查询mes用户名

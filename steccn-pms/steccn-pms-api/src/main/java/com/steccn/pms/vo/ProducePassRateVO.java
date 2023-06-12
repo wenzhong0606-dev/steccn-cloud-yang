@@ -70,4 +70,14 @@ public class ProducePassRateVO implements Serializable {
      * 产量
      */
     private BigDecimal yield;
+
+    /**
+     * 班组id
+     */
+    private Integer classGroupId;
+
+    /**
+     * 班组名字
+     */
+    private String classGroupName;
 }

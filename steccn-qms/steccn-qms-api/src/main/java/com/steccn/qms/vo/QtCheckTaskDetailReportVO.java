@@ -1,5 +1,7 @@
 package com.steccn.qms.vo;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -77,4 +79,18 @@ public class QtCheckTaskDetailReportVO implements Serializable {
 
     @ApiModelProperty("备注")
     private String note;
+
+    @ApiModelProperty("客户名称")
+    private String customerName;
+
+    @ApiModelProperty("客户主键")
+    private Integer customerId;
+
+    @ApiModelProperty("班组id")
+    private Integer classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
+
+
 }
