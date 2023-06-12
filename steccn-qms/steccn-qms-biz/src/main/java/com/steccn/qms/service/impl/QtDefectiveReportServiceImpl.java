@@ -309,6 +309,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             vo.setTaskCode(qtCheckTask.getCode());
                             vo.setProductWorkshopId(Objects.nonNull(qtCheckTask.getProductWorkshop()) ? qtCheckTask.getProductWorkshop().getId() : null);
                             vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
+                            //客户属性
+                            vo.setCustomerId(Objects.nonNull(qtCheckTask.getCustomer()) ? qtCheckTask.getCustomer().getId() : null);
+                            vo.setCustomerName(Objects.nonNull(qtCheckTask.getCustomer()) ? qtCheckTask.getCustomer().getName() : null);
                             vo.setClassId(qtCheckTask.getClassesId());
                             vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                             vo.setDefectEndTime(qtCheckTask.getDefectEndTime());

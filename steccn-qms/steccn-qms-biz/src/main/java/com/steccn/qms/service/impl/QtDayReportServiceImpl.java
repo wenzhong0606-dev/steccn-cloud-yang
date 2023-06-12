@@ -146,6 +146,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         vo.setNote(qtCheckTask.getNote());
                         vo.setMaterialName(materialIdNameMap.get(vo.getMaterialId()));
                         vo.setProductLineName(productLineName);
+                        //客户属性
+                        vo.setCustomerName(qtCheckTask.getCustomerName());
+                        vo.setCustomerId(qtCheckTask.getCustomerId());
                         tableData.add(vo);
                         List<FurtherValueStrVO> module = Lists.newArrayList();
                         vo.setModule(module);

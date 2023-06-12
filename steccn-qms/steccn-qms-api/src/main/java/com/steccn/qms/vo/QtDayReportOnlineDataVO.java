@@ -63,6 +63,12 @@ public class QtDayReportOnlineDataVO implements Serializable {
     @ApiModelProperty("备注")
     private String note;
 
+    @ApiModelProperty("客户名称")
+    private String customerName;
+
+    @ApiModelProperty("客户主键")
+    private Integer customerId;
+
     @ApiModelProperty("数据")
     private List<FurtherValueStrVO> module;
 
