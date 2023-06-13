@@ -22,18 +22,17 @@
     <select id="collectDetail" resultType="com.steccn.data.vo.DwDefectCollectVO">
         select
         line,
-        to_char( product_time, 'yyyy-mm-dd HH24' ) || ':00:00' AS product_time,
+        start_time AS product_time,
         defect_type,
         SUM ( defect_count ) as defect_count
         from qt_defect_collect dc join qt_defect_collect_detail detail on dc.id = detail.push_id
-        where dc.product_time &gt;= '${start}' and dc.product_time &lt; '${end}'
-        AND dc.line IN
-        <foreach collection="lineSet" item="item" open="(" close=")" separator=",">
+        where dc.start_time IN
+        <foreach collection="timeList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
         GROUP BY
         line,
-        to_char( product_time, 'yyyy-mm-dd HH24' ),
+        start_time,
         defect_type
     </select>
 </mapper>
