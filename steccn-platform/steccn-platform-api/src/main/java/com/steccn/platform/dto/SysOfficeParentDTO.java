@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * 根据父级节点和类型查询数据
@@ -29,4 +30,9 @@ public class SysOfficeParentDTO implements Serializable {
      * 主键id
      */
     private Integer id;
+
+    /**
+     * 父级节点
+     */
+    private Set<Integer> parentIds;
 }

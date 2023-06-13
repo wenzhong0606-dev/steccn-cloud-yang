@@ -5,6 +5,7 @@ import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
+import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
 import java.math.BigDecimal;
@@ -73,4 +74,14 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return map key为物料id value 【key为班次id，value为数量】
      */
     Map<Long, Map<Long, BigDecimal>> materialByDateMap(Set<Long> materialSet , LocalDate date);
+
+
+    /**
+     * 查询物料的入库（截至当前日期的当月数据）
+     * @param materialSet
+     * @param date
+     * @return
+     */
+    List<FurtherProduceReportDataVO> materialByDateList(Set<Long> materialSet , LocalDate date);
+
 }

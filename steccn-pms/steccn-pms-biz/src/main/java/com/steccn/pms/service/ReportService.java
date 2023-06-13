@@ -91,5 +91,11 @@ public interface ReportService {
      */
     List<OutputQualityVO> outputQualityJp(OutputQualityDTO outputQualityDTO);
 
+
+    /**
+     * 擦汗了质量报表-深加工
+     * @param outputQualityDTO
+     * @return
+     */
     List<OutputQualitySjgVO> outputQualitySjg(OutputQualityDTO outputQualityDTO);
 }

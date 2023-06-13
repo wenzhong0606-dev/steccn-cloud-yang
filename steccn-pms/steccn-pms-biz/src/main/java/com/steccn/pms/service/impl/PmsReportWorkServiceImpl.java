@@ -818,6 +818,22 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return BeanUtil.copyToList(list, PmsReportWorkVO.class);
     }
 
+    @Override
+    public Map<Long, Long> mainMaterialByReportWork(Set<Long> reportIds) {
+        Map<Long,Long> resMap =  Maps.newHashMap();
+        if (CollUtil.isNotEmpty(reportIds)){
+            List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getId, reportIds));
+            if (CollUtil.isNotEmpty(list)){
+                Set<Long> orderIds = list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet());
+                Map<Long, Long> orderMap = produceOrderService.maiMaterialAByOrderId(orderIds);
+                for (PmsReportWork pmsReportWork : list) {
+                    resMap.put(pmsReportWork.getId(),orderMap.get(pmsReportWork.getProduceOrderId()));
+                }
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 更新物料消耗
      * @param dto dto信息
