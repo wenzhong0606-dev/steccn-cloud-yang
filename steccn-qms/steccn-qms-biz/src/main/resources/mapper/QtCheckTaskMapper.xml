@@ -244,7 +244,7 @@
     </select>
     <select id="getDefectItemList" resultType="com.steccn.qms.vo.QtDefectItemInfoVO">
         SELECT
-        a.id as taskId,a.classes_id,c.id,c.name,e.id as categoryId,e.name as categoryName
+        a.id as taskId,a.classes_id,c.id,c.name,e.id as categoryId,e.name as categoryName,JSON_EXTRACT(a.product_line, '$.id') as productLineId,a.class_group_name as classGroupName
         FROM
         qt_check_task a
         JOIN qt_check_task_detail b ON b.task_id = a.id

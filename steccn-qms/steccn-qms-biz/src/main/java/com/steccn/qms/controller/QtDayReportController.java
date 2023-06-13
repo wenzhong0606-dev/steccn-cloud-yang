@@ -41,11 +41,10 @@ public class QtDayReportController {
     }
 
 
-    @GetMapping("/polling/defect/item")
+    @PostMapping("/polling/defect/item")
     @ApiOperation("质量日报表-巡检-缺陷项")
-    public R<QtDayPollingFirstVO> pollingDefectItem(@RequestParam("date") LocalDate date,
-                                                    @RequestParam("productLineId") Integer productLineId) {
-        return R.success(qtDayReportService.pollingDefectItem(date,productLineId));
+    public R<QtDayPollingFirstVO> pollingDefectItem(@RequestBody @Validated QtReportFirstPatrolDTO dto) {
+        return R.success(qtDayReportService.pollingDefectItem(dto));
     }
 
     @GetMapping("/sampling")

@@ -41,6 +41,12 @@ public class QtReport implements Serializable {
     private String name;
 
     /**
+     * 动态日期范围类型
+     */
+    @TableField(value = "dynamic_date_type")
+    private Integer dynamicDateType;
+
+    /**
      * 日期范围开始时间
      */
     @TableField(value = "time_scope_start")
