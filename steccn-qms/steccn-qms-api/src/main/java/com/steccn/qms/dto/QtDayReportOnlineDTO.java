@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,8 +20,10 @@ import java.util.List;
 public class QtDayReportOnlineDTO implements Serializable {
 
     @ApiModelProperty("班次日期")
+    @NotNull(message = "班次日期不能为空")
     private LocalDate date;
 
     @ApiModelProperty("产线id集合")
+    @NotEmpty(message = "产线集合不能为空")
     private List<Integer> productLineIdList;
 }
