@@ -1,7 +1,10 @@
 package com.steccn.common.constant;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.steccn.common.util.LocalDateUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import java.time.*;
 import java.time.temporal.TemporalAdjusters;
 
@@ -52,7 +55,6 @@ public interface DateSelectorConstant {
          * [2023-06-07 00:00:00,2023-06-14 00:00:00) 过去7天
          * [2023-05-31 00:00:00,2023-06-14 00:00:00) 过去14天
          * <p>
-         *
          *
          * @param code    编码
          * @param current 当前日期
@@ -131,7 +133,14 @@ public interface DateSelectorConstant {
                     end = current.plusDays(1);
                     break;
             }
-            return new LocalDateTime[]{LocalDateTime.of(start, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MIN)};
+
+            //如果超出了当前日期T+1 00:00:00 则截止当前日期
+            LocalDateTime resEnd = LocalDateTime.of(end, LocalTime.MIN);
+            LocalDateTime limitEnd = LocalDateTime.now().toLocalDate().plusDays(1).atTime(LocalTime.MIN);
+            if (LocalDateUtil.gt(resEnd, limitEnd)) {
+                resEnd = limitEnd;
+            }
+            return new LocalDateTime[]{LocalDateTime.of(start, LocalTime.MIN), resEnd};
         }
 
         /**
@@ -155,4 +164,11 @@ public interface DateSelectorConstant {
             return start;
         }
     }
+
+//    public static void main(String[] args) {
+//        for (DateSelectEnum value : DateSelectEnum.values()) {
+//            LocalDateTime[] dynamicDateTime = DateSelectEnum.getDynamicDateTime(value.getCode(), LocalDate.now());
+//            System.out.println(value.getName() + ":" + dynamicDateTime[0] + "~" + dynamicDateTime[1]);
+//        }
+//    }
 }
