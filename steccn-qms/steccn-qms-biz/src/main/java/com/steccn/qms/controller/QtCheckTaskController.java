@@ -176,7 +176,7 @@ public class QtCheckTaskController {
     }
 
     @PostMapping("/deep/acceptability/chart")
-    @ApiOperation(value = "深加工合格率趋势柱状图")
+    @ApiOperation(value = "深加工巡检合格率趋势")
     public R<QtLineChartBiBarDTO> getQtChartDeepBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(QtManagerConstant.DEEP_OFFICE_NAME, dto));
