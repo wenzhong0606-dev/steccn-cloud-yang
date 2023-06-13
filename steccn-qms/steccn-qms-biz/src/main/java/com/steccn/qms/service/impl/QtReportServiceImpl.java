@@ -294,12 +294,25 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
                 }
             }
+
+            LocalDateTime startLdt;
+            LocalDateTime endLdt;
+            //判断是否是动态日期还是静态日期
+            if(Objects.nonNull(q.getDynamicDateType())){
+                LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(q.getDynamicDateType(), LocalDate.now());
+                startLdt = dynamicDateTime[0];
+                endLdt = dynamicDateTime[1];
+            }else{
+                startLdt= q.getTimeScopeStart();
+                endLdt = q.getTimeScopeEnd();
+            }
+            q.setTimeScopeStart(startLdt);
+            q.setTimeScopeEnd(endLdt);
             //设置开始结束时间
             qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
             qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
             QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
             Assert.notNull(granularityEnum,"粒度不存在");
-
             if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(q.getCheckType())){
                 //来料检
                 incomingCheck(q, qtReportChartVO, itemIds,granularityEnum);
@@ -321,21 +334,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private void incomingCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds,QtManagerConstant.QtGranularityEnum granularityEnum) {
         //获取符合条件的原始数据
         List<QtIncomingCheckDTO> sourceList = qtCheckTaskService.comingList(itemIds);
-
-        LocalDateTime startLdt;
-        LocalDateTime endLdt;
-        //判断是否是动态日期还是静态日期
-        if(Objects.nonNull(q.getDynamicDateType())){
-            LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(q.getDynamicDateType(), LocalDate.now());
-            startLdt = dynamicDateTime[0];
-            endLdt = dynamicDateTime[1];
-        }else{
-            startLdt= q.getTimeScopeStart();
-            endLdt = q.getTimeScopeEnd();
-        }
-
         //将时间范围根据粒度分片
-        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), startLdt, endLdt);
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
         //设置折线图数据
         List<String> itemValue = new ArrayList<>();
 
@@ -389,21 +389,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         );
         //设置时间分片
         List<String> dates = Lists.newArrayList();
-
-        LocalDateTime startLdt;
-        LocalDateTime endLdt;
-        //判断是否是动态日期还是静态日期
-        if (Objects.nonNull(q.getDynamicDateType())) {
-            LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(q.getDynamicDateType(), LocalDate.now());
-            startLdt = dynamicDateTime[0];
-            endLdt = dynamicDateTime[1];
-        } else {
-            startLdt = q.getTimeScopeStart();
-            endLdt = q.getTimeScopeEnd();
-        }
-
         //将时间范围根据粒度分片
-        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), startLdt, endLdt);
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
         //设置折线图数据
         List<String> itemValue = new ArrayList<>();
         for (int i = 1; i < localDateTimes.size(); i++) {
@@ -1314,6 +1301,20 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         QtMaterial material = qtMaterialService.getById(report.getMaterialId());
         Assert.notNull(material, "物料不存在");
 
+        LocalDateTime startLdt;
+        LocalDateTime endLdt;
+        //判断是否是动态日期还是静态日期
+        if(Objects.nonNull(report.getDynamicDateType())){
+            LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(report.getDynamicDateType(), LocalDate.now());
+            startLdt = dynamicDateTime[0];
+            endLdt = dynamicDateTime[1];
+        }else{
+            startLdt= report.getTimeScopeStart();
+            endLdt = report.getTimeScopeEnd();
+        }
+        report.setTimeScopeStart(startLdt);
+        report.setTimeScopeEnd(endLdt);
+
         if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(report.getCheckType())){
             //来料检
             return incomingDetailPage(dto, report, granularityEnum, qtCheckItem, itemIds, measureUnitName, material);
@@ -1349,19 +1350,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             });
         });
-        LocalDateTime startLdt;
-        LocalDateTime endLdt;
-        //判断是否是动态日期还是静态日期
-        if(Objects.nonNull(report.getDynamicDateType())){
-            LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(report.getDynamicDateType(), LocalDate.now());
-            startLdt = dynamicDateTime[0];
-            endLdt = dynamicDateTime[1];
-        }else{
-            startLdt= report.getTimeScopeStart();
-            endLdt = report.getTimeScopeEnd();
-        }
         //将时间范围根据粒度分片
-        List<LocalDateTime> rangeList = ShardTimeUtil.cutDateRange(granularityEnum.getType(), startLdt, endLdt);
+        List<LocalDateTime> rangeList = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
         //spc任务明细表的数据集合
         List<QtSpcReportDetailVO> mainList = Lists.newArrayList();
         for (int i = 1; i < rangeList.size(); i++) {
@@ -1438,21 +1428,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //根据条件先low出所有的检验任务数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
         SteccnTableAssertUtil.notEmpty(qtCheckTasks,"全量数据表为空");
-
-        LocalDateTime startLdt;
-        LocalDateTime endLdt;
-        //判断是否是动态日期还是静态日期
-        if(Objects.nonNull(report.getDynamicDateType())){
-            LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(report.getDynamicDateType(), LocalDate.now());
-            startLdt = dynamicDateTime[0];
-            endLdt = dynamicDateTime[1];
-        }else{
-            startLdt= report.getTimeScopeStart();
-            endLdt = report.getTimeScopeEnd();
-        }
-
         //将时间范围根据粒度分片
-        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), startLdt, endLdt);
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
         //spc任务明细表的数据集合
         List<QtSpcReportDetailVO> mainList = Lists.newArrayList();
         for (int i = 1; i < localDateTimes.size(); i++) {
