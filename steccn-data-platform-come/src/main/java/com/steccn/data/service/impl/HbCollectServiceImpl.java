@@ -51,8 +51,12 @@ public class HbCollectServiceImpl implements HbCollectService {
             model.setMsgType(dto.getMsgEchoType());
             if (Objects.nonNull(dto.getData())) {
                 model.setLine(dto.getData().getLine());
+                model.setNewLine(Integer.parseInt(model.getLine()));
                 model.setErrorCode(dto.getData().getErrcode());
                 model.setProductTime(dto.getData().getProduct_time());
+                LocalDate date = model.getProductTime().toLocalDate();
+                int hour = model.getProductTime().getHour();
+                model.setStartTime(LocalDateTime.of(date, LocalTime.of(hour, 0, 0)));
             }
             model.setCreateTime(now);
             qtDefectCollectService.save(model);
