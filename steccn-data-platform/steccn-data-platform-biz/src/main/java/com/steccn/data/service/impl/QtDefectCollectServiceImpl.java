@@ -43,10 +43,20 @@ public class QtDefectCollectServiceImpl extends ServiceImpl<QtDefectCollectMappe
     public List<DwDefectCollectVO> collectDetail(LocalDateTime start, LocalDateTime end, Set<String> lineSet) {
         List<DwDefectCollectVO> resList = null;
         if (Objects.nonNull(start) && Objects.nonNull(end) && LocalDateUtil.gt(end, start) && CollUtil.isNotEmpty(lineSet)) {
-            //根据时间分片
-            List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 3600);
-            resList = this.baseMapper.collectDetail(shardList);
-            resList = resList.stream().filter(v-> lineSet.contains(v.getLine())).collect(Collectors.toList());
+            String startStr = start.format(DATE_TIME_FORMATTER);
+            String endStr = end.format(DATE_TIME_FORMATTER);
+            Set<Integer> newLineSet = Sets.newHashSet();
+            lineSet.forEach(ele -> {
+                try {
+                    newLineSet.add(Integer.parseInt(ele));
+                } catch (Exception e) {
+                    log.error("转换异常");
+                }
+            });
+            long l = System.currentTimeMillis();
+            resList = this.baseMapper.collectDetail(startStr, endStr, newLineSet);
+            log.info("耗费时间 -> {} s", (System.currentTimeMillis() - l)/1000.0);
+
         }
         return Objects.nonNull(resList) ? resList : Lists.newArrayList();
     }

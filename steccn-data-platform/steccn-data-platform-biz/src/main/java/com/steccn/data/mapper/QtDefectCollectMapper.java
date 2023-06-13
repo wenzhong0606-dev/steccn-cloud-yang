@@ -28,7 +28,7 @@ public interface QtDefectCollectMapper extends BaseMapper<QtDefectCollect> {
      * @param lineSet 产线集合
      * @return
      */
-    List<DwDefectCollectVO> collectDetail(@Param("timeList") List<LocalDateTime> timeList);
+    List<DwDefectCollectVO> collectDetail(@Param("start") String start, @Param("end") String end, @Param("lineSet") Set<Integer> lineSet);
 }
 
 

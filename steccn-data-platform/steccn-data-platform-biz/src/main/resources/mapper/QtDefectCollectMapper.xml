@@ -5,34 +5,36 @@
 <mapper namespace="com.steccn.data.mapper.QtDefectCollectMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.data.domain.QtDefectCollect">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="msgType" column="msg_type" jdbcType="VARCHAR"/>
-            <result property="extField" column="ext_field" jdbcType="VARCHAR"/>
-            <result property="errorCode" column="error_code" jdbcType="VARCHAR"/>
-            <result property="productTime" column="product_time" jdbcType="VARCHAR"/>
-            <result property="line" column="line" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="msgType" column="msg_type" jdbcType="VARCHAR"/>
+        <result property="extField" column="ext_field" jdbcType="VARCHAR"/>
+        <result property="errorCode" column="error_code" jdbcType="VARCHAR"/>
+        <result property="productTime" column="product_time" jdbcType="VARCHAR"/>
+        <result property="line" column="line" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,msg_type,ext_field,
+        id
+        ,msg_type,ext_field,
         error_code,product_time,line,
         create_time
     </sql>
     <select id="collectDetail" resultType="com.steccn.data.vo.DwDefectCollectVO">
         select
-        line,
+        new_line as line,
         start_time AS product_time,
         defect_type,
         SUM ( defect_count ) as defect_count
         from qt_defect_collect dc join qt_defect_collect_detail detail on dc.id = detail.push_id
-        where dc.start_time IN
-        <foreach collection="timeList" item="item" open="(" close=")" separator=",">
+        where dc.start_time &gt;= '${start}' and dc.start_time &lt; '${end}'
+        AND dc.new_line IN
+        <foreach collection="lineSet" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
         GROUP BY
-        line,
         start_time,
+        new_line,
         defect_type
     </select>
 </mapper>
