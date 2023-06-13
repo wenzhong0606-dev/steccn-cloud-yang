@@ -42,10 +42,21 @@ public class QtDefectCollect implements Serializable {
      */
     private LocalDateTime productTime;
 
+
+    /**
+     * 缺陷记录时段开始时间
+     */
+    private LocalDateTime startTime;
+
     /**
      * 线次
      */
     private String line;
+
+    /**
+     * 线次
+     */
+    private Integer newLine;
 
     /**
      * 创建时间
