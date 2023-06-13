@@ -39,7 +39,7 @@ public class QtDefectiveReportController {
     private final QtDefectiveReportService qtDefectiveReportService;
 
     @PostMapping("/deep/category/bar")
-    @ApiOperation("深加工缺陷类别分布-柱状图")
+    @ApiOperation("深加工缺陷类别分布")
     public R<QtLineChartBarDTO> deepDefectiveCategoryBar(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryBar(dto));
     }
@@ -57,7 +57,7 @@ public class QtDefectiveReportController {
     }
 
     @PostMapping("/deep/item/bar")
-    @ApiOperation("深加工缺陷分布-柱状图")
+    @ApiOperation("深加工缺陷项分布")
     public R<QtLineChartBarDTO> deepDefectiveItemBar(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveItemBar(dto));
     }
@@ -75,7 +75,7 @@ public class QtDefectiveReportController {
     }
 
     @PostMapping("/substrate/item/bar")
-    @ApiOperation("基片缺陷项分布-柱状图")
+    @ApiOperation("基片缺陷项分布")
     public R<QtLineChartBarDTO> substrateItemBar(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateItemBar(dto));
     }
@@ -93,7 +93,7 @@ public class QtDefectiveReportController {
     }
 
     @PostMapping("/deep/category/line")
-    @ApiOperation("深加工缺陷类别趋势-折线图")
+    @ApiOperation("深加工缺陷类别趋势")
     public R<QtLineChartBarDTO> deepDefectiveCategoryLine(@Valid @RequestBody QtChartParamDTO dto) {
         validLineHourDiff(dto);
         return R.success(qtDefectiveReportService.deepDefectiveCategoryLine(dto));
@@ -115,14 +115,14 @@ public class QtDefectiveReportController {
     }
 
     @PostMapping("/deep/item/line")
-    @ApiOperation("深加工缺陷项趋势-折线图")
+    @ApiOperation("深加工缺陷项趋势")
     public R<QtLineChartBarDTO> deepItemLine(@Valid @RequestBody QtChartParamDTO dto) {
         validLineHourDiff(dto);
         return R.success(qtDefectiveReportService.deepItemLine(dto));
     }
 
     @PostMapping("/substrate/item/line")
-    @ApiOperation("基片缺陷项趋势-折线图")
+    @ApiOperation("基片缺陷项趋势")
     public R<QtLineChartBarDTO> substrateItemLine(@Valid @RequestBody QtChartParamDTO dto) {
         validLineHourDiff(dto);
         return R.success(qtDefectiveReportService.substrateItemLine(dto));
