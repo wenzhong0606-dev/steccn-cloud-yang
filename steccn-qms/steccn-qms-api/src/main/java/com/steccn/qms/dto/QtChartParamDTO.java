@@ -36,6 +36,9 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("产线名字")
     private String productLineName;
 
+    @ApiModelProperty("产线id")
+    private List<Integer> productLineIdList;
+
     @ApiModelProperty("车间id")
     private Integer productWorkShopId;
 

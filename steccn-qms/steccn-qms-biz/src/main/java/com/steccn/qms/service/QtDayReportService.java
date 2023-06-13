@@ -6,6 +6,7 @@ import com.steccn.qms.dto.QtReportFirstPatrolDTO;
 import com.steccn.qms.vo.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author yequan
@@ -19,7 +20,7 @@ public interface QtDayReportService {
      * @param productLineId 产线id
      * @return vo
      */
-    QtDayReportOnlineVO online(LocalDate date, Integer productLineId);
+    QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId);
 
 
     /**

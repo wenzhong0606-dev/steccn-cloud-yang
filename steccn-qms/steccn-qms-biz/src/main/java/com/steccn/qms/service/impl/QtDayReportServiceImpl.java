@@ -80,7 +80,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final OaInfoService oaInfoService;
 
     @Override
-    public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
+    public QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId) {
         QtDayReportOnlineVO resVo = new QtDayReportOnlineVO();
         List<QtDayReportOnlineDataVO> tableData = Lists.newArrayList();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("HH:mm");
@@ -89,7 +89,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         QtChartParamDTO dto = new QtChartParamDTO();
         dto.setDateStart(date);
         dto.setDateEnd(date);
-        dto.setProductLineId(productLineId);
+        dto.setProductLineIdList(productLineId);
         //获取人工采集的缺陷集合+获取机器采集的缺陷集合
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);
@@ -98,85 +98,107 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //查询物料
         Set<Long> materialIdSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(productLineId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //做缺陷类别+缺陷分组
         Map<Integer, Set<Integer>> categoryDefectMap = Maps.newHashMap();
         manDataList.forEach(ele -> MapUtil.computeSet(categoryDefectMap, ele.getDefectCategory(), ele.getDefectId()));
         //构建module
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
-
-        //根据来源分组
-        Map<Integer, BigDecimal> countMap = Maps.newHashMap();
-        Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
-
-        String productLineName = sysOfficeMap.get(dto.getProductLineId());
-
+        
         //根据时间获取班组
         Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(date, date), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
-        for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
-            //根据班次分组
-            Map<Integer, BigDecimal> classCountMap = Maps.newHashMap();
-            Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
-            for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
-                //根据缺陷记录时段分组
-                Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime() + "~" + v.getDefectEndTime()));
-                for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
-                    //根据物料分组
-                    Map<Long, List<QtCheckTaskDetailReportVO>> taskMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getTaskId()) ? v.getTaskId() : -1L));
-                    for (Map.Entry<Long, List<QtCheckTaskDetailReportVO>> taskEntry : taskMap.entrySet()) {
-                        QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
-                        vo.setDataSource(dataSourceEntry.getKey());
-                        vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
-                        vo.setClassId(classEntry.getKey());
-                        String name = QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName();
-                        vo.setClassName(name);
-                        OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(date + ":" + name, defaultOaGroupCountDTO);
-                        vo.setClassGroupName(oaGroupCountDTO.getGroupName());
-                        vo.setClassGroupId(oaGroupCountDTO.getGroupId());
-                        String[] split = defectTimeEntry.getKey().split("~");
-                        vo.setDefectStartTime(LocalDateTime.parse(split[0]));
-                        vo.setDefectEndTime(LocalDateTime.parse(split[1]));
-                        vo.setDefectTimeStr(vo.getDefectStartTime().format(df) + "~" + vo.getDefectEndTime().format(df));
-                        vo.setType(0);
-                        vo.setTaskId(-1 == taskEntry.getKey() ? null : taskEntry.getKey());
-                        QtCheckTaskDetailReportVO qtCheckTask = taskEntry.getValue().get(0);
-                        vo.setMaterialId(qtCheckTask.getMaterialId());
-                        vo.setNote(qtCheckTask.getNote());
-                        vo.setMaterialName(materialIdNameMap.get(vo.getMaterialId()));
-                        vo.setProductLineName(productLineName);
-                        //客户属性
-                        vo.setCustomerName(qtCheckTask.getCustomerName());
-                        vo.setCustomerId(qtCheckTask.getCustomerId());
-                        tableData.add(vo);
-                        List<FurtherValueStrVO> module = Lists.newArrayList();
-                        vo.setModule(module);
-                        //遍历类别
-                        for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
-                            FurtherValueStrVO strVO = new FurtherValueStrVO();
-                            List<String> value = Lists.newArrayList();
-                            for (Integer defectId : categoryDefectEntry.getValue()) {
-                                //获取该缺陷下的所有数据
-                                List<QtCheckTaskDetailReportVO> defectDataList = taskEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
-                                int sum = defectDataList.stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                                BigDecimalUtil.accumulate(countMap, defectId, BigDecimal.valueOf(sum));
-                                BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));
-                                value.add(String.valueOf(sum));
+
+        //总计
+        Map<Integer, BigDecimal> allMap = Maps.newHashMap();
+        //基于产线去分组
+        Map<Integer, List<QtCheckTaskDetailReportVO>> lineEntrySet = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
+        for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> lineEntry : lineEntrySet.entrySet()) {
+            String productLineName = sysOfficeMap.get(lineEntry.getKey());
+            //根据来源分组
+            Map<Integer, BigDecimal> countMap = Maps.newHashMap();
+            Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
+                //根据班次分组
+                Map<Integer, BigDecimal> classCountMap = Maps.newHashMap();
+                Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
+                for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
+                    //根据缺陷记录时段分组
+                    Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime() + "~" + v.getDefectEndTime()));
+                    for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
+                        //根据物料分组
+                        Map<Long, List<QtCheckTaskDetailReportVO>> taskMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getTaskId()) ? v.getTaskId() : -1L));
+                        for (Map.Entry<Long, List<QtCheckTaskDetailReportVO>> taskEntry : taskMap.entrySet()) {
+                            QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
+                            vo.setDataSource(dataSourceEntry.getKey());
+                            vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
+                            vo.setClassId(classEntry.getKey());
+                            String name = QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName();
+                            vo.setClassName(name);
+                            OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(date + ":" + name, defaultOaGroupCountDTO);
+                            vo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            vo.setClassGroupId(oaGroupCountDTO.getGroupId());
+                            String[] split = defectTimeEntry.getKey().split("~");
+                            vo.setDefectStartTime(LocalDateTime.parse(split[0]));
+                            vo.setDefectEndTime(LocalDateTime.parse(split[1]));
+                            vo.setDefectTimeStr(vo.getDefectStartTime().format(df) + "~" + vo.getDefectEndTime().format(df));
+                            vo.setType(0);
+                            vo.setTaskId(-1 == taskEntry.getKey() ? null : taskEntry.getKey());
+                            QtCheckTaskDetailReportVO qtCheckTask = taskEntry.getValue().get(0);
+                            vo.setMaterialId(qtCheckTask.getMaterialId());
+                            vo.setNote(qtCheckTask.getNote());
+                            vo.setMaterialName(materialIdNameMap.get(vo.getMaterialId()));
+                            vo.setProductLineName(productLineName);
+                            //客户属性
+                            vo.setCustomerName(qtCheckTask.getCustomerName());
+                            vo.setCustomerId(qtCheckTask.getCustomerId());
+                            tableData.add(vo);
+                            List<FurtherValueStrVO> module = Lists.newArrayList();
+                            vo.setModule(module);
+                            //遍历类别
+                            for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
+                                FurtherValueStrVO strVO = new FurtherValueStrVO();
+                                List<String> value = Lists.newArrayList();
+                                for (Integer defectId : categoryDefectEntry.getValue()) {
+                                    //获取该缺陷下的所有数据
+                                    List<QtCheckTaskDetailReportVO> defectDataList = taskEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
+                                    int sum = defectDataList.stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                                    BigDecimalUtil.accumulate(countMap, defectId, BigDecimal.valueOf(sum));
+                                    BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));
+                                    BigDecimalUtil.accumulate(allMap, defectId, BigDecimal.valueOf(sum));
+                                    value.add(String.valueOf(sum));
+                                }
+                                strVO.setValue(value);
+                                module.add(strVO);
                             }
-                            strVO.setValue(value);
-                            module.add(strVO);
                         }
                     }
                 }
+                QtDayReportOnlineDataVO vo = insertCount(1, categoryDefectMap, classEntry.getKey(), classCountMap, productLineName);
+                tableData.add(vo);
             }
-            QtDayReportOnlineDataVO vo = insertCount(1, categoryDefectMap, classEntry.getKey(), classCountMap, productLineName);
-            tableData.add(vo);
+            QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap, productLineName);
+            tableData.add(allVo);
         }
-        QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap, productLineName);
-        tableData.add(allVo);
+        //插入总计
+        QtDayReportOnlineDataVO zongjiVo = insertCount(3, categoryDefectMap, 2, allMap, "总计");
+        tableData.add(zongjiVo);
         //数据需要排序
         tableData.sort((o1, o2) -> {
+            //先对比产线
+            if(Objects.isNull(o1.getProductLineName()) && Objects.nonNull(o2.getProductLineName())){
+                return 1;
+            }
+            if(Objects.nonNull(o1.getProductLineName()) && Objects.isNull(o2.getProductLineName())){
+                return -1;
+            }
+            if(Objects.isNull(o1.getProductLineName()) && Objects.isNull(o2.getProductLineName())){
+                return 0;
+            }
+            if(!o1.getProductLineName().equals(o2.getProductLineName())){
+                return o1.getProductLineName().compareTo(o2.getProductLineName());
+            }
             //先对比班次
             if (!o1.getClassId().equals(o2.getClassId())) {
                 return o1.getClassId() - o2.getClassId();
@@ -204,7 +226,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead());
         //落板原因
-        resVo.setFallList(fallList(date, manData, productLineName));
+        resVo.setFallList(fallList(date, manData, sysOfficeMap));
         return resVo;
     }
 
@@ -214,13 +236,16 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param manDataList 人工检测数据
      * @return 落板原因集合
      */
-    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList, String productLineName) {
+    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList,Map<Integer, String> lineIdNameMap) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
             Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(curDate, curDate), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(manDataList)) {
+                Map<Long, Integer> taskIdLineMap = Maps.newHashMap();
+                manDataList.forEach(ele -> taskIdLineMap.put(ele.getTaskId(), ele.getProductLineId()));
+
                 //先根据人工数据查询所有的taskId
                 Map<Long, Integer> taskClassMap = Maps.newHashMap();
                 manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));
@@ -246,7 +271,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             if (Objects.nonNull(classEnum)) {
                                 vo.setClassName(classEnum.getName());
                             }
-                            vo.setProductLineName(productLineName);
+                            Integer line = taskIdLineMap.get(destroy.getTaskId());
+                            vo.setProductLineName(lineIdNameMap.get(line));
                             fallList.add(vo);
                         }
                     }
@@ -285,9 +311,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap, String productLineName) {
         //插入一条合计
         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
-        if (type == 1) {
-            vo.setProductLineName(productLineName);
-        }
+//        if (type == 1) {
+        vo.setProductLineName(productLineName);
+//        }
         vo.setType(type);
         List<FurtherValueStrVO> module = Lists.newArrayList();
         vo.setModule(module);
@@ -755,7 +781,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
             if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
                 //落板原因
-                luoData.addAll(fallList(dto.getDate(), manData, productLine.getOfficeName()));
+                luoData.addAll(fallList(dto.getDate(), manData, officeMap));
                 //缺陷表格
             }
 
@@ -870,7 +896,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     public QtDaySamplingVO sampling(LocalDate date) {
         //1.获取早班和晚班时间
         LocalDateTime morning = LocalDateUtil.getMorning(date);
-        LocalDateTime night = LocalDateUtil.getNight(date).plusDays(1);
+//        LocalDateTime night = LocalDateUtil.getNight(date).plusDays(1);
+//        1）查询已检验的配料抽检任务中，取样时间在区间 [查询日期8:00:00, 查询日期20:00:00] 内的所有样本，记为集合T1（早班）
+//        2）查询已检验的配料抽检任务中，取样时间在区间 [查询日期20:00:00, 查询日期+1 8:00:00] 内的所有样本，记为集合T2（晚班）
+        LocalDateTime night = morning.plusDays(1);
         //2.获取原始数据
         List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingList(morning, night);
         //3.如果原始数据集合不为空，则继续执行
