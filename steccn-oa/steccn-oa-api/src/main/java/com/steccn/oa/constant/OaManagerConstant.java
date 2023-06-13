@@ -1,7 +1,10 @@
 package com.steccn.oa.constant;
 
+import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.Map;
 
 /**
  * OA数据常量
@@ -57,6 +60,20 @@ public interface OaManagerConstant {
                 }
             }
             return null;
+        }
+
+
+        /**
+         * 获取所有班组
+         *
+         * @return
+         */
+        public static Map<Integer, String> allGroup() {
+            Map<Integer, String> resMap = Maps.newHashMap();
+            for (OaTeamGroupMapping ele : OaTeamGroupMapping.values()) {
+                resMap.put(ele.getCode(), ele.getName());
+            }
+            return resMap;
         }
     }
 }
