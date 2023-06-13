@@ -41,4 +41,6 @@ public class BaseScreenVO implements Serializable {
     @ApiModelProperty("缺陷项筛选")
     private List<BaseSelectVO<Integer>> defectItemScreen;
 
+    @ApiModelProperty("客户")
+    private List<BaseSelectVO<Integer>> customerScreen;
 }
