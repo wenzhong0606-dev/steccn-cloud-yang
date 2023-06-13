@@ -35,4 +35,9 @@ public class QtDefectItemInfoVO {
     @ApiModelProperty("任务id")
     private Long taskId;
 
+    @ApiModelProperty("产线id")
+    private Integer productLineId;
+
+    @ApiModelProperty("班组名字")
+    private String classGroupName;
 }

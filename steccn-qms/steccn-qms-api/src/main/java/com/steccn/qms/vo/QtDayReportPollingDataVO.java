@@ -29,6 +29,9 @@ public class QtDayReportPollingDataVO implements Serializable {
     @ApiModelProperty("班次名称")
     private String className;
 
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
+
     @ApiModelProperty("数据")
     private List<FurtherValueStrVO> module;
 

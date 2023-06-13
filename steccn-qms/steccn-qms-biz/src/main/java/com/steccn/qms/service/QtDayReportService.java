@@ -33,11 +33,10 @@ public interface QtDayReportService {
 
     /**
      * 质量日报表-巡检-缺陷项
-     * @param date
-     * @param productLineId
+     * @param dto
      * @return
      */
-    QtDayPollingFirstVO pollingDefectItem(LocalDate date, Integer productLineId);
+    QtDayPollingFirstVO pollingDefectItem(QtReportFirstPatrolDTO dto);
 
     /**
      * 配料抽检日报表
