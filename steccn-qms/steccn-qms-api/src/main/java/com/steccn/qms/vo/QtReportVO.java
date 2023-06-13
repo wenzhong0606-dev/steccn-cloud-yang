@@ -27,6 +27,10 @@ public class QtReportVO implements Serializable {
     private String name;
 
     /**
+     * 动态日期类型
+     */
+    private Integer dynamicDateType;
+    /**
      * 日期范围开始时间
      */
     private LocalDate timeScopeStart;

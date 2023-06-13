@@ -1066,7 +1066,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtIncomingCheckDTO> conditionDataList = sourceList.stream()
                 .filter(v -> LocalDateUtil.isRange(v.getSamplingTime(), start, end, true, false)).collect(Collectors.toList());
         //取平均值
-        BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<BigDecimal> collect = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
+        BigDecimal reduce = BigDecimalUtil.sum(collect);
         return BigDecimalUtil.divide(reduce, new BigDecimal(conditionDataList.size()));
     }
 
@@ -1084,7 +1085,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtOtherCheckDTO> conditionDataList = sourceList.stream()
                 .filter(v -> LocalDateUtil.isRange(v.getFinishTime(), start, end, true, false)).collect(Collectors.toList());
         //取平均值
-        BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<BigDecimal> collect = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
+        BigDecimal reduce = BigDecimalUtil.sum(collect);
         return BigDecimalUtil.divide(reduce, new BigDecimal(conditionDataList.size()));
     }
 
@@ -1103,7 +1105,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             BigDecimal tmp = dataList.get(0);
             for (int i = 1; i < dataList.size(); i++) {
                 //没有呈现上升趋势
-                if (!(tmp.compareTo(dataList.get(i)) > 0)) {
+                if (Objects.isNull(tmp) || Objects.isNull(dataList.get(i)) || BigDecimalUtil.le(tmp, dataList.get(i))) {
                     flag1 = Boolean.FALSE;
                     break;
                 }
@@ -1111,7 +1113,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             }
             for (int i = 1; i < dataList.size(); i++) {
                 //没有呈现下降趋势
-                if (!(tmp.compareTo(dataList.get(i)) < 0)) {
+                if ( Objects.isNull(tmp) || Objects.isNull(dataList.get(i)) || BigDecimalUtil.ge(tmp,dataList.get(i))) {
                     flag2 = Boolean.FALSE;
                     break;
                 }
