@@ -71,4 +71,13 @@ public class QtChartSubController {
         }
     }
 
+    /**
+     * 基片损耗分布
+     * @return
+     */
+    @GetMapping("/sub/test")
+    public void testTask(){
+        qtChartGenerateService.calculatePullAmountTask();
+    }
+
 }
