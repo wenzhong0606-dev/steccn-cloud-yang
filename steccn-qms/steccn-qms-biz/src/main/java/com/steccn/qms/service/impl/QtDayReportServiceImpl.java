@@ -339,6 +339,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
         commonHeadList.add(new QtSpcHeadTitleVO("产线", "productLineName"));
         commonHeadList.add(new QtSpcHeadTitleVO("班次", "className"));
+        commonHeadList.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        commonHeadList.add(new QtSpcHeadTitleVO("客户", "customerName"));
         commonHeadList.add(new QtSpcHeadTitleVO("来源", "dataSourceStr"));
         commonHeadList.add(new QtSpcHeadTitleVO("物料名称", "materialName"));
         commonHeadList.add(new QtSpcHeadTitleVO("缺陷记录时段", "defectTimeStr"));

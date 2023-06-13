@@ -30,7 +30,7 @@ public class QtDayReportController {
 
     @PostMapping("/online")
     @ApiOperation("质量日报表-在线检")
-    public R<QtDayReportOnlineVO> online(@RequestBody QtDayReportOnlineDTO dto) {
+    public R<QtDayReportOnlineVO> online(@RequestBody @Validated QtDayReportOnlineDTO dto) {
         return R.success(qtDayReportService.online(dto.getDate(), dto.getProductLineIdList()));
     }
 
