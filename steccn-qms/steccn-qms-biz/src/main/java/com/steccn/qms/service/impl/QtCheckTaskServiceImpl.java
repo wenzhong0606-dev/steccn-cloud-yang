@@ -1924,20 +1924,26 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         //基片巡检合格率趋势-柱状图 全量数据表查询车间，产线，班次，物料
         Set<Integer> classIdSet = Sets.newTreeSet();
+        Set<Integer> groupIdSet = Sets.newTreeSet();
         Set<Integer> workShopIdSet = Sets.newTreeSet();
         Set<Integer> lineIdSet = Sets.newTreeSet();
         Set<Long> materialIdSet = Sets.newHashSet();
+        Set<Integer> customerIdSet = Sets.newHashSet();
         for (QtCheckTaskReportVO data : flatDataList) {
             classIdSet.add(data.getClassesId());
             workShopIdSet.add(data.getProductWorkshopId());
             lineIdSet.add(data.getProductLineId());
             materialIdSet.add(data.getMaterialId());
+            customerIdSet.add(data.getCustomerId());
+            groupIdSet.add(data.getClassGroupId());
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
         baseScreenVO.setProductWorkShopScreen(conditionData(workShopIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(workShopIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
         baseScreenVO.setProductLineScreen(conditionData(lineIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
-        baseScreenVO.setMaterialScreen(conditionData(materialIdSet, FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setMaterialScreen(conditionData(materialIdSet, FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setCustomerScreen(conditionData(customerIdSet, FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(customerIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()));
+        baseScreenVO.setClassGroupScreen(conditionData(groupIdSet, OaManagerConstant.OaTeamGroupMapping.allGroup()));
         qtLineChartBiBarDTO.setOther(baseScreenVO);
         return qtLineChartBiBarDTO;
     }

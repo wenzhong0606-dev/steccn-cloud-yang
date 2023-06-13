@@ -4,8 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +24,6 @@ public class QtDayReportOnlineDTO implements Serializable {
     private LocalDate date;
 
     @ApiModelProperty("产线id集合")
-    @Size(min = 1, message = "产线集合不能为空")
+    @NotEmpty(message = "产线集合不能为空")
     private List<Integer> productLineIdList;
 }
