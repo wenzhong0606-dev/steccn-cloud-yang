@@ -98,10 +98,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
         QtReport qtReport = new QtReport();
         BeanUtils.copyProperties(dto, qtReport);
-        qtReport.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
-        LocalDate timeScopeEnd = dto.getTimeScopeEnd();
-        qtReport.setTimeScopeEnd(LocalDateTime.of(timeScopeEnd.getYear(), timeScopeEnd.getMonth()
-                , timeScopeEnd.getDayOfMonth(), 23, 59, 59));
+        if (Objects.nonNull(dto.getTimeScopeStart()) && Objects.nonNull(dto.getTimeScopeEnd())) {
+            qtReport.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
+            LocalDate timeScopeEnd = dto.getTimeScopeEnd();
+            qtReport.setTimeScopeEnd(LocalDateTime.of(timeScopeEnd.getYear(), timeScopeEnd.getMonth()
+                    , timeScopeEnd.getDayOfMonth(), 23, 59, 59));
+        }
         //根据分组id去查询分组
         this.save(qtReport);
         //保存告警人员信息
@@ -530,6 +532,21 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
                 //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
         );
+
+        //设置开始时间和结束时间
+        LocalDateTime startLdt;
+        LocalDateTime endLdt;
+        //判断是否是动态日期还是静态日期
+        if(Objects.nonNull(q.getDynamicDateType())){
+            LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(q.getDynamicDateType(), LocalDate.now());
+            startLdt = dynamicDateTime[0];
+            endLdt = dynamicDateTime[1];
+        }else{
+            startLdt= q.getTimeScopeStart();
+            endLdt = q.getTimeScopeEnd();
+        }
+        q.setTimeScopeStart(startLdt);
+        q.setTimeScopeEnd(endLdt);
 
         //设置开始结束时间
         qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
