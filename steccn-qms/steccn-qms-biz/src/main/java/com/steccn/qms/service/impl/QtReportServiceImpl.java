@@ -278,6 +278,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
         //遍历查出来的集合封装数据
         qtReportList.forEach(q -> {
+            //获取动态日期
+            getDynamicDate(q);
             //返回报表数据
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
@@ -299,9 +301,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
                 }
             }
-            //获取动态日期
-            getDynamicDate(q);
-
             //设置开始结束时间
             qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
             qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
@@ -457,6 +456,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.isNull(q)) {
             return qtReportChartVO;
         }
+        //获取动态日期
+        getDynamicDate(q);
         BeanUtils.copyProperties(q, qtReportChartVO);
         //根据物料id查询物料
         if (Objects.nonNull(q.getMaterialId())) {
@@ -482,7 +483,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     });
                 }
                 //设置检验项的数据类型与物料单位
-                Set<Long> dictIdSet = Sets.newHashSet(qtCheckItem.getDataType(),qtCheckItem.getMeasureUnit());
+                Set<Long> dictIdSet = Sets.newHashSet(qtCheckItem.getDataType(), qtCheckItem.getMeasureUnit());
                 Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 qtReportChartVO.setDataTypeId(qtCheckItem.getDataType());
                 qtReportChartVO.setDataTypeName(dictIdNameMap.get(qtCheckItem.getDataType()));
@@ -494,15 +495,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             }
         }
-        //获取动态日期
-        getDynamicDate(q);
         //根据条件查出所有的任务
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
-                        .eq(QtCheckTask::getMaterialId, q.getMaterialId())
-                        .eq(QtCheckTask::getTaskType, q.getCheckType())
-                        .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                        .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
-                        .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd()));
+                .eq(QtCheckTask::getMaterialId, q.getMaterialId())
+                .eq(QtCheckTask::getTaskType, q.getCheckType())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
+                .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd()));
 
         //设置开始结束时间
         qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
@@ -1188,7 +1187,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         , timeScopeEnd.getDayOfMonth(), 23, 59, 59));
             }
             //如果是静态日期，则该字段默认值为-1
-            if(Objects.isNull(dto.getDynamicDateType())){
+            if (Objects.isNull(dto.getDynamicDateType())) {
                 report.setDynamicDateType(-1);
             }
             updateById(report);
@@ -1200,12 +1199,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             }
         }
         qureyReport = getById(dto.getId());
+        //获取动态日期
+        getDynamicDate(qureyReport);
         //编辑完后回显数据
         QtReportVO qtReportVO = new QtReportVO();
         BeanUtils.copyProperties(qureyReport, qtReportVO);
 
-        //获取动态日期
-        getDynamicDate(qureyReport);
+
 
         qtReportVO.setTimeScopeStart(qureyReport.getTimeScopeStart().toLocalDate());
         qtReportVO.setTimeScopeEnd(qureyReport.getTimeScopeEnd().toLocalDate());
@@ -1221,6 +1221,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(report.getDynamicDateType(), LocalDate.now());
             report.setTimeScopeStart(dynamicDateTime[0]);
             report.setTimeScopeEnd(dynamicDateTime[1]);
+        } else {
+            report.setDynamicDateType(null);
         }
     }
 
@@ -1235,6 +1237,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //根据报表卡片id先查找到spc数据库中的报表数据
         QtReport report = getById(dto.getId());
         Assert.notNull(report, "该报表卡片不存在");
+        //获取动态日期
+        getDynamicDate(report);
 
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(report.getGranularity());
         Assert.notNull(granularityEnum, "粒度不存在");
@@ -1257,13 +1261,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //查询物料名称
         QtMaterial material = qtMaterialService.getById(report.getMaterialId());
         Assert.notNull(material, "物料不存在");
-        //获取动态日期
-        getDynamicDate(report);
 
         if (QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(report.getCheckType())) {
             //来料检
             return incomingDetailPage(dto, report, granularityEnum, qtCheckItem, itemIds, measureUnitName, material);
-        }else if(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(report.getCheckType())){
+        } else if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(report.getCheckType())) {
             //巡检
             return null;
 
@@ -1430,6 +1432,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
     /**
      * 巡检
+     *
      * @param dto             请求参数
      * @param report          spc报表
      * @param granularityEnum 粒度
@@ -1492,8 +1495,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         Page<QtSpcReportDetailVO> page = LogicalPageUtil.page(mainList, dto.getCurrent(), dto.getSize());
         return page;
     }
-
-
 
 
     private void getHSCList(Set<Integer> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
