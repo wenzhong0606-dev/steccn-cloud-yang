@@ -1281,8 +1281,18 @@ public class ReportServiceImpl implements ReportService {
                 outputQualityDataVO.setTotalFinishedProduct(BigDecimalUtil.multiply(divide, new BigDecimal(100)));
             }
             //排序
-            outputQualityDataVOS = outputQualityDataVOS.stream().sorted(Comparator.comparing(OutputQualityDataVO::getProductionLine, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getMonitor, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getType, Comparator.nullsFirst(Integer::compareTo))).collect(Collectors.toList());
-            outputQualityDataVOS = outputQualityDataVOS.stream().sorted(Comparator.comparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getType)).collect(Collectors.toList());
+            outputQualityDataVOS = outputQualityDataVOS
+                    .stream()
+                    .sorted(Comparator.comparing(OutputQualityDataVO::getProductionLine, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualityDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualityDataVO::getMonitor, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualityDataVO::getType, Comparator.nullsFirst(Integer::compareTo)))
+                    .collect(Collectors.toList());
+            outputQualityDataVOS = outputQualityDataVOS
+                    .stream()
+                    .sorted(Comparator.comparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualityDataVO::getType)).collect(Collectors.toList());
 
         }
         outputQualityVO.setColumns(getJpTableHeader());
@@ -1492,7 +1502,22 @@ public class ReportServiceImpl implements ReportService {
                 outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
                 dataList.add(outputQualitySjgDataVO);
             }
+
+            //排序
+            dataList = dataList
+                    .stream()
+                    .sorted(Comparator.comparing(OutputQualitySjgDataVO::getProductLine, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualitySjgDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualitySjgDataVO::getMonitor, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualitySjgDataVO::getType, Comparator.nullsFirst(Integer::compareTo)))
+                    .collect(Collectors.toList());
+            dataList = dataList
+                    .stream()
+                    .sorted(Comparator.comparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(OutputQualitySjgDataVO::getType)).collect(Collectors.toList());
         }
+
         outputQualitySjgVO.setTableList(dataList);
         outputQualitySjgVO.setColumns(getSjgTableHeader());
         resList.add(outputQualitySjgVO);
@@ -1568,7 +1593,7 @@ public class ReportServiceImpl implements ReportService {
         //线别
         OutputQualityHeaderVO productionLineHeader = new OutputQualityHeaderVO();
         productionLineHeader.setLabel("线别");
-        productionLineHeader.setProp("productionLine");
+        productionLineHeader.setProp("productLine");
         columns.add(productionLineHeader);
         //厚度
         OutputQualityHeaderVO thicknessHeader = new OutputQualityHeaderVO();
@@ -1595,10 +1620,10 @@ public class ReportServiceImpl implements ReportService {
         //原片不良
         OutputQualityHeaderVO header1 = new OutputQualityHeaderVO();
         header1.setLabel("原片不良");
-        header1.setProp("1");
+        header1.setProp("rawClassBadness");
         List<OutputQualityHeaderVO> childHeaders1 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader1 = new OutputQualityHeaderVO();
-        unitHeader1.setProp("1");
+        unitHeader1.setProp("rawClassBadness");
         unitHeader1.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders1.add(unitHeader1);
         header1.setChildren(childHeaders1);
@@ -1606,10 +1631,10 @@ public class ReportServiceImpl implements ReportService {
         //磨边不良
         OutputQualityHeaderVO header2 = new OutputQualityHeaderVO();
         header2.setLabel("磨边不良");
-        header2.setProp("2");
+        header2.setProp("rawClassBadness");
         List<OutputQualityHeaderVO> childHeaders2 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader2 = new OutputQualityHeaderVO();
-        unitHeader2.setProp("2");
+        unitHeader2.setProp("rawClassBadness");
         unitHeader2.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders2.add(unitHeader2);
         header2.setChildren(childHeaders2);
@@ -1617,10 +1642,10 @@ public class ReportServiceImpl implements ReportService {
         //打孔不良
         OutputQualityHeaderVO header3 = new OutputQualityHeaderVO();
         header3.setLabel("打孔不良");
-        header3.setProp("3");
+        header3.setProp("punchingBadness");
         List<OutputQualityHeaderVO> childHeaders3 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader3 = new OutputQualityHeaderVO();
-        unitHeader3.setProp("3");
+        unitHeader3.setProp("punchingBadness");
         unitHeader3.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders3.add(unitHeader3);
         header3.setChildren(childHeaders3);
@@ -1628,10 +1653,10 @@ public class ReportServiceImpl implements ReportService {
         //丝印/镀膜不良
         OutputQualityHeaderVO header4 = new OutputQualityHeaderVO();
         header4.setLabel("丝印/镀膜不良");
-        header4.setProp("4");
+        header4.setProp("silkScreenBadness");
         List<OutputQualityHeaderVO> childHeaders4 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader4 = new OutputQualityHeaderVO();
-        unitHeader4.setProp("4");
+        unitHeader4.setProp("silkScreenBadness");
         unitHeader4.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders4.add(unitHeader4);
         header4.setChildren(childHeaders4);
@@ -1639,10 +1664,10 @@ public class ReportServiceImpl implements ReportService {
         //钢化不良
         OutputQualityHeaderVO header5 = new OutputQualityHeaderVO();
         header5.setLabel("钢化不良");
-        header5.setProp("5");
+        header5.setProp("temperingBadness");
         List<OutputQualityHeaderVO> childHeaders5 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader5 = new OutputQualityHeaderVO();
-        unitHeader5.setProp("5");
+        unitHeader5.setProp("temperingBadness");
         unitHeader5.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders5.add(unitHeader5);
         header5.setChildren(childHeaders5);
@@ -1650,10 +1675,10 @@ public class ReportServiceImpl implements ReportService {
         //不良合计
         OutputQualityHeaderVO header6 = new OutputQualityHeaderVO();
         header6.setLabel("不良合计");
-        header6.setProp("6");
+        header6.setProp("badTotal");
         List<OutputQualityHeaderVO> childHeaders6 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader6 = new OutputQualityHeaderVO();
-        unitHeader6.setProp("6");
+        unitHeader6.setProp("badTotal");
         unitHeader6.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders6.add(unitHeader6);
         header6.setChildren(childHeaders6);
@@ -1664,11 +1689,11 @@ public class ReportServiceImpl implements ReportService {
         header7.setProp("7");
         List<OutputQualityHeaderVO> childHeaders7 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader71 = new OutputQualityHeaderVO();
-        unitHeader71.setProp("7.1");
+        unitHeader71.setProp("currentClassSlice");
         unitHeader71.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders7.add(unitHeader71);
         OutputQualityHeaderVO unitHeader72 = new OutputQualityHeaderVO();
-        unitHeader72.setProp("7.2");
+        unitHeader72.setProp("currentClassSquare");
         unitHeader72.setLabel(PmManagerConstant.MEASURE_UNIT_SM);
         childHeaders7.add(unitHeader72);
         header7.setChildren(childHeaders7);
@@ -1679,11 +1704,11 @@ public class ReportServiceImpl implements ReportService {
         header8.setProp("8");
         List<OutputQualityHeaderVO> childHeaders8 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader81 = new OutputQualityHeaderVO();
-        unitHeader81.setProp("8.1");
+        unitHeader81.setProp("inStorageSlice");
         unitHeader81.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders8.add(unitHeader81);
         OutputQualityHeaderVO unitHeader82 = new OutputQualityHeaderVO();
-        unitHeader82.setProp("8.2");
+        unitHeader82.setProp("inStorageSquare");
         unitHeader82.setLabel(PmManagerConstant.MEASURE_UNIT_SM);
         childHeaders8.add(unitHeader82);
         header8.setChildren(childHeaders8);
@@ -1694,11 +1719,11 @@ public class ReportServiceImpl implements ReportService {
         header9.setProp("9");
         List<OutputQualityHeaderVO> childHeaders9 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader91 = new OutputQualityHeaderVO();
-        unitHeader91.setProp("9.1");
+        unitHeader91.setProp("processQuantitySlice");
         unitHeader91.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders9.add(unitHeader91);
         OutputQualityHeaderVO unitHeader92 = new OutputQualityHeaderVO();
-        unitHeader92.setProp("9.2");
+        unitHeader92.setProp("processQuantitySquare");
         unitHeader92.setLabel(PmManagerConstant.MEASURE_UNIT_SM);
         childHeaders9.add(unitHeader92);
         header9.setChildren(childHeaders9);
@@ -1724,6 +1749,7 @@ public class ReportServiceImpl implements ReportService {
         //月累计
         OutputQualitySjgDataVO outputQualitySjgDataVO = new OutputQualitySjgDataVO();
         outputQualitySjgDataVO.setType(2);
+        outputQualitySjgDataVO.setProductLine("月累计");
         LocalDateTime nightStart = LocalDateUtil.getNight(date);
         //晚班结束时间
         LocalDateTime nightEnd = LocalDateUtil.getMorning(date).plusDays(1);
@@ -2101,6 +2127,7 @@ public class ReportServiceImpl implements ReportService {
         }
         OutputQualitySjgDataVO outputQualitySjgDataVO = new OutputQualitySjgDataVO();
         outputQualitySjgDataVO.setType(1);
+        outputQualitySjgDataVO.setProductLine("合计");
         outputQualitySjgDataVO.setRawClassBadness(rawClassBadness);
         outputQualitySjgDataVO.setEdgingBadness(edgingBadness);
         outputQualitySjgDataVO.setPunchingBadness(punchingBadness);
