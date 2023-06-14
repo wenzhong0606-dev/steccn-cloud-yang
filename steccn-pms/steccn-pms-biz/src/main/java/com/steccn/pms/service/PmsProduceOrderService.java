@@ -241,4 +241,12 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     CustomerIdAndNameVO getCustomer(QmsCustomerDTO dto);
+
+
+    /**
+     * 根据生产订单id 获取生产订单bom中的主物料
+     * @param orderIds
+     * @return key 生产订单id  value 物料id
+     */
+    Map<Long,Long> maiMaterialAByOrderId(Set<Long> orderIds);
 }

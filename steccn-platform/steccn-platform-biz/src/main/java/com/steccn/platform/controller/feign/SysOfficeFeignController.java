@@ -100,9 +100,9 @@ public class SysOfficeFeignController {
     }
 
     @ApiOperation("根据父节点以及子节点类型获取下级子节点数据")
-    @GetMapping("/listByParentIdAndType")
-    public R<List<SysOfficeVO>> listByParentIdAndType(Set<Integer> parentIds,String type ){
-        return R.success(sysOfficeService.listByParentIdAndType(parentIds,type));
+    @PostMapping("/listByParentIdAndType")
+    public R<List<SysOfficeVO>> listByParentIdAndType(@RequestBody SysOfficeParentDTO dto){
+        return R.success(sysOfficeService.listByParentIdAndType(dto));
     }
 
     @ApiOperation("货架的仓库")

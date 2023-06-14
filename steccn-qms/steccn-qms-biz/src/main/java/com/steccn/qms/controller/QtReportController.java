@@ -44,7 +44,7 @@ public class QtReportController {
     @SysLog("新建报表任务")
     public R<Integer> add(@Validated(InsertGroup.class) @RequestBody QtReportDTO dto) {
         //如果动态日期和静态日期都为空，则抛异常，参数错误
-        if ((Objects.isNull(dto.getTimeScopeStart()) && Objects.isNull(dto.getTimeScopeEnd()) || Objects.isNull(dto.getDynamicDateType()))) {
+        if ((Objects.isNull(dto.getTimeScopeStart()) && Objects.isNull(dto.getTimeScopeEnd()) && Objects.isNull(dto.getDynamicDateType()))) {
             throw new BusinessException("动态日期类型和静态日期不能同时为空");
         }
         return R.success(qtReportService.add(dto));

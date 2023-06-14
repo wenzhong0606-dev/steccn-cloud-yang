@@ -105,6 +105,14 @@ public class PmMaterialDTO {
     @ApiModelProperty("是否是反冲：1是0否")
     private Integer isBackCalculation;
 
+
+    /**
+     * 是否主物料
+     */
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "是否是主物料不能为空")
+    @ApiModelProperty("是否是主物料：1是0否")
+    private Integer isMainMaterial;
+
     /**
      * 工序报废百分比
      */

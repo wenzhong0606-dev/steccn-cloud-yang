@@ -163,4 +163,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     List<PmsReportWorkVO> monthlyData(LocalDate date, List<Integer> lineIds);
+
+    /**
+     * 根据报工记录获取物料的主物料（1个生产订单只有一个主物料）
+     * @param reportIds
+     * @return key 报工id value 物料id
+     */
+    Map<Long,Long> mainMaterialByReportWork(Set<Long> reportIds);
 }
