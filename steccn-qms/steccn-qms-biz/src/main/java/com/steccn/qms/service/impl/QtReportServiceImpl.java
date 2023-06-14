@@ -1359,6 +1359,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 QtSpcReportHSCDetailTaskVO taskVO = new QtSpcReportHSCDetailTaskVO();
                 taskVO.setMaterialName(material.getName());
                 taskVO.setFinishedTime(LocalDateUtil.format(ele.getSpotTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                taskVO.setCode(ele.getCode());
                 //检验任务样本结果集合
                 List<String> results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                                 .eq(QtCheckTaskDetail::getTaskId, ele.getId())
