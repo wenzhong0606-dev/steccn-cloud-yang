@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -1023,6 +1024,22 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         String customerName = FeignOptional.of(() -> remoteOfficeFeign.getNameById(result.getCustomerId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         result.setCustomerName(customerName);
         return result;
+    }
+
+    @Override
+    public Map<Long, Long> maiMaterialAByOrderId(Set<Long> orderIds) {
+        Map<Long, Long> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(orderIds)) {
+            List<PmsWorkOrderBom> list = pmsWorkOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                    .in(PmsWorkOrderBom::getWorkProduceId, orderIds)
+                    .eq(PmsWorkOrderBom::getMainMaterialFlag, 1));
+            if (CollUtil.isNotEmpty(list)){
+                for (PmsWorkOrderBom pmsWorkOrderBom : list) {
+                    map.put(pmsWorkOrderBom.getWorkProduceId(),pmsWorkOrderBom.getModuleId());
+                }
+            }
+        }
+        return map;
     }
 
 

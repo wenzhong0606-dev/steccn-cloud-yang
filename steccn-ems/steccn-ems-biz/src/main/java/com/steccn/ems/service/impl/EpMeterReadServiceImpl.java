@@ -730,20 +730,22 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      */
     public List<EpMeterReadDistantDTO> orderDetail(Set<LocalDate> dateSet, Collection<EpInstrumentAccountDTO> meterIdSet) {
         List<EpMeterReadDistantDTO> resList = Lists.newArrayList();
-        List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
-                .in(EpMeterReadDistant::getMeterId, meterIdSet.stream().map(EpInstrumentAccountDTO::getId).collect(Collectors.toSet()))
-                .in(EpMeterReadDistant::getReadDate, dateSet));
-        if (CollUtil.isNotEmpty(dbList)) {
-            Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick() + "_" + v.getProduceOrderId()));
-            collect.forEach((k, v) -> {
-                EpMeterReadDistant ele = v.get(0);
-                EpMeterReadDistantDTO model = new EpMeterReadDistantDTO();
-                BeanUtils.copyProperties(ele, model);
-                BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
-                model.setReadValue(reduce);
-                model.setProduceOrderId(ele.getProduceOrderId());
-                resList.add(model);
-            });
+        if(CollUtil.isNotEmpty(dateSet) && CollUtil.isNotEmpty(meterIdSet)){
+            List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
+                    .in(EpMeterReadDistant::getMeterId, meterIdSet.stream().map(EpInstrumentAccountDTO::getId).collect(Collectors.toSet()))
+                    .in(EpMeterReadDistant::getReadDate, dateSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick() + "_" + v.getProduceOrderId()));
+                collect.forEach((k, v) -> {
+                    EpMeterReadDistant ele = v.get(0);
+                    EpMeterReadDistantDTO model = new EpMeterReadDistantDTO();
+                    BeanUtils.copyProperties(ele, model);
+                    BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    model.setReadValue(reduce);
+                    model.setProduceOrderId(ele.getProduceOrderId());
+                    resList.add(model);
+                });
+            }
         }
         return resList;
     }

@@ -121,8 +121,8 @@ public interface RemoteOfficeFeign {
     R<List<SysOfficeVO>> listByParentId(@RequestBody SysOfficeParentDTO dto);
 
     @ApiOperation("根据父id获取下级节点数据")
-    @GetMapping("/feign/platform/sys/office/listByParentIdAndType")
-    R<List<SysOfficeVO>> listByParentIdAndType(@RequestParam("parentIds") Set<Integer> parentIds, @RequestParam("type") String type);
+    @PostMapping("/feign/platform/sys/office/listByParentIdAndType")
+    R<List<SysOfficeVO>> listByParentIdAndType(@RequestBody SysOfficeParentDTO dto);
 
 
     /**

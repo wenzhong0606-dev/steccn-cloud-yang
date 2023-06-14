@@ -73,6 +73,11 @@ public class PmMaterial implements Serializable {
     private Integer isBackCalculation;
 
     /**
+     * 是否主物料
+     */
+    private Integer isMainMaterial;
+
+    /**
      * 工序报废百分比
      */
     private Float processScrapingPercent;

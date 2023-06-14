@@ -1,5 +1,6 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
@@ -21,6 +22,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
+import com.steccn.pms.dto.PmsCompleteDeliveryInfoDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
 import com.steccn.pms.service.*;
@@ -264,6 +266,27 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             pmsCompleteDeliveryInfoService.saveBatch(infoList);
         }
         return save(pmsCompleteDelivery);
+    }
+
+    @Override
+    public  Map<Long,List<PmsCompleteDeliveryInfoDTO>> reportWorkMaterial(Set<Long> reportIds) {
+        Map<Long,List<PmsCompleteDeliveryInfoDTO>> res = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(reportIds)){
+            List<PmsCompleteDelivery> list = list(new LambdaQueryWrapper<PmsCompleteDelivery>().in(PmsCompleteDelivery::getReportWorkId, reportIds));
+            if (CollUtil.isNotEmpty(list)){
+                Set<Long> collect = list.stream().map(PmsCompleteDelivery::getId).collect(Collectors.toSet());
+                List<PmsCompleteDeliveryInfo> infoList = pmsCompleteDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().in(PmsCompleteDeliveryInfo::getCompleteDeliveryId, collect));
+                if (CollUtil.isNotEmpty(infoList)){
+                    Map<Long, List<PmsCompleteDeliveryInfo>> map = infoList.stream().collect(Collectors.groupingBy(PmsCompleteDeliveryInfo::getCompleteDeliveryId));
+                    for (PmsCompleteDelivery pmsCompleteDelivery : list) {
+                        List<PmsCompleteDeliveryInfo> deliveryInfoList = map.get(pmsCompleteDelivery.getId());
+                        List<PmsCompleteDeliveryInfoDTO> infos = BeanUtil.copyToList(deliveryInfoList, PmsCompleteDeliveryInfoDTO.class);
+                        res.put(pmsCompleteDelivery.getReportWorkId(),infos);
+                    }
+                }
+            }
+        }
+        return res;
     }
 
 

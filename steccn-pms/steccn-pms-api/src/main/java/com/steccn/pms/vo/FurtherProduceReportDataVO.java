@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -34,4 +35,7 @@ public class FurtherProduceReportDataVO implements Serializable {
 
     @ApiModelProperty("不合格数")
     private BigDecimal badnessQuantity;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime createTime;
 }

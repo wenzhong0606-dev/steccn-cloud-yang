@@ -48,6 +48,7 @@
         SELECT
             pbp.material_id,
             pbp.classes_id,
+            si.create_time,
             sum( si.quantity) as processQuantity
         FROM
             `pms_complete_storage_info` si
@@ -60,7 +61,7 @@
         AND si.create_time &gt;= #{start}
         AND si.create_time &lt;= #{end}
         GROUP BY
-            pbp.material_id,pbp.classes_id
+            pbp.material_id,pbp.classes_id,si.create_time
 
     </select>
     <select id="existCaseNo" resultType="java.lang.Long">

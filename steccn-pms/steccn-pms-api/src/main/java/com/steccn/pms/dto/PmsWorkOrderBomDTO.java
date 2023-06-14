@@ -83,6 +83,11 @@ public class PmsWorkOrderBomDTO {
 //    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "是否回收不能为空")
     private Integer recycleFlag;
 
+
+    @ApiModelProperty("是否主物料")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "是否主物料不能为空")
+    private Integer mainMaterialFlag;
+
     @ApiModelProperty("工艺路线组件id")
     private Long craftRouteModuleId;
 

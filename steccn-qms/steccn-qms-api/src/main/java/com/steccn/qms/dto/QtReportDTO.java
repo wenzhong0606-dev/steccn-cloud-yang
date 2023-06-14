@@ -38,15 +38,18 @@ public class QtReportDTO implements Serializable {
     private String name;
 
     /**
+     * 动态日期类型
+     */
+    private Integer dynamicDateType;
+
+    /**
      * 日期范围开始时间
      */
-    @NotNull(message = "日期范围开始时间不能为空",groups = {InsertGroup.class, UpdateGroup.class})
     private LocalDate timeScopeStart;
 
     /**
      * 日期范围结束时间
      */
-    @NotNull(message = "日期范围结束时间不能为空",groups = {InsertGroup.class, UpdateGroup.class})
     private LocalDate timeScopeEnd;
 
     /**

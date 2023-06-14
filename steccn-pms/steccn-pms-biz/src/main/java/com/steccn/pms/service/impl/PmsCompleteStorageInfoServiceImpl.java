@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.util.LocalDateUtil;
@@ -32,8 +33,7 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
-public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteStorageInfoMapper, PmsCompleteStorageInfo>
-        implements PmsCompleteStorageInfoService {
+public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteStorageInfoMapper, PmsCompleteStorageInfo> implements PmsCompleteStorageInfoService {
 
     @Override
     public Boolean existCaseNo(Long typeId, Set<String> caseNoSet) {
@@ -50,9 +50,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     public Map<Long, PmsCompleteStorageNumDTO> numByOrderId(Set<Long> orderSet) {
         Map<Long, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(orderSet)) {
-            List<PmsCompleteStorageInfo> list = list(new QueryWrapper<PmsCompleteStorageInfo>()
-                    .select("produce_order_id,sum(quantity) as quantity ,unit_id")
-                    .lambda().in(PmsCompleteStorageInfo::getProduceOrderId, orderSet).groupBy(PmsCompleteStorageInfo::getProduceOrderId));
+            List<PmsCompleteStorageInfo> list = list(new QueryWrapper<PmsCompleteStorageInfo>().select("produce_order_id,sum(quantity) as quantity ,unit_id").lambda().in(PmsCompleteStorageInfo::getProduceOrderId, orderSet).groupBy(PmsCompleteStorageInfo::getProduceOrderId));
             if (CollUtil.isNotEmpty(list)) {
                 list.forEach(pmsCompleteStorageInfo -> {
                     PmsCompleteStorageNumDTO storageNumDTO = new PmsCompleteStorageNumDTO();
@@ -123,6 +121,19 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<FurtherProduceReportDataVO> materialByDateList(Set<Long> materialSet, LocalDate date) {
+        List<FurtherProduceReportDataVO> resList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)){
+            //当前日期的一号早八点
+            LocalDateTime start = LocalDateUtil.getMorning(date.withDayOfMonth(1));
+            //当前日期的晚班结束时间
+            LocalDateTime end = LocalDateUtil.getMorning(date).plusDays(1);
+            resList = this.baseMapper.materialList(materialSet, start, end);
+        }
+        return resList;
     }
 }
 

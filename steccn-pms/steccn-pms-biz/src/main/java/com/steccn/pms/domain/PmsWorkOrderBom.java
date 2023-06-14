@@ -64,6 +64,11 @@ public class PmsWorkOrderBom implements Serializable {
     private Integer jointProductFlag;
 
     /**
+     * 是否主物料
+     */
+    private Integer mainMaterialFlag;
+
+    /**
      * 工序报废百分比
      */
     private Float processScrapingPercent;

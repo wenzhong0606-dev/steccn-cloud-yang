@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * SPC控制图
@@ -41,6 +43,10 @@ public class QtReportController {
     @ApiOperation(value = "新建报表任务")
     @SysLog("新建报表任务")
     public R<Integer> add(@Validated(InsertGroup.class) @RequestBody QtReportDTO dto) {
+        //如果动态日期和静态日期都为空，则抛异常，参数错误
+        if ((Objects.isNull(dto.getTimeScopeStart()) && Objects.isNull(dto.getTimeScopeEnd()) && Objects.isNull(dto.getDynamicDateType()))) {
+            throw new BusinessException("动态日期类型和静态日期不能同时为空");
+        }
         return R.success(qtReportService.add(dto));
     }
 
@@ -145,5 +151,4 @@ public class QtReportController {
         List<LocalDateTime> timeList = SpcWarnTask.preTimeSlot(dto.getStartTime(), granularity.getType(), 7);
         return R.success(qtReportService.warnSerialUpOrDown(timeList, granularity.getName()));
     }
-
 }
