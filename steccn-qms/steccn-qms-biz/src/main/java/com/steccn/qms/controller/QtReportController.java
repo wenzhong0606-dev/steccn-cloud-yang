@@ -151,5 +151,4 @@ public class QtReportController {
         List<LocalDateTime> timeList = SpcWarnTask.preTimeSlot(dto.getStartTime(), granularity.getType(), 7);
         return R.success(qtReportService.warnSerialUpOrDown(timeList, granularity.getName()));
     }
-
 }
