@@ -1691,6 +1691,21 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return Objects.nonNull(dbList) ? dbList : Lists.newArrayList();
     }
 
+    @Override
+    public List<QtCheckTask> getSpcCheckTaskSpotTime(QtReport report) {
+        //设置查询条件
+        List<QtCheckTask> dbList = list(new QueryWrapper<QtCheckTask>()
+                .lambda()
+                .eq(QtCheckTask::getMaterialId, report.getMaterialId())
+                .eq(QtCheckTask::getTaskType, report.getCheckType())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .ge(QtCheckTask::getSpotTime, report.getTimeScopeStart())
+                .lt(QtCheckTask::getSpotTime, report.getTimeScopeEnd()));
+
+        //根据条件先low出所有的检验任务数据
+        return Objects.nonNull(dbList) ? dbList : Lists.newArrayList();
+    }
+
 
     /**
      * 深加工/基片巡检合格率趋势明细分页表

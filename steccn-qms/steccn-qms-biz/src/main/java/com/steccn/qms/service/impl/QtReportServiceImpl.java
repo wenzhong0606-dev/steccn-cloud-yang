@@ -384,6 +384,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
                 .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
         );
+        SteccnTableAssertUtil.notEmpty(qtCheckTasks,"全量数据表为空");
         //设置时间分片
         List<String> dates = Lists.newArrayList();
         //将时间范围根据粒度分片
@@ -1081,9 +1082,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //编辑完后回显数据
         QtReportVO qtReportVO = new QtReportVO();
         BeanUtils.copyProperties(qureyReport, qtReportVO);
-
-
-
         qtReportVO.setTimeScopeStart(qureyReport.getTimeScopeStart().toLocalDate());
         qtReportVO.setTimeScopeEnd(qureyReport.getTimeScopeEnd().toLocalDate());
         return qtReportVO;
@@ -1145,7 +1143,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         } else if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(report.getCheckType())) {
             //巡检
             return patrol(dto, report, granularityEnum, qtCheckItem, itemIds, measureUnitName, material);
-
         } else {
             //其余检验方式
             return otherDetailPage(dto, report, granularityEnum, qtCheckItem, itemIds, measureUnitName, material);
@@ -1289,7 +1286,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     qtSpcReportDetailTaskAllVO.setHeader(headerList);
                 }
             }
-
             //区分不同的检验类型
             if (QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(report.getCheckType())) {
                 getMIXEDList(itemIds, material.getName(),
@@ -1321,7 +1317,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     private Page<QtSpcReportDetailVO> patrol(QtSpcReportDetailPageDTO dto, QtReport report, QtManagerConstant.QtGranularityEnum granularityEnum, QtCheckItem qtCheckItem, Set<Integer> itemIds, String measureUnitName, QtMaterial material) {
         //根据条件先low出所有的检验任务数据
-        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTask(report);
+        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTaskSpotTime(report);
         SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
         //将时间范围根据粒度分片
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
@@ -1334,7 +1330,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             List<QtCheckTask> conditionDataList = qtCheckTasks.stream()
                     .filter(v -> Objects.nonNull(v.getSpotTime()))
                     .filter(v -> LocalDateUtil.isRange(v.getSpotTime(), start, end, true, false)).collect(Collectors.toList());
-
             //设置返回数据类型对象
             QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
             BeanUtils.copyProperties(report, qtSpcReportDetailVO);
@@ -1347,7 +1342,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtSpcReportDetailVO.setCheckItemId(qtCheckItem.getId());
             //设置检验项名称
             qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
-
             //设置计量单位名称
             qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
             if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(qtCheckItem.getName())) {
@@ -1359,8 +1353,40 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtSpcReportDetailTaskAllVO.setHeader(getHeaderList(report.getCheckType(), qtCheckItem.getName()));
 
             //解析最终的结果-求平均值
-
-            getHSCList(itemIds, material.getName(), conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
+            List<QtSpcReportHSCDetailTaskVO> qtSpcReportHSCDetailTaskVOS = Lists.newArrayList();
+            List<BigDecimal> sumBdList = Lists.newArrayList();
+            conditionDataList.forEach(ele ->{
+                QtSpcReportHSCDetailTaskVO taskVO = new QtSpcReportHSCDetailTaskVO();
+                taskVO.setMaterialName(material.getName());
+                taskVO.setFinishedTime(LocalDateUtil.format(ele.getSpotTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                //检验任务样本结果集合
+                List<String> results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .eq(QtCheckTaskDetail::getTaskId, ele.getId())
+                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                        .stream().filter(qt -> Objects.nonNull(qt) && Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
+                        .map(QtCheckTaskDetail::getCheckResult)
+                        .collect(Collectors.toList());
+                List<BigDecimal> bdList = Lists.newArrayList();
+                results.forEach(res -> {
+                    if (isNumber(res) || isFloatNumber(res)) {
+                        BigDecimal bdData = new BigDecimal(res);
+                        if (Objects.nonNull(bdData)) {
+                            bdList.add(new BigDecimal(res));
+                        }
+                    }
+                });
+                BigDecimal detailSum = bdList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(bdList.size()));
+                sumBdList.addAll(bdList);
+                taskVO.setCheckResult(Objects.nonNull(result) ? result.toString(): null);
+                taskVO.setProductLine(ele.getProductLine());
+                qtSpcReportHSCDetailTaskVOS.add(taskVO);
+            });
+            //求平均值
+            BigDecimal sum = sumBdList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(sumBdList.size()));
+            qtSpcReportDetailVO.setResultAverage(resultAverage);
+            qtSpcReportDetailTaskAllVO.setReportDetailTaskVOList(qtSpcReportHSCDetailTaskVOS);
             qtSpcReportDetailVO.setDetailTaskAllVO(qtSpcReportDetailTaskAllVO);
             mainList.add(qtSpcReportDetailVO);
         }
@@ -1393,9 +1419,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 //详情检验结果
                 BeanUtils.copyProperties(s, taskVO);
                 //设置物料名称
-                if (Objects.nonNull(name)) {
-                    taskVO.setMaterialName(name);
-                }
+                taskVO.setMaterialName(name);
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
                 //检验任务样本结果集合
@@ -1564,6 +1588,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         QtSpcHeadTitleVO qtSpcHeadTitleVO7 = new QtSpcHeadTitleVO(QtManagerConstant.SPC_HEADER_FILELD_SUPPLIER, QtManagerConstant.SPC_HEADER_FILELD_SUPPLIER_VALUE);
         //取样时间
         QtSpcHeadTitleVO qtSpcHeadTitleVO8 = new QtSpcHeadTitleVO(QtManagerConstant.SPC_REPORT_SAMPLING_TIME, QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME_VALUE);
+        //抽检时间
+        QtSpcHeadTitleVO qtSpcHeadTitleVO9 = new QtSpcHeadTitleVO(QtManagerConstant.SPC_HEADER_FIELD_SPOT_TIME, QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME_VALUE);
 
         //所有检都需要【检验任务单号，检验完成时间，检验项，物料名称】
         if (QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(dataType)) {
@@ -1572,6 +1598,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         } else if (QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(dataType)) {
             //配料抽检需要加入【物料使用车间】
             Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO2, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4, qtSpcHeadTitleVO6);
+        }else if(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dataType)){
+           //巡检
+            Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO9, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4, qtSpcHeadTitleVO5);
         } else {
             //其余检需要加入【生产产线】
             Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO2, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4, qtSpcHeadTitleVO5);

@@ -126,6 +126,14 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     List<QtCheckTask> getSpcCheckTask(QtReport report);
 
+
+    /**
+     * 获取spc的检验任务
+     * @param report 检验任务
+     * @return
+     */
+    List<QtCheckTask> getSpcCheckTaskSpotTime(QtReport report);
+
     /**
      * 深加工/基片巡检合格率趋势明细分页
      *
