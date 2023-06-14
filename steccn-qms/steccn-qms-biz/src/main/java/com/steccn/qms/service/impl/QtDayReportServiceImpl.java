@@ -37,6 +37,7 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -1451,7 +1452,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 &&v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
                     }
                     //算总计
-                    QtDayReportLossDataVO lossLine = countAmount(tableDataTmp);
+                    QtDayReportLossDataVO lossLine = countAmount(tableDataTmp,dto.getType());
                     //如果是班次则算损耗小计，否则算损耗合计
                     if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
                         lossLine.setClassName(className);
@@ -1478,7 +1479,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         &&(v.getProductLineName()!=null&&v.getProductLineName().equals(productLine.getOfficeName())))).collect(Collectors.toList());
                 //size小于2说明没有数据
                 if(tableDataTmp.size() > QtManagerConstant.NUM_2){
-                    QtDayReportLossDataVO lossLine = countAmount(tableDataTmp);
+                    QtDayReportLossDataVO lossLine = countAmount(tableDataTmp,dto.getType());
                     lossLine.setType(QtManagerConstant.NUM_2);
                     tableData.add(lossLine);
                 }
@@ -1492,7 +1493,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 //        type2.addAll(tableData.stream().filter(v->v.getType().equals(QtManagerConstant.NUM_2)).collect(Collectors.toList()));
         //只有大于车间的大小才有总计
         if(type2.size() > productLineList.size()){
-            QtDayReportLossDataVO lossAllLine = countAmount(type2);
+            QtDayReportLossDataVO lossAllLine = countAmount(type2,dto.getType());
             lossAllLine.setType(QtManagerConstant.NUM_3);
             tableData.add(lossAllLine);
         }
@@ -1528,11 +1529,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             for(FurtherValueStrVO tmp:horizon){
                 String strTmp = tmp.getValue().get(0);
                 if(StrUtil.isNotBlank(strTmp)){
-                    if(!StrUtil.isNumeric(strTmp)){
-                        //如果不是数字则跳过这一次循环
-                        continue;
+                    if(!NumberUtils.isCreatable(strTmp)){
+                        strTmp = tmp.getValue().get(1);
                     }
-                    result = BigDecimalUtil.add(result,new BigDecimal(tmp.getValue().get(0))) ;
+//                    if(!StrUtil.isNumeric(strTmp)){
+//                        //如果不是数字则跳过这一次循环
+//                        continue;
+//                    }
+                    result = BigDecimalUtil.add(result,new BigDecimal(strTmp)) ;
                 }
             }
         }
@@ -1547,6 +1551,20 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private List<BigDecimal> countColumn(List<QtDayReportLossDataVO> tableData){
         List<BigDecimal> bigDecimalList = Lists.newArrayList();
         if(CollUtil.isNotEmpty(tableData)){
+            //先统计每个module中value的情况
+            int valueSize1 = tableData.get(0).getModule().get(0).getValue().size();
+            int valueSize2 = tableData.get(0).getModule().get(tableData.get(0).getModule().size()-1).getValue().size();
+            //有班组的情况
+            List<String> classNameList = Lists.newArrayList();
+            if(valueSize1!=valueSize2){
+                tableData.forEach(tableTmp -> {
+                    tableTmp.getModule().forEach(moduleTmp->{
+                        if(moduleTmp.getValue().size()==valueSize1){
+                            classNameList.add(moduleTmp.getValue().remove(0));
+                        }
+                    });
+                });
+            }
             //列
             int col = tableData.get(0).getModule().size();
             //行
@@ -1555,15 +1573,35 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             for(int i = 0; i < col;i++){
                 BigDecimal count = BigDecimal.ZERO;
                 for(int j = 0; j<row;j++){
-                    String numStr = tableData.get(j).getModule().get(i).getValue().get(0);
-                    if(StrUtil.isNotEmpty(numStr)){
-                        if(!StrUtil.isNumeric(numStr)){
-                            continue;
-                        }
+                    String numStr = "";
+                    //为空时是总计
+                    if(tableData.get(j).getModule().get(i).getValue().get(0)!=null&&!tableData.get(j).getModule().get(i).getValue().get(0).equals("")){
+                        numStr = tableData.get(j).getModule().get(i).getValue().get(0);
+                    }else {
+                        numStr = tableData.get(j).getModule().get(i).getValue().get(1);
+                    }
+                    //空串说明是班组那一列
+                    if(StrUtil.isNotBlank(numStr)){
                         count = BigDecimalUtil.add(count,new BigDecimal(numStr));
                     }
                 }
                 bigDecimalList.add(count);
+            }
+            //复原tableData
+            if(valueSize1!=valueSize2){
+                tableData.forEach(tableTmp -> {
+                    int moduleSize = tableTmp.getModule().size();
+                    //不包括最有一个
+                    for(int i = 0;i < moduleSize -1;i++){
+                        tableTmp.getModule().get(i).getValue().add(0,classNameList.remove(0));
+                    }
+//                    tableTmp.getModule().forEach(moduleTmp->{
+//                        if(moduleTmp.getValue().size()==valueSize1){
+//
+//                            classNameList.add(moduleTmp.getValue().remove(0));
+//                        }
+//                    });
+                });
             }
         }
         return bigDecimalList;
@@ -1572,9 +1610,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     /**
      * 算合计一行
      * @param tableDataTmp
+     * @param reportType 报表类型，如果是班次报表则需要做特殊处理
      * @return
      */
-    private QtDayReportLossDataVO countAmount(List<QtDayReportLossDataVO> tableDataTmp){
+    private QtDayReportLossDataVO countAmount(List<QtDayReportLossDataVO> tableDataTmp,Integer reportType){
         QtDayReportLossDataVO lossLine = new QtDayReportLossDataVO();
         //拿到该行的拉引量
         List<QtDayReportLossDataVO> pullAmountData = tableDataTmp.stream().filter(v->v.getDefectName()!=null
@@ -1589,6 +1628,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<BigDecimal> pullAmountBigDecimal = countColumn(pullAmountData);
         for(int i = 0; i < bigDecimalList.size(); i++){
             List<String> lossAmount = Lists.newArrayList();
+            //如果是班次报表则需要空出班组列
+            if(reportType.equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=bigDecimalList.size()-1){
+                lossAmount.add("");
+            }
             lossAmount.add(bigDecimalList.get(i).toString());
             if(pullAmountBigDecimal.get(i).compareTo(BigDecimal.ZERO)==0){
                 lossAmount.add(null);
