@@ -3,6 +3,7 @@ package com.steccn.ems.dto;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.oa.dto.OaUserIdAndName;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
@@ -49,6 +50,11 @@ public class EpProductUnitStandardDTO implements Serializable {
      * 应用部门
      */
     private Set<Integer> applyOffice;
+
+    /**
+     * 告警用户
+     */
+    private List<OaUserIdAndName> users;
 
     /**
      * 产品类型【基片、深加工】

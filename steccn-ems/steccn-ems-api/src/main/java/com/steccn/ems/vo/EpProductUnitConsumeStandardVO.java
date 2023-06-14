@@ -1,6 +1,7 @@
 package com.steccn.ems.vo;
 
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.platform.vo.SysOfficeVO;
 import lombok.Data;
 
@@ -144,5 +145,10 @@ public class EpProductUnitConsumeStandardVO implements Serializable {
      * 更新人时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 用户
+     */
+    List<OaUserIdAndName> users;
 
 }

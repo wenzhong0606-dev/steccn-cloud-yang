@@ -15,14 +15,17 @@ import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
+import com.steccn.ems.domain.EpProductUnitConsumeStandardUser;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
+import com.steccn.ems.service.EpProductUnitConsumeStandardUserService;
 import com.steccn.ems.util.PinyinUtils;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
+import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -56,7 +59,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     @Autowired
     private  RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
-    private  EpPartitionServiceImpl epPartitionService;
+    private EpProductUnitConsumeStandardUserService epProductUnitConsumeStandardUserService;
 
     /**
      * 默认生产类型
@@ -248,6 +251,21 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 throw new BusinessException("该产品单耗标准已删除无法编辑");
             }
             updateById(unitConsumeStandard);
+            //删除关联用户
+            epProductUnitConsumeStandardUserService.remove(new LambdaQueryWrapper<EpProductUnitConsumeStandardUser>()
+                    .eq(EpProductUnitConsumeStandardUser::getStandardId,dto.getId()));
+        }
+        //保存告警用户
+        if(CollUtil.isNotEmpty(dto.getUsers())){
+            List<EpProductUnitConsumeStandardUser> userList = Lists.newArrayList();
+            dto.getUsers().forEach(tmp->{
+                EpProductUnitConsumeStandardUser user = new EpProductUnitConsumeStandardUser();
+                user.setUserId(tmp.getId());
+                user.setUserName(tmp.getName());
+                user.setStandardId(unitConsumeStandard.getId());
+                userList.add(user);
+            });
+            epProductUnitConsumeStandardUserService.saveBatch(userList);
         }
         return Boolean.TRUE;
     }
@@ -290,6 +308,18 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         }
         //设置产品类型
             vo.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(vo.getProductType()).getName());
+        //获取用户
+        List<EpProductUnitConsumeStandardUser> userList = epProductUnitConsumeStandardUserService.list(new LambdaQueryWrapper<EpProductUnitConsumeStandardUser>().eq(EpProductUnitConsumeStandardUser::getStandardId, id));
+        if(CollUtil.isNotEmpty(userList)){
+            List<OaUserIdAndName> users = Lists.newArrayList();
+            userList.forEach(tmp -> {
+                OaUserIdAndName user = new OaUserIdAndName();
+                user.setId(tmp.getUserId());
+                user.setName(tmp.getUserName());
+                users.add(user);
+            });
+            vo.setUsers(users);
+        }
         return vo;
     }
 
