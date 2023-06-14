@@ -79,7 +79,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final QtReportWarnUserService qtReportWarnUserService;
     private final RemoteMsgFeignApi remoteMsgFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
-    private final QtCheckTaskMapper taskMapper;
 
     /**
      * 新建报表卡片
@@ -103,6 +102,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             LocalDate timeScopeEnd = dto.getTimeScopeEnd();
             qtReport.setTimeScopeEnd(LocalDateTime.of(timeScopeEnd.getYear(), timeScopeEnd.getMonth()
                     , timeScopeEnd.getDayOfMonth(), 23, 59, 59));
+        }
+        //如果是静态日期，则该字段默认值为-1
+        if (Objects.isNull(dto.getDynamicDateType())) {
+            qtReport.setDynamicDateType(-1);
         }
         //根据分组id去查询分组
         this.save(qtReport);
@@ -1184,7 +1187,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 report.setTimeScopeEnd(LocalDateTime.of(timeScopeEnd.getYear(), timeScopeEnd.getMonth()
                         , timeScopeEnd.getDayOfMonth(), 23, 59, 59));
             }
-
+            //如果是静态日期，则该字段默认值为-1
+            if(Objects.isNull(dto.getDynamicDateType())){
+                report.setDynamicDateType(-1);
+            }
             updateById(report);
             //修改告警人员信息
             if (PmReportConstant.TYPE_1.equals(dto.getWarnFlag())) {
@@ -1211,7 +1217,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     private void getDynamicDate(QtReport report) {
         //判断是否是动态日期还是静态日期
-        if (Objects.nonNull(report.getDynamicDateType())) {
+        if (Objects.nonNull(report.getDynamicDateType()) && report.getDynamicDateType() != -1) {
             LocalDateTime[] dynamicDateTime = DateSelectorConstant.DateSelectEnum.getDynamicDateTime(report.getDynamicDateType(), LocalDate.now());
             report.setTimeScopeStart(dynamicDateTime[0]);
             report.setTimeScopeEnd(dynamicDateTime[1]);
@@ -1257,6 +1263,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(report.getCheckType())) {
             //来料检
             return incomingDetailPage(dto, report, granularityEnum, qtCheckItem, itemIds, measureUnitName, material);
+        }else if(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(report.getCheckType())){
+            //巡检
+            return null;
+
         } else {
             //其余检验方式
             return otherDetailPage(dto, report, granularityEnum, qtCheckItem, itemIds, measureUnitName, material);
@@ -1357,17 +1367,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @return 分页对象
      */
     private Page<QtSpcReportDetailVO> otherDetailPage(QtSpcReportDetailPageDTO dto, QtReport report, QtManagerConstant.QtGranularityEnum granularityEnum, QtCheckItem qtCheckItem, Set<Integer> itemIds, String measureUnitName, QtMaterial material) {
-        //设置查询条件
-        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
-                .lambda()
-                .eq(QtCheckTask::getMaterialId, report.getMaterialId())
-                .eq(QtCheckTask::getTaskType, report.getCheckType())
-                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
-                .lt(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
-
         //根据条件先low出所有的检验任务数据
-        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
+        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTask(report);
         SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
@@ -1425,6 +1426,74 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         Page<QtSpcReportDetailVO> page = LogicalPageUtil.page(mainList, dto.getCurrent(), dto.getSize());
         return page;
     }
+
+
+    /**
+     * 巡检
+     * @param dto             请求参数
+     * @param report          spc报表
+     * @param granularityEnum 粒度
+     * @param qtCheckItem     检验项
+     * @param itemIds         快照检验项
+     * @param measureUnitName 单位名称
+     * @param material        物料
+     * @return 分页对象
+     */
+    private Page<QtSpcReportDetailVO> patrol(QtSpcReportDetailPageDTO dto, QtReport report, QtManagerConstant.QtGranularityEnum granularityEnum, QtCheckItem qtCheckItem, Set<Integer> itemIds, String measureUnitName, QtMaterial material) {
+        //根据条件先low出所有的检验任务数据
+        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTask(report);
+        SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
+        //spc任务明细表的数据集合
+        List<QtSpcReportDetailVO> mainList = Lists.newArrayList();
+        for (int i = 1; i < localDateTimes.size(); i++) {
+            LocalDateTime start = localDateTimes.get(i - 1);
+            LocalDateTime end = localDateTimes.get(i);
+            //过滤出该时间分片下的所有检验任务
+            List<QtCheckTask> conditionDataList = qtCheckTasks.stream()
+                    .filter(v -> Objects.nonNull(v.getFinishedTime()))
+                    .filter(v -> LocalDateUtil.isRange(v.getFinishedTime(), start, end, true, false)).collect(Collectors.toList());
+
+            //设置返回数据类型对象
+            QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
+            BeanUtils.copyProperties(report, qtSpcReportDetailVO);
+            //设置主键id
+            qtSpcReportDetailVO.setId(i);
+            //设置开始结束分片范围
+            qtSpcReportDetailVO.setStartTime(start);
+            qtSpcReportDetailVO.setEndTime(end);
+            //检验项id
+            qtSpcReportDetailVO.setCheckItemId(qtCheckItem.getId());
+            //设置检验项名称
+            qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
+
+            //设置计量单位名称
+            qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
+            if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(qtCheckItem.getName())) {
+                qtSpcReportDetailVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+            }
+
+            // 创建检验项详情对象
+            QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO = new QtSpcReportDetailTaskAllVO();
+            //获取表头
+            if (Objects.nonNull(qtCheckItem.getName()) && Objects.nonNull(report.getCheckType())) {
+                List<QtSpcHeadTitleVO> headerList = getHeaderList(report.getCheckType(), qtCheckItem.getName());
+                if (Objects.nonNull(headerList)) {
+                    qtSpcReportDetailTaskAllVO.setHeader(headerList);
+                }
+            }
+
+            getHSCList(itemIds, material.getName(), conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
+            qtSpcReportDetailVO.setDetailTaskAllVO(qtSpcReportDetailTaskAllVO);
+            mainList.add(qtSpcReportDetailVO);
+        }
+        //逻辑分页返回数据
+        Page<QtSpcReportDetailVO> page = LogicalPageUtil.page(mainList, dto.getCurrent(), dto.getSize());
+        return page;
+    }
+
+
 
 
     private void getHSCList(Set<Integer> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {

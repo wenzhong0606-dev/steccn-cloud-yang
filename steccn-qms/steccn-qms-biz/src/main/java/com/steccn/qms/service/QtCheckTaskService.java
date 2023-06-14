@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.domain.QtReport;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
 import org.apache.ibatis.annotations.Param;
@@ -118,6 +119,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     Page<QtCheckProduceTaskVO> pageProductOrder(QtCheckaProductTaskListDTO dto);
 
+    /**
+     * 获取spc的检验任务
+     * @param report 检验任务
+     * @return
+     */
+    List<QtCheckTask> getSpcCheckTask(QtReport report);
 
     /**
      * 深加工/基片巡检合格率趋势明细分页
