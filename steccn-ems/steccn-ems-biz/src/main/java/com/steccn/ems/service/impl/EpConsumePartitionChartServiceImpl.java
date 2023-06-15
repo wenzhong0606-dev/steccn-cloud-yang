@@ -29,6 +29,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
+import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.dto.EpTableDTO;
@@ -1097,12 +1098,37 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
         epChartGraphDTO.setDataList(dataList);
         epChartGraphDTO.setStandardList(standardVOList);
+        epChartGraphDTO.setCheckStandardMap(getDpStandardList(dto.getEnergyType(), consumeStandardList));
         epChartGraphDTO.setEnergyType(dto.getEnergyType());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
+    }
+
+    /**
+     * 获取部门标准map
+     * @param energyType 能源类型
+     * @param consumeStandardList 部门单耗标准list
+     * @return
+     */
+    private Map<Long,TupleDTO<Integer,BigDecimal>>  getDpStandardList(Integer energyType, List<EpProductUnitConsumeStandard> consumeStandardList) {
+        Map<Long,TupleDTO<Integer,BigDecimal>> dpStandardMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(consumeStandardList)) {
+            //获取整个树结构
+            Set<Integer> officeIdSet = consumeStandardList.stream().map(v -> v.getApplyOffice()).flatMap(Collection::stream).collect(Collectors.toSet());
+            Map<Integer, EpInstrumentAccount> partitionMap = epPartitionService.listByOfficeId(energyType, officeIdSet);
+            for (EpProductUnitConsumeStandard consumeStandard : consumeStandardList) {
+                consumeStandard.getApplyOffice().forEach(ele -> {
+                    EpInstrumentAccount account = partitionMap.get(ele);
+                    if (Objects.nonNull(account)) {
+                        dpStandardMap.put(account.getPartitionNode(), new TupleDTO<>(consumeStandard.getId(), consumeStandard.getUnitValue()));
+                    }
+                });
+            }
+        }
+        return dpStandardMap;
     }
 
     @Override

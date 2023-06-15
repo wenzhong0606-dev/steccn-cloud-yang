@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;

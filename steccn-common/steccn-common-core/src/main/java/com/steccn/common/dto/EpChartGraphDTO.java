@@ -34,6 +34,9 @@ public class EpChartGraphDTO<E1, E2, E3> implements Serializable {
     @ApiModelProperty("部门标准map")
     private Map<E1, E3> standardMap;
 
+    @ApiModelProperty("部门标准map")
+    private Map<Long, TupleDTO<Integer, BigDecimal>> checkStandardMap;
+
     @ApiModelProperty("条件时间")
     private LocalDate conditionDate;
 
