@@ -182,6 +182,13 @@
                 <version>${steccn-cloud.version}</version>
             </dependency>
 
+            <!--xxl-job-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-common-xxljob</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+
             <!-- log日志-->
             <dependency>
                 <groupId>com.steccn</groupId>
