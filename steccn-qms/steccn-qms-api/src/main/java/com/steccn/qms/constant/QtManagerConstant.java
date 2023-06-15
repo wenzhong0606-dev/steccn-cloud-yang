@@ -802,6 +802,12 @@ public interface QtManagerConstant {
 
     String WHIPPTREE = "-";
 
+    /**
+     * 质量开启是否需要采样数据
+     */
+    String CONF_QMS_COLLECT_ENABLE = "QMS_COLLECT_ENABLE";
+    String CONF_QMS_COLLECT_ENABLE_CONTENT = "QMS_COLLECT_ENABLE_CONTENT";
+
 
     /**
      * 周枚举
