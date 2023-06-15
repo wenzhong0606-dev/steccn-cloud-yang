@@ -17,5 +17,6 @@
         <module>steccn-common-data</module>
         <module>steccn-common-oauth</module>
         <module>steccn-common-log</module>
+        <module>steccn-common-xxljob</module>
     </modules>
 </project>
