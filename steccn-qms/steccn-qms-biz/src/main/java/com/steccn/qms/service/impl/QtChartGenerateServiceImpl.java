@@ -14,10 +14,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.dto.ValidList;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
@@ -26,6 +23,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.ProducePassRateDTO;
@@ -88,6 +86,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final RemotePullForceFeignApi remotePullForceFeignApi;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     /**
      * 生产基片损耗数据
      *
@@ -142,6 +142,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 .orderByAsc(QtCheckTask::getFinishedTime);
         List<QtCheckTask> taskList = qtCheckTaskService.list(taskCondition);
         List<QtCheckTask> onlineTask = qtCheckTaskService.list(onlineTaskCondition1);
+        //先拿到开关
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
         //加入在线检的数据
         taskList.addAll(onlineTask);
         if (CollUtil.isNotEmpty(taskList)) {
@@ -563,10 +566,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 //对应产线
                                 chartParam.setProductLineId(entry3.getKey());
                                 List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = Lists.newArrayList();
-                                try {
-//                                    qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
-                                } catch (Exception e) {
-                                    log.error(e.getMessage());
+                                //判断是否需要接入数采数据
+                                if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+                                    try {
+                                        qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
+                                    } catch (Exception e) {
+                                        log.error(e.getMessage());
+                                    }
                                 }
                                 //加入测点数据
                                 if(CollUtil.isNotEmpty(qtCheckTaskDetailReportVOS)){
