@@ -88,6 +88,11 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-websocket-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!--添加actuator依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

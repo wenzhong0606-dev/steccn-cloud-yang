@@ -49,8 +49,8 @@ public interface SysMsgConstant {
         IMPROVE_RECORD_APPROVE_PASS(13,"整改审批结案通过",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n",0),
         SPC_SERIAL_UP_WARN(14, "SPC连续上升告警", MsgCategoryEnum.SYS_REMIND.code, "SPC名称: %s \r\n物料名称: %s\r\n检验项: %s",0),
         SPC_SERIAL_DOWN_WARN(15, "SPC连续下降告警", MsgCategoryEnum.SYS_REMIND.code, "SPC名称: %s \r\n物料名称: %s\r\n检验项: %s",0),
-        BATCH_CHECK_UPDATE(16,"配料抽检日报表更新",MsgCategoryEnum.SYS_REMIND.code,"%s更新了配料抽检日报表",1);
-
+        BATCH_CHECK_UPDATE(16,"配料抽检日报表更新",MsgCategoryEnum.SYS_REMIND.code,"%s更新了配料抽检日报表",1),
+        UNIT_CONSUME_ALARM(17,"能源单耗超标",MsgCategoryEnum.SYS_REMIND.code,"%s日单耗%s,超过%s",0);
 
 
         private Integer code;
