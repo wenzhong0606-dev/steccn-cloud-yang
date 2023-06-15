@@ -1573,15 +1573,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
         //过滤班次
-        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare()!=null&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
             data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());
         }
         //过滤车间
-        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare()!=null&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
             data = data.stream().filter(v->dto.getFilters().contains(v.getProductWorkShopName())).collect(Collectors.toList());
         }
         //过滤产线
-        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare()!=null&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
             data = data.stream().filter(v->dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
         }
         SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");

@@ -269,15 +269,20 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> defectiveIdSet = Sets.newHashSet();
         //存放检验设备的数据
         List<QtCheckTaskDetailReportVO> collectList = null;
-        try {
-            collectList = defectCollect(dto);
-            if (CollUtil.isNotEmpty(collectList)) {
-                collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
-            }
-        } catch (Exception e) {
-            log.error("{}", e.getLocalizedMessage());
-        }
 
+        //获取配置
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            try {
+                collectList = defectCollect(dto);
+                if (CollUtil.isNotEmpty(collectList)) {
+                    collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
+                }
+            } catch (Exception e) {
+                log.error("{}", e.getLocalizedMessage());
+            }
+        }
         //暂无数据
         if (CollUtil.isEmpty(qtCheckTasks) && CollUtil.isEmpty(collectList)) {
             throw new SteccnChartException("暂无数据");
