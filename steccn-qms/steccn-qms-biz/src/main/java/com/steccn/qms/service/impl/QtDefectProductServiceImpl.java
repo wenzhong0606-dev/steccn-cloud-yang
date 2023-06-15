@@ -92,7 +92,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private final QtDealWayService qtDealWayService;
 
     @Override
-    public Boolean add(QtDefectProductDTO dto) {
+    public Long add(QtDefectProductDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.QT_DEFECT_PRODUCT);
         lock.lock();
         try {
@@ -134,7 +134,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("消息发送失败");
             }
-            return Boolean.TRUE;
+            return qtDefectProduct.getId();
         } finally {
             lock.unlock();
         }
