@@ -41,4 +41,7 @@ public class EpChartUnitConsumeAlarmVO implements Serializable {
     @ApiModelProperty("标准值")
     private BigDecimal standardValue;
 
+    @ApiModelProperty("标准id")
+    private Integer standardId;
+
 }
