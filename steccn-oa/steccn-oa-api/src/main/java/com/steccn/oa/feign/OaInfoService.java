@@ -239,4 +239,13 @@ public interface OaInfoService {
     @ApiOperation("获取班次对应的班组")
     @GetMapping("/feign/oa/group/count")
     R<Map<String,OaGroupCountDTO>> getGroupInfo(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate);
+
+    /**
+     * 获取班组长信息
+     * @param productWorkShop 车间名称set
+     * @return
+     */
+    @ApiOperation("获取班组长信息")
+    @PostMapping("/feign/oa/group/workshop/leader")
+    R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop )
 }

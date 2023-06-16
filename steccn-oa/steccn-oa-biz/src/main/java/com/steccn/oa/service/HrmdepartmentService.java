@@ -2,7 +2,12 @@ package com.steccn.oa.service;
 
 import com.steccn.oa.domain.Hrmdepartment;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.vo.OaDepartmentVO;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -17,5 +22,12 @@ public interface HrmdepartmentService extends IService<Hrmdepartment> {
      * @return
      */
     OaDepartmentVO getOaDepartmentById(Integer id);
+
+    /**
+     * 获取班组长
+     * @param productWorkShop 车间名字集合
+     * @return
+     */
+    Map<String, List<OaClassUserNameDTO>> getClassUserName(Set<String> productWorkShop);
 
 }
