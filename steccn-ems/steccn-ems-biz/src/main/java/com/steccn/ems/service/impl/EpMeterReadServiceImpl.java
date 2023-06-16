@@ -713,7 +713,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
                 Map<String, List<EpMeterReadDistant>> groupData = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getReadDate() + "_" + v.getClassId() + "_" + v.getThick()));
                 groupData.forEach((k, v) -> {
-                    BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<BigDecimal> reduceList = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).collect(Collectors.toList());
+                    BigDecimal reduce = BigDecimalUtil.sum(reduceList);
                     resMap.put(k, reduce);
                 });
             }
@@ -740,7 +741,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     EpMeterReadDistant ele = v.get(0);
                     EpMeterReadDistantDTO model = new EpMeterReadDistantDTO();
                     BeanUtils.copyProperties(ele, model);
-                    BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<BigDecimal> reduceList = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).collect(Collectors.toList());
+                    BigDecimal reduce = BigDecimalUtil.sum(reduceList);
                     model.setReadValue(reduce);
                     model.setProduceOrderId(ele.getProduceOrderId());
                     resList.add(model);
@@ -898,9 +900,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && (sjgLineSet.contains(epPartition.getOfficeId()) || jpLineSet.contains(epPartition.getOfficeId()))) {
                         //若空格所在列的节点是产线节点L或L的下级节点，则查询条件为“产线 = L”
                         //过滤出相同的班次日期，相同班次，相同厚度的订单
-                        BigDecimal yieldSum = orderRowList.stream().filter(ele -> ele.getReadDate().equals(consumeDTO.getReadDate()) &&
+                        List<BigDecimal> yieldSumList = orderRowList.stream().filter(ele -> ele.getReadDate().equals(consumeDTO.getReadDate()) &&
                                 Objects.equals(ele.getClassId(), consumeDTO.getClassId()) &&
-                                Objects.equals(ele.getThick(), consumeDTO.getThick())).filter(ele -> epPartition.getOfficeId().equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                                Objects.equals(ele.getThick(), consumeDTO.getThick())).filter(ele -> epPartition.getOfficeId().equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+                        BigDecimal yieldSum = BigDecimalUtil.sum(yieldSumList);
                         unitMap.put(epPartition.getId(), yieldSum);
                         //获取当前节点的所有孩子节点
                         Set<Long> childrenIdSet = allChildren.getOrDefault(epPartition.getId(), Lists.newArrayList()).stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
@@ -912,7 +915,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         lineIdSet.forEach(ele -> {
                             officeIdSet.add(partitionMap.get(ele).getOfficeId());
                         });
-                        BigDecimal workShopYieldSum = orderRowList.stream().filter(ele -> officeIdSet.contains(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        List<BigDecimal> workShopYieldSumList = orderRowList.stream().filter(ele -> officeIdSet.contains(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+                        BigDecimal workShopYieldSum = BigDecimalUtil.sum(workShopYieldSumList);
                         unitMap.put(epPartition.getId(), workShopYieldSum);
                     } else if (noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && !unitMap.containsKey(epPartition.getId())) {
                         //对于班次、产品厚度均为“无”的行，值为“-”的单元格K填入日产量t：

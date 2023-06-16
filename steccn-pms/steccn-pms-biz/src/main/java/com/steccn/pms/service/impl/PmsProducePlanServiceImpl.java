@@ -13,6 +13,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -113,7 +114,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         for (Map.Entry<String, List<PmsProducePlanVO>> entry : groupBy.entrySet()) {
             PmsProducePlanDTO pmsProducePlanDTO = new PmsProducePlanDTO();
             String[] materials = entry.getKey().split(",");
-            BigDecimal total = entry.getValue().stream().map(PmsProducePlanVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            List<BigDecimal> totalList = entry.getValue().stream().map(PmsProducePlanVO::getQuantity).collect(Collectors.toList());
+            BigDecimal total = BigDecimalUtil.sum(totalList);
 
             pmsProducePlanDTO.setMaterialName(materials[0]);
             pmsProducePlanDTO.setMaterialCode(materials[1]);

@@ -1777,7 +1777,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     rateList.add(detail.getDetailAcceptability());
                                     taskDetails.add(detail);
                                 });
-                                BigDecimal reduce = rateList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                                BigDecimal reduce = BigDecimalUtil.sum(rateList);
                                 BigDecimal divide = BigDecimalUtil.divide(reduce, BigDecimal.valueOf(rateList.size()), 2);
                                 resVO.setAcceptability(divide);
                                 resVO.setTaskDetails(taskDetails);
