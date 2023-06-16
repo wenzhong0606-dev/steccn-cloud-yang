@@ -74,7 +74,7 @@ public class EpChartGraphUtil {
                 //获取每根柱子的图例
                 //获取单根柱子的所有堆叠
                 List<TupleDTO<String, BigDecimal>> stackList = x2.getField2();
-                BigDecimal sum = BigDecimal.ZERO;
+                BigDecimal sum = null;
                 for (TupleDTO<String, BigDecimal> stack : stackList) {
                     if (onlyStack) {
                         legend.add(stack.getField1());
