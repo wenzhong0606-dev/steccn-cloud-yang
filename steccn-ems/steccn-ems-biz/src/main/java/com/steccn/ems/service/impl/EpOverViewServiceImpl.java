@@ -248,13 +248,13 @@ public class EpOverViewServiceImpl implements EpOverViewService {
 
     private BigDecimal getUnitValue(List<EpMeterReadAllDataVO> epMeterReadAllDataVOList) {
         //汇总能耗值
-        BigDecimal sumConsume = epMeterReadAllDataVOList.stream().filter(meterReadAllDataVO -> Objects.nonNull(meterReadAllDataVO.getConsume()))
-                .map(EpMeterReadAllDataVO::getConsume)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<BigDecimal> sumConsumeList = epMeterReadAllDataVOList.stream().filter(meterReadAllDataVO -> Objects.nonNull(meterReadAllDataVO.getConsume()))
+                .map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+        BigDecimal sumConsume = BigDecimalUtil.sum(sumConsumeList);
         //汇总生产值
-        BigDecimal sumProductNum = epMeterReadAllDataVOList.stream().filter(meterReadAllDataVO -> Objects.nonNull(meterReadAllDataVO.getProductNum()))
-                .map(EpMeterReadAllDataVO::getProductNum)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<BigDecimal> sumProductNumList = epMeterReadAllDataVOList.stream().filter(meterReadAllDataVO -> Objects.nonNull(meterReadAllDataVO.getProductNum()))
+                .map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
+        BigDecimal sumProductNum = BigDecimalUtil.sum(sumProductNumList);
         //获取单耗值
         return BigDecimalUtil.divide(sumConsume,sumProductNum);
     }
@@ -324,8 +324,10 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         }
         for (LocalDate localDate : dxData) {
             List<EpMeterReadAllDataVO> readAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> localDate.isEqual(epMeterReadAllDataVO.getReadDate())).collect(Collectors.toList());
-            BigDecimal sumConsume = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal sumProductNum = readAllDataVOList.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> sumConsumeList = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal sumConsume = BigDecimalUtil.sum(sumConsumeList);
+            List<BigDecimal> sumProductNumList = readAllDataVOList.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
+            BigDecimal sumProductNum = BigDecimalUtil.sum(sumProductNumList);
             dateConsumeList.add(BigDecimalUtil.divide(sumConsume, sumProductNum));
         }
         return dateConsumeList;
