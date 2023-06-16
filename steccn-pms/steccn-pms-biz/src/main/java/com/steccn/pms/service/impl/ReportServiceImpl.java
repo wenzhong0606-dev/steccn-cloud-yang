@@ -20,6 +20,7 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.data.dto.DwStationInfoDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwStationCollectVO;
+import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysDictDTO;
@@ -1058,6 +1059,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<OutputQualityVO> outputQualityJp(OutputQualityDTO dto) {
+        Assert.isTrue(CollUtil.isNotEmpty(dto.getProductWorkshop()),"车间不能为空");
+        Assert.isTrue(Objects.nonNull(dto.getDate()),"日期不能为空");
         //查询缺陷数据
         List<OutputQualityDetailVO> defectiveData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
         //缺陷数量根据班组拆分
@@ -1068,11 +1071,16 @@ public class ReportServiceImpl implements ReportService {
         Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
         //丙班缺陷数据
         Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-
+        //获取车间的名称
+        Map<Integer, String> workshopMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(new HashSet<>(dto.getProductWorkshop())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<String> workshopName = workshopMap.values().stream().collect(Collectors.toSet());
+        //获取班组长姓名
+        Map<String, List<OaClassUserNameDTO>> monitorName = FeignOptional.of(() -> oaInfoService.getLeaderName(workshopName), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         OutputQualityDetailDTO outputQualityDetailDTO = new OutputQualityDetailDTO();
         outputQualityDetailDTO.setStartDate(dto.getDate());
         outputQualityDetailDTO.setEndDate(dto.getDate());
         outputQualityDetailDTO.setProductWorkshopId(dto.getProductWorkshop());
+
         //获取平均厚度数据
         Optional<List<OutputQualityDetailVO>> optionalPlyData = Optional.ofNullable(FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.listPollingDate(outputQualityDetailDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get());
         List<OutputQualityDetailVO> plyData = optionalPlyData.get();
@@ -1094,6 +1102,8 @@ public class ReportServiceImpl implements ReportService {
         Map<Integer, List<Integer>> integerListMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(dto.getProductWorkshop()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取产线合集
         List<Integer> lineIds = integerListMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        //获取产线的上级车间的数据
+        Map<Integer, SysOfficeVO> lineGetWorkshopMap = FeignOptional.of(() -> remoteOfficeFeign.getParentOfficeMap(lineIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取产线名称
         Map<Integer, String> lineNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(new HashSet<>(lineIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取报工记录
@@ -1208,6 +1218,14 @@ public class ReportServiceImpl implements ReportService {
                     outputQualityDataVO.setOutputSq(value2.compareTo(BigDecimal.ZERO) == 0 ? null : value2);
                     //产线
                     outputQualityDataVO.setProductionLine(lineNameMap.get(reportWork.getProductLineId()));
+                    //根据产线获取车间的名称
+                    SysOfficeVO sysOfficeVO = lineGetWorkshopMap.get(reportWork.getProductLineId());
+                    //获取车间下的班组长信息
+                    List<OaClassUserNameDTO> oaClassUserNameDTOS = monitorName.get(sysOfficeVO.getOfficeName());
+                    if (CollUtil.isNotEmpty(oaClassUserNameDTOS)) {
+                        String userName = oaClassUserNameDTOS.stream().filter(d -> classGroupName.equals(d.getClassName())).findFirst().map(OaClassUserNameDTO::getUserName).orElse(null);
+                        outputQualityDataVO.setMonitor(userName);
+                    }
                     //当班拉引量
                     List<PmsPullForce> pmsPullForces = pullForceMap.get(reportWork.getProductLineId());
                     if (CollUtil.isNotEmpty(pmsPullForces)) {
@@ -1309,6 +1327,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<OutputQualitySjgVO> outputQualitySjg(OutputQualityDTO dto) {
+        Assert.isTrue(CollUtil.isNotEmpty(dto.getProductWorkshop()),"车间不能为空");
+        Assert.isTrue(Objects.nonNull(dto.getDate()),"日期不能为空");
         //获取缺陷数据
         List<OutputQualityDetailVO> qmsTaskDefectData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
         //缺陷数量根据班组拆分
@@ -1324,6 +1344,8 @@ public class ReportServiceImpl implements ReportService {
         //获取产线合集
         List<Integer> lineIds = integerListMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
         Set<Integer> lineIdSet = new HashSet<>(lineIds);
+        //获取产线的上级车间的数据
+        Map<Integer, SysOfficeVO> lineGetWorkshopMap = FeignOptional.of(() -> remoteOfficeFeign.getParentOfficeMap(lineIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取产线名称
         Map<Integer, String> lineNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
@@ -1360,6 +1382,11 @@ public class ReportServiceImpl implements ReportService {
         //单位转换
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(Sets.newHashSet(materialIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取车间的名称
+        Map<Integer, String> workshopMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(new HashSet<>(dto.getProductWorkshop())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<String> workshopName = workshopMap.values().stream().collect(Collectors.toSet());
+        //获取班组长姓名
+        Map<String, List<OaClassUserNameDTO>> monitorName = FeignOptional.of(() -> oaInfoService.getLeaderName(workshopName), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //构建表格模型
         List<OutputQualitySjgVO> resList = Lists.newArrayList();
         //构建主表格模型
@@ -1381,9 +1408,16 @@ public class ReportServiceImpl implements ReportService {
                         //班组
                         String classGroupName = classMap.get(reportWork.getClassGroupId());
                         outputQualitySjgDataVO.setClassGroup(classGroupName);
-                        //班长
                         //产线
                         outputQualitySjgDataVO.setProductLine(lineNameMap.get(reportWork.getProductLineId()));
+                        //根据产线获取车间的名称
+                        SysOfficeVO sysOfficeVO = lineGetWorkshopMap.get(reportWork.getProductLineId());
+                        //获取车间下的班组长信息
+                        List<OaClassUserNameDTO> oaClassUserNameDTOS = monitorName.get(sysOfficeVO.getOfficeName());
+                        if (CollUtil.isNotEmpty(oaClassUserNameDTOS)) {
+                            String userName = oaClassUserNameDTOS.stream().filter(d -> classGroupName.equals(d.getClassName())).findFirst().map(OaClassUserNameDTO::getUserName).orElse(null);
+                            outputQualitySjgDataVO.setMonitor(userName);
+                        }
                         //获取厚度以及规格
                         outputQualitySjgDataVO.setThickQuantity(eqpSpareVO.getThickQuantity());
                         outputQualitySjgDataVO.setSpecifications(eqpSpareVO.getSpecifications());
