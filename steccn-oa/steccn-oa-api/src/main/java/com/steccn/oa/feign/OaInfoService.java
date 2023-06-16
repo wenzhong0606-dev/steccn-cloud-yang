@@ -247,5 +247,5 @@ public interface OaInfoService {
      */
     @ApiOperation("获取班组长信息")
     @PostMapping("/feign/oa/group/workshop/leader")
-    R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop )
+    R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop);
 }
