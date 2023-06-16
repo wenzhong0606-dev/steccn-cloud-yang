@@ -47,4 +47,30 @@
         showorder,showOrderOfTree,tenant_key,
         dep_sync_time
     </sql>
+
+
+    <select id="selectGroupLeader" resultType="com.steccn.oa.dto.OaClassUserNameDTO">
+        SELECT hrm.LASTNAME AS userName, department.DEPARTMENTNAME AS className
+            FROM hrmresource hrm
+            LEFT JOIN hrmdepartment department
+            ON hrm.DEPARTMENTID = department.id
+            LEFT JOIN hrmjobtitles job
+            ON hrm.JOBTITLE = job.id
+            WHERE hrm.STATUS != 5
+            AND job.JOBTITLENAME LIKE CONCAT('%','班长','%')
+            AND hrm.DEPARTMENTID IN (
+                <!--查寻甲乙丙班-->
+                SELECT id
+                    FROM hrmdepartment
+                    WHERE SUPDEPID = (
+                        SELECT id
+                        FROM hrmdepartment
+                        WHERE DEPARTMENTNAME = #{productWorkshopName}
+                        <!--深加工制造部 id为106，基片制造部id为36-->
+                        AND (SUPDEPID = 106 OR SUPDEPID = 36)
+                        AND ISNULL(CANCELED)
+                        LIMIT 1
+                    )
+            )
+    </select>
 </mapper>

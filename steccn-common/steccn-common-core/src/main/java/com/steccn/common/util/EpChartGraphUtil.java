@@ -74,7 +74,7 @@ public class EpChartGraphUtil {
                 //获取每根柱子的图例
                 //获取单根柱子的所有堆叠
                 List<TupleDTO<String, BigDecimal>> stackList = x2.getField2();
-                BigDecimal sum = BigDecimal.ZERO;
+                BigDecimal sum = null;
                 for (TupleDTO<String, BigDecimal> stack : stackList) {
                     if (onlyStack) {
                         legend.add(stack.getField1());
@@ -153,6 +153,15 @@ public class EpChartGraphUtil {
             BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
             if (Objects.nonNull(officeStandardValue) && Objects.nonNull(value) && officeStandardValue.compareTo(value) < 0) {
                 EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
+                alarmList.add(vo);
+            }
+        }
+        //部门标准
+        if (CollUtil.isNotEmpty(epChartGraphDTO.getCheckStandardMap())) {
+            TupleDTO<Integer, BigDecimal> tupleDTO = epChartGraphDTO.getCheckStandardMap().get(officeId);
+            if (Objects.nonNull(tupleDTO.getField2()) && Objects.nonNull(value) && tupleDTO.getField2().compareTo(value) < 0) {
+                EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, tupleDTO.getField2(), 2);
+                vo.setStandardId(tupleDTO.getField1());
                 alarmList.add(vo);
             }
         }

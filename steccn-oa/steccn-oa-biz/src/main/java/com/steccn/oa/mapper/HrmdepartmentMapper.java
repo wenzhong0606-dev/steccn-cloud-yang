@@ -2,7 +2,11 @@ package com.steccn.oa.mapper;
 
 import com.steccn.oa.domain.Hrmdepartment;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.oa.dto.OaClassUserNameDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author Admin
@@ -12,7 +16,12 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface HrmdepartmentMapper extends BaseMapper<Hrmdepartment> {
-
+    /**
+     * 查询车间下各班的班组长
+     * @param productWorkshopName
+     * @return
+     */
+    List<OaClassUserNameDTO> selectGroupLeader(@Param("productWorkshopName") String productWorkshopName);
 }
 
 

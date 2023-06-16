@@ -6,10 +6,7 @@ import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
 
-import com.steccn.oa.service.HrmresourceService;
-import com.steccn.oa.service.KqGroupmemberService;
-import com.steccn.oa.service.OaService;
-import com.steccn.oa.service.WorkflowCurrentoperatorService;
+import com.steccn.oa.service.*;
 import com.steccn.oa.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

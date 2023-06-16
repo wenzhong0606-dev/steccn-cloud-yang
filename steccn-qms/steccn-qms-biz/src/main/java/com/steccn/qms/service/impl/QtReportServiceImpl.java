@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author 86178
@@ -361,7 +362,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
             //取平均值
-            BigDecimal reduce = conditionTasks.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> reduceList = conditionTasks.stream().map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(reduceList);
             itemValue.add(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, new BigDecimal(conditionTasks.size()))));
             //赋值x轴点
             xList.add(XAxisUtil.convert(granularityEnum, start));
@@ -410,13 +412,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .filter(qt -> isNumber(qt.getCheckResult()) || isFloatNumber(qt.getCheckResult()))
                         .map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(valueList)) {
-                    BigDecimal reduce = valueList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal reduce = BigDecimalUtil.sum(valueList);
                     itemValue.add(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, new BigDecimal(valueList.size()))));
                 } else {
-                    itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
+                    itemValue.add(null);
                 }
             } else {
-                itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
+                itemValue.add(null);
             }
             //赋值x轴点
             dates.add(XAxisUtil.convert(granularityEnum, start));
@@ -465,13 +467,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .filter(qt -> isNumber(qt.getCheckResult()) || isFloatNumber(qt.getCheckResult()))
                         .map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(valueList)) {
-                    BigDecimal reduce = valueList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal reduce = BigDecimalUtil.sum(valueList);
                     itemValue.add(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, new BigDecimal(valueList.size()))));
                 } else {
-                    itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
+                    itemValue.add(null);
                 }
             } else {
-                itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
+                itemValue.add(null);
             }
             //赋值x轴点
             dates.add(XAxisUtil.convert(granularityEnum, start));
@@ -1104,7 +1106,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     .filter(v -> LocalDateUtil.isRange(v.getSamplingTime(), start, end, true, false)).collect(Collectors.toList());
             //取平均值
             conditionDataList = conditionDataList.stream().filter(v -> StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
-            BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> reduceList = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(reduceList);
 
             //设置返回数据类型对象
             QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
@@ -1292,7 +1295,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         }
                     }
                 });
-                BigDecimal detailSum = bdList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal detailSum = BigDecimalUtil.sum(bdList);
                 BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(bdList.size()));
                 sumBdList.addAll(bdList);
                 taskVO.setCheckResult(Objects.nonNull(result) ? result.toString(): null);
@@ -1300,7 +1303,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 qtSpcReportHSCDetailTaskVOS.add(taskVO);
             });
             //求平均值
-            BigDecimal sum = sumBdList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal sum = BigDecimalUtil.sum(sumBdList);
             BigDecimal resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(sumBdList.size()));
             qtSpcReportDetailVO.setResultAverage(resultAverage);
             qtSpcReportDetailTaskAllVO.setReportDetailTaskVOList(qtSpcReportHSCDetailTaskVOS);
@@ -1358,22 +1361,22 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     });
                 }
                 if (CollUtil.isNotEmpty(resultList)) {
-                    BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal detailSum =  BigDecimalUtil.sum(resultList);
                     BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
                     taskVO.setCheckResult(result.toString());
                     mainDecimals.add(result);
                 } else {
-                    taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
+                    taskVO.setCheckResult(null);
                 }
                 taskVO.setProductLine(s.getProductLine());
                 qtSpcReportHSCDetailTaskVOS.add(taskVO);
             });
             if (CollUtil.isNotEmpty(mainDecimals)) {
-                BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal sum = BigDecimalUtil.sum(mainDecimals);
                 resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
                 qtSpcReportDetailVO.setResultAverage(resultAverage);
             } else {
-                qtSpcReportDetailVO.setResultAverage(new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS));
+                qtSpcReportDetailVO.setResultAverage(null);
             }
             qtSpcReportDetailTaskAllVO.setReportDetailTaskVOList(qtSpcReportHSCDetailTaskVOS);
         }
@@ -1418,22 +1421,22 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     });
                 }
                 if (CollUtil.isNotEmpty(resultList)) {
-                    BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal detailSum = BigDecimalUtil.sum(resultList);
                     BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
                     taskVO.setCheckResult(result.toString());
                     mainDecimals.add(result);
                 } else {
-                    taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
+                    taskVO.setCheckResult(null);
                 }
                 taskVO.setWorkshop(s.getMaterialWorkshop());
                 qtSamplingDetailVOS.add(taskVO);
             });
             if (CollUtil.isNotEmpty(mainDecimals)) {
-                BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal sum = BigDecimalUtil.sum(mainDecimals);
                 resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
                 qtSpcReportDetailVO.setResultAverage(resultAverage);
             } else {
-                qtSpcReportDetailVO.setResultAverage(new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS));
+                qtSpcReportDetailVO.setResultAverage(null);
             }
             qtSpcReportDetailTaskAllVO.setReportDetailTaskVOList(qtSamplingDetailVOS);
         }
@@ -1471,7 +1474,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 taskVO.setSupplier(sourceCheck.getSupplier());
                 //平均值
                 value = value.stream().filter(v -> StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
-                BigDecimal reduce = value.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> reduceList = value.stream().map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
+                BigDecimal reduce = BigDecimalUtil.sum(reduceList);
                 taskVO.setCheckResult(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, BigDecimal.valueOf(value.size()))));
                 taskVO.setId(sourceCheck.getTaskId());
                 taskVO.setCode(sourceCheck.getTaskCode());

@@ -29,6 +29,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
+import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.dto.EpTableDTO;
@@ -54,6 +55,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -134,7 +136,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                         thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
                         thickName = thick.setScale(1) + "mm";
                     }
-                    BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    List<BigDecimal> reduceList = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+                    BigDecimal reduce = BigDecimalUtil.sum(reduceList);
                     TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
                     poleList.add(stack);
                 }
@@ -370,7 +374,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     thickData = dataVOList.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
                     thickName = thick.setScale(1) +"mm";
                 }
-                BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> bdList = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+                BigDecimal reduce = BigDecimalUtil.sum(bdList);
                 TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
                 poleList.add(stack);
             }
@@ -432,7 +437,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(rowVO.getClassId());
                     rowVO.setClassIdStr(Objects.nonNull(code) ? code.getName() : null);
                 }
-                BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> reduceList = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+                BigDecimal reduce = BigDecimalUtil.sum(reduceList);
                 rowVO.setConsumeStr(BigDecimalUtil.format(reduce));
                 resList.add(rowVO);
             }
@@ -564,8 +570,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 //过滤之后的数据
                 List<EpMeterReadAllDataVO> filterData = thickAllDataList.stream().filter(v -> v.getOfficeId().equals(partitionEntry.getKey()) && v.getClassGroupId().equals(classGroupEntry.getKey())).collect(Collectors.toList());
                 //计算单耗的平均值
-                BigDecimal consume = filterData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal productNum = filterData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> consumeList = filterData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal consume = BigDecimalUtil.sum(consumeList);
+                List<BigDecimal> productNumList = filterData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
+                BigDecimal productNum = BigDecimalUtil.sum(productNumList);
                 BigDecimal divide = BigDecimalUtil.divide(consume, productNum);
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 epChartGraphxAxisDTO.setXAxis(Strings.EMPTY);
@@ -668,8 +676,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                             QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(rowVO.getClassId());
                             rowVO.setClassIdStr(Objects.nonNull(code) ? code.getName() : null);
                         }
-                        BigDecimal consume = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                        BigDecimal productNum = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        List<BigDecimal> consumeList = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+                        BigDecimal consume = BigDecimalUtil.sum(consumeList);
+                        List<BigDecimal> productNumList = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).collect(Collectors.toList());
+                        BigDecimal productNum = BigDecimalUtil.sum(productNumList);
                         rowVO.setUnitValueStr(BigDecimalUtil.format(BigDecimalUtil.divide(consume, productNum)) + unitName);
                         EpPartition epPartition = partitionEntityMap.getOrDefault(partitionId, defaultEpPartition);
                         rowVO.setPartitionName(epPartition.getOfficeName());
@@ -779,7 +789,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     //根据分区节点去汇总所有能耗
                     Long partitionId = rootMap.get(energy).getId();
                     List<EpMeterReadAllDataVO> dataSet = filterDataList.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
-                    BigDecimal reduce = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<BigDecimal> reduceList = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+                    BigDecimal reduce = BigDecimalUtil.sum(reduceList);
                     String name = energyMap.get(energy).getName();
                     TupleDTO<String, BigDecimal> stack = new TupleDTO<>(name, reduce);
                     poleList.add(stack);
@@ -817,7 +828,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         for (Long partitionId : dto.getPartitionIdList()) {
             //获取分区数据集合
             List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
-            BigDecimal reduce = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> reduceList = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(reduceList);
             if (!BigDecimalUtil.equals(reduce, BigDecimal.ZERO)) {
                 EpEnergyChartPieValueVO<BigDecimal> vo = new EpEnergyChartPieValueVO<>();
                 vo.setName(partitionIdNameMap.get(partitionId));
@@ -895,8 +907,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 TupleDTO<String, BigDecimal> stack = new TupleDTO<>("部门标准", standard);
                 poleList.add(stack);
             }
-            BigDecimal consume = dataVOList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal productNum = dataVOList.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> consumeList = dataVOList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+            BigDecimal consume = BigDecimalUtil.sum(consumeList);
+            List<BigDecimal> productNumList = dataVOList.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).collect(Collectors.toList());
+            BigDecimal productNum = BigDecimalUtil.sum(productNumList);
             TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(consume, productNum));
             poleList.add(stack);
             data.add(pole);
@@ -987,8 +1001,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(rowVO.getClassId());
                     rowVO.setClassIdStr(Objects.nonNull(code) ? code.getName() : null);
                 }
-                BigDecimal consume = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal productNum = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> consumeList = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
+                BigDecimal consume = BigDecimalUtil.sum(consumeList);
+                List<BigDecimal> productNumList = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).collect(Collectors.toList());
+                BigDecimal productNum = BigDecimalUtil.sum(productNumList);
                 BigDecimal divide = BigDecimalUtil.divide(consume, productNum);
                 rowVO.setConsumeStr(BigDecimalUtil.format(divide) + unitName(dto.getEnergyType()));
                 resList.add(rowVO);
@@ -1097,12 +1113,37 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
         epChartGraphDTO.setDataList(dataList);
         epChartGraphDTO.setStandardList(standardVOList);
+        epChartGraphDTO.setCheckStandardMap(getDpStandardList(dto.getEnergyType(), consumeStandardList));
         epChartGraphDTO.setEnergyType(dto.getEnergyType());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
+    }
+
+    /**
+     * 获取部门标准map
+     * @param energyType 能源类型
+     * @param consumeStandardList 部门单耗标准list
+     * @return
+     */
+    private Map<Long,TupleDTO<Integer,BigDecimal>>  getDpStandardList(Integer energyType, List<EpProductUnitConsumeStandard> consumeStandardList) {
+        Map<Long,TupleDTO<Integer,BigDecimal>> dpStandardMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(consumeStandardList)) {
+            //获取整个树结构
+            Set<Integer> officeIdSet = consumeStandardList.stream().map(v -> v.getApplyOffice()).flatMap(Collection::stream).collect(Collectors.toSet());
+            Map<Integer, EpInstrumentAccount> partitionMap = epPartitionService.listByOfficeId(energyType, officeIdSet);
+            for (EpProductUnitConsumeStandard consumeStandard : consumeStandardList) {
+                consumeStandard.getApplyOffice().forEach(ele -> {
+                    EpInstrumentAccount account = partitionMap.get(ele);
+                    if (Objects.nonNull(account)) {
+                        dpStandardMap.put(account.getPartitionNode(), new TupleDTO<>(consumeStandard.getId(), consumeStandard.getUnitValue()));
+                    }
+                });
+            }
+        }
+        return dpStandardMap;
     }
 
     @Override
@@ -1375,8 +1416,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 } else {
                     thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
                 }
-                BigDecimal sumConsume = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal sumProductNum = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> sumConsumeList = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal sumConsume = BigDecimalUtil.sum(sumConsumeList);
+                List<BigDecimal> sumProductNumList = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
+                BigDecimal sumProductNum = BigDecimalUtil.sum(sumProductNumList);
                 //获取单耗值
                 TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum));
                 poleList.add(stack);

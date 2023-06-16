@@ -3,10 +3,7 @@ package com.steccn.oa.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
-import com.steccn.oa.dto.OaGroupCountDTO;
-import com.steccn.oa.dto.OaGroupLeaderDTO;
-import com.steccn.oa.dto.OaOperatorParamDTO;
-import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
+import com.steccn.oa.dto.*;
 import com.steccn.oa.service.*;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
@@ -103,5 +100,11 @@ public class OaFeignController {
     @GetMapping("/group/count")
     public R<Map<String, OaGroupCountDTO>> getGroupInfo(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate){
         return R.success(oaService.getClassGroupMap(startDate,endDate));
+    }
+
+    @ApiOperation("获取班组长信息")
+    @PostMapping("/group/workshop/leader")
+    public R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop ){
+        return R.success(hrmdepartmentService.getClassUserName(productWorkShop));
     }
 }

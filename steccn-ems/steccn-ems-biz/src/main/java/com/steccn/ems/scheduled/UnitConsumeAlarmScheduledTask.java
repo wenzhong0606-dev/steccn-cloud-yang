@@ -1,9 +1,13 @@
 package com.steccn.ems.scheduled;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.SteccnChartException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.RegularUtil;
@@ -11,13 +15,17 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.EpChartUnitConsumeAlarmVO;
 import com.steccn.ems.domain.EpPartition;
+import com.steccn.ems.domain.EpProductUnitConsumeStandard;
+import com.steccn.ems.domain.EpProductUnitConsumeStandardUser;
 import com.steccn.ems.domain.EpUnitConsumeAlarm;
 import com.steccn.ems.dto.EpTableDTO;
-import com.steccn.ems.service.EpConsumePartitionChartService;
-import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.service.EpUnitConsumeAlarmService;
+import com.steccn.ems.service.*;
+import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -27,9 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +54,12 @@ public class UnitConsumeAlarmScheduledTask {
     private final EpUnitConsumeAlarmService epUnitConsumeAlarmService;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final EpProductUnitConsumeStandardUserService epProductUnitConsumeStandardUserService;
+
+    private final EpProductUnitConsumeStandardService epProductUnitConsumeStandardService;
+
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Async
     @Scheduled(cron = "0 15 9 * * ?")
@@ -110,6 +122,44 @@ public class UnitConsumeAlarmScheduledTask {
                 String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过内部标准" + consumeAlarmVO.getStandardValue();
                 epUnitConsumeAlarm.setContent(content);
                 epUnitConsumeAlarmList.add(epUnitConsumeAlarm);
+                //拿到消息发送人
+                if(consumeAlarmVO.getStandardId()!=null){
+                    List<EpProductUnitConsumeStandardUser> userList = epProductUnitConsumeStandardUserService.list(new LambdaQueryWrapper<EpProductUnitConsumeStandardUser>()
+                            .select(EpProductUnitConsumeStandardUser::getUserId)
+                            .eq(EpProductUnitConsumeStandardUser::getStandardId, consumeAlarmVO.getStandardId()));
+                    if(CollUtil.isNotEmpty(userList)){
+                        Set<Long> userIds = Sets.newHashSet();
+                        userList.forEach(tmp -> {
+                            userIds.add(tmp.getUserId().longValue());
+                        });
+                        //发送消息
+                        SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                        sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getCode());
+                        sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getTitle());
+                        sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getWarnFlag());
+                        sysMsgDTO.setUserList(userIds);
+                        String msgContent = SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getTemplate();
+                        //拿到单位和标准类型
+                        EpProductUnitConsumeStandard epProductUnitConsumeStandard = epProductUnitConsumeStandardService.getById(consumeAlarmVO.getStandardId());
+                        Set<Long> dictSet = Sets.newHashSet();
+                        Collections.addAll(dictSet,epProductUnitConsumeStandard.getMeasureUnit(),epProductUnitConsumeStandard.getStandardType());
+                        String unitStr = "";
+                        String standardStr = "";
+                        if (CollUtil.isNotEmpty(dictSet)){
+                            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                            if(CollUtil.isNotEmpty(dictMap)){
+                                unitStr = dictMap.get(epProductUnitConsumeStandard.getMeasureUnit());
+                                standardStr = dictMap.get(epProductUnitConsumeStandard.getStandardType());
+                            }
+                        }
+                        epProductUnitConsumeStandard.getMeasureUnit();
+                        sysMsgDTO.setContent(String.format(msgContent, dateString, consumeAlarmVO.getCurrentValue()+unitStr,standardStr+"("+consumeAlarmVO.getStandardValue()+unitStr+")"));
+                        sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                        FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    }
+                }else {
+                    log.info("发送失败,消息发送人为空");
+                }
             }
         }
 
