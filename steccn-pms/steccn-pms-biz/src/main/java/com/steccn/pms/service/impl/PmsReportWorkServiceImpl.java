@@ -728,7 +728,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             if (CollUtil.isNotEmpty(dbList)) {
                 Map<String, List<PmsReportWork>> dbMap = dbList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + LocalDateUtil.getClassDate(v.getStartTime(), Boolean.FALSE)));
                 for (Map.Entry<String, List<PmsReportWork>> entry : dbMap.entrySet()) {
-                    BigDecimal sumNum = entry.getValue().stream().filter(v -> Objects.nonNull(v.getProcessQuantity())).map(v -> v.getProcessQuantity()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<BigDecimal> sumNumList = entry.getValue().stream().filter(v -> Objects.nonNull(v.getProcessQuantity())).map(v -> v.getProcessQuantity()).collect(Collectors.toList());
+                    BigDecimal sumNum = BigDecimalUtil.sum(sumNumList);
                     resMap.put(entry.getKey(), sumNum);
                 }
             }
