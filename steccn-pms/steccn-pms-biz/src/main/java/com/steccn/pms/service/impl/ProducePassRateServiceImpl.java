@@ -49,13 +49,9 @@ import java.util.stream.Collectors;
 public class ProducePassRateServiceImpl implements ProducePassRateService {
 
     private final PmsPullForceService pmsPullForceService;
-
     private final RemoteOfficeFeign remoteOfficeFeign;
-
     private final PmsReportWorkMapper pmsReportWorkMapper;
-
     private final RemoteDictFeignApi remoteDictFeignApi;
-
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
 
@@ -125,20 +121,19 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 Map<Integer, List<PmsReportWorkGroupVO>> groupBy = pmsReportWorkGroupVOList
                         .stream()
                         .collect(Collectors.groupingBy(PmsReportWorkGroupVO::getProductLineId));
-                BigDecimal dayWorkSum = BigDecimal.ZERO;
-                BigDecimal pullForceSum = BigDecimal.ZERO;
+                BigDecimal dayWorkSum = null;
+                BigDecimal pullForceSum = null;
                 //根据产线分组
                 for (Map.Entry<Integer, List<PmsReportWorkGroupVO>> entry : groupBy.entrySet()) {
                     //获取每条产线的产量和拉引量
-                    BigDecimal dayWork = reportWorkList.stream().filter(reportWork -> Objects.equals(reportWork.getProductLineId(), entry.getKey())).map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal pullForce = pmsPullForceList.stream().filter(pmsPullForce -> pmsPullForce.getPullForceDate().equals(localDate) && Objects.equals(entry.getKey(), pmsPullForce.getProductLineId()))
-                            .map(PmsPullForce::getQuantity)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<BigDecimal> dayWorkList = reportWorkList.stream().filter(reportWork -> Objects.equals(reportWork.getProductLineId(), entry.getKey())).map(PmsReportWorkGroupVO::getQuantity).collect(Collectors.toList());
+                    BigDecimal dayWork = BigDecimalUtil.sum(dayWorkList);
+                    List<BigDecimal> pullForceList = pmsPullForceList.stream().filter(pmsPullForce -> pmsPullForce.getPullForceDate().equals(localDate) && Objects.equals(entry.getKey(), pmsPullForce.getProductLineId())).map(PmsPullForce::getQuantity).collect(Collectors.toList());
+                    BigDecimal pullForce = BigDecimalUtil.sum(pullForceList);
                     if (Objects.nonNull(dayWork) && Objects.nonNull(pullForce)) {
-                        dayWorkSum = dayWorkSum.add(dayWork);
-                        pullForceSum = pullForceSum.add(pullForce);
+                        dayWorkSum = BigDecimalUtil.add(dayWorkSum, dayWork);
+                        pullForceSum = BigDecimalUtil.add(pullForceSum, pullForce);
                     }
-
                 }
                 dayPassRate = BigDecimalUtil.divide(dayWorkSum, pullForceSum, 4);
             }
@@ -164,11 +159,10 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                         producePassRateVO.setLaAmount(optional.get().getQuantity());
                         producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(), optional.get().getQuantity(), 4));
                     } else {
-                        producePassRateVO.setPassRate(BigDecimal.ZERO);
+                        producePassRateVO.setPassRate(null);
                     }
-
                 } else {
-                    producePassRateVO.setPassRate(BigDecimal.ZERO);
+                    producePassRateVO.setPassRate(null);
                 }
                 producePassRateVOList.add(producePassRateVO);
             }
@@ -267,9 +261,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             } else {
                 pmsReportWorkGroupVO.setQuantity(BigDecimal.ZERO);
             }
-
         }
-
         Map<String, List<PmsReportWorkGroupVO>> groupBy = reportWorkGroupVOList
                 .stream()
                 .collect(Collectors.groupingBy(reportWorkGroupVO -> reportWorkGroupVO.getGroupDate() + "," +
@@ -289,8 +281,8 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             if(Objects.nonNull(splits[3]) && StrUtil.isNumeric(splits[3])){
                 classesId = Long.parseLong(splits[3]);
             }
-            BigDecimal total = entry.getValue().stream().map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-
+            List<BigDecimal> totalList = entry.getValue().stream().map(PmsReportWorkGroupVO::getQuantity).collect(Collectors.toList());
+            BigDecimal total = BigDecimalUtil.sum(totalList);
             PmsReportWorkGroupVO pmsReportWorkGroupVO = new PmsReportWorkGroupVO();
             pmsReportWorkGroupVO.setGroupDate(groupDate);
             pmsReportWorkGroupVO.setWorkshopId(workshopId);
