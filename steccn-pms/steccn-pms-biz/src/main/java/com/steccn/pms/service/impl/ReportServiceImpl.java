@@ -119,6 +119,8 @@ public class ReportServiceImpl implements ReportService {
         workShopMap.forEach((k, v) -> {
             //车间统计
             Map<Integer, BigDecimal> workshopCountMap = Maps.newHashMap();
+            //产线排序
+            v.sort(Comparator.comparing(SysOfficeVO::getTreeSort));
             //根据产线遍历
             for (SysOfficeVO productLine : v) {
                 //产线数量合计-早班，晚班，合计
