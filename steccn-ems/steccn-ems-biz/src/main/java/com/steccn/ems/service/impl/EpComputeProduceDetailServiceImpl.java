@@ -186,7 +186,8 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         for (Map.Entry<String, List<EpProduceDetailVO>> entry : map.entrySet()) {
             EpProduceDetailVO parentProduceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(entry.getValue().get(0), parentProduceDetailVO);
-            BigDecimal sumYield = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> sumYieldList = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).collect(Collectors.toList());
+            BigDecimal sumYield = BigDecimalUtil.sum(sumYieldList);
             parentProduceDetailVO.setYield(sumYield);
             sumParentProduceDetailList.add(parentProduceDetailVO);
         }
@@ -206,7 +207,8 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         for (Map.Entry<String, List<PmsReportWorkVO>> entry : groupBy.entrySet()) {
             PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
             BeanUtils.copyProperties(entry.getValue().get(0), pmsReportWorkVO);
-            BigDecimal sum = entry.getValue().stream().map(PmsReportWorkVO::getProcessQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> sumList = entry.getValue().stream().map(PmsReportWorkVO::getProcessQuantity).collect(Collectors.toList());
+            BigDecimal sum = BigDecimalUtil.sum(sumList);
             pmsReportWorkVO.setProcessQuantity(sum);
 
             List<BigDecimal> hoursList = new ArrayList<>();
@@ -218,7 +220,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
                 //获取生产多少小时
                 hoursList.add(BigDecimalUtil.divide(BigDecimal.valueOf(minutes), BigDecimal.valueOf(60)));
             }
-            pmsReportWorkVO.setDuration(hoursList.stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+            pmsReportWorkVO.setDuration(BigDecimalUtil.sum(hoursList));
             reportWorkVoArrayList.add(pmsReportWorkVO);
         }
         return reportWorkVoArrayList;
@@ -229,9 +231,13 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         List<QtCheckTaskDetailItemMaterialVO> snappingList = itemMaterialVOList.stream().filter(item -> Objects.equals(item.getItemName(),"单片掰边重量")).collect(Collectors.toList());
         List<QtCheckTaskDetailItemMaterialVO> singleWeightList = itemMaterialVOList.stream().filter(item -> Objects.equals(item.getItemName(),"单片重量")).collect(Collectors.toList());
         List<QtCheckTaskDetailItemMaterialVO> pullSpeedList = itemMaterialVOList.stream().filter(item -> Objects.equals(item.getItemName(),"拉引时速")).collect(Collectors.toList());
-        BigDecimal sumSnapping = snappingList.stream().map(item -> new BigDecimal(item.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal sumSingleWeight = singleWeightList.stream().map(item -> new BigDecimal(item.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal sumPullSpeed = pullSpeedList.stream().map(item -> new BigDecimal(item.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<BigDecimal> sumSnappingList = snappingList.stream().map(item -> new BigDecimal(item.getCheckResult())).collect(Collectors.toList());
+        BigDecimal sumSnapping = BigDecimalUtil.sum(sumSnappingList);
+        List<BigDecimal> sumSingleWeightList = singleWeightList.stream().map(item -> new BigDecimal(item.getCheckResult())).collect(Collectors.toList());
+        BigDecimal sumSingleWeight = BigDecimalUtil.sum(sumSingleWeightList);
+        List<BigDecimal> sumPullSpeedList = pullSpeedList.stream().map(item -> new BigDecimal(item.getCheckResult())).collect(Collectors.toList());
+        BigDecimal sumPullSpeed = BigDecimalUtil.sum(sumPullSpeedList);
         //平均单片掰边重量
         BigDecimal avgSnapping = BigDecimalUtil.divide(sumSnapping, BigDecimal.valueOf(snappingList.size()));
         //平均单片重量

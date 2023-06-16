@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -51,9 +52,7 @@ import static java.time.format.DateTimeFormatter.ISO_DATE;
 public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, PmsPullForce> implements PmsPullForceService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
-
     private final RemoteOfficeFeign remoteOfficeFeign;
-
     private final RedissonClient redissonClient;
 
     @Override
@@ -86,7 +85,8 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             Map<Long, List<PmsPullForce>> classMap = localDateGroupList.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId));
             for (Map.Entry<Long, List<PmsPullForce>> classEntry : classMap.entrySet()) {
                 //获取白班夜班总量
-                BigDecimal dayClassTotal = classEntry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> dayClassTotalList = classEntry.getValue().stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+                BigDecimal dayClassTotal = BigDecimalUtil.sum(dayClassTotalList);
                 String classCode = classIdMap.get(classEntry.getKey()).getCode();
 
                 if (SysDictConstant.CODE_0.equals(classCode)) {
@@ -96,7 +96,8 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                 }
             }
             //获取总量
-            BigDecimal total = localDateGroupList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> totalList = localDateGroupList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+            BigDecimal total = BigDecimalUtil.sum(totalList);
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
@@ -136,8 +137,8 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
         List<PmsPullForceDetailsVO> pullForceDetailsVOList = new ArrayList<>();
         for (Map.Entry<Integer, List<PmsPullForce>> entry : groupBy.entrySet()) {
-            BigDecimal total = entry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-
+            List<BigDecimal> totalList = entry.getValue().stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+            BigDecimal total = BigDecimalUtil.sum(totalList);
             PmsPullForceDetailsVO pullForceDetailsVO = new PmsPullForceDetailsVO();
             pullForceDetailsVO.setProductLineId(entry.getKey());
             pullForceDetailsVO.setProductLineName(map.get(entry.getKey()).getOfficeName());
