@@ -85,4 +85,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty(value = "班组id")
     private Integer classGroupId;
+
+    @ApiModelProperty("加入数采")
+    private Integer joinAcquisition;
 }

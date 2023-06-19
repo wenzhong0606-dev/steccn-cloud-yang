@@ -817,6 +817,7 @@ public interface QtManagerConstant {
      * 质量开启是否需要采样数据
      */
     String CONF_QMS_COLLECT_ENABLE = "QMS_COLLECT_ENABLE";
+    String CONF_QMS_COLLECT_DISABLE_CONTENT = "QMS_COLLECT_DISABLE_CONTENT";
     String CONF_QMS_COLLECT_ENABLE_CONTENT = "QMS_COLLECT_ENABLE_CONTENT";
 
 
