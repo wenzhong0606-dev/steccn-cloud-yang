@@ -1,32 +1,32 @@
 package com.steccn.data.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.DingDingUtils;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.SplitListUtil;
+import com.steccn.data.constant.HbThirdPartyConstant;
 import com.steccn.data.domain.EpMeterCollect;
-import com.steccn.data.domain.PmStationCollect;
-import com.steccn.data.dto.DwMeterReadDiffDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
-import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
-import com.steccn.data.service.EpMeterCollectService;
+import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.mapper.EpMeterCollectMapper;
+import com.steccn.data.service.EpMeterCollectService;
+import com.steccn.data.vo.DwEpMeterCollectVO;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.qms.util.ShardTimeUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -36,7 +36,6 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -49,8 +48,10 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         implements EpMeterCollectService {
 
     private final ConcurrentHashMap<String, LocalDateTime> lastRecordTimeMap = new ConcurrentHashMap<>(1024);
-
     private LocalDateTime lastRecordTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+    @Autowired
+    private RemoteSysConfigurationFeignApi sysConfigurationFeignApi;
+
 
     @Override
     public DwEpMeterCollectVO meterRead(DwMeterReadDTO dto) {
@@ -111,16 +112,36 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     public Boolean refreshLastReadTime(LocalDateTime curTime) {
         List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
                 .lambda()
-                .between(EpMeterCollect::getRecordTime, curTime, LocalDateTime.now())
+                .between(EpMeterCollect::getRecordTime, curTime.plusSeconds(1L), LocalDateTime.now())
                 .groupBy(EpMeterCollect::getCode));
         //如果集合不为空
         if (CollUtil.isNotEmpty(dbList)) {
             dbList.forEach(ele -> {
-                if (ele.getRecordTime().isAfter(lastRecordTime)) {
+                if (LocalDateUtil.gt(ele.getRecordTime(), lastRecordTime)) {
                     lastRecordTime = ele.getRecordTime();
                 }
                 lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
             });
+        } else {
+            //如果db集合为空 ，此时去查询最近抄表时间，大于阈值则会发送钉钉消息
+            LocalDateTime lastRecordTime = getLastRecordTime();
+            long between = LocalDateTimeUtil.between(lastRecordTime, LocalDateTime.now(), ChronoUnit.SECONDS);
+            //获取阈值
+            Map<String, List<Integer>> confMap = FeignOptional.of(() -> sysConfigurationFeignApi.confListInteger(new TripleDTO<>(HbThirdPartyConstant.CONF_AC_LAST_RECORD_CONTENT, Sets.newHashSet(HbThirdPartyConstant.CONF_AC_LAST_RECORD_TIME_MAX_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (CollUtil.isNotEmpty(confMap)) {
+                List<Integer> maxTimeList = confMap.get(HbThirdPartyConstant.CONF_AC_LAST_RECORD_TIME_MAX_CONTENT);
+                if (CollUtil.isNotEmpty(maxTimeList)) {
+                    Integer maxTime = maxTimeList.get(0);
+                    if (between > maxTime) {
+                        Long minutes =  between / 60 ;
+                        try {
+                            DingDingUtils.sendTextMsg("监控告警-数采数据断传时间已超过"+ minutes +"分钟", Lists.newArrayList("13601717164"), null, false);
+                        } catch (Exception e) {
+                            log.error("{}", e.getLocalizedMessage());
+                        }
+                    }
+                }
+            }
         }
         return Boolean.TRUE;
     }
