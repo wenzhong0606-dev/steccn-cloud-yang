@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.codec.Base64;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
@@ -285,8 +284,8 @@ public class DingDingUtils {
     private static String getDingUrl() throws Exception {
         // 获取系统时间戳
         Long timestamp = System.currentTimeMillis();
-        String SECRET = "SEC6bf356a45f68e888d9949abccb3d1055192d061b9e5da4e3de84d1aa8323c34a";
-        String WEBHOOK = "https://oapi.dingtalk.com/robot/send?access_token=665debc1c2d1241cab8c356e52309aa6bf0103f84c32d432c1dba53acd352ae1";
+        String SECRET = "SEC111cbf5ce9a58e87a50344abbd83c8e1383394bf8b02e047a09528ad18332dcb";
+        String WEBHOOK = "https://oapi.dingtalk.com/robot/send?access_token=5a860fa32f83efd5359f6a0eb0f174adbe01c66946be5e80cd504f956db9edde";
         // 拼接
         String stringToSign = timestamp + "\n" + SECRET;
         // 使用HmacSHA256算法计算签名
