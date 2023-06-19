@@ -26,6 +26,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.websocket.constant.WebsocketConstant;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -61,9 +62,7 @@ public class UnitConsumeAlarmScheduledTask {
 
     private final RemoteMsgFeignApi remoteMsgFeignApi;
 
-    @Async
-    @Scheduled(cron = "0 15 9 * * ?")
-//    @Scheduled(cron = "0/40 * * * * ? ")
+    @XxlJob("unitConsumeAlarm")
     public void execute() {
         List<EpChartUnitConsumeAlarmVO> consumeAlarmVOList = new ArrayList<>();
         List<SysDictVO> thickVOList = remoteDictFeignApi.listByType( "product_thickness_range").getData();
