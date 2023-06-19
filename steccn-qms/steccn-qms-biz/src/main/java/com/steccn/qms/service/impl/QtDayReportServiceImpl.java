@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -14,13 +13,13 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.*;
-import com.steccn.common.vo.QtTaskClassCalculate;
-import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
@@ -29,7 +28,6 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
-import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +37,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.text.Collator;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -62,14 +58,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
-
     private final QtCheckTaskService qtCheckTaskService;
     private final QtDefectiveItemService qtDefectiveItemService;
-    private final QtDefectiveItemMapper qtDefectiveItemMapper;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
     private final QtChartGenerateService qtChartGenerateService;
-
-
     private final QtCheckTaskMapper qtCheckTaskMapper;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
@@ -89,6 +82,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         dto.setProductLineId(productLineId);
         //获取人工采集的缺陷集合+获取机器采集的缺陷集合
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
+
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);
         List<QtCheckTaskDetailReportVO> manDataList = manData;
         SteccnTableAssertUtil.notEmpty(manDataList, "数据为空");

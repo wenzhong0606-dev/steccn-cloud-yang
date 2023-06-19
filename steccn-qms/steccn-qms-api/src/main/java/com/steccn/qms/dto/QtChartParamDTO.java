@@ -76,4 +76,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private List<String> guaFilters;
 
     private String base64;
+
+    @ApiModelProperty("加入数采")
+    private Integer joinAcquisition;
 }

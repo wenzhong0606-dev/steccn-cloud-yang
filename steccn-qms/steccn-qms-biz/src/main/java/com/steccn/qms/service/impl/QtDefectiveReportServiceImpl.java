@@ -91,6 +91,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtLineChartBarDTO deepDefectiveCategoryBar(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //获取所有扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //如果车间和产线为空，表示查询深加工车间所有数据
@@ -233,10 +239,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //存放检验设备的数据
         List<QtCheckTaskDetailReportVO> collectList = null;
 
-        //获取配置
-        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
-        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+        //是否加入数采数据
+        if (Objects.nonNull(dto.getJoinAcquisition()) && dto.getJoinAcquisition() == 1) {
             try {
                 collectList = defectCollect(dto);
                 if (CollUtil.isNotEmpty(collectList)) {
@@ -367,6 +371,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtChartPieVO deepDefectiveCategoryPie(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //如果车间和产线为空，表示查询深加工车间所有数据
@@ -522,6 +532,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     }
 
     private List<DeepDefectiveCategoryDetailVO> getDeepDefectiveCategoryDetailList(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //如果车间和产线为空，表示查询深加工车间所有数据
@@ -752,6 +768,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @Override
     public QtLineChartBarDTO deepDefectiveItemBar(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -786,6 +808,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtLineChartBarDTO substrateItemBar(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.SUB_OFFICE_NAME);
@@ -805,6 +833,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtChartPieVO deepDefectiveItemPie(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //深加工车间
@@ -826,6 +860,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtChartPieVO substrateItemPie(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -859,6 +899,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     }
 
     private List<DeepDefectiveCategoryDetailVO> getSubstrateItemDetail(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -891,6 +937,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @Override
     public QtLineChartBarDTO deepDefectiveCategoryLine(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -1061,6 +1113,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtLineChartBarDTO substrateItemLine(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -1096,6 +1154,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtLineChartBarDTO deepItemLine(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -1220,6 +1284,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     }
 
     private List<DeepDefectiveCategoryDetailVO> getDeepDefectiveItemDetailList(QtChartParamDTO dto) {
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
