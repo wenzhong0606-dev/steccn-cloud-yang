@@ -1059,8 +1059,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<OutputQualityVO> outputQualityJp(OutputQualityDTO dto) {
-        Assert.isTrue(CollUtil.isNotEmpty(dto.getProductWorkshop()),"车间不能为空");
-        Assert.isTrue(Objects.nonNull(dto.getDate()),"日期不能为空");
+        Assert.isTrue(CollUtil.isNotEmpty(dto.getProductWorkshop()), "车间不能为空");
+        Assert.isTrue(Objects.nonNull(dto.getDate()), "日期不能为空");
         //查询缺陷数据
         List<OutputQualityDetailVO> defectiveData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
         //缺陷数量根据班组拆分
@@ -1249,9 +1249,38 @@ public class ReportServiceImpl implements ReportService {
             //晚班数据
             List<OutputQualityDataVO> nightData = collect.get(PmManagerConstant.NIGHT_SHIFT);
             if (CollUtil.isNotEmpty(foreData)) {
+                Map<String, OutputQualityDataVO> valueMap = jpDataByline(foreData);
+                for (OutputQualityDataVO foreDatum : foreData) {
+                    OutputQualityDataVO outputQualityDataVO = valueMap.get(foreDatum.getProductionLine());
+                    foreDatum.setShutUp(outputQualityDataVO.getShutUp());
+                    foreDatum.setStartToTalk(outputQualityDataVO.getStartToTalk());
+                    foreDatum.setStone(outputQualityDataVO.getStone());
+                    foreDatum.setVariant(outputQualityDataVO.getVariant());
+                    foreDatum.setFlaw(outputQualityDataVO.getFlaw());
+                    foreDatum.setAverageThickness(outputQualityDataVO.getAverageThickness());
+                    foreDatum.setCurrentClass(outputQualityDataVO.getCurrentClass());
+                    foreDatum.setOutputSq(outputQualityDataVO.getOutputSq());
+                    foreDatum.setOutputTon(outputQualityDataVO.getOutputTon());
+                    foreDatum.setFinishedProduct(outputQualityDataVO.getFinishedProduct());
+                }
                 outputQualityDataVOS.add(totalJp(foreData));
+
             }
             if (CollUtil.isNotEmpty(nightData)) {
+                Map<String, OutputQualityDataVO> valueMap = jpDataByline(nightData);
+                for (OutputQualityDataVO foreDatum : nightData) {
+                    OutputQualityDataVO outputQualityDataVO = valueMap.get(foreDatum.getProductionLine());
+                    foreDatum.setShutUp(outputQualityDataVO.getShutUp());
+                    foreDatum.setStartToTalk(outputQualityDataVO.getStartToTalk());
+                    foreDatum.setStone(outputQualityDataVO.getStone());
+                    foreDatum.setVariant(outputQualityDataVO.getVariant());
+                    foreDatum.setFlaw(outputQualityDataVO.getFlaw());
+                    foreDatum.setAverageThickness(outputQualityDataVO.getAverageThickness());
+                    foreDatum.setCurrentClass(outputQualityDataVO.getCurrentClass());
+                    foreDatum.setOutputSq(outputQualityDataVO.getOutputSq());
+                    foreDatum.setOutputTon(outputQualityDataVO.getOutputTon());
+                    foreDatum.setFinishedProduct(outputQualityDataVO.getFinishedProduct());
+                }
                 outputQualityDataVOS.add(totalJp(nightData));
             }
             //累计拉引量
@@ -1299,18 +1328,8 @@ public class ReportServiceImpl implements ReportService {
                 outputQualityDataVO.setTotalFinishedProduct(BigDecimalUtil.multiply(divide, new BigDecimal(100)));
             }
             //排序
-            outputQualityDataVOS = outputQualityDataVOS
-                    .stream()
-                    .sorted(Comparator.comparing(OutputQualityDataVO::getProductionLine, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualityDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualityDataVO::getMonitor, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualityDataVO::getType, Comparator.nullsFirst(Integer::compareTo)))
-                    .collect(Collectors.toList());
-            outputQualityDataVOS = outputQualityDataVOS
-                    .stream()
-                    .sorted(Comparator.comparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualityDataVO::getType)).collect(Collectors.toList());
+            outputQualityDataVOS = outputQualityDataVOS.stream().sorted(Comparator.comparing(OutputQualityDataVO::getProductionLine, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getMonitor, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getType, Comparator.nullsFirst(Integer::compareTo))).collect(Collectors.toList());
+            outputQualityDataVOS = outputQualityDataVOS.stream().sorted(Comparator.comparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualityDataVO::getType)).collect(Collectors.toList());
 
         }
         outputQualityVO.setColumns(getJpTableHeader());
@@ -1318,7 +1337,7 @@ public class ReportServiceImpl implements ReportService {
         //从表格
         OutputQualityVO fromTableData = new OutputQualityVO();
         fromTableData.setColumns(getFromTableHeader());
-        fromTableData.setFromTableList(getFromData(pmsReportWorkVOS,lineNameMap));
+        fromTableData.setFromTableList(getFromData(pmsReportWorkVOS, lineNameMap));
         fromTableData.setType(2);
         resList.add(outputQualityVO);
         resList.add(fromTableData);
@@ -1327,8 +1346,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<OutputQualitySjgVO> outputQualitySjg(OutputQualityDTO dto) {
-        Assert.isTrue(CollUtil.isNotEmpty(dto.getProductWorkshop()),"车间不能为空");
-        Assert.isTrue(Objects.nonNull(dto.getDate()),"日期不能为空");
+        Assert.isTrue(CollUtil.isNotEmpty(dto.getProductWorkshop()), "车间不能为空");
+        Assert.isTrue(Objects.nonNull(dto.getDate()), "日期不能为空");
         //获取缺陷数据
         List<OutputQualityDetailVO> qmsTaskDefectData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
         //缺陷数量根据班组拆分
@@ -1384,7 +1403,7 @@ public class ReportServiceImpl implements ReportService {
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(Sets.newHashSet(materialIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取车间的名称
         Map<Integer, String> workshopMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(new HashSet<>(dto.getProductWorkshop())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Set<String> workshopName = workshopMap.values().stream().collect(Collectors.toSet());
+        Set<String> workshopName = new HashSet<>(workshopMap.values());
         //获取班组长姓名
         Map<String, List<OaClassUserNameDTO>> monitorName = FeignOptional.of(() -> oaInfoService.getLeaderName(workshopName), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //构建表格模型
@@ -1538,18 +1557,8 @@ public class ReportServiceImpl implements ReportService {
             }
 
             //排序
-            dataList = dataList
-                    .stream()
-                    .sorted(Comparator.comparing(OutputQualitySjgDataVO::getProductLine, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualitySjgDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualitySjgDataVO::getMonitor, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualitySjgDataVO::getType, Comparator.nullsFirst(Integer::compareTo)))
-                    .collect(Collectors.toList());
-            dataList = dataList
-                    .stream()
-                    .sorted(Comparator.comparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualitySjgDataVO::getType)).collect(Collectors.toList());
+            dataList = dataList.stream().sorted(Comparator.comparing(OutputQualitySjgDataVO::getProductLine, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualitySjgDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualitySjgDataVO::getMonitor, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualitySjgDataVO::getType, Comparator.nullsFirst(Integer::compareTo))).collect(Collectors.toList());
+            dataList = dataList.stream().sorted(Comparator.comparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo)).thenComparing(OutputQualitySjgDataVO::getType)).collect(Collectors.toList());
         }
 
         outputQualitySjgVO.setTableList(dataList);
@@ -1560,9 +1569,58 @@ public class ReportServiceImpl implements ReportService {
         outputQualitySjgVO.setType(2);
 
         outputQualitySjgVO1.setColumns(getFromTableHeader());
-        outputQualitySjgVO1.setFromTableList(getFromData(pmsReportWorkVOS,lineNameMap));
+        outputQualitySjgVO1.setFromTableList(getFromData(pmsReportWorkVOS, lineNameMap));
         resList.add(outputQualitySjgVO1);
         return resList;
+    }
+
+
+    /**
+     * 获取基片质量报表基片车间根据产线的合计数据
+     */
+    private Map<String,OutputQualityDataVO> jpDataByline(List<OutputQualityDataVO> dataList){
+        Map<String,OutputQualityDataVO> valueMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(dataList)) {
+            //根据线别将数据拆分
+            Map<String, List<OutputQualityDataVO>> lineMap = dataList.stream().collect(Collectors.groupingBy(OutputQualityDataVO::getProductionLine));
+            for (Map.Entry<String, List<OutputQualityDataVO>> entry : lineMap.entrySet()) {
+                Integer shutUp = null;
+                Integer startToTalk = null;
+                Integer stone = null;
+                Integer variant = null;
+                Integer flaw = null;
+                BigDecimal averageThickness = null;
+                BigDecimal currentClass =null;
+                BigDecimal outputTon = null;
+                BigDecimal outputSq = null;
+                BigDecimal finishedProduct = null;
+                for (OutputQualityDataVO outputQualityDataVO : entry.getValue()) {
+                    shutUp = IntegerUtil.add(shutUp, outputQualityDataVO.getShutUp());
+                    startToTalk = IntegerUtil.add(startToTalk, outputQualityDataVO.getStartToTalk());
+                    stone = IntegerUtil.add(stone, outputQualityDataVO.getStone());
+                    variant = IntegerUtil.add(variant, outputQualityDataVO.getVariant());
+                    flaw = IntegerUtil.add(flaw, outputQualityDataVO.getFlaw());
+                    averageThickness = BigDecimalUtil.add(averageThickness, outputQualityDataVO.getAverageThickness());
+                    currentClass = BigDecimalUtil.add(currentClass, outputQualityDataVO.getCurrentClass());
+                    outputTon = BigDecimalUtil.add(outputTon,outputQualityDataVO.getOutputTon());
+                    outputSq = BigDecimalUtil.add(outputSq,outputQualityDataVO.getOutputSq());
+                    finishedProduct = BigDecimalUtil.add(finishedProduct,outputQualityDataVO.getFinishedProduct());
+                }
+                OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
+                outputQualityDataVO.setShutUp(shutUp);
+                outputQualityDataVO.setStartToTalk(startToTalk);
+                outputQualityDataVO.setStone(stone);
+                outputQualityDataVO.setVariant(variant);
+                outputQualityDataVO.setFlaw(flaw);
+                outputQualityDataVO.setAverageThickness(averageThickness);
+                outputQualityDataVO.setCurrentClass(currentClass);
+                outputQualityDataVO.setOutputSq(outputSq);
+                outputQualityDataVO.setOutputTon(outputTon);
+                outputQualityDataVO.setFinishedProduct(finishedProduct);
+                valueMap.put(entry.getKey(),outputQualityDataVO);
+            }
+        }
+        return valueMap;
     }
 
 
