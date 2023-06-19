@@ -5,7 +5,6 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.domain.EpMeterCollect;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.vo.DwEpMeterCollectVO;

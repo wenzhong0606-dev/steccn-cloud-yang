@@ -21,7 +21,7 @@ public interface QtDefectProductService extends IService<QtDefectProduct> {
      * @param dto
      * @return
      */
-    Boolean add(QtDefectProductDTO dto);
+    Long add(QtDefectProductDTO dto);
 
     /**
      * 不合格品处理记录列表

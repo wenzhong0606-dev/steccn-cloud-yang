@@ -31,7 +31,7 @@ public class QtDefectProductController {
     @PostMapping("/add")
     @ApiOperation(value = "新增不合格品处理记录")
     @SysLog("新增不合格品处理记录")
-    public R<Boolean> add(@RequestBody QtDefectProductDTO dto) {
+    public R<Long> add(@RequestBody QtDefectProductDTO dto) {
         return R.success(qtDefectProductService.add(dto));
     }
 
