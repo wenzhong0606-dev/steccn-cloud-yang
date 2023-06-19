@@ -15,4 +15,11 @@ public interface HbThirdPartyConstant {
      * 请求头
      */
     String STR_CLIENT_ID = "client-id";
+
+    /**
+     * 最近抄表时间的最大阈值
+     */
+    String CONF_AC_LAST_RECORD_CONTENT = "CONF_AC_LAST_RECORD_CONTENT";
+    String CONF_AC_LAST_RECORD_TIME_MAX_CONTENT = "CONF_AC_LAST_RECORD_TIME_MAX_CONTENT";
+
 }
