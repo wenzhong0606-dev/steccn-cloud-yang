@@ -3,6 +3,7 @@ package com.steccn.platform.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.SecurityUtils;
@@ -35,11 +36,12 @@ public class SysRouteRecordServiceImpl extends ServiceImpl<SysRouteRecordMapper,
 
     @Override
     public List<SysRouteRecordVO> getRouteRecord() {
-        LambdaQueryWrapper<SysRouteRecord> condition = new LambdaQueryWrapper<>();
-        condition.select(SysRouteRecord::getRouteData)
-                .eq(SysRouteRecord::getUserid,SecurityUtils.getUser().getUserId())
-                .orderByDesc(SysRouteRecord::getCreateTime)
-                .last("LIMIT 4");
+        QueryWrapper<SysRouteRecord> condition = new QueryWrapper<>();
+        condition.select("JSON_EXTRACT(route_data, '$.id') AS unique_id,MAX(create_time) AS create_time,MAX(route_data) AS route_data")
+                .eq("userId",SecurityUtils.getUser().getUserId())
+                .groupBy("unique_id")
+                .orderByDesc("create_time")
+                .last("LIMIT 5");
         List<SysRouteRecord> list = list(condition);
         List<SysRouteRecordVO> results = Lists.newArrayList();
         if(CollUtil.isNotEmpty(list)){
