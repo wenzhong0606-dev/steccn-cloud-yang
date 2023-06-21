@@ -2003,7 +2003,7 @@ public class ReportServiceImpl implements ReportService {
         //备注
         OutputQualityHeaderVO remark = new OutputQualityHeaderVO();
         remark.setLabel("备注");
-        remark.setProp("remark");
+        remark.setProp("remarks");
         columns1.add(remark);
         return columns1;
     }
