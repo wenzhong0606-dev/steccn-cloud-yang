@@ -1978,17 +1978,17 @@ public class ReportServiceImpl implements ReportService {
         List<OutputQualityHeaderVO> columns1 = Lists.newArrayList();
         OutputQualityHeaderVO produceLineHeader = new OutputQualityHeaderVO();
         produceLineHeader.setLabel("产线");
-        produceLineHeader.setProp("produceLineHeader");
+        produceLineHeader.setProp("produceLineName");
         columns1.add(produceLineHeader);
         //班次
         OutputQualityHeaderVO classHeader1 = new OutputQualityHeaderVO();
         classHeader1.setLabel("班次");
-        classHeader1.setProp("classes1");
+        classHeader1.setProp("className");
         columns1.add(classHeader1);
         //时间
         OutputQualityHeaderVO dateHeader = new OutputQualityHeaderVO();
         dateHeader.setLabel("时间");
-        dateHeader.setProp("dateHeader");
+        dateHeader.setProp("startTime");
         columns1.add(dateHeader);
         //时长
         OutputQualityHeaderVO duration = new OutputQualityHeaderVO();
@@ -1997,7 +1997,7 @@ public class ReportServiceImpl implements ReportService {
         columns1.add(duration);
         //原因
         OutputQualityHeaderVO cause = new OutputQualityHeaderVO();
-        cause.setLabel("时长");
+        cause.setLabel("原因");
         cause.setProp("cause");
         columns1.add(cause);
         //备注
