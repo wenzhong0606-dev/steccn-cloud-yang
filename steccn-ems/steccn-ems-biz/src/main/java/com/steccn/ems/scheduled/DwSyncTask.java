@@ -47,4 +47,18 @@ public class DwSyncTask {
         Boolean flag = epDwService.read(LocalDate.now().minusDays(1));
         XxlJobHelper.log("抄表管理任务-任务完成，结果 -> {}", flag);
     }
+
+    @XxlJob("compensateTask")
+    public void countTaskFinish() {
+        XxlJobHelper.log("统计任务执行条数-任务开始");
+        Boolean flag = epDwService.countTaskFinish();
+        XxlJobHelper.log("统计任务执行条数-任务完成，结果 -> {}", flag);
+    }
+
+    @XxlJob("compensateTask")
+    public void compensateTask() {
+        XxlJobHelper.log("补偿任务-任务开始");
+        Boolean flag = epDwService.compensateTask();
+        XxlJobHelper.log("补偿任务-任务完成，结果 -> {}", flag);
+    }
 }

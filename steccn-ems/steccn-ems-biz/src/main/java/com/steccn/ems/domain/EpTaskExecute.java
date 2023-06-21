@@ -38,6 +38,11 @@ public class EpTaskExecute implements Serializable {
     private Integer taskParam;
 
     /**
+     * 任务条数
+     */
+    private Integer taskCount;
+
+    /**
      * 任务状态
      * @see com.steccn.ems.constant.EpManagerConstant.TaskFlagEnum
      */
