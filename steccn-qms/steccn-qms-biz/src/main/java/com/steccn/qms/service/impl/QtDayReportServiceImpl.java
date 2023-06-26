@@ -633,7 +633,16 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         .filter(v -> v.getClassesId() != null && v.getClassesId().equals(finalI))
                         .collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(morningCollect)){
-                    classGroupMap.put(i,morningCollect.get(0).getClassGroupName());
+//                    1）集合T1内的记录所属的班组（所有记录填报的班组中，取填报次数最多的一个班组）为早班对应的班组
+//                    2）集合T2内的记录所属的班组为晚班对应的班组
+                    Map<String, Long> countByAttribute = morningCollect.stream()
+                            .collect(Collectors.groupingBy(QtCheckTaskListVO::getClassGroupName, Collectors.counting()));
+                    //取出现次数最多的班组名
+                    String mostFrequentName = countByAttribute.entrySet().stream()
+                            .max(Comparator.comparing(Map.Entry::getValue))
+                            .map(Map.Entry::getKey)
+                            .orElse(null);
+                    classGroupMap.put(i,mostFrequentName);
                 }
             }
             //过滤产线下的任务详情
