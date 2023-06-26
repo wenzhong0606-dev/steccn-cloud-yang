@@ -37,4 +37,16 @@ public interface EpDwService {
      * @return
      */
     Boolean heatPower(LocalDate date);
+
+    /**
+     * 补偿任务
+     * @return
+     */
+    Boolean compensateTask();
+
+    /**
+     * 统计任务完成情况
+     * @return
+     */
+    Boolean countTaskFinish();
 }

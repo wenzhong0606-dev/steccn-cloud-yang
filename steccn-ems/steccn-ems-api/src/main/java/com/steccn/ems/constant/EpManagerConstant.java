@@ -299,27 +299,29 @@ public interface EpManagerConstant {
 
     /**
      * 任务类型
+     *
      * @see com.steccn.ems.service.impl.EpDwServiceImpl
      */
     @Getter
     @AllArgsConstructor
     enum TaskTypeEnum {
-        //计算钱
-        TYPE_0(0),
-        //计算读数
-        TYPE_1(1);
+        TYPE_0(0, "余热发电任务"),
+        TYPE_1(1, "远传仪表能耗Distant任务"),
+        TYPE_2(2, "峰谷平电费任务"),
+        TYPE_3(3, "抄表管理任务");
         private final Integer code;
+        private final String name;
     }
 
 
     /**
      * 默认能源 电，水，天燃气，燃料油，燃料(气+油)
      */
-    Integer ENERGY_ELECTRIC= 1;
-    Integer ENERGY_WATER= 2;
-    Integer ENERGY_GAS= 3;
-    Integer ENERGY_OIL= 4;
-    Integer ENERGY_GAS_OIL= 5;
+    Integer ENERGY_ELECTRIC = 1;
+    Integer ENERGY_WATER = 2;
+    Integer ENERGY_GAS = 3;
+    Integer ENERGY_OIL = 4;
+    Integer ENERGY_GAS_OIL = 5;
 
 
     /**
@@ -350,8 +352,8 @@ public interface EpManagerConstant {
         FL610_LIST,
         FL15_LIST,
         DSJ_LIST,
-        JPZZB_LIST
-        ;
+        JPZZB_LIST;
+
         //根据code查找值
         public static Set<String> allContentConf() {
             Set<String> resSet = Sets.newHashSet();
