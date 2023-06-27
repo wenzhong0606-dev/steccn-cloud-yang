@@ -82,7 +82,7 @@ public class EpDwServiceImpl implements EpDwService {
             //子任务执行好插入数据，更新标识
             //避免重复执行
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList, lineMap);
-            log.info("{}", taskList);
+            log.debug("{}", taskList);
             for (DwConditionDTO task : taskList) {
                 CompletableFuture.runAsync(() ->{
                     try {
