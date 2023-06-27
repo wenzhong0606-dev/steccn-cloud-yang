@@ -329,8 +329,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     private void reduceRecursion(List<MeterReadListVO> meterReadListVOList, List<List<ReadValueListVO>> readValueAllList) {
         for (MeterReadListVO meterReadListVO : meterReadListVOList) {
-            reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
-            if (!Objects.equals(meterReadListVO.getEntityTable(), 2)) {
+            if(Objects.equals(meterReadListVO.getEntityTable(), 2)){
+                reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
+            } else if (!Objects.equals(meterReadListVO.getEntityTable(), 2)) {
                 readValueAllList.add(meterReadListVO.getReadValueList());
             }
         }
