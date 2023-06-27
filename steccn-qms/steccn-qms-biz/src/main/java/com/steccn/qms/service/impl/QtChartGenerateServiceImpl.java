@@ -1938,6 +1938,20 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }else {
             log.info("没有拉引量数据");
         }
+//                return true;
+//        now = now.of(2023,5,15,8,0);
+//        while(now.getMonthValue()!=6||now.getDayOfMonth()!=27){
+//            for(int i = 0;i<2;i++){
+//                if(i==0){
+//                    now = now.withHour(8);
+//                }else {
+//                    now = now.withHour(20);
+//                }
+//                date = now.toLocalDate();
+//
+//            }
+//            now = now.plusDays(1);
+//        }
         return true;
     }
 
