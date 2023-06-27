@@ -11,6 +11,32 @@ public interface PmManagerConstant {
 
 
     /**
+     * 排序条件-编码
+     */
+    String PMS_ORDER_CODE = "code";
+
+    /**
+     * 排序条件-批次号
+     */
+    String PMS_ORDER_BATCH_NO = "batchNo";
+
+
+    /**
+     * 排序条件-箱号
+     */
+    String PMS_ORDER_CASE_NO = "caseNo";
+
+    /**
+     * 排序条件-物料名称
+     */
+    String PMS_MATERIAL_NAME ="materialName";
+
+    /**
+     * 排序条件- 物料编码
+     */
+    String PMS_MATERIAL_CODE = "materialCode";
+
+    /**
      * 开口泡
      */
     String QMS_TASK_ITEM_SHUT_UP = "开口泡";

@@ -39,6 +39,7 @@ import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
@@ -976,10 +977,40 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //查询生产订单数据
         List<PanoramicTracingVO> tracingVOList = baseMapper.tracing(panoramicTracingDTO);
 
-        //排序
-        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
-                .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
-                .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        if (Objects.nonNull(panoramicTracingDTO.getSortField())) {
+            //自定义定义排序条件
+            if (PmManagerConstant.PMS_ORDER_CODE.equals(panoramicTracingDTO.getSortField())) {
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_ORDER_BATCH_NO.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_ORDER_CASE_NO.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_MATERIAL_NAME.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName,Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_MATERIAL_CODE.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode,Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }
+        }else {
+            //默认排序
+            tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
+                    .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
+                    .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        }
         //逻辑分页
         return LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
     }
