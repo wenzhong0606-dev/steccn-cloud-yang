@@ -190,6 +190,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
+                QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                station.setId(sysOfficeVO.getId());
+                station.setName(sysOfficeVO.getOfficeName());
+                dto.setStation(station);
             }
         }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                 ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
@@ -211,6 +215,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     }
                     dto.setStationId(sysOfficeVO.getId().longValue());
                     dto.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    dto.setStation(station);
                 }
             }
         }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
@@ -232,6 +240,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
+                QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                station.setId(sysOfficeVO.getId());
+                station.setName(sysOfficeVO.getOfficeName());
+                dto.setStation(station);
             }
 
         }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())
@@ -253,6 +265,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
+                QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                station.setId(sysOfficeVO.getId());
+                station.setName(sysOfficeVO.getOfficeName());
+                dto.setStation(station);
             }
         }
 
