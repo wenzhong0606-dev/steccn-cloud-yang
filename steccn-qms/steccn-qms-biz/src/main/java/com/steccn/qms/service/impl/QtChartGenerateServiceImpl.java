@@ -167,6 +167,42 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             if(CollUtil.isNotEmpty(allDefectIds)){
                 allDefectDetails = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>().eq(QtDefectiveItem::getId,allDefectIds));
             }
+            //拿到相关检验项数据 把掰边，样品，拉引时速，负载加入
+            List<String> bdlTmp = Lists.newArrayList();
+            bdlTmp.add("掰边重量");
+            bdlTmp.add("样品重量");
+            bdlTmp.add("拉引速度");
+            bdlTmp.add("负载");
+            List<QtCheckItem> bdlItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                    .in(QtCheckItem::getName,bdlTmp));
+            //查询单片掰边重量(改成了掰边重量)
+            List<QtCheckItem> baiItems = bdlItems.stream().filter(v->v.getName().equals("掰边重量"))
+                    .collect(Collectors.toList());
+            List<Integer> baiItemIds = new ArrayList<>();
+            baiItems.forEach(tmp -> {
+                baiItemIds.add(tmp.getId());
+            });
+            //查询单片重量 (生产改成样品重量)
+            List<QtCheckItem> danItems = bdlItems.stream().filter(v->v.getName().equals("样品重量"))
+                    .collect(Collectors.toList());
+            List<Integer> danItemIds = new ArrayList<>();
+            danItems.forEach(tmp -> {
+                danItemIds.add(tmp.getId());
+            });
+            //查询拉引时速(改成了拉引速度)
+            List<QtCheckItem> laItems = bdlItems.stream().filter(v->v.getName().equals("拉引速度"))
+                    .collect(Collectors.toList());
+            List<Integer> laItemIds = new ArrayList<>();
+            laItems.forEach(tmp -> {
+                laItemIds.add(tmp.getId());
+            });
+            //查询负载
+            List<QtCheckItem> fuItems = bdlItems.stream().filter(v->v.getName().equals("负载"))
+                    .collect(Collectors.toList());
+            List<Integer> fuItemIds = new ArrayList<>();
+            fuItems.forEach(tmp -> {
+                fuItemIds.add(tmp.getId());
+            });
             //根据班次日期进行分组
             Map<String, List<QtCheckTask>> groupByDate = taskList.stream().collect(Collectors.groupingBy(QtCheckTask::getDate));
             //遍历日期map
@@ -200,34 +236,6 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
                     //计算生产时长
                     Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList,flag,entry2);
-                    //查询单片掰边重量(改成了掰边重量)
-                    //把掰边，样品，拉引时速加入
-                    List<String> bdlTmp = Lists.newArrayList();
-                    bdlTmp.add("掰边重量");
-                    bdlTmp.add("样品重量");
-                    bdlTmp.add("拉引速度");
-                    List<QtCheckItem> bdlItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .in(QtCheckItem::getName,bdlTmp));
-                    List<QtCheckItem> baiItems = bdlItems.stream().filter(v->v.getName().equals("掰边重量"))
-                            .collect(Collectors.toList());
-                    List<Integer> baiItemIds = new ArrayList<>();
-                    baiItems.forEach(tmp -> {
-                        baiItemIds.add(tmp.getId());
-                    });
-                    //查询单片重量 (生产改成样品重量)
-                    List<QtCheckItem> danItems = bdlItems.stream().filter(v->v.getName().equals("样品重量"))
-                            .collect(Collectors.toList());
-                    List<Integer> danItemIds = new ArrayList<>();
-                    danItems.forEach(tmp -> {
-                        danItemIds.add(tmp.getId());
-                    });
-                    //查询拉引时速(改成了拉引速度)
-                    List<QtCheckItem> laItems = bdlItems.stream().filter(v->v.getName().equals("拉引速度"))
-                            .collect(Collectors.toList());
-                    List<Integer> laItemIds = new ArrayList<>();
-                    laItems.forEach(tmp -> {
-                        laItemIds.add(tmp.getId());
-                    });
                     //一种物料
                     //根据产线进行分组
                     Map<Integer, List<QtCheckTask>> groupByProductLine = checkTaskWorkOrderList.stream().collect(Collectors.groupingBy(QtCheckTask::getProductLineId));
@@ -249,6 +257,75 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         //拉引量
                         BigDecimal laQuantity = BigDecimal.ZERO;
+                        //【情况1】班次b的12个小时拉引速度没有变化：拉引量 = 负载平均值f * 12
+                        //负载平均值f：查询满足下列条件的巡检任务，记为集合T，集合T内所有任务录入的“负载”取平均值即为f
+                        //状态为已检验
+                        //产线为A
+                        //工位为“基片下片工位（南）”
+                        //抽检时间属于班次日期D班次b
+                        List<QtCheckTask> productLineTask = entry3.getValue();
+                        if(CollUtil.isNotEmpty(productLineTask)){
+                            //产线下所有任务id
+                            List<Long> taskIds = productLineTask.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+                            //拉引速度没有变化
+                            List<QtCheckTaskDetail> laItemDetails = Lists.newArrayList();
+                            Boolean laChangeFlag = true;
+                            if (taskIds.size() > 0 && fuItems.size() > 0) {
+                                laItemDetails = allTaskDetails.stream().filter(v->taskIds.contains(v.getTaskId())
+                                                && laItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
+                                //比较所有拉引速度是否有变化
+                                if(CollUtil.isNotEmpty(laItemDetails)){
+                                    laChangeFlag = laItemDetails.stream().filter(v -> StrUtil.isNotBlank(v.getCheckResult()))
+                                            .map(QtCheckTaskDetail::getCheckResult)
+                                            .distinct()
+                                            .count() == 1;
+                                }
+                            }
+                            //情况一
+                            laChangeFlag = true;
+                            if(laChangeFlag){
+                                //【情况1】班次b的12个小时拉引速度没有变化：拉引量 = 负载平均值f * 12
+                                //负载平均值f：查询满足下列条件的巡检任务，记为集合T，集合T内所有任务录入的“负载”取平均值即为f
+                                //状态为已检验
+                                //产线为A
+                                //工位为“基片下片工位（南）”
+                                //负载任务id
+                                List<Long> fuTaskIds = productLineTask.stream().filter(v -> v.getStation() != null
+                                                && v.getStation().getName() != null
+                                                && v.getStation().getName().equals(QtManagerConstant.JIPIAN_DOWN_STATION_SOUTH))
+                                        .map(QtCheckTask::getId)
+                                        .collect(Collectors.toList());
+                                //拿到所有负载的值取平均数
+                                //获取所有负载
+                                List<QtCheckTaskDetail> fuDetails = Lists.newArrayList();
+                                if (fuTaskIds.size() > 0 && fuItemIds.size() > 0) {
+                                    fuDetails = allTaskDetails.stream().filter(v->fuTaskIds.contains(v.getTaskId())
+                                                    && fuItemIds.contains(v.getItemId()))
+                                            .collect(Collectors.toList());
+                                }
+                                if (CollUtil.isNotEmpty(fuDetails)) {
+                                    BigDecimal totalFuItem = BigDecimal.ZERO;
+                                    BigDecimal totalFuCount = BigDecimal.ZERO;
+                                    for (QtCheckTaskDetail tmp : fuDetails) {
+                                        if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                            BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                            totalFuItem = BigDecimalUtil.add(totalFuItem, decimalTmp);
+                                            totalFuCount = BigDecimalUtil.add(totalFuCount, new BigDecimal(1));
+                                        }
+                                    }
+
+                                    //拉引量 = 负载平均值f * 12
+                                    BigDecimal avgFuItem = new BigDecimal(0);
+                                    if (totalFuItem.intValue() != 0) {
+                                        avgFuItem = BigDecimalUtil.divide(totalFuItem, totalFuCount,4);
+                                    }
+                                    laQuantity = BigDecimalUtil.multiply(avgFuItem,new BigDecimal(12));
+                                }
+                            }else {
+                                // TODO: 2023/6/27
+                            }
+                        }
                         //掰边损耗重量
                         BigDecimal baiLossWeight = BigDecimal.ZERO;
                         //产线下所有物料的缺陷
@@ -256,7 +333,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //产线下所有落板的缺陷
                         Map<String, BigDecimal> luoLossWeightMap = MapUtil.newHashMap();
                         //根据物料进行分组
-                        Map<Long, List<QtCheckTask>> groupByMaterial = entry3.getValue().stream().collect(Collectors.groupingBy(QtCheckTask::getMaterialId));
+                        Map<Long, List<QtCheckTask>> groupByMaterial = productLineTask.stream().collect(Collectors.groupingBy(QtCheckTask::getMaterialId));
                         //只统计一次(测点数据用)
 //                        int point = 1;
                         //遍历物料分组
@@ -388,26 +465,26 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
                             //平均单片掰边重量 + 平均单片重量
-                            BigDecimal baiAddDan = BigDecimalUtil.add(avgBaiItem, avgDanItem);
-                            BigDecimal multi = BigDecimalUtil.multiply(baiAddDan, divideLaGlass);
-                            BigDecimal multi12 = BigDecimalUtil.multiply(multi, new BigDecimal(12));
+//                            BigDecimal baiAddDan = BigDecimalUtil.add(avgBaiItem, avgDanItem);
+//                            BigDecimal multi = BigDecimalUtil.multiply(baiAddDan, divideLaGlass);
+//                            BigDecimal multi12 = BigDecimalUtil.multiply(multi, new BigDecimal(12));
 
                             //拉引量
-                            if (flag) {
-                                //产品改需求，不变
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(1));
-                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
-                            } else {
-                                BigDecimal produceTime = new BigDecimal(6);
-                                if (materialProduceTime.get(materialEntry.getKey()) != null) {
-                                    produceTime = materialProduceTime.get(materialEntry.getKey());
-                                }
-                                BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
-//                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
-                                //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(1));
-                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
-                            }
+//                            if (flag) {
+//                                //产品改需求，不变
+//                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(1));
+//                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
+//                            } else {
+//                                BigDecimal produceTime = new BigDecimal(6);
+//                                if (materialProduceTime.get(materialEntry.getKey()) != null) {
+//                                    produceTime = materialProduceTime.get(materialEntry.getKey());
+//                                }
+//                                BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
+////                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
+//                                //产品改需求，乘以2即可
+//                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(1));
+//                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
+//                            }
 
                             //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
                             //缺陷项q的数量：缺陷记录时段在班次日期D班次b的时段内、产线A的所有已完成在线检任务记录的缺陷项q数量加总 + 检验完成时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总 + 在班次日期D班次b的时段内产线A的检验设备上报的缺陷项q总数
@@ -1673,6 +1750,26 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //一下获取所有详情数据，便于后续计算
             List<QtCheckTaskDetail> allTaskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                     .in(QtCheckTaskDetail::getTaskId, taskIdList));
+            //拿到相关检验项数据 把掰边，样品，拉引时速，负载加入
+            List<String> bdlTmp = Lists.newArrayList();
+            bdlTmp.add("拉引速度");
+            bdlTmp.add("负载");
+            List<QtCheckItem> bdlItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                    .in(QtCheckItem::getName,bdlTmp));
+            //查询负载
+            List<QtCheckItem> fuItems = bdlItems.stream().filter(v->v.getName().equals("负载"))
+                    .collect(Collectors.toList());
+            List<Integer> fuItemIds = new ArrayList<>();
+            fuItems.forEach(tmp -> {
+                fuItemIds.add(tmp.getId());
+            });
+            //查询拉引时速(改成了拉引速度)
+            List<QtCheckItem> laItems = bdlItems.stream().filter(v -> v.getName().equals("拉引速度"))
+                    .collect(Collectors.toList());
+            List<Integer> laItemIds = new ArrayList<>();
+            laItems.forEach(tmp -> {
+                laItemIds.add(tmp.getId());
+            });
             //根据班次日期进行分组
             Map<String, List<QtCheckTask>> groupByDate = taskList.stream().collect(Collectors.groupingBy(QtCheckTask::getDate));
             //遍历班次日期
@@ -1684,56 +1781,27 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 for (Map.Entry<Integer, List<QtCheckTask>> entry2 : groupByWorkOrder.entrySet()) {
                     //根据时间排序
                     List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
-
-                    //查询单片掰边重量(改成了掰边重量)
-                    //把掰边，样品，拉引时速加入
-                    List<String> bdlTmp = Lists.newArrayList();
-                    bdlTmp.add("掰边重量");
-                    bdlTmp.add("样品重量");
-                    bdlTmp.add("拉引速度");
-                    List<QtCheckItem> bdlItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .in(QtCheckItem::getName, bdlTmp));
-                    List<QtCheckItem> baiItems = bdlItems.stream().filter(v -> v.getName().equals("掰边重量"))
-                            .collect(Collectors.toList());
-                    List<Integer> baiItemIds = new ArrayList<>();
-                    baiItems.forEach(tmp -> {
-                        baiItemIds.add(tmp.getId());
-                    });
-                    //查询单片重量 (生产改成样品重量)
-                    List<QtCheckItem> danItems = bdlItems.stream().filter(v -> v.getName().equals("样品重量"))
-                            .collect(Collectors.toList());
-                    List<Integer> danItemIds = new ArrayList<>();
-                    danItems.forEach(tmp -> {
-                        danItemIds.add(tmp.getId());
-                    });
-                    //查询拉引时速(改成了拉引速度)
-                    List<QtCheckItem> laItems = bdlItems.stream().filter(v -> v.getName().equals("拉引速度"))
-                            .collect(Collectors.toList());
-                    List<Integer> laItemIds = new ArrayList<>();
-                    laItems.forEach(tmp -> {
-                        laItemIds.add(tmp.getId());
-                    });
                     //根据产线进行分组
                     Map<Integer, List<QtCheckTask>> groupByProductLine = checkTaskWorkOrderList.stream().collect(Collectors.groupingBy(QtCheckTask::getProductLineId));
                     for (Map.Entry<Integer, List<QtCheckTask>> entry3 : groupByProductLine.entrySet()) {
-                        //查看是否是一种物料
-                        HashSet<Long> materialIdSet = new HashSet<>();
-                        //物料id集合
-                        List<Long> materialList = Lists.newArrayList();
-                        if(CollUtil.isNotEmpty(entry3.getValue())){
-                            entry3.getValue().forEach(tmp -> {
-                                materialIdSet.add(tmp.getMaterialId());
-                                if (!materialList.contains(tmp.getMaterialId())) {
-                                    materialList.add(tmp.getMaterialId());
-                                }
-                            });
-                        }
-                        Boolean flag = true;
-                        if (materialIdSet.size() > 1) {
-                            flag = false;
-                        }
-                        //计算生产时长
-                        Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList, flag, entry2);
+//                        //查看是否是一种物料
+//                        HashSet<Long> materialIdSet = new HashSet<>();
+//                        //物料id集合
+//                        List<Long> materialList = Lists.newArrayList();
+//                        if(CollUtil.isNotEmpty(entry3.getValue())){
+//                            entry3.getValue().forEach(tmp -> {
+//                                materialIdSet.add(tmp.getMaterialId());
+//                                if (!materialList.contains(tmp.getMaterialId())) {
+//                                    materialList.add(tmp.getMaterialId());
+//                                }
+//                            });
+//                        }
+//                        Boolean flag = true;
+//                        if (materialIdSet.size() > 1) {
+//                            flag = false;
+//                        }
+//                        //计算生产时长
+//                        Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList, flag, entry2);
 
                         QtPullAmountDTO resultTmp = new QtPullAmountDTO();
                         //产线名字
@@ -1748,122 +1816,69 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             resultTmp.setProductWorkShopId(parent.getData().getId());
                             resultTmp.setProductWorkShopName(productWorkShopName);
                         }
+                        List<QtCheckTask> productLineTask = entry3.getValue();
                         //拉引量
                         BigDecimal laQuantity = BigDecimal.ZERO;
-                        //根据物料进行分组
-                        Map<Long, List<QtCheckTask>> groupByMaterial = entry3.getValue().stream().collect(Collectors.groupingBy(QtCheckTask::getMaterialId));
-                        //遍历物料分组
-                        for (Map.Entry<Long, List<QtCheckTask>> materialEntry : groupByMaterial.entrySet()) {
-                            BigDecimal totalBaiItem = new BigDecimal(0);
-                            BigDecimal totalBaiItemCount = new BigDecimal(0);
-                            BigDecimal totalDanItem = new BigDecimal(0);
-                            BigDecimal totalDanItemCount = new BigDecimal(0);
-                            BigDecimal totalLaItem = new BigDecimal(0);
-                            BigDecimal totalLaItemCount = new BigDecimal(0);
-                            //准备产线下taskId
-                            List<QtCheckTask> checkTaskProductLineList = materialEntry.getValue();
-                            List<Long> taskIds = new ArrayList<>();
-                            checkTaskProductLineList.forEach(tmp -> {
-                                taskIds.add(tmp.getId());
-                            });
-                            //获取所有单片掰边重量
-                            List<QtCheckTaskDetail> baiItemDetails = Lists.newArrayList();
-                            if (taskIds.size() > 0 && baiItemIds.size() > 0) {
-                                baiItemDetails = allTaskDetails.stream().filter(v -> taskIds.contains(v.getTaskId())
-                                                && baiItemIds.contains(v.getItemId()))
-                                        .collect(Collectors.toList());
-                            }
-                            if (CollUtil.isNotEmpty(baiItemDetails)) {
-                                for (QtCheckTaskDetail tmp : baiItemDetails) {
-                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
-                                        BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                        totalBaiItem = BigDecimalUtil.add(totalBaiItem, decimalTmp);
-                                        totalBaiItemCount = BigDecimalUtil.add(totalBaiItemCount, new BigDecimal(1));
-                                    }
-                                }
-                            }
-                            //获取所有单片重量
-                            List<QtCheckTaskDetail> danItemDetails = Lists.newArrayList();
-                            if (taskIds.size() > 0 && danItemIds.size() > 0) {
-                                danItemDetails = allTaskDetails.stream().filter(v -> taskIds.contains(v.getTaskId())
-                                                && danItemIds.contains(v.getItemId()))
-                                        .collect(Collectors.toList());
-                            }
-                            if (CollUtil.isNotEmpty(danItemDetails)) {
-                                for (QtCheckTaskDetail tmp : danItemDetails) {
-                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
-                                        //判断是否为数字
-                                        if (RegularUtil.isNum(tmp.getCheckResult())) {
-                                            BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                            totalDanItem = BigDecimalUtil.add(totalDanItem, decimalTmp);
-                                            totalDanItemCount = BigDecimalUtil.add(totalDanItemCount, new BigDecimal(1));
-                                        }
-                                    }
-                                }
-                            }
-                            //获取所有拉引时速
+                        if(CollUtil.isNotEmpty(productLineTask)){
+                            //产线下所有任务id
+                            List<Long> taskIds = productLineTask.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+                            //拉引速度没有变化
                             List<QtCheckTaskDetail> laItemDetails = Lists.newArrayList();
-                            if (taskIds.size() > 0 && laItemIds.size() > 0) {
-                                laItemDetails = allTaskDetails.stream().filter(v -> taskIds.contains(v.getTaskId())
+                            Boolean laChangeFlag = true;
+                            if (taskIds.size() > 0 && fuItems.size() > 0) {
+                                laItemDetails = allTaskDetails.stream().filter(v->taskIds.contains(v.getTaskId())
                                                 && laItemIds.contains(v.getItemId()))
                                         .collect(Collectors.toList());
+                                //比较所有拉引速度是否有变化
+                                if(CollUtil.isNotEmpty(laItemDetails)){
+                                    laChangeFlag = laItemDetails.stream().filter(v -> StrUtil.isNotBlank(v.getCheckResult()))
+                                            .map(QtCheckTaskDetail::getCheckResult)
+                                            .distinct()
+                                            .count() == 1;
+                                }
                             }
-                            if (CollUtil.isNotEmpty(laItemDetails)) {
-                                for (QtCheckTaskDetail tmp : laItemDetails) {
-                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
-                                        BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                        totalLaItem = BigDecimalUtil.add(totalLaItem, decimalTmp);
-                                        totalLaItemCount = BigDecimalUtil.add(totalLaItemCount, new BigDecimal(1));
+                            //情况一
+                            laChangeFlag = true;
+                            if(laChangeFlag){
+                                //【情况1】班次b的12个小时拉引速度没有变化：拉引量 = 负载平均值f * 12
+                                //负载平均值f：查询满足下列条件的巡检任务，记为集合T，集合T内所有任务录入的“负载”取平均值即为f
+                                //状态为已检验
+                                //产线为A
+                                //工位为“基片下片工位（南）”
+                                //负载任务id
+                                List<Long> fuTaskIds = productLineTask.stream().filter(v -> v.getStation() != null
+                                                && v.getStation().getName() != null
+                                                && v.getStation().getName().equals(QtManagerConstant.JIPIAN_DOWN_STATION_SOUTH))
+                                        .map(QtCheckTask::getId)
+                                        .collect(Collectors.toList());
+                                //拿到所有负载的值取平均数
+                                //获取所有负载
+                                List<QtCheckTaskDetail> fuDetails = Lists.newArrayList();
+                                if (fuTaskIds.size() > 0 && fuItemIds.size() > 0) {
+                                    fuDetails = allTaskDetails.stream().filter(v->fuTaskIds.contains(v.getTaskId())
+                                                    && fuItemIds.contains(v.getItemId()))
+                                            .collect(Collectors.toList());
+                                }
+                                if (CollUtil.isNotEmpty(fuDetails)) {
+                                    BigDecimal totalFuItem = BigDecimal.ZERO;
+                                    BigDecimal totalFuCount = BigDecimal.ZERO;
+                                    for (QtCheckTaskDetail tmp : fuDetails) {
+                                        if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                            BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                            totalFuItem = BigDecimalUtil.add(totalFuItem, decimalTmp);
+                                            totalFuCount = BigDecimalUtil.add(totalFuCount, new BigDecimal(1));
+                                        }
                                     }
-                                }
-                            }
-                            //平均单片掰边重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片掰边重量”（需提前配置好“单片掰边重量”检验项）取平均值，单位为kg
-                            BigDecimal avgBaiItem = new BigDecimal(0);
-                            if (totalBaiItem.intValue() != 0) {
-                                avgBaiItem = BigDecimalUtil.divide(totalBaiItem, totalBaiItemCount, 4);
-                            }
-                            //平均单片重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片重量”（需提前配置好“单片重量”检验项）取平均值，单位为kg
-                            BigDecimal avgDanItem = new BigDecimal(0);
-                            if (totalDanItem.intValue() != 0) {
-                                avgDanItem = BigDecimalUtil.divide(totalDanItem, totalDanItemCount, 4);
-                            }
-                            //拉引时速：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“拉引速度”（需提前配置好“拉引速度”检验项）取平均值，单位为m/h
-                            BigDecimal avgLaItem = new BigDecimal(0);
-                            if (totalDanItem.intValue() != 0) {
-                                avgLaItem = BigDecimalUtil.divide(totalLaItem, totalLaItemCount, 4);
-                            }
-                            //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
-                            BigDecimal glassLength = new BigDecimal(0);
-                            QtMaterial material = qtMaterialService.getById(checkTaskWorkOrderList.get(0).getMaterialId());
-                            if (material.getLengthQuantity() != null) {
-                                glassLength = BigDecimalUtil.add(glassLength, material.getLengthQuantity());
-                            }
 
-                            //拉引时速/玻璃片长度
-                            BigDecimal divideLaGlass = new BigDecimal(0);
-                            if (glassLength.compareTo(BigDecimal.ZERO) > 0) {
-                                divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength,4);
-                            }
-                            //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
-                            //平均单片掰边重量 + 平均单片重量
-                            BigDecimal baiAddDan = BigDecimalUtil.add(avgBaiItem, avgDanItem);
-                            BigDecimal multi = BigDecimalUtil.multiply(baiAddDan, divideLaGlass);
-                            BigDecimal multi12 = BigDecimalUtil.multiply(multi, new BigDecimal(12));
-
-                            //拉引量
-                            if (flag) {
-                                //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(1));
-                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
-                            } else {
-                                BigDecimal produceTime = new BigDecimal(6);
-                                if (materialProduceTime.get(materialEntry.getKey()) != null) {
-                                    produceTime = materialProduceTime.get(materialEntry.getKey());
+                                    //拉引量 = 负载平均值f * 12
+                                    BigDecimal avgFuItem = new BigDecimal(0);
+                                    if (totalFuItem.intValue() != 0) {
+                                        avgFuItem = BigDecimalUtil.divide(totalFuItem, totalFuCount,4);
+                                    }
+                                    laQuantity = BigDecimalUtil.multiply(avgFuItem,new BigDecimal(12));
                                 }
-                                BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
-                                //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(1));
-                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
+                            }else {
+                                // TODO: 2023/6/27
                             }
                         }
                         resultTmp.setPullAmount(laQuantity);
