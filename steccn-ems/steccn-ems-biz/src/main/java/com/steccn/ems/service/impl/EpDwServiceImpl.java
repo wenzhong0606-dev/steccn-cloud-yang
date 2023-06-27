@@ -77,13 +77,12 @@ public class EpDwServiceImpl implements EpDwService {
         //防止fegin获取不到当前请求
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         //6.遍历所有的远传仪表
-        Integer taskNum = 0 ;
         for (EpDwMeterPartitionDTO meter : meterList) {
             //一开始 应该划分好任务，然后插入数据库中，加上标识
             //子任务执行好插入数据，更新标识
             //避免重复执行
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList, lineMap);
-            taskNum += taskList.size();
+            log.debug("{}", taskList);
             for (DwConditionDTO task : taskList) {
                 CompletableFuture.runAsync(() ->{
                     try {
@@ -96,14 +95,6 @@ public class EpDwServiceImpl implements EpDwService {
                 });
             }
         }
-        //保存到数据库中
-        EpTaskExecute taskExecute = new EpTaskExecute();
-        taskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_1.getCode());
-        taskExecute.setTaskDate(date);
-        taskExecute.setTaskParam(taskNum);
-        taskExecute.setTaskCount(0);
-        taskExecute.setTaskFlag(0);
-        epTaskExecuteService.save(taskExecute);
         return Boolean.TRUE;
     }
 
@@ -219,11 +210,9 @@ public class EpDwServiceImpl implements EpDwService {
         Integer sum = 0;
         //防止fegin获取不到当前请求
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        Integer taskCount = 0 ;
         for (EpDwMeterPartitionDTO meter : meterList) {
             //分解出task
             List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter, priceList);
-            taskCount += taskList.size();
             for (DwEpEnergyMoneyDTO ele : taskList) {
                 sum++;
                 CompletableFuture.runAsync(() -> {
@@ -237,15 +226,16 @@ public class EpDwServiceImpl implements EpDwService {
                 });
             }
         }
-
-        //保存到数据库中
-        EpTaskExecute taskExecute = new EpTaskExecute();
-        taskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_2.getCode());
-        taskExecute.setTaskDate(date);
-        taskExecute.setTaskParam(taskCount);
-        taskExecute.setTaskCount(0);
-        taskExecute.setTaskFlag(0);
-        epTaskExecuteService.save(taskExecute);
+        //保存任务条数
+        //如果没有当前任务，则需要插入，如果有当前任务，补偿更新
+        if (Objects.isNull(oldTask)) {
+            oldTask = new EpTaskExecute();
+        }
+        oldTask.setType(EpManagerConstant.TaskTypeEnum.TYPE_0.getCode());
+        oldTask.setTaskDate(date);
+        oldTask.setTaskParam(sum);
+        oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
+        epTaskExecuteService.saveOrUpdate(oldTask);
         return Boolean.TRUE;
     }
 
@@ -266,14 +256,6 @@ public class EpDwServiceImpl implements EpDwService {
                 }
             });
         });
-        //保存到数据库中
-        EpTaskExecute taskExecute = new EpTaskExecute();
-        taskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_3.getCode());
-        taskExecute.setTaskDate(date);
-        taskExecute.setTaskParam(meterList.size());
-        taskExecute.setTaskCount(0);
-        taskExecute.setTaskFlag(0);
-        epTaskExecuteService.save(taskExecute);
         return Boolean.TRUE;
     }
 
@@ -285,28 +267,7 @@ public class EpDwServiceImpl implements EpDwService {
         EpHeatPower model = new EpHeatPower();
         model.setValue(value);
         model.setClassDate(date);
-        boolean save = epHeatPowerService.save(model);
-        //保存到数据库中
-        EpTaskExecute taskExecute = new EpTaskExecute();
-        taskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_0.getCode());
-        taskExecute.setTaskDate(date);
-        taskExecute.setTaskParam(1);
-        taskExecute.setTaskCount(save ? 1 : 0);
-        taskExecute.setTaskFlag(0);
-        epTaskExecuteService.save(taskExecute);
-        return save;
-    }
-
-    @Override
-    public Boolean compensateTask() {
-        //补偿之前再次查询
-        //一次只补偿1条
-        return null;
-    }
-
-    @Override
-    public Boolean countTaskFinish() {
-        return null;
+        return epHeatPowerService.save(model);
     }
 
     /**
