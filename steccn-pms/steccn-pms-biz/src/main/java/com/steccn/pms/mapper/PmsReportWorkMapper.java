@@ -88,6 +88,16 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return 所有的报工记录
      */
     List<DwCurrentReportWorkDTO> currentDateReportWork(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+
+    /**
+     * 查询产线下在这个日期之间的所有报工数据
+     * @param lineIds  产线id
+     * @param start 开始日期
+     * @param end   结束日期
+     * @return 报工记录详情数据
+     */
+    List<PmsReportWorkVO> listReportWorkInfo(@Param("lineIds") List<Integer> lineIds,@Param("start")  LocalDateTime start,@Param("end") LocalDateTime end);
 }
 
 

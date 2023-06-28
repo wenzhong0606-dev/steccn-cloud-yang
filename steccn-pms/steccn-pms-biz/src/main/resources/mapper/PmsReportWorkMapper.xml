@@ -281,4 +281,27 @@
         AND prw.start_time &lt;= #{end}
 
     </select>
+    <select id="listReportWorkInfo" resultType="com.steccn.pms.vo.PmsReportWorkVO">
+        SELECT
+            prw.product_line_id,
+            prw.station_id,
+            prw.start_time as startTime,
+            prw.end_time as endTime,
+            prw.process_quantity as processQuantity,
+        prw.id,
+        ppo.material_id,
+        prw.classes_id
+        FROM
+            pms_report_work prw
+            JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        WHERE
+            prw.start_time &gt;= #{start}
+          AND prw.start_time &lt;= #{end}
+        <if test="lineIds != null and lineIds.size  != ''">
+            AND prw.product_line_id in
+            <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
+                #{lineId}
+            </foreach>
+        </if>
+    </select>
 </mapper>
