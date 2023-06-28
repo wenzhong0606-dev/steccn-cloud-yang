@@ -2083,12 +2083,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Set<Long> materialIdSet = Sets.newHashSet();
         Set<Integer> customerIdSet = Sets.newHashSet();
         for (QtCheckTaskReportVO data : flatDataList) {
-            classIdSet.add(data.getClassesId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            materialIdSet.add(data.getMaterialId());
-            customerIdSet.add(data.getCustomerId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getClassesId())){
+                classIdSet.add(data.getClassesId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getMaterialId())){
+                materialIdSet.add(data.getMaterialId());
+            }
+            if(Objects.nonNull(data.getCustomerId())){
+                customerIdSet.add(data.getCustomerId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -2124,8 +2136,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     private List<QtCheckTaskReportVO> copyQtCheckTask(List<QtCheckTask> sourceData) {
         //班組信息
-        Optional<QtCheckTask> minOp = sourceData.stream().min(Comparator.comparing(QtCheckTask::getSpotTime));
-        Optional<QtCheckTask> maxOp = sourceData.stream().max(Comparator.comparing(QtCheckTask::getSpotTime));
+        Optional<QtCheckTask> minOp = sourceData.stream().filter(v -> Objects.nonNull(v.getSpotTime())).min(Comparator.comparing(QtCheckTask::getSpotTime));
+        Optional<QtCheckTask> maxOp = sourceData.stream().filter(v -> Objects.nonNull(v.getSpotTime())).max(Comparator.comparing(QtCheckTask::getSpotTime));
         Map<String, OaGroupCountDTO> groupMap;
         if(minOp.isPresent() && maxOp.isPresent()){
             LocalDate start = LocalDateUtil.getClassDate(minOp.get().getSpotTime(), Boolean.FALSE);
