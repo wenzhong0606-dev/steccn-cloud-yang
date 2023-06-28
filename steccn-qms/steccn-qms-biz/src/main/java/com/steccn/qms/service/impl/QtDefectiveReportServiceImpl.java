@@ -1121,6 +1121,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         } else if (Objects.nonNull(dto.getProductLineId())) {
             productLineSet.add(dto.getProductLineId());
+        } else if(CollUtil.isNotEmpty(dto.getProductLineIdList())){
+            productLineSet.addAll(dto.getProductLineIdList());
         }
         List<QtCheckTaskDetailReportVO> convertDefectCollect = Lists.newArrayList();
         //查询检验设备数据
