@@ -812,6 +812,7 @@ public interface QtManagerConstant {
 
     String STELL_STATION = "钢化工位";
     String DOWN_STATION = "下片工位";
+    String JIPIAN_DOWN_STATION_SOUTH = "基片下片工位（南）";
     String FORMING_STATION = "成型工位";
     /**
      * 质量开启是否需要采样数据
