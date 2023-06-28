@@ -1622,7 +1622,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAs(QtMaterial::getName, QtCheckTask::getMaterialName)
                 .eq(QtCheckTask::getProductOrder, dto.getProductOrder())
                 .in(QtCheckTask::getTaskType, checkTypeCodeList)
-                .and(wrapper -> wrapper.apply("JSON_CONTAINS(station, CAST(JSON_ARRAY({0}) AS JSON), '$[0].id')", stationIds));
+                .and(wrapper -> wrapper.apply("JSON_CONTAINS(JSON_ARRAY(" + String.join(",", stationIds.stream().map(Object::toString).collect(Collectors.toList())) + "), station->'$.id')"));
         if (Objects.nonNull(dto.getSortField())) {
             switch (dto.getSortField()) {
                 case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE:
