@@ -36,4 +36,11 @@ public interface HbCollectService {
      * @return true | false
      */
     Boolean mesEqpSignal(CollectCommonValidDTO<MesEqpSignalDTO> dto);
+
+    /**
+     * 保存数采屏幕数据
+     * @param dto
+     * @return
+     */
+    Boolean saveScreenData(CollectCommonValidDTO<ScreenDataDTO> dto);
 }

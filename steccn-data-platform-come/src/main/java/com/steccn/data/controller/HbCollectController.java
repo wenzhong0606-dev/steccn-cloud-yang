@@ -63,6 +63,14 @@ public class HbCollectController {
         return R.success(hbCollectService.mesEqpSignal(dto));
     }
 
+    @PostMapping("/qt/screen")
+    @ApiOperation(value = "设备管理-设备启停信号")
+    public R<Boolean> screenData(HttpServletRequest request, @RequestBody @Validated CollectCommonValidDTO<ScreenDataDTO> dto) {
+        validRequestHeader(request);
+        Assert.notEmpty(dto.getData(), "数据集合为空");
+        return R.success(hbCollectService.saveScreenData(dto));
+    }
+
     /**
      * 校验请求头信息
      *

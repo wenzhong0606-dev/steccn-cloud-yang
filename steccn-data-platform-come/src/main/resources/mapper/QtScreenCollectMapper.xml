@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.data.mapper.QtScreenCollectMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.data.domain.QtScreenCollect">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="productLine" column="product_line" jdbcType="VARCHAR"/>
+            <result property="value" column="value" jdbcType="NUMERIC"/>
+            <result property="recordTime" column="record_time" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,name,code,
+        product_line,value,record_time,
+        create_time
+    </sql>
+</mapper>
