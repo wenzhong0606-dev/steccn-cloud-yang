@@ -1080,10 +1080,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     markLineDataList.add(markLineData);
                     //对比维度为班次
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())) {
+                        groupByDateVO.stream().filter(v->v.getPassRate() == null).forEach(v -> {v.setPassRate(BigDecimal.ZERO);});
                         dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
                     }
                     //对比维度为班组
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())) {
+                        groupByDateVO.stream().filter(v->v.getPassRate() == null).forEach(v -> {v.setPassRate(BigDecimal.ZERO);});
                         dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassGroupName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
                     }
 
