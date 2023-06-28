@@ -1259,7 +1259,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Boolean refreshGroupClass() {
         List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
                 .select(QtCheckTask::getId,QtCheckTask::getStartBy)
-                .and(v->v.between(QtCheckTask::getId,15000,16935))
+                .and(v->v.between(QtCheckTask::getId,24491,30000))
                 .and(v->v.eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                         .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                         .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())));
@@ -1289,8 +1289,115 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public Boolean refreshWorkStation() {
-        List<QtCheckTask> list = list(new LambdaQueryWrapper<>());
-        return null;
+        List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>().between(QtCheckTask::getId,24491,30000));
+        for(QtCheckTask tmp:taskList){
+            QtCheckTask taskModel = new QtCheckTask();
+            //1）仅当生产车间为深加工车间且检验类型为在线检时，默认值为已选中生产产线的“钢化工位”，只读
+            if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                    &&tmp.getProductWorkshop()!=null
+                    &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)){
+                if(tmp.getProductLine()!=null
+                        &&tmp.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(tmp.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        continue;
+                    }
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.STELL_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        continue;
+                    }
+                    taskModel.setStationId(sysOfficeVO.getId().longValue());
+                    taskModel.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    taskModel.setStation(station);
+                }
+            }else if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                    ||tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
+                //2）仅当生产车间为深加工车间且检验类型为首检/巡检时，默认值为已选中生产产线的“下片工位”，只读
+                if(tmp.getProductWorkshop()!=null
+                        &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)){
+                    if(tmp.getProductLine()!=null
+                            &&tmp.getProductLine().getId()!=null){
+                        SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                        officeDto.setId(tmp.getProductLine().getId());
+                        officeDto.setOfficeType(SysOfficeConstant.STATION);
+                        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                        if(CollUtil.isEmpty(sysOfficeVOS)){
+                            continue;
+                        }
+                        SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
+                        if(Objects.isNull(sysOfficeVO)){
+                            continue;
+                        }
+                        taskModel.setStationId(sysOfficeVO.getId().longValue());
+                        taskModel.setStationName(sysOfficeVO.getOfficeName());
+                        QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                        station.setId(sysOfficeVO.getId());
+                        station.setName(sysOfficeVO.getOfficeName());
+                        taskModel.setStation(station);
+                    }
+                }
+            }else if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                    &&tmp.getProductWorkshop()!=null
+                    &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.JIPIAN)){
+                //3）仅当生产车间为基片车间且检验类型为在线检时，默认值为已选中生产产线的“成型工位”，只读
+                if(tmp.getProductLine()!=null
+                        &&tmp.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(tmp.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        continue;
+                    }
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.FORMING_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        continue;
+                    }
+                    taskModel.setStationId(sysOfficeVO.getId().longValue());
+                    taskModel.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    taskModel.setStation(station);
+                }
+
+            }else if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())
+                    &&tmp.getProductWorkshop()!=null
+                    &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.JIPIAN)){
+                //4）仅当生产车间为基片车间且检验类型为化验抽检时，默认值为已选中生产产线的“下片工位”，只读
+                if(tmp.getProductLine()!=null
+                        &&tmp.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(tmp.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        continue;
+                    }
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        continue;
+                    }
+                    taskModel.setStationId(sysOfficeVO.getId().longValue());
+                    taskModel.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    taskModel.setStation(station);
+                }
+            }
+            taskModel.setId(tmp.getId());
+            if(taskModel.getStation()!=null){
+                updateById(taskModel);
+            }
+        }
+        return true;
     }
 
     @Override
