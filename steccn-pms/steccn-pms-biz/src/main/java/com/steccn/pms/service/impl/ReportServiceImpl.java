@@ -1333,7 +1333,7 @@ public class ReportServiceImpl implements ReportService {
             }
             //累计成品率
             for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
-                BigDecimal divide = BigDecimalUtil.divide( outputQualityDataVO.getTotalOutput(),outputQualityDataVO.getTotalPull());
+                BigDecimal divide = BigDecimalUtil.divide(outputQualityDataVO.getTotalOutput(),outputQualityDataVO.getTotalPull(),4);
                 outputQualityDataVO.setTotalFinishedProduct(BigDecimalUtil.multiply(divide, new BigDecimal(100)));
             }
             //排序
