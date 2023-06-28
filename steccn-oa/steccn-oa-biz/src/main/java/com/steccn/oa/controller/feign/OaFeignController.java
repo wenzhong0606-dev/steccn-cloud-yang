@@ -2,6 +2,7 @@ package com.steccn.oa.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.service.*;
@@ -97,9 +98,9 @@ public class OaFeignController {
     }
 
     @ApiOperation("获取班次对应的班组")
-    @GetMapping("/group/count")
-    public R<Map<String, OaGroupCountDTO>> getGroupInfo(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate){
-        return R.success(oaService.getClassGroupMap(startDate,endDate));
+    @PostMapping("/group/count")
+    public R<Map<String, OaGroupCountDTO>> getGroupInfo(@RequestBody TupleDTO<LocalDate,LocalDate> dateDTO){
+        return R.success(oaService.getClassGroupMap(dateDTO));
     }
 
     @ApiOperation("获取班组长信息")

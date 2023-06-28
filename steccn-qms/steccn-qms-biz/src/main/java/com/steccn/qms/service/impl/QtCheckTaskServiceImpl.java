@@ -2130,7 +2130,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(minOp.isPresent() && maxOp.isPresent()){
             LocalDate start = LocalDateUtil.getClassDate(minOp.get().getSpotTime(), Boolean.FALSE);
             LocalDate end = LocalDateUtil.getClassDate(maxOp.get().getSpotTime(), Boolean.TRUE);
-            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(start, end), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(start, end);
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         }else{
             groupMap = Maps.newHashMap();
         }

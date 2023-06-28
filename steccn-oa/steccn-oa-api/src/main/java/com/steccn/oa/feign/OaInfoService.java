@@ -3,6 +3,7 @@ package com.steccn.oa.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.*;
@@ -232,13 +233,12 @@ public interface OaInfoService {
 
     /**
      * 键为2023-06-06:早班 值为甲班
-     * @param startDate
-     * @param endDate
+     * @param tupleDTO filed1开始时间 filed2结束时间
      * @return
      */
     @ApiOperation("获取班次对应的班组")
-    @GetMapping("/feign/oa/group/count")
-    R<Map<String,OaGroupCountDTO>> getGroupInfo(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate);
+    @PostMapping("/feign/oa/group/count")
+    R<Map<String,OaGroupCountDTO>> getGroupInfo(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO);
 
     /**
      * 获取班组长信息

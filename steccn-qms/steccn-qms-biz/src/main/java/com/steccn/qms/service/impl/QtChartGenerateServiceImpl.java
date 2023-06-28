@@ -821,7 +821,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //            Assert.notEmpty(resultList, "数据为空，暂无报表");
             return resultList;
         }
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime()), LocalDate.parse(resultList.get(0).getWorkOrderTime())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime()), LocalDate.parse(resultList.get(0).getWorkOrderTime()));
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         resultList.forEach(tmp->{
             OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(tmp.getWorkOrderTime() + ":" + tmp.getWorkOrder());
             if(Objects.nonNull(oaGroupCountDTO)){
@@ -987,7 +988,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (CollUtil.isNotEmpty(rResult.getData())) {
             List<ProducePassRateVO> rList = rResult.getData();
             List<ProducePassRateVO> finalRList = rList;
-            Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(finalRList.get(0).getDate(), finalRList.get(finalRList.size()-1).getDate()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(finalRList.get(0).getDate(), finalRList.get(finalRList.size()-1).getDate());
+            Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             //加入班组
             rList.forEach(tmp->{
                 OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(tmp.getDate() + ":" + tmp.getClassesName());

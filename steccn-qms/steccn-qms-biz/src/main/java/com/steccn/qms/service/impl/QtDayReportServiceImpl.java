@@ -14,6 +14,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
@@ -109,9 +110,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         manDataList.forEach(ele -> MapUtil.computeSet(categoryDefectMap, ele.getDefectCategory(), ele.getDefectId()));
         //构建module
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
-
+        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(date,date);
         //根据时间获取班组
-        Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(date, date), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
 
         //总计
@@ -243,7 +244,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList,Map<Integer, String> lineIdNameMap) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
-            Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(curDate, curDate), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO(curDate, curDate);
+            Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(manDataList)) {

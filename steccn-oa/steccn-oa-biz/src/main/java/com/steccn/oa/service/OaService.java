@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
@@ -572,17 +573,21 @@ public class OaService {
     }
 
     /**
-     * 获取质检岗位的map
+     * 获取班次班组
+     * @param dateDTO filed1为开始时间 filed2为结束时间
      * @return
      */
-    public Map<String,OaGroupCountDTO> getClassGroupMap(LocalDate startDate,LocalDate endDate){
+    public Map<String,OaGroupCountDTO> getClassGroupMap(TupleDTO<LocalDate,LocalDate> dateDTO){
 //        调用OA接口返回在本行班次日期&班次”质检“岗位上的所有人员
 //        每个人员属于1个或多于1个班组，取人数最多的班组（班组简写为甲班、乙班、丙班）。例如4个人属于甲班，1个人属于乙班，则取甲班
 //        取不到人数最多的班组的情况，均取空值
         Map<String,OaGroupCountDTO> resultMap = MapUtil.newHashMap();
         OaRosterRecordDTO dto = new OaRosterRecordDTO();
-        dto.setStartdate(startDate.toString());
-        dto.setEnddate(endDate.toString());
+        if(dateDTO.getField1()==null||dateDTO.getField2()==null){
+            throw new BusinessException("开始时间,结束时间不能为空");
+        }
+        dto.setStartdate(dateDTO.getField1().toString());
+        dto.setEnddate(dateDTO.getField2().toString());
         dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN);
         List<OaRosterRecordVO> rosterRecord = getRosterRecord(dto);
         if(CollUtil.isNotEmpty(rosterRecord)){
