@@ -1560,14 +1560,14 @@ public class ReportServiceImpl implements ReportService {
                 dataList.add(totalSjg(foreShiftData));
                 OutputQualitySjgDataVO outputQualitySjgDataVO = monthToTotal(PmManagerConstant.FORE_SHIFT, dto.getDate(), reportWorkDataList, completeStorageList, stationIds, reportWorkMaterialMap, materialIdMap, unitList, unitConvertMap);
                 outputQualitySjgDataVO.setClasses(PmManagerConstant.FORE_SHIFT);
-                outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
+//                outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
                 dataList.add(outputQualitySjgDataVO);
             }
             if (CollUtil.isNotEmpty(nightShiftData)) {
                 dataList.add(totalSjg(nightShiftData));
                 OutputQualitySjgDataVO outputQualitySjgDataVO = monthToTotal(PmManagerConstant.NIGHT_SHIFT, dto.getDate(), reportWorkDataList, completeStorageList, stationIds, reportWorkMaterialMap, materialIdMap, unitList, unitConvertMap);
                 outputQualitySjgDataVO.setClasses(PmManagerConstant.NIGHT_SHIFT);
-                outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
+//                outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
                 dataList.add(outputQualitySjgDataVO);
             }
 
