@@ -18,21 +18,10 @@ public class ScreenDataDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 检验项名
-     */
-    @NotNull(message = "名称不能为空")
-    private String name;
-
-    /**
      * 检验项编码
      */
+    @NotNull(message = "编码不能为空")
     private String code;
-
-    /**
-     * 产线名字
-     */
-    @NotNull(message = "产线不能为空")
-    private String productLine;
 
     /**
      * 检验项名字

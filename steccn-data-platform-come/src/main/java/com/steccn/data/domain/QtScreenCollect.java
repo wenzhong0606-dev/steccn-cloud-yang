@@ -24,19 +24,10 @@ public class QtScreenCollect implements Serializable {
     private Long id;
 
     /**
-     * 检验项名称
-     */
-    private String name;
-
-    /**
      * 检验项编码
      */
     private String code;
 
-    /**
-     * 产线名称
-     */
-    private String productLine;
 
     /**
      * 值
