@@ -104,6 +104,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         Set<Long> materialIdSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(productLineId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(productLineId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //做缺陷类别+缺陷分组
         Map<Integer, Set<Integer>> categoryDefectMap = Maps.newHashMap();
@@ -120,7 +121,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //基于产线去分组
         Map<Integer, List<QtCheckTaskDetailReportVO>> lineEntrySet = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
         for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> lineEntry : lineEntrySet.entrySet()) {
-            String productLineName = sysOfficeMap.get(lineEntry.getKey());
+            SysOfficeVO sysOfficeVO = sysOfficeVOMap.getOrDefault(lineEntry.getKey(), new SysOfficeVO());
+            String productLineName = sysOfficeVO.getOfficeName();
+            Integer treeSort = sysOfficeVO.getTreeSort();
             //根据来源分组
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
@@ -155,6 +158,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             vo.setNote(qtCheckTask.getNote());
                             vo.setMaterialName(materialIdNameMap.get(vo.getMaterialId()));
                             vo.setProductLineName(productLineName);
+                            vo.setProductLineSort(treeSort);
                             //客户属性
                             vo.setCustomerName(qtCheckTask.getCustomerName());
                             vo.setCustomerId(qtCheckTask.getCustomerId());
@@ -180,14 +184,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         }
                     }
                 }
-                QtDayReportOnlineDataVO vo = insertCount(1, categoryDefectMap, classEntry.getKey(), classCountMap, productLineName);
+                QtDayReportOnlineDataVO vo = insertCount(1, categoryDefectMap, classEntry.getKey(), classCountMap, productLineName,treeSort);
                 tableData.add(vo);
             }
-            QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap, productLineName);
+            QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap, productLineName,treeSort);
             tableData.add(allVo);
         }
         //插入总计
-        QtDayReportOnlineDataVO zongjiVo = insertCount(3, categoryDefectMap, 2, allMap, "总计");
+        QtDayReportOnlineDataVO zongjiVo = insertCount(3, categoryDefectMap, 2, allMap, "总计",Integer.MAX_VALUE);
         tableData.add(zongjiVo);
         //数据需要排序
         tableData.sort((o1, o2) -> {
@@ -202,7 +206,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 return 0;
             }
             if(!o1.getProductLineName().equals(o2.getProductLineName())){
-                return o1.getProductLineName().compareTo(o2.getProductLineName());
+                return o1.getProductLineSort().compareTo(o2.getProductLineSort());
             }
             //先对比班次
             if (!o1.getClassId().equals(o2.getClassId())) {
@@ -314,12 +318,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param productLineName
      * @return
      */
-    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap, String productLineName) {
+    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap, String productLineName , Integer treeSort) {
         //插入一条合计
         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
-//        if (type == 1) {
         vo.setProductLineName(productLineName);
-//        }
+        vo.setProductLineSort(treeSort);
         vo.setType(type);
         List<FurtherValueStrVO> module = Lists.newArrayList();
         vo.setModule(module);

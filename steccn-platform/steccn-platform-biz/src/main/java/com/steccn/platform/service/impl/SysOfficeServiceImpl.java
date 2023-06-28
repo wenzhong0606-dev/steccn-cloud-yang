@@ -115,7 +115,8 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public Map<Integer, SysOfficeVO> listById(Set<Integer> idList) {
         Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
-        Collection<SysOffice> sysOfficeList = listByIds(idList);
+        List<SysOffice> sysOfficeList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, idList).orderByAsc(SysOffice::getTreeSort));
+
         if (CollUtil.isNotEmpty(sysOfficeList)) {
             //对此接口进行功能增强,可以获取父节点的名称，id，名字
             Set<String> parentCodeSet = sysOfficeList.stream().map(SysOffice::getParentCode).collect(Collectors.toSet());
@@ -502,7 +503,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                 .like(SysOffice::getOfficeName, workshop));
         List<String> parentCodes = workShopList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
         List<SysOffice> productList = list(new LambdaQueryWrapper<SysOffice>()
-                .select(SysOffice::getOfficeName,SysOffice::getId,SysOffice::getParentCode)
+                .select(SysOffice::getOfficeName, SysOffice::getId, SysOffice::getParentCode, SysOffice::getTreeSort)
                 .eq(SysOffice::getOfficeType, SysOfficeConstant.PRODUCT_LINE)
                 .in(SysOffice::getParentCode,parentCodes));
         Map<String, List<SysOffice>> productLineCollect = productList.stream().collect(Collectors.groupingBy(SysOffice::getParentCode));
@@ -512,7 +513,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             vo.setId(tmp.getId());
             vo.setOfficeName(tmp.getOfficeName());
             List<SysOfficeVO> children = Lists.newArrayList();
-            productLineCollect.get(tmp.getOfficeCode()).forEach(childrenTmp -> {
+            productLineCollect.get(tmp.getOfficeCode()).stream()
+                    .sorted(Comparator.comparing(SysOffice::getTreeSort))
+                    .forEach(childrenTmp -> {
                 SysOfficeVO childrenVo = new SysOfficeVO();
                 childrenVo.setId(childrenTmp.getId());
                 childrenVo.setOfficeName(childrenTmp.getOfficeName());

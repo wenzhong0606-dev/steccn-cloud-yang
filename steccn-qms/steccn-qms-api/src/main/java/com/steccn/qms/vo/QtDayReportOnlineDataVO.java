@@ -39,6 +39,9 @@ public class QtDayReportOnlineDataVO implements Serializable {
     @ApiModelProperty("产线名称")
     private String productLineName;
 
+    @ApiModelProperty("产线排序")
+    private Integer productLineSort;
+
     @ApiModelProperty("班次id 0早班 1夜班")
     private Integer classId;
 
