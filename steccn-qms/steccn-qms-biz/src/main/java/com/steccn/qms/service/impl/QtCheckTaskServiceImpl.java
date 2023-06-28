@@ -2333,8 +2333,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto) {
         //根据已知条件查询任务表
-
-        String join = String.join(",", dto.getProductLineIdList().stream().map(Object::toString).collect(Collectors.toList()));
+        String join = null;
+        if(CollUtil.isNotEmpty(dto.getProductLineIdList())){
+            join = String.join(",", dto.getProductLineIdList().stream().map(Object::toString).collect(Collectors.toList()));
+        }
 
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
