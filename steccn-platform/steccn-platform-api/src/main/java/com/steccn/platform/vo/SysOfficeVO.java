@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,4 +59,10 @@ public class SysOfficeVO implements Serializable {
     @ApiModelProperty("子级节点")
     private List<SysOfficeVO> children;
 
+    public void addChild(SysOfficeVO child){
+        if(children==null){
+            children = new ArrayList<>();
+        }
+        children.add(child);
+    }
 }

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.oa.vo.OaDepartmentTreeVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
@@ -52,13 +53,52 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> treeData() {
         //获取所有数据
-        List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal));
+        //机构类型
+        List<String> officeTypeList = Lists.newArrayList();
+        officeTypeList.add(SysOfficeConstant.PROVINCIAL_COMPANY);
+        officeTypeList.add(SysOfficeConstant.MUNICIPAL_COMPANY);
+        officeTypeList.add(SysOfficeConstant.LOGISTICS_DEPARTMENT);
+        officeTypeList.add(SysOfficeConstant.PRODUCT_DEPARTMENT);
+        officeTypeList.add(SysOfficeConstant.POST);
+        officeTypeList.add(SysOfficeConstant.WORKSHOP);
+        officeTypeList.add(SysOfficeConstant.PRODUCT_LINE);
+        officeTypeList.add(SysOfficeConstant.SECTION);
+        officeTypeList.add(SysOfficeConstant.STATION);
+        officeTypeList.add(SysOfficeConstant.DEPARTMENT);
+        List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getOfficeType,officeTypeList));
         //如果数据为空,直接返回空集
         if (CollUtil.isEmpty(list)) {
             return Lists.newArrayList();
         }
+        //倒入vo
+        List<SysOfficeVO> vos = Lists.newArrayList();
+        list.forEach(tmp->{
+            SysOfficeVO vo = new SysOfficeVO();
+            BeanUtil.copyProperties(tmp,vo);
+            vos.add(vo);
+        });
+        //构建部门Code与部门对象的映射关系
+        Map<String, SysOfficeVO> departmentMap = Maps.newHashMap();
+        for(SysOfficeVO vo:vos) {
+            departmentMap.put(vo.getOfficeCode(), vo);
+        }
+        //构建树形结构
+        List<SysOfficeVO> treeList = Lists.newArrayList();
+        for(SysOfficeVO vo:vos){
+            String parentCode = vo.getParentCode();
+            if(parentCode == null || parentCode.equals(SysOfficeConstant.normal)){
+                //根节点
+                treeList.add(vo);
+            }else {
+                SysOfficeVO parentVO = departmentMap.get(parentCode);
+                if(parentVO!=null){
+                    parentVO.addChild(vo);
+                }
+            }
+        }
         //递归返回一棵树
-        return recursiveTree(list);
+        return treeList;
     }
 
     @Override
