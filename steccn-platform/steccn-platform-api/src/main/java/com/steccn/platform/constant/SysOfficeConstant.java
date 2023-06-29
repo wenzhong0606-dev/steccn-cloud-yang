@@ -32,6 +32,7 @@ public interface SysOfficeConstant {
      * 状态正常
      */
     String normal = "0";
+    String DEL_FLAG = "1";
 
 
     /**
