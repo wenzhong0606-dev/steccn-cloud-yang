@@ -5,9 +5,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.interfaces.Join;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
@@ -44,10 +46,7 @@ import com.steccn.qms.dto.QtCustomerComplainDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
-import com.steccn.qms.vo.QtComplainDefectProgressVO;
-import com.steccn.qms.vo.QtCustomerComplainDetailVO;
-import com.steccn.qms.vo.QtCustomerComplainVO;
-import com.steccn.qms.vo.QtImproveRecordVO;
+import com.steccn.qms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,6 +101,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
+    private final QtCustomerComplainModuleService qtCustomerComplainModuleService;
+
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.QT_CUSTOMER_COMPLAIN);
@@ -122,6 +123,15 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 detailList.add(customerComplainDetail);
             });
             qtCustomerComplainDetailService.saveBatch(detailList);
+            // 组件信息
+            List<QtCustomerComplainModule> moduleList = Lists.newArrayList();
+            dto.getModules().forEach(module ->{
+                QtCustomerComplainModule qtCustomerComplainModule = new QtCustomerComplainModule();
+                BeanUtil.copyProperties(module,qtCustomerComplainModule);
+                qtCustomerComplainModule.setCustomerComplainId(qtCustomerComplain.getId());
+                moduleList.add(qtCustomerComplainModule);
+            });
+            qtCustomerComplainModuleService.saveBatch(moduleList);
             //3.保存进度信息
             QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
             qtComplainDefectProgress.setBusiId(qtCustomerComplain.getId());
@@ -153,8 +163,14 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             dto.setStartTime(LocalDateTime.of(dto.getStartDate(), LocalTime.MIN));
             dto.setEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
+        if (Objects.nonNull(dto.getReplyClientStartDate()) && Objects.nonNull(dto.getReplyClientEndDate())){
+            dto.setReplyClientStartTime(LocalDateTime.of(dto.getStartDate(), LocalTime.MIN));
+            dto.setReplyClientEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
+        }
         //1.定义查询条件查询数据
-        LambdaQueryWrapper<QtCustomerComplain> between = new LambdaQueryWrapper<QtCustomerComplain>()
+        MPJLambdaWrapper<QtCustomerComplain> between = new MPJLambdaWrapper<QtCustomerComplain>()
+                .leftJoin(QtCustomerComplainModule.class, QtCustomerComplainModule::getCustomerComplainId, QtCustomerComplain::getId)
+                .leftJoin(QtCustomerComplainDetail.class, QtCustomerComplainDetail::getCustomerComplainId, QtCustomerComplain::getId)
                 .like(Objects.nonNull(dto.getCode()), QtCustomerComplain::getCode, dto.getCode())
                 .like(Objects.nonNull(dto.getTitle()), QtCustomerComplain::getTitle, dto.getTitle())
                 .eq(Objects.nonNull(dto.getComplainCustomer()), QtCustomerComplain::getComplainCustomer, dto.getComplainCustomer())
@@ -164,7 +180,12 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 .eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay())
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime())
-                , QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime());
+                        , QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime())
+                .between(Objects.nonNull(dto.getReplyClientStartTime()) && Objects.nonNull(dto.getReplyClientEndTime())
+                        , QtCustomerComplain::getReplyClientDate, dto.getReplyClientStartTime(), dto.getReplyClientEndTime())
+                .like(Objects.nonNull(dto.getClientCaseNo()), QtCustomerComplainDetail::getClientCaseNo, dto.getClientCaseNo())
+                .like(Objects.nonNull(dto.getModuleNumber()), QtCustomerComplainModule::getModuleNumber, dto.getModuleNumber());
+
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
             if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_CODE.equals(dto.getSortField())) {
@@ -183,6 +204,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getComplainReceiverName);
             } else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_DEAL_WAY.equals(dto.getSortField())) {
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getDealWayName);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getReplyClientDate);
             }
         }
         //2.定义分页对象
@@ -256,6 +279,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>().in(QtCustomerComplainDetail::getCustomerComplainId, customerComplain.getId()));
             BeanUtil.copyProperties(customerComplain, qtCustomerComplainVO);
             qtCustomerComplainVO.setDetails(BeanUtil.copyToList(list, QtCustomerComplainDetailVO.class));
+            //获取组件信息
+            List<QtCustomerComplainModule> modules = qtCustomerComplainModuleService.list(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getCustomerComplainId, customerComplain.getId()));
+            qtCustomerComplainVO.setModels(BeanUtil.copyToList(modules,QtCustomerComplainModelVO.class));
             List<Long> idList = Lists.newArrayList();
             idList.add(qtCustomerComplainVO.getComplainReceiver());
             idList.add(qtCustomerComplainVO.getDealMan());
@@ -457,6 +483,15 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
         }
         return updateById(customerComplain);
+    }
+
+    @Override
+    public Boolean modelNoFlag(String modelNo) {
+        QtCustomerComplainModule one = qtCustomerComplainModuleService.getOne(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getModuleNumber, modelNo));
+        if (Objects.nonNull(one)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
 

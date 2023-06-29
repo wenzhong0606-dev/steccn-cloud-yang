@@ -37,7 +37,7 @@ public class QtCustomerComplaintController {
 
     @ApiOperation(value = "客诉记录列表")
     @PostMapping("/list")
-    public R<Page<QtCustomerComplainVO>> list(@RequestBody CustomerComplainPageDTO dto){
+    public R<Page<QtCustomerComplainVO>> list(@RequestBody CustomerComplainPageDTO dto) {
         return R.success(qtCustomerComplainService.listPage(dto));
     }
 
@@ -51,24 +51,30 @@ public class QtCustomerComplaintController {
     @ApiOperation("编辑客诉记录")
     @PutMapping()
     @SysLog("编辑客诉记录")
-    public R<Boolean> edit(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
-        return  R.success(qtCustomerComplainService.edit(qtCustomerComplainDTO));
+    public R<Boolean> edit(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO) {
+        return R.success(qtCustomerComplainService.edit(qtCustomerComplainDTO));
     }
 
 
     @ApiOperation("处理客诉记录")
     @PutMapping("/dispose")
     @SysLog("处理客诉记录")
-    public R<Boolean> dispose(@Validated(UpdateGroup.class) @RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
-        return  R.success(qtCustomerComplainService.dispose(qtCustomerComplainDTO));
+    public R<Boolean> dispose(@Validated(UpdateGroup.class) @RequestBody QtCustomerComplainDTO qtCustomerComplainDTO) {
+        return R.success(qtCustomerComplainService.dispose(qtCustomerComplainDTO));
     }
 
     @ApiOperation("删除客诉记录")
     @DeleteMapping("/{id}")
-    public R<Boolean> delete(@PathVariable("id") Long id){
+    public R<Boolean> delete(@PathVariable("id") Long id) {
         return R.success(qtCustomerComplainService.delete(id));
     }
 
+
+    @ApiOperation("获取客诉详情组件序列号是否存在")
+    @GetMapping("/model/no/flag")
+    public R<Boolean> modelNoFlag(@RequestParam("modelNo") String modelNo) {
+        return R.success(qtCustomerComplainService.modelNoFlag(modelNo));
+    }
 
 
 }

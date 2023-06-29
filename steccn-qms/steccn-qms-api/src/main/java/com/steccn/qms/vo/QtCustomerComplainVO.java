@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
+import com.steccn.qms.dto.QtCustomerComplainModuleDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -110,10 +111,17 @@ public class QtCustomerComplainVO {
     private String note;
 
     /**
+     * 回复客户日期
+     */
+    private LocalDate replyClientDate;
+
+    /**
      * 客诉明细
      */
     @Valid
     private List<QtCustomerComplainDetailVO> details;
+
+    private List<QtCustomerComplainModelVO> models;
 
     /**
      * 抄送人
