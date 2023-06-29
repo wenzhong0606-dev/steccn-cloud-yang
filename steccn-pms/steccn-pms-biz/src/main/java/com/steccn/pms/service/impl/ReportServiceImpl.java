@@ -1234,10 +1234,15 @@ public class ReportServiceImpl implements ReportService {
                     //当班拉引量
                     List<PmsPullForce> pmsPullForces = pullForceMap.get(reportWork.getProductLineId());
                     if (CollUtil.isNotEmpty(pmsPullForces)) {
-                        PmsPullForce pmsPullForce = pmsPullForces.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId)).get(reportWork.getClassesId()).get(0);
-                        outputQualityDataVO.setCurrentClass(pmsPullForce.getQuantity());
+                        List<PmsPullForce> pullForces = pmsPullForces.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId)).get(reportWork.getClassesId());
+                        if (CollUtil.isNotEmpty(pullForces)) {
+                            outputQualityDataVO.setCurrentClass(pullForces.get(0).getQuantity());
+                        }else {
+                            //当班拉引量不存在  赋值0
+                            outputQualityDataVO.setCurrentClass(BigDecimal.ZERO);
+                        }
                         //计算成品率
-                        BigDecimal divide = BigDecimalUtil.divide(value1, pmsPullForce.getQuantity(), 4);
+                        BigDecimal divide = BigDecimalUtil.divide(value1, outputQualityDataVO.getCurrentClass(), 4);
                         BigDecimal hundred = BigDecimal.valueOf(100);
                         outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
                     }
