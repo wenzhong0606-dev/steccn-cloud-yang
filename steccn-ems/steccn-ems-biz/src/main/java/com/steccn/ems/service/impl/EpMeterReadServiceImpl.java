@@ -887,6 +887,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取所有产线的父节点-不包含父节点
         Map<Long, Set<Long>> lineParentMap = getLineParentMap(partitionMap.values(), jpLineSet, sjgLineSet);
         EpPartition root = root(partitionMap.values());
+        //根节点为空，则直接返回
+        if(Objects.isNull(root)){
+            return Lists.newArrayList();
+        }
         //获取父节点的产线孩子节点-不含有根节点
         Map<Long, Set<Long>> lineChildrenMap = getLineChildrenMap(lineParentMap);
         lineChildrenMap.remove(root.getId());
@@ -965,7 +969,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      */
     private EpPartition root(Collection<EpPartition> nodeList) {
         Optional<EpPartition> first = nodeList.stream().filter(v -> Objects.isNull(v.getParentId())).findFirst();
-        return first.get();
+        return first.isPresent() ? first.get() : null;
     }
 
 
