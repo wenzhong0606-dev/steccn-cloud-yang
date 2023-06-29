@@ -33,7 +33,7 @@ public class PullAmountCalculateTask {
      * 08:10:00
      * 20:10:00
      */
-    @XxlJob("calculatePullAmount")
+    @XxlJob("calculatePullAmountHandler")
     public void calculatePullAmount() {
         XxlJobHelper.log("计算拉引量-任务开始");
         qtChartGenerateService.calculatePullAmountTask();
