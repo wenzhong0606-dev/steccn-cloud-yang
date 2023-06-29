@@ -22,6 +22,12 @@ public class QtCustomerComplainDetailDTO implements Serializable {
      */
     private Long id;
 
+
+    /**
+     * 客户定制箱号
+     */
+    private String clientCaseNo;
+
     /**
      * 箱号
      */
@@ -35,19 +41,19 @@ public class QtCustomerComplainDetailDTO implements Serializable {
     /**
      * 物料主键
      */
-    @NotNull(message = "物料主键不能为空")
+//    @NotNull(message = "物料主键不能为空")
     private Long materialId;
 
     /**
      * 物料名称
      */
-    @NotNull(message = "物料名称不能为空")
+//    @NotNull(message = "物料名称不能为空")
     private String materialName;
 
     /**
      * 物料编码
      */
-    @NotNull(message = "物料编码不能为空")
+//    @NotNull(message = "物料编码不能为空")
     private String materialCode;
 
     /**

@@ -325,6 +325,12 @@ public interface QtManagerConstant {
      */
     String QT_CUSTOMER_COMPLAIN_DEAL_WAY = "dealWay";
 
+
+    /**
+     * 客诉排序字段-回复客户日期
+     */
+    String QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE  = "replyClientDate";
+
     /**
      * 不合格品处理排序-检验单号
      */

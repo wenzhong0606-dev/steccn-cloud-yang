@@ -22,6 +22,11 @@ public class QtCustomerComplainDetail implements Serializable {
     private Long id;
 
     /**
+     * 客户定制箱号
+     */
+    private String clientCaseNo;
+
+    /**
      * 箱号
      */
     private String caseNo;
