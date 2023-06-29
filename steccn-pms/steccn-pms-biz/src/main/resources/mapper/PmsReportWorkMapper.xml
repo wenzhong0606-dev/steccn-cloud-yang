@@ -287,6 +287,7 @@
             prw.station_id,
             prw.start_time as startTime,
             prw.end_time as endTime,
+            prw.create_time,
             prw.process_quantity as processQuantity,
         prw.id,
         ppo.material_id,

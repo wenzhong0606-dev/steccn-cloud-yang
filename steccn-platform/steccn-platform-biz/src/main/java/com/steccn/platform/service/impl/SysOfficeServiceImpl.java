@@ -595,9 +595,13 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> listByParentIdAndType(SysOfficeParentDTO dto) {
         List<SysOfficeVO> list = new ArrayList<>();
-        if (CollUtil.isNotEmpty(list)) {
-            List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, dto.getParentIds()).eq(SysOffice::getOfficeType, dto.getOfficeType()));
-            list = BeanUtil.copyToList(officeList, SysOfficeVO.class);
+        if (CollUtil.isNotEmpty(dto.getParentIds())) {
+            List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, dto.getParentIds()));
+            Set<String> collect = officeList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toSet());
+            if (CollUtil.isNotEmpty(collect)){
+                List<SysOffice> offices = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getParentCode, collect).eq(SysOffice::getOfficeType, dto.getOfficeType()));
+                list = BeanUtil.copyToList(offices, SysOfficeVO.class);
+            }
         }
         return list;
     }

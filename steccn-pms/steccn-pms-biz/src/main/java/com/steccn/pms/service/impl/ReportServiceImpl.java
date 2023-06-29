@@ -1512,7 +1512,7 @@ public class ReportServiceImpl implements ReportService {
                             List<PmsCompleteDeliveryInfoDTO> pmsCompleteDeliveryInfoDTOS = reportWorkMaterialMap.get(reportWork.getId());
                             //获取生产订单的主物料
                             Long materialId = materialIdMap.get(reportWork.getId());
-                            if (CollUtil.isNotEmpty(pmsCompleteDeliveryInfoDTOS)) {
+                            if (CollUtil.isNotEmpty(pmsCompleteDeliveryInfoDTOS) && Objects.nonNull(materialId)) {
                                 List<BigDecimal> collect = pmsCompleteDeliveryInfoDTOS.stream().filter(p -> materialId.equals(p.getMaterialId())).map(PmsCompleteDeliveryInfoDTO::getQuantity).collect(Collectors.toList());
                                 BigDecimal sum = BigDecimalUtil.sum(collect);
                                 //单位转换
