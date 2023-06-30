@@ -103,7 +103,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //查询物料
         Set<Long> materialIdSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(productLineId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(productLineId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //做缺陷类别+缺陷分组
@@ -235,7 +234,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead());
         //落板原因
-        resVo.setFallList(fallList(date, manData, sysOfficeMap));
+        resVo.setFallList(fallList(date, manData, sysOfficeVOMap));
         return resVo;
     }
 
@@ -245,7 +244,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param manDataList 人工检测数据
      * @return 落板原因集合
      */
-    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList,Map<Integer, String> lineIdNameMap) {
+    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList,Map<Integer, SysOfficeVO> lineIdNameMap) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
             TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO(curDate, curDate);
@@ -282,11 +281,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 vo.setClassName(classEnum.getName());
                             }
                             Integer line = taskIdLineMap.get(destroy.getTaskId());
-                            vo.setProductLineName(lineIdNameMap.get(line));
+                            SysOfficeVO sysOfficeVO = lineIdNameMap.getOrDefault(line, new SysOfficeVO());
+                            vo.setProductLineName(sysOfficeVO.getOfficeName());
+                            vo.setProductLineSort(sysOfficeVO.getTreeSort());
                             fallList.add(vo);
                         }
                     }
                     fallList.sort((o1, o2) -> {
+                        //先对比产线
+                        if(!o1.getProductLineName().equals(o2.getProductLineName())){
+                            return o1.getProductLineSort().compareTo(o2.getProductLineSort());
+                        }
                         //先对比班次-如果为空，放置到最后
                         if (Objects.nonNull(o1.getClassId()) && Objects.nonNull(o2.getClassId()) && !o1.getClassId().equals(o2.getClassId())) {
                             return o1.getClassId() - o2.getClassId();
@@ -437,6 +442,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             manData.add(qtCheckTaskDetailReportVO);
         });
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> officeVoMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
         //把深加工或者基片的值取出
         Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(dto.getProductLineId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysOfficeVO> productLineList = sysOfficeVOMap.values().stream().collect(Collectors.toList());
@@ -801,7 +808,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
             if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
                 //落板原因
-                luoData.addAll(fallList(dto.getDate(), manData, officeMap));
+                luoData.addAll(fallList(dto.getDate(), manData, officeVoMap));
                 //缺陷表格
             }
 
