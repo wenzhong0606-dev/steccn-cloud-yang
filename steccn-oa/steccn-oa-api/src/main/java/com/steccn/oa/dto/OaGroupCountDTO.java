@@ -13,6 +13,13 @@ import java.io.Serializable;
 @Data
 public class OaGroupCountDTO implements Serializable {
     private Integer count;
+    /**
+     * 班组id
+     */
+    private Integer id;
+    /**
+     * 班组枚举id
+     */
     private Integer groupId;
     private String groupName;
 }
