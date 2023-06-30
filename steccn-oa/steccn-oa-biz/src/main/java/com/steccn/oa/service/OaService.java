@@ -631,7 +631,7 @@ public class OaService {
                             .last("LIMIT 1");
                     OaGroupCountDTO groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjQueryWrapper);
                     if(Objects.nonNull(groupCountDTO)){
-                        groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.getNameByOaName(groupCountDTO.getGroupName()));
+                        groupCountDTO.setGroupName(classGroupNameMap(groupCountDTO.getGroupName()));
                         resultMap.put(entry.getKey(),groupCountDTO);
                     }
                 }
@@ -846,6 +846,24 @@ public class OaService {
         headers.remove("userid");
         headers.set("userid",userIdStr);
         return headers;
+    }
+
+    /**
+     * 凡是包含甲班的数据都显示甲班
+     * @param classGroupName
+     * @return
+     */
+    private String classGroupNameMap(String classGroupName){
+        if(classGroupName.contains(OaManagerConstant.OaTeamGroupMapping.A.getName())){
+            return OaManagerConstant.OaTeamGroupMapping.A.getName();
+        }
+        if(classGroupName.contains(OaManagerConstant.OaTeamGroupMapping.B.getName())){
+            return OaManagerConstant.OaTeamGroupMapping.B.getName();
+        }
+        if(classGroupName.contains(OaManagerConstant.OaTeamGroupMapping.C.getName())){
+            return OaManagerConstant.OaTeamGroupMapping.C.getName();
+        }
+        return classGroupName;
     }
 
 }
