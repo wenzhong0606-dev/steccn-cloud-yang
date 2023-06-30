@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * 桐城机房环境 ： http://192.168.16.228:8900/xxl-job-admin
  * @author yequan
  * @desc spc预警任务
  */
