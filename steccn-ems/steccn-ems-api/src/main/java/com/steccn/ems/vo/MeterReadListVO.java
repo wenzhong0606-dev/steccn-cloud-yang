@@ -17,6 +17,7 @@ public class MeterReadListVO {
     private Long partitionNode;
     private String partitionNodeName;
     private Long parentId;
+    private Integer sort;
 
     @ApiModelProperty("合计")
     private BigDecimal sum;
