@@ -824,9 +824,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         LocalDateTime start = LocalDateUtil.getMorning(date.withDayOfMonth(1));
         //当前日期的晚班结束时间
         LocalDateTime end = LocalDateUtil.getMorning(date).plusDays(1);
-        List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineIds).ge(PmsReportWork::getStartTime, start)
-                .le(PmsReportWork::getEndTime, end));
-        return BeanUtil.copyToList(list, PmsReportWorkVO.class);
+        List<PmsReportWorkVO> list =  baseMapper.listReportWorkInfo(lineIds,start,end);
+        return list;
     }
 
     @Override

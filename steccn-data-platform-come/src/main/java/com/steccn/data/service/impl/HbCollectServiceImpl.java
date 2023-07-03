@@ -36,6 +36,7 @@ public class HbCollectServiceImpl implements HbCollectService {
     private final EpMeterCollectService epMeterCollectService;
     private final PmStationCollectService pmStationCollectService;
     private final MesEqpSignalService mesEqpSignalService;
+    private final QtScreenCollectService qtScreenCollectService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -129,5 +130,18 @@ public class HbCollectServiceImpl implements HbCollectService {
             models.add(model);
         });
         return mesEqpSignalService.saveBatch(models);
+    }
+
+    @Override
+    public Boolean saveScreenData(CollectCommonValidDTO<ScreenDataDTO> dto) {
+        List<ScreenDataDTO> data = dto.getData();
+        List<QtScreenCollect> models = Lists.newArrayList();
+        data.forEach(tmp->{
+            QtScreenCollect model = new QtScreenCollect();
+            BeanUtils.copyProperties(tmp,model);
+            model.setCreateTime(LocalDateTime.now());
+            models.add(model);
+        });
+        return qtScreenCollectService.saveBatch(models);
     }
 }

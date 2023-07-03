@@ -631,7 +631,7 @@ public class OaService {
                             .last("LIMIT 1");
                     OaGroupCountDTO groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjQueryWrapper);
                     if(Objects.nonNull(groupCountDTO)){
-                        groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.getNameByOaName(groupCountDTO.getGroupName()));
+                        groupCountDTO = classGroupNameMap(groupCountDTO);
                         resultMap.put(entry.getKey(),groupCountDTO);
                     }
                 }
@@ -846,6 +846,34 @@ public class OaService {
         headers.remove("userid");
         headers.set("userid",userIdStr);
         return headers;
+    }
+
+    /**
+     * 凡是包含甲班的数据都显示甲班
+     * @param groupCountDTO
+     * @return
+     */
+    private OaGroupCountDTO classGroupNameMap(OaGroupCountDTO groupCountDTO){
+        String classGroupName = groupCountDTO.getGroupName();
+        if(classGroupName.contains(OaManagerConstant.OaTeamGroupMapping.A.getName())){
+            groupCountDTO.setId(groupCountDTO.getGroupId());
+            groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.A.getName());
+            groupCountDTO.setGroupId(OaManagerConstant.OaTeamGroupMapping.A.getCode());
+            return groupCountDTO;
+        }
+        if(classGroupName.contains(OaManagerConstant.OaTeamGroupMapping.B.getName())){
+            groupCountDTO.setId(groupCountDTO.getGroupId());
+            groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.B.getName());
+            groupCountDTO.setGroupId(OaManagerConstant.OaTeamGroupMapping.B.getCode());
+            return groupCountDTO;
+        }
+        if(classGroupName.contains(OaManagerConstant.OaTeamGroupMapping.C.getName())){
+            groupCountDTO.setId(groupCountDTO.getGroupId());
+            groupCountDTO.setGroupName(OaManagerConstant.OaTeamGroupMapping.C.getName());
+            groupCountDTO.setGroupId(OaManagerConstant.OaTeamGroupMapping.C.getCode());
+            return groupCountDTO;
+        }
+        return groupCountDTO;
     }
 
 }

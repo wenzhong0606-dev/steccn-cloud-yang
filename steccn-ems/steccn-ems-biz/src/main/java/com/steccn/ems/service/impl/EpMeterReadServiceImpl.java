@@ -195,6 +195,17 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<String> collect = localDateList.stream().map(ele -> LocalDateTimeUtil.format(ele, "MM-dd")).collect(Collectors.toList());
         eqMeterReadVO.setLabelList(collect);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
+
+        //根据partitionId去查询sort，然后根据sort排序
+        //查询所有的节点sort
+        Map<Long, Integer> sortMap = Maps.newHashMap();
+        List<EpPartition> sortDbList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, meterType));
+        if (CollUtil.isNotEmpty(sortDbList)) {
+            sortDbList.forEach(ele -> sortMap.put(ele.getId(), ele.getSort()));
+        }
+        setSort(eqMeterReadVO.getMeterReadListVOList(), sortMap);
+        eleSort(eqMeterReadVO.getMeterReadListVOList());
+
         return eqMeterReadVO;
     }
 
@@ -324,8 +335,50 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<String> collect = localDateList.stream().map(ele -> LocalDateTimeUtil.format(ele, "MM-dd")).collect(Collectors.toList());
         eqMeterReadVO.setLabelList(collect);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
+        //根据partitionId去查询sort，然后根据sort排序
+        //查询所有的节点sort
+        Map<Long, Integer> sortMap = Maps.newHashMap();
+        List<EpPartition> sortDbList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, meterType));
+        if (CollUtil.isNotEmpty(sortDbList)) {
+            sortDbList.forEach(ele -> sortMap.put(ele.getId(), ele.getSort()));
+        }
+        setSort(eqMeterReadVO.getMeterReadListVOList(), sortMap);
+        eleSort(eqMeterReadVO.getMeterReadListVOList());
         return eqMeterReadVO;
     }
+
+    /**
+     * 排序
+     * @param eleList
+     */
+    private void eleSort(List<MeterReadListVO> eleList) {
+        Collections.sort(eleList, Comparator.nullsLast(Comparator.comparing(MeterReadListVO::getSort)));
+        if(CollUtil.isNotEmpty(eleList)){
+            for (MeterReadListVO ele : eleList) {
+                if(CollUtil.isNotEmpty(ele.getMeterReadListVOList())){
+                    eleSort(ele.getMeterReadListVOList());
+                }
+            }
+        }
+    }
+
+    /**
+     * 设置序号
+     * @param eleList
+     * @param sortMap
+     */
+    private void setSort(List<MeterReadListVO> eleList, Map<Long,Integer> sortMap){
+        if(CollUtil.isNotEmpty(eleList) && CollUtil.isNotEmpty(sortMap)){
+            for (MeterReadListVO ele : eleList) {
+                Long partitionNode = ele.getPartitionNode();
+                ele.setSort(sortMap.getOrDefault(partitionNode,Integer.MAX_VALUE));
+                if(CollUtil.isNotEmpty(ele.getMeterReadListVOList())){
+                    setSort(ele.getMeterReadListVOList(),sortMap);
+                }
+            }
+        }
+    }
+
 
     private void reduceRecursion(List<MeterReadListVO> meterReadListVOList, List<List<ReadValueListVO>> readValueAllList) {
         for (MeterReadListVO meterReadListVO : meterReadListVOList) {
@@ -887,6 +940,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取所有产线的父节点-不包含父节点
         Map<Long, Set<Long>> lineParentMap = getLineParentMap(partitionMap.values(), jpLineSet, sjgLineSet);
         EpPartition root = root(partitionMap.values());
+        //根节点为空，则直接返回
+        if(Objects.isNull(root)){
+            return Lists.newArrayList();
+        }
         //获取父节点的产线孩子节点-不含有根节点
         Map<Long, Set<Long>> lineChildrenMap = getLineChildrenMap(lineParentMap);
         lineChildrenMap.remove(root.getId());
@@ -965,7 +1022,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      */
     private EpPartition root(Collection<EpPartition> nodeList) {
         Optional<EpPartition> first = nodeList.stream().filter(v -> Objects.isNull(v.getParentId())).findFirst();
-        return first.get();
+        return first.isPresent() ? first.get() : null;
     }
 
 

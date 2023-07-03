@@ -3,6 +3,8 @@ package com.steccn.qms.scheduled;
 import com.google.common.collect.Lists;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.qms.service.QtReportService;
+import com.xxl.job.core.context.XxlJobHelper;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jni.Local;
@@ -21,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * 桐城机房环境 ： http://192.168.16.228:8900/xxl-job-admin
  * @author yequan
  * @desc spc预警任务
  */
@@ -31,35 +34,20 @@ public class SpcWarnTask {
 
     private final QtReportService qtReportService;
 
-    private final RedissonClient redissonClient;
-
     /**
      * @desc 每小时执行一次
      * 00:05:00
      * 01:05:00
      * 02:05:00
      */
-    @Async
-    @Scheduled(cron = "0 5 * * * ?")
+    @XxlJob("spcWarnHourHandler")
     public void hour() {
-        RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_HOUR);
-        boolean b = lock.tryLock();
-        if (!b) {
-            log.info("spc预警任务获取锁失败");
-            return;
-        }
-        log.info("spc预警任务开始");
-        try {
-            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "H", 1);
-            qtReportService.warnSPC(hs.get(0), hs.get(1), "小时");
-            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "H", 7);
-            qtReportService.warnSerialUpOrDown(serialHs, "小时");
-        } catch (Exception e) {
-            log.error("spc预警任务异常", e);
-        } finally {
-            log.info("spc预警任务结束");
-            lock.unlock();
-        }
+        XxlJobHelper.log("SPC预警任务-小时任务开始");
+        List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "H", 1);
+        qtReportService.warnSPC(hs.get(0), hs.get(1), "小时");
+        List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "H", 7);
+        qtReportService.warnSerialUpOrDown(serialHs, "小时");
+        XxlJobHelper.log("SPC预警任务-小时任务结束");
     }
 
     /**
@@ -70,25 +58,14 @@ public class SpcWarnTask {
      */
     @Async
     @Scheduled(cron = "0 10 0 * * ?")
+    @XxlJob("spcWarnDayHandler")
     public void day() {
-        RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_DAY);
-        boolean b = lock.tryLock();
-        if (!b) {
-            log.info("spc预警任务获取锁失败");
-            return;
-        }
-        log.info("spc预警任务开始");
-        try {
-            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "D", 1);
-            qtReportService.warnSPC(hs.get(0), hs.get(1), "天");
-            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "D", 7);
-            qtReportService.warnSerialUpOrDown(serialHs, "天");
-        } catch (Exception e) {
-            log.error("spc预警任务异常", e);
-        } finally {
-            log.info("spc预警任务结束");
-            lock.unlock();
-        }
+        XxlJobHelper.log("SPC预警任务-天任务开始");
+        List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "D", 1);
+        qtReportService.warnSPC(hs.get(0), hs.get(1), "天");
+        List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "D", 7);
+        qtReportService.warnSerialUpOrDown(serialHs, "天");
+        XxlJobHelper.log("SPC预警任务-天任务结束");
     }
 
     /**
@@ -100,25 +77,14 @@ public class SpcWarnTask {
      */
     @Async
     @Scheduled(cron = "0 15 0 ? * 2")
+    @XxlJob("spcWarnWeekHandler")
     public void week() {
-        RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_WEEK);
-        boolean b = lock.tryLock();
-        if (!b) {
-            log.info("spc预警任务获取锁失败");
-            return;
-        }
-        log.info("spc预警任务开始");
-        try {
-            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "W", 1);
-            qtReportService.warnSPC(hs.get(0), hs.get(1), "周");
-            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "W", 7);
-            qtReportService.warnSerialUpOrDown(serialHs, "周");
-        } catch (Exception e) {
-            log.error("spc预警任务异常", e);
-        } finally {
-            log.info("spc预警任务结束");
-            lock.unlock();
-        }
+        XxlJobHelper.log("SPC预警任务-周任务开始");
+        List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "W", 1);
+        qtReportService.warnSPC(hs.get(0), hs.get(1), "周");
+        List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "W", 7);
+        qtReportService.warnSerialUpOrDown(serialHs, "周");
+        XxlJobHelper.log("SPC预警任务-周任务结束");
     }
 
     /**
@@ -130,25 +96,14 @@ public class SpcWarnTask {
      */
     @Async
     @Scheduled(cron = "0 20 0 1 1/1 ?")
+    @XxlJob("spcWarnMonthHandler")
     public void month() {
-        RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_MONTH);
-        boolean b = lock.tryLock();
-        if (!b) {
-            log.info("spc预警任务获取锁失败");
-            return;
-        }
-        log.info("spc预警任务开始");
-        try {
-            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "M", 1);
-            qtReportService.warnSPC(hs.get(0), hs.get(1), "月");
-            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "M", 7);
-            qtReportService.warnSerialUpOrDown(serialHs, "月");
-        } catch (Exception e) {
-            log.error("spc预警任务异常", e);
-        } finally {
-            log.info("spc预警任务结束");
-            lock.unlock();
-        }
+        XxlJobHelper.log("SPC预警任务-月任务开始");
+        List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "M", 1);
+        qtReportService.warnSPC(hs.get(0), hs.get(1), "月");
+        List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "M", 7);
+        qtReportService.warnSerialUpOrDown(serialHs, "月");
+        XxlJobHelper.log("SPC预警任务-月任务结束");
     }
 
     /**
@@ -161,25 +116,14 @@ public class SpcWarnTask {
      */
     @Async
     @Scheduled(cron = "0 25 0 1 1,4,7,10 ?")
+    @XxlJob("spcWarnSeasonHandler")
     public void season() {
-        RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_SEASON);
-        boolean b = lock.tryLock();
-        if (!b) {
-            log.info("spc预警任务获取锁失败");
-            return;
-        }
-        log.info("spc预警任务开始");
-        try {
-            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "Q", 1);
-            qtReportService.warnSPC(hs.get(0), hs.get(1), "季度");
-            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "Q", 7);
-            qtReportService.warnSerialUpOrDown(serialHs, "季度");
-        } catch (Exception e) {
-            log.error("spc预警任务异常", e);
-        } finally {
-            log.info("spc预警任务结束");
-            lock.unlock();
-        }
+        XxlJobHelper.log("SPC预警任务-季度任务开始");
+        List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "Q", 1);
+        qtReportService.warnSPC(hs.get(0), hs.get(1), "季度");
+        List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "Q", 7);
+        qtReportService.warnSerialUpOrDown(serialHs, "季度");
+        XxlJobHelper.log("SPC预警任务-季度任务结束");
     }
 
     /**
@@ -191,25 +135,14 @@ public class SpcWarnTask {
      */
     @Async
     @Scheduled(cron = "0 30 0 1 1 ?")
+    @XxlJob("spcWarnYearHandler")
     public void year() {
-        RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_YEAR);
-        boolean b = lock.tryLock();
-        if (!b) {
-            log.info("spc预警任务获取锁失败");
-            return;
-        }
-        log.info("spc预警任务开始");
-        try {
-            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "Y", 1);
-            qtReportService.warnSPC(hs.get(0), hs.get(1), "年");
-            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "Y", 7);
-            qtReportService.warnSerialUpOrDown(serialHs, "年");
-        } catch (Exception e) {
-            log.error("spc预警任务异常", e);
-        } finally {
-            log.info("spc预警任务结束");
-            lock.unlock();
-        }
+        XxlJobHelper.log("SPC预警任务-年任务开始");
+        List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "Y", 1);
+        qtReportService.warnSPC(hs.get(0), hs.get(1), "年");
+        List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "Y", 7);
+        qtReportService.warnSerialUpOrDown(serialHs, "年");
+        XxlJobHelper.log("SPC预警任务-年任务结束");
     }
 
 

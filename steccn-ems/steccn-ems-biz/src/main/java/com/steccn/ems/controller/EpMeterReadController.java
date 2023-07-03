@@ -35,7 +35,8 @@ public class EpMeterReadController {
     @GetMapping("/kvDay")
     @ApiOperation(value = "35kV开关站日报表")
     public R<EpMeterReadVO> kvDay(@RequestParam("readMonth") String readMonth, @RequestParam("energyType") Integer energyType) {
-        return R.success(epMeterReadService.kvDay(readMonth, energyType));
+        EpMeterReadVO epMeterReadVO = epMeterReadService.kvDay(readMonth, energyType);
+        return R.success(epMeterReadVO);
     }
 
     @PostMapping("/add")

@@ -73,4 +73,6 @@ public class MeterReadMapperVO {
 
     private LocalDateTime endTime;
 
+    private Integer sort;
+
 }

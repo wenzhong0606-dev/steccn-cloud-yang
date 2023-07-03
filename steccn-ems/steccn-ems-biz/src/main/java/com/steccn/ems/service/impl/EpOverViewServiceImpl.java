@@ -75,25 +75,35 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         //倒数第二条数据
         BigDecimal lastButOneData = yData.get(yData.size() - 2);
         //计算日同比
-        BigDecimal dayValue = BigDecimalUtil.divide(lastData.subtract(lastButOneData).abs(), lastButOneData).multiply(BigDecimalUtil.HUNDRED);
+        BigDecimal subtract = BigDecimalUtil.subtract(lastData, lastButOneData);
+        if (Objects.nonNull(subtract)) {
+            subtract = subtract.abs();
+        }
+        BigDecimal dayValue = BigDecimalUtil.divide(subtract, lastButOneData);
+        dayValue = BigDecimalUtil.multiply(dayValue, BigDecimalUtil.HUNDRED);
         //计算周同比
-        BigDecimal weekValue = BigDecimalUtil.divide(lastData.subtract(firstData).abs(), firstData).multiply(BigDecimalUtil.HUNDRED);
+        BigDecimal weekSub = BigDecimalUtil.subtract(lastData, firstData);
+        if (Objects.nonNull(weekSub)) {
+            weekSub = weekSub.abs();
+        }
+        BigDecimal weekValue = BigDecimalUtil.divide(weekSub, firstData);
+        weekValue = BigDecimalUtil.multiply(weekValue, BigDecimalUtil.HUNDRED);
 
         epOverViewVO.setValue(lastData);
         epOverViewVO.setDayValue(dayValue);
         epOverViewVO.setWeekValue(weekValue);
         //判断日同比上升还是下降
-        if (lastData.compareTo(lastButOneData) > 0) {
+        if (Objects.nonNull(lastData) && Objects.nonNull(lastButOneData) && BigDecimalUtil.gt(lastData, lastButOneData)) {
             epOverViewVO.setDayFlag(1);
-        } else if (lastData.compareTo(lastButOneData) < 0) {
+        } else if (Objects.nonNull(lastData) && Objects.nonNull(lastButOneData) && BigDecimalUtil.gt(lastData,lastButOneData)) {
             epOverViewVO.setDayFlag(0);
         } else {
             epOverViewVO.setDayFlag(2);
         }
         //判断周同比上升还是下降
-        if (lastData.compareTo(firstData) > 0) {
+        if (Objects.nonNull(lastData) && Objects.nonNull(firstData) && BigDecimalUtil.gt(lastData,firstData)) {
             epOverViewVO.setWeekFlag(1);
-        } else if (lastData.compareTo(firstData) < 0) {
+        } else if (Objects.nonNull(lastData) && Objects.nonNull(firstData) && BigDecimalUtil.gt(lastData,firstData)) {
             epOverViewVO.setWeekFlag(0);
         } else {
             epOverViewVO.setWeekFlag(2);
@@ -101,7 +111,6 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         epOverViewVO.setKey(Objects.requireNonNull(EpManagerConstant.CardType.getByCode(type)).getCode());
         epOverViewVO.setTitle(Objects.requireNonNull(EpManagerConstant.CardType.getByCode(type)).getName());
         epOverViewVO.setTooltip(Objects.requireNonNull(EpManagerConstant.CardType.getByCode(type)).getTooltip());
-
         return epOverViewVO;
     }
 

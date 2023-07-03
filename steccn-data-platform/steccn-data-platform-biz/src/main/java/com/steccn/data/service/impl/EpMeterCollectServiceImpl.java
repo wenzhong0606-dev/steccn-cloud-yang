@@ -71,16 +71,14 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     @Override
     public BigDecimal meterReadDiff(DwMeterReadDiffDTO dto) {
         //根据条件获取出站采集点的采集数据
-        LocalDateTime startTime = dto.getStart().minusDays(1);
-        LocalDateTime endTime = dto.getEnd().minusDays(1);
         EpMeterCollect start = getOne(new LambdaQueryWrapper<EpMeterCollect>()
                 .eq(EpMeterCollect::getCode, dto.getCode())
-                .between(EpMeterCollect::getRecordTime, startTime, dto.getStart())
+                .between(EpMeterCollect::getRecordTime,  LocalDateTime.of(dto.getStart().toLocalDate(), LocalTime.MIN), dto.getStart())
                 .orderByDesc(EpMeterCollect::getRecordTime)
                 .last(MpConstant.STR_LIMIT_1));
         EpMeterCollect end = getOne(new LambdaQueryWrapper<EpMeterCollect>()
                 .eq(EpMeterCollect::getCode, dto.getCode())
-                .between(EpMeterCollect::getRecordTime, endTime, dto.getEnd())
+                .between(EpMeterCollect::getRecordTime,  LocalDateTime.of(dto.getEnd().toLocalDate(), LocalTime.MIN), dto.getEnd())
                 .orderByDesc(EpMeterCollect::getRecordTime)
                 .last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(start) && Objects.nonNull(end)) {

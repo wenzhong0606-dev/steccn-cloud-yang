@@ -127,6 +127,11 @@
             <artifactId>mybatis-plus-join</artifactId>
             <version>1.2.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-platform-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
