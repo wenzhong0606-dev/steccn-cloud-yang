@@ -13,6 +13,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
@@ -144,7 +145,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用水量
                 Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
-                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER));
+                return waterRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER));
             } catch (Exception e) {
                 log.error("water -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
@@ -658,6 +659,75 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         }
         return rowList;
     }
+
+
+    /**
+     * 获取能耗行
+     *
+     * @param epEnergy      能源类型
+     * @param start         开始日期
+     * @param end           结束日期
+     * @param partitionList 节点集合
+     * @return
+     */
+    private List<EpDayReportCountRowVO> waterRow(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
+        List<EpDayReportCountRowVO> rowList = Lists.newArrayList();
+        if (CollUtil.isEmpty(partitionList) || Objects.isNull(epEnergy)) {
+            return rowList;
+        }
+        //查询全量数据表
+        LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
+        LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集
+        List<TupleDTO<LocalDate, Integer>> classRangeList = ClassUtil.classRange(startLdt, endLdt);
+        Set<LocalDate> dateSet = classRangeList.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
+        //获取全量数据表
+        List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
+        //获取基片节点
+        Optional<TripleDTO<Long, Integer, String>> jpOp = partitionList.stream().filter(ele -> ele.getField3().indexOf("基片") != -1).findFirst();
+        TripleDTO<Long, Integer, String> jpEle = null;
+        if(jpOp.isPresent()){
+            jpEle = jpOp.get();
+            partitionList.remove(jpEle);
+            partitionList.add(jpEle);
+        }
+        Map<LocalDate,BigDecimal> otherMap = Maps.newHashMap();
+        for (TripleDTO<Long, Integer, String> tripleDTO : partitionList) {
+            EpDayReportCountRowVO row = new EpDayReportCountRowVO();
+            List<BigDecimal> consumeList = Lists.newArrayList();
+            List<EpMeterReadAllDataVO> dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1())).collect(Collectors.toList());
+            List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
+            for (LocalDate classDate : timeList) {
+                List<BigDecimal> valueList = dataList.stream().filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal dataValue = BigDecimalUtil.sum(valueList);
+                BigDecimal dataInt = BigDecimalUtil.setScale(dataValue, 0);
+                if(Objects.nonNull(jpEle) && tripleDTO != jpEle){
+                    otherMap.put(classDate, BigDecimalUtil.add(otherMap.get(classDate), dataInt));
+                }else if (Objects.nonNull(jpEle) && tripleDTO == jpEle){
+                    dataInt = BigDecimalUtil.subtract(dataInt, otherMap.get(classDate));
+                }
+                consumeList.add(BigDecimalUtil.setScale(dataInt, 0));
+            }
+            row.setConsumeList(consumeList);
+            row.setEnergyType(epEnergy.getName());
+            row.setUnit(epEnergy.getMeasureUnitName());
+            row.setDepartmentName(tripleDTO.getField3());
+            BigDecimal sum = BigDecimalUtil.sum(consumeList);
+            row.setSumStr(BigDecimalUtil.setScale(sum, 0));
+            rowList.add(row);
+
+
+        }
+
+        //如果超过一行，则添加一个合计行
+        if (rowList.size() > 1) {
+            EpDayReportCountRowVO countRow = countRow(rowList, epEnergy);
+            rowList.add(countRow);
+        }
+        return rowList;
+    }
+
 
     /**
      * 获取表头
