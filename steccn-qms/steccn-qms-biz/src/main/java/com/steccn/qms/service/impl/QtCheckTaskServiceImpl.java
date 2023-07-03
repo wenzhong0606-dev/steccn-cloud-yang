@@ -1876,8 +1876,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     for (Map.Entry<Integer, List<QtCheckTaskReportVO>> lineEntry : lineMap.entrySet()) {
                         Map<Long, List<QtCheckTaskReportVO>> materialMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialId));
                         for (Map.Entry<Long, List<QtCheckTaskReportVO>> materialEntry : materialMap.entrySet()) {
-//                            Map<Integer, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
-//                            for (Map.Entry<Integer, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
+                            Map<String, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getCustomerId() + ""));
+                            for (Map.Entry<String, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
                                 QtDeepOrSubAcceptabilityDetailVO resVO = new QtDeepOrSubAcceptabilityDetailVO();
                                 resVO.setClassesDate(classDateEntry.getKey());
                                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classEntry.getKey());
@@ -1885,7 +1885,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 resVO.setProductWorkshopName(officeIdNameMap.getOrDefault(pwsEntry.getKey(), Strings.EMPTY));
                                 resVO.setProductLineName(officeIdNameMap.getOrDefault(lineEntry.getKey(), Strings.EMPTY));
                                 resVO.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), Strings.EMPTY));
-//                                resVO.setCustomerName(officeIdNameMap.getOrDefault(customerEntry.getKey(), Strings.EMPTY));
+                                if(!"null".equals(customerEntry.getKey())){
+                                    Integer customerId = Integer.parseInt(customerEntry.getKey());
+                                    resVO.setCustomerId(customerId);
+                                    resVO.setCustomerName(officeIdNameMap.getOrDefault(customerId, Strings.EMPTY));
+                                }
                                 List<QtSubOrDeepFPYTaskDetailsVO> taskDetails = Lists.newArrayList();
                                 List<BigDecimal> rateList = Lists.newArrayList();
                                 materialEntry.getValue().forEach(ele -> {
@@ -1905,7 +1909,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 resVO.setAcceptability(divide);
                                 resVO.setTaskDetails(taskDetails);
                                 resList.add(resVO);
-//                            }
+                            }
                         }
                     }
                 }
