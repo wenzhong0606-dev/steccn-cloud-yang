@@ -184,7 +184,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 .between(Objects.nonNull(dto.getReplyClientStartTime()) && Objects.nonNull(dto.getReplyClientEndTime())
                         , QtCustomerComplain::getReplyClientDate, dto.getReplyClientStartTime(), dto.getReplyClientEndTime())
                 .like(Objects.nonNull(dto.getClientCaseNo()), QtCustomerComplainDetail::getClientCaseNo, dto.getClientCaseNo())
-                .like(Objects.nonNull(dto.getModuleNumber()), QtCustomerComplainModule::getModuleNumber, dto.getModuleNumber());
+                .like(Objects.nonNull(dto.getModuleNumber()), QtCustomerComplainModule::getModuleNumber, dto.getModuleNumber())
+                .selectAll(QtCustomerComplain.class);
 
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
