@@ -658,6 +658,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
         if (!qtCheckTaskDestoryInfoList.isEmpty()) {
             List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList1 = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
+            //处理落板工位
+            qtCheckTaskDestoryInfoVOList1.forEach(destoryVOInfo->{
+                Integer workStation = destoryVOInfo.getDestoryWorkStation();
+                if(workStation!=null){
+                    if(workStation.equals(QtManagerConstant.NUM_3)){
+                        Set<String> checkList = Sets.newHashSet(QtManagerConstant.NUM_1.toString(),QtManagerConstant.NUM_2.toString());
+                        destoryVOInfo.setCheckList(checkList);
+                    }else {
+                        destoryVOInfo.setCheckList(Sets.newHashSet(workStation.toString()));
+                    }
+                }
+            });
             qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList1);
             qtCheckTaskDetailVo.setDestoryInfoRemark(qtCheckTaskDestoryInfoVOList1.get(0).getDestoryInfoRemark());
         }
@@ -848,7 +860,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         //选一个
                         if(destoryInfoVO.getCheckList().size() == 1){
                             Integer tmp = Integer.valueOf(destoryInfoVO.getCheckList().iterator().next());
-                            if(!tmp.equals(QtManagerConstant.NUM_1) || !tmp.equals(QtManagerConstant.NUM_2)){
+                            if(!tmp.equals(QtManagerConstant.NUM_1) && !tmp.equals(QtManagerConstant.NUM_2)){
                                 throw new BusinessException("落板工位格式错误");
                             }
                             qtCheckTaskDestoryInfo.setDestoryWorkStation(tmp);
@@ -1104,7 +1116,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     //选一个
                     if(destoryInfoVO.getCheckList().size() == 1){
                         Integer tmp = Integer.valueOf(destoryInfoVO.getCheckList().iterator().next());
-                        if(!tmp.equals(QtManagerConstant.NUM_1) || !tmp.equals(QtManagerConstant.NUM_2)){
+                        if(!tmp.equals(QtManagerConstant.NUM_1) && !tmp.equals(QtManagerConstant.NUM_2)){
                             throw new BusinessException("落板工位格式错误");
                         }
                         qtCheckTaskDestoryInfo.setDestoryWorkStation(tmp);
