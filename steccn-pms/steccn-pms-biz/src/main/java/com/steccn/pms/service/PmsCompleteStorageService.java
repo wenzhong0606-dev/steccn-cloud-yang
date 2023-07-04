@@ -38,7 +38,7 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @param list 入库单
      * @return 入库单号
      */
-    String generate(List<CompleteStorageScanDTO> list);
+    String generateInfo(List<CompleteStorageScanDTO> list);
 
     /**
      * 入库单列表
