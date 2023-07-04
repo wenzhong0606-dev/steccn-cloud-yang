@@ -72,6 +72,12 @@ public class QtCustomerComplainDTO {
      */
     private String complainTypeName;
 
+
+    /**
+     * 回复客户日期
+     */
+    private LocalDate replyClientDate;
+
     /**
      * 处理人
      */
@@ -115,6 +121,8 @@ public class QtCustomerComplainDTO {
     private Long carbonCopyMan;
 
     private List<QtCarbonCopyManDTO> manList;
+
+    private List<QtCustomerComplainModuleDTO> modules;
 
     /**
      * 审批人
