@@ -262,7 +262,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
         //遍历查出来的集合封装数据
         reportList.forEach(q -> {
-            resList.add(getQtReportChartVO(q, checkItemMap, materialIdNameMap, dictIdNameMap, snapshotMap));
+            try {
+                resList.add(getQtReportChartVO(q, checkItemMap, materialIdNameMap, dictIdNameMap, snapshotMap));
+            }catch (Exception e){
+                log.error("{}",e.getLocalizedMessage());
+            }
         });
         return resList;
     }
