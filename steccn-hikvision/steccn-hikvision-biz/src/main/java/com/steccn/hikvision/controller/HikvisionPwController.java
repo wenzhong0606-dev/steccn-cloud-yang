@@ -2,6 +2,8 @@ package com.steccn.hikvision.controller;
 
 
 import com.steccn.common.vo.R;
+import com.steccn.hikvision.dto.SysHikPwDTO;
+import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +21,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HikvisionPwController {
 
+    private final SysHikPwService sysHikPwService;
+
     @ApiOperation("权限新增")
     @PostMapping
-    public R<Boolean> add() {
-        return R.success();
-    }
-
-    @ApiOperation("权限编辑")
-    @PutMapping
-    public R<Boolean> edit() {
-        return R.success();
-    }
-
-    @ApiOperation("权限删除")
-    @DeleteMapping
-    public R<Boolean> delete() {
+    public R<Boolean> save(@RequestBody SysHikPwDTO sysHikPwDTO) {
         return R.success();
     }
 
