@@ -74,6 +74,12 @@ public class QtCustomerComplain implements Serializable {
 
 
     /**
+     * 回复客户日期
+     */
+    private LocalDate replyClientDate;
+
+
+    /**
      * 处理人
      */
     private Long dealMan;

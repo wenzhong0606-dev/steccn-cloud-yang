@@ -325,6 +325,12 @@ public interface QtManagerConstant {
      */
     String QT_CUSTOMER_COMPLAIN_DEAL_WAY = "dealWay";
 
+
+    /**
+     * 客诉排序字段-回复客户日期
+     */
+    String QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE  = "replyClientDate";
+
     /**
      * 不合格品处理排序-检验单号
      */
@@ -812,6 +818,7 @@ public interface QtManagerConstant {
 
     String STELL_STATION = "钢化工位";
     String DOWN_STATION = "下片工位";
+    String JIPIAN_DOWN_STATION_SOUTH = "基片下片工位（南）";
     String FORMING_STATION = "成型工位";
     /**
      * 质量开启是否需要采样数据

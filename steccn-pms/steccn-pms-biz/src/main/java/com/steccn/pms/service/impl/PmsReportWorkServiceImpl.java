@@ -784,6 +784,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 .le(PmsReportWork::getEndTime, end));
         List<PmsReportWorkVO> resList = new ArrayList<>();
         if (CollUtil.isNotEmpty(list)) {
+
+            //获取班次的id
+            Set<String> classNames = Sets.newHashSet(PmManagerConstant.FORE_SHIFT, PmManagerConstant.NIGHT_SHIFT);
+            Map<String, Long> classNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(classNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //早班
+            Long foreShiftId = classNameMap.get(PmManagerConstant.FORE_SHIFT);
             List<Long> collect = new ArrayList<>(list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet()));
             Set<Long> workIds = list.stream().map(PmsReportWork::getId).collect(Collectors.toSet());
             //获取报工工时信息
@@ -797,6 +803,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 pmsReportWorkVO.setProduceOrder(orderMap.get(pmsReportWork.getProduceOrderId()).getCode());
                 pmsReportWorkVO.setProduceOrderId(orderMap.get(pmsReportWork.getProduceOrderId()).getId());
                 pmsReportWorkVO.setClassGroupId(pmsReportWork.getClassGroupId());
+                pmsReportWorkVO.setClasses(PmManagerConstant.NIGHT_SHIFT);
+                if (foreShiftId.equals(pmsReportWork.getClassesId())){
+                    pmsReportWorkVO.setClasses(PmManagerConstant.FORE_SHIFT);
+                }
                 resList.add(pmsReportWorkVO);
                 List<PmsReportWorkHour> pmsReportWorkHours1 = reportWorkHoursMap.get(pmsReportWork.getId());
                 if (CollUtil.isNotEmpty(pmsReportWorkHours1)){
@@ -814,9 +824,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         LocalDateTime start = LocalDateUtil.getMorning(date.withDayOfMonth(1));
         //当前日期的晚班结束时间
         LocalDateTime end = LocalDateUtil.getMorning(date).plusDays(1);
-        List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineIds).ge(PmsReportWork::getStartTime, start)
-                .le(PmsReportWork::getEndTime, end));
-        return BeanUtil.copyToList(list, PmsReportWorkVO.class);
+        List<PmsReportWorkVO> list =  baseMapper.listReportWorkInfo(lineIds,start,end);
+        return list;
     }
 
     @Override

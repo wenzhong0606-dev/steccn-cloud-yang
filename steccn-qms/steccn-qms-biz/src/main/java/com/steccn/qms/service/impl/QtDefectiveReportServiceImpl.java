@@ -118,10 +118,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> lineIdSet = Sets.newTreeSet();
         Set<Integer> groupIdSet = Sets.newTreeSet();
         for (QtCheckTaskDetailReportVO data : flatDataList) {
-            classIdSet.add(data.getClassId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getClassId())){
+                classIdSet.add(data.getClassId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -326,7 +334,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         if (minOp.isPresent() && maxOp.isPresent()) {
             LocalDate startLdt = LocalDateUtil.getClassDate(minOp.get().getDefectStartTime(), Boolean.FALSE);
             LocalDate endLdt = LocalDateUtil.getClassDate(maxOp.get().getDefectStartTime(), Boolean.TRUE);
-            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(startLdt, endLdt), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(startLdt,endLdt);
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         } else {
             groupMap = Maps.newHashMap();
         }
@@ -852,11 +861,21 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> lineIdSet = Sets.newTreeSet();
         Set<Integer> groupIdSet = Sets.newTreeSet();
         for (QtCheckTaskDetailReportVO data : flatDataList) {
-            defectCategorySet.add(data.getDefectCategory());
-            classIdSet.add(data.getClassId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getDefectCategory())){
+                defectCategorySet.add(data.getDefectCategory());
+            }
+            if(Objects.nonNull(data.getClassId())){
+                classIdSet.add(data.getClassId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -913,10 +932,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> workShopIdSet = Sets.newTreeSet();
         Set<Integer> lineIdSet = Sets.newTreeSet();
         for (QtCheckTaskDetailReportVO data : flatDataList) {
-            defectCategorySet.add(data.getDefectCategory());
-            classIdSet.add(data.getClassId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
+            if(Objects.nonNull(data.getDefectCategory())){
+                defectCategorySet.add(data.getDefectCategory());
+            }
+            if(Objects.nonNull(data.getClassId())){
+                classIdSet.add(data.getClassId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -1086,11 +1113,21 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> lineIdSet = Sets.newTreeSet();
         Set<Integer> defectCategorySet = Sets.newTreeSet();
         for (QtCheckTaskDetailReportVO data : flatDataList) {
-            defectCategorySet.add(data.getDefectCategory());
-            classIdSet.add(data.getClassId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getDefectCategory())){
+                defectCategorySet.add(data.getDefectCategory());
+            }
+            if(Objects.nonNull(data.getClassId())){
+                classIdSet.add(data.getClassId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -1120,6 +1157,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         } else if (Objects.nonNull(dto.getProductLineId())) {
             productLineSet.add(dto.getProductLineId());
+        } else if(CollUtil.isNotEmpty(dto.getProductLineIdList())){
+            productLineSet.addAll(dto.getProductLineIdList());
         }
         List<QtCheckTaskDetailReportVO> convertDefectCollect = Lists.newArrayList();
         //查询检验设备数据
@@ -1291,11 +1330,21 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> lineIdSet = Sets.newTreeSet();
         Set<Integer> defectCategorySet = Sets.newTreeSet();
         for (QtCheckTaskDetailReportVO data : flatDataList) {
-            defectCategorySet.add(data.getDefectCategory());
-            classIdSet.add(data.getClassId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getDefectCategory())){
+                defectCategorySet.add(data.getDefectCategory());
+            }
+            if(Objects.nonNull(data.getClassId())){
+                classIdSet.add(data.getClassId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -1355,11 +1404,21 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Set<Integer> lineIdSet = Sets.newTreeSet();
         Set<Integer> defectCategorySet = Sets.newTreeSet();
         for (QtCheckTaskDetailReportVO data : flatDataList) {
-            defectCategorySet.add(data.getDefectCategory());
-            classIdSet.add(data.getClassId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getDefectCategory())){
+                defectCategorySet.add(data.getDefectCategory());
+            }
+            if(Objects.nonNull(data.getClassId())){
+                classIdSet.add(data.getClassId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));

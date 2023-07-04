@@ -190,6 +190,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
+                QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                station.setId(sysOfficeVO.getId());
+                station.setName(sysOfficeVO.getOfficeName());
+                dto.setStation(station);
             }
         }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                 ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
@@ -211,6 +215,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     }
                     dto.setStationId(sysOfficeVO.getId().longValue());
                     dto.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    dto.setStation(station);
                 }
             }
         }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
@@ -232,6 +240,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
+                QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                station.setId(sysOfficeVO.getId());
+                station.setName(sysOfficeVO.getOfficeName());
+                dto.setStation(station);
             }
 
         }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())
@@ -253,6 +265,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
+                QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                station.setId(sysOfficeVO.getId());
+                station.setName(sysOfficeVO.getOfficeName());
+                dto.setStation(station);
             }
         }
 
@@ -1283,7 +1299,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Boolean refreshGroupClass() {
         List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
                 .select(QtCheckTask::getId,QtCheckTask::getStartBy)
-                .and(v->v.between(QtCheckTask::getId,15000,16935))
+                .and(v->v.between(QtCheckTask::getId,24491,30000))
                 .and(v->v.eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                         .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                         .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())));
@@ -1313,8 +1329,115 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public Boolean refreshWorkStation() {
-        List<QtCheckTask> list = list(new LambdaQueryWrapper<>());
-        return null;
+        List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>().between(QtCheckTask::getId,24491,30000));
+        for(QtCheckTask tmp:taskList){
+            QtCheckTask taskModel = new QtCheckTask();
+            //1）仅当生产车间为深加工车间且检验类型为在线检时，默认值为已选中生产产线的“钢化工位”，只读
+            if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                    &&tmp.getProductWorkshop()!=null
+                    &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)){
+                if(tmp.getProductLine()!=null
+                        &&tmp.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(tmp.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        continue;
+                    }
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.STELL_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        continue;
+                    }
+                    taskModel.setStationId(sysOfficeVO.getId().longValue());
+                    taskModel.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    taskModel.setStation(station);
+                }
+            }else if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                    ||tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
+                //2）仅当生产车间为深加工车间且检验类型为首检/巡检时，默认值为已选中生产产线的“下片工位”，只读
+                if(tmp.getProductWorkshop()!=null
+                        &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)){
+                    if(tmp.getProductLine()!=null
+                            &&tmp.getProductLine().getId()!=null){
+                        SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                        officeDto.setId(tmp.getProductLine().getId());
+                        officeDto.setOfficeType(SysOfficeConstant.STATION);
+                        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                        if(CollUtil.isEmpty(sysOfficeVOS)){
+                            continue;
+                        }
+                        SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
+                        if(Objects.isNull(sysOfficeVO)){
+                            continue;
+                        }
+                        taskModel.setStationId(sysOfficeVO.getId().longValue());
+                        taskModel.setStationName(sysOfficeVO.getOfficeName());
+                        QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                        station.setId(sysOfficeVO.getId());
+                        station.setName(sysOfficeVO.getOfficeName());
+                        taskModel.setStation(station);
+                    }
+                }
+            }else if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                    &&tmp.getProductWorkshop()!=null
+                    &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.JIPIAN)){
+                //3）仅当生产车间为基片车间且检验类型为在线检时，默认值为已选中生产产线的“成型工位”，只读
+                if(tmp.getProductLine()!=null
+                        &&tmp.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(tmp.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        continue;
+                    }
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.FORMING_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        continue;
+                    }
+                    taskModel.setStationId(sysOfficeVO.getId().longValue());
+                    taskModel.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    taskModel.setStation(station);
+                }
+
+            }else if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())
+                    &&tmp.getProductWorkshop()!=null
+                    &&tmp.getProductWorkshop().getName().contains(QtManagerConstant.JIPIAN)){
+                //4）仅当生产车间为基片车间且检验类型为化验抽检时，默认值为已选中生产产线的“下片工位”，只读
+                if(tmp.getProductLine()!=null
+                        &&tmp.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(tmp.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        continue;
+                    }
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        continue;
+                    }
+                    taskModel.setStationId(sysOfficeVO.getId().longValue());
+                    taskModel.setStationName(sysOfficeVO.getOfficeName());
+                    QtBaseIdNameDTO station = new QtBaseIdNameDTO();
+                    station.setId(sysOfficeVO.getId());
+                    station.setName(sysOfficeVO.getOfficeName());
+                    taskModel.setStation(station);
+                }
+            }
+            taskModel.setId(tmp.getId());
+            if(taskModel.getStation()!=null){
+                updateById(taskModel);
+            }
+        }
+        return true;
     }
 
     @Override
@@ -1646,7 +1769,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAs(QtMaterial::getName, QtCheckTask::getMaterialName)
                 .eq(QtCheckTask::getProductOrder, dto.getProductOrder())
                 .in(QtCheckTask::getTaskType, checkTypeCodeList)
-                .and(wrapper -> wrapper.apply("JSON_CONTAINS(station, CAST(JSON_ARRAY({0}) AS JSON), '$[0].id')", stationIds));
+                .and(wrapper -> wrapper.apply("JSON_CONTAINS(JSON_ARRAY(" + String.join(",", stationIds.stream().map(Object::toString).collect(Collectors.toList())) + "), station->'$.id')"));
         if (Objects.nonNull(dto.getSortField())) {
             switch (dto.getSortField()) {
                 case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE:
@@ -1793,8 +1916,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     for (Map.Entry<Integer, List<QtCheckTaskReportVO>> lineEntry : lineMap.entrySet()) {
                         Map<Long, List<QtCheckTaskReportVO>> materialMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialId));
                         for (Map.Entry<Long, List<QtCheckTaskReportVO>> materialEntry : materialMap.entrySet()) {
-//                            Map<Integer, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
-//                            for (Map.Entry<Integer, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
+                            Map<String, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getCustomerId() + ""));
+                            for (Map.Entry<String, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
                                 QtDeepOrSubAcceptabilityDetailVO resVO = new QtDeepOrSubAcceptabilityDetailVO();
                                 resVO.setClassesDate(classDateEntry.getKey());
                                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classEntry.getKey());
@@ -1802,7 +1925,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 resVO.setProductWorkshopName(officeIdNameMap.getOrDefault(pwsEntry.getKey(), Strings.EMPTY));
                                 resVO.setProductLineName(officeIdNameMap.getOrDefault(lineEntry.getKey(), Strings.EMPTY));
                                 resVO.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), Strings.EMPTY));
-//                                resVO.setCustomerName(officeIdNameMap.getOrDefault(customerEntry.getKey(), Strings.EMPTY));
+                                if(!"null".equals(customerEntry.getKey())){
+                                    Integer customerId = Integer.parseInt(customerEntry.getKey());
+                                    resVO.setCustomerId(customerId);
+                                    resVO.setCustomerName(officeIdNameMap.getOrDefault(customerId, Strings.EMPTY));
+                                }
                                 List<QtSubOrDeepFPYTaskDetailsVO> taskDetails = Lists.newArrayList();
                                 List<BigDecimal> rateList = Lists.newArrayList();
                                 materialEntry.getValue().forEach(ele -> {
@@ -1822,7 +1949,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 resVO.setAcceptability(divide);
                                 resVO.setTaskDetails(taskDetails);
                                 resList.add(resVO);
-//                            }
+                            }
                         }
                     }
                 }
@@ -2000,12 +2127,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Set<Long> materialIdSet = Sets.newHashSet();
         Set<Integer> customerIdSet = Sets.newHashSet();
         for (QtCheckTaskReportVO data : flatDataList) {
-            classIdSet.add(data.getClassesId());
-            workShopIdSet.add(data.getProductWorkshopId());
-            lineIdSet.add(data.getProductLineId());
-            materialIdSet.add(data.getMaterialId());
-            customerIdSet.add(data.getCustomerId());
-            groupIdSet.add(data.getClassGroupId());
+            if(Objects.nonNull(data.getClassesId())){
+                classIdSet.add(data.getClassesId());
+            }
+            if(Objects.nonNull(data.getProductWorkshopId())){
+                workShopIdSet.add(data.getProductWorkshopId());
+            }
+            if(Objects.nonNull(data.getProductLineId())){
+                lineIdSet.add(data.getProductLineId());
+            }
+            if(Objects.nonNull(data.getMaterialId())){
+                materialIdSet.add(data.getMaterialId());
+            }
+            if(Objects.nonNull(data.getCustomerId())){
+                customerIdSet.add(data.getCustomerId());
+            }
+            if(Objects.nonNull(data.getClassGroupId())){
+                groupIdSet.add(data.getClassGroupId());
+            }
         }
         BaseScreenVO baseScreenVO = new BaseScreenVO();
         baseScreenVO.setWorkingOrderScreen(conditionData(classIdSet, QtManagerConstant.QtClassesEnum.allClass()));
@@ -2041,13 +2180,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     private List<QtCheckTaskReportVO> copyQtCheckTask(List<QtCheckTask> sourceData) {
         //班組信息
-        Optional<QtCheckTask> minOp = sourceData.stream().min(Comparator.comparing(QtCheckTask::getSpotTime));
-        Optional<QtCheckTask> maxOp = sourceData.stream().max(Comparator.comparing(QtCheckTask::getSpotTime));
+        Optional<QtCheckTask> minOp = sourceData.stream().filter(v -> Objects.nonNull(v.getSpotTime())).min(Comparator.comparing(QtCheckTask::getSpotTime));
+        Optional<QtCheckTask> maxOp = sourceData.stream().filter(v -> Objects.nonNull(v.getSpotTime())).max(Comparator.comparing(QtCheckTask::getSpotTime));
         Map<String, OaGroupCountDTO> groupMap;
         if(minOp.isPresent() && maxOp.isPresent()){
             LocalDate start = LocalDateUtil.getClassDate(minOp.get().getSpotTime(), Boolean.FALSE);
             LocalDate end = LocalDateUtil.getClassDate(maxOp.get().getSpotTime(), Boolean.TRUE);
-            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(start, end), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(start, end);
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         }else{
             groupMap = Maps.newHashMap();
         }
@@ -2249,8 +2389,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto) {
         //根据已知条件查询任务表
-
-        String join = String.join(",", dto.getProductLineIdList().stream().map(Object::toString).collect(Collectors.toList()));
+        String join = null;
+        if(CollUtil.isNotEmpty(dto.getProductLineIdList())){
+            join = String.join(",", dto.getProductLineIdList().stream().map(Object::toString).collect(Collectors.toList()));
+        }
 
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成

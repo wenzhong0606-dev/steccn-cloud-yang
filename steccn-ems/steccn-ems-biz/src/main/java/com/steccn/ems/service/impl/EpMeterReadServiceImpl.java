@@ -195,6 +195,17 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<String> collect = localDateList.stream().map(ele -> LocalDateTimeUtil.format(ele, "MM-dd")).collect(Collectors.toList());
         eqMeterReadVO.setLabelList(collect);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
+
+        //根据partitionId去查询sort，然后根据sort排序
+        //查询所有的节点sort
+        Map<Long, Integer> sortMap = Maps.newHashMap();
+        List<EpPartition> sortDbList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, meterType));
+        if (CollUtil.isNotEmpty(sortDbList)) {
+            sortDbList.forEach(ele -> sortMap.put(ele.getId(), ele.getSort()));
+        }
+        setSort(eqMeterReadVO.getMeterReadListVOList(), sortMap);
+        eleSort(eqMeterReadVO.getMeterReadListVOList());
+
         return eqMeterReadVO;
     }
 
@@ -324,13 +335,56 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<String> collect = localDateList.stream().map(ele -> LocalDateTimeUtil.format(ele, "MM-dd")).collect(Collectors.toList());
         eqMeterReadVO.setLabelList(collect);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
+        //根据partitionId去查询sort，然后根据sort排序
+        //查询所有的节点sort
+        Map<Long, Integer> sortMap = Maps.newHashMap();
+        List<EpPartition> sortDbList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, meterType));
+        if (CollUtil.isNotEmpty(sortDbList)) {
+            sortDbList.forEach(ele -> sortMap.put(ele.getId(), ele.getSort()));
+        }
+        setSort(eqMeterReadVO.getMeterReadListVOList(), sortMap);
+        eleSort(eqMeterReadVO.getMeterReadListVOList());
         return eqMeterReadVO;
     }
 
+    /**
+     * 排序
+     * @param eleList
+     */
+    private void eleSort(List<MeterReadListVO> eleList) {
+        Collections.sort(eleList, Comparator.nullsLast(Comparator.comparing(MeterReadListVO::getSort)));
+        if(CollUtil.isNotEmpty(eleList)){
+            for (MeterReadListVO ele : eleList) {
+                if(CollUtil.isNotEmpty(ele.getMeterReadListVOList())){
+                    eleSort(ele.getMeterReadListVOList());
+                }
+            }
+        }
+    }
+
+    /**
+     * 设置序号
+     * @param eleList
+     * @param sortMap
+     */
+    private void setSort(List<MeterReadListVO> eleList, Map<Long,Integer> sortMap){
+        if(CollUtil.isNotEmpty(eleList) && CollUtil.isNotEmpty(sortMap)){
+            for (MeterReadListVO ele : eleList) {
+                Long partitionNode = ele.getPartitionNode();
+                ele.setSort(sortMap.getOrDefault(partitionNode,Integer.MAX_VALUE));
+                if(CollUtil.isNotEmpty(ele.getMeterReadListVOList())){
+                    setSort(ele.getMeterReadListVOList(),sortMap);
+                }
+            }
+        }
+    }
+
+
     private void reduceRecursion(List<MeterReadListVO> meterReadListVOList, List<List<ReadValueListVO>> readValueAllList) {
         for (MeterReadListVO meterReadListVO : meterReadListVOList) {
-            reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
-            if (!Objects.equals(meterReadListVO.getEntityTable(), 2)) {
+            if(Objects.equals(meterReadListVO.getEntityTable(), 2)){
+                reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
+            } else if (!Objects.equals(meterReadListVO.getEntityTable(), 2)) {
                 readValueAllList.add(meterReadListVO.getReadValueList());
             }
         }
@@ -836,16 +890,23 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Map<Long, EpMeterReadRowDTO> orderMap = Maps.newHashMap();
         //因为同一时间 一条产线上 生产订单只会存在一个
         List<EpMeterReadRowDTO> orderRowList = Lists.newArrayList();
+        //查询所有节点的产线父节点
+        Set<Integer> nodeOfficeIdSet = partitionMap.values().stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
+        Map<Integer, Integer> parentLineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(nodeOfficeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
         orderList.forEach(ele -> {
             EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
             rowDTO.setUuid(IdWorker.getId());
             BeanUtils.copyProperties(ele, rowDTO);
             Long nodeId = meterNodeMap.get(ele.getMeterId());
             EpPartition epPartition = partitionMap.getOrDefault(nodeId, defaultPartition);
-            if (sjgLineSet.contains(epPartition.getOfficeId())) {
+            //获取当前节点产线父节点
+            Integer lineId = parentLineMap.get(epPartition.getOfficeId());
+            rowDTO.setProductLineId(lineId);
+            if (sjgLineSet.contains(lineId)) {
                 //深加工产线节点
                 sjgDataList.add(rowDTO);
-            } else if (jpLineSet.contains(epPartition.getOfficeId())) {
+            } else if (jpLineSet.contains(lineId)) {
                 //基片产线节点
                 rowDTO.setProductLineId(epPartition.getOfficeId());
                 jpDataList.add(convertToJpDto(rowDTO));
@@ -859,14 +920,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             EpMeterReadRowDTO jpRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             jpRowDTO.setYield(ele.getPullAmount());
             //test11
-            jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
+//            jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
         });
         List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         sjgNumList.forEach(ele -> {
             EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             sjgRowDTO.setYield(ele.getYield());
             //test11
-            sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
+//            sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
         });
 
         //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
@@ -879,6 +940,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取所有产线的父节点-不包含父节点
         Map<Long, Set<Long>> lineParentMap = getLineParentMap(partitionMap.values(), jpLineSet, sjgLineSet);
         EpPartition root = root(partitionMap.values());
+        //根节点为空，则直接返回
+        if(Objects.isNull(root)){
+            return Lists.newArrayList();
+        }
         //获取父节点的产线孩子节点-不含有根节点
         Map<Long, Set<Long>> lineChildrenMap = getLineChildrenMap(lineParentMap);
         lineChildrenMap.remove(root.getId());
@@ -957,7 +1022,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      */
     private EpPartition root(Collection<EpPartition> nodeList) {
         Optional<EpPartition> first = nodeList.stream().filter(v -> Objects.isNull(v.getParentId())).findFirst();
-        return first.get();
+        return first.isPresent() ? first.get() : null;
     }
 
 

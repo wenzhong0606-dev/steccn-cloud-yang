@@ -39,13 +39,16 @@ import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,6 +85,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+    @Autowired
+    @Lazy
+    private PmsReportWorkService pmsReportWorkService;
 
 
     /**
@@ -853,62 +859,85 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //获取班次日期-早班和晚班
         LocalDateTime start = LocalDateUtil.getMorning(currentDate);
         LocalDateTime end = start.plusDays(1);
-        //查询订单实际结束时间大于当前班次开始时间或者当前还没有结束的生产订单
-        List<PmsProduceOrder> dbList = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
-            wr.isNull(PmsProduceOrder::getActualEndTime).or().gt(PmsProduceOrder::getActualEndTime, start);
-        }));
-        if (CollUtil.isNotEmpty(dbList)) {
-            //获取物料的信息
-            Set<Long> materialIdSet = dbList.stream().map(PmsProduceOrder::getMaterialId).collect(Collectors.toSet());
-            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            for (PmsProduceOrder order : dbList) {
-                //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end,共计有六种情况
-                //①结束时间小于end，开始时间小于start        ==> start,结束时间
-                //②结束时间小于end，开始时间等于start        ==> start,结束时间
-                //③结束时间小于end，开始时间大于start        ==> 开始时间,结束时间
-                //④结束时间大于等于end，开始时间小于start     ==> start,end
-                //⑤结束时间大于等于end，开始时间等于start     ==> start,end
-                //⑥结束时间大于等于end，开始时间大于start     ==> 开始时间,end
+        //过滤当前日期已完成报工的订单
+        List<PmsReportWork> rwOrderList = pmsReportWorkService.list(new LambdaQueryWrapper<PmsReportWork>().eq(PmsReportWork::getClassDate, currentDate)
+                .select(PmsReportWork::getProduceOrderId));
+        if (CollUtil.isNotEmpty(rwOrderList)) {
+            Set<Long> rwOrderIdSet = rwOrderList.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet());
+            //根据订单查询批次
+            List<PmsWorkOrderBatch> batchList = pmsWorkOrderBatchService.list(new LambdaQueryWrapper<PmsWorkOrderBatch>().in(PmsWorkOrderBatch::getProduceOrderId, rwOrderIdSet));
+            if (CollUtil.isNotEmpty(batchList)) {
+                //根据生产订单获取
+                List<PmsProduceOrder> pmsProduceOrders = listByIds(rwOrderIdSet);
+                Map<Long, PmsProduceOrder> orderMap = Maps.newHashMap();
+                Set<Long> materialIdSet = Sets.newHashSet();
+                pmsProduceOrders.forEach(ele -> {
+                    materialIdSet.add(ele.getMaterialId());
+                    orderMap.put(ele.getId(), ele);
+                });
+                //获取物料的信息
+                Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                for (PmsWorkOrderBatch batch : batchList) {
+                    //过滤时间-批次的开始时间为空，或者批次的结束开始
+                    if(Objects.isNull(batch.getStartTime()) || LocalDateUtil.gt(batch.getStartTime(),end)){
+                        continue;
+                    }
+                    if(Objects.nonNull(batch.getEndTime()) && LocalDateUtil.lt(batch.getEndTime(),start)){
+                        continue;
+                    }
+                    //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end,共计有六种情况
+                    //①结束时间小于end，开始时间小于start        ==> start,结束时间
+                    //②结束时间小于end，开始时间等于start        ==> start,结束时间
+                    //③结束时间小于end，开始时间大于start        ==> 开始时间,结束时间
+                    //④结束时间大于等于end，开始时间小于start     ==> start,end
+                    //⑤结束时间大于等于end，开始时间等于start     ==> start,end
+                    //⑥结束时间大于等于end，开始时间大于start     ==> 开始时间,end
 
-                //2.如果结束时间为null，则开始时间必须要小于end,共计有三种情况
-                //⑦开始时间小于start    ==> start,end
-                //⑧开始时间等于start    ==> start,end
-                //⑨开始时间大于start    ==> 开始时间,end
+                    //2.如果结束时间为null，则开始时间必须要小于end,共计有三种情况
+                    //⑦开始时间小于start    ==> start,end
+                    //⑧开始时间等于start    ==> start,end
+                    //⑨开始时间大于start    ==> 开始时间,end
 
-                //3.总共分成四种情况
-                //start-结束时间
-                //start-end
-                //开始时间-结束时间
-                //开始时间-end
-                DwProduceOrderDTO orderDTO = new DwProduceOrderDTO();
-                BeanUtil.copyProperties(order, orderDTO);
-                orderDTO.setClassDate(currentDate);
-                orderDTO.setProductLineId(order.getProductionLineId());
-                orderDTO.setProduceOrderId(order.getId());
-                orderDTO.setProduceOrderNo(order.getCode());
-                LocalDateTime tempStart = LocalDateUtil.gt(order.getActualStartTime(),start) ? order.getActualStartTime() : start;
-                LocalDateTime tempEnd = Objects.isNull(order.getActualEndTime()) || LocalDateUtil.ge(order.getActualEndTime(), end) ? end : order.getActualEndTime();
-                orderDTO.setStart(tempStart);
-                orderDTO.setEnd(tempEnd);
-                orderDTO.setThick(materialMap.getOrDefault(orderDTO.getMaterialId(), new EqpSpareVO()).getThickQuantity());
-                //考虑开始时间和结束时间是否跨班次问题，如果跨班次，则基于班次进行分割。如果不跨班次，则直接返回
-                if (!CalculateDateUtil.isSameClassType(tempStart, tempEnd)) {
-                    DwProduceOrderDTO left = new DwProduceOrderDTO();
-                    DwProduceOrderDTO right = new DwProduceOrderDTO();
-                    BeanUtil.copyProperties(orderDTO, left);
-                    BeanUtil.copyProperties(orderDTO, right);
-                    left.setStart(tempStart);
-                    left.setEnd(LocalDateUtil.getNight(currentDate));
-                    left.setClassId(ClassUtil.MORNING);
-                    resList.add(left);
-                    right.setStart(LocalDateUtil.getNight(currentDate));
-                    right.setEnd(tempEnd);
-                    right.setClassId(ClassUtil.NIGHT);
-                    resList.add(right);
-                } else {
-                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(start);
-                    orderDTO.setClassId(qtTaskClassCalculate.getClassType());
-                    resList.add(orderDTO);
+                    //3.总共分成四种情况
+                    //start-结束时间
+                    //start-end
+                    //开始时间-结束时间
+                    //开始时间-end
+                    PmsProduceOrder order = orderMap.get(batch.getProduceOrderId());
+                    if (Objects.isNull(order)) {
+                        continue;
+                    }
+                    DwProduceOrderDTO orderDTO = new DwProduceOrderDTO();
+                    BeanUtil.copyProperties(batch, orderDTO);
+                    orderDTO.setClassDate(currentDate);
+                    orderDTO.setProductLineId(order.getProductionLineId());
+                    orderDTO.setProduceOrderId(order.getId());
+                    orderDTO.setProduceOrderNo(order.getCode());
+                    orderDTO.setMaterialId(order.getMaterialId());
+                    LocalDateTime tempStart = LocalDateUtil.gt(batch.getStartTime(), start) ? batch.getStartTime() : start;
+                    LocalDateTime tempEnd = Objects.isNull(batch.getEndTime()) || LocalDateUtil.ge(batch.getEndTime(), end) ? end : batch.getEndTime();
+                    orderDTO.setStart(tempStart);
+                    orderDTO.setEnd(tempEnd);
+                    orderDTO.setThick(materialMap.getOrDefault(orderDTO.getMaterialId(), new EqpSpareVO()).getThickQuantity());
+                    //考虑开始时间和结束时间是否跨班次问题，如果跨班次，则基于班次进行分割。如果不跨班次，则直接返回
+                    if (!CalculateDateUtil.isSameClassType(tempStart, tempEnd)) {
+                        DwProduceOrderDTO left = new DwProduceOrderDTO();
+                        DwProduceOrderDTO right = new DwProduceOrderDTO();
+                        BeanUtil.copyProperties(orderDTO, left);
+                        BeanUtil.copyProperties(orderDTO, right);
+                        left.setStart(tempStart);
+                        left.setEnd(LocalDateUtil.getNight(currentDate));
+                        left.setClassId(ClassUtil.MORNING);
+                        resList.add(left);
+                        right.setStart(LocalDateUtil.getNight(currentDate));
+                        right.setEnd(tempEnd);
+                        right.setClassId(ClassUtil.NIGHT);
+                        resList.add(right);
+                    } else {
+                        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(start);
+                        orderDTO.setClassId(qtTaskClassCalculate.getClassType());
+                        resList.add(orderDTO);
+                    }
                 }
             }
         }
@@ -976,10 +1005,40 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //查询生产订单数据
         List<PanoramicTracingVO> tracingVOList = baseMapper.tracing(panoramicTracingDTO);
 
-        //排序
-        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
-                .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
-                .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        if (Objects.nonNull(panoramicTracingDTO.getSortField())) {
+            //自定义定义排序条件
+            if (PmManagerConstant.PMS_ORDER_CODE.equals(panoramicTracingDTO.getSortField())) {
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_ORDER_BATCH_NO.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_ORDER_CASE_NO.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_MATERIAL_NAME.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName,Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }else if (PmManagerConstant.PMS_MATERIAL_CODE.equals(panoramicTracingDTO.getSortField())){
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode,Comparator.nullsFirst(String::compareTo)));
+                if (!panoramicTracingDTO.getAscFlag()){
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode, Comparator.nullsFirst(String::compareTo)).reversed());
+                }
+            }
+        }else {
+            //默认排序
+            tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
+                    .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
+                    .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        }
         //逻辑分页
         return LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
     }

@@ -76,6 +76,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.refreshGroupClass());
     }
 
+    @GetMapping("/refreshStation")
+    @ApiOperation(value = "刷新工位数据")
+    public R<Boolean> refreshStation() {
+        return R.success(qtCheckTaskService.refreshWorkStation());
+    }
+
     @PutMapping("/status")
     @ApiOperation(value = "修改任务状态")
     @SysLog("修改任务状态")

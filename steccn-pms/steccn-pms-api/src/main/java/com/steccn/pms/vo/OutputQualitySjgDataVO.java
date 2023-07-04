@@ -26,6 +26,9 @@ public class OutputQualitySjgDataVO {
     @ApiModelProperty("产线")
     private String productLine;
 
+    @ApiModelProperty("产线排序")
+    private Integer sort;
+
     @ApiModelProperty("厚度")
     private BigDecimal thickQuantity;
 
