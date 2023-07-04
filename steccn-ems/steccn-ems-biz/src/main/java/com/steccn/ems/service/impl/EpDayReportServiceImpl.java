@@ -687,12 +687,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //获取基片节点
         Optional<TripleDTO<Long, Integer, String>> jpOp = partitionList.stream().filter(ele -> ele.getField3().indexOf("基片") != -1).findFirst();
         TripleDTO<Long, Integer, String> jpEle = null;
-        if(jpOp.isPresent()){
+        if (jpOp.isPresent()) {
             jpEle = jpOp.get();
             partitionList.remove(jpEle);
             partitionList.add(jpEle);
         }
-        Map<LocalDate,BigDecimal> otherMap = Maps.newHashMap();
+        Map<LocalDate, BigDecimal> otherMap = Maps.newHashMap();
         for (TripleDTO<Long, Integer, String> tripleDTO : partitionList) {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
             List<BigDecimal> consumeList = Lists.newArrayList();
@@ -702,9 +702,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 List<BigDecimal> valueList = dataList.stream().filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
                 BigDecimal dataValue = BigDecimalUtil.sum(valueList);
                 BigDecimal dataInt = BigDecimalUtil.setScale(dataValue, 0);
-                if(Objects.nonNull(jpEle) && tripleDTO != jpEle){
+                if (Objects.nonNull(jpEle) && tripleDTO != jpEle) {
                     otherMap.put(classDate, BigDecimalUtil.add(otherMap.get(classDate), dataInt));
-                }else if (Objects.nonNull(jpEle) && tripleDTO == jpEle){
+                } else if (Objects.nonNull(jpEle) && tripleDTO == jpEle) {
                     dataInt = BigDecimalUtil.subtract(dataInt, otherMap.get(classDate));
                 }
                 consumeList.add(BigDecimalUtil.setScale(dataInt, 0));
@@ -716,10 +716,13 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             BigDecimal sum = BigDecimalUtil.sum(consumeList);
             row.setSumStr(BigDecimalUtil.setScale(sum, 0));
             rowList.add(row);
-
-
         }
-
+        //需要将基片放到第一位
+        if (CollUtil.isNotEmpty(rowList)) {
+            EpDayReportCountRowVO rowVO = rowList.get(rowList.size() - 1);
+            rowList.remove(rowVO);
+            rowList.add(0, rowVO);
+        }
         //如果超过一行，则添加一个合计行
         if (rowList.size() > 1) {
             EpDayReportCountRowVO countRow = countRow(rowList, epEnergy);
