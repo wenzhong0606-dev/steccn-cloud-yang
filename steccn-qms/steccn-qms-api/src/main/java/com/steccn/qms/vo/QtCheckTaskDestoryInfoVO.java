@@ -1,9 +1,11 @@
 package com.steccn.qms.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * 
@@ -87,6 +89,17 @@ public class QtCheckTaskDestoryInfoVO implements Serializable {
      * 备注
      */
     private String destoryInfoRemark;
+
+    /**
+     * 1南 2北 3全部
+     */
+    private Set<String> checkList;
+
+    /**
+     * 落板工位
+     */
+    @JsonIgnore
+    private Integer destoryWorkStation;
 
     private static final long serialVersionUID = 1L;
 }

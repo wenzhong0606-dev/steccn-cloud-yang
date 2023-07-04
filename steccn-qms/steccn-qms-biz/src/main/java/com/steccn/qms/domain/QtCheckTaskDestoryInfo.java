@@ -80,19 +80,19 @@ public class QtCheckTaskDestoryInfo implements Serializable {
     /**
      * 修改人id
      */
-    @TableField(value = "update_by")
+    @TableField(value = "update_by",fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 修改人姓名
      */
-    @TableField(value = "update_name")
+    @TableField(value = "update_name",fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 是否删除标识：0否 1是
      */
-    @TableField(value = "del_flag")
+    @TableField(value = "del_flag",fill = FieldFill.INSERT)
     @TableLogic
     private Integer delFlag;
 
@@ -105,7 +105,7 @@ public class QtCheckTaskDestoryInfo implements Serializable {
     /**
      * 修改时间
      */
-    @TableField(value = "update_time")
+    @TableField(value = "update_time",fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**
@@ -113,6 +113,11 @@ public class QtCheckTaskDestoryInfo implements Serializable {
      */
     @TableField(value = "destory_info_remark")
     private String destoryInfoRemark;
+
+    /**
+     * 南1 北2 全选3
+     */
+    private Integer destoryWorkStation;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

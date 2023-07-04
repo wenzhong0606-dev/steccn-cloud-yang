@@ -504,6 +504,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //放入落板记录模块数据setQtCheckTaskDestoryInfoVOList
                 List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
                 List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
+                //处理落板工位
+                if(CollUtil.isNotEmpty(qtCheckTaskDestoryInfoVOList)){
+                    qtCheckTaskDestoryInfoVOList.forEach(destoryVOInfo->{
+                        Integer workStation = destoryVOInfo.getDestoryWorkStation();
+                        if(workStation!=null){
+                            if(workStation.equals(QtManagerConstant.NUM_3)){
+                                Set<String> checkList = Sets.newHashSet(QtManagerConstant.NUM_1.toString(),QtManagerConstant.NUM_2.toString());
+                                destoryVOInfo.setCheckList(checkList);
+                            }else {
+                                destoryVOInfo.setCheckList(Sets.newHashSet(workStation.toString()));
+                            }
+                        }
+                    });
+                }
                 qtCheckTaskDetailCopyVO.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList);
             }
 
@@ -813,6 +827,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         qtCheckTaskDestoryInfoDTO.setSampleNum(qtCheckTaskCopyService.getById(dto.getId()).getSampleNum());
                     }
                     BeanUtils.copyProperties(qtCheckTaskDestoryInfoDTO, qtCheckTaskDestoryInfo);
+                    //落板工位
+                    if(CollUtil.isNotEmpty(destoryInfoVO.getCheckList())){
+                        //选一个
+                        if(destoryInfoVO.getCheckList().size() == 1){
+                            Integer tmp = Integer.valueOf(destoryInfoVO.getCheckList().iterator().next());
+                            if(!tmp.equals(QtManagerConstant.NUM_1) || !tmp.equals(QtManagerConstant.NUM_2)){
+                                throw new BusinessException("落板工位格式错误");
+                            }
+                            qtCheckTaskDestoryInfo.setDestoryWorkStation(tmp);
+                        }else {
+                            qtCheckTaskDestoryInfo.setDestoryWorkStation(QtManagerConstant.NUM_3);
+                        }
+                    }
                     qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
                 }
             });
@@ -1056,6 +1083,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 qtCheckTaskDestoryInfoDTO.setDestoryInfoRemark(dto.getDestoryInfoRemark());
                 BeanUtils.copyProperties(qtCheckTaskDestoryInfoDTO, qtCheckTaskDestoryInfo);
+                //落板工位
+                if(CollUtil.isNotEmpty(destoryInfoVO.getCheckList())){
+                    //选一个
+                    if(destoryInfoVO.getCheckList().size() == 1){
+                        Integer tmp = Integer.valueOf(destoryInfoVO.getCheckList().iterator().next());
+                        if(!tmp.equals(QtManagerConstant.NUM_1) || !tmp.equals(QtManagerConstant.NUM_2)){
+                            throw new BusinessException("落板工位格式错误");
+                        }
+                        qtCheckTaskDestoryInfo.setDestoryWorkStation(tmp);
+                    }else {
+                        qtCheckTaskDestoryInfo.setDestoryWorkStation(QtManagerConstant.NUM_3);
+                    }
+                }
                 qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
             });
             qtCheckTaskDestoryInfoService.saveBatch(qtCheckTaskDestoryInfoList);
