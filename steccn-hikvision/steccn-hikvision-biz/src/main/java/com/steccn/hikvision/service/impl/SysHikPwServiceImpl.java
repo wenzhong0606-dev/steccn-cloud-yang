@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.hikvision.domain.SysHikPw;
@@ -14,6 +16,7 @@ import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
 import com.steccn.hikvision.dto.SysHikPwTreeDTO;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.mapper.SysHikPwMapper;
+import com.steccn.hikvision.vo.CameraVO;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.MessScopeVO;
@@ -39,6 +42,7 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
         implements SysHikPwService {
 
     private final RemoteMessFeignApi remoteMessFeignApi;
+    private final HikvisionServiceImpl hikvisionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -94,13 +98,12 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
     }
 
     @Override
-    public SysHikPwTreeDTO tree(String username) {
+    public List<CameraVO> tree(String username) {
         //获取用户的角色
         MessScopeVO role = remoteMessFeignApi.getRole(username);
         if (Objects.isNull(role) || CollUtil.isEmpty(role.getStringList())) {
             return null;
         }
-        //获取整棵树
 
         //获取数据集
         List<SysHikPw> dbList = list(new LambdaQueryWrapper<SysHikPw>().in(SysHikPw::getRoleCode, role.getStringList()).orderByAsc(SysHikPw::getSort));
@@ -108,9 +111,35 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
             return null;
         }
 
-        
+        //获取所有type = 0 的元素，然后递归去树中查询所有叶子节点
+        Set<String> virtualNodeList = dbList.stream().filter(ele -> ele.getType() == 1).map(SysHikPw::getIndexCode).collect(Collectors.toSet());
+        Set<CameraVO> resSet = Sets.newHashSet();
+        //获取所有的节点
+        List<CameraVO> sourceFlatList = hikvisionService.flatCameraList();
+        Map<String, Integer> sortMap = Maps.newHashMap();
+        for (int i = 0; i < sourceFlatList.size(); i++) {
+            sortMap.put(sourceFlatList.get(i).getIndexCode(), i);
+        }
 
-        return null;
+        if (CollUtil.isNotEmpty(virtualNodeList) && CollUtil.isNotEmpty(sourceFlatList)) {
+
+            List<CameraVO> filterNodeList = sourceFlatList.stream().filter(ele -> virtualNodeList.contains(ele.getRegionPathName())).collect(Collectors.toList());
+            resSet.addAll(filterNodeList);
+        }
+
+        Set<String> leafList = dbList.stream().filter(ele -> ele.getType() == 0).map(SysHikPw::getIndexCode).collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(leafList) && CollUtil.isNotEmpty(sourceFlatList)) {
+            List<CameraVO> sourceList = sourceFlatList.stream().filter(ele -> leafList.contains(ele.getIndexCode())).collect(Collectors.toList());
+            resSet.addAll(sourceList);
+        }
+
+        //排序
+        List<CameraVO> resList = Lists.newArrayList(resSet);
+        resList.forEach(ele -> ele.setSort(sortMap.getOrDefault(ele.getIndexCode(), Integer.MAX_VALUE)));
+        resList.sort(Comparator.comparing(CameraVO::getSort));
+
+        //递归成一颗树 返回出去
+        return HikvisionServiceImpl.convertToTree(resList);
     }
 }
 

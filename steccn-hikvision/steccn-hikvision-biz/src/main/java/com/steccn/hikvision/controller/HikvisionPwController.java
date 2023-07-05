@@ -44,7 +44,7 @@ public class HikvisionPwController {
 
     @ApiOperation("用户权限-树型结构输出")
     @GetMapping("/tree")
-    public R<SysHikPwTreeDTO> tree() {
+    public R<List<CameraVO>> tree() {
         String username = SecurityUtils.getUser().getUsername();
         return R.success(sysHikPwService.tree(username));
     }

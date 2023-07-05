@@ -7,6 +7,7 @@ import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
 import com.steccn.hikvision.dto.SysHikPwTreeDTO;
+import com.steccn.hikvision.vo.CameraVO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -40,5 +41,5 @@ public interface SysHikPwService extends IService<SysHikPw> {
      * @param username 用户名称
      * @return 树结构
      */
-    SysHikPwTreeDTO tree(String username);
+    List<CameraVO> tree(String username);
 }
