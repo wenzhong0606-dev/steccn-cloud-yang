@@ -1304,6 +1304,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 sumBdList.addAll(bdList);
                 taskVO.setCheckResult(Objects.nonNull(result) ? result.toString(): null);
                 taskVO.setProductLine(ele.getProductLine());
+                taskVO.setId(ele.getId());
                 qtSpcReportHSCDetailTaskVOS.add(taskVO);
             });
             //求平均值
