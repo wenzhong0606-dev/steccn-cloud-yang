@@ -10,6 +10,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -38,6 +39,7 @@ import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.vo.OutputQualityDetailVO;
@@ -2271,6 +2273,9 @@ public class ReportServiceImpl implements ReportService {
     private OutputQualityDataVO totalJp(List<OutputQualityDataVO> data) {
 
         int size = data.stream().map(OutputQualityDataVO::getProductionLine).distinct().collect(Collectors.toSet()).size();
+        //避免重复值合计,一条产线只合计一次
+        Map<String,Integer> productLineCount = data.stream()
+                .map(OutputQualityDataVO::getProductionLine).distinct().collect(Collectors.toMap(name -> name,name -> 0));
         Integer shutUp = 0;
         Integer startToTalk = 0;
         Integer stone = 0;
@@ -2280,6 +2285,10 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal outputTon = BigDecimal.ZERO;
         BigDecimal outputSq = BigDecimal.ZERO;
         for (OutputQualityDataVO foreDatum : data) {
+            //一条产线只合计一次
+            if(!productLineCount.get(foreDatum.getProductionLine()).equals(QtManagerConstant.NUM_0)){
+                continue;
+            }
             shutUp = IntegerUtil.add(shutUp, foreDatum.getShutUp());
             startToTalk = IntegerUtil.add(startToTalk, foreDatum.getStartToTalk());
             stone = IntegerUtil.add(stone, foreDatum.getStone());
@@ -2288,6 +2297,8 @@ public class ReportServiceImpl implements ReportService {
             outputTon = BigDecimalUtil.add(outputTon, foreDatum.getOutputTon());
             outputSq = BigDecimalUtil.add(outputSq, foreDatum.getOutputSq());
             currentClass = BigDecimalUtil.add(currentClass, foreDatum.getCurrentClass());
+            //累加产线
+            productLineCount.computeIfPresent(foreDatum.getProductionLine(),(k,v)->v+1);
         }
         OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
         outputQualityDataVO.setType(1);
