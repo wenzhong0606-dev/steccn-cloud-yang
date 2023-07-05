@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.hikvision.domain.SysHikPw;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.hikvision.dto.SysHikPwDTO;
+import com.steccn.hikvision.dto.SysHikPwSaveDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -18,8 +19,8 @@ public interface SysHikPwService extends IService<SysHikPw> {
 
     /**
      * 权限保存
-     * @param sysHikPwDTO dto
+     * @param list dto
      * @return 是否保存成功
      */
-    Boolean pwSave(List<SysHikPwSaveListDTO> sysHikPwDTOList);
+    Boolean pwSave(List<SysHikPwSaveDTO> list);
 }

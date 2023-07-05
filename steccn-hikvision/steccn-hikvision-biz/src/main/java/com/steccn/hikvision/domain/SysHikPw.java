@@ -32,7 +32,7 @@ public class SysHikPw implements Serializable {
     /**
      * 视频监控code|节点code
      */
-    private Long indexCode;
+    private String indexCode;
 
     /**
      * 排序字段

@@ -4,6 +4,9 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -19,14 +22,15 @@ public class SysHikPwSaveListDTO implements Serializable {
     private Integer id;
 
     @ApiModelProperty("0-表示是父节点 1-表示是叶子节点")
+    @NotNull(message = "节点类型不能为空")
     private Integer type;
 
-    @ApiModelProperty("角色code")
-    private String roleCode;
-
-    @ApiModelProperty("视频监控code|节点code")
-    private Long indexCode;
+    @ApiModelProperty("视频监控code|虚拟节点code")
+    @NotBlank(message = "视频监控不能为空")
+    @Size(max = 128, message = "视频监控长度不能超过128个文字")
+    private String indexCode;
 
     @ApiModelProperty("排序字段")
+    @NotNull(message = "排序字段不能空")
     private Integer sort;
 }
