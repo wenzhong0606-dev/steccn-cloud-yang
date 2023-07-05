@@ -3,6 +3,7 @@ package com.steccn.hikvision.controller;
 
 import com.steccn.common.vo.R;
 import com.steccn.hikvision.dto.SysHikPwDTO;
+import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
 import io.swagger.annotations.ApiOperation;
@@ -23,10 +24,10 @@ public class HikvisionPwController {
 
     private final SysHikPwService sysHikPwService;
 
-    @ApiOperation("权限新增")
+    @ApiOperation("权限保存")
     @PostMapping
-    public R<Boolean> save(@RequestBody SysHikPwDTO sysHikPwDTO) {
-        return R.success();
+    public R<Boolean> save(@RequestBody List<SysHikPwSaveListDTO> sysHikPwDTOList) {
+        return R.success(sysHikPwService.pwSave(sysHikPwDTOList));
     }
 
     @ApiOperation("权限查询")
