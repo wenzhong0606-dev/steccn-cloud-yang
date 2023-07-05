@@ -14,6 +14,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
@@ -102,6 +103,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsCompleteStorageService pmsCompleteStorageService;
     @Autowired
     private RemoteSpareUnitConvertFeignApi spareUnitConvertFeignApi;
+    @Autowired
+    private PmsProduceOrderCraftService pmsProduceOrderCraftService;
+    @Autowired
+    private PmProcessService pmProcessService;
 
 
     @Override
@@ -726,15 +731,51 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     .ge(PmsReportWork::getStartTime, start)
                     .le(PmsReportWork::getEndTime, end));
             if (CollUtil.isNotEmpty(dbList)) {
+                //获取产量-最后一道工序的合格数【最后一道工序报工集合 加工数 - 不合格数】
+                //获取所有订单的最后一道工序的工位
+                Set<Long> orderIdSet = Sets.newHashSet();
+                Set<Long> processIdSet = Sets.newHashSet();
+                dbList.forEach(ele -> {
+                    orderIdSet.add(ele.getProduceOrderId());
+                    processIdSet.add(ele.getProcessId());
+                });
+                Set<Long> lastProcessIdSet = getLastProcessStationMap(orderIdSet, processIdSet);
                 Map<String, List<PmsReportWork>> dbMap = dbList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + LocalDateUtil.getClassDate(v.getStartTime(), Boolean.FALSE)));
                 for (Map.Entry<String, List<PmsReportWork>> entry : dbMap.entrySet()) {
-                    List<BigDecimal> sumNumList = entry.getValue().stream().filter(v -> Objects.nonNull(v.getProcessQuantity())).map(v -> v.getProcessQuantity()).collect(Collectors.toList());
+                    //根据钢化工序，查询所有的订单工序id集合
+                    List<BigDecimal> sumNumList = entry.getValue().stream()
+                            .filter(v -> lastProcessIdSet.contains(v.getProcessId()))
+                            .filter(v -> Objects.nonNull(v.getProcessQuantity()) && Objects.nonNull(v.getBadnessQuantity()))
+                            .map(v -> BigDecimalUtil.subtract(v.getProcessQuantity(), v.getBadnessQuantity())).collect(Collectors.toList());
                     BigDecimal sumNum = BigDecimalUtil.sum(sumNumList);
                     resMap.put(entry.getKey(), sumNum);
                 }
             }
         }
         return resMap;
+    }
+
+    /**
+     * 获取每一个订单的最后一道工序
+     * @param orderIdSet 订单id集合
+     * @param processIdSet 工序id集合
+     * @return map
+     */
+    private Set<Long> getLastProcessStationMap(Set<Long> orderIdSet, Set<Long> processIdSet) {
+        //查询工序的信息
+        List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
+        if (CollUtil.isNotEmpty(pmsProduceOrderCraftList)) {
+            Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
+            List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
+            if (CollUtil.isNotEmpty(pmProcessList)) {
+                //排序，取最后一条
+                pmProcessList.sort(Comparator.comparing(PmProcess::getId));
+                Long processId = pmProcessList.get(pmProcessList.size() - 1).getId();
+                Set<Long> collect = pmsProduceOrderCraftList.stream().filter(v -> processId.equals(v.getProcessId())).map(PmsProduceOrderCraft::getId).collect(Collectors.toSet());
+                return collect;
+            }
+        }
+        return Sets.newHashSet();
     }
 
     @Override

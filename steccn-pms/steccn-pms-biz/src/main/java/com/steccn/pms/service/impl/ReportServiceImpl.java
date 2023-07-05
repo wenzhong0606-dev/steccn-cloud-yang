@@ -1625,7 +1625,9 @@ public class ReportServiceImpl implements ReportService {
                     variant = IntegerUtil.add(variant, outputQualityDataVO.getVariant());
                     flaw = IntegerUtil.add(flaw, outputQualityDataVO.getFlaw());
                     averageThickness = BigDecimalUtil.add(averageThickness, outputQualityDataVO.getAverageThickness());
-                    currentClass = BigDecimalUtil.add(currentClass, outputQualityDataVO.getCurrentClass());
+                    //不需要累加当班拉引量
+//                    currentClass = BigDecimalUtil.add(currentClass, outputQualityDataVO.getCurrentClass());
+                    currentClass = outputQualityDataVO.getCurrentClass();
                     outputTon = BigDecimalUtil.add(outputTon,outputQualityDataVO.getOutputTon());
                     outputSq = BigDecimalUtil.add(outputSq,outputQualityDataVO.getOutputSq());
                     finishedProduct = BigDecimalUtil.add(finishedProduct,outputQualityDataVO.getFinishedProduct());
