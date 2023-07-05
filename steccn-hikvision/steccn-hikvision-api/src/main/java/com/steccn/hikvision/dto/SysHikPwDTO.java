@@ -25,7 +25,7 @@ public class SysHikPwDTO implements Serializable {
     private String roleCode;
 
     @ApiModelProperty("视频监控code|节点code")
-    private Long indexCode;
+    private String indexCode;
 
     @ApiModelProperty("排序字段")
     private Integer sort;

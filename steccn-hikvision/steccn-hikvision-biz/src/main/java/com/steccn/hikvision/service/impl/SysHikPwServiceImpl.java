@@ -4,22 +4,27 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.hikvision.domain.SysHikPw;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
+import com.steccn.hikvision.dto.SysHikPwTreeDTO;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.mapper.SysHikPwMapper;
+import com.steccn.platform.feign.RemoteMesFeignApi;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.MessScopeVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -29,8 +34,11 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
         implements SysHikPwService {
+
+    private final RemoteMessFeignApi remoteMessFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -69,6 +77,40 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
             }
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<SysHikPwDTO> info(String roleCode) {
+        List<SysHikPwDTO> resList = Lists.newArrayList();
+        List<SysHikPw> dbList = list(new LambdaQueryWrapper<SysHikPw>().eq(SysHikPw::getRoleCode, roleCode).orderByAsc(SysHikPw::getSort));
+        if (Objects.nonNull(dbList)) {
+            dbList.forEach(ele -> {
+                SysHikPwDTO res = new SysHikPwDTO();
+                BeanUtils.copyProperties(ele, res);
+                resList.add(res);
+            });
+        }
+        return resList;
+    }
+
+    @Override
+    public SysHikPwTreeDTO tree(String username) {
+        //获取用户的角色
+        MessScopeVO role = remoteMessFeignApi.getRole(username);
+        if (Objects.isNull(role) || CollUtil.isEmpty(role.getStringList())) {
+            return null;
+        }
+        //获取整棵树
+
+        //获取数据集
+        List<SysHikPw> dbList = list(new LambdaQueryWrapper<SysHikPw>().in(SysHikPw::getRoleCode, role.getStringList()).orderByAsc(SysHikPw::getSort));
+        if (CollUtil.isEmpty(dbList)) {
+            return null;
+        }
+
+        
+
+        return null;
     }
 }
 

@@ -2,11 +2,13 @@ package com.steccn.hikvision.controller;
 
 
 import cn.hutool.core.lang.Assert;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
+import com.steccn.hikvision.dto.SysHikPwTreeDTO;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
 import io.swagger.annotations.ApiOperation;
@@ -36,13 +38,14 @@ public class HikvisionPwController {
 
     @ApiOperation("权限查询")
     @GetMapping
-    public R<List<SysHikPwDTO>> get() {
-        return R.success();
+    public R<List<SysHikPwDTO>> info(@RequestParam("roleCode") String roleCode) {
+        return R.success(sysHikPwService.info(roleCode));
     }
 
     @ApiOperation("用户权限-树型结构输出")
     @GetMapping("/tree")
-    public R<List<CameraVO>> tree() {
-        return R.success();
+    public R<SysHikPwTreeDTO> tree() {
+        String username = SecurityUtils.getUser().getUsername();
+        return R.success(sysHikPwService.tree(username));
     }
 }
