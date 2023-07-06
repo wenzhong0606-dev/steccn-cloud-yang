@@ -219,7 +219,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
                 WmsStorageReceiptInfoDTO wmsStorageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
                 BeanUtils.copyProperties(caseInfo, wmsStorageReceiptInfoDTO);
-                wmsStorageReceiptInfoDTO.setQuantity(sumQuantity);
+                wmsStorageReceiptInfoDTO.setQuantity(caseInfo.getQuantity());
                 wmsStorageReceiptInfoDTO.setUnit(caseInfo.getUnitId());
                 wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
                 wmsStorageReceiptInfoDTO.setBatch("0");
