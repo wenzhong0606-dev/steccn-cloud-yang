@@ -140,7 +140,23 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String generate(List<CompleteStorageScanDTO> dtoList) {
+    public String generateInfo(List<CompleteStorageScanDTO> dtoList) {
+        String code = generate(dtoList);
+        //调用确认入库单接口
+        PmsCompleteStorage pmsCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code), false);
+        Assert.notNull(pmsCompleteStorage, "入库单为空");
+        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+        receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
+        FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        return code;
+    }
+
+    /**
+     * 生成入库单
+     * @param dtoList
+     * @return
+     */
+    private String generate(List<CompleteStorageScanDTO> dtoList) {
         Assert.notEmpty(dtoList, "请选择箱子");
         //分布式锁 ，保证最大入库单号
         //加锁

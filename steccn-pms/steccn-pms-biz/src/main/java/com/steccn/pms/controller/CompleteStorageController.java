@@ -46,7 +46,7 @@ public class CompleteStorageController {
         if (CollUtil.isEmpty(validList)) {
             throw new BusinessException("请选择箱子");
         }
-        return R.success(pmsCompleteStorageService.generate(validList.getList()));
+        return R.success(pmsCompleteStorageService.generateInfo(validList.getList()));
     }
 
     @PostMapping("/connect/line")
