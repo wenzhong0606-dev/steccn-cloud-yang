@@ -262,11 +262,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
         //遍历查出来的集合封装数据
         reportList.forEach(q -> {
-            try {
-                resList.add(getQtReportChartVO(q, checkItemMap, materialIdNameMap, dictIdNameMap, snapshotMap));
-            }catch (Exception e){
-                log.error("{}",e.getLocalizedMessage());
-            }
+            resList.add(getQtReportChartVO(q, checkItemMap, materialIdNameMap, dictIdNameMap, snapshotMap));
         });
         return resList;
     }
@@ -386,7 +382,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private void otherCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds, QtManagerConstant.QtGranularityEnum granularityEnum) {
         //根据条件查出所有的任务
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTaskSpotTime(q);
-        SteccnTableAssertUtil.notEmpty(qtCheckTasks,"全量数据表为空");
         //设置时间分片
         List<String> dates = Lists.newArrayList();
         //将时间范围根据粒度分片
@@ -441,7 +436,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private void patrol(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds, QtManagerConstant.QtGranularityEnum granularityEnum) {
         //根据条件查出所有的任务
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTaskSpotTime(q);
-        SteccnTableAssertUtil.notEmpty(qtCheckTasks,"全量数据表为空");
         //设置时间分片
         List<String> dates = Lists.newArrayList();
         //将时间范围根据粒度分片
@@ -1087,7 +1081,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //1.先查询所有的业务数据
         //获取符合条件的原始数据
         List<QtIncomingCheckDTO> sourceList = qtCheckTaskService.comingList(itemIds);
-        SteccnTableAssertUtil.notEmpty(sourceList, "来料检全量数据表为空");
+//        SteccnTableAssertUtil.notEmpty(sourceList, "来料检全量数据表为空");
+        sourceList = Objects.isNull(sourceList) ? Lists.newArrayList() : sourceList;
 
         List<QtIncomingCheckDTO> dataList = Lists.newArrayList();
         sourceList.forEach(ele -> {
@@ -1168,7 +1163,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private Page<QtSpcReportDetailVO> otherDetailPage(QtSpcReportDetailPageDTO dto, QtReport report, QtManagerConstant.QtGranularityEnum granularityEnum, QtCheckItem qtCheckItem, Set<Integer> itemIds, String measureUnitName, QtMaterial material) {
         //根据条件先low出所有的检验任务数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTask(report);
-        SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
+        qtCheckTasks = Objects.isNull(qtCheckTasks) ? Lists.newArrayList() : qtCheckTasks;
+//        SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
         //spc任务明细表的数据集合
@@ -1241,7 +1237,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private Page<QtSpcReportDetailVO> patrol(QtSpcReportDetailPageDTO dto, QtReport report, QtManagerConstant.QtGranularityEnum granularityEnum, QtCheckItem qtCheckItem, Set<Integer> itemIds, String measureUnitName, QtMaterial material) {
         //根据条件先low出所有的检验任务数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.getSpcCheckTaskSpotTime(report);
-        SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
+        qtCheckTasks = Objects.isNull(qtCheckTasks) ? Lists.newArrayList() : qtCheckTasks;
+
+//        SteccnTableAssertUtil.notEmpty(qtCheckTasks, "全量数据表为空");
         //将时间范围根据粒度分片
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRange(granularityEnum.getType(), report.getTimeScopeStart(), report.getTimeScopeEnd());
         //spc任务明细表的数据集合
