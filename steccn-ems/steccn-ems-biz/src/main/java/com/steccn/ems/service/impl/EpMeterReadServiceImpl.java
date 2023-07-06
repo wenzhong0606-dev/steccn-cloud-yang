@@ -445,6 +445,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             epMeterReadDetailsVO.setEntityTable(instrumentAccount.getEntityTable());
             epMeterReadDetailsVO.setMeterId(instrumentAccount.getId().longValue());
             epMeterReadDetailsVO.setMeterName(instrumentAccount.getMeterName());
+            epMeterReadDetailsVO.setStatus(instrumentAccount.getStatus());
             epMeterReadDetailsVO.setMeterTypeName(epEnergyType.getMeasureMeterName());
             setPartitionNode(epMeterReadDetailsVO);
         } else {
