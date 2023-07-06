@@ -437,7 +437,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         LocalDate date = LocalDate.parse(readDate, DatePattern.NORM_DATE_FORMATTER);
         EpMeterReadDetailsVO epMeterReadDetailsVO = this.baseMapper.selectByReadDateAndMeterId(readDate, meterId);
 
-        if (Objects.isNull(epMeterReadDetailsVO) && now.isEqual(date)) {
+        if (Objects.isNull(epMeterReadDetailsVO) && LocalDateUtil.le(date, now)) {
             EpEnergyType epEnergyType = epEnergyTypeService.getById(instrumentAccount.getMeterType());
             epMeterReadDetailsVO = new EpMeterReadDetailsVO();
             epMeterReadDetailsVO.setPartitionId(instrumentAccount.getPartitionNode());
