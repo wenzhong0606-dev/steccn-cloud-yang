@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.KqShiftonoffworksectionsMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.KqShiftonoffworksections">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="serialid" column="serialid" jdbcType="INTEGER"/>
+            <result property="across" column="across" jdbcType="CHAR"/>
+            <result property="beginmin" column="beginmin" jdbcType="VARCHAR"/>
+            <result property="endmin" column="endmin" jdbcType="VARCHAR"/>
+            <result property="times" column="times" jdbcType="VARCHAR"/>
+            <result property="onoffworktype" column="onoffworktype" jdbcType="VARCHAR"/>
+            <result property="isdelete" column="isdelete" jdbcType="CHAR"/>
+            <result property="mins" column="mins" jdbcType="VARCHAR"/>
+            <result property="record" column="record" jdbcType="VARCHAR"/>
+            <result property="minsNext" column="mins_next" jdbcType="CHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,serialid,across,
+        beginmin,endmin,times,
+        onoffworktype,isdelete,mins,
+        record,mins_next
+    </sql>
+</mapper>
