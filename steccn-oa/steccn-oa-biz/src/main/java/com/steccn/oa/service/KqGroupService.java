@@ -2,6 +2,9 @@ package com.steccn.oa.service;
 
 import com.steccn.oa.domain.KqGroup;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.oa.vo.OaKqGroupDetailVO;
+
+import java.util.List;
 
 /**
 * @author Admin
@@ -9,5 +12,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2023-04-04 11:18:13
 */
 public interface KqGroupService extends IService<KqGroup> {
-
+    /**
+     * 获取oa考勤组详情
+     * @return
+     */
+    List<OaKqGroupDetailVO> getKqGroupDetails();
 }
