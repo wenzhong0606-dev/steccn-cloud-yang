@@ -1,9 +1,11 @@
 package com.steccn.pms.service;
 
-import com.steccn.common.constant.ResultCode;
-import com.steccn.pms.domain.PmsPullForce;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
+import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.vo.PmsPullForceDataVO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 
@@ -86,4 +88,11 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     List<PmsPullForce> monthlyData(LocalDate date, List<Integer> productWorkshop);
+
+    /**
+     * 时间范围内的拉引量数据
+     * @param dto
+     * @return
+     */
+    List<PmsPullForceDataVO> getDataFromPeriods(PmsPullForceQueryDTO dto);
 }
