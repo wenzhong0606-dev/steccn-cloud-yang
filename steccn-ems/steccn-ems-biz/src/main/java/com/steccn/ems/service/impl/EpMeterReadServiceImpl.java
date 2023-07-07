@@ -906,11 +906,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             rowDTO.setProductLineId(lineId);
             if (sjgLineSet.contains(lineId)) {
                 //深加工产线节点
+                rowDTO.setProductLineId(lineId);
                 sjgDataList.add(rowDTO);
             } else if (jpLineSet.contains(lineId)) {
                 //基片产线节点
                 rowDTO.setProductLineId(epPartition.getOfficeId());
-                jpDataList.add(convertToJpDto(rowDTO));
+                jpDataList.add(convertToJpDto(rowDTO,lineId));
             }
             orderMap.put(rowDTO.getUuid(), rowDTO);
             orderRowList.add(rowDTO);
@@ -1085,12 +1086,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @param rowDTO 对象
      * @return
      */
-    private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO) {
+    private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO,Integer lineId) {
         QtEmsPullAmountDTO dto = new QtEmsPullAmountDTO();
         BeanUtils.copyProperties(rowDTO, dto);
         dto.setClassDate(rowDTO.getReadDate());
         dto.setClassId(rowDTO.getClassId());
         dto.setStartTime(rowDTO.getStart());
+        dto.setProductLineId(lineId);
         dto.setEndTime(rowDTO.getEnd());
         return dto;
     }
