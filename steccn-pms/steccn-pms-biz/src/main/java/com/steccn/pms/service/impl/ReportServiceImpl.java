@@ -46,6 +46,7 @@ import com.steccn.qms.vo.OutputQualityDetailVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -1295,6 +1296,12 @@ public class ReportServiceImpl implements ReportService {
                 }
                 outputQualityDataVOS.add(totalJp(nightData));
             }
+            //如果早晚班都有，则加入总计
+            if(CollUtil.isNotEmpty(foreData) && CollUtil.isNotEmpty(nightData)){
+                outputQualityDataVOS.add(totalAllJp(foreData,nightData));
+            }
+
+
             //累计拉引量
             if (CollUtil.isNotEmpty(pullDataList)) {
                 BigDecimal quantity = BigDecimal.ZERO;
@@ -1348,10 +1355,10 @@ public class ReportServiceImpl implements ReportService {
             }
             //排序
             outputQualityDataVOS = outputQualityDataVOS.stream()
-                    .sorted(Comparator.comparing(OutputQualityDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
+                    .sorted(Comparator.comparing(OutputQualityDataVO::getClasses, Comparator.nullsLast(String::compareTo))
                             .thenComparing(OutputQualityDataVO::getType)
-                            .thenComparing(OutputQualityDataVO::getClassGroup, Comparator.nullsFirst(String::compareTo))
-                            .thenComparing(OutputQualityDataVO::getSort,Comparator.nullsFirst(Integer::compareTo)))
+                            .thenComparing(OutputQualityDataVO::getClassGroup, Comparator.nullsLast(String::compareTo))
+                            .thenComparing(OutputQualityDataVO::getSort,Comparator.nullsLast(Integer::compareTo)))
                     .collect(Collectors.toList());
 
         }
@@ -1365,6 +1372,78 @@ public class ReportServiceImpl implements ReportService {
         resList.add(outputQualityVO);
         resList.add(fromTableData);
         return resList;
+    }
+
+    /**
+     * 合计列
+     * @param dayData 白班数据
+     * @param nightData 夜班数据
+     * @return
+     */
+    private OutputQualityDataVO totalAllJp(List<OutputQualityDataVO> dayData, List<OutputQualityDataVO> nightData) {
+        Integer shutUp = 0;
+        Integer startToTalk = 0;
+        Integer stone = 0;
+        Integer variant = 0;
+        BigDecimal averageThickness = BigDecimal.ZERO;
+        BigDecimal currentClass = BigDecimal.ZERO;
+        BigDecimal outputTon = BigDecimal.ZERO;
+        BigDecimal outputSq = BigDecimal.ZERO;
+        //避免重复值合计,一条产线只合计一次
+        Map<String,Integer> dayProductLineCount = dayData.stream()
+                .map(OutputQualityDataVO::getProductionLine).distinct().collect(Collectors.toMap(name -> name,name -> 0));
+        Map<String,Integer> nightProductLineCount = dayData.stream()
+                .map(OutputQualityDataVO::getProductionLine).distinct().collect(Collectors.toMap(name -> name,name -> 0));
+        for (OutputQualityDataVO foreDatum : dayData) {
+            if (!dayProductLineCount.get(foreDatum.getProductionLine()).equals(QtManagerConstant.NUM_0)) {
+                continue;
+            }
+            shutUp = IntegerUtil.add(shutUp, foreDatum.getShutUp());
+            startToTalk = IntegerUtil.add(startToTalk, foreDatum.getStartToTalk());
+            stone = IntegerUtil.add(stone, foreDatum.getStone());
+            variant = IntegerUtil.add(variant, foreDatum.getVariant());
+            averageThickness = BigDecimalUtil.add(averageThickness, foreDatum.getAverageThickness());
+            outputTon = BigDecimalUtil.add(outputTon, foreDatum.getOutputTon());
+            outputSq = BigDecimalUtil.add(outputSq, foreDatum.getOutputSq());
+            currentClass = BigDecimalUtil.add(currentClass, foreDatum.getCurrentClass());
+            //累加产线
+            dayProductLineCount.computeIfPresent(foreDatum.getProductionLine(), (k, v) -> v + 1);
+        }
+
+        for (OutputQualityDataVO foreDatum : nightData) {
+            if (!nightProductLineCount.get(foreDatum.getProductionLine()).equals(QtManagerConstant.NUM_0)) {
+                continue;
+            }
+            shutUp = IntegerUtil.add(shutUp, foreDatum.getShutUp());
+            startToTalk = IntegerUtil.add(startToTalk, foreDatum.getStartToTalk());
+            stone = IntegerUtil.add(stone, foreDatum.getStone());
+            variant = IntegerUtil.add(variant, foreDatum.getVariant());
+            averageThickness = BigDecimalUtil.add(averageThickness, foreDatum.getAverageThickness());
+            outputTon = BigDecimalUtil.add(outputTon, foreDatum.getOutputTon());
+            outputSq = BigDecimalUtil.add(outputSq, foreDatum.getOutputSq());
+            currentClass = BigDecimalUtil.add(currentClass, foreDatum.getCurrentClass());
+            //累加产线
+            nightProductLineCount.computeIfPresent(foreDatum.getProductionLine(), (k, v) -> v + 1);
+        }
+
+
+        OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
+        outputQualityDataVO.setType(2);
+        outputQualityDataVO.setProductionLine("合计");
+        outputQualityDataVO.setCurrentClass(currentClass.compareTo(BigDecimal.ZERO) == 0 ? null : currentClass);
+        outputQualityDataVO.setOutputSq(outputSq.compareTo(BigDecimal.ZERO) == 0 ? null : outputSq);
+        outputQualityDataVO.setOutputTon(outputTon.compareTo(BigDecimal.ZERO) == 0 ? null : outputTon);
+        outputQualityDataVO.setShutUp(shutUp);
+        outputQualityDataVO.setStartToTalk(startToTalk);
+        outputQualityDataVO.setStone(stone);
+        outputQualityDataVO.setVariant(variant);
+        outputQualityDataVO.setFlaw(IntegerUtil.add(IntegerUtil.add(shutUp, startToTalk), IntegerUtil.add(stone, variant)));
+        outputQualityDataVO.setAverageThickness(averageThickness.divide(new BigDecimal(dayData.size() + nightData.size())));
+        BigDecimal divide = BigDecimalUtil.divide(outputTon, currentClass, 4);
+        BigDecimal hundred = BigDecimal.valueOf(100);
+        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
+        outputQualityDataVO.setClasses(null);
+        return outputQualityDataVO;
     }
 
     @Override
