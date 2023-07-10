@@ -1,16 +1,16 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -21,9 +21,11 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
-import com.steccn.pms.service.PmsPullForceService;
+import com.steccn.pms.dto.PmsPullForceQueryDTO;
 import com.steccn.pms.mapper.PmsPullForceMapper;
+import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.vo.PmsPullForceClassQuantity;
+import com.steccn.pms.vo.PmsPullForceDataVO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +39,6 @@ import org.springframework.util.Assert;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE;
@@ -303,6 +304,19 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     public List<PmsPullForce> monthlyData(LocalDate date, List<Integer> productWorkshop) {
         LocalDate startDate = date.withDayOfMonth(1);
         return list(new LambdaQueryWrapper<PmsPullForce>().in(PmsPullForce::getWorkshopId, productWorkshop).ge(PmsPullForce::getPullForceDate, startDate).le(PmsPullForce::getPullForceDate, date));
+    }
+
+    @Override
+    public List<PmsPullForceDataVO> getDataFromPeriods(PmsPullForceQueryDTO dto) {
+        List<PmsPullForceDataVO> result = Lists.newArrayList();
+        List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>()
+                .ge(PmsPullForce::getPullForceDate, dto.getStartDate())
+                .le(PmsPullForce::getPullForceDate, dto.getEndDate())
+                .in(CollUtil.isNotEmpty(dto.getProductLineIds()),PmsPullForce::getProductLineId,dto.getProductLineIds()));
+        if(CollUtil.isNotEmpty(list)){
+            result = BeanUtil.copyToList(list,PmsPullForceDataVO.class);
+        }
+        return result;
     }
 }
 

@@ -380,6 +380,7 @@ public class OaService {
                 break;
             case 4:
                 result = oaApi.getDoneWorkflow(headers,dto);
+                break;
             case 5:
                 result = oaApi.getRejectedWorkflow(headers,dto);
                 break;

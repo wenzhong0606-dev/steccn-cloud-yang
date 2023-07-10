@@ -22,12 +22,15 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
+import com.steccn.pms.dto.PmsPullForceQueryDTO;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.PmsPullForceDataVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
@@ -1970,16 +1973,52 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         resultList = resultList.stream().sorted(Comparator.comparing(QtEmsPullAmountDTO::getClassDate)).collect(Collectors.toList());
         LocalDate startDate = resultList.get(0).getClassDate();
         LocalDate endDate = resultList.get(resultList.size()-1).getClassDate();
-        //拿到所有产线的班次日期
-        List<QtPullAmountDTO> qtPullAmountDTOS = calculatePullAmount(startDate, endDate);
-        resultList.forEach(tmp->{
+        List<Integer> productLineIds = resultList.stream()
+                .map(QtEmsPullAmountDTO::getProductLineId)
+                .collect(Collectors.toList());
+        //去重id
+        productLineIds = productLineIds.stream().distinct().collect(Collectors.toList());
+        PmsPullForceQueryDTO pmsPullForceQueryDTO = new PmsPullForceQueryDTO();
+        pmsPullForceQueryDTO.setStartDate(startDate);
+        pmsPullForceQueryDTO.setEndDate(endDate);
+        pmsPullForceQueryDTO.setProductLineIds(new HashSet<>(productLineIds));
+        List<QtPullAmountDTO> qtPullAmountDTOS = Lists.newArrayList();
+        //拿到算好的拉引量
+        List<PmsPullForceDataVO> pmsPullForceDataVOS = FeignOptional.of(() -> remotePullForceFeignApi.getDataFromPeriods(pmsPullForceQueryDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        //查看今天是否在日期范围内,若在范围内则计算当天数据
+        LocalDate today = LocalDate.now();
+        if (today.isAfter(startDate) && today.isBefore(endDate) || today.isEqual(startDate) || today.isEqual(endDate)) {
+            qtPullAmountDTOS = calculatePullAmount(startDate, endDate);
+            pmsPullForceDataVOS = pmsPullForceDataVOS.stream().filter(v->!v.getPullForceDate().isEqual(today)).collect(Collectors.toList());
+        }
+        //处理班次
+        Set<String> classNames = Sets.newHashSet(PmManagerConstant.FORE_SHIFT, PmManagerConstant.NIGHT_SHIFT);
+        Map<String, Long> classNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(classNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //转成0,1表示班次的形式
+        Map<Long, Integer> classIdCodeMap = classNameMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getValue,
+                        entry -> entry.getKey().equals("早班") ? 0 : 1));
+        //把已经算好的拉引量数据放入
+        if(CollUtil.isNotEmpty(pmsPullForceDataVOS)){
+            for(PmsPullForceDataVO tmp:pmsPullForceDataVOS){
+                QtPullAmountDTO pullAmount = new QtPullAmountDTO();
+                pullAmount.setPullAmount(tmp.getQuantity());
+                pullAmount.setClassDate(tmp.getPullForceDate());
+                pullAmount.setProductLineId(tmp.getProductLineId());
+                pullAmount.setClassId(classIdCodeMap.get(tmp.getClassesId()));
+                qtPullAmountDTOS.add(pullAmount);
+            }
+        }
+        //处理数据
+        for(QtEmsPullAmountDTO tmp:resultList){
             BigDecimal pullAmount = BigDecimal.ZERO;
             if(tmp.getEndTime().isAfter(tmp.getStartTime())){
                 //12小时做比较
                 BigDecimal hour12 = new BigDecimal(43200);
                 Duration dr = Duration.between(tmp.getStartTime(),tmp.getEndTime());
                 BigDecimal period = new BigDecimal(dr.getSeconds());
-                if(hour12.compareTo(period)==1){
+                if(hour12.compareTo(period)==1 || hour12.compareTo(period)==0){
                     //找到满足条件的产线
                     QtPullAmountDTO qtPullAmountDTO = qtPullAmountDTOS.stream().filter(v -> v.getClassDate().equals(tmp.getClassDate())
                             && v.getProductLineId().equals(tmp.getProductLineId())
@@ -1991,7 +2030,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 }
             }
             tmp.setPullAmount(pullAmount);
-        });
+        }
         return resultList;
     }
 

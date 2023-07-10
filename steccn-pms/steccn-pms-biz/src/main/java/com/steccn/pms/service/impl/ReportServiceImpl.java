@@ -1304,7 +1304,8 @@ public class ReportServiceImpl implements ReportService {
                     quantity = quantity.add(pmsPullForce.getQuantity());
                     if (dto.getDate().equals(pmsPullForce.getPullForceDate()) && classId.equals(pmsPullForce.getClassesId())) {
                         //截至日期的夜班拉引量
-                        nightQuantity = pmsPullForce.getQuantity();
+//                        nightQuantity = pmsPullForce.getQuantity();
+                        nightQuantity = BigDecimalUtil.add(pmsPullForce.getQuantity(),nightQuantity,4);
                     }
                 }
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
@@ -1328,7 +1329,9 @@ public class ReportServiceImpl implements ReportService {
                     if (LocalDateUtil.isRange(start, pmsReportWorkVO.getStartTime(), pmsReportWorkVO.getEndTime(), false, false) && classId.equals(pmsReportWorkVO.getClassesId())) {
                         //截至日期的夜班产量
                         //根据报工数量计算产量 吨
-                        nightQuantity = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
+//                        nightQuantity = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
+                        BigDecimal nightQuantityTmp = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
+                        nightQuantity = BigDecimalUtil.add(nightQuantity,nightQuantityTmp);
                     }
                 }
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {

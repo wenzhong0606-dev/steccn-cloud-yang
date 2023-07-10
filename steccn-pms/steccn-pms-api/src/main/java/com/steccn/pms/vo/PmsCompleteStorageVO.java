@@ -56,4 +56,10 @@ public class PmsCompleteStorageVO {
 
     @ApiModelProperty("货架")
     private String shelfName;
+
+    @ApiModelProperty("是否已打印")
+    private Integer printFlag;
+
+    @ApiModelProperty("打印次数")
+    private Integer printCount;
 }
