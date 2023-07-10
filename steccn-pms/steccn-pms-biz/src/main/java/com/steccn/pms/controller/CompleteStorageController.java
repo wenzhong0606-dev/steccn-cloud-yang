@@ -74,13 +74,18 @@ public class CompleteStorageController {
         return R.success(pmsCompleteStorageService.completeStoragePageList(dto));
     }
 
+    @PostMapping("/case/print")
+    @ApiOperation("生产订单的箱号批量打印")
+    public R<Boolean> casePrint(@RequestBody List<String> caseNoList) {
+        return R.success(pmsCompleteStorageService.casePrint(caseNoList));
+    }
+
     @PostMapping("/complete")
     @ApiOperation("根据完成生产订单入库单编码修改状态")
     @SysLog("complete")
     public R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto) {
         return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode(),dto.getConfirmName());
     }
-
 
     /**
      * 生产-入库冲销
