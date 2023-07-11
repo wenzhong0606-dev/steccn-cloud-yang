@@ -154,8 +154,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         countRow.setClassDateStr(otherName);
         List<String> valueList = Lists.newArrayList();
         for (Integer defectId : defectIdList) {
-            Integer num = valueMap.get(defectId);
-            valueList.add(Objects.isNull(num) ? null : String.valueOf(num));
+            //为空，则给0
+            int num = valueMap.getOrDefault(defectId, 0);
+            valueList.add(String.valueOf(num));
         }
         countRow.setValueList(valueList);
         return countRow;
