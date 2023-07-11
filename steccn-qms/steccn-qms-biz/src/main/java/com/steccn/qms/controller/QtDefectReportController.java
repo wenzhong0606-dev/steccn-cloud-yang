@@ -3,6 +3,7 @@ package com.steccn.qms.controller;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
+import com.steccn.qms.vo.QtDefectFallingVO;
 import com.steccn.qms.vo.QtDefectReportVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +34,10 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.defectList(dto));
     }
 
+    @PostMapping("/falling")
+    @ApiOperation(value = "落板记录报表")
+    public R<List<QtDefectFallingVO>> falling(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.falling(dto));
+    }
 }
 

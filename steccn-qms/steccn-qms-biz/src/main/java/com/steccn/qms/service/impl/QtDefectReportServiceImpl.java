@@ -14,11 +14,14 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtDefectReportDTO;
+import com.steccn.qms.dto.QtDestoryInfoFallDTO;
+import com.steccn.qms.service.QtCheckTaskDestoryInfoService;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtDefectiveReportService;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.QtDefectFallingVO;
 import com.steccn.qms.vo.QtDefectReportDataVO;
 import com.steccn.qms.vo.QtDefectReportVO;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final QtDefectiveItemService qtDefectiveItemService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final OaInfoService oaInfoService;
+    private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -133,6 +137,17 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         }
         dataList.add(count(1, "总计", "总计", allValueMap, defectIdList));
         return resVo;
+    }
+
+    @Override
+    public List<QtDefectFallingVO> falling(QtDefectReportDTO dto) {
+        //查询所有的落板记录
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<QtDestoryInfoFallDTO> fallDTOList = qtCheckTaskDestoryInfoService.falling(dto.getProductLineList(), start, end);
+        log.info("fallDTOList -> {}", fallDTOList);
+
+        return null;
     }
 
     /**
