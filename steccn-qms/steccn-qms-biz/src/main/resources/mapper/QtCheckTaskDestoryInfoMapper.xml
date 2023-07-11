@@ -9,7 +9,7 @@
         task.task_type,
         task.product_line ->> '$.id' as product_line,
         task.class_time,
-        task.classes_id,
+        task.classes_id as classId,
         task.class_group_id,
         info.destory_start_time,
         info.destory_end_time,

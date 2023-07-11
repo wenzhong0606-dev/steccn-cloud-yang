@@ -147,6 +147,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         List<QtDestoryInfoFallDTO> fallDTOList = qtCheckTaskDestoryInfoService.falling(dto.getProductLineList(), start, end);
         log.info("fallDTOList -> {}", fallDTOList);
 
+
+
         return null;
     }
 
