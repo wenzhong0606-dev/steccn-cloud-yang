@@ -122,7 +122,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
                 for (Integer defectId : defectIdList) {
-                    Integer sum = sourceMap.getOrDefault(key(line, classDate, row.getClassId(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                    int sum = sourceMap.getOrDefault(key(line, classDate, row.getClassId(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                     valueList.add(String.valueOf(sum));
                     lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + sum);
                     allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + sum);
