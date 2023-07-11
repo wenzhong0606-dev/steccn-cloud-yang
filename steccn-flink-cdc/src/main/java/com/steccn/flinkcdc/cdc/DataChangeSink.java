@@ -4,6 +4,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.steccn.flinkcdc.constant.CdcConstant;
 import com.steccn.flinkcdc.dto.DataChangeDTO;
+import com.steccn.flinkcdc.dto.HrmresourceDTO;
 import com.steccn.flinkcdc.service.HrmresourceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -30,6 +31,25 @@ public class DataChangeSink implements SinkFunction<DataChangeDTO> {
 //        log.info("########data={}",data);
 //        SystemDept systemDept = JSONObject.parseObject(data, SystemDept.class);
 //        SystemDeptRepository bean = SpringUtil.getBean(SystemDeptRepository.class);
+//        HrmresourceDTO before = JSONObject.parseObject(dataChangeInfo.getBeforeData(), HrmresourceDTO.class);
+//        HrmresourceDTO after = JSONObject.parseObject(dataChangeInfo.getAfterData(), HrmresourceDTO.class);
+//        before.setCreated(null);
+//        before.setCreater(null);
+//        before.setModified(null);
+//        before.setModified(null);
+//        before.setCompanyworkyear(null);
+//        before.setWorkyear(null);
+//        after.setCreated(null);
+//        after.setCreater(null);
+//        after.setModified(null);
+//        after.setModified(null);
+//        after.setCompanyworkyear(null);
+//        after.setWorkyear(null);
+//        if(before.toString().equals(after.toString())){
+//            operatorType = 1;
+//        }
+//        String beforeStr = before.toString();
+//        String afterStr = after.toString();
         HrmresourceService dataBean = SpringUtil.getBean(HrmresourceService.class);
         dataBean.handleData(operatorType,dataChangeInfo);
         // 初始化/新增/修改（非逻辑删除）

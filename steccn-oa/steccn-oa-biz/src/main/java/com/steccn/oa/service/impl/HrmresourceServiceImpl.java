@@ -2,6 +2,7 @@ package com.steccn.oa.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -10,12 +11,15 @@ import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
+import com.steccn.oa.vo.OaMesUserVO;
+import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -28,6 +32,8 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         implements HrmresourceService {
 
     private final HrmresourceMapper hrmresourceMapper;
+
+    private final RemoteMesFeignApi remoteMesFeignApi;
 
     @Override
     public Long getIdByWorkCode(String workCode) {
@@ -138,6 +144,23 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             return null;
         }
         return hrmresource.getLoginid();
+    }
+
+    @Override
+    public List<OaMesUserVO> getMesUser() {
+        String data = remoteMesFeignApi.getAllUser().getData();
+        List<OaMesUserVO> oaMesUserVOS = JSONObject.parseArray(data, OaMesUserVO.class);
+        List<String> loginName = oaMesUserVOS.stream().map(OaMesUserVO::getLoginCode).collect(Collectors.toList());
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
+                .select(Hrmresource::getId, Hrmresource::getLoginid)
+                .in(Hrmresource::getLoginid,loginName));
+        oaMesUserVOS.forEach(tmp->{
+            Hrmresource one = list.stream().filter(v -> v.getLoginid().equals(tmp.getLoginCode())).findFirst().orElse(null);
+            if(Objects.nonNull(one)){
+                tmp.setOaId(one.getId());
+            }
+        });
+        return oaMesUserVOS;
     }
 }
 
