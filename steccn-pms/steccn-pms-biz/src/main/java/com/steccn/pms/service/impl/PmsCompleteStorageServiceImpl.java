@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -29,7 +31,10 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
-import com.steccn.pms.vo.*;
+import com.steccn.pms.vo.CompleteStorageListVO;
+import com.steccn.pms.vo.CompleteStorageMaterialVO;
+import com.steccn.pms.vo.CompleteStoragePageVO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
@@ -382,14 +387,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 ids.add(pmsCompleteStorageVO.getUnitId());
                 warehouseCodes.add(pmsCompleteStorageVO.getCaseNo());
             });
-            //获取单位信息
-            R<Map<Long, SysDictVO>> mapR = remoteDictFeignApi.listById(ids);
+            //获取单位信息&仓库信息
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取仓库以及货架信息
             Map<String, CaseSiteDTO> caseSiteDTOMap = pmsBarcodePrintService.caseSite(warehouseCodes);
             CaseSiteDTO defaultCaseSiteDTO = new CaseSiteDTO();
             records.forEach(pmsCompleteStorageVO -> {
                 CaseSiteDTO caseSiteDTO = caseSiteDTOMap.getOrDefault(pmsCompleteStorageVO.getCaseNo(), defaultCaseSiteDTO);
-                pmsCompleteStorageVO.setUnit(mapR.getData().get(pmsCompleteStorageVO.getUnitId()).getName());
+                pmsCompleteStorageVO.setUnit(dictMap.get(pmsCompleteStorageVO.getUnitId()).getName());
                 pmsCompleteStorageVO.setWarehouseName(caseSiteDTO.getWarehouseName());
                 pmsCompleteStorageVO.setShelfName(caseSiteDTO.getShelfName());
                 pmsCompleteStorageVO.setWarehouseId(caseSiteDTO.getWarehouseId());
@@ -610,6 +615,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
         pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
         return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
+    }
+
+    @Override
+    public Boolean casePrint(List<String> caseNoList) {
+        LambdaUpdateWrapper<PmsCompleteStorageInfo> updateWrapper = Wrappers.lambdaUpdate();
+        updateWrapper.in(PmsCompleteStorageInfo::getCaseNo, caseNoList);
+        updateWrapper.setSql("print_flag =1 , print_count = IFNULL(print_count , 0) + 1");
+        return completeStorageInfoService.update(updateWrapper);
     }
 
     /**
