@@ -28,7 +28,7 @@ public class QtDefectReportDataVO implements Serializable {
     private String productLineName;
 
     @ApiModelProperty("班次日期")
-    private LocalDate classDate;
+    private String classDateStr;
 
     @ApiModelProperty("班次")
     private Integer classId;

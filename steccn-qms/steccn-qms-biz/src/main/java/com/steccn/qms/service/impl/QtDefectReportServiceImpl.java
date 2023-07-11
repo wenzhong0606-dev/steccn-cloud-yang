@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.date.DatePattern;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -72,7 +73,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //粒度来获取班次日期
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
-        String granularityStr = null;
+        String granularityStr;
         if (QtManagerConstant.LossReportType.MONTH.getCode().equals(dto.getGranularity())) {
             granularityStr = QtManagerConstant.QtGranularityEnum.MONTH.getType();
         } else if (QtManagerConstant.LossReportType.DAY.getCode().equals(dto.getGranularity())) {
@@ -97,20 +98,24 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 //        });
 
         Map<String, List<QtCheckTaskDetailReportVO>> sourceMap = sourceDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + v.getClassesDate() + "_" + v.getClassId() + "_" + v.getDefectId()));
+        Map<Integer, Integer> allValueMap = Maps.newHashMap();
 
         for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            //合计（单产线）
+            Map<Integer, Integer> lineValueMap = Maps.newHashMap();
             for (int i = 1; i < shardTimeList.size(); i++) {
                 LocalDateTime begin = shardTimeList.get(i - 1);
                 //根据缺陷记录时段来过滤数据集
                 QtDefectReportDataVO row = new QtDefectReportDataVO();
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
                 row.setType(1);
-                row.setClassDate(classDate);
+                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
                 row.setClassId(LocalDateUtil.getClassId(begin, false));
                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(row.getClassId());
                 row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
                 row.setProductLine(line);
-                row.setProductLineName(lineIdNameMap.get(line));
+                row.setProductLineName(lineName);
                 OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
                 row.setClassGroupId(oaGroupCountDTO.getGroupId());
                 row.setClassGroupName(oaGroupCountDTO.getGroupName());
@@ -119,20 +124,51 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 for (Integer defectId : defectIdList) {
                     Integer sum = sourceMap.getOrDefault(key(line, classDate, row.getClassId(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                     valueList.add(String.valueOf(sum));
+                    lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + sum);
+                    allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + sum);
                 }
                 dataList.add(row);
             }
+            dataList.add(count(1, lineName, "合计（单产线）", lineValueMap, defectIdList));
         }
+        dataList.add(count(1, "总计", "总计", allValueMap, defectIdList));
         return resVo;
     }
+
+    /**
+     * 统计合计（单产线） | 总计
+     *
+     * @param type         类型
+     * @param lineName     产线名称
+     * @param otherName    其他名称
+     * @param valueMap     缺陷总计
+     * @param defectIdList 缺陷排序
+     * @return 行合计
+     */
+    private QtDefectReportDataVO count(Integer type, String lineName, String otherName, Map<Integer, Integer> valueMap, List<Integer> defectIdList) {
+        QtDefectReportDataVO countRow = new QtDefectReportDataVO();
+        countRow.setType(type);
+        countRow.setProductLineName(lineName);
+        countRow.setClassGroupName(otherName);
+        countRow.setClassName(otherName);
+        countRow.setClassDateStr(otherName);
+        List<String> valueList = Lists.newArrayList();
+        for (Integer defectId : defectIdList) {
+            Integer num = valueMap.get(defectId);
+            valueList.add(Objects.isNull(num) ? null : String.valueOf(num));
+        }
+        countRow.setValueList(valueList);
+        return countRow;
+    }
+
 
     /**
      * 获取map的key
      *
      * @param line      产线
-     * @param classDate
-     * @param classId
-     * @param defectId
+     * @param classDate 班次日期
+     * @param classId   班次
+     * @param defectId  缺陷id
      * @return
      */
     private String key(Integer line, LocalDate classDate, Integer classId, Integer defectId) {
