@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -86,21 +87,14 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             granularityStr = QtManagerConstant.QtGranularityEnum.CLASS.getType();
         }
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityStr, start, end);
-
         //获取产线的中文
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
-        //获取班组
-        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-
-        //性能优化
-//        Map<String, Integer> defectNumMap = Maps.newHashMap();
-//        sourceDataList.forEach(ele -> {
-//            String key = key(ele.getProductLineId(), ele.getClassesDate(), ele.getClassId(), ele.getDefectId());
-//            defectNumMap.put(key, ele.getDefectNum() + defectNumMap.getOrDefault(key, 0));
-//        });
-
+        //获取班组-只有粒度为班组，才会查询班组信息
+        Map<String, OaGroupCountDTO> classGroupMap = null;
+        if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
+            TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
+            classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        }
         Map<String, List<QtCheckTaskDetailReportVO>> sourceMap = sourceDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + v.getClassesDate() + "_" + v.getClassId() + "_" + v.getDefectId()));
         Map<Integer, Integer> allValueMap = Maps.newHashMap();
 
@@ -115,14 +109,16 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
                 row.setType(1);
                 row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
-                row.setClassId(LocalDateUtil.getClassId(begin, false));
-                QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(row.getClassId());
-                row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
                 row.setProductLine(line);
                 row.setProductLineName(lineName);
-                OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
-                row.setClassGroupId(oaGroupCountDTO.getGroupId());
-                row.setClassGroupName(oaGroupCountDTO.getGroupName());
+                if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
+                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
+                    row.setClassGroupId(oaGroupCountDTO.getGroupId());
+                    row.setClassGroupName(oaGroupCountDTO.getGroupName());
+                    row.setClassId(LocalDateUtil.getClassId(begin, false));
+                    QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(row.getClassId());
+                    row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                }
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
                 for (Integer defectId : defectIdList) {
@@ -146,7 +142,13 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<QtDestoryInfoFallDTO> fallDTOList = qtCheckTaskDestoryInfoService.falling(dto.getProductLineList(), start, end);
         log.info("fallDTOList -> {}", fallDTOList);
+        //获取产线的中文
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+
+        for (Integer line : dto.getProductLineList()) {
+
+        }
 
 
         return null;
