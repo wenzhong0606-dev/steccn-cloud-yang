@@ -261,6 +261,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //查询所有的落板原因
                 List<QtCheckTaskDestoryInfo> destroyList = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>()
                         .in(QtCheckTaskDestoryInfo::getTaskId, taskClassMap.keySet())
+                        .isNotNull(QtCheckTaskDestoryInfo::getDestoryReason)
                         .eq(QtCheckTaskDestoryInfo::getDelFlag, MpConstant.NO));
                 if (CollUtil.isNotEmpty(destroyList)) {
                     Map<Long, List<QtCheckTaskDestoryInfo>> collect = destroyList.stream().collect(Collectors.groupingBy(QtCheckTaskDestoryInfo::getTaskId));
