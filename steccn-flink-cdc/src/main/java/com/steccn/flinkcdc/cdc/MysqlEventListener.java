@@ -70,7 +70,7 @@ public class MysqlEventListener implements ApplicationRunner {
                 // initial:初始化快照,即全量导入后增量导入(检测更新数据写入)
                 .startupOptions(StartupOptions.latest())
                 .deserializer(new MysqlDeserialization())
-                .serverTimeZone("GMT+8")
+                .serverTimeZone("UTC-4")
                 .build();
     }
 }
