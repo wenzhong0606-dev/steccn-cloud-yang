@@ -23,7 +23,7 @@ public class QtDefectFallingDetailVO implements Serializable {
     private String overStr;
 
     @ApiModelProperty("落板时长")
-    private BigDecimal interval;
+    private String interval;
 
     @ApiModelProperty("落板时长（小时）")
     private BigDecimal intervalHour;

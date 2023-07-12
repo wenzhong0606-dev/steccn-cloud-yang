@@ -20,6 +20,7 @@
         JOIN qt_check_task task ON info.task_id = task.id
         WHERE
         info.del_flag = 0  AND task.del_flag = 0
+        AND task.status = 2
         AND task.task_type IN ( 3, 4 )
         AND info.destory_reason IS NOT NULL
         AND task.product_line ->> '$.id' IN

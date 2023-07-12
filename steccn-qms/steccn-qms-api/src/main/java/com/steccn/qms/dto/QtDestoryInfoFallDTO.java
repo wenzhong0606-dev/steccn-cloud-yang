@@ -40,6 +40,9 @@ public class QtDestoryInfoFallDTO implements Serializable {
     @ApiModelProperty("落板原因")
     private String destoryReason;
 
+    @ApiModelProperty("落板原因类别：0 -厚度、外观不良 1- 改尺寸，切割不良")
+    private Integer reasonCategory;
+
     @ApiModelProperty("落板工位多选框 1南 2北 3全选")
     private Integer destoryWorkStation;
 }

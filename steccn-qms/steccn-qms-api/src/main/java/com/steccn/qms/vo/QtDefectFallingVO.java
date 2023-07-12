@@ -31,6 +31,6 @@ public class QtDefectFallingVO implements Serializable {
     @ApiModelProperty("班组名称")
     private String classGroupName;
 
-    @ApiModelProperty("明细")
-    private List<QtDefectFallingDetailVO> detailList;
+    @ApiModelProperty("明细-多行四列")
+    private List<List<QtDefectFallingDetailVO>> detailList;
 }
