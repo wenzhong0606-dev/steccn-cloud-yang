@@ -148,7 +148,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
 
     @Override
     public List<OaMesUserVO> getMesUser() {
-        String data = remoteMesFeignApi.getAllUser().getData();
+        String data = remoteMesFeignApi.getAllUser();
         List<OaMesUserVO> oaMesUserVOS = JSONObject.parseArray(data, OaMesUserVO.class);
         List<String> loginName = oaMesUserVOS.stream().map(OaMesUserVO::getLoginCode).collect(Collectors.toList());
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()

@@ -67,5 +67,5 @@ public interface RemoteMesFeignApi {
     @GetMapping(value = "/web/user/getAllUser")
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    R<String> getAllUser();
+    String getAllUser();
 }
