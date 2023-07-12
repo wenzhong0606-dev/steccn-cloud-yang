@@ -21,23 +21,14 @@ public class QtDefectReportDataVO implements Serializable {
     @ApiModelProperty("类型 0表示数据 1表示合计（单产线） 2表示总计")
     private Integer type;
 
-    @ApiModelProperty("产线")
-    private Integer productLine;
-
     @ApiModelProperty("产线名称")
     private String productLineName;
 
     @ApiModelProperty("班次日期")
     private String classDateStr;
 
-    @ApiModelProperty("班次")
-    private Integer classId;
-
     @ApiModelProperty("班次名称")
     private String className;
-
-    @ApiModelProperty("班组")
-    private Integer classGroupId;
 
     @ApiModelProperty("班组名称")
     private String classGroupName;

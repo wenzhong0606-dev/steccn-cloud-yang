@@ -109,20 +109,18 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
                 row.setType(1);
                 row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
-                row.setProductLine(line);
                 row.setProductLineName(lineName);
+                Integer classId = LocalDateUtil.getClassId(begin, false);
                 if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
-                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
-                    row.setClassGroupId(oaGroupCountDTO.getGroupId());
-                    row.setClassGroupName(oaGroupCountDTO.getGroupName());
-                    row.setClassId(LocalDateUtil.getClassId(begin, false));
-                    QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(row.getClassId());
+                    QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
                     row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
+                    row.setClassGroupName(oaGroupCountDTO.getGroupName());
                 }
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
                 for (Integer defectId : defectIdList) {
-                    int sum = sourceMap.getOrDefault(key(line, classDate, row.getClassId(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                    int sum = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                     valueList.add(String.valueOf(sum));
                     lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + sum);
                     allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + sum);
