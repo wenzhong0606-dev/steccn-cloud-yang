@@ -20,7 +20,7 @@ public class QtDestoryInfoFallDTO implements Serializable {
     private Integer taskType;
 
     @ApiModelProperty("产线")
-    private Integer productLine;
+    private Integer productLineId;
 
     @ApiModelProperty("班次日期")
     private LocalDateTime classTime;

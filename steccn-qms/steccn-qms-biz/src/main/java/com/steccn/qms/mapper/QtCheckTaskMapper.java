@@ -3,10 +3,7 @@ package com.steccn.qms.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
-import com.steccn.qms.dto.QtDaySamplingDTO;
-import com.steccn.qms.dto.QtIncomingCheckDTO;
-import com.steccn.qms.dto.QtOtherCheckDTO;
-import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.QtDefectItemInfoVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -69,19 +66,21 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @param taskIds
      * @return
      */
-    List<QtDefectItemInfoVO> getDefectItemList(@Param("apparentCondition")String apparentCondition,@Param("taskIds") List<Long> taskIds);
+    List<QtDefectItemInfoVO> getDefectItemList(@Param("apparentCondition") String apparentCondition, @Param("taskIds") List<Long> taskIds);
 
 
     /**
      * 获取所有的配料检数
+     *
      * @param morning 早上
-     * @param night 晚上
+     * @param night   晚上
      * @return
      */
     List<QtDaySamplingDTO> samplingList(@Param("morning") LocalDateTime morning, @Param("night") LocalDateTime night);
 
     /**
      * 获取来料检
+     *
      * @param itemIdSet 检验项集合
      * @return 所有的来料检
      */
@@ -89,13 +88,28 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
 
     /**
      * 其余检的数据
+     *
      * @param checkType 校验类型
      * @param itemIdSet 检验项集合
-     * @param start 开始时间
-     * @param end 结束时间
+     * @param start     开始时间
+     * @param end       结束时间
      * @return list
      */
     List<QtOtherCheckDTO> otherList(@Param("checkType") Integer checkType, @Param("itemIdSet") Set<Integer> itemIdSet, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    /**
+     * 获取巡检的厚度平均值的平均值
+     *
+     * @param productLineList 产线集合
+     * @param thickItemIdList 检验项id集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return 集合
+     */
+    List<QtThickAvgDTO> thickAvg(@Param("lineIdList") List<Integer> productLineList,
+                                 @Param("itemIdSet") List<Integer> thickItemIdList,
+                                 @Param("start") LocalDateTime start,
+                                 @Param("end") LocalDateTime end);
 }
 
 

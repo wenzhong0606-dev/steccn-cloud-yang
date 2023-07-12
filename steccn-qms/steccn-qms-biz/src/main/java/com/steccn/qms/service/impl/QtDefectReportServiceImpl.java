@@ -1,8 +1,10 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -11,18 +13,19 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.dto.QtDestoryInfoFallDTO;
-import com.steccn.qms.service.QtCheckTaskDestoryInfoService;
-import com.steccn.qms.service.QtDefectReportService;
-import com.steccn.qms.service.QtDefectiveItemService;
-import com.steccn.qms.service.QtDefectiveReportService;
+import com.steccn.qms.dto.QtThickAvgDTO;
+import com.steccn.qms.mapper.QtCheckTaskMapper;
+import com.steccn.qms.service.*;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,6 +58,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final OaInfoService oaInfoService;
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
+    private final QtCheckItemService qtCheckItemService;
+    private final QtCheckTaskMapper qtCheckTaskMapper;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -163,7 +169,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         for (Integer line : dto.getProductLineList()) {
             //合计（单产线）
             Map<Integer, BigDecimal> lineCountMap = Maps.newHashMap();
-            List<QtDestoryInfoFallDTO> sourceList = dealReasonDataList.stream().filter(ele -> line.equals(ele.getProductLine())).collect(Collectors.toList());
+            List<QtDestoryInfoFallDTO> sourceList = dealReasonDataList.stream().filter(ele -> line.equals(ele.getProductLineId())).collect(Collectors.toList());
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < shardTimeList.size(); i++) {
                 QtDefectFallingVO row = new QtDefectFallingVO();
@@ -188,6 +194,49 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //增加总计
         resList.add(reasonCount(2, "总计", countMap));
         return resList;
+    }
+
+    @Override
+    public QtThickAvgVO thickAvg(QtDefectReportDTO dto) {
+        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000100").select(QtCheckItem::getId));
+        SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<Integer> thickItemIdList = thickItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
+        List<QtThickAvgDTO> thickAvgDTOList = qtCheckTaskMapper.thickAvg(dto.getProductLineList(), thickItemIdList, start, end);
+        SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
+        //获取产线集合
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<QtThickAvgListVO> rowList = Lists.newArrayList();
+        //将start -> end 切分成班次日期
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+
+        QtThickAvgVO resVo = new QtThickAvgVO();
+        resVo.setRowList(rowList);
+        List<String> dateHeadList = Lists.newArrayList();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
+        shardTimeList.forEach(ele -> dateHeadList.add(dateTimeFormatter.format(ele)));
+        dateHeadList.remove(dateHeadList.size() - 1);
+        resVo.setDateList(dateHeadList);
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            for (OaManagerConstant.OaTeamGroupMapping classGroup : OaManagerConstant.OaTeamGroupMapping.values()) {
+                QtThickAvgListVO row = new QtThickAvgListVO();
+                row.setProductLineName(lineName);
+                row.setClassGroupName(classGroup.getName());
+                rowList.add(row);
+                List<List<BigDecimal>> dataList = Lists.newArrayList();
+                for (int i = 1; i < shardTimeList.size(); i++) {
+                    LocalDateTime begin = shardTimeList.get(i - 1);
+                    LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                    List<QtThickAvgDTO> filterDataList = thickAvgDTOList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classGroup.getCode().equals(ele.getClassGroupId())).collect(Collectors.toList());
+                    List<BigDecimal> valueList = filterDataList.stream().map(QtThickAvgDTO::getValue).collect(Collectors.toList());
+                    dataList.add(valueList);
+                }
+                row.setValueList(dataList);
+            }
+        }
+        return resVo;
     }
 
     /**

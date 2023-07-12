@@ -339,4 +339,33 @@
             </foreach>
          </if>
     </select>
+    <select id="thickAvg" resultType="com.steccn.qms.dto.QtThickAvgDTO">
+        SELECT
+        task.product_line ->> '$.id' as product_line_id,
+        DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+        material_id,
+        class_group_id,
+        ROUND(avg(check_result ),2) as value
+        FROM
+        qt_check_task task
+        JOIN qt_check_task_detail detail ON task.id = detail.task_id
+        WHERE
+        task.STATUS = 2 and detail.check_result is not null
+        AND item_id IN
+        <foreach collection="itemIdSet" item="id" open="(" close=")" separator=",">
+          #{id}
+        </foreach>
+        AND task.product_line ->> '$.id' IN
+        <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        AND spot_time &gt;= #{start}
+        AND spot_time &lt; #{end}
+        GROUP BY
+        DATE_FORMAT(class_time,'%Y-%m-%d')
+        ,class_group_id,
+        task.product_line ->> '$.id',
+        material_id
+
+    </select>
 </mapper>

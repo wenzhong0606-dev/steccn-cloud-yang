@@ -29,8 +29,7 @@
         </foreach>
         AND ((task.defect_start_time &gt;= #{start} and task.defect_start_time &lt; #{end})
         OR (task.finished_time &gt;= #{start} and task.finished_time &lt; #{end} ))
-
-
+        ORDER BY destory_start_time ASC
 
     </select>
 </mapper>
