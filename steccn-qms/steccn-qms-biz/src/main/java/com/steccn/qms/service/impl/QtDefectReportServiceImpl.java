@@ -146,11 +146,24 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         for (Integer line : dto.getProductLineList()) {
             List<QtDestoryInfoFallDTO> sourceList = fallDTOList.stream().filter(ele -> line.equals(ele.getProductLine())).collect(Collectors.toList());
-
-
             String lineName = lineIdNameMap.get(line);
-            QtDefectFallingVO fallingVO = new QtDefectFallingVO();
-            resList.add(fallingVO);
+
+            for (int i = 1; i < shardTimeList.size(); i++) {
+                QtDefectFallingVO row = new QtDefectFallingVO();
+                LocalDateTime begin = shardTimeList.get(i - 1);
+                LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                row.setType(1);
+                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+                row.setProductLineName(lineName);
+                sourceList.stream().filter(ele -> classDate.isEqual(ele.getClassTime().toLocalDate()));
+
+
+                resList.add(row);
+
+
+            }
+
+
         }
 
 
