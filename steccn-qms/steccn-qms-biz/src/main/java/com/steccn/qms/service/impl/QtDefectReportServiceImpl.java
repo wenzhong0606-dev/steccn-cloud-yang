@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -75,18 +76,13 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         List<String> defectNameList = defectEntityList.stream().map(QtDefectiveItem::getName).collect(Collectors.toList());
         List<Integer> defectIdList = defectEntityList.stream().map(QtDefectiveItem::getId).collect(Collectors.toList());
         resVo.setValueHeadList(defectNameList);
-        //粒度来获取班次日期
+        //获取班次日期
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
-        String granularityStr;
-        if (QtManagerConstant.LossReportType.MONTH.getCode().equals(dto.getGranularity())) {
-            granularityStr = QtManagerConstant.QtGranularityEnum.MONTH.getType();
-        } else if (QtManagerConstant.LossReportType.DAY.getCode().equals(dto.getGranularity())) {
-            granularityStr = QtManagerConstant.QtGranularityEnum.DAY.getType();
-        } else {
-            granularityStr = QtManagerConstant.QtGranularityEnum.CLASS.getType();
-        }
-        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityStr, start, end);
+        //获取粒度
+        QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEntity, "粒度不存在");
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
         //获取产线的中文
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取班组-只有粒度为班组，才会查询班组信息
@@ -135,6 +131,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
     @Override
     public List<QtDefectFallingVO> falling(QtDefectReportDTO dto) {
+        List<QtDefectFallingVO> resList = Lists.newArrayList();
         //查询所有的落板记录
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
@@ -142,10 +139,18 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         log.info("fallDTOList -> {}", fallDTOList);
         //获取产线的中文
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
+        //获取粒度
+        QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEntity, "粒度不存在");
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
 
         for (Integer line : dto.getProductLineList()) {
+            List<QtDestoryInfoFallDTO> sourceList = fallDTOList.stream().filter(ele -> line.equals(ele.getProductLine())).collect(Collectors.toList());
 
+
+            String lineName = lineIdNameMap.get(line);
+            QtDefectFallingVO fallingVO = new QtDefectFallingVO();
+            resList.add(fallingVO);
         }
 
 
