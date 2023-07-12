@@ -345,7 +345,7 @@
         DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
         material_id,
         class_group_id,
-        ROUND(avg(check_result ),2) as value
+        ROUND(avg(check_result ),1) as value
         FROM
         qt_check_task task
         JOIN qt_check_task_detail detail ON task.id = detail.task_id

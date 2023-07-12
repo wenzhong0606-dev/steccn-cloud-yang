@@ -1,6 +1,5 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
@@ -197,21 +196,40 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
-    public QtThickAvgVO thickAvg(QtDefectReportDTO dto) {
+    public QtCheckItemAvgVO thickAvg(QtDefectReportDTO dto) {
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000100").select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
+        QtCheckItemAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        return resVo;
+    }
+
+    @Override
+    public QtCheckItemAvgVO rbwAvg(QtDefectReportDTO dto) {
+        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000072").select(QtCheckItem::getId));
+        SteccnTableAssertUtil.notEmpty(thickItemList, "毛边宽检验项不存在");
+        QtCheckItemAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        return resVo;
+    }
+
+    /**
+     * 获取所有检验项参数
+     * @param dto 请求参数
+     * @param checkItemList 检验项集合
+     * @return vo
+     */
+    private QtCheckItemAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList) {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
-        List<Integer> thickItemIdList = thickItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
+        List<Integer> thickItemIdList = checkItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
         List<QtThickAvgDTO> thickAvgDTOList = qtCheckTaskMapper.thickAvg(dto.getProductLineList(), thickItemIdList, start, end);
         SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
         //获取产线集合
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<QtThickAvgListVO> rowList = Lists.newArrayList();
+        List<QtCheckItemAvgListVO> rowList = Lists.newArrayList();
         //将start -> end 切分成班次日期
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
 
-        QtThickAvgVO resVo = new QtThickAvgVO();
+        QtCheckItemAvgVO resVo = new QtCheckItemAvgVO();
         resVo.setRowList(rowList);
         List<String> dateHeadList = Lists.newArrayList();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
@@ -221,7 +239,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         for (Integer line : dto.getProductLineList()) {
             String lineName = lineIdNameMap.get(line);
             for (OaManagerConstant.OaTeamGroupMapping classGroup : OaManagerConstant.OaTeamGroupMapping.values()) {
-                QtThickAvgListVO row = new QtThickAvgListVO();
+                QtCheckItemAvgListVO row = new QtCheckItemAvgListVO();
                 row.setProductLineName(lineName);
                 row.setClassGroupName(classGroup.getName());
                 rowList.add(row);

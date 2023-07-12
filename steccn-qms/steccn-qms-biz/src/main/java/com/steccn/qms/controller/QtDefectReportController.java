@@ -5,7 +5,7 @@ import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.vo.QtDefectFallingVO;
 import com.steccn.qms.vo.QtDefectReportVO;
-import com.steccn.qms.vo.QtThickAvgVO;
+import com.steccn.qms.vo.QtCheckItemAvgVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,10 +43,15 @@ public class QtDefectReportController {
 
     @PostMapping("/thick")
     @ApiOperation(value = "厚度报表")
-    public R<QtThickAvgVO> thickAvg(@RequestBody QtDefectReportDTO dto) {
+    public R<QtCheckItemAvgVO> thickAvg(@RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.thickAvg(dto));
     }
 
+    @PostMapping("/rbw")
+    @ApiOperation(value = "毛板宽报表")
+    public R<QtCheckItemAvgVO> rbwAvg(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.rbwAvg(dto));
+    }
 
 }
 

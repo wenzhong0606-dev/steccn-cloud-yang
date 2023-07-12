@@ -14,8 +14,8 @@ import java.util.List;
  * @date 2023/7/12
  */
 @Data
-@ApiModel("平均厚度集合视图对象")
-public class QtThickAvgListVO implements Serializable {
+@ApiModel("检验项平均值集合视图对象")
+public class QtCheckItemAvgListVO implements Serializable {
 
     @ApiModelProperty("产线名称")
     private String productLineName;
@@ -23,7 +23,7 @@ public class QtThickAvgListVO implements Serializable {
     @ApiModelProperty("班组名称")
     private String classGroupName;
 
-    @ApiModelProperty("平均厚度")
+    @ApiModelProperty("平均参数")
     private List<List<BigDecimal>> valueList;
 
 }

@@ -4,7 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.vo.QtDefectFallingVO;
 import com.steccn.qms.vo.QtDefectReportVO;
-import com.steccn.qms.vo.QtThickAvgVO;
+import com.steccn.qms.vo.QtCheckItemAvgVO;
 
 import java.util.List;
 
@@ -34,8 +34,17 @@ public interface QtDefectReportService {
 
     /**
      * 厚度报表
+     *
      * @param dto 请求
      * @return 报表
      */
-    QtThickAvgVO thickAvg(QtDefectReportDTO dto);
+    QtCheckItemAvgVO thickAvg(QtDefectReportDTO dto);
+
+    /**
+     * 毛边宽报表
+     *
+     * @param dto 请求
+     * @return 报表
+     */
+    QtCheckItemAvgVO rbwAvg(QtDefectReportDTO dto);
 }
