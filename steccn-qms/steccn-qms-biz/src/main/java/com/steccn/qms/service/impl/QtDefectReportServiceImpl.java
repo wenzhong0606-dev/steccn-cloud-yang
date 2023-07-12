@@ -116,7 +116,14 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
                 for (Integer defectId : defectIdList) {
-                    int sum = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                    int sum;
+                    if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
+                        sum = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                    } else {
+                        int sum1 = sourceMap.getOrDefault(key(line, classDate, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                        int sum2 = sourceMap.getOrDefault(key(line, classDate, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                        sum = sum2 + sum1;
+                    }
                     valueList.add(String.valueOf(sum));
                     lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + sum);
                     allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + sum);
