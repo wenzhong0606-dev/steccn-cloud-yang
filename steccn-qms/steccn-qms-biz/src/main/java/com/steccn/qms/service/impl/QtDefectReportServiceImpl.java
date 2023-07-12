@@ -1,6 +1,5 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
@@ -164,7 +163,6 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         for (Integer line : dto.getProductLineList()) {
             //合计（单产线）
             Map<Integer, BigDecimal> lineCountMap = Maps.newHashMap();
-
             List<QtDestoryInfoFallDTO> sourceList = dealReasonDataList.stream().filter(ele -> line.equals(ele.getProductLine())).collect(Collectors.toList());
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < shardTimeList.size(); i++) {
@@ -175,62 +173,13 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setType(0);
                 row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
                 row.setProductLineName(lineName);
-
                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
                 row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
                 OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
                 row.setClassGroupName(oaGroupCountDTO.getGroupName());
-
-                List<List<QtDestoryInfoFallDTO>> tempList = Lists.newArrayList();
-
                 List<QtDestoryInfoFallDTO> tempSourceList = sourceList.stream().filter(ele -> classDate.isEqual(ele.getClassTime().toLocalDate()) && classId.equals(ele.getClassId())).collect(Collectors.toList());
-
-                for (Integer category : Arrays.asList(0, 1)) {
-                    for (Integer station : Arrays.asList(0, 1)) {
-                        List<QtDestoryInfoFallDTO> collect = tempSourceList.stream().filter(ele -> category.equals(ele.getReasonCategory()) && station.equals(ele.getDestoryWorkStation())).collect(Collectors.toList());
-                        tempList.add(collect);
-                    }
-                }
-                //获取tempList中集合最多的元素
-                Integer maxSize = 1;
-                for (List<QtDestoryInfoFallDTO> dataList : tempList) {
-                    if (dataList.size() > maxSize) {
-                        maxSize = dataList.size();
-                    }
-                }
-
-                List<List<QtDefectFallingDetailVO>> rowList = Lists.newArrayList();
+                List<List<QtDefectFallingDetailVO>> rowList = getDetailList(countMap, lineCountMap, tempSourceList);
                 row.setDetailList(rowList);
-                //遍历行数数据
-                for (int rowCt = 0; rowCt < maxSize; rowCt++) {
-                    //定义四列数据
-                    List<QtDefectFallingDetailVO> columnList = Lists.newArrayList();
-                    for (int idx = 0; idx < 4; idx++) {
-                        QtDefectFallingDetailVO column = new QtDefectFallingDetailVO();
-                        List<QtDestoryInfoFallDTO> dataList = tempList.get(idx);
-                        if (rowCt < dataList.size()) {
-                            QtDestoryInfoFallDTO qtDestoryInfoFallDTO = dataList.get(rowCt);
-                            column.setBeginStr(LocalDateUtil.format(qtDestoryInfoFallDTO.getDestoryStartTime(), "HH:mm"));
-                            column.setOverStr(LocalDateUtil.format(qtDestoryInfoFallDTO.getDestoryEndTime(), "HH:mm"));
-                            LocalDateTime ldt1 = qtDestoryInfoFallDTO.getDestoryStartTime().withSecond(0).withNano(0);
-                            LocalDateTime ldt2 = qtDestoryInfoFallDTO.getDestoryEndTime().withSecond(0).withNano(0);
-                            long between = LocalDateTimeUtil.between(ldt1, ldt2, ChronoUnit.MINUTES);
-                            column.setIntervalHour(BigDecimalUtil.divide(BigDecimal.valueOf(between), BigDecimal.valueOf(60), 2));
-                            //合计（单产线）
-                            lineCountMap.put(idx, BigDecimalUtil.add(column.getIntervalHour(), lineCountMap.get(idx)));
-                            countMap.put(idx, BigDecimalUtil.add(column.getIntervalHour(), countMap.get(idx)));
-                            long minutes = between % 60;
-                            String str = String.valueOf(minutes);
-                            if (minutes < 10) {
-                                str = 0 + str;
-                            }
-                            column.setInterval(between / 60 + ":" + str);
-                            BeanUtils.copyProperties(qtDestoryInfoFallDTO, column);
-                        }
-                        columnList.add(column);
-                    }
-                    rowList.add(columnList);
-                }
                 resList.add(row);
             }
             //增加合计（单产线）
@@ -239,6 +188,64 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //增加总计
         resList.add(reasonCount(2, "总计", countMap));
         return resList;
+    }
+
+    /**
+     * 获取明细集合
+     *
+     * @param countMap     总计map
+     * @param lineCountMap 产线map
+     * @param sourceList   元数据集合
+     * @return 明细集合
+     */
+    private List<List<QtDefectFallingDetailVO>> getDetailList(Map<Integer, BigDecimal> countMap, Map<Integer, BigDecimal> lineCountMap, List<QtDestoryInfoFallDTO> sourceList) {
+        List<List<QtDefectFallingDetailVO>> rowList = Lists.newArrayList();
+
+        List<List<QtDestoryInfoFallDTO>> tempList = Lists.newArrayList();
+        for (Integer category : Arrays.asList(0, 1)) {
+            for (Integer station : Arrays.asList(1, 2)) {
+                List<QtDestoryInfoFallDTO> collect = sourceList.stream().filter(ele -> category.equals(ele.getReasonCategory()) && station.equals(ele.getDestoryWorkStation())).collect(Collectors.toList());
+                tempList.add(collect);
+            }
+        }
+        //获取tempList中集合最多的元素
+        Integer maxSize = 1;
+        for (List<QtDestoryInfoFallDTO> dataList : tempList) {
+            if (dataList.size() > maxSize) {
+                maxSize = dataList.size();
+            }
+        }
+        //遍历行数数据
+        for (int rowCt = 0; rowCt < maxSize; rowCt++) {
+            //定义四列数据
+            List<QtDefectFallingDetailVO> columnList = Lists.newArrayList();
+            for (int idx = 0; idx < 4; idx++) {
+                QtDefectFallingDetailVO column = new QtDefectFallingDetailVO();
+                List<QtDestoryInfoFallDTO> dataList = tempList.get(idx);
+                if (rowCt < dataList.size()) {
+                    QtDestoryInfoFallDTO qtDestoryInfoFallDTO = dataList.get(rowCt);
+                    column.setBeginStr(LocalDateUtil.format(qtDestoryInfoFallDTO.getDestoryStartTime(), "HH:mm"));
+                    column.setOverStr(LocalDateUtil.format(qtDestoryInfoFallDTO.getDestoryEndTime(), "HH:mm"));
+                    LocalDateTime ldt1 = qtDestoryInfoFallDTO.getDestoryStartTime().withSecond(0).withNano(0);
+                    LocalDateTime ldt2 = qtDestoryInfoFallDTO.getDestoryEndTime().withSecond(0).withNano(0);
+                    long between = LocalDateTimeUtil.between(ldt1, ldt2, ChronoUnit.MINUTES);
+                    column.setIntervalHour(BigDecimalUtil.divide(BigDecimal.valueOf(between), BigDecimal.valueOf(60), 2));
+                    //合计（单产线）
+                    lineCountMap.put(idx, BigDecimalUtil.add(column.getIntervalHour(), lineCountMap.get(idx), 2));
+                    countMap.put(idx, BigDecimalUtil.add(column.getIntervalHour(), countMap.get(idx), 2));
+                    long minutes = between % 60;
+                    String str = String.valueOf(minutes);
+                    if (minutes < 10) {
+                        str = 0 + str;
+                    }
+                    column.setInterval(between / 60 + ":" + str);
+                    BeanUtils.copyProperties(qtDestoryInfoFallDTO, column);
+                }
+                columnList.add(column);
+            }
+            rowList.add(columnList);
+        }
+        return rowList;
     }
 
     /**
