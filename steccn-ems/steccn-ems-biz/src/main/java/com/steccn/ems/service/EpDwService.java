@@ -37,4 +37,12 @@ public interface EpDwService {
      * @return
      */
     Boolean heatPower(LocalDate date);
+
+
+    /**
+     * 能源任务补偿代码
+     * @param batchSize 补偿批量条数
+     * @param maxExecCount 补偿次数最大上线
+     */
+    void compensate(int batchSize, int maxExecCount);
 }

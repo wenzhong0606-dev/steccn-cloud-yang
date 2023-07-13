@@ -1,6 +1,7 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
@@ -60,6 +61,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final EpMeterReadService epMeterReadService;
     private final EpHeatPowerService epHeatPowerService;
+    private final EpTaskExecuteRetryService taskExecuteRetryService;
 
     @Override
     public Integer meterRead(LocalDate date) {
@@ -89,13 +91,19 @@ public class EpDwServiceImpl implements EpDwService {
                     try {
                         RequestContextHolder.setRequestAttributes(attributes);
                         //执行任务
-                        doMeterRead(task);
+                        doMeterRead(task, null);
                     } catch (Exception e) {
                         log.error("{}", e);
                     }
                 });
             }
         }
+        EpTaskExecute epTaskExecute = new EpTaskExecute();
+        epTaskExecute.setTaskParam(count);
+        epTaskExecute.setTaskDate(date);
+        epTaskExecute.setTaskCount(0);
+        epTaskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_1.getCode());
+        epTaskExecuteService.save(epTaskExecute);
         log.info("date ->{} 执行条数{}", date, count);
         return count;
     }
@@ -106,7 +114,7 @@ public class EpDwServiceImpl implements EpDwService {
      * @param task 任务
      * @return
      */
-    private boolean doMeterRead(DwConditionDTO task) {
+    private boolean doMeterRead(DwConditionDTO task, Integer retryId) {
         //执行任务，考虑重复执行的问题
         long count = epMeterReadDistantService.count(new LambdaQueryWrapper<EpMeterReadDistant>()
                 .eq(EpMeterReadDistant::getMeterId, task.getMeterId())
@@ -119,7 +127,7 @@ public class EpDwServiceImpl implements EpDwService {
                 .eq(Objects.nonNull(task.getProduceOrderId()), EpMeterReadDistant::getProduceOrderId, task.getProduceOrderId()));
         if (count > 0) {
             log.debug("读数归档 班次日期 -> {} 已跑过", task);
-            return Boolean.FALSE;
+            return Boolean.TRUE;
         }
         //构造请求
         DwMeterReadDiffDTO readDTO = new DwMeterReadDiffDTO();
@@ -134,6 +142,15 @@ public class EpDwServiceImpl implements EpDwService {
             epMeterRead.setReadValue(diffValue);
             epMeterReadDistantService.save(epMeterRead);
             return Boolean.TRUE;
+        } else if (Objects.isNull(retryId)) {
+            //读数异常,且非重试情况下
+            log.error("读数异常 -> {}", task);
+            EpTaskExecuteRetry retry = new EpTaskExecuteRetry();
+            retry.setType(EpManagerConstant.TaskTypeEnum.TYPE_1.getCode());
+            retry.setParam(JSONObject.toJSONString(task));
+            retry.setExecCount(0);
+            retry.setClassDate(task.getReadDate());
+            taskExecuteRetryService.save(retry);
         }
         return Boolean.FALSE;
     }
@@ -270,6 +287,38 @@ public class EpDwServiceImpl implements EpDwService {
         model.setValue(value);
         model.setClassDate(date);
         return epHeatPowerService.save(model);
+    }
+
+    @Override
+    public void compensate(int batchSize, int maxExecCount) {
+        //根据类型不同，如何补偿
+        //补偿不该影响当前正在执行的任务
+        List<EpTaskExecuteRetry> dbList = taskExecuteRetryService.list(new LambdaQueryWrapper<EpTaskExecuteRetry>()
+                .le(EpTaskExecuteRetry::getExecCount, maxExecCount)
+                .last("limit " + batchSize)
+                .last("order by exec_count asc , class_date desc "));
+        if (CollUtil.isNotEmpty(dbList)) {
+
+            for (EpTaskExecuteRetry retry : dbList) {
+                //反序列化参数
+                DwConditionDTO task = JSONObject.parseObject(retry.getParam(), DwConditionDTO.class);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        //执行任务
+                        boolean flag = doMeterRead(task, retry.getId());
+                        if (flag) {
+                            //成功删除
+                            taskExecuteRetryService.removeById(retry.getId());
+                        } else {
+                            retry.setExecCount(retry.getExecCount() + 1);
+                            taskExecuteRetryService.updateById(retry);
+                        }
+                    } catch (Exception e) {
+                        log.error("{}", e);
+                    }
+                });
+            }
+        }
     }
 
     /**
