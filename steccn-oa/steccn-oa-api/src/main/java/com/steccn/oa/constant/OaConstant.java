@@ -83,6 +83,7 @@ public class OaConstant {
     public static final Integer NUM_2 = 2;
     public static final Integer NUM_3 = 3;
     public static final Integer NUM_5 = 5;
+    public static final Integer NUM_6 = 6;
 }
 
 /**

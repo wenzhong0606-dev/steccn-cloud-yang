@@ -12,7 +12,15 @@ import lombok.Data;
 public class OaMesUserVO {
     private String userCode;
     private String loginCode;
+    /**
+     * 部门code
+     */
     private String officeCode;
+    /**
+     * 岗位code
+     */
+    private String postCode;
     private String username;
     private Integer oaId;
+    private String officeType;
 }

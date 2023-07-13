@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.service.HrmresourceService;
@@ -156,6 +157,11 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                 .in(Hrmresource::getLoginid,loginName));
         oaMesUserVOS.forEach(tmp->{
             Hrmresource one = list.stream().filter(v -> v.getLoginid().equals(tmp.getLoginCode())).findFirst().orElse(null);
+            if(tmp.getOfficeType().equals(OaConstant.NUM_6.toString())){
+                String code = tmp.getOfficeCode();
+                tmp.setOfficeCode(null);
+                tmp.setPostCode(code);
+            }
             if(Objects.nonNull(one)){
                 tmp.setOaId(one.getId());
             }
