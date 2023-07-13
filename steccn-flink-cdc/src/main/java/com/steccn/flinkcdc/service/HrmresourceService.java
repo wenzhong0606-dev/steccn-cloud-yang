@@ -50,7 +50,8 @@ public class HrmresourceService {
         String data = dataChangeInfo.getData();
         HrmresourceDTO hrmresourceDTO = JSONObject.parseObject(data, HrmresourceDTO.class);
         //新增
-        if(operatorType.equals(CdcConstant.OperateType.INSERT.getNum())){
+        if((operatorType.equals(CdcConstant.OperateType.UPDATE.getNum())&&StrUtil.isNotBlank(hrmresourceDTO.getLoginid()))
+            ||operatorType.equals(CdcConstant.OperateType.INSERT.getNum())){
             MesUserDTO mesUserDTO = setUserDTO(hrmresourceDTO,true);
             String s = "";
             try {
@@ -58,12 +59,13 @@ public class HrmresourceService {
             } catch (Exception e) {
                 log.error("mes调用异常",e);
             }
-            log.info("mes返回:",s);
-        }else if(operatorType.equals(CdcConstant.OperateType.UPDATE.getNum())){
+            log.info("新增-mes返回:",s);
+        }
+        if(operatorType.equals(CdcConstant.OperateType.UPDATE.getNum())){
             //离职同步
             //修改前数据
             HrmresourceDTO beforeDTO = JSONObject.parseObject(dataChangeInfo.getBeforeData(), HrmresourceDTO.class);
-            if(!beforeDTO.getStatus().equals(hrmresourceDTO.getStatus())&&hrmresourceDTO.getStatus().equals(CdcConstant.NUM_5)){
+            if(hrmresourceDTO.getStatus().equals(CdcConstant.NUM_5)){
                 //调用mes接口停用
                 String s = "";
                 try {
@@ -71,7 +73,7 @@ public class HrmresourceService {
                 } catch (Exception e) {
                     log.error("mes调用异常",e);
                 }
-                log.info("mes返回:",s);
+                log.info("离职-mes返回:",s);
             }else if(!beforeDTO.getDepartmentid().equals(hrmresourceDTO.getDepartmentid())||!beforeDTO.getJobtitle().equals(hrmresourceDTO.getJobtitle())){
                 //部门有所改动或者岗位有所改动
                 MesUserDTO mesUserDTO = setUserDTO(hrmresourceDTO,false);
@@ -81,7 +83,7 @@ public class HrmresourceService {
                 } catch (Exception e) {
                     log.error("mes调用异常",e);
                 }
-                log.info("mes返回:",s);
+                log.info("部门变动-mes返回:",s);
             }
         }
         return true;

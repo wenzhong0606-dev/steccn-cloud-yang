@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.oa.domain.Hrmresource;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.vo.OaMesUserVO;
 
 import java.util.List;
 import java.util.Map;
@@ -70,4 +71,10 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     String getLoginIdById(Integer id);
+
+    /**
+     * 获取mes用户信息
+     * @return
+     */
+    List<OaMesUserVO> getMesUser();
 }

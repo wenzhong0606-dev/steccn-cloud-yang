@@ -1,30 +1,27 @@
 package com.steccn.oa.service;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.github.yulichang.base.MPJBaseMapper;
 import com.github.yulichang.query.MPJQueryWrapper;
-import com.github.yulichang.wrapper.MPJLambdaWrapper;
-import com.github.yulichang.wrapper.enums.BaseFuncEnum;
-import com.github.yulichang.wrapper.enums.DefaultFuncEnum;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.OutSystemOptional;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
-import com.steccn.oa.domain.*;
+import com.steccn.oa.domain.Docdetaillog;
+import com.steccn.oa.domain.Hrmdepartment;
+import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
@@ -35,7 +32,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -44,14 +40,15 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
 
-import javax.print.Doc;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +69,7 @@ public class OaService {
     private final OaWorkflowDeleteDetailMapper oaWorkflowDeleteDetailMapper;
     private final DocdetaillogService docdetaillogService;
     private final KqGroupmemberMapper kqGroupmemberMapper;
+    private final HrmdepartmentService hrmdepartmentService;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -90,7 +88,7 @@ public class OaService {
      * @return OaLoginResult
      */
     public OaLoginResult checkLogin(OaLoginParam loginParam){
-        String result = oaApi.checkLogin(loginParam);
+        String result = OutSystemOptional.of(() -> oaApi.checkLogin(loginParam), FeignConstant.OA_SERVICE_NAME).get();
         JSONObject loginObj = JSONObject.parseObject(result);
         OaLoginResult oaLoginResult = new OaLoginResult();
         oaLoginResult.setLoginStatus(loginObj.getBoolean(OaConstant.OA_JSON_LOGIN_STATUS));
@@ -109,7 +107,7 @@ public class OaService {
      */
     public OaSsoTokenResult getSsoToken(OaSsoTokenParam oaSSoTokenParam){
         oaSSoTokenParam.setAppid(OaConstant.OA_SSO_APPID);
-        String result = oaApi.getSsoToken(oaSSoTokenParam);
+        String result = OutSystemOptional.of(() -> oaApi.getSsoToken(oaSSoTokenParam), FeignConstant.OA_SERVICE_NAME).get();
         log.debug(result);
         String res = result.substring(0,9);
         OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
@@ -150,7 +148,8 @@ public class OaService {
             //用户id加密
             String userIdSecret = rsa.encrypt(null, userId, null, "utf-8", spk, false);
             headers.set("userid",userIdSecret);
-            String result = oaApi.getOaMenu(headers);
+
+            String result = OutSystemOptional.of(() -> oaApi.getOaMenu(headers), FeignConstant.OA_SERVICE_NAME).get();
             JSONArray jsonArray = JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATA);
             //递归拿到树状数据
 //            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
@@ -203,41 +202,60 @@ public class OaService {
      */
     public OaUserInfo getOaUserInfo(String loginId){
         OaUserInfo oaUserInfo = new OaUserInfo();
-        //放入Token
-        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
-        if(!oaApiTokenResult.isStatus()){
+        //先查用户表
+        Hrmresource hrmresource = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .select(Hrmresource::getId,Hrmresource::getLastname,Hrmresource::getMessagerurl,Hrmresource::getDepartmentid)
+                .eq(Hrmresource::getLoginid, loginId)
+                .ne(Hrmresource::getStatus, OaConstant.NUM_5),false);
+        if(Objects.isNull(hrmresource)){
             oaUserInfo.setStatus(false);
-            log.error(oaApiTokenResult.getMsg());
-            return oaUserInfo;
-        }else{
-            MultiValueMap<String, String> headers = this.setHeaders();
-            OaUserParam oaUserParam = new OaUserParam();
-            OaUserIdAndName oaUserIdAndName = hrmresourceService.getNameByLoginId(loginId);
-            if(Objects.isNull(oaUserIdAndName)){
-                oaUserInfo.setStatus(false);
-                log.error("没有获取userInfo");
-                return oaUserInfo;
-            }
-            //根据名称查
-            oaUserParam.setQ(oaUserIdAndName.getName());
-            String result = oaApi.getOaUserInfo(headers,oaUserParam);
-            //转成对象
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
-                JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
-                List<OaUserInfoTmpDTO> infoList = data.toJavaList(OaUserInfoTmpDTO.class);
-                //根据id过滤
-                OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
-                oaUserInfo.setDepartmentName(one.getDepartmentname());
-                oaUserInfo.setName(one.getLastname());
-                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
-                oaUserInfo.setStatus(true);
-            }else {
-                oaUserInfo.setStatus(false);
-                log.error("没有获取userInfo");
-            }
+            log.error("没有获取userInfo");
             return oaUserInfo;
         }
+        oaUserInfo.setStatus(true);
+        oaUserInfo.setName(hrmresource.getLastname());
+        oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+hrmresource.getMessagerurl());
+        oaUserInfo.setOaUserId(hrmresource.getId());
+        Hrmdepartment hrmdepartment = hrmdepartmentService.getOne(new LambdaQueryWrapper<Hrmdepartment>()
+                .select(Hrmdepartment::getDepartmentname)
+                .eq(Hrmdepartment::getId, hrmresource.getDepartmentid()), false);
+        oaUserInfo.setDepartmentName(hrmdepartment.getDepartmentname());
+        return oaUserInfo;
+        //放入Token
+//        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
+//        if(!oaApiTokenResult.isStatus()){
+//            oaUserInfo.setStatus(false);
+//            log.error(oaApiTokenResult.getMsg());
+//            return oaUserInfo;
+//        }else{
+//            MultiValueMap<String, String> headers = this.setHeaders();
+//            OaUserParam oaUserParam = new OaUserParam();
+//            OaUserIdAndName oaUserIdAndName = hrmresourceService.getNameByLoginId(loginId);
+//            if(Objects.isNull(oaUserIdAndName)){
+//                oaUserInfo.setStatus(false);
+//                log.error("没有获取userInfo");
+//                return oaUserInfo;
+//            }
+//            //根据名称查
+//            oaUserParam.setQ(oaUserIdAndName.getName());
+//            String result = oaApi.getOaUserInfo(headers,oaUserParam);
+//            //转成对象
+//            JSONObject jsonObject = JSONObject.parseObject(result);
+//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
+//                JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+//                List<OaUserInfoTmpDTO> infoList = data.toJavaList(OaUserInfoTmpDTO.class);
+//                //根据id过滤
+//                OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
+//                oaUserInfo.setDepartmentName(one.getDepartmentname());
+//                oaUserInfo.setName(one.getLastname());
+//                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
+//                oaUserInfo.setStatus(true);
+//            }else {
+//                oaUserInfo.setStatus(false);
+//                log.error("没有获取userInfo");
+//            }
+//            return oaUserInfo;
+//        }
     }
 
     /**
@@ -246,28 +264,39 @@ public class OaService {
      */
     public List<OaUserIdAndName> getAll(){
         List<OaUserIdAndName> oaUserIdAndName = new ArrayList<>();
+        List<Hrmresource> list = hrmresourceService.list(new LambdaQueryWrapper<Hrmresource>()
+                .select(Hrmresource::getId,Hrmresource::getLastname)
+                .ne(Hrmresource::getStatus, OaConstant.NUM_5)
+                .last("LIMIT 30"));
+        list.forEach(tmp->{
+            OaUserIdAndName info = new OaUserIdAndName();
+            info.setId(tmp.getId());
+            info.setName(tmp.getLastname());
+            oaUserIdAndName.add(info);
+        });
+        return oaUserIdAndName;
         //放入Token
-        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
-        if(!oaApiTokenResult.isStatus()){
-            log.error(oaApiTokenResult.getMsg());
-            return oaUserIdAndName;
-        }else{
-            MultiValueMap<String, String> headers = setHeaders();
-            String result = oaApi.getAllOaUser(headers);
-            //转成对象
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
-                JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
-                for(int i = 0; i < jsonArray.size(); i++){
-                    JSONObject objTmp = jsonArray.getJSONObject(i);
-                    OaUserIdAndName info = new OaUserIdAndName();
-                    info.setId(objTmp.getInteger("id"));
-                    info.setName(objTmp.getString("name"));
-                    oaUserIdAndName.add(info);
-                }
-            }
-            return oaUserIdAndName;
-        }
+//        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
+//        if(!oaApiTokenResult.isStatus()){
+//            log.error(oaApiTokenResult.getMsg());
+//            return oaUserIdAndName;
+//        }else{
+//            MultiValueMap<String, String> headers = setHeaders();
+//            String result = oaApi.getAllOaUser(headers);
+//            //转成对象
+//            JSONObject jsonObject = JSONObject.parseObject(result);
+//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
+//                JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
+//                for(int i = 0; i < jsonArray.size(); i++){
+//                    JSONObject objTmp = jsonArray.getJSONObject(i);
+//                    OaUserIdAndName info = new OaUserIdAndName();
+//                    info.setId(objTmp.getInteger("id"));
+//                    info.setName(objTmp.getString("name"));
+//                    oaUserIdAndName.add(info);
+//                }
+//            }
+//            return oaUserIdAndName;
+//        }
     }
 
     /**
@@ -291,12 +320,12 @@ public class OaService {
             dto.setKeyword("");
             dto.setVirtualCompanyid(OaConstant.YES);
             dto.setIsLoadSubDepartment(OaConstant.YES);
-            result = oaApi.getCompany(headers,dto);
+            result = OutSystemOptional.of(() -> oaApi.getCompany(headers, dto), FeignConstant.OA_SERVICE_NAME).get();
             JSONObject jsonObject = JSONObject.parseObject(result);
             JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
             vos = jsonArray.toJavaList(OaCompanyVO.class);
         }else {
-            result = oaApi.getCompanyTree(headers);
+            result = OutSystemOptional.of(() -> oaApi.getCompanyTree(headers), FeignConstant.OA_SERVICE_NAME).get();
             JSONObject jsonObject = JSONObject.parseObject(result);
             OaCompanyVO vo = jsonObject.getJSONObject(OaConstant.OA_JSON_DATAS).toJavaObject(OaCompanyVO.class);
             vos.add(vo);
@@ -315,7 +344,7 @@ public class OaService {
             dto.setId(OaConstant.YES);
         }
         MultiValueMap<String, String> headers = setHeaders();
-        String sessionResult = oaApi.getCompanyEmpSessionKey(headers,dto);
+        String sessionResult = OutSystemOptional.of(() -> oaApi.getCompanyEmpSessionKey(headers, dto), FeignConstant.OA_SERVICE_NAME).get();
         //获得sessionKey
         String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
         OaDataKeyDTO dataKey = new OaDataKeyDTO();
@@ -323,7 +352,7 @@ public class OaService {
         if(dto.getCurrent()!=null){
             dataKey.setCurrent(dto.getCurrent());
         }
-        String result = oaApi.getDataBySessionKey(headers,dataKey);
+        String result = OutSystemOptional.of(() -> oaApi.getDataBySessionKey(headers,dataKey), FeignConstant.OA_SERVICE_NAME).get();
         JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
         List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
         return vos;
@@ -336,7 +365,8 @@ public class OaService {
      */
     public List<OaEmpVO> getEmpInfoByCondition(OaEmpStatusDTO dto){
         MultiValueMap<String, String> headers = setHeaders();
-        String sessionResult = oaApi.getEmpInfoSessionKey(headers,dto);
+
+        String sessionResult = OutSystemOptional.of(() -> oaApi.getEmpInfoSessionKey(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
         //获得sessionKey
         String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
         OaDataKeyDTO dataKey = new OaDataKeyDTO();
@@ -347,7 +377,7 @@ public class OaService {
             dataKey.setPageSize(dto.getPageSize());
         }
         dataKey.setDataKey(sessionKey);
-        String result = oaApi.getDataBySessionKey(headers,dataKey);
+        String result = OutSystemOptional.of(() -> oaApi.getDataBySessionKey(headers,dataKey), FeignConstant.OA_SERVICE_NAME).get();
         JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
         List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
         return vos;
@@ -370,19 +400,19 @@ public class OaService {
         //0为待办列表,1为待阅列表,3已创建列表，4已处理的,5已驳回的
         switch (flag) {
             case 0:
-                result = oaApi.getToDoWorkflow(headers,dto);
+                result = OutSystemOptional.of(() -> oaApi.getToDoWorkflow(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
                 break;
             case 1:
-                result = oaApi.getToReadWorkflow(headers,dto);
+                result = OutSystemOptional.of(() -> oaApi.getToReadWorkflow(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
                 break;
             case 3:
-                result = oaApi.getCreatedWorkflow(headers,dto);
+                result = OutSystemOptional.of(() -> oaApi.getCreatedWorkflow(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
                 break;
             case 4:
-                result = oaApi.getDoneWorkflow(headers,dto);
+                result = OutSystemOptional.of(() -> oaApi.getDoneWorkflow(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
                 break;
             case 5:
-                result = oaApi.getRejectedWorkflow(headers,dto);
+                result = OutSystemOptional.of(() -> oaApi.getRejectedWorkflow(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
                 break;
         }
         JSONArray arr = JSONArray.parseArray(result);
@@ -442,9 +472,9 @@ public class OaService {
         }
         String result = "";
         if(dto.getUserId()!=null){
-            result = oaApi.postProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowDTO);
+            result = OutSystemOptional.of(() -> oaApi.postProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowDTO) , FeignConstant.OA_SERVICE_NAME).get();
         }else {
-            result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
+            result = OutSystemOptional.of(() -> oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO) , FeignConstant.OA_SERVICE_NAME).get();
         }
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
@@ -489,7 +519,7 @@ public class OaService {
             oaWorkflowDeleteDetailMapper.deleteComplain1(dto.getRequestId());
             oaWorkflowDeleteDetailMapper.deleteComplain2(dto.getRequestId());
         }
-        String result = oaApi.submitProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowSubmitDTO);
+        String result = OutSystemOptional.of(() -> oaApi.submitProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowSubmitDTO) , FeignConstant.OA_SERVICE_NAME).get();
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
@@ -515,10 +545,10 @@ public class OaService {
     public OaWorkflowCountVO getWorkflowCount(){
         OaWorkflowCountVO vo = new OaWorkflowCountVO();
         MultiValueMap<String, String> headers = this.setUserIdHeaders();
-        String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
-        String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
-        String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
-        String rejectedWorkflowCount = oaApi.getRejectedWorkflowCount(headers);
+        String toDoWorkflowCount  = OutSystemOptional.of(() -> oaApi.getToDoWorkflowCount(headers), FeignConstant.OA_SERVICE_NAME).get();
+        String createdWorkflowCount = OutSystemOptional.of(() -> oaApi.getCreatedWorkflowCount(headers), FeignConstant.OA_SERVICE_NAME).get();
+        String handledWorkflowCount = OutSystemOptional.of(() -> oaApi.getHandledWorkflowCount(headers), FeignConstant.OA_SERVICE_NAME).get();
+        String rejectedWorkflowCount = OutSystemOptional.of(() -> oaApi.getRejectedWorkflowCount(headers) , FeignConstant.OA_SERVICE_NAME).get();
         //我的待办
         if(StrUtil.isNumeric(toDoWorkflowCount)){
             vo.setTodoCount(Integer.parseInt(toDoWorkflowCount));
@@ -556,7 +586,7 @@ public class OaService {
     public List<OaRosterRecordVO> getRosterRecord(OaRosterRecordDTO dto){
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set("Authorization",OaConstant.OA_BASIC_AUTH);
-        String rosterRecord = oaApi.getRosterRecord(headers, dto);
+        String rosterRecord = OutSystemOptional.of(() -> oaApi.getRosterRecord(headers, dto), FeignConstant.OA_SERVICE_NAME).get();
         List<OaRosterRecordVO> vos = Lists.newArrayList();
         if(StrUtil.isBlank(rosterRecord)){
             return vos;
@@ -647,11 +677,11 @@ public class OaService {
      */
     public List<OaEmpVO> getHrmSearchResult(OaHrmDTO dto){
         MultiValueMap<String, String> headers = this.setHeaders();
-        String sessionKeyResult = oaApi.getHrmSearchResult(headers,dto);
+        String sessionKeyResult = OutSystemOptional.of(() -> oaApi.getHrmSearchResult(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
         String sessionKey = JSONObject.parseObject(sessionKeyResult).getString(OaConstant.OA_SESSION_KEY);
         OaDataKeyDTO dataKey = new OaDataKeyDTO();
         dataKey.setDataKey(sessionKey);
-        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
+        String dataBySessionKey = OutSystemOptional.of(() -> oaApi.getDataBySessionKey(headers, dataKey), FeignConstant.OA_SERVICE_NAME).get();
         JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
         List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
         return vos;
@@ -665,12 +695,12 @@ public class OaService {
     public List<OaOrgDetailVO> getOrgDetailByCondition(OaOrgDetailDTO dto){
         MultiValueMap<String, String> headers = this.setHeaders();
         //获取sessionKey
-        String sessionKeyResult = oaApi.getOrgDetail(headers,dto);
+        String sessionKeyResult = OutSystemOptional.of(() -> oaApi.getOrgDetail(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
         String sessionKey = JSONObject.parseObject(sessionKeyResult).getString(OaConstant.OA_SESSION_KEY);
         //根据sessionKey获取数据
         OaDataKeyDTO dataKey = new OaDataKeyDTO();
         dataKey.setDataKey(sessionKey);
-        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
+        String dataBySessionKey = OutSystemOptional.of(() -> oaApi.getDataBySessionKey(headers, dataKey), FeignConstant.OA_SERVICE_NAME).get();
         JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
         List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
         return vos;
@@ -683,7 +713,7 @@ public class OaService {
      */
     public List<OaOrgDetailVO> getOrgDetailByConditionV2(OaOrgDetailParamDTO dto){
         MultiValueMap<String, String> headers = this.setHeaders();
-        String result = oaApi.getCompanyByOrg(headers,dto);
+        String result = OutSystemOptional.of(() -> oaApi.getCompanyByOrg(headers,dto), FeignConstant.OA_SERVICE_NAME).get();
         JSONArray data =  JSONObject.parseObject(result).getJSONObject(OaConstant.OA_JSON_DATA).getJSONArray(OaConstant.OA_JSON_DATA_LIST);
         List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
         return vos;
@@ -715,7 +745,7 @@ public class OaService {
                 "</body>\n" +
                 "</html>");
         dto.setDocSubject(docName);
-        String result = oaApi.saveDoc(headers,dto);
+        String result = OutSystemOptional.of(() -> oaApi.saveDoc(headers, dto), FeignConstant.OA_SERVICE_NAME).get();
         OaSaveDocVO oaSaveDocVO = JSONObject.parseObject(result, OaSaveDocVO.class);
         return oaSaveDocVO;
     }
@@ -729,7 +759,7 @@ public class OaService {
         dto.setResourceId(SecurityUtils.getUser().getUserId().toString());
         dto.setType(OaConstant.TWO);
         dto.setTypevalue(LocalDate.now().format(DateTimeFormatter.ofPattern("YYYY-MM")));
-        String result = oaApi.getMyAttendance(setUserIdHeaders(), dto);
+        String result = OutSystemOptional.of(() -> oaApi.getMyAttendance(setUserIdHeaders(), dto), FeignConstant.OA_SERVICE_NAME).get();
         OaAttendanceVO vo = new OaAttendanceVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         //出勤相关
@@ -772,13 +802,13 @@ public class OaService {
         List<OaNewsVO> oaNewsVOS = Lists.newArrayList();
         MultiValueMap<String, String> headers = this.setHeaders();
         //1、先获取新闻列表的sessionKey
-        String newList = oaApi.getNewList(headers);
+        String newList = OutSystemOptional.of(() -> oaApi.getNewList(headers), FeignConstant.OA_SERVICE_NAME).get();
         String sessionKey = JSONObject.parseObject(newList).getString(OaConstant.OA_SESSION_KEY);
         OaDataKeyDTO dataKeyDTO = new OaDataKeyDTO();
         dataKeyDTO.setDataKey(sessionKey);
         dataKeyDTO.setCurrent(1);
         dataKeyDTO.setPageSize(6);
-        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKeyDTO);
+        String dataBySessionKey = OutSystemOptional.of(() -> oaApi.getDataBySessionKey(headers, dataKeyDTO), FeignConstant.OA_SERVICE_NAME).get();
         List<OaNewsListDTO> oaNewsListDTOS = JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS).toJavaList(OaNewsListDTO.class);
         //2、遍历获取每个页面的doc
         if(CollUtil.isNotEmpty(oaNewsListDTOS)){
@@ -787,7 +817,7 @@ public class OaService {
                 oaNewsVO.setNewsId(tmp.getId());
                 oaNewsVO.setNewsName(tmp.getFrontpagename());
                 //3、获取docId对应的时间
-                String newInfo = oaApi.getNewInfo(headers, tmp.getId());
+                String newInfo = OutSystemOptional.of(() -> oaApi.getNewInfo(headers, tmp.getId()), FeignConstant.OA_SERVICE_NAME).get();
                 String docIdStr = JSONObject.parseObject(newInfo).getJSONObject(OaConstant.OA_JSON_DATA).getString(OaConstant.OA_JSON_IMPORTDOCID);
                 if(StrUtil.isNotBlank(docIdStr)){
                     String[] split = docIdStr.split(",");

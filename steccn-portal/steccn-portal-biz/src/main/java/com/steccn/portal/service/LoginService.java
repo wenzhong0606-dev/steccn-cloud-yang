@@ -87,21 +87,22 @@ public class LoginService {
             steccnTokenVO.setDepartment(oaUserInfo.getDepartmentName());
             steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
             steccnTokenVO.setRealName(oaUserInfo.getName());
+            steccnTokenVO.setOaUserId(oaUserInfo.getOaUserId());
 
-            //3.用户oa登录
-            OaLoginParam oaLoginParam = new OaLoginParam();
-            oaLoginParam.setLoginid(username);
-            oaLoginParam.setUserpassword(password);
-            R r = oaInfoService.checkLogin(oaLoginParam);
-            Map oaMap = (Map) r.getData();
-            OaLoginResult oaLoginResult = new OaLoginResult();
-            BeanUtil.fillBeanWithMap(oaMap, oaLoginResult, true);
-            steccnTokenVO.setOaUserId(oaLoginResult.getUserId());
-            //4.如果oa登录失败，则直接跑异常
-            if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
-                log.error("r -> {}",r);
-                throw new BusinessException("OA用户登录失败");
-            }
+//            //3.用户oa登录
+//            OaLoginParam oaLoginParam = new OaLoginParam();
+//            oaLoginParam.setLoginid(username);
+//            oaLoginParam.setUserpassword(password);
+//            R r = oaInfoService.checkLogin(oaLoginParam);
+//            Map oaMap = (Map) r.getData();
+//            OaLoginResult oaLoginResult = new OaLoginResult();
+//            BeanUtil.fillBeanWithMap(oaMap, oaLoginResult, true);
+//            steccnTokenVO.setOaUserId(oaLoginResult.getUserId());
+//            //4.如果oa登录失败，则直接跑异常
+//            if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
+//                log.error("r -> {}",r);
+//                throw new BusinessException("OA用户登录失败");
+//            }
             //将用户和clientNo绑定起来,用于push消息
             if(StrUtil.isNotBlank(clientNo)){
                 SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
@@ -111,19 +112,19 @@ public class LoginService {
                 Boolean aBoolean = FeignOptional.of(() -> remoteSysUserClientFeignApi.bind(sysUserClientRefDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 log.info("移动端绑定结果 -> {}", aBoolean);
             }
-            //5.获取ssotoken
-            R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
-            Map ssoMap = (Map) ssoToken.getData();
-            OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
-            BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
-            if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {
-                log.error(" ssoToken -> {} ", ssoToken);
-                throw new BusinessException("OA用户获取ssotoken失败");
-            }
-            steccnTokenVO.setOaToken(oaSsoTokenResult.getToken());
-            //6.获取mess的token
-            String mesToken = mesMenuService.getMesToken(username);
-            steccnTokenVO.setMessToken(mesToken);
+//            //5.获取ssotoken
+//            R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
+//            Map ssoMap = (Map) ssoToken.getData();
+//            OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
+//            BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
+//            if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {
+//                log.error(" ssoToken -> {} ", ssoToken);
+//                throw new BusinessException("OA用户获取ssotoken失败");
+//            }
+//            steccnTokenVO.setOaToken(oaSsoTokenResult.getToken());
+//            //6.获取mess的token
+//            String mesToken = mesMenuService.getMesToken(username);
+//            steccnTokenVO.setMessToken(mesToken);
             flag = Boolean.TRUE;
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
