@@ -51,11 +51,17 @@ public class CameraVO {
     private String resourceType;
 
     /**
+     * 排序
+     */
+    private Integer sort;
+
+    /**
      * 监控点类型
      */
     private Integer cameraType;
 
     private List<CameraVO> children;
+
     public CameraVO() {
         children = new ArrayList<>();
     }

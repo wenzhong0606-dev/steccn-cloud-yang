@@ -1,12 +1,18 @@
 package com.steccn.hikvision.controller;
 
 
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
+import com.steccn.hikvision.dto.SysHikPwDTO;
+import com.steccn.hikvision.dto.SysHikPwSaveDTO;
+import com.steccn.pms.dto.MesRoleDTO;
+import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
+import javax.validation.Valid;
 import java.util.List;
 
 
@@ -19,33 +25,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HikvisionPwController {
 
-    @ApiOperation("权限新增")
+    private final SysHikPwService sysHikPwService;
+
+    @ApiOperation("权限保存")
     @PostMapping
-    public R<Boolean> add() {
-        return R.success();
-    }
-
-    @ApiOperation("权限编辑")
-    @PutMapping
-    public R<Boolean> edit() {
-        return R.success();
-    }
-
-    @ApiOperation("权限删除")
-    @DeleteMapping
-    public R<Boolean> delete() {
-        return R.success();
+    public R<Boolean> save(@Valid @RequestBody ValidList<SysHikPwSaveDTO> dtoList) {
+        return R.success(sysHikPwService.pwSave(dtoList.getList()));
     }
 
     @ApiOperation("权限查询")
     @GetMapping
-    public R<List<CameraVO>> get() {
-        return R.success();
+    public R<List<SysHikPwDTO>> info(@RequestParam("roleCode") String roleCode) {
+        return R.success(sysHikPwService.info(roleCode));
     }
 
     @ApiOperation("用户权限-树型结构输出")
     @GetMapping("/tree")
     public R<List<CameraVO>> tree() {
-        return R.success();
+        String username = SecurityUtils.getUser().getUsername();
+        return R.success(sysHikPwService.tree(username));
+    }
+
+    @ApiOperation("获取所有角色")
+    @GetMapping("/getAllRole")
+    public R<List<MesRoleDTO>> getAllRole(){
+        return R.success(sysHikPwService.getAllRole());
     }
 }

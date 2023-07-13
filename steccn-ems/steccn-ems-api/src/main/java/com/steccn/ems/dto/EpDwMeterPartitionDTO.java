@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -13,6 +15,9 @@ import java.io.Serializable;
 @Data
 @ApiModel("抄表归档-仪表分区dto")
 public class EpDwMeterPartitionDTO implements Serializable {
+
+    @ApiModelProperty("班次日期")
+    private LocalDate classDate;
 
     @ApiModelProperty("能源类型")
     private Integer energyType;

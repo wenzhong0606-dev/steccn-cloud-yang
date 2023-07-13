@@ -2,9 +2,7 @@ package com.steccn.pms.feign;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.vo.MessInStorageVoucherVO;
-import com.steccn.pms.vo.MessScopeVO;
-import com.steccn.pms.vo.WmsStockVO;
+import com.steccn.pms.vo.*;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -154,5 +152,15 @@ public interface RemoteMessFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     MessScopeVO getUserNameByPermission(@RequestParam("permission") String permission);
+
+
+    /**
+     * 获取所有角色
+     * @return
+     */
+    @GetMapping(value = "/web/auth/getAllRole")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    MesRoleListVO getAllRole();
 
 }

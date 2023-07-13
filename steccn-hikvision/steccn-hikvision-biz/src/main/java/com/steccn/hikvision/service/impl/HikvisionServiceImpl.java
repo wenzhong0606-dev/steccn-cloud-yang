@@ -26,6 +26,18 @@ import java.util.stream.Collectors;
 public class HikvisionServiceImpl implements HikvisionService {
 
     @Override
+    public List<CameraVO> flatCameraList(){
+        Cameras cameras = new Cameras();
+        cameras.setPageSize(1000);
+        cameras.setPageNo(1);
+        VideoApi videoApi = new VideoApi();
+        String search = videoApi.search1(cameras);
+        HikvisionR r = JSONObject.parseObject(search, HikvisionR.class);
+        List<CameraVO> list = r.getData().getList();
+        return list;
+    }
+
+    @Override
     public List<CameraVO> cameraSearchTree() {
         List<CameraVO> res = new ArrayList<>();
         Cameras cameras = new Cameras();

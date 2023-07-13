@@ -750,6 +750,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
                                     //落版原因，产品改需求不需要除法
                                     BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1),4);
+                                    //如果选了南工位和北工位则乘以二
+                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
+                                        reasonResult = BigDecimalUtil.multiply(reasonResult,new BigDecimal(2));
+                                    }
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
