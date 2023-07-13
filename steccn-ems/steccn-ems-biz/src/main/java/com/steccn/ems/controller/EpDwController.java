@@ -47,7 +47,7 @@ public class EpDwController {
 
     @GetMapping("/meter/chao")
     @ApiOperation(value = "抄表-ep_meter_read")
-    public R<Boolean> meterChao(@RequestParam("date") LocalDate date) {
+    public R<Integer> meterChao(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.read(date));
     }
 

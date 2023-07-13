@@ -13,7 +13,7 @@ public interface EpDwService {
      * 抄表归档
      *
      * @param date 指定日期
-     * @return 是否成功
+     * @return 条数
      */
     Integer meterRead(LocalDate date);
 
@@ -27,9 +27,9 @@ public interface EpDwService {
     /**
      * 抄表读数
      * @param date 上一个班次日期
-     * @return 是否成功
+     * @return 条数
      */
-    Boolean read(LocalDate date);
+    Integer read(LocalDate date);
 
     /**
      * 余热发电

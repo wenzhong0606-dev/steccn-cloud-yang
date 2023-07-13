@@ -50,7 +50,7 @@ public class DwSyncTask {
     @XxlJob("chaoHandler")
     public void chao() {
         XxlJobHelper.log("抄表管理任务-任务开始");
-        Boolean flag = epDwService.read(LocalDate.now().minusDays(1));
+        Integer count = epDwService.read(LocalDate.now().minusDays(1));
         XxlJobHelper.log("抄表管理任务-任务完成，结果 -> {}", flag);
     }
 

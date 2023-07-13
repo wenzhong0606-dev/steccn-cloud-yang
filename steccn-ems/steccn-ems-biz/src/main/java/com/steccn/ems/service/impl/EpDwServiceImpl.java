@@ -259,7 +259,7 @@ public class EpDwServiceImpl implements EpDwService {
     }
 
     @Override
-    public Boolean read(LocalDate date) {
+    public Integer read(LocalDate date) {
         //1.获取所有的远传仪表+挂载的分区节点
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         //2.获取当前日期的任务
@@ -270,13 +270,21 @@ public class EpDwServiceImpl implements EpDwService {
                 try {
                     RequestContextHolder.setRequestAttributes(attributes);
                     meter.setClassDate(date);
-                    saveReadMeter(meter);
+                    saveReadMeter(meter, null);
                 } catch (Exception e) {
                     log.error("插入抄表数据失败 {}", e.getLocalizedMessage());
                 }
             });
         });
-        return Boolean.TRUE;
+
+        EpTaskExecute epTaskExecute = new EpTaskExecute();
+        epTaskExecute.setTaskParam(meterList.size());
+        epTaskExecute.setTaskDate(date);
+        epTaskExecute.setTaskCount(0);
+        epTaskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_3.getCode());
+        epTaskExecuteService.save(epTaskExecute);
+        log.info("read date ->{} 执行条数{}", date, meterList.size());
+        return meterList.size();
     }
 
     @Override
@@ -327,7 +335,6 @@ public class EpDwServiceImpl implements EpDwService {
         /**
          * @see EpManagerConstant.TaskTypeEnum
          */
-
         boolean flag = Boolean.FALSE;
         switch (retry.getType()) {
             case 1:
@@ -338,12 +345,13 @@ public class EpDwServiceImpl implements EpDwService {
                 break;
             case 3:
                 //抄表管理任务
-
+                EpDwMeterPartitionDTO dwMeterPartitionDTO = JSONObject.parseObject(retry.getParam(), EpDwMeterPartitionDTO.class);
+                //执行任务
+                flag = saveReadMeter(dwMeterPartitionDTO, retry.getId());
                 break;
         }
         return flag;
     }
-
 
     /**
      * 插入抄表数据
@@ -351,7 +359,7 @@ public class EpDwServiceImpl implements EpDwService {
      * @param meter
      * @return
      */
-    private boolean saveReadMeter(EpDwMeterPartitionDTO meter) {
+    private boolean saveReadMeter(EpDwMeterPartitionDTO meter,Integer retryId) {
         LocalDate date = meter.getClassDate();
         //避免重复插入
         EpMeterRead one = epMeterReadService.getOne(new LambdaQueryWrapper<EpMeterRead>()
@@ -379,12 +387,12 @@ public class EpDwServiceImpl implements EpDwService {
             ele.setMeterId(meter.getMeterId());
             ele.setDistantMapCode(meter.getDistantMapCode());
             return epMeterReadService.save(ele);
-        }else{
+        }else if(Objects.isNull(retryId)){
             //抄表异常
             //读数异常,且非重试情况下
             log.error("读数异常 -> {}", meter);
             EpTaskExecuteRetry retry = new EpTaskExecuteRetry();
-            retry.setType(EpManagerConstant.TaskTypeEnum.TYPE_1.getCode());
+            retry.setType(EpManagerConstant.TaskTypeEnum.TYPE_3.getCode());
             retry.setParam(JSONObject.toJSONString(meter));
             retry.setExecCount(0);
             retry.setClassDate(meter.getClassDate());
