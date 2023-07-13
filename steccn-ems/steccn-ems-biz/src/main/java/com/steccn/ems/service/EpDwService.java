@@ -22,7 +22,7 @@ public interface EpDwService {
      * @param date 指定日期
      * @return 是否成功
      */
-    Boolean electricMoney(LocalDate date);
+    Integer electricMoney(LocalDate date);
 
     /**
      * 抄表读数
@@ -45,4 +45,9 @@ public interface EpDwService {
      * @param maxExecCount 补偿次数最大上线
      */
     void compensate(int batchSize, int maxExecCount);
+
+    /**
+     * 统计任务完成情况
+     */
+    void countExec();
 }

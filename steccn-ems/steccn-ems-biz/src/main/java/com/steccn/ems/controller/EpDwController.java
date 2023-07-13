@@ -41,7 +41,7 @@ public class EpDwController {
 
     @GetMapping("/electric/money")
     @ApiOperation(value = "电费归档")
-    public R<Boolean> electricMoney(@RequestParam("date") LocalDate date) {
+    public R<Integer> electricMoney(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.electricMoney(date));
     }
 
