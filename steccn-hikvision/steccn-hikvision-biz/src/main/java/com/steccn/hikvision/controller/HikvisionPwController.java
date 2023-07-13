@@ -1,20 +1,16 @@
 package com.steccn.hikvision.controller;
 
 
-import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
-import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
-import com.steccn.hikvision.dto.SysHikPwTreeDTO;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
 import javax.validation.Valid;
 import java.util.List;
 
