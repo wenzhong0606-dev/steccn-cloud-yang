@@ -199,7 +199,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         heatPowerRow.setEnergyType(energy.getName());
         heatPowerRow.setDepartmentName("余热发电");
         heatPowerRow.setUnit(energy.getMeasureUnitName());
-        BigDecimal heatPowerSum = BigDecimalUtil.sum(heatPowerList);
+        BigDecimal heatPowerSum = BigDecimalUtil.sum(heatPowerListNew);
         heatPowerRow.setSumStr(BigDecimalUtil.setScale(heatPowerSum, 0));
         return heatPowerRow;
     }
