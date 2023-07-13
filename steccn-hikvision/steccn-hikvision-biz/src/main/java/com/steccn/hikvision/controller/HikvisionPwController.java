@@ -6,6 +6,7 @@ import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
+import com.steccn.pms.dto.MesRoleDTO;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
 import io.swagger.annotations.ApiOperation;
@@ -43,5 +44,11 @@ public class HikvisionPwController {
     public R<List<CameraVO>> tree() {
         String username = SecurityUtils.getUser().getUsername();
         return R.success(sysHikPwService.tree(username));
+    }
+
+    @ApiOperation("获取所有角色")
+    @GetMapping("/getAllRole")
+    public R<List<MesRoleDTO>> getAllRole(){
+        return R.success(sysHikPwService.getAllRole());
     }
 }

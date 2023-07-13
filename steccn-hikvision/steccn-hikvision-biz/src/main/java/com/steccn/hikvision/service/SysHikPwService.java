@@ -1,14 +1,11 @@
 package com.steccn.hikvision.service;
 
-import com.steccn.common.constant.ResultCode;
 import com.steccn.hikvision.domain.SysHikPw;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
-import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
-import com.steccn.hikvision.dto.SysHikPwTreeDTO;
+import com.steccn.pms.dto.MesRoleDTO;
 import com.steccn.hikvision.vo.CameraVO;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -42,4 +39,10 @@ public interface SysHikPwService extends IService<SysHikPw> {
      * @return 树结构
      */
     List<CameraVO> tree(String username);
+
+    /**
+     * 获取所有角色
+     * @return
+     */
+    List<MesRoleDTO> getAllRole();
 }

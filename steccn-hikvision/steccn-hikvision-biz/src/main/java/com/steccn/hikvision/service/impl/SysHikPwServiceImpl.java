@@ -11,6 +11,8 @@ import com.steccn.hikvision.domain.SysHikPw;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
+import com.steccn.pms.dto.MesRoleDTO;
+import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.mapper.SysHikPwMapper;
 import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
@@ -19,6 +21,7 @@ import com.steccn.pms.vo.MessScopeVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -127,6 +130,11 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
 
         //递归成一颗树 返回出去
         return HikvisionServiceImpl.convertToTree(resList);
+    }
+
+    @Override
+    public List<MesRoleDTO> getAllRole() {
+        return remoteMessFeignApi.getAllRole().getMesRoleDTOList();
     }
 }
 
