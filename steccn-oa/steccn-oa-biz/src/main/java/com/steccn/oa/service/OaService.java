@@ -206,7 +206,7 @@ public class OaService {
         OaUserInfo oaUserInfo = new OaUserInfo();
         //先查用户表
         Hrmresource hrmresource = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>()
-                .select(Hrmresource::getLastname,Hrmresource::getMessagerurl,Hrmresource::getDepartmentid)
+                .select(Hrmresource::getId,Hrmresource::getLastname,Hrmresource::getMessagerurl,Hrmresource::getDepartmentid)
                 .eq(Hrmresource::getLoginid, loginId)
                 .ne(Hrmresource::getStatus, OaConstant.NUM_5),false);
         if(Objects.isNull(hrmresource)){
@@ -217,6 +217,7 @@ public class OaService {
         oaUserInfo.setStatus(true);
         oaUserInfo.setName(hrmresource.getLastname());
         oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+hrmresource.getMessagerurl());
+        oaUserInfo.setOaUserId(hrmresource.getId());
         Hrmdepartment hrmdepartment = hrmdepartmentService.getOne(new LambdaQueryWrapper<Hrmdepartment>()
                 .select(Hrmdepartment::getDepartmentname)
                 .eq(Hrmdepartment::getId, hrmresource.getDepartmentid()), false);
