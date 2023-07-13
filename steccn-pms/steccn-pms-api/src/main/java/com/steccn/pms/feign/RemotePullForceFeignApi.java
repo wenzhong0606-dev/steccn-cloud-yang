@@ -2,10 +2,13 @@ package com.steccn.pms.feign;
 
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
+import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.vo.PmsPullForceDataVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -13,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -33,4 +38,13 @@ public interface RemotePullForceFeignApi {
     @ApiOperation("拉引量值预填")
     @PostMapping("/feign/pms/pull/force")
     R<Boolean> edit(@Validated(UpdateGroup.class)@Valid @RequestBody ValidList<PmsPullForceEditDTO> dtoList);
+
+    /**
+     * 查询拉引量
+     * @param dto
+     * @return
+     */
+    @ApiOperation("获取时间段内的拉引量详细值")
+    @PostMapping("/feign/pms/pull/force/data")
+    R<List<PmsPullForceDataVO>> getDataFromPeriods(@Valid @RequestBody PmsPullForceQueryDTO dto);
 }

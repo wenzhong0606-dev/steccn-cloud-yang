@@ -13,8 +13,13 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.domain.KqGroup;
 import com.steccn.oa.service.HrmdepartmentService;
+import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.KqGroupService;
 import com.steccn.oa.vo.OaDepartmentTreeVO;
+import com.steccn.oa.vo.OaKqGroupDetailVO;
+import com.steccn.oa.vo.OaMesUserVO;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,11 +46,29 @@ public class OaThirdPartyController {
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
     private final HrmdepartmentService hrmdepartmentService;
+
+    private final KqGroupService kqGroupService;
+
+    private final HrmresourceService hrmresourceService;
     @GetMapping("/thirdParty/department/{id}")
     @ApiOperation(value = "第三方获取部门信息")
     public R<List<OaDepartmentTreeVO>> screenData(HttpServletRequest request, @PathVariable("id") Integer subId) {
         validRequestHeader(request);
         return R.success(hrmdepartmentService.getDepartmentTree(subId));
+    }
+
+    @GetMapping("/thirdParty/kqGroup")
+    @ApiOperation(value = "第三方排班规则")
+    public R<List<OaKqGroupDetailVO>> screenData(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(kqGroupService.getKqGroupDetails());
+    }
+
+    @GetMapping("/thirdParty/getAllUser")
+    @ApiOperation(value = "第三方获取所有用户")
+    public R<List<OaMesUserVO>> getAllUser(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(hrmresourceService.getMesUser());
     }
 
     /**

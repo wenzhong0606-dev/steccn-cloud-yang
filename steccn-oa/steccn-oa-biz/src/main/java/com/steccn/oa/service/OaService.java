@@ -72,6 +72,7 @@ public class OaService {
     private final OaWorkflowDeleteDetailMapper oaWorkflowDeleteDetailMapper;
     private final DocdetaillogService docdetaillogService;
     private final KqGroupmemberMapper kqGroupmemberMapper;
+    private final HrmdepartmentService hrmdepartmentService;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -203,41 +204,59 @@ public class OaService {
      */
     public OaUserInfo getOaUserInfo(String loginId){
         OaUserInfo oaUserInfo = new OaUserInfo();
-        //放入Token
-        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
-        if(!oaApiTokenResult.isStatus()){
+        //先查用户表
+        Hrmresource hrmresource = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .select(Hrmresource::getLastname,Hrmresource::getMessagerurl,Hrmresource::getDepartmentid)
+                .eq(Hrmresource::getLoginid, loginId)
+                .ne(Hrmresource::getStatus, OaConstant.NUM_5),false);
+        if(Objects.isNull(hrmresource)){
             oaUserInfo.setStatus(false);
-            log.error(oaApiTokenResult.getMsg());
-            return oaUserInfo;
-        }else{
-            MultiValueMap<String, String> headers = this.setHeaders();
-            OaUserParam oaUserParam = new OaUserParam();
-            OaUserIdAndName oaUserIdAndName = hrmresourceService.getNameByLoginId(loginId);
-            if(Objects.isNull(oaUserIdAndName)){
-                oaUserInfo.setStatus(false);
-                log.error("没有获取userInfo");
-                return oaUserInfo;
-            }
-            //根据名称查
-            oaUserParam.setQ(oaUserIdAndName.getName());
-            String result = oaApi.getOaUserInfo(headers,oaUserParam);
-            //转成对象
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
-                JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
-                List<OaUserInfoTmpDTO> infoList = data.toJavaList(OaUserInfoTmpDTO.class);
-                //根据id过滤
-                OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
-                oaUserInfo.setDepartmentName(one.getDepartmentname());
-                oaUserInfo.setName(one.getLastname());
-                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
-                oaUserInfo.setStatus(true);
-            }else {
-                oaUserInfo.setStatus(false);
-                log.error("没有获取userInfo");
-            }
+            log.error("没有获取userInfo");
             return oaUserInfo;
         }
+        oaUserInfo.setStatus(true);
+        oaUserInfo.setName(hrmresource.getLastname());
+        oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+hrmresource.getMessagerurl());
+        Hrmdepartment hrmdepartment = hrmdepartmentService.getOne(new LambdaQueryWrapper<Hrmdepartment>()
+                .select(Hrmdepartment::getDepartmentname)
+                .eq(Hrmdepartment::getId, hrmresource.getDepartmentid()), false);
+        oaUserInfo.setDepartmentName(hrmdepartment.getDepartmentname());
+        return oaUserInfo;
+        //放入Token
+//        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
+//        if(!oaApiTokenResult.isStatus()){
+//            oaUserInfo.setStatus(false);
+//            log.error(oaApiTokenResult.getMsg());
+//            return oaUserInfo;
+//        }else{
+//            MultiValueMap<String, String> headers = this.setHeaders();
+//            OaUserParam oaUserParam = new OaUserParam();
+//            OaUserIdAndName oaUserIdAndName = hrmresourceService.getNameByLoginId(loginId);
+//            if(Objects.isNull(oaUserIdAndName)){
+//                oaUserInfo.setStatus(false);
+//                log.error("没有获取userInfo");
+//                return oaUserInfo;
+//            }
+//            //根据名称查
+//            oaUserParam.setQ(oaUserIdAndName.getName());
+//            String result = oaApi.getOaUserInfo(headers,oaUserParam);
+//            //转成对象
+//            JSONObject jsonObject = JSONObject.parseObject(result);
+//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
+//                JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+//                List<OaUserInfoTmpDTO> infoList = data.toJavaList(OaUserInfoTmpDTO.class);
+//                //根据id过滤
+//                OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
+//                oaUserInfo.setDepartmentName(one.getDepartmentname());
+//                oaUserInfo.setName(one.getLastname());
+//                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
+//                oaUserInfo.setStatus(true);
+//            }else {
+//                oaUserInfo.setStatus(false);
+//                log.error("没有获取userInfo");
+//            }
+//            return oaUserInfo;
+//        }
     }
 
     /**
@@ -380,6 +399,7 @@ public class OaService {
                 break;
             case 4:
                 result = oaApi.getDoneWorkflow(headers,dto);
+                break;
             case 5:
                 result = oaApi.getRejectedWorkflow(headers,dto);
                 break;

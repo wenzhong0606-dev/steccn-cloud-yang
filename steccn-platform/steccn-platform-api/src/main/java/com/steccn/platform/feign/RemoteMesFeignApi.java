@@ -59,4 +59,13 @@ public interface RemoteMesFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     R<String> disableUser(@RequestParam("loginCode") String loginCode);
+
+    /**
+     * 获取所有用户
+     * @return
+     */
+    @GetMapping(value = "/web/user/getAllUser")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String getAllUser();
 }

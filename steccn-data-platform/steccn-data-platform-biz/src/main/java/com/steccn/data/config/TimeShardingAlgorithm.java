@@ -2,6 +2,7 @@ package com.steccn.data.config;
 
 import com.google.common.collect.Range;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.SpringContextHolder;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,9 @@ import org.apache.shardingsphere.api.sharding.standard.PreciseShardingValue;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingValue;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,6 +93,9 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
         LocalDateTime end = valueRange.upperEndpoint();
 
         Collection<String> resTableList = new ArrayList<>();
+        //只看年月不看日
+        start = LocalDateUtil.getFirstDayOfMonthStr(start.toLocalDate());
+        end = LocalDateUtil.getFirstDayOfMonthStr(end.toLocalDate());
         while (start.compareTo(end) <= 0) {
             String tableName = buildShardingTable(rangeShardingValue.getLogicTableName(), start);
             if (tableSet.contains(tableName)) {

@@ -116,4 +116,10 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
     Boolean wmsChargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO);
 
 
+    /**
+     * 箱号打印
+     * @param caseNoList 箱号集合
+     * @return 是否
+     */
+    Boolean casePrint(List<String> caseNoList);
 }

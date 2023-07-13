@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.KqFixedschedulceMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.KqFixedschedulce">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="weekday" column="weekday" jdbcType="INTEGER"/>
+            <result property="serialid" column="serialid" jdbcType="INTEGER"/>
+            <result property="groupid" column="groupid" jdbcType="INTEGER"/>
+            <result property="isdelete" column="isdelete" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,weekday,serialid,
+        groupid,isdelete
+    </sql>
+</mapper>

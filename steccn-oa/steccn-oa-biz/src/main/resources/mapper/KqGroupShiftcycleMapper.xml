@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.KqGroupShiftcycleMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.KqGroupShiftcycle">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="shiftcyclename" column="shiftcyclename" jdbcType="VARCHAR"/>
+            <result property="shiftcycleday" column="shiftcycleday" jdbcType="INTEGER"/>
+            <result property="shiftcycleserialids" column="shiftcycleserialids" jdbcType="VARCHAR"/>
+            <result property="groupid" column="groupid" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,shiftcyclename,shiftcycleday,
+        shiftcycleserialids,groupid
+    </sql>
+</mapper>

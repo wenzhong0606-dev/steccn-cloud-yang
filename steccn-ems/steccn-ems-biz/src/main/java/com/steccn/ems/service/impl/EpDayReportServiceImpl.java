@@ -192,7 +192,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<BigDecimal> heatPowerList = epHeatPowerService.heatPower(start, end);
         EpDayReportCountRowVO heatPowerRow = new EpDayReportCountRowVO();
         List<BigDecimal> heatPowerListNew = Lists.newArrayList();
-        heatPowerList.forEach(ele -> heatPowerListNew.add(BigDecimalUtil.setScale(ele, 0)));
+        //余热发电数据不准确，临时解决方案，默认为null
+//        heatPowerList.forEach(ele -> heatPowerListNew.add(BigDecimalUtil.setScale(ele, 0)));
+        heatPowerList.forEach(ele -> heatPowerListNew.add(null));
         heatPowerRow.setConsumeList(heatPowerListNew);
         heatPowerRow.setEnergyType(energy.getName());
         heatPowerRow.setDepartmentName("余热发电");

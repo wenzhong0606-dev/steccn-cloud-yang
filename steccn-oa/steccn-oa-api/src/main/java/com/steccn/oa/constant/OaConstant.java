@@ -78,6 +78,11 @@ public class OaConstant {
     public static final String JOB_TITLE_ZHIJIAN = "183";
 
     public static final String CLIENT_ID = "client-id";
+
+    public static final Integer NUM_1 = 1;
+    public static final Integer NUM_2 = 2;
+    public static final Integer NUM_3 = 3;
+    public static final Integer NUM_5 = 5;
 }
 
 /**
