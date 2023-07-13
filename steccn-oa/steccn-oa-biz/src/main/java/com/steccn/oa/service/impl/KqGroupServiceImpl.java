@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -161,7 +162,48 @@ public class KqGroupServiceImpl extends ServiceImpl<KqGroupMapper, KqGroup>
             oaKqGroupShiftOnOffVO.setRecord(kqShiftonoffworksection.getRecord());
             timeDetail.add(oaKqGroupShiftOnOffVO);
         });
+        if(CollUtil.isNotEmpty(kqShiftonoffworksections)){
+            OaKqGroupTimeRangeVO timeRange = new OaKqGroupTimeRangeVO();
+            //开始
+            List<KqShiftonoffworksections> start = kqShiftonoffworksections.stream().filter(v -> v.getOnoffworktype().equals("start")).collect(Collectors.toList());
+            LocalTime startTime = LocalTime.now();
+            for(int i = 0; i < start.size(); i++){
+                if(i==0){
+                    startTime = LocalTime.parse(start.get(i).getTimes());
+                    continue;
+                }
+                LocalTime tmpTime = LocalTime.parse(start.get(i).getTimes());
+                if(tmpTime.isBefore(startTime)){
+                    startTime = tmpTime;
+                }
+            }
+            timeRange.setStartTime(startTime);
+            //结束
+            List<KqShiftonoffworksections> end = kqShiftonoffworksections.stream().filter(v -> v.getOnoffworktype().equals("end")).collect(Collectors.toList());
+            LocalTime endTime = LocalTime.now();
+            Integer across = 0;
+            for(int i = 0; i < start.size(); i++){
+                if(i==0){
+                    endTime = LocalTime.parse(end.get(i).getTimes());
+                    across = Integer.parseInt(end.get(i).getAcross());
+                    continue;
+                }
+                LocalTime tmpTime = LocalTime.parse(end.get(i).getTimes());
+                int tmpAcross = Integer.parseInt(end.get(i).getAcross());
+                //先判断是否跨天
+                if(tmpAcross>across){
+                    across = tmpAcross;
+                    endTime = tmpTime;
+                }else if(tmpTime.isAfter(endTime)){
+                    endTime = tmpTime;
+                }
+            }
+            timeRange.setEndTime(endTime);
+            timeRange.setIsAcross(across);
+            shiftManageVO.setTimeRange(timeRange);
+        }
         shiftManageVO.setTimeDetail(timeDetail);
+
         return shiftManageVO;
     }
 }

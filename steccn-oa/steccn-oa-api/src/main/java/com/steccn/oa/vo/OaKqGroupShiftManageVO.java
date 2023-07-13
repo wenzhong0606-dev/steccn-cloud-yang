@@ -25,4 +25,9 @@ public class OaKqGroupShiftManageVO implements Serializable {
      * 具体时间
      */
     private List<OaKqGroupShiftOnOffVO> timeDetail;
+
+    /**
+     * 时间范围
+     */
+    private OaKqGroupTimeRangeVO timeRange;
 }
