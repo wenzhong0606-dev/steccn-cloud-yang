@@ -59,7 +59,7 @@ public class DwSyncTask {
         XxlJobHelper.log("补偿任务-任务开始，开始时间{}", LocalDateUtil.format(LocalDateTime.now(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
         //一次补偿N条，补偿次数超过5次 会停止补偿
         //补偿策略是 ，补偿次数最少的 ， 时间新的先补偿
-        int BATCH_SIZE = 100;
+        int BATCH_SIZE = 1;
         int MAX_EXEC_COUNT = 5;
         epDwService.compensate(BATCH_SIZE, MAX_EXEC_COUNT);
         XxlJobHelper.log("补偿任务-任务完成");

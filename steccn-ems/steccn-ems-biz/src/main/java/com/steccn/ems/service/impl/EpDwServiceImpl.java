@@ -245,16 +245,16 @@ public class EpDwServiceImpl implements EpDwService {
                 });
             }
         }
-        //保存任务条数
-        //如果没有当前任务，则需要插入，如果有当前任务，补偿更新
-        if (Objects.isNull(oldTask)) {
-            oldTask = new EpTaskExecute();
-        }
-        oldTask.setType(EpManagerConstant.TaskTypeEnum.TYPE_0.getCode());
-        oldTask.setTaskDate(date);
-        oldTask.setTaskParam(sum);
-        oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
-        epTaskExecuteService.saveOrUpdate(oldTask);
+//        //保存任务条数
+//        //如果没有当前任务，则需要插入，如果有当前任务，补偿更新
+//        if (Objects.isNull(oldTask)) {
+//            oldTask = new EpTaskExecute();
+//        }
+//        oldTask.setType(EpManagerConstant.TaskTypeEnum.TYPE_0.getCode());
+//        oldTask.setTaskDate(date);
+//        oldTask.setTaskParam(sum);
+//        oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
+//        epTaskExecuteService.saveOrUpdate(oldTask);
         return Boolean.TRUE;
     }
 
@@ -269,7 +269,8 @@ public class EpDwServiceImpl implements EpDwService {
             CompletableFuture.runAsync(() -> {
                 try {
                     RequestContextHolder.setRequestAttributes(attributes);
-                    saveReadMeter(date, meter);
+                    meter.setClassDate(date);
+                    saveReadMeter(meter);
                 } catch (Exception e) {
                     log.error("插入抄表数据失败 {}", e.getLocalizedMessage());
                 }
@@ -295,18 +296,13 @@ public class EpDwServiceImpl implements EpDwService {
         //补偿不该影响当前正在执行的任务
         List<EpTaskExecuteRetry> dbList = taskExecuteRetryService.list(new LambdaQueryWrapper<EpTaskExecuteRetry>()
                 .le(EpTaskExecuteRetry::getExecCount, maxExecCount)
-                .last("limit " + batchSize)
-                .last("order by exec_count asc , class_date desc "));
+                .last("order by exec_count asc , class_date desc limit " + batchSize));
         if (CollUtil.isNotEmpty(dbList)) {
-
             for (EpTaskExecuteRetry retry : dbList) {
                 //反序列化参数
-                DwConditionDTO task = JSONObject.parseObject(retry.getParam(), DwConditionDTO.class);
                 CompletableFuture.runAsync(() -> {
                     try {
-                        //执行任务
-                        boolean flag = doMeterRead(task, retry.getId());
-                        if (flag) {
+                        if (compensateStrategy(retry)) {
                             //成功删除
                             taskExecuteRetryService.removeById(retry.getId());
                         } else {
@@ -322,13 +318,41 @@ public class EpDwServiceImpl implements EpDwService {
     }
 
     /**
+     * 不同任务的重试
+     *
+     * @param retry 重试
+     * @return
+     */
+    private boolean compensateStrategy(EpTaskExecuteRetry retry) {
+        /**
+         * @see EpManagerConstant.TaskTypeEnum
+         */
+
+        boolean flag = Boolean.FALSE;
+        switch (retry.getType()) {
+            case 1:
+                //远传仪表能耗Distant任务
+                DwConditionDTO task = JSONObject.parseObject(retry.getParam(), DwConditionDTO.class);
+                //执行任务
+                flag = doMeterRead(task, retry.getId());
+                break;
+            case 3:
+                //抄表管理任务
+
+                break;
+        }
+        return flag;
+    }
+
+
+    /**
      * 插入抄表数据
      *
-     * @param date
      * @param meter
      * @return
      */
-    private boolean saveReadMeter(LocalDate date, EpDwMeterPartitionDTO meter) {
+    private boolean saveReadMeter(EpDwMeterPartitionDTO meter) {
+        LocalDate date = meter.getClassDate();
         //避免重复插入
         EpMeterRead one = epMeterReadService.getOne(new LambdaQueryWrapper<EpMeterRead>()
                 .eq(EpMeterRead::getMeterId, meter.getMeterId())
@@ -355,6 +379,16 @@ public class EpDwServiceImpl implements EpDwService {
             ele.setMeterId(meter.getMeterId());
             ele.setDistantMapCode(meter.getDistantMapCode());
             return epMeterReadService.save(ele);
+        }else{
+            //抄表异常
+            //读数异常,且非重试情况下
+            log.error("读数异常 -> {}", meter);
+            EpTaskExecuteRetry retry = new EpTaskExecuteRetry();
+            retry.setType(EpManagerConstant.TaskTypeEnum.TYPE_1.getCode());
+            retry.setParam(JSONObject.toJSONString(meter));
+            retry.setExecCount(0);
+            retry.setClassDate(meter.getClassDate());
+            taskExecuteRetryService.save(retry);
         }
         return Boolean.FALSE;
     }
