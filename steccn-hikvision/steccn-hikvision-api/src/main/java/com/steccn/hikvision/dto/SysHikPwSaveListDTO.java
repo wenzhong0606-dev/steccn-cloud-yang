@@ -18,9 +18,6 @@ import java.io.Serializable;
 @ApiModel("海康威视权限保存dto")
 public class SysHikPwSaveListDTO implements Serializable {
 
-    @ApiModelProperty("主键")
-    private Integer id;
-
     @ApiModelProperty("0-表示是父节点 1-表示是叶子节点")
     @NotNull(message = "节点类型不能为空")
     private Integer type;
@@ -29,8 +26,5 @@ public class SysHikPwSaveListDTO implements Serializable {
     @NotBlank(message = "视频监控不能为空")
     @Size(max = 128, message = "视频监控长度不能超过128个文字")
     private String indexCode;
-
-    @ApiModelProperty("排序字段")
-    @NotNull(message = "排序字段不能空")
-    private Integer sort;
+    
 }

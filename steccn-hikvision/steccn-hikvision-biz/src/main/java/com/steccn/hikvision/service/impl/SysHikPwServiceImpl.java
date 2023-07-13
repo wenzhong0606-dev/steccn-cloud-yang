@@ -1,6 +1,5 @@
 package com.steccn.hikvision.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -8,22 +7,18 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.hikvision.domain.SysHikPw;
 import com.steccn.hikvision.dto.SysHikPwDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveDTO;
 import com.steccn.hikvision.dto.SysHikPwSaveListDTO;
-import com.steccn.hikvision.dto.SysHikPwTreeDTO;
-import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.mapper.SysHikPwMapper;
+import com.steccn.hikvision.service.SysHikPwService;
 import com.steccn.hikvision.vo.CameraVO;
-import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.MessScopeVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,37 +42,29 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean pwSave(List<SysHikPwSaveDTO> dtoList) {
+
         //对角色的分组
         for (SysHikPwSaveDTO ele : dtoList) {
-            List<SysHikPwSaveListDTO> v = ele.getPwList();
-            if (CollUtil.isEmpty(v)) {
-                //删除该角色的所有权限
-                remove(new LambdaQueryWrapper<SysHikPw>().eq(SysHikPw::getRoleCode, ele.getRoleCode()));
-            } else {
-                Set<String> codeSet = v.stream().map(SysHikPwSaveListDTO::getIndexCode).collect(Collectors.toSet());
-                Set<Integer> existIdSet = v.stream().filter(e -> Objects.nonNull(e.getId())).map(SysHikPwSaveListDTO::getId).collect(Collectors.toSet());
-                //考虑同一个角色下indexCode是否重复
-                if (codeSet.size() != v.size()) {
-                    throw new BusinessException("同一角色下存在重复的视频监控");
+            int idx = 0;
+            List<SysHikPwSaveListDTO> pwList = ele.getPwList();
+            //删除该角色的所有权限
+            remove(new LambdaQueryWrapper<SysHikPw>().eq(SysHikPw::getRoleCode, ele.getRoleCode()));
+            Set<String> codeSet = pwList.stream().map(SysHikPwSaveListDTO::getIndexCode).collect(Collectors.toSet());
+            //考虑同一个角色下indexCode是否重复
+            if (codeSet.size() != pwList.size()) {
+                throw new BusinessException("同一角色下存在重复的视频监控");
+            }
+            //3.新增的数据插入
+            if (CollUtil.isNotEmpty(ele.getPwList())) {
+                List<SysHikPw> insertModelList = Lists.newArrayList();
+                for (SysHikPwSaveListDTO pwDto : pwList) {
+                    SysHikPw model = new SysHikPw();
+                    BeanUtils.copyProperties(pwDto, model);
+                    model.setSort(idx++);
+                    model.setRoleCode(ele.getRoleCode());
+                    insertModelList.add(model);
                 }
-                //1.删除本次不存在的数据，如果indexCode为空，则删除所有
-                remove(new LambdaQueryWrapper<SysHikPw>()
-                        .eq(SysHikPw::getRoleCode, ele.getRoleCode())
-                        .notIn(CollUtil.isNotEmpty(existIdSet), SysHikPw::getId, existIdSet));
-                //2.编辑的数据考虑覆盖
-                List<SysHikPwSaveListDTO> editList = v.stream().filter(item -> Objects.nonNull(item.getId())).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(editList)) {
-                    List<SysHikPw> editModelList = BeanUtil.copyToList(editList, SysHikPw.class);
-                    editModelList.forEach(aa -> aa.setRoleCode(ele.getRoleCode()));
-                    updateBatchById(editModelList);
-                }
-                //3.新增的数据插入
-                List<SysHikPwSaveListDTO> insertList = v.stream().filter(item -> Objects.isNull(item.getId())).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(insertList)) {
-                    List<SysHikPw> insertModelList = BeanUtil.copyToList(insertList, SysHikPw.class);
-                    insertModelList.forEach(bb -> bb.setRoleCode(ele.getRoleCode()));
-                    saveBatch(insertModelList);
-                }
+                saveBatch(insertModelList);
             }
         }
         return Boolean.TRUE;
@@ -102,13 +89,13 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
         //获取用户的角色
         MessScopeVO role = remoteMessFeignApi.getRole(username);
         if (Objects.isNull(role) || CollUtil.isEmpty(role.getStringList())) {
-            return null;
+            return Lists.newArrayList();
         }
 
         //获取数据集
         List<SysHikPw> dbList = list(new LambdaQueryWrapper<SysHikPw>().in(SysHikPw::getRoleCode, role.getStringList()).orderByAsc(SysHikPw::getSort));
         if (CollUtil.isEmpty(dbList)) {
-            return null;
+            return Lists.newArrayList();
         }
 
         //获取所有type = 0 的元素，然后递归去树中查询所有叶子节点
