@@ -266,28 +266,39 @@ public class OaService {
      */
     public List<OaUserIdAndName> getAll(){
         List<OaUserIdAndName> oaUserIdAndName = new ArrayList<>();
+        List<Hrmresource> list = hrmresourceService.list(new LambdaQueryWrapper<Hrmresource>()
+                .select(Hrmresource::getId,Hrmresource::getLastname)
+                .ne(Hrmresource::getStatus, OaConstant.NUM_5)
+                .last("LIMIT 30"));
+        list.forEach(tmp->{
+            OaUserIdAndName info = new OaUserIdAndName();
+            info.setId(tmp.getId());
+            info.setName(tmp.getLastname());
+            oaUserIdAndName.add(info);
+        });
+        return oaUserIdAndName;
         //放入Token
-        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
-        if(!oaApiTokenResult.isStatus()){
-            log.error(oaApiTokenResult.getMsg());
-            return oaUserIdAndName;
-        }else{
-            MultiValueMap<String, String> headers = setHeaders();
-            String result = oaApi.getAllOaUser(headers);
-            //转成对象
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
-                JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
-                for(int i = 0; i < jsonArray.size(); i++){
-                    JSONObject objTmp = jsonArray.getJSONObject(i);
-                    OaUserIdAndName info = new OaUserIdAndName();
-                    info.setId(objTmp.getInteger("id"));
-                    info.setName(objTmp.getString("name"));
-                    oaUserIdAndName.add(info);
-                }
-            }
-            return oaUserIdAndName;
-        }
+//        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
+//        if(!oaApiTokenResult.isStatus()){
+//            log.error(oaApiTokenResult.getMsg());
+//            return oaUserIdAndName;
+//        }else{
+//            MultiValueMap<String, String> headers = setHeaders();
+//            String result = oaApi.getAllOaUser(headers);
+//            //转成对象
+//            JSONObject jsonObject = JSONObject.parseObject(result);
+//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
+//                JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
+//                for(int i = 0; i < jsonArray.size(); i++){
+//                    JSONObject objTmp = jsonArray.getJSONObject(i);
+//                    OaUserIdAndName info = new OaUserIdAndName();
+//                    info.setId(objTmp.getInteger("id"));
+//                    info.setName(objTmp.getString("name"));
+//                    oaUserIdAndName.add(info);
+//                }
+//            }
+//            return oaUserIdAndName;
+//        }
     }
 
     /**
