@@ -62,7 +62,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpHeatPowerService epHeatPowerService;
 
     @Override
-    public Boolean meterRead(LocalDate date) {
+    public Integer meterRead(LocalDate date) {
         //1.获取所有的远传仪表+挂载的分区节点
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         //2.获取所有有仪表的节点
@@ -77,25 +77,27 @@ public class EpDwServiceImpl implements EpDwService {
         //防止fegin获取不到当前请求
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         //6.遍历所有的远传仪表
+        Integer count = 0;
         for (EpDwMeterPartitionDTO meter : meterList) {
             //一开始 应该划分好任务，然后插入数据库中，加上标识
             //子任务执行好插入数据，更新标识
             //避免重复执行
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList, lineMap);
-            log.debug("{}", taskList);
+            count += taskList.size();
             for (DwConditionDTO task : taskList) {
-                CompletableFuture.runAsync(() ->{
+                CompletableFuture.runAsync(() -> {
                     try {
                         RequestContextHolder.setRequestAttributes(attributes);
                         //执行任务
                         doMeterRead(task);
-                    }catch (Exception e){
-                        log.error("{}",e);
+                    } catch (Exception e) {
+                        log.error("{}", e);
                     }
                 });
             }
         }
-        return Boolean.TRUE;
+        log.info("date ->{} 执行条数{}", date, count);
+        return count;
     }
 
     /**
@@ -116,7 +118,7 @@ public class EpDwServiceImpl implements EpDwService {
                 .eq(EpMeterReadDistant::getEnd, task.getEnd())
                 .eq(Objects.nonNull(task.getProduceOrderId()), EpMeterReadDistant::getProduceOrderId, task.getProduceOrderId()));
         if (count > 0) {
-            log.info("读数归档 班次日期 -> {} 已跑过", task);
+            log.debug("读数归档 班次日期 -> {} 已跑过", task);
             return Boolean.FALSE;
         }
         //构造请求

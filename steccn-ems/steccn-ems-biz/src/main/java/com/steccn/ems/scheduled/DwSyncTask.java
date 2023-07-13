@@ -7,6 +7,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
 
 /**
@@ -30,8 +31,8 @@ public class DwSyncTask {
     @XxlJob("meterReadDistantHandler")
     public void meterReadDistant() {
         XxlJobHelper.log("远传仪表能耗Distant任务-任务开始");
-        Boolean flag = epDwService.meterRead(LocalDate.now().minusDays(1));
-        XxlJobHelper.log("远传仪表能耗Distant任务-任务完成，结果 -> {}", flag);
+        Integer count = epDwService.meterRead(LocalDate.now().minusDays(1));
+        XxlJobHelper.log("远传仪表能耗Distant任务-任务完成，任务条数 -> {}", count);
     }
 
     @XxlJob("electricMoneyHandler")
