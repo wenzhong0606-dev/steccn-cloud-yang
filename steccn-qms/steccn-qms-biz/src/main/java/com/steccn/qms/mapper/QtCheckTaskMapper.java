@@ -106,10 +106,58 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @param end             结束时间
      * @return 集合
      */
-    List<QtThickAvgDTO> thickAvg(@Param("lineIdList") List<Integer> productLineList,
-                                 @Param("itemIdSet") List<Integer> thickItemIdList,
-                                 @Param("start") LocalDateTime start,
-                                 @Param("end") LocalDateTime end);
+    List<QtCheckItemMaterialAvgDTO> checkItemMaterialAvg(@Param("lineIdList") List<Integer> productLineList,
+                                                         @Param("itemIdSet") List<Integer> thickItemIdList,
+                                                         @Param("start") LocalDateTime start,
+                                                         @Param("end") LocalDateTime end,
+                                                         @Param("bit") Integer bit);
+
+
+    /**
+     * 获取巡检的厚度平均值的平均值--班组
+     *
+     * @param productLineList 产线集合
+     * @param thickItemIdList 检验项id集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return 集合
+     */
+    List<QtCheckItemMaterialAvgDTO> checkItemAvgClassGroup(@Param("lineIdList") List<Integer> productLineList,
+                                                           @Param("itemIdSet") List<Integer> thickItemIdList,
+                                                           @Param("start") LocalDateTime start,
+                                                           @Param("end") LocalDateTime end,
+                                                           @Param("bit") Integer bit);
+
+    /**
+     * 获取巡检的厚度平均值的平均值--班次日期
+     *
+     * @param productLineList 产线集合
+     * @param thickItemIdList 检验项id集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return 集合
+     */
+    List<QtCheckItemMaterialAvgDTO> checkItemAvgDay(@Param("lineIdList") List<Integer> productLineList,
+                                                           @Param("itemIdSet") List<Integer> thickItemIdList,
+                                                           @Param("start") LocalDateTime start,
+                                                           @Param("end") LocalDateTime end,
+                                                           @Param("bit") Integer bit);
+
+    /**
+     * 获取巡检的厚度平均值的平均值--班次日期
+     *
+     * @param productLineList 产线集合
+     * @param thickItemIdList 检验项id集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return 集合
+     */
+    List<QtCheckItemMaterialAvgDTO> checkItemAvgMonth(@Param("lineIdList") List<Integer> productLineList,
+                                                      @Param("itemIdSet") List<Integer> thickItemIdList,
+                                                      @Param("start") LocalDateTime start,
+                                                      @Param("end") LocalDateTime end,
+                                                      @Param("bit") Integer bit);
+
 }
 
 
