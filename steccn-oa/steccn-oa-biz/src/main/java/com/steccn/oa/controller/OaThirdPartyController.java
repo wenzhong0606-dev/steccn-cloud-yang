@@ -71,6 +71,12 @@ public class OaThirdPartyController {
         return R.success(hrmresourceService.getMesUser());
     }
 
+    @GetMapping("/thirdParty/synchronizeUser")
+    @ApiOperation(value = "第三方获取所有用户")
+    public R<String> synchronizeUserUser(HttpServletRequest request) {
+        return R.success(hrmresourceService.synchronizeUser());
+    }
+
     /**
      * 校验请求头信息
      *

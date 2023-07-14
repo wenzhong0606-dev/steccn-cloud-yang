@@ -2,6 +2,7 @@ package com.steccn.oa.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,6 +14,7 @@ import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.vo.OaMesUserVO;
+import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -157,7 +159,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                 .in(Hrmresource::getLoginid,loginName));
         oaMesUserVOS.forEach(tmp->{
             Hrmresource one = list.stream().filter(v -> v.getLoginid().equals(tmp.getLoginCode())).findFirst().orElse(null);
-            if(tmp.getOfficeType().equals(OaConstant.NUM_6.toString())){
+            if(StrUtil.isNotBlank(tmp.getOfficeType())&&tmp.getOfficeType().equals(OaConstant.NUM_6.toString())){
                 String code = tmp.getOfficeCode();
                 tmp.setOfficeCode(null);
                 tmp.setPostCode(code);
@@ -167,6 +169,22 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             }
         });
         return oaMesUserVOS;
+    }
+
+    @Override
+    public String synchronizeUser() {
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().ne(Hrmresource::getStatus, OaConstant.NUM_5));
+        List<MesUserDTO> dto = Lists.newArrayList();
+        list.forEach(tmp->{
+            MesUserDTO tmpDTO = new MesUserDTO();
+            tmpDTO.setUserName(tmp.getLastname());
+            tmpDTO.setLoginCode(tmp.getLoginid());
+            tmpDTO.setOfficeCode("Unallocated");
+            tmpDTO.setOfficeName("待分配部门");
+            tmpDTO.setIsNewRecord(true);
+            dto.add(tmpDTO);
+        });
+        return remoteMesFeignApi.synchronizeUser(dto);
     }
 }
 
