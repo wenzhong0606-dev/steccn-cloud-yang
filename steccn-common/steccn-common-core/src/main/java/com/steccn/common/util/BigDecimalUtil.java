@@ -277,6 +277,20 @@ public class BigDecimalUtil {
     }
 
     /**
+     * 格式化输出
+     *
+     * @param value 值
+     * @param scale 位数
+     * @return
+     */
+    public static String format(BigDecimal value, Integer scale) {
+        if (Objects.isNull(value)) {
+            return null;
+        }
+        return value.setScale(scale, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+
+    /**
      * val1 x val2
      *
      * @param val1

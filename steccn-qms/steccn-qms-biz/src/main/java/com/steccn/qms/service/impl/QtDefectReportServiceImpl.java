@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
@@ -17,6 +18,7 @@ import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.vo.BaseReportHeaderVO;
+import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
@@ -325,7 +327,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     @Override
     public QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto) {
         QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
+        List<QtCheckItemTransmitDataVO> rowList = Lists.newArrayList();
         setTransmitHeader(resVo);
+        resVo.setDataList(rowList);
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<String> checkItemCodeList = Arrays.asList("JYX000154", "JYX000155", "JYX000037", "JYX000036");
@@ -333,11 +337,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         SteccnTableAssertUtil.notEmpty(dbList, "透光率数据集合为空");
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), start, end);
-
         //获取班组的集合
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-
         for (Integer line : dto.getProductLineList()) {
             String lineName = lineIdNameMap.get(line);
             //班次日期
@@ -352,15 +354,53 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
                 OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
                 row.setClassGroupName(oaGroupCountDTO.getGroupName());
-                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassGroupId().equals(oaGroupCountDTO.getGroupId())).findFirst();
-                if(first.isPresent()){
-                    QtCheckItemMaterialAvgDTO qtCheckItemMaterialAvgDTO = first.get();
+                List<QtCheckItemMaterialAvgDTO> filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassGroupId().equals(oaGroupCountDTO.getGroupId())).collect(Collectors.toList());
+                Map<String, BigDecimal> dataMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(filterList)) {
+                    filterList.forEach(ele -> dataMap.put(ele.getCode(), ele.getValue()));
                 }
+                row.setFigureDepth(BigDecimalUtil.format(dataMap.get(checkItemCodeList.get(0))));
+                BigDecimal thick = dataMap.get(checkItemCodeList.get(1));
+                row.setThickness(BigDecimalUtil.format(thick, BigDecimalUtil.SCALE_2));
+                BigDecimal oneYValue = dataMap.get(checkItemCodeList.get(2));
+                BigDecimal oneTValue = dataMap.get(checkItemCodeList.get(3));
+                String oneYValueStr = BigDecimalUtil.format(oneYValue, BigDecimalUtil.SCALE_2);
+                String oneTValueStr = BigDecimalUtil.format(oneTValue, BigDecimalUtil.SCALE_2);
+                List<FurtherValueStrVO> multiList = Lists.newArrayList();
+                row.setModule(multiList);
+                multiList.add(new FurtherValueStrVO(Arrays.asList(oneYValueStr, oneTValueStr)));
+                //POWER(所在行“平均值-Y值” / (0.96 * 0.96 * 100), 3.2 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                //POWER(所在行“平均值-T值” / (0.96 * 0.96 * 100), 3.2 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                BigDecimal twoYValue = avgYtThick(oneYValue, new BigDecimal(3.0), thick);
+                BigDecimal twoTValue = avgYtThick(oneTValue, new BigDecimal(3.0), thick);
+                String twoYValueStr = BigDecimalUtil.format(twoYValue, BigDecimalUtil.SCALE_2);
+                String twoTValueStr = BigDecimalUtil.format(twoTValue, BigDecimalUtil.SCALE_2);
+                multiList.add(new FurtherValueStrVO(Arrays.asList(twoYValueStr, twoTValueStr)));
+                //POWER(所在行“平均值-Y值” / (0.96 * 0.96 * 100), 3 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                //POWER(所在行“平均值-T值” / (0.96 * 0.96 * 100), 3 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                BigDecimal threeYValue = avgYtThick(oneYValue, new BigDecimal(3.2), thick);
+                BigDecimal threeTValue = avgYtThick(oneTValue, new BigDecimal(3.2), thick);
+                String threeYValueStr = BigDecimalUtil.format(threeYValue, BigDecimalUtil.SCALE_2);
+                String threeTValueStr = BigDecimalUtil.format(threeTValue, BigDecimalUtil.SCALE_2);
+                multiList.add(new FurtherValueStrVO(Arrays.asList(threeYValueStr, threeTValueStr)));
+                rowList.add(row);
             }
         }
-
         return resVo;
     }
+
+    /**
+     * 计算折成3.2mm 3.0mm的Y,T值
+     *
+     * @param val   平均值-Y值 | 平均值-T值
+     * @param x     3.2, 3.0
+     * @param thick 所在行“厚度”
+     * @return 值
+     */
+    private BigDecimal avgYtThick(BigDecimal val, BigDecimal x, BigDecimal thick) {
+        return BigDecimal.ZERO;
+    }
+
 
     /**
      * 设置透光率表头
