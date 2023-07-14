@@ -113,7 +113,7 @@ public class SysHikPwServiceImpl extends ServiceImpl<SysHikPwMapper, SysHikPw>
 
         if (CollUtil.isNotEmpty(virtualNodeList) && CollUtil.isNotEmpty(sourceFlatList)) {
 
-            List<CameraVO> filterNodeList = sourceFlatList.stream().filter(ele -> virtualNodeList.contains(ele.getRegionPathName())).collect(Collectors.toList());
+            List<CameraVO> filterNodeList = sourceFlatList.stream().filter(ele -> virtualNodeList.contains(ele.getRegionName())).collect(Collectors.toList());
             resSet.addAll(filterNodeList);
         }
 
