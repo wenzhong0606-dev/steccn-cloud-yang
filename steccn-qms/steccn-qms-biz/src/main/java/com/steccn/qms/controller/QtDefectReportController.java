@@ -3,10 +3,7 @@ package com.steccn.qms.controller;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
-import com.steccn.qms.vo.QtCheckItemSingleAvgVO;
-import com.steccn.qms.vo.QtDefectFallingVO;
-import com.steccn.qms.vo.QtDefectReportVO;
-import com.steccn.qms.vo.QtCheckItemMultiAvgVO;
+import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,5 +57,10 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.roughness(dto));
     }
 
+    @PostMapping("/transmittance")
+    @ApiOperation(value = "透光率报表")
+    public R<QtCheckItemTransmitVO> transmittance(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.transmittance(dto));
+    }
 }
 

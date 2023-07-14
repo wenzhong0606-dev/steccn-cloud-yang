@@ -158,6 +158,19 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
                                                       @Param("end") LocalDateTime end,
                                                       @Param("bit") Integer bit);
 
+    /**
+     * 透光率
+     *
+     * @param productLineList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @param codeList        检验项code
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> transmittance(@Param("lineIdList") List<Integer> productLineList,
+                                                  @Param("start") LocalDateTime start,
+                                                  @Param("end") LocalDateTime end,
+                                                  @Param("codeList") List<String> codeList);
 }
 
 

@@ -350,7 +350,9 @@
         qt_check_task task
         JOIN qt_check_task_detail detail ON task.id = detail.task_id
         WHERE
-        task.STATUS = 2 and detail.check_result is not null
+        task.STATUS = 2
+        AND task.task_type = 4
+        AND detail.check_result is not null
         AND item_id IN
         <foreach collection="itemIdSet" item="id" open="(" close=")" separator=",">
           #{id}
@@ -378,7 +380,9 @@
         qt_check_task task
         JOIN qt_check_task_detail detail ON task.id = detail.task_id
         WHERE
-        task.STATUS = 2 and detail.check_result is not null
+        task.STATUS = 2
+        AND task.task_type = 4
+        AND detail.check_result is not null
         AND item_id IN
         <foreach collection="itemIdSet" item="id" open="(" close=")" separator=",">
             #{id}
@@ -403,7 +407,9 @@
         qt_check_task task
         JOIN qt_check_task_detail detail ON task.id = detail.task_id
         WHERE
-        task.STATUS = 2 and detail.check_result is not null
+        task.STATUS = 2
+        AND task.task_type = 4
+        AND detail.check_result is not null
         AND item_id IN
         <foreach collection="itemIdSet" item="id" open="(" close=")" separator=",">
             #{id}
@@ -427,7 +433,9 @@
         qt_check_task task
         JOIN qt_check_task_detail detail ON task.id = detail.task_id
         WHERE
-        task.STATUS = 2 and detail.check_result is not null
+        task.STATUS = 2
+        AND task.task_type = 4
+        AND detail.check_result is not null
         AND item_id IN
         <foreach collection="itemIdSet" item="id" open="(" close=")" separator=",">
             #{id}
@@ -441,5 +449,35 @@
         GROUP BY
         DATE_FORMAT(class_time,'%Y-%m'),
         task.product_line ->> '$.id'
+    </select>
+    <select id="transmittance" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        SELECT
+            task.product_line ->> '$.id' AS product_line_id,
+            DATE_FORMAT( class_time, '%Y-%m-%d' ) AS class_date,
+            class_group_id,
+            ROUND( avg( check_result ), 2 ) AS VALUE,
+            item.code
+        FROM
+        qt_check_task task
+        JOIN qt_check_task_detail detail ON task.id = detail.task_id
+        JOIN qt_check_item item ON detail.item_id = item.id
+        WHERE
+        task.STATUS = 2 AND task.task_type = 4
+        AND detail.check_result IS NOT NULL
+        AND item.code IN
+        <foreach collection="codeList" item="code" open="(" close=")" separator=",">
+            #{code}
+        </foreach>
+        AND task.product_line ->> '$.id' IN
+        <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        AND spot_time &gt;= #{start}
+        AND spot_time &lt; #{end}
+        GROUP BY
+        DATE_FORMAT( class_time, '%Y-%m-%d' ),
+        class_group_id,
+        task.product_line ->> '$.id',
+        item.code
     </select>
 </mapper>

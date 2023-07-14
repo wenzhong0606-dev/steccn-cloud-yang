@@ -35,4 +35,7 @@ public class QtCheckItemMaterialAvgDTO implements Serializable {
     @ApiModelProperty("值")
     private BigDecimal value;
 
+    @ApiModelProperty("编码")
+    private String code;
+
 }

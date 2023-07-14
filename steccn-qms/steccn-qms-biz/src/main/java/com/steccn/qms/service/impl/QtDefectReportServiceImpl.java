@@ -16,6 +16,7 @@ import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
@@ -319,6 +320,67 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         resVo.setRowList(rowList);
         resVo.setDateList(dateList);
         return resVo;
+    }
+
+    @Override
+    public QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto) {
+        QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
+        setTransmitHeader(resVo);
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<String> checkItemCodeList = Arrays.asList("JYX000154", "JYX000155", "JYX000037", "JYX000036");
+        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.transmittance(dto.getProductLineList(), start, end, checkItemCodeList);
+        SteccnTableAssertUtil.notEmpty(dbList, "透光率数据集合为空");
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), start, end);
+
+        //获取班组的集合
+        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            //班次日期
+            for (int i = 1; i < shardTimeList.size(); i++) {
+                LocalDateTime begin = shardTimeList.get(i - 1);
+                LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                QtCheckItemTransmitDataVO row = new QtCheckItemTransmitDataVO();
+                row.setProductLineName(lineName);
+                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+                Integer classId = LocalDateUtil.getClassId(begin, false);
+                QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
+                row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
+                row.setClassGroupName(oaGroupCountDTO.getGroupName());
+                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassGroupId().equals(oaGroupCountDTO.getGroupId())).findFirst();
+                if(first.isPresent()){
+                    QtCheckItemMaterialAvgDTO qtCheckItemMaterialAvgDTO = first.get();
+                }
+            }
+        }
+
+        return resVo;
+    }
+
+    /**
+     * 设置透光率表头
+     *
+     * @param resVo 返回对象
+     */
+    private void setTransmitHeader(QtCheckItemTransmitVO resVo) {
+        List<QtSpcHeadTitleVO> headerLeft = Lists.newArrayList();
+        headerLeft.add(new QtSpcHeadTitleVO("产线", "productLineName"));
+        headerLeft.add(new QtSpcHeadTitleVO("日期", "classDateStr"));
+        headerLeft.add(new QtSpcHeadTitleVO("班次", "className"));
+        headerLeft.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        headerLeft.add(new QtSpcHeadTitleVO("花纹深度", "figureDepth"));
+        headerLeft.add(new QtSpcHeadTitleVO("厚度", "thickness"));
+        List<BaseReportHeaderVO> headerRight = Lists.newArrayList();
+        headerRight.add(new BaseReportHeaderVO("平均值", Arrays.asList("Y值", "T值")));
+        headerRight.add(new BaseReportHeaderVO("折成3.2mm", Arrays.asList("Y值", "T值")));
+        headerRight.add(new BaseReportHeaderVO("折成3.0mm", Arrays.asList("Y值", "T值")));
+        resVo.setHeaderLeft(headerLeft);
+        resVo.setHeaderRight(headerRight);
     }
 
     /**
