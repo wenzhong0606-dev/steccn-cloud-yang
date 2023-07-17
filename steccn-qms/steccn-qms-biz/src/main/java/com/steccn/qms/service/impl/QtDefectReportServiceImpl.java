@@ -398,7 +398,15 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @return 值
      */
     private BigDecimal avgYtThick(BigDecimal val, BigDecimal x, BigDecimal thick) {
-        return BigDecimal.ZERO;
+        //POWER(所在行“平均值-Y值” / (0.96 * 0.96 * 100), 3.2 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+        BigDecimal first = BigDecimalUtil.divide(val, new BigDecimal("92.16"));
+        BigDecimal second = BigDecimalUtil.divide(x, thick);
+        double pow = 0;
+        if (Objects.nonNull(first) && Objects.nonNull(second) && BigDecimalUtil.gt(first, BigDecimal.ZERO) && BigDecimalUtil.gt(second, BigDecimal.ZERO)) {
+            pow = Math.pow(first.doubleValue(), second.doubleValue());
+            pow = pow * 92.16;
+        }
+        return BigDecimal.valueOf(pow).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
 
