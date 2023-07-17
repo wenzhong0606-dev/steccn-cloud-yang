@@ -277,8 +277,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
             ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
             ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
-            Assert.notNull(dto.getClassGroupId(),"首检、在线检、巡检班组不能为空");
             Assert.notNull(dto.getClassGroupName(),"首检、在线检、巡检班组不能为空");
+            if(dto.getClassGroupName().contains(PmManagerConstant.METHYL_CLASS_NAME)){
+                dto.setClassGroupId(QtManagerConstant.NUM_0);
+            }else if(dto.getClassGroupName().contains(PmManagerConstant.ETHYL_CLASS_NAME)){
+                dto.setClassGroupId(QtManagerConstant.NUM_1);
+            }else if(dto.getClassGroupName().contains(PmManagerConstant.PROPYLENE_CLASS_NAME)){
+                dto.setClassGroupId(QtManagerConstant.NUM_2);
+            }
         }
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
@@ -420,6 +426,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(readOnly = true)
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
+        //转换一下班组
+        if(StrUtil.isNotBlank(qtCheckTask.getClassGroupName())){
+            if(qtCheckTask.getClassGroupName().contains(PmManagerConstant.METHYL_CLASS_NAME)){
+                qtCheckTask.setClassGroupName(PmManagerConstant.METHYL_CLASS_NAME);
+            }else if(qtCheckTask.getClassGroupName().contains(PmManagerConstant.ETHYL_CLASS_NAME)){
+                qtCheckTask.setClassGroupName(PmManagerConstant.ETHYL_CLASS_NAME);
+            }else if(qtCheckTask.getClassGroupName().contains(PmManagerConstant.PROPYLENE_CLASS_NAME)){
+                qtCheckTask.setClassGroupName(PmManagerConstant.PROPYLENE_CLASS_NAME);
+            }
+        }
         Assert.notNull(qtCheckTask, "检验记录不存在");
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
