@@ -2,6 +2,8 @@ package com.steccn.oa.vo;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * MesUser接口
  *
@@ -23,4 +25,8 @@ public class OaMesUserVO {
     private String username;
     private Integer oaId;
     private String officeType;
+    /**
+     * 分组id
+     */
+    private List<Integer> groupId;
 }
