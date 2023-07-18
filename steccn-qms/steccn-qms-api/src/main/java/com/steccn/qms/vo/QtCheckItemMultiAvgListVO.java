@@ -14,8 +14,8 @@ import java.util.List;
  * @date 2023/7/12
  */
 @Data
-@ApiModel("检验项平均值集合视图对象")
-public class QtCheckItemAvgListVO implements Serializable {
+@ApiModel("检验项平均值集合视图对象-cell多值")
+public class QtCheckItemMultiAvgListVO implements Serializable {
 
     @ApiModelProperty("产线名称")
     private String productLineName;

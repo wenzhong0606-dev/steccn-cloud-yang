@@ -13,11 +13,11 @@ import java.util.List;
  */
 @Data
 @ApiModel("平均厚度集合视图对象")
-public class QtCheckItemAvgVO implements Serializable {
+public class QtCheckItemMultiAvgVO implements Serializable {
 
     @ApiModelProperty("表头日期集合")
     private List<String> dateList;
 
     @ApiModelProperty("数据集合")
-    private List<QtCheckItemAvgListVO> rowList;
+    private List<QtCheckItemMultiAvgListVO> rowList;
 }
