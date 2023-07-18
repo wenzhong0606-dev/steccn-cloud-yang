@@ -286,7 +286,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtCustomerComplainVO.setDetails(BeanUtil.copyToList(list, QtCustomerComplainDetailVO.class));
             //获取组件信息
             List<QtCustomerComplainModule> modules = qtCustomerComplainModuleService.list(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getCustomerComplainId, customerComplain.getId()));
-            qtCustomerComplainVO.setModels(BeanUtil.copyToList(modules,QtCustomerComplainModelVO.class));
+            qtCustomerComplainVO.setModules(BeanUtil.copyToList(modules,QtCustomerComplainModelVO.class));
             List<Long> idList = Lists.newArrayList();
             idList.add(qtCustomerComplainVO.getComplainReceiver());
             idList.add(qtCustomerComplainVO.getDealMan());
@@ -345,6 +345,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //编辑明细信息
         if (Objects.nonNull(qtCustomerComplainDTO.getDetails())) {
             qtCustomerComplainDetailService.edit(qtCustomerComplainDTO);
+        }
+        if(Objects.nonNull(qtCustomerComplainDTO.getModules())){
+            qtCustomerComplainModuleService.edit(qtCustomerComplainDTO);
         }
         List<Long> idList = Lists.newArrayList();
         idList.add(qtCustomerComplainDTO.getComplainReceiver());
