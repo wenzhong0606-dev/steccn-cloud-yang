@@ -1,6 +1,8 @@
 package com.steccn.oa.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.steccn.authserver.util.OutSystemOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaApiTokenResult;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class OaTokenService {
         MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
         headers.set("appid", OaConstant.OA_API_APPID);
         headers.set("secret",OaConstant.OA_API_SECRET);
-        String result = oaApi.getApiToken(headers);
+        String result = OutSystemOptional.of(() -> oaApi.getApiToken(headers), FeignConstant.OA_SERVICE_NAME).get();
         JSONObject jsonObject = JSONObject.parseObject(result);
         OaApiTokenResult oaApiTokenResult = new OaApiTokenResult();
         if(jsonObject.getBoolean(OaConstant.OA_JSON_STATUS)){

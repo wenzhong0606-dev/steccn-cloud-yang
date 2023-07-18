@@ -62,4 +62,10 @@ public interface FeignConstant {
      * mes服务名称
      */
     String STECCN_MES_SERVICE_NAME = "steccn-mes";
+
+
+    /**
+     * mes服务名称
+     */
+    String OA_SERVICE_NAME = "OA";
 }

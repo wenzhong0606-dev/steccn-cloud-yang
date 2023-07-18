@@ -41,6 +41,16 @@ public interface RemoteMesFeignApi {
     String saveUser(@RequestBody MesUserDTO mesUserDTO);
 
     /**
+     * 根据分类id查询分类信息
+     *
+     * @param mesUserDTO
+     * @return
+     */
+    @PostMapping(value = "/web/user/synchronizeData")
+    @ResponseBody
+    String synchronizeUser(@RequestBody List<MesUserDTO> mesUserDTO);
+
+    /**
      * 根据用户名查询mes用户名
      * @param loginCode
      * @return
