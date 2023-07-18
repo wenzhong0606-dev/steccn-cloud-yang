@@ -45,7 +45,7 @@ public interface SysOfficeConstant {
     String SUPPLIER = "11";
 
     /**
-     * 省级 市级公司 后勤部门 生产部门 岗位 工段 部门
+     * 省级 市级公司 后勤部门 生产部门 岗位 工段 部门 岗位分组
      */
     String PROVINCIAL_COMPANY = "1";
     String MUNICIPAL_COMPANY = "2";
@@ -54,6 +54,7 @@ public interface SysOfficeConstant {
     String POST = "6";
     String SECTION = "10";
     String DEPARTMENT = "15";
+    String POST_GROUP = "18";
 
 
     /**

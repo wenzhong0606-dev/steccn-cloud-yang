@@ -28,5 +28,5 @@ public class OaMesUserVO {
     /**
      * 分组id
      */
-    private List<Integer> groupId;
+    private Integer groupId;
 }
