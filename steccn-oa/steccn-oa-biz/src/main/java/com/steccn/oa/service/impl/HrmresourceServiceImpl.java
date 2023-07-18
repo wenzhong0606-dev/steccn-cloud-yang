@@ -21,6 +21,7 @@ import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -161,7 +162,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                 .in(Hrmresource::getLoginid,loginName));
         //拿到所有考勤组
         List<KqGroupmember> kqGroupmembers = kqGroupmemberMapper.selectList(new LambdaQueryWrapper<KqGroupmember>()
-                .select(KqGroupmember::getGroupid,KqGroupmember::getTypevalue).isNull(KqGroupmember::getIsdelete));
+                .select(KqGroupmember::getId,KqGroupmember::getGroupid,KqGroupmember::getTypevalue).isNull(KqGroupmember::getIsdelete));
         oaMesUserVOS.forEach(tmp->{
             Hrmresource one = list.stream().filter(v -> v.getLoginid().equals(tmp.getLoginCode())).findFirst().orElse(null);
             if(StrUtil.isNotBlank(tmp.getOfficeType())&&tmp.getOfficeType().equals(OaConstant.NUM_6.toString())){
@@ -171,10 +172,11 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             }
             if(Objects.nonNull(one)){
                 tmp.setOaId(one.getId());
-                List<KqGroupmember> memberTmp = kqGroupmembers.stream().filter(v -> v.getTypevalue().equals(one.getId())).collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(memberTmp)){
-                    List<Integer> collect = memberTmp.stream().map(KqGroupmember::getGroupid).collect(Collectors.toList());
-                    tmp.setGroupId(collect);
+                KqGroupmember memberTmp = kqGroupmembers.stream().filter(v -> v.getTypevalue().equals(one.getId()))
+                        .sorted(Comparator.comparing(KqGroupmember::getId).reversed())
+                        .findFirst().orElse(null);
+                if(Objects.nonNull(memberTmp)){
+                    tmp.setGroupId(memberTmp.getGroupid());
                 }
             }
         });

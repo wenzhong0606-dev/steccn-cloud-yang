@@ -65,6 +65,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         officeTypeList.add(SysOfficeConstant.SECTION);
         officeTypeList.add(SysOfficeConstant.STATION);
         officeTypeList.add(SysOfficeConstant.DEPARTMENT);
+        officeTypeList.add(SysOfficeConstant.POST_GROUP);
         List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal)
                 .in(SysOffice::getOfficeType,officeTypeList));
         //如果数据为空,直接返回空集
