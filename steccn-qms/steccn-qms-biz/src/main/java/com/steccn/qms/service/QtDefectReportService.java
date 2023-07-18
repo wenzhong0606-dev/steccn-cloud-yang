@@ -2,9 +2,7 @@ package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.dto.QtDefectReportDTO;
-import com.steccn.qms.vo.QtDefectFallingVO;
-import com.steccn.qms.vo.QtDefectReportVO;
-import com.steccn.qms.vo.QtCheckItemAvgVO;
+import com.steccn.qms.vo.*;
 
 import java.util.List;
 
@@ -38,7 +36,7 @@ public interface QtDefectReportService {
      * @param dto 请求
      * @return 报表
      */
-    QtCheckItemAvgVO thickAvg(QtDefectReportDTO dto);
+    QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto);
 
     /**
      * 毛边宽报表
@@ -46,5 +44,20 @@ public interface QtDefectReportService {
      * @param dto 请求
      * @return 报表
      */
-    QtCheckItemAvgVO rbwAvg(QtDefectReportDTO dto);
+    QtCheckItemMultiAvgVO rbwAvg(QtDefectReportDTO dto);
+
+    /**
+     * 粗糙度报表
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    QtCheckItemSingleAvgVO roughness(QtDefectReportDTO dto);
+
+    /**
+     * 透光率报表
+     * @param dto – 请求参数
+     * @return
+     */
+    QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
 }

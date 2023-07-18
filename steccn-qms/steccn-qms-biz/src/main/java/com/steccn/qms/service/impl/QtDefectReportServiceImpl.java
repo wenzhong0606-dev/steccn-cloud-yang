@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
@@ -16,13 +17,15 @@ import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.vo.BaseReportHeaderVO;
+import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtCheckItemMaterialAvgDTO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.dto.QtDestoryInfoFallDTO;
-import com.steccn.qms.dto.QtThickAvgDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.ShardTimeUtil;
@@ -196,40 +199,258 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
-    public QtCheckItemAvgVO thickAvg(QtDefectReportDTO dto) {
+    public QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto) {
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000100").select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
-        QtCheckItemAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
         return resVo;
     }
 
     @Override
-    public QtCheckItemAvgVO rbwAvg(QtDefectReportDTO dto) {
+    public QtCheckItemMultiAvgVO rbwAvg(QtDefectReportDTO dto) {
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000072").select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "毛边宽检验项不存在");
-        QtCheckItemAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        return resVo;
+    }
+
+    @Override
+    public QtCheckItemSingleAvgVO roughness(QtDefectReportDTO dto) {
+        List<QtCheckItem> roughnessItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000105").select(QtCheckItem::getId));
+        SteccnTableAssertUtil.notEmpty(roughnessItemList, "粗糙度检验项不存在");
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        //获取粒度
+        QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEntity, "粒度不存在");
+        String type = granularityEntity.getType();
+        if (QtManagerConstant.LossReportType.CLASS.equals(granularityEntity)) {
+            type = QtManagerConstant.LossReportType.DAY.getType();
+        }
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(type, start, end);
+        List<Integer> roughnessIdList = roughnessItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
+        //获取产线的中文
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        List<QtCheckItemMaterialAvgDTO> dbList;
+        List<QtCheckItemSingleAvgListVO> rowList = Lists.newArrayList();
+        List<String> dateList = Lists.newArrayList();
+
+        if (QtManagerConstant.LossReportType.CLASS.equals(granularityEntity)) {
+            dbList = qtCheckTaskMapper.checkItemAvgClassGroup(dto.getProductLineList(), roughnessIdList, start, end, 3);
+            SteccnTableAssertUtil.notEmpty(dbList, "粗糙检验项暂无数据");
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
+            for (int i = 0; i < shardTimeList.size() - 1; i++) {
+                dateList.add(dateTimeFormatter.format(shardTimeList.get(i)));
+            }
+            //遍历产线
+            for (Integer line : dto.getProductLineList()) {
+                String lineName = lineIdNameMap.get(line);
+                for (OaManagerConstant.OaTeamGroupMapping classGroup : OaManagerConstant.OaTeamGroupMapping.values()) {
+                    QtCheckItemSingleAvgListVO row = new QtCheckItemSingleAvgListVO();
+                    rowList.add(row);
+                    row.setProductLineName(lineName);
+                    row.setClassGroupName(classGroup.getName());
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    row.setValueList(valueList);
+                    for (int i = 1; i < shardTimeList.size(); i++) {
+                        LocalDateTime begin = shardTimeList.get(i - 1);
+                        LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                        Optional<BigDecimal> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classGroup.getCode().equals(ele.getClassGroupId())).map(QtCheckItemMaterialAvgDTO::getValue).findFirst();
+                        if (first.isPresent()) {
+                            valueList.add(first.get());
+                        } else {
+                            valueList.add(null);
+                        }
+                    }
+                }
+            }
+        } else if (QtManagerConstant.LossReportType.DAY.equals(granularityEntity)) {
+            dbList = qtCheckTaskMapper.checkItemAvgDay(dto.getProductLineList(), roughnessIdList, start, end, 3);
+            SteccnTableAssertUtil.notEmpty(dbList, "粗糙检验项暂无数据");
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
+            for (int i = 0; i < shardTimeList.size() - 1; i++) {
+                dateList.add(dateTimeFormatter.format(shardTimeList.get(i)));
+            }
+            //遍历产线
+            for (Integer line : dto.getProductLineList()) {
+                String lineName = lineIdNameMap.get(line);
+                QtCheckItemSingleAvgListVO row = new QtCheckItemSingleAvgListVO();
+                rowList.add(row);
+                row.setProductLineName(lineName);
+                List<BigDecimal> valueList = Lists.newArrayList();
+                row.setValueList(valueList);
+                for (int i = 1; i < shardTimeList.size(); i++) {
+                    LocalDateTime begin = shardTimeList.get(i - 1);
+                    LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                    Optional<BigDecimal> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).map(QtCheckItemMaterialAvgDTO::getValue).findFirst();
+                    if (first.isPresent()) {
+                        valueList.add(first.get());
+                    } else {
+                        valueList.add(null);
+                    }
+                }
+            }
+        } else {
+            dbList = qtCheckTaskMapper.checkItemAvgMonth(dto.getProductLineList(), roughnessIdList, start, end, 3);
+            SteccnTableAssertUtil.notEmpty(dbList, "粗糙检验项暂无数据");
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy年MM月");
+            for (int i = 0; i < shardTimeList.size() - 1; i++) {
+                dateList.add(dateTimeFormatter.format(shardTimeList.get(i)));
+            }
+            //遍历产线
+            for (Integer line : dto.getProductLineList()) {
+                String lineName = lineIdNameMap.get(line);
+                QtCheckItemSingleAvgListVO row = new QtCheckItemSingleAvgListVO();
+                rowList.add(row);
+                row.setProductLineName(lineName);
+                List<BigDecimal> valueList = Lists.newArrayList();
+                row.setValueList(valueList);
+                for (int i = 1; i < shardTimeList.size(); i++) {
+                    LocalDateTime begin = shardTimeList.get(i - 1);
+                    String classMonth = LocalDateUtil.format(begin, "yyyy-MM");
+                    Optional<BigDecimal> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classMonth.equals(ele.getClassMonth())).map(QtCheckItemMaterialAvgDTO::getValue).findFirst();
+                    if (first.isPresent()) {
+                        valueList.add(first.get());
+                    } else {
+                        valueList.add(null);
+                    }
+                }
+            }
+        }
+        QtCheckItemSingleAvgVO resVo = new QtCheckItemSingleAvgVO();
+        resVo.setRowList(rowList);
+        resVo.setDateList(dateList);
+        return resVo;
+    }
+
+    @Override
+    public QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto) {
+        QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
+        List<QtCheckItemTransmitDataVO> rowList = Lists.newArrayList();
+        setTransmitHeader(resVo);
+        resVo.setDataList(rowList);
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<String> checkItemCodeList = Arrays.asList("JYX000154", "JYX000155", "JYX000037", "JYX000036");
+        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.transmittance(dto.getProductLineList(), start, end, checkItemCodeList);
+        SteccnTableAssertUtil.notEmpty(dbList, "透光率数据集合为空");
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), start, end);
+        //获取班组的集合
+        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            //班次日期
+            for (int i = 1; i < shardTimeList.size(); i++) {
+                LocalDateTime begin = shardTimeList.get(i - 1);
+                LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                QtCheckItemTransmitDataVO row = new QtCheckItemTransmitDataVO();
+                row.setProductLineName(lineName);
+                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+                Integer classId = LocalDateUtil.getClassId(begin, false);
+                QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
+                row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
+                row.setClassGroupName(oaGroupCountDTO.getGroupName());
+                List<QtCheckItemMaterialAvgDTO> filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassGroupId().equals(oaGroupCountDTO.getGroupId())).collect(Collectors.toList());
+                Map<String, BigDecimal> dataMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(filterList)) {
+                    filterList.forEach(ele -> dataMap.put(ele.getCode(), ele.getValue()));
+                }
+                row.setFigureDepth(BigDecimalUtil.format(dataMap.get(checkItemCodeList.get(0))));
+                BigDecimal thick = dataMap.get(checkItemCodeList.get(1));
+                row.setThickness(BigDecimalUtil.format(thick, BigDecimalUtil.SCALE_2));
+                BigDecimal oneYValue = dataMap.get(checkItemCodeList.get(2));
+                BigDecimal oneTValue = dataMap.get(checkItemCodeList.get(3));
+                String oneYValueStr = BigDecimalUtil.format(oneYValue, BigDecimalUtil.SCALE_2);
+                String oneTValueStr = BigDecimalUtil.format(oneTValue, BigDecimalUtil.SCALE_2);
+                List<FurtherValueStrVO> multiList = Lists.newArrayList();
+                row.setModule(multiList);
+                multiList.add(new FurtherValueStrVO(Arrays.asList(oneYValueStr, oneTValueStr)));
+                //POWER(所在行“平均值-Y值” / (0.96 * 0.96 * 100), 3.2 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                //POWER(所在行“平均值-T值” / (0.96 * 0.96 * 100), 3.2 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                BigDecimal twoYValue = avgYtThick(oneYValue, new BigDecimal(3.0), thick);
+                BigDecimal twoTValue = avgYtThick(oneTValue, new BigDecimal(3.0), thick);
+                String twoYValueStr = BigDecimalUtil.format(twoYValue, BigDecimalUtil.SCALE_2);
+                String twoTValueStr = BigDecimalUtil.format(twoTValue, BigDecimalUtil.SCALE_2);
+                multiList.add(new FurtherValueStrVO(Arrays.asList(twoYValueStr, twoTValueStr)));
+                //POWER(所在行“平均值-Y值” / (0.96 * 0.96 * 100), 3 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                //POWER(所在行“平均值-T值” / (0.96 * 0.96 * 100), 3 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+                BigDecimal threeYValue = avgYtThick(oneYValue, new BigDecimal(3.2), thick);
+                BigDecimal threeTValue = avgYtThick(oneTValue, new BigDecimal(3.2), thick);
+                String threeYValueStr = BigDecimalUtil.format(threeYValue, BigDecimalUtil.SCALE_2);
+                String threeTValueStr = BigDecimalUtil.format(threeTValue, BigDecimalUtil.SCALE_2);
+                multiList.add(new FurtherValueStrVO(Arrays.asList(threeYValueStr, threeTValueStr)));
+                rowList.add(row);
+            }
+        }
         return resVo;
     }
 
     /**
+     * 计算折成3.2mm 3.0mm的Y,T值
+     *
+     * @param val   平均值-Y值 | 平均值-T值
+     * @param x     3.2, 3.0
+     * @param thick 所在行“厚度”
+     * @return 值
+     */
+    private BigDecimal avgYtThick(BigDecimal val, BigDecimal x, BigDecimal thick) {
+        //POWER(所在行“平均值-Y值” / (0.96 * 0.96 * 100), 3.2 / 所在行“厚度”) * 100 * 0.96 * 0.96，小数点后最多2位
+        BigDecimal first = BigDecimalUtil.divide(val, new BigDecimal("92.16"));
+        BigDecimal second = BigDecimalUtil.divide(x, thick);
+        double pow = 0;
+        if (Objects.nonNull(first) && Objects.nonNull(second) && BigDecimalUtil.gt(first, BigDecimal.ZERO) && BigDecimalUtil.gt(second, BigDecimal.ZERO)) {
+            pow = Math.pow(first.doubleValue(), second.doubleValue());
+            pow = pow * 92.16;
+        }
+        return BigDecimal.valueOf(pow).setScale(2, BigDecimal.ROUND_HALF_UP);
+    }
+
+
+    /**
+     * 设置透光率表头
+     *
+     * @param resVo 返回对象
+     */
+    private void setTransmitHeader(QtCheckItemTransmitVO resVo) {
+        List<QtSpcHeadTitleVO> headerLeft = Lists.newArrayList();
+        headerLeft.add(new QtSpcHeadTitleVO("产线", "productLineName"));
+        headerLeft.add(new QtSpcHeadTitleVO("日期", "classDateStr"));
+        headerLeft.add(new QtSpcHeadTitleVO("班次", "className"));
+        headerLeft.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        headerLeft.add(new QtSpcHeadTitleVO("花纹深度", "figureDepth"));
+        headerLeft.add(new QtSpcHeadTitleVO("厚度", "thickness"));
+        List<BaseReportHeaderVO> headerRight = Lists.newArrayList();
+        headerRight.add(new BaseReportHeaderVO("平均值", Arrays.asList("Y值", "T值")));
+        headerRight.add(new BaseReportHeaderVO("折成3.2mm", Arrays.asList("Y值", "T值")));
+        headerRight.add(new BaseReportHeaderVO("折成3.0mm", Arrays.asList("Y值", "T值")));
+        resVo.setHeaderLeft(headerLeft);
+        resVo.setHeaderRight(headerRight);
+    }
+
+    /**
      * 获取所有检验项参数
-     * @param dto 请求参数
+     *
+     * @param dto           请求参数
      * @param checkItemList 检验项集合
      * @return vo
      */
-    private QtCheckItemAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList) {
+    private QtCheckItemMultiAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList) {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<Integer> thickItemIdList = checkItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
-        List<QtThickAvgDTO> thickAvgDTOList = qtCheckTaskMapper.thickAvg(dto.getProductLineList(), thickItemIdList, start, end);
+        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, 1);
         SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
         //获取产线集合
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<QtCheckItemAvgListVO> rowList = Lists.newArrayList();
+        List<QtCheckItemMultiAvgListVO> rowList = Lists.newArrayList();
         //将start -> end 切分成班次日期
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
 
-        QtCheckItemAvgVO resVo = new QtCheckItemAvgVO();
+        QtCheckItemMultiAvgVO resVo = new QtCheckItemMultiAvgVO();
         resVo.setRowList(rowList);
         List<String> dateHeadList = Lists.newArrayList();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
@@ -239,7 +460,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         for (Integer line : dto.getProductLineList()) {
             String lineName = lineIdNameMap.get(line);
             for (OaManagerConstant.OaTeamGroupMapping classGroup : OaManagerConstant.OaTeamGroupMapping.values()) {
-                QtCheckItemAvgListVO row = new QtCheckItemAvgListVO();
+                QtCheckItemMultiAvgListVO row = new QtCheckItemMultiAvgListVO();
                 row.setProductLineName(lineName);
                 row.setClassGroupName(classGroup.getName());
                 rowList.add(row);
@@ -247,8 +468,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 for (int i = 1; i < shardTimeList.size(); i++) {
                     LocalDateTime begin = shardTimeList.get(i - 1);
                     LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
-                    List<QtThickAvgDTO> filterDataList = thickAvgDTOList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classGroup.getCode().equals(ele.getClassGroupId())).collect(Collectors.toList());
-                    List<BigDecimal> valueList = filterDataList.stream().map(QtThickAvgDTO::getValue).collect(Collectors.toList());
+                    List<QtCheckItemMaterialAvgDTO> filterDataList = thickAvgDTOList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classGroup.getCode().equals(ele.getClassGroupId())).collect(Collectors.toList());
+                    List<BigDecimal> valueList = filterDataList.stream().map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
                     dataList.add(valueList);
                 }
                 row.setValueList(dataList);

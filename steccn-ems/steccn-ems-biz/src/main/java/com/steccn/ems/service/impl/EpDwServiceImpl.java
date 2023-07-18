@@ -213,27 +213,18 @@ public class EpDwServiceImpl implements EpDwService {
     }
 
     @Override
-    public Boolean electricMoney(LocalDate date) {
-        //如果发现date日期任务已完成，则不执行
-        EpTaskExecute oldTask = epTaskExecuteService.getOne(new LambdaQueryWrapper<EpTaskExecute>().eq(EpTaskExecute::getTaskDate, date)
-                .eq(EpTaskExecute::getType, EpManagerConstant.TaskTypeEnum.TYPE_0.getCode())
-                .last(MpConstant.STR_LIMIT_1));
-        if (Objects.nonNull(oldTask) && EpManagerConstant.TaskFlagEnum.ALL_FINISHED.getCode().equals(oldTask.getTaskFlag())) {
-            //当前日期的任务已完成
-            log.info("当前日期的任务已完成");
-            return Boolean.FALSE;
-        }
+    public Integer electricMoney(LocalDate date) {
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         //当前有效的计划
         List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
-        Integer sum = 0;
+        Integer count = 0;
         //防止fegin获取不到当前请求
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         for (EpDwMeterPartitionDTO meter : meterList) {
             //分解出task
             List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter, priceList);
+            count += taskList.size();
             for (DwEpEnergyMoneyDTO ele : taskList) {
-                sum++;
                 CompletableFuture.runAsync(() -> {
                     try {
                         RequestContextHolder.setRequestAttributes(attributes);
@@ -245,17 +236,14 @@ public class EpDwServiceImpl implements EpDwService {
                 });
             }
         }
-//        //保存任务条数
-//        //如果没有当前任务，则需要插入，如果有当前任务，补偿更新
-//        if (Objects.isNull(oldTask)) {
-//            oldTask = new EpTaskExecute();
-//        }
-//        oldTask.setType(EpManagerConstant.TaskTypeEnum.TYPE_0.getCode());
-//        oldTask.setTaskDate(date);
-//        oldTask.setTaskParam(sum);
-//        oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
-//        epTaskExecuteService.saveOrUpdate(oldTask);
-        return Boolean.TRUE;
+        EpTaskExecute epTaskExecute = new EpTaskExecute();
+        epTaskExecute.setTaskParam(count);
+        epTaskExecute.setTaskDate(date);
+        epTaskExecute.setTaskCount(0);
+        epTaskExecute.setType(EpManagerConstant.TaskTypeEnum.TYPE_2.getCode());
+        epTaskExecuteService.save(epTaskExecute);
+        log.info("electricMoney date -> {} 执行条数 -> {}", date, count);
+        return count;
     }
 
     @Override
@@ -325,6 +313,52 @@ public class EpDwServiceImpl implements EpDwService {
         }
     }
 
+    @Override
+    public void countExec() {
+        List<EpTaskExecute> dbList = epTaskExecuteService.list(new LambdaQueryWrapper<EpTaskExecute>().eq(EpTaskExecute::getTaskFlag, MpConstant.NO));
+        if (CollUtil.isNotEmpty(dbList)) {
+            for (EpTaskExecute epTaskExecute : dbList) {
+                //反序列化参数
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        Integer countStrategy = countStrategy(epTaskExecute);
+                        epTaskExecute.setTaskCount(countStrategy);
+                        if(countStrategy >= epTaskExecute.getTaskParam()){
+                            epTaskExecute.setTaskFlag(MpConstant.YES);
+                        }
+                        epTaskExecuteService.updateById(epTaskExecute);
+                    } catch (Exception e) {
+                        log.error("{}", e);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * 不同任务的统计数量策略
+     *
+     * @param taskExecute 任务
+     * @return
+     */
+    private Integer countStrategy(EpTaskExecute taskExecute) {
+        Long count = null;
+        switch (taskExecute.getType()) {
+            case 1:
+                //远传仪表能耗Distant任务
+                count = epMeterReadDistantService.count(new LambdaQueryWrapper<EpMeterReadDistant>().eq(EpMeterReadDistant::getReadDate, taskExecute.getTaskDate()));
+                break;
+            case 2:
+                count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>().eq(EpEnergyMoney::getClassDate, taskExecute.getTaskDate()));
+                break;
+            case 3:
+                //抄表管理任务
+                count = epMeterReadService.count(new LambdaQueryWrapper<EpMeterRead>().eq(EpMeterRead::getReadDate, taskExecute.getTaskDate()).isNotNull(EpMeterRead::getDistantMapCode));
+                break;
+        }
+        return Objects.nonNull(count) ? count.intValue() : 0;
+    }
+
     /**
      * 不同任务的重试
      *
@@ -359,7 +393,7 @@ public class EpDwServiceImpl implements EpDwService {
      * @param meter
      * @return
      */
-    private boolean saveReadMeter(EpDwMeterPartitionDTO meter,Integer retryId) {
+    private boolean saveReadMeter(EpDwMeterPartitionDTO meter, Integer retryId) {
         LocalDate date = meter.getClassDate();
         //避免重复插入
         EpMeterRead one = epMeterReadService.getOne(new LambdaQueryWrapper<EpMeterRead>()
@@ -387,7 +421,7 @@ public class EpDwServiceImpl implements EpDwService {
             ele.setMeterId(meter.getMeterId());
             ele.setDistantMapCode(meter.getDistantMapCode());
             return epMeterReadService.save(ele);
-        }else if(Objects.isNull(retryId)){
+        } else if (Objects.isNull(retryId)) {
             //抄表异常
             //读数异常,且非重试情况下
             log.error("读数异常 -> {}", meter);

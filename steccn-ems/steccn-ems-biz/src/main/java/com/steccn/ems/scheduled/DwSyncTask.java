@@ -43,15 +43,15 @@ public class DwSyncTask {
     @XxlJob("electricMoneyHandler")
     public void electricMoney() {
         XxlJobHelper.log("峰谷平电费任务-任务开始");
-        Boolean flag = epDwService.electricMoney(LocalDate.now().minusDays(1));
-        XxlJobHelper.log("峰谷平电费任务-任务完成，结果 -> {}", flag);
+        Integer count = epDwService.electricMoney(LocalDate.now().minusDays(1));
+        XxlJobHelper.log("峰谷平电费任务-任务完成，任务条数 -> {}", count);
     }
 
     @XxlJob("chaoHandler")
     public void chao() {
         XxlJobHelper.log("抄表管理任务-任务开始");
         Integer count = epDwService.read(LocalDate.now().minusDays(1));
-        XxlJobHelper.log("抄表管理任务-任务完成，结果 -> {}", flag);
+        XxlJobHelper.log("抄表管理任务-任务完成，任务条数 -> {}", count);
     }
 
     @XxlJob("compensate")
@@ -59,10 +59,16 @@ public class DwSyncTask {
         XxlJobHelper.log("补偿任务-任务开始，开始时间{}", LocalDateUtil.format(LocalDateTime.now(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
         //一次补偿N条，补偿次数超过5次 会停止补偿
         //补偿策略是 ，补偿次数最少的 ， 时间新的先补偿
-        int BATCH_SIZE = 1;
+        int BATCH_SIZE = 100;
         int MAX_EXEC_COUNT = 5;
         epDwService.compensate(BATCH_SIZE, MAX_EXEC_COUNT);
         XxlJobHelper.log("补偿任务-任务完成");
     }
 
+    @XxlJob("countExec")
+    public void countExec() {
+        XxlJobHelper.log("统计任务执行情况-任务开始，开始时间{}", LocalDateUtil.format(LocalDateTime.now(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+        epDwService.countExec();
+        XxlJobHelper.log("补偿任务-任务完成");
+    }
 }

@@ -109,6 +109,7 @@ public class HikvisionServiceImpl implements HikvisionService {
                     parentNode.setRegionPathName(parentPath);
                     parentNode.setRegionName(path);
                     parentNode.setName(path);
+                    parentNode.setIndexCode(path);
                     parentNode.setChildren(new ArrayList<>());
                     parent.getChildren().add(parentNode);
                     map.put(parentPath, parentNode);
