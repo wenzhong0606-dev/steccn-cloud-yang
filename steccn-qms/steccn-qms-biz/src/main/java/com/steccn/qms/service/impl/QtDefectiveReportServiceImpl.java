@@ -335,7 +335,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             LocalDate startLdt = LocalDateUtil.getClassDate(minOp.get().getDefectStartTime(), Boolean.FALSE);
             LocalDate endLdt = LocalDateUtil.getClassDate(maxOp.get().getDefectStartTime(), Boolean.TRUE);
             TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(startLdt,endLdt);
-            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         } else {
             groupMap = Maps.newHashMap();
         }

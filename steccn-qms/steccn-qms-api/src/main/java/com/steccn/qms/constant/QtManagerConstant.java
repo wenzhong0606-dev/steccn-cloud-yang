@@ -329,7 +329,7 @@ public interface QtManagerConstant {
     /**
      * 客诉排序字段-回复客户日期
      */
-    String QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE  = "replyClientDate";
+    String QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE = "replyClientDate";
 
     /**
      * 不合格品处理排序-检验单号
@@ -427,14 +427,13 @@ public interface QtManagerConstant {
     String COMPLAINT_MANAGER = " complaintManager";
 
 
-
     /**
      * 不合格品管理员角色编码
      */
     String DEFECT_PRODUCT_MANAGER = " defectProductManager";
 
 
-    Set<Integer> states = Sets.newHashSet(2,3,4,5,6,7,8);
+    Set<Integer> states = Sets.newHashSet(2, 3, 4, 5, 6, 7, 8);
 
     /**
      * oa不合格品处理审批发起人
@@ -465,17 +464,17 @@ public interface QtManagerConstant {
     /**
      * 客诉标题
      */
-    String WORKFLOW_KSBT ="ksbt";
+    String WORKFLOW_KSBT = "ksbt";
 
     /**
-     *  描述
+     * 描述
      */
     String WORKFLOW_MS = "ms";
 
     /**
      * 投诉客户
      */
-    String WORKFLOW_TSKH ="tskh";
+    String WORKFLOW_TSKH = "tskh";
 
     /**
      * 投诉日期
@@ -500,7 +499,7 @@ public interface QtManagerConstant {
     /**
      * 投诉类型
      */
-    String WORKFLOW_TSLX =  "tslx";
+    String WORKFLOW_TSLX = "tslx";
 
     /**
      * 抄送
@@ -541,7 +540,7 @@ public interface QtManagerConstant {
     /**
      * 抽检数量
      */
-    String WORKFLOW_CJSL =  "cjsl";
+    String WORKFLOW_CJSL = "cjsl";
 
     /**
      * 抽检率
@@ -567,7 +566,7 @@ public interface QtManagerConstant {
     /**
      * 勘察确认初步结论
      */
-    String WORKFLOW_KCQRCBJ ="kcqrcbj";
+    String WORKFLOW_KCQRCBJ = "kcqrcbj";
 
     String WORKFLOW_GLZG = "glzg";
 
@@ -733,7 +732,7 @@ public interface QtManagerConstant {
     /**
      * D6处理人
      */
-    String WORKFLOW_D6CLR ="d6clr";
+    String WORKFLOW_D6CLR = "d6clr";
 
 
     /**
@@ -744,7 +743,7 @@ public interface QtManagerConstant {
     /**
      * D7处理人
      */
-    String WORKFLOW_D7CLR ="d7clr";
+    String WORKFLOW_D7CLR = "d7clr";
 
 
     /**
@@ -756,7 +755,7 @@ public interface QtManagerConstant {
     /**
      * D8 审批人
      */
-    String WORKFLOW_D8SPR ="d8spr";
+    String WORKFLOW_D8SPR = "d8spr";
 
     /**
      * 关联不合格品处理
@@ -772,13 +771,12 @@ public interface QtManagerConstant {
     /**
      * 关联客诉
      */
-    String WORKFLOW_GLKS  ="glks";
+    String WORKFLOW_GLKS = "glks";
 
     /**
      * 关联客诉-移动
      */
-    String WORKFLOW_GLKS_MOBILE  ="glksmobile";
-
+    String WORKFLOW_GLKS_MOBILE = "glksmobile";
 
 
     /**
@@ -1205,7 +1203,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtBusinessType {
-        CUSTOMER_COMPLAIN(0, "客诉"), UNACCEPTED_PRODUCT(1, "不合格品"), IMPROVE_START(2, "整改启动"),IMPROVE_CLOSEOUT(3,"整改结案");
+        CUSTOMER_COMPLAIN(0, "客诉"), UNACCEPTED_PRODUCT(1, "不合格品"), IMPROVE_START(2, "整改启动"), IMPROVE_CLOSEOUT(3, "整改结案");
 
         private Integer code;
         private String name;
@@ -1295,11 +1293,12 @@ public interface QtManagerConstant {
         static {
             HashMap<Integer, ImproveProgressStatus> hashMap = new HashMap<>(ImproveProgressStatus.values().length);
             for (ImproveProgressStatus value : ImproveProgressStatus.values()) {
-                hashMap.put(value.code,value);
+                hashMap.put(value.code, value);
             }
             map = hashMap;
         }
-        public static ImproveProgressStatus getEnum(Integer code){
+
+        public static ImproveProgressStatus getEnum(Integer code) {
             return map.get(code);
         }
     }
@@ -1344,10 +1343,26 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum LossReportType {
-        CLASS(0, "班次"), DAY(1, "日"), MONTH(2, "月");
+        CLASS(0, "班次", "C"), DAY(1, "日","D"), MONTH(2, "月","M");
 
         private Integer code;
         private String name;
+        private String type;
+
+        /**
+         * 根据code去查询时间粒度
+         *
+         * @param code code
+         * @return 时间粒度
+         */
+        public static LossReportType getByCode(Integer code) {
+            for (LossReportType value : LossReportType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value;
+                }
+            }
+            return null;
+        }
     }
 
 

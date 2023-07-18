@@ -86,6 +86,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     private final QtComplainTypeService qtComplainTypeService;
 
+    private final QtCustomerComplainMapper qtCustomerComplainMapper;
+
     @Autowired
     @Lazy
     private  QtDealWayService qtDealWayService;
@@ -179,6 +181,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 .eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan())
                 .eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay())
+                .eq(QtCustomerComplainDetail::getDelFlag,QtManagerConstant.NUM_0)
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime())
                         , QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime())
                 .between(Objects.nonNull(dto.getReplyClientStartTime()) && Objects.nonNull(dto.getReplyClientEndTime())
@@ -228,7 +231,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         }
 
         //3.查询分页数据
-        IPage resPage = page(page, between);
+        IPage<QtCustomerComplain> resPage = qtCustomerComplainMapper.selectJoinPage(page, QtCustomerComplain.class, between);
+//        IPage resPage = page(page, between);
         //4.拷贝page信息
         BeanUtil.copyProperties(resPage, page);
         List<QtCustomerComplainVO> qtCustomerComplainVOList = BeanUtil.copyToList(resPage.getRecords(), QtCustomerComplainVO.class);

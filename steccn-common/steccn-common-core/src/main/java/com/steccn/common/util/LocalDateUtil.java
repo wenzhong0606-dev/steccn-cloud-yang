@@ -1,5 +1,6 @@
 package com.steccn.common.util;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.LocalDateEnum;
 import lombok.Data;
@@ -270,46 +271,51 @@ public class LocalDateUtil {
 
     /**
      * 晚班时间
+     *
      * @param date
      * @return
      */
-    public static LocalDateTime getNight(LocalDate date){
+    public static LocalDateTime getNight(LocalDate date) {
         return date.atTime(20, 0, 0, 0);
     }
 
     /**
      * 晚班时间
+     *
      * @param date
      * @return
      */
-    public static LocalDateTime getNight(LocalDateTime date){
+    public static LocalDateTime getNight(LocalDateTime date) {
         return date.withHour(20).withMinute(0).withSecond(0).withNano(0);
     }
 
     /**
      * 早班时间
+     *
      * @param date
      * @return
      */
-    public static LocalDateTime getMorning(LocalDate date){
+    public static LocalDateTime getMorning(LocalDate date) {
         return date.atTime(8, 0, 0, 0);
     }
 
     /**
      * 早班时间
+     *
      * @param date
      * @return
      */
-    public static LocalDateTime getMorning(LocalDateTime date){
+    public static LocalDateTime getMorning(LocalDateTime date) {
         return date.withHour(8).withMinute(0).withSecond(0).withNano(0);
     }
 
     /**
      * 判断time是否在start-end之前
-     * @param time 时间
-     * @param start 开始时间
-     * @param end 结束时间
-     * @param leftEq 左包含
+     *
+     * @param time    时间
+     * @param start   开始时间
+     * @param end     结束时间
+     * @param leftEq  左包含
      * @param rightEq 右包含
      * @return
      */
@@ -334,7 +340,8 @@ public class LocalDateUtil {
 
     /**
      * 大于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否大于的结果
      */
@@ -344,7 +351,8 @@ public class LocalDateUtil {
 
     /**
      * 大于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否大于的结果
      */
@@ -354,7 +362,8 @@ public class LocalDateUtil {
 
     /**
      * 小于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否小于的结果
      */
@@ -364,7 +373,8 @@ public class LocalDateUtil {
 
     /**
      * 小于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否小于的结果
      */
@@ -374,7 +384,8 @@ public class LocalDateUtil {
 
     /**
      * 小于等于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否小于的结果
      */
@@ -385,7 +396,8 @@ public class LocalDateUtil {
 
     /**
      * 小于等于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否小于的结果
      */
@@ -395,7 +407,8 @@ public class LocalDateUtil {
 
     /**
      * 大于等于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否大于等于的结果
      */
@@ -406,7 +419,8 @@ public class LocalDateUtil {
 
     /**
      * 大于等于的判断
-     * @param left 左侧的数
+     *
+     * @param left  左侧的数
      * @param right 右侧的数
      * @return 是否大于等于的结果
      */
@@ -416,8 +430,9 @@ public class LocalDateUtil {
 
     /**
      * 大于【等于】的判断
-     * @param left 左侧的数
-     * @param right 右侧的数
+     *
+     * @param left       左侧的数
+     * @param right      右侧的数
      * @param equalsFlag 是否等于
      * @return 是否大于【等于】的结果
      */
@@ -430,8 +445,9 @@ public class LocalDateUtil {
 
     /**
      * 大于【等于】的判断
-     * @param left 左侧的数
-     * @param right 右侧的数
+     *
+     * @param left       左侧的数
+     * @param right      右侧的数
      * @param equalsFlag 是否等于
      * @return 是否大于【等于】的结果
      */
@@ -443,8 +459,9 @@ public class LocalDateUtil {
 
     /**
      * 根据时间得到班次日期
+     *
      * @param dateTime 时间
-     * @param isPrev 临界点，是否算前一天
+     * @param isPrev   临界点，是否算前一天
      * @return
      */
     public static LocalDate getClassDate(LocalDateTime dateTime, Boolean isPrev) {
@@ -458,4 +475,21 @@ public class LocalDateUtil {
         //其余情况算当天
         return dateTime.toLocalDate();
     }
+
+    /**
+     * 获取当前时间的班次id
+     *
+     * @param dateTime 班次时间点
+     * @param isPrev   是否是前一个班次，用于临界点判断
+     * @return
+     */
+    public static Integer getClassId(LocalDateTime dateTime, Boolean isPrev) {
+        // isPrev == true (8:00,20:00] 为早班
+        // isPrev == false [8:00,20:00) 为早班
+        if (isRange(dateTime, getMorning(dateTime), getNight(dateTime), !isPrev, isPrev)) {
+            return ClassUtil.MORNING;
+        }
+        return ClassUtil.NIGHT;
+    }
+
 }

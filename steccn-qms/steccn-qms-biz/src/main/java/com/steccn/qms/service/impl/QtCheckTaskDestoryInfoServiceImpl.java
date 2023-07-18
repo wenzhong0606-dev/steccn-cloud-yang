@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.qms.domain.QtCheckTaskDestoryInfo;
 import com.steccn.qms.dto.QtCheckTaskDestoryInfoDTO;
+import com.steccn.qms.dto.QtDestoryInfoFallDTO;
 import com.steccn.qms.mapper.QtCheckTaskDestoryInfoMapper;
 import com.steccn.qms.service.QtCheckTaskDestoryInfoService;
 import com.steccn.qms.vo.QtCheckTaskDestoryInfoVO;
@@ -16,6 +17,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -79,6 +81,11 @@ public class QtCheckTaskDestoryInfoServiceImpl extends ServiceImpl<QtCheckTaskDe
 
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<QtDestoryInfoFallDTO> falling(List<Integer> productLineList, LocalDateTime start, LocalDateTime end) {
+        return baseMapper.falling(productLineList, start, end);
     }
 
     /**
