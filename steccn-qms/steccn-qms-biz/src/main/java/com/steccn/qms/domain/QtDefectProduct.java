@@ -154,6 +154,11 @@ public class QtDefectProduct implements Serializable {
     private BigDecimal dealQuantity;
 
     /**
+     * 处理时间
+     */
+    private LocalDateTime dealTime;
+
+    /**
      * 备注
      */
     private String note;

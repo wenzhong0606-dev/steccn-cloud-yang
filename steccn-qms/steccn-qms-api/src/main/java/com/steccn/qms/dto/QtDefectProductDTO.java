@@ -144,6 +144,12 @@ public class QtDefectProductDTO {
     private BigDecimal dealQuantity;
 
     /**
+     * 处理时间
+     */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "处理时间不能为空")
+    private LocalDateTime dealTime;
+
+    /**
      * 备注
      */
     private String note;
