@@ -62,5 +62,12 @@ public class QtDefectReportController {
     public R<QtCheckItemTransmitVO> transmittance(@RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.transmittance(dto));
     }
+
+    @PostMapping("/micro/bubble")
+    @ApiOperation(value = "微气泡报表")
+    public R<QtMicroBubbleVO> microBubble(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.microBubble(dto));
+    }
+
 }
 

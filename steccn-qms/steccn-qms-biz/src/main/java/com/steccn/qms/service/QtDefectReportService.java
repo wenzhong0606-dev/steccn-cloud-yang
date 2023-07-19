@@ -60,4 +60,11 @@ public interface QtDefectReportService {
      * @return
      */
     QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
+
+    /**
+     * 微气泡
+     * @param dto 请求参数
+     * @return vo
+     */
+    QtMicroBubbleVO microBubble(QtDefectReportDTO dto);
 }

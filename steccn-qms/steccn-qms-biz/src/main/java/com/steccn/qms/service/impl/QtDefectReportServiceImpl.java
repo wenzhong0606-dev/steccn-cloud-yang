@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -384,6 +385,74 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 String threeTValueStr = BigDecimalUtil.format(threeTValue, BigDecimalUtil.SCALE_2);
                 multiList.add(new FurtherValueStrVO(Arrays.asList(threeYValueStr, threeTValueStr)));
                 rowList.add(row);
+            }
+        }
+        return resVo;
+    }
+
+    @Override
+    public QtMicroBubbleVO microBubble(QtDefectReportDTO dto) {
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<QtCheckItem> qpQtCheckItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000074").select(QtCheckItem::getId));
+        Assert.notEmpty(qpQtCheckItemList, "气泡检验项为空");
+        List<Integer> qpItemIdList = qpQtCheckItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
+        List<QtCheckItemMaterialAvgDTO> timeList1 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(8, 0), LocalTime.of(12, 0), 0);
+        List<QtCheckItemMaterialAvgDTO> timeList2 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(12, 0), LocalTime.of(16, 0), 0);
+        List<QtCheckItemMaterialAvgDTO> timeList3 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(16, 0), LocalTime.of(20, 0), 0);
+        List<QtCheckItemMaterialAvgDTO> timeList4 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(20, 0), LocalTime.of(0, 0), 1);
+        List<QtCheckItemMaterialAvgDTO> timeList5 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(0, 0), LocalTime.of(4, 0), 1);
+        List<QtCheckItemMaterialAvgDTO> timeList6 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(4, 0), LocalTime.of(8, 0), 1);
+
+        QtMicroBubbleVO resVo = new QtMicroBubbleVO();
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.DAY.getType(), start, end);
+        List<String> dateList = Lists.newArrayList();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
+        for (int i = 0; i < shardTimeList.size() - 1; i++) {
+            dateList.add(dateTimeFormatter.format(shardTimeList.get(i)));
+        }
+        resVo.setDateStrList(dateList);
+        List<QtMicroBubbleListVO> dataList = Lists.newArrayList();
+        resVo.setDataList(dataList);
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            //遍历早班和晚班
+            for (QtManagerConstant.QtClassesEnum classesEnum : QtManagerConstant.QtClassesEnum.values()) {
+                for (String site : Arrays.asList("南", "北")) {
+                    QtMicroBubbleListVO row = new QtMicroBubbleListVO();
+                    dataList.add(row);
+                    row.setLineSite(site);
+                    row.setProductLineName(lineName);
+                    row.setClassName(classesEnum.getName());
+                    List<List<String>> dateDataList = Lists.newArrayList();
+                    row.setDateDataList(dateDataList);
+                    for (int i = 1; i < shardTimeList.size(); i++) {
+                        List<String> dateValueList = Lists.newArrayList();
+                        dateDataList.add(dateValueList);
+                        LocalDateTime startLdt = shardTimeList.get(i - 1);
+                        LocalDate classDate = LocalDateUtil.getClassDate(startLdt, false);
+                        //根据classDate去查询
+                        if (classesEnum.equals(QtManagerConstant.QtClassesEnum.DAY)) {
+                            //time1 , time2 ,time3
+                            Optional<QtCheckItemMaterialAvgDTO> first = timeList1.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> second = timeList2.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> third = timeList3.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            dateValueList.add(first.isPresent() ? String.valueOf(first.get().getValue()) : null);
+                            dateValueList.add(second.isPresent() ? String.valueOf(second.get().getValue()) : null);
+                            dateValueList.add(third.isPresent() ? String.valueOf(third.get().getValue()) : null);
+                        } else {
+                            //time4, time5 ,time6
+                            Optional<QtCheckItemMaterialAvgDTO> forth = timeList4.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> fifth = timeList5.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> sixth = timeList6.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            dateValueList.add(forth.isPresent() ? String.valueOf(forth.get().getValue()) : null);
+                            dateValueList.add(fifth.isPresent() ? String.valueOf(fifth.get().getValue()) : null);
+                            dateValueList.add(sixth.isPresent() ? String.valueOf(sixth.get().getValue()) : null);
+                        }
+                    }
+                }
             }
         }
         return resVo;

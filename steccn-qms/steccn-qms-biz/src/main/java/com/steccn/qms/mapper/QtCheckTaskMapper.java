@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
@@ -138,10 +139,10 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @return 集合
      */
     List<QtCheckItemMaterialAvgDTO> checkItemAvgDay(@Param("lineIdList") List<Integer> productLineList,
-                                                           @Param("itemIdSet") List<Integer> thickItemIdList,
-                                                           @Param("start") LocalDateTime start,
-                                                           @Param("end") LocalDateTime end,
-                                                           @Param("bit") Integer bit);
+                                                    @Param("itemIdSet") List<Integer> thickItemIdList,
+                                                    @Param("start") LocalDateTime start,
+                                                    @Param("end") LocalDateTime end,
+                                                    @Param("bit") Integer bit);
 
     /**
      * 获取巡检的厚度平均值的平均值--班次日期
@@ -171,6 +172,25 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
                                                   @Param("start") LocalDateTime start,
                                                   @Param("end") LocalDateTime end,
                                                   @Param("codeList") List<String> codeList);
+
+    /**
+     * 微气泡数量统计
+     *
+     * @param productLineList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @param itemIdList      检验项微气泡id
+     * @param time1           时间段
+     * @param time2           时间段
+     * @return 微气泡
+     */
+    List<QtCheckItemMaterialAvgDTO> microBubble(@Param("lineIdList") List<Integer> productLineList,
+                                                @Param("start") LocalDateTime start,
+                                                @Param("end") LocalDateTime end,
+                                                @Param("itemIdList") List<Integer> itemIdList,
+                                                @Param("time1") LocalTime time1,
+                                                @Param("time2") LocalTime time2,
+                                                @Param("classId") Integer classId);
 }
 
 
