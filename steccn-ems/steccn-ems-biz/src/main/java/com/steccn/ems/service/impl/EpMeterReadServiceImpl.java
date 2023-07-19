@@ -559,6 +559,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             orderList.forEach(ele -> {
                 DwProduceOrderDTO dwProduceOrderDTO = new DwProduceOrderDTO();
                 BeanUtils.copyProperties(ele, dwProduceOrderDTO);
+                dwProduceOrderDTO.setClassDate(ele.getReadDate());
                 orderDetailList.add(dwProduceOrderDTO);
             });
         }
@@ -910,7 +911,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 sjgDataList.add(rowDTO);
             } else if (jpLineSet.contains(lineId)) {
                 //基片产线节点
-                rowDTO.setProductLineId(epPartition.getOfficeId());
+                rowDTO.setProductLineId(lineId);
                 jpDataList.add(convertToJpDto(rowDTO,lineId));
             }
             orderMap.put(rowDTO.getUuid(), rowDTO);
@@ -975,7 +976,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         //获取当前节点的所有孩子节点
                         Set<Long> childrenIdSet = allChildren.getOrDefault(epPartition.getId(), Lists.newArrayList()).stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
                         childrenIdSet.forEach(ele -> unitMap.put(ele, BigDecimalUtil.add(unitMap.get(ele), yieldSum)));
-                    } else if (noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && lineChildrenMap.containsKey(account.getPartitionNode())) {
+                    } else if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && lineChildrenMap.containsKey(account.getPartitionNode())) {
                         //若空格所在列的节点是产线节点的上级节点，则查询条件为“产线 = 该上级节点以下所有产线节点”
                         Set<Long> lineIdSet = lineChildrenMap.get(account.getPartitionNode());
                         Set<Integer> officeIdSet = Sets.newHashSet();

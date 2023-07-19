@@ -736,7 +736,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //计算班次时间
             QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
             qtCheckTask.setClassesId(taskClassCalculate.getClassType());
-            qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+            qtCheckTask.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         }
         return updateById(qtCheckTask);
     }
@@ -1199,7 +1199,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //计算班次时间
             QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(taskModel.getFinishedTime());
             taskModel.setClassesId(taskClassCalculate.getClassType());
-            taskModel.setClassTime(taskClassCalculate.getClassDate());
+            taskModel.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         }
 
         //如果是配料抽检，则pushtype为SPOT_CHECK
@@ -1264,7 +1264,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //计算班次时间
         QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
-        qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+        qtCheckTask.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         //配料抽检任务完成,发送消息给岗位为"配料工"的当前班次人员;
         QtCheckTask task = getById(dto.getId());
         if (QtManagerConstant.NUM_7.equals(task.getTaskType())){
