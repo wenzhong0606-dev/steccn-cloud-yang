@@ -98,7 +98,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
                 //获取某天某个班次的巡检任务
                 int finalI = i;
                 itemMaterialVOList = detailItemMaterialVOList.stream()
-                        .filter(detailItemMaterial -> detailItemMaterial.getClassTime().toLocalDate().isEqual(localDate) && detailItemMaterial.getClassId().equals(finalI))
+                        .filter(detailItemMaterial -> detailItemMaterial.getClassTime().isEqual(localDate) && detailItemMaterial.getClassId().equals(finalI))
                         .collect(Collectors.toList());
 
                 //获取某天某个班次某个物料的基片拉引量和深加工产量
