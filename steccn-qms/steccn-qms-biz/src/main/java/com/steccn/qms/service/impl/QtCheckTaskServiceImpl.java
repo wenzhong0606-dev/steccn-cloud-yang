@@ -1879,7 +1879,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<Integer, String> officeIdNameMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> materialIdNameMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-        Map<LocalDate, List<QtCheckTaskReportVO>> classDateMap = rateDataList.stream().collect(Collectors.groupingBy(v -> v.getClassTime().toLocalDate()));
+        Map<LocalDate, List<QtCheckTaskReportVO>> classDateMap = rateDataList.stream().collect(Collectors.groupingBy(v -> v.getClassTime()));
         //定义返回的集合
         List<QtDeepOrSubAcceptabilityDetailVO> resList = Lists.newArrayList();
 
@@ -2068,7 +2068,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //获取时间范围的集合
             List<QtCheckTaskReportVO> conditionDataList = flatDataList.stream().filter(v -> {
                 //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
+                LocalDate classDate = LocalDateUtil.getClassDate(start, false);
+                if (classDate.isEqual(v.getClassTime())) {
                     return Boolean.TRUE;
                 }
                 return Boolean.FALSE;
@@ -2193,7 +2194,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             if(Objects.nonNull(vo.getSpotTime())){
                 QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getSpotTime());
                 vo.setClassesId(qtTaskClassCalculate.getClassType());
-                vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                vo.setClassTime(qtTaskClassCalculate.getClassDate().toLocalDate());
                 //班組信息
                 QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(vo.getClassesId());
                 if (Objects.nonNull(code)) {

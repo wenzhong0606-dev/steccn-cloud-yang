@@ -119,7 +119,7 @@ public class QtCheckTaskReportVO implements Serializable {
     private String classGroupName;
 
     @ApiModelProperty("班次时间")
-    private LocalDateTime classTime;
+    private LocalDate classTime;
 
     @ApiModelProperty("任务完成时间")
     private LocalDateTime finishedTime;
