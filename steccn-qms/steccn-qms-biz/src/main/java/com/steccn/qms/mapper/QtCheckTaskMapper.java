@@ -193,7 +193,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
                                                 @Param("classId") Integer classId);
 
     /**
-     * 获取原片不良数据
+     * 获取原片不良数据-班次日期
      *
      * @param lineIdList 产线集合
      * @param start           开始时间
@@ -201,10 +201,26 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @param categoryId      原片不良类别id
      * @return
      */
-    List<QtCheckItemMaterialAvgDTO> originalDefect(@Param("lineIdList") List<Integer> lineIdList,
-                                                   @Param("start") LocalDateTime start,
-                                                   @Param("end") LocalDateTime end,
-                                                   @Param("categoryId") Integer categoryId);
+    List<QtCheckItemMaterialAvgDTO> originalDefectDay(@Param("lineIdList") List<Integer> lineIdList,
+                                                      @Param("start") LocalDateTime start,
+                                                      @Param("end") LocalDateTime end,
+                                                      @Param("categoryId") Integer categoryId);
+
+
+    /**
+     * 获取原片不良数据-班次日期
+     *
+     * @param lineIdList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @param categoryId      原片不良类别id
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> originalDefectMonth(@Param("lineIdList") List<Integer> lineIdList,
+                                                      @Param("start") LocalDateTime start,
+                                                      @Param("end") LocalDateTime end,
+                                                      @Param("categoryId") Integer categoryId);
+
 }
 
 

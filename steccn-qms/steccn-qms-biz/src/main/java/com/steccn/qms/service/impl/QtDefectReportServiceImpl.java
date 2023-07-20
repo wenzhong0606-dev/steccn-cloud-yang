@@ -466,7 +466,26 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         QtItemCategory category = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getName, "原片不良"));
         Assert.notNull(category, "原片不良类别不存在");
-        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.originalDefect(dto.getProductLineList(), start, end, category.getId());
+        OriginalDefectVO resVo = null;
+        if (QtManagerConstant.LossReportType.DAY.getCode().equals(dto.getGranularity())) {
+            resVo = getOriginalDefectDay(dto, start, end, category);
+        } else {
+            resVo = getOriginalDefectMonth(dto, start, end, category);
+        }
+        return resVo;
+    }
+
+    /**
+     * 原片不良 - 天
+     *
+     * @param dto      请求
+     * @param start    开始时间
+     * @param end      结束时间
+     * @param category 类别
+     * @return vo
+     */
+    private OriginalDefectVO getOriginalDefectDay(QtDefectReportDTO dto, LocalDateTime start, LocalDateTime end, QtItemCategory category) {
+        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.originalDefectDay(dto.getProductLineList(), start, end, category.getId());
         SteccnTableAssertUtil.notEmpty(dbList, "原片不良数据为空");
         OriginalDefectVO resVo = new OriginalDefectVO();
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.DAY.getType(), start, end);
@@ -517,6 +536,71 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         rowList.add(sumRow);
         return resVo;
     }
+
+    /**
+     * 原片不良 - 天
+     *
+     * @param dto      请求
+     * @param start    开始时间
+     * @param end      结束时间
+     * @param category 类别
+     * @return vo
+     */
+    private OriginalDefectVO getOriginalDefectMonth(QtDefectReportDTO dto, LocalDateTime start, LocalDateTime end, QtItemCategory category) {
+        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.originalDefectMonth(dto.getProductLineList(), start, end, category.getId());
+        SteccnTableAssertUtil.notEmpty(dbList, "原片不良数据为空");
+        OriginalDefectVO resVo = new OriginalDefectVO();
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.MONTH.getType(), start, end);
+        List<String> dateList = Lists.newArrayList();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy年MM月");
+        for (int i = 0; i < shardTimeList.size() - 1; i++) {
+            dateList.add(dateTimeFormatter.format(shardTimeList.get(i)));
+        }
+        resVo.setDateStrList(dateList);
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        List<OriginalDefectRowVO> rowList = Lists.newArrayList();
+        resVo.setRowList(rowList);
+        //每列的合计map
+        Map<String, BigDecimal> columnSumMap = Maps.newHashMap();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DatePattern.NORM_MONTH_PATTERN);
+
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            OriginalDefectRowVO row = new OriginalDefectRowVO();
+            row.setType(0);
+            List<String> dateDataList = Lists.newArrayList();
+            BigDecimal sum = null;
+            for (int i = 1; i < shardTimeList.size(); i++) {
+                LocalDateTime startLdt = shardTimeList.get(i - 1);
+                String classMonth = formatter.format(startLdt);
+                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classMonth.equals(ele.getClassMonth())).findFirst();
+                BigDecimal value = first.isPresent() ? first.get().getValue() : null;
+                sum = BigDecimalUtil.add(sum, value);
+                columnSumMap.put(classMonth, BigDecimalUtil.add(columnSumMap.get(classMonth), value));
+                dateDataList.add(String.valueOf(value));
+            }
+            row.setProductLineName(lineName);
+            row.setSum(BigDecimalUtil.format(sum, 0));
+            row.setDateDataList(dateDataList);
+            rowList.add(row);
+        }
+        OriginalDefectRowVO sumRow = new OriginalDefectRowVO();
+        sumRow.setType(1);
+        sumRow.setProductLineName("合计");
+        List<String> dateDataList = Lists.newArrayList();
+        sumRow.setDateDataList(dateDataList);
+        for (int i = 1; i < shardTimeList.size(); i++) {
+            LocalDateTime startLdt = shardTimeList.get(i - 1);
+            String classMonth = formatter.format(startLdt);
+            dateDataList.add(BigDecimalUtil.format(columnSumMap.get(classMonth), 0));
+        }
+        BigDecimal allSum = BigDecimalUtil.sum(columnSumMap.values().stream().collect(Collectors.toList()));
+        sumRow.setSum(BigDecimalUtil.format(allSum, 0));
+        rowList.add(sumRow);
+        return resVo;
+    }
+
 
     /**
      * 计算折成3.2mm 3.0mm的Y,T值
