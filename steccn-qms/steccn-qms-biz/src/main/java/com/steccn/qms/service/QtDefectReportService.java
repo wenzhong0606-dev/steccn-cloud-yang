@@ -74,4 +74,11 @@ public interface QtDefectReportService {
      * @return 原片不良报表
      */
     OriginalDefectVO originalDefect(QtDefectReportDTO dto);
+
+    /**
+     * 镀膜不良报表
+     * @param dto 请求参数
+     * @return
+     */
+    CoatingFilmVO coatingFilm(QtDefectReportDTO dto);
 }

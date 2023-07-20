@@ -5,11 +5,13 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -473,6 +475,107 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             resVo = getOriginalDefectMonth(dto, start, end, category);
         }
         return resVo;
+    }
+
+    @Override
+    public CoatingFilmVO coatingFilm(QtDefectReportDTO dto) {
+        QtItemCategory category = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getName, "镀膜不良"));
+        Assert.notNull(category, "原片不良类别不存在");
+        List<QtDefectiveItem> itemList = qtDefectiveItemService.list(new QueryWrapper<QtDefectiveItem>()
+                .select("code, any_value(name) as name")
+                .lambda()
+                .eq(QtDefectiveItem::getCategoryId, category.getId())
+                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
+                .groupBy(QtDefectiveItem::getCode));
+        Assert.notEmpty(itemList, "镀膜不良类别下暂无缺陷项");
+        CoatingFilmVO resVo = new CoatingFilmVO();
+        List<String> headerList = Lists.newArrayList();
+        resVo.setHeaderList(headerList);
+        itemList.forEach(ele -> {
+            headerList.add(ele.getName());
+            headerList.add(ele.getName() + "不良率");
+        });
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.coatingFilmMonth(dto.getProductLineList(), start, end, category.getId());
+        SteccnTableAssertUtil.notEmpty(dbList, "镀膜不良数据为空");
+
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.MONTH.getType(), start, end);
+
+        List<CoatingFilmRowVO> rowList = Lists.newArrayList();
+        resVo.setRowList(rowList);
+
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        Map<String, BigDecimal> useCountMap = Maps.newHashMap();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DatePattern.NORM_MONTH_PATTERN);
+        Map<String, BigDecimal> sumMap = Maps.newHashMap();
+        //先遍历月份
+        for (int i = 1; i < shardTimeList.size(); i++) {
+            LocalDateTime begin = shardTimeList.get(i - 1);
+            String monthStr = formatter.format(begin);
+            //合计（每月）
+            Map<String, BigDecimal> countMap = Maps.newHashMap();
+            for (Integer line : dto.getProductLineList()) {
+                String lineName = lineIdNameMap.get(line);
+                CoatingFilmRowVO row = new CoatingFilmRowVO();
+                row.setType(0);
+                List<BigDecimal> valueList = Lists.newArrayList();
+                row.setValueList(valueList);
+                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(formatter + "_" + line), 2));
+                rowList.add(row);
+                row.setProductLineName(lineName);
+                row.setMonthStr(monthStr);
+                BigDecimal rowSum = null;
+                for (QtDefectiveItem defectItem : itemList) {
+                    Optional<QtCheckItemMaterialAvgDTO> dataOp = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && defectItem.getCode().equals(ele.getCode()) && monthStr.equals(ele.getClassMonth())).findFirst();
+                    BigDecimal value = dataOp.isPresent() ? dataOp.get().getValue() : null;
+                    valueList.add(value);
+                    BigDecimalUtil.accumulate(countMap, defectItem.getCode(), value);
+                    BigDecimalUtil.accumulate(sumMap, defectItem.getCode(), value);
+                    rowSum = BigDecimalUtil.add(value, rowSum);
+                    valueList.add(BigDecimalUtil.divide(value, row.getUseCount(), 2));
+                }
+                row.setDefectSum(BigDecimalUtil.setScale(rowSum, 0));
+                row.setDefectRate(BigDecimalUtil.divide(rowSum, row.getUseCount(), 2));
+                BigDecimalUtil.accumulate(countMap, "-1", row.getUseCount());
+                BigDecimalUtil.accumulate(countMap, "-2", row.getDefectSum());
+                BigDecimalUtil.accumulate(sumMap, "-1", row.getUseCount());
+                BigDecimalUtil.accumulate(sumMap, "-2", row.getDefectSum());
+            }
+            //月份合计
+            rowList.add(countRow(itemList, countMap, 1, "合计（单月）"));
+        }
+        //总计
+        rowList.add(countRow(itemList, sumMap, 2, "合计"));
+        return resVo;
+    }
+
+    /**
+     * 合计行
+     *
+     * @param itemList 缺陷项
+     * @param map      统计数据
+     * @param type     类型
+     * @param hintName 提示语
+     * @return
+     */
+    private CoatingFilmRowVO countRow(List<QtDefectiveItem> itemList, Map<String, BigDecimal> map, int type, String hintName) {
+        CoatingFilmRowVO row = new CoatingFilmRowVO();
+        row.setType(type);
+        row.setProductLineName(hintName);
+        row.setDefectSum(BigDecimalUtil.sum(map.values()));
+        List<BigDecimal> valueList = Lists.newArrayList();
+        for (QtDefectiveItem defectItem : itemList) {
+            BigDecimal defectValue = map.get(defectItem.getCode());
+            valueList.add(BigDecimalUtil.setScale(defectValue, 0));
+            valueList.add(BigDecimalUtil.divide(defectValue, row.getUseCount(), 2));
+        }
+        row.setValueList(valueList);
+        row.setUseCount(BigDecimalUtil.setScale(map.get("-1"), 0));
+        row.setDefectSum(BigDecimalUtil.setScale(map.get("-2"), 0));
+        row.setDefectRate(BigDecimalUtil.divide(row.getDefectSum(), row.getUseCount(), 2));
+        return row;
     }
 
     /**

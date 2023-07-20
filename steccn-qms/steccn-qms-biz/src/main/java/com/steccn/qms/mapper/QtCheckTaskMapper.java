@@ -208,7 +208,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
 
 
     /**
-     * 获取原片不良数据-班次日期
+     * 获取原片不良数据-月份
      *
      * @param lineIdList 产线集合
      * @param start           开始时间
@@ -220,6 +220,20 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
                                                       @Param("start") LocalDateTime start,
                                                       @Param("end") LocalDateTime end,
                                                       @Param("categoryId") Integer categoryId);
+
+    /**
+     * 获取镀膜不良数据-月份
+     *
+     * @param lineIdList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @param categoryId      原片不良类别id
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> coatingFilmMonth(@Param("lineIdList") List<Integer> lineIdList,
+                                                        @Param("start") LocalDateTime start,
+                                                        @Param("end") LocalDateTime end,
+                                                        @Param("categoryId") Integer categoryId);
 
 }
 

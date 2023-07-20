@@ -75,5 +75,11 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.originalDefect(dto));
     }
 
+    @PostMapping("/coating/film")
+    @ApiOperation(value = "镀膜不良月报表")
+    public R<CoatingFilmVO> coatingFilm(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.coatingFilm(dto));
+    }
+
 }
 
