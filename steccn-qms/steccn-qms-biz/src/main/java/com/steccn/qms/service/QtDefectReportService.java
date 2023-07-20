@@ -67,4 +67,11 @@ public interface QtDefectReportService {
      * @return vo
      */
     QtMicroBubbleVO microBubble(QtDefectReportDTO dto);
+
+    /**
+     * 原片不良报表
+     * @param dto 请求参数
+     * @return 原片不良报表
+     */
+    OriginalDefectVO originalDefect(QtDefectReportDTO dto);
 }

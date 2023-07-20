@@ -22,6 +22,7 @@ import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
+import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckItemMaterialAvgDTO;
 import com.steccn.qms.dto.QtDefectReportDTO;
@@ -63,6 +64,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
     private final QtCheckItemService qtCheckItemService;
     private final QtCheckTaskMapper qtCheckTaskMapper;
+    private final QtItemCategoryService qtItemCategoryService;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -455,6 +457,64 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 }
             }
         }
+        return resVo;
+    }
+
+    @Override
+    public OriginalDefectVO originalDefect(QtDefectReportDTO dto) {
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        QtItemCategory category = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getName, "原片不良"));
+        Assert.notNull(category, "原片不良类别不存在");
+        List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.originalDefect(dto.getProductLineList(), start, end, category.getId());
+        SteccnTableAssertUtil.notEmpty(dbList, "原片不良数据为空");
+        OriginalDefectVO resVo = new OriginalDefectVO();
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.DAY.getType(), start, end);
+        List<String> dateList = Lists.newArrayList();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM月dd日");
+        for (int i = 0; i < shardTimeList.size() - 1; i++) {
+            dateList.add(dateTimeFormatter.format(shardTimeList.get(i)));
+        }
+        resVo.setDateStrList(dateList);
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        List<OriginalDefectRowVO> rowList = Lists.newArrayList();
+        resVo.setRowList(rowList);
+        //每列的合计map
+        Map<LocalDate, BigDecimal> columnSumMap = Maps.newHashMap();
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            OriginalDefectRowVO row = new OriginalDefectRowVO();
+            row.setType(0);
+            List<String> dateDataList = Lists.newArrayList();
+            BigDecimal sum = null;
+            for (int i = 1; i < shardTimeList.size(); i++) {
+                LocalDateTime startLdt = shardTimeList.get(i - 1);
+                LocalDate classDate = LocalDateUtil.getClassDate(startLdt, false);
+                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).findFirst();
+                BigDecimal value = first.isPresent() ? first.get().getValue() : null;
+                sum = BigDecimalUtil.add(sum, value);
+                columnSumMap.put(classDate, BigDecimalUtil.add(columnSumMap.get(classDate), value));
+                dateDataList.add(String.valueOf(value));
+            }
+            row.setProductLineName(lineName);
+            row.setSum(BigDecimalUtil.format(sum, 0));
+            row.setDateDataList(dateDataList);
+            rowList.add(row);
+        }
+        OriginalDefectRowVO sumRow = new OriginalDefectRowVO();
+        sumRow.setType(1);
+        sumRow.setProductLineName("合计");
+        List<String> dateDataList = Lists.newArrayList();
+        sumRow.setDateDataList(dateDataList);
+        for (int i = 1; i < shardTimeList.size(); i++) {
+            LocalDateTime startLdt = shardTimeList.get(i - 1);
+            LocalDate classDate = LocalDateUtil.getClassDate(startLdt, false);
+            dateDataList.add(BigDecimalUtil.format(columnSumMap.get(classDate), 0));
+        }
+        BigDecimal allSum = BigDecimalUtil.sum(columnSumMap.values().stream().collect(Collectors.toList()));
+        sumRow.setSum(BigDecimalUtil.format(allSum, 0));
+        rowList.add(sumRow);
         return resVo;
     }
 

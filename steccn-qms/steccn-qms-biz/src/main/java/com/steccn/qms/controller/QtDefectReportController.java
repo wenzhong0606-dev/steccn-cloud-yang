@@ -69,5 +69,11 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.microBubble(dto));
     }
 
+    @PostMapping("/original/defect")
+    @ApiOperation(value = "原片不良报表")
+    public R<OriginalDefectVO> originalDefect(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.originalDefect(dto));
+    }
+
 }
 

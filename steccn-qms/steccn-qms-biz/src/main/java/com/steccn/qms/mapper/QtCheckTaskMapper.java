@@ -101,13 +101,13 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值
      *
-     * @param productLineList 产线集合
+     * @param lineIdList 产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
      * @return 集合
      */
-    List<QtCheckItemMaterialAvgDTO> checkItemMaterialAvg(@Param("lineIdList") List<Integer> productLineList,
+    List<QtCheckItemMaterialAvgDTO> checkItemMaterialAvg(@Param("lineIdList") List<Integer> lineIdList,
                                                          @Param("itemIdSet") List<Integer> thickItemIdList,
                                                          @Param("start") LocalDateTime start,
                                                          @Param("end") LocalDateTime end,
@@ -117,13 +117,13 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值--班组
      *
-     * @param productLineList 产线集合
+     * @param lineIdList 产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
      * @return 集合
      */
-    List<QtCheckItemMaterialAvgDTO> checkItemAvgClassGroup(@Param("lineIdList") List<Integer> productLineList,
+    List<QtCheckItemMaterialAvgDTO> checkItemAvgClassGroup(@Param("lineIdList") List<Integer> lineIdList,
                                                            @Param("itemIdSet") List<Integer> thickItemIdList,
                                                            @Param("start") LocalDateTime start,
                                                            @Param("end") LocalDateTime end,
@@ -132,13 +132,13 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值--班次日期
      *
-     * @param productLineList 产线集合
+     * @param lineIdList 产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
      * @return 集合
      */
-    List<QtCheckItemMaterialAvgDTO> checkItemAvgDay(@Param("lineIdList") List<Integer> productLineList,
+    List<QtCheckItemMaterialAvgDTO> checkItemAvgDay(@Param("lineIdList") List<Integer> lineIdList,
                                                     @Param("itemIdSet") List<Integer> thickItemIdList,
                                                     @Param("start") LocalDateTime start,
                                                     @Param("end") LocalDateTime end,
@@ -147,13 +147,13 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值--班次日期
      *
-     * @param productLineList 产线集合
+     * @param lineIdList 产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
      * @return 集合
      */
-    List<QtCheckItemMaterialAvgDTO> checkItemAvgMonth(@Param("lineIdList") List<Integer> productLineList,
+    List<QtCheckItemMaterialAvgDTO> checkItemAvgMonth(@Param("lineIdList") List<Integer> lineIdList,
                                                       @Param("itemIdSet") List<Integer> thickItemIdList,
                                                       @Param("start") LocalDateTime start,
                                                       @Param("end") LocalDateTime end,
@@ -162,13 +162,13 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 透光率
      *
-     * @param productLineList 产线集合
+     * @param lineIdList 产线集合
      * @param start           开始时间
      * @param end             结束时间
      * @param codeList        检验项code
      * @return
      */
-    List<QtCheckItemMaterialAvgDTO> transmittance(@Param("lineIdList") List<Integer> productLineList,
+    List<QtCheckItemMaterialAvgDTO> transmittance(@Param("lineIdList") List<Integer> lineIdList,
                                                   @Param("start") LocalDateTime start,
                                                   @Param("end") LocalDateTime end,
                                                   @Param("codeList") List<String> codeList);
@@ -176,7 +176,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 微气泡数量统计
      *
-     * @param productLineList 产线集合
+     * @param lineIdList 产线集合
      * @param start           开始时间
      * @param end             结束时间
      * @param itemIdList      检验项微气泡id
@@ -184,13 +184,27 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @param time2           时间段
      * @return 微气泡
      */
-    List<QtCheckItemMaterialAvgDTO> microBubble(@Param("lineIdList") List<Integer> productLineList,
+    List<QtCheckItemMaterialAvgDTO> microBubble(@Param("lineIdList") List<Integer> lineIdList,
                                                 @Param("start") LocalDateTime start,
                                                 @Param("end") LocalDateTime end,
                                                 @Param("itemIdList") List<Integer> itemIdList,
                                                 @Param("time1") LocalTime time1,
                                                 @Param("time2") LocalTime time2,
                                                 @Param("classId") Integer classId);
+
+    /**
+     * 获取原片不良数据
+     *
+     * @param lineIdList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @param categoryId      原片不良类别id
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> originalDefect(@Param("lineIdList") List<Integer> lineIdList,
+                                                   @Param("start") LocalDateTime start,
+                                                   @Param("end") LocalDateTime end,
+                                                   @Param("categoryId") Integer categoryId);
 }
 
 
