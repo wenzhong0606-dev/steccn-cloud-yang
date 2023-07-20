@@ -544,7 +544,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtCheckPlanDTO dto) {
-        if (qtCheckPlanMapper.CountLindkedPlan(dto.getId()) != 0) {
+        if (qtCheckPlanMapper.CountLinkedTask(dto.getId()) != 0) {
             throw new BusinessException("无法保存！请完成相关检验中的任务再重试");
         }
         //查对应的groupid
