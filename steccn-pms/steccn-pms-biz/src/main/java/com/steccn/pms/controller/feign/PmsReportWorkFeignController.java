@@ -63,4 +63,11 @@ public class PmsReportWorkFeignController {
     R<Map<String, Long>> workshopClassGroupMap(@RequestBody TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO){
        return R.success(pmsReportWorkService.workshopClassGroupMap(tupleDTO.getField1(),tupleDTO.getField2()));
     }
+
+    @ApiOperation("原料耗用量")
+    @PostMapping("/original/consume")
+    R<Map<String, BigDecimal>> getUseCount(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
+        Map<String, BigDecimal> useCountMap = pmsReportWorkService.getUseCount(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3());
+        return R.success(useCountMap);
+    }
 }

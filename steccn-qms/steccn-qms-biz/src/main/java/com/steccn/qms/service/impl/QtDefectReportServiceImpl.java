@@ -12,6 +12,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -19,6 +20,7 @@ import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -67,6 +69,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final QtCheckItemService qtCheckItemService;
     private final QtCheckTaskMapper qtCheckTaskMapper;
     private final QtItemCategoryService qtItemCategoryService;
+    private final RemoteReportWorkFeignApi reportWorkFeignApi;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -507,7 +510,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-        Map<String, BigDecimal> useCountMap = Maps.newHashMap();
+        //替换取自生产管理->产量质量报表中每日的“原料耗用量”片数累加 key ->
+        Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.getUseCount(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DatePattern.NORM_MONTH_PATTERN);
         Map<String, BigDecimal> sumMap = Maps.newHashMap();
         //先遍历月份
@@ -522,7 +526,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setType(0);
                 List<BigDecimal> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
-                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(formatter + "_" + line), 2));
+                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(monthStr + "_" + line), 2));
                 rowList.add(row);
                 row.setProductLineName(lineName);
                 row.setMonthStr(monthStr);
