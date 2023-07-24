@@ -20,8 +20,11 @@ import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.dto.PmsDefectDayRowDTO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
+import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
@@ -70,6 +73,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final QtCheckTaskMapper qtCheckTaskMapper;
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -483,7 +487,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     @Override
     public CoatingFilmVO coatingFilm(QtDefectReportDTO dto) {
         QtItemCategory category = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getName, "镀膜不良"));
-        Assert.notNull(category, "原片不良类别不存在");
+        Assert.notNull(category, "镀膜不良类别不存在");
         List<QtDefectiveItem> itemList = qtDefectiveItemService.list(new QueryWrapper<QtDefectiveItem>()
                 .select("code, any_value(name) as name")
                 .lambda()
@@ -553,6 +557,18 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //总计
         rowList.add(countRow(itemList, sumMap, 2, "合计"));
         return resVo;
+    }
+
+    @Override
+    public DefectDayVO defectDay(QtDefectReportDTO dto) {
+        LocalDateTime begin = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime over = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<PmsDefectDayRowDTO> pmsList = FeignOptional.of(() -> remotePmsFeignApi.defectDay(new TripleDTO<>(dto.getProductLineList(), begin, over)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        SteccnTableAssertUtil.notEmpty(pmsList, "暂无符合条件的订单");
+        //
+
+
+        return null;
     }
 
     /**

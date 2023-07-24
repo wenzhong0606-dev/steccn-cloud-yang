@@ -1,13 +1,11 @@
 package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.DwCurrentReportWorkDTO;
-import com.steccn.pms.dto.DwProduceOrderDTO;
-import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
-import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.pms.vo.ReportWorkOrderVO;
@@ -137,4 +135,8 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据业务id查询状态")
     @GetMapping("/feign/pms/material/requisition/type")
     R<Long> getStatusById(@RequestParam("id") Long id);
+
+    @ApiOperation("根据业务id查询状态")
+    @PostMapping("/feign/pms/produce/order/defect")
+    R<List<PmsDefectDayRowDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto);
 }

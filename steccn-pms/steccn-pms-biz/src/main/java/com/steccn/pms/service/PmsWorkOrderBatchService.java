@@ -1,10 +1,15 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
+import com.steccn.pms.dto.PmsDefectDayRowDTO;
 import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.vo.WorkOrderBatchVO;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,4 +62,13 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
      * @return 批次信息
      */
     PmsWorkOrderBatch getByCode(String batchNo);
+
+    /**
+     * 查询不良日报表
+     * @param lineList 产线
+     * @param start 开始日期
+     * @param end 结束日期
+     * @return list
+     */
+    List<PmsDefectDayRowDTO> defectDay(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
 }

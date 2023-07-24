@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.vo.*;
@@ -79,6 +80,12 @@ public class QtDefectReportController {
     @ApiOperation(value = "镀膜不良月报表")
     public R<CoatingFilmVO> coatingFilm(@RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.coatingFilm(dto));
+    }
+
+    @PostMapping("/defect/day")
+    @ApiOperation(value = "不良日报表")
+    public R<DefectDayVO> defectDay(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.defectDay(dto));
     }
 
 }

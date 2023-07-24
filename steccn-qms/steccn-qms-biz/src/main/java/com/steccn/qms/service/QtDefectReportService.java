@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.vo.*;
 
@@ -81,4 +82,11 @@ public interface QtDefectReportService {
      * @return
      */
     CoatingFilmVO coatingFilm(QtDefectReportDTO dto);
+
+    /**
+     * 不良日报表
+     * @param dto 请求参数
+     * @return
+     */
+    DefectDayVO defectDay(QtDefectReportDTO dto);
 }
