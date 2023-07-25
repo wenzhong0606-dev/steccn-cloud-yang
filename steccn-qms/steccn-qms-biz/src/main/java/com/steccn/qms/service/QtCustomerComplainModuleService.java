@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 import com.steccn.qms.domain.QtCustomerComplainModule;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtCustomerComplainDTO;
 
 /**
 * @author W10
@@ -11,4 +12,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtCustomerComplainModuleService extends IService<QtCustomerComplainModule> {
 
+    Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO);
 }

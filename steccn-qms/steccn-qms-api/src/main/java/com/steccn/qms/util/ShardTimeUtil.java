@@ -179,10 +179,8 @@ public class ShardTimeUtil {
                     start = LocalDateTime.of(LocalDate.of(start.getYear(), start.getMonth(), 1), start.toLocalTime());
                     listDate.add(start);
                     start = start.plusMonths(1);
-                    if (!end.isAfter(start)){
-                        LocalDateTime lastDayOfMonthStr = LocalDateUtil.getLastDayOfMonthStr(end.toLocalDate());
-                        listDate.add(LocalDateTime.of(lastDayOfMonthStr.getYear(),lastDayOfMonthStr.getMonth(),
-                                lastDayOfMonthStr.getDayOfMonth(),23,59,59));
+                    if (!end.isAfter(start)) {
+                        listDate.add(start);
                     }
                     break;
                 case "W":

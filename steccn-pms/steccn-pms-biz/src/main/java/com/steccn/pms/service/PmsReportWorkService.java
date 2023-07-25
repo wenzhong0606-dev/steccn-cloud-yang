@@ -170,4 +170,14 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return key 报工id value 物料id
      */
     Map<Long,Long> mainMaterialByReportWork(Set<Long> reportIds);
+
+    /**
+     * 原料耗用量
+     *
+     * @param lineList 产线
+     * @param start    开始时间
+     * @param end      结束时间
+     * @return
+     */
+    Map<String, BigDecimal> getUseCount(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
 }

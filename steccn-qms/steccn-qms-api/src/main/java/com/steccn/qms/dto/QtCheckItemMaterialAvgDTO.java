@@ -26,11 +26,17 @@ public class QtCheckItemMaterialAvgDTO implements Serializable {
     @ApiModelProperty("班次日期")
     private LocalDate classDate;
 
+    @ApiModelProperty("班次日期")
+    private Integer classId;
+
     @ApiModelProperty("物料主键")
     private Long materialId;
 
     @ApiModelProperty("班组主键")
     private Integer classGroupId;
+
+    @ApiModelProperty("工位")
+    private String station;
 
     @ApiModelProperty("值")
     private BigDecimal value;

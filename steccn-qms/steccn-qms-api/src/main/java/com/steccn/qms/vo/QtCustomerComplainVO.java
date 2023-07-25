@@ -121,7 +121,7 @@ public class QtCustomerComplainVO {
     @Valid
     private List<QtCustomerComplainDetailVO> details;
 
-    private List<QtCustomerComplainModelVO> models;
+    private List<QtCustomerComplainModelVO> modules;
 
     /**
      * 抄送人

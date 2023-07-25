@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.vo.*;
 
@@ -60,4 +61,32 @@ public interface QtDefectReportService {
      * @return
      */
     QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
+
+    /**
+     * 微气泡
+     * @param dto 请求参数
+     * @return vo
+     */
+    QtMicroBubbleVO microBubble(QtDefectReportDTO dto);
+
+    /**
+     * 原片不良报表
+     * @param dto 请求参数
+     * @return 原片不良报表
+     */
+    OriginalDefectVO originalDefect(QtDefectReportDTO dto);
+
+    /**
+     * 镀膜不良报表
+     * @param dto 请求参数
+     * @return
+     */
+    CoatingFilmVO coatingFilm(QtDefectReportDTO dto);
+
+    /**
+     * 不良日报表
+     * @param dto 请求参数
+     * @return
+     */
+    DefectDayVO defectDay(QtDefectReportDTO dto);
 }
