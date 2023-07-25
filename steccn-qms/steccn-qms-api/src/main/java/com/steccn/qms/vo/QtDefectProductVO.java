@@ -145,6 +145,13 @@ public class QtDefectProductVO {
     private BigDecimal dealQuantity;
 
 
+
+    /**
+     * 处理时间
+     */
+    private LocalDateTime dealTime;
+
+
     /**
      * 抄送人
      */

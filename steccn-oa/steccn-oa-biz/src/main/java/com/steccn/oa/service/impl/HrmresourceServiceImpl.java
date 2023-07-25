@@ -2,20 +2,26 @@ package com.steccn.oa.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
+import com.steccn.oa.domain.KqGroupmember;
 import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.vo.OaMesUserVO;
+import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +37,7 @@ import java.util.stream.Collectors;
 public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmresource>
         implements HrmresourceService {
 
-    private final HrmresourceMapper hrmresourceMapper;
+    private final KqGroupmemberMapper kqGroupmemberMapper;
 
     private final RemoteMesFeignApi remoteMesFeignApi;
 
@@ -154,13 +160,43 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
                 .select(Hrmresource::getId, Hrmresource::getLoginid)
                 .in(Hrmresource::getLoginid,loginName));
+        //拿到所有考勤组
+        List<KqGroupmember> kqGroupmembers = kqGroupmemberMapper.selectList(new LambdaQueryWrapper<KqGroupmember>()
+                .select(KqGroupmember::getId,KqGroupmember::getGroupid,KqGroupmember::getTypevalue).isNull(KqGroupmember::getIsdelete));
         oaMesUserVOS.forEach(tmp->{
             Hrmresource one = list.stream().filter(v -> v.getLoginid().equals(tmp.getLoginCode())).findFirst().orElse(null);
+            if(StrUtil.isNotBlank(tmp.getOfficeType())&&tmp.getOfficeType().equals(OaConstant.NUM_6.toString())){
+                String code = tmp.getOfficeCode();
+                tmp.setOfficeCode(null);
+                tmp.setPostCode(code);
+            }
             if(Objects.nonNull(one)){
                 tmp.setOaId(one.getId());
+                KqGroupmember memberTmp = kqGroupmembers.stream().filter(v -> v.getTypevalue().equals(one.getId()))
+                        .sorted(Comparator.comparing(KqGroupmember::getId).reversed())
+                        .findFirst().orElse(null);
+                if(Objects.nonNull(memberTmp)){
+                    tmp.setGroupId(memberTmp.getGroupid());
+                }
             }
         });
         return oaMesUserVOS;
+    }
+
+    @Override
+    public String synchronizeUser() {
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().ne(Hrmresource::getStatus, OaConstant.NUM_5));
+        List<MesUserDTO> dto = Lists.newArrayList();
+        list.forEach(tmp->{
+            MesUserDTO tmpDTO = new MesUserDTO();
+            tmpDTO.setUserName(tmp.getLastname());
+            tmpDTO.setLoginCode(tmp.getLoginid());
+            tmpDTO.setOfficeCode("Unallocated");
+            tmpDTO.setOfficeName("待分配部门");
+            tmpDTO.setIsNewRecord(true);
+            dto.add(tmpDTO);
+        });
+        return remoteMesFeignApi.synchronizeUser(dto);
     }
 }
 

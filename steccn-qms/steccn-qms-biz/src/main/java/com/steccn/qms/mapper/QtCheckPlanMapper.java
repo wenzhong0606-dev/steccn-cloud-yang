@@ -24,6 +24,14 @@ public interface QtCheckPlanMapper extends BaseMapper<QtCheckPlan> {
      */
     @Select("SELECT COUNT(*) FROM qt_material_link_check_plan a LEFT JOIN qt_check_task b ON a.material_id = b.material_id WHERE a.check_plan_id = #{planId} AND a.del_flag = 0 AND b.del_flag = 0 AND b.status = 1 ")
     Long  CountLindkedPlan(@Param("planId") Integer planId);
+
+    /**
+     * 通过计划id查询是否有正在执行中的任务
+     * @param planId
+     * @return
+     */
+    @Select("SELECT COUNT(*) FROM qt_check_task WHERE check_plan_id IN (SELECT id FROM qt_check_plan WHERE code = (SELECT code FROM qt_check_plan WHERE id = #{planId})) AND del_flag = 0 AND status = 1")
+    Long CountLinkedTask(@Param("planId") Integer planId);
 }
 
 

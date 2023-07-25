@@ -111,7 +111,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //班次时间范围
-                .between(QtCheckTask::getClassTime, startTime, endTime)
+                .between(QtCheckTask::getClassTime, startTime.toLocalDate(), endTime.toLocalDate())
                 //班次
                 .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, dto.getWorkingOrder())
                 //只要巡检
@@ -1743,7 +1743,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //班次时间范围
-                .between(QtCheckTask::getClassTime, startTime, endTime)
+                .between(QtCheckTask::getClassTime, startTime.toLocalDate(), endTime.toLocalDate())
                 //只要巡检
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                 //只要基片车间
@@ -2075,10 +2075,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             LocalDateTime time = LocalDateTime.now();
                             if(entry2.getKey().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
                                 //早班
-                                time = materialN.get(0).getClassTime().withHour(8).withMinute(0).withSecond(0);
+                                time = materialN.get(0).getClassTime().atStartOfDay().withHour(8).withMinute(0).withSecond(0);
                             }else {
                                 //晚班
-                                time = materialN.get(0).getClassTime().withHour(20).withMinute(0).withSecond(0);
+                                time = materialN.get(0).getClassTime().atStartOfDay().withHour(20).withMinute(0).withSecond(0);
                             }
                             //1997则说明前一个物料没有设置时间
                             if(preMaterialTime.getYear() == 1997){
@@ -2099,10 +2099,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             LocalDateTime time = LocalDateTime.now();
                             if(entry2.getKey().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
                                 //早班
-                                time = materialNTmp.getClassTime().withHour(8).withMinute(0).withSecond(0);
+                                time = materialNTmp.getClassTime().atStartOfDay().withHour(8).withMinute(0).withSecond(0);
                             }else {
                                 //晚班
-                                time = materialNTmp.getClassTime().withHour(20).withMinute(0).withSecond(0);
+                                time = materialNTmp.getClassTime().atStartOfDay().withHour(20).withMinute(0).withSecond(0);
                             }
                             Duration dr = Duration.between(time,materialN1.get(0).getSpotTime());
                             preMaterialTime = materialN1.get(0).getSpotTime();
@@ -2114,10 +2114,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     LocalDateTime time = LocalDateTime.now();
                     if(entry2.getKey().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
                         //早班结束时间
-                        time = materialN.get(0).getClassTime().withHour(20).withMinute(0).withSecond(0);
+                        time = materialN.get(0).getClassTime().atStartOfDay().withHour(20).withMinute(0).withSecond(0);
                     }else {
                         //晚班结束时间
-                        time = materialN.get(0).getClassTime().withHour(8).withMinute(0).withSecond(0).plusDays(1);
+                        time = materialN.get(0).getClassTime().atStartOfDay().withHour(8).withMinute(0).withSecond(0).plusDays(1);
                     }
                     Duration dr = Duration.between(preMaterialTime,time);
                     double hours = dr.toMinutes() / 60.0;

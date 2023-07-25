@@ -77,4 +77,10 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     List<OaMesUserVO> getMesUser();
+
+    /**
+     * 同步用户
+     * @return
+     */
+    String synchronizeUser();
 }

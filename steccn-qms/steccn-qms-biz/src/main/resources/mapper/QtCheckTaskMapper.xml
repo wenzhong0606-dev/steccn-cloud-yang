@@ -29,7 +29,7 @@
         <result property="badNum" column="bad_num" jdbcType="INTEGER"/>
         <result property="result" column="result" jdbcType="VARCHAR"/>
         <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
-        <result property="classTime" column="class_time" jdbcType="TIMESTAMP"/>
+        <result property="classTime" column="class_time" jdbcType="DATE"/>
         <result property="spotTime" column="spot_time" jdbcType="TIMESTAMP"/>
         <result property="note" column="note" jdbcType="VARCHAR"/>
         <result property="createBy" column="create_by" jdbcType="BIGINT"/>

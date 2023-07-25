@@ -277,8 +277,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
             ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
             ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
-            Assert.notNull(dto.getClassGroupId(),"首检、在线检、巡检班组不能为空");
             Assert.notNull(dto.getClassGroupName(),"首检、在线检、巡检班组不能为空");
+            if(dto.getClassGroupName().contains(PmManagerConstant.METHYL_CLASS_NAME)){
+                dto.setClassGroupId(QtManagerConstant.NUM_0);
+            }else if(dto.getClassGroupName().contains(PmManagerConstant.ETHYL_CLASS_NAME)){
+                dto.setClassGroupId(QtManagerConstant.NUM_1);
+            }else if(dto.getClassGroupName().contains(PmManagerConstant.PROPYLENE_CLASS_NAME)){
+                dto.setClassGroupId(QtManagerConstant.NUM_2);
+            }
         }
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
@@ -420,6 +426,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(readOnly = true)
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
+        //转换一下班组
+        if(StrUtil.isNotBlank(qtCheckTask.getClassGroupName())){
+            if(qtCheckTask.getClassGroupName().contains(PmManagerConstant.METHYL_CLASS_NAME)){
+                qtCheckTask.setClassGroupName(PmManagerConstant.METHYL_CLASS_NAME);
+            }else if(qtCheckTask.getClassGroupName().contains(PmManagerConstant.ETHYL_CLASS_NAME)){
+                qtCheckTask.setClassGroupName(PmManagerConstant.ETHYL_CLASS_NAME);
+            }else if(qtCheckTask.getClassGroupName().contains(PmManagerConstant.PROPYLENE_CLASS_NAME)){
+                qtCheckTask.setClassGroupName(PmManagerConstant.PROPYLENE_CLASS_NAME);
+            }
+        }
         Assert.notNull(qtCheckTask, "检验记录不存在");
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
@@ -720,7 +736,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //计算班次时间
             QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
             qtCheckTask.setClassesId(taskClassCalculate.getClassType());
-            qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+            qtCheckTask.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         }
         return updateById(qtCheckTask);
     }
@@ -1183,7 +1199,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //计算班次时间
             QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(taskModel.getFinishedTime());
             taskModel.setClassesId(taskClassCalculate.getClassType());
-            taskModel.setClassTime(taskClassCalculate.getClassDate());
+            taskModel.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         }
 
         //如果是配料抽检，则pushtype为SPOT_CHECK
@@ -1248,7 +1264,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //计算班次时间
         QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
-        qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+        qtCheckTask.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         //配料抽检任务完成,发送消息给岗位为"配料工"的当前班次人员;
         QtCheckTask task = getById(dto.getId());
         if (QtManagerConstant.NUM_7.equals(task.getTaskType())){
@@ -1915,7 +1931,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<Integer, String> officeIdNameMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> materialIdNameMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-        Map<LocalDate, List<QtCheckTaskReportVO>> classDateMap = rateDataList.stream().collect(Collectors.groupingBy(v -> v.getClassTime().toLocalDate()));
+        Map<LocalDate, List<QtCheckTaskReportVO>> classDateMap = rateDataList.stream().collect(Collectors.groupingBy(v -> v.getClassTime()));
         //定义返回的集合
         List<QtDeepOrSubAcceptabilityDetailVO> resList = Lists.newArrayList();
 
@@ -2104,7 +2120,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //获取时间范围的集合
             List<QtCheckTaskReportVO> conditionDataList = flatDataList.stream().filter(v -> {
                 //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
+                LocalDate classDate = LocalDateUtil.getClassDate(start, false);
+                if (classDate.isEqual(v.getClassTime())) {
                     return Boolean.TRUE;
                 }
                 return Boolean.FALSE;
@@ -2229,7 +2246,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             if(Objects.nonNull(vo.getSpotTime())){
                 QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getSpotTime());
                 vo.setClassesId(qtTaskClassCalculate.getClassType());
-                vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                vo.setClassTime(qtTaskClassCalculate.getClassDate().toLocalDate());
                 //班組信息
                 QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(vo.getClassesId());
                 if (Objects.nonNull(code)) {

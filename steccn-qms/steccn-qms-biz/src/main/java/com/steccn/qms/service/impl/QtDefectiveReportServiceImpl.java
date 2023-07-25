@@ -378,7 +378,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             //根据缺陷记录时段计算完成时间
                             QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectStartTime());
                             vo.setFinishedTime(qtCheckTask.getFinishedTime());
-                            vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                            vo.setClassTime(qtTaskClassCalculate.getClassDate().toLocalDate());
                             vo.setClassId(qtTaskClassCalculate.getClassType());
                             vo.setClassesDate(qtTaskClassCalculate.getClassDate().toLocalDate());
                             //班組
@@ -1215,9 +1215,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                     }else {
                         qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
                     }
-                    vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                    vo.setClassTime(qtTaskClassCalculate.getClassDate().toLocalDate());
                     vo.setClassId(qtTaskClassCalculate.getClassType());
-                    vo.setClassesDate(vo.getClassTime().toLocalDate());
+                    vo.setClassesDate(vo.getClassTime());
                     vo.setDefectNum(ele.getDefectCount());
                     //配置缺陷项
                     QtDefectiveItem qtDefectiveItem = resMap.get(ele.getDefectType());
@@ -1473,7 +1473,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 //其他时间粒度
                 conditionDataList = flatDataList.stream().filter(v -> {
                     //数据范围应该是大于等于开始时间  小于结束时间
-                    if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
+                    LocalDate classDate = LocalDateUtil.getClassDate(start, false);
+                    if (classDate.isEqual(v.getClassTime())) {
                         return Boolean.TRUE;
                     }
                     return Boolean.FALSE;
