@@ -7,7 +7,7 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.DwProduceOrderDTO;
-import com.steccn.pms.dto.PmsDefectDayRowDTO;
+import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
@@ -106,7 +106,7 @@ public class PmsProduceOrderFeignController {
 
     @ApiOperation("查询不良日报表")
     @PostMapping("/defect")
-    R<List<PmsDefectDayRowDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto){
+    R<List<PmsDefectDayOrderBasicDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto){
         return R.success(pmsWorkOrderBatchService.defectDay(dto.getField1(),dto.getField2(),dto.getField3()));
     }
 }

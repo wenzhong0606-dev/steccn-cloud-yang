@@ -7,12 +7,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
-import com.steccn.pms.dto.PmsDefectDayRowDTO;
+import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.mapper.PmsWorkOrderBatchMapper;
@@ -90,8 +86,8 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
     }
 
     @Override
-    public List<PmsDefectDayRowDTO> defectDay(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
-        List<PmsDefectDayRowDTO> dbList = baseMapper.defectDay(lineList, start, end);
+    public List<PmsDefectDayOrderBasicDTO> defectDay(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+        List<PmsDefectDayOrderBasicDTO> dbList = baseMapper.defectDay(lineList, start, end);
         return Objects.nonNull(dbList) ? dbList : Lists.newArrayList();
     }
 

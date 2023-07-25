@@ -3,25 +3,20 @@ package com.steccn.pms.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
-import com.steccn.pms.vo.ReportWorkOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -138,5 +133,5 @@ public interface RemotePmsFeignApi {
 
     @ApiOperation("根据业务id查询状态")
     @PostMapping("/feign/pms/produce/order/defect")
-    R<List<PmsDefectDayRowDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto);
+    R<List<PmsDefectDayOrderBasicDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto);
 }

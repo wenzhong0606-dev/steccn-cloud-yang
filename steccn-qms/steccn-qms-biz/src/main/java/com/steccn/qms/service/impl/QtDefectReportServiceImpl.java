@@ -15,15 +15,17 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.pms.dto.PmsDefectDayRowDTO;
+import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
+import com.steccn.pms.vo.DefectDayRowVO;
 import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -563,22 +565,49 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     public DefectDayVO defectDay(QtDefectReportDTO dto) {
         LocalDateTime begin = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime over = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
-        List<PmsDefectDayRowDTO> pmsList = FeignOptional.of(() -> remotePmsFeignApi.defectDay(new TripleDTO<>(dto.getProductLineList(), begin, over)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        List<PmsDefectDayOrderBasicDTO> pmsList = FeignOptional.of(() -> remotePmsFeignApi.defectDay(new TripleDTO<>(dto.getProductLineList(), begin, over)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         SteccnTableAssertUtil.notEmpty(pmsList, "暂无符合条件的订单");
+        //存放订单的基础信息
+        Map<String, PmsDefectDayOrderBasicDTO> orderBasicMap = Maps.newHashMap();
+        pmsList.forEach(ele -> orderBasicMap.put(ele.getProduceOrderCode(), ele));
         //根据开始日期和结束日期
         List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), begin, over);
-        for (int i = 1; i < timeList.size(); i++) {
-            LocalDateTime startTmp = timeList.get(i - 1);
-            LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
-            Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
-//            pmsList.stream().filter(ele -> ele.get)
+        List<DefectDayRowVO> rowList = Lists.newArrayList();
+        Set<Integer> officeIdSet = Sets.newHashSet(dto.getProductLineList());
+        pmsList.forEach(ele -> officeIdSet.add(ele.getCustomerId()));
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
 
-
+        for (Integer line : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(line);
+            for (int i = 1; i < timeList.size(); i++) {
+                LocalDateTime startTmp = timeList.get(i - 1);
+                LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
+                Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
+                //获取满足条件的批次
+                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), ele.getEndTime(), Boolean.TRUE, Boolean.FALSE)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
+                List<String> orderNoList = new ArrayList<>(orderNoSet);
+                Collections.sort(orderNoList);
+                String classDateStr = LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN);
+                for (String order : orderNoList) {
+                    PmsDefectDayOrderBasicDTO orderBasicInfo = orderBasicMap.get(order);
+                    DefectDayRowVO row = new DefectDayRowVO();
+                    row.setProductLineName(lineName);
+                    row.setClassDateStr(classDateStr);
+                    row.setClassName(QtManagerConstant.QtClassesEnum.code(classId).getName());
+                    row.setMaterialName(orderBasicInfo.getMaterialName());
+                    row.setProduceOrderNo(orderBasicInfo.getProduceOrderCode());
+                    row.setType(0);
+                    row.setClassGroupName(classGroupMap.getOrDefault(classDateStr + ":" + row.getClassName(), new OaGroupCountDTO()).getGroupName());
+                    rowList.add(row);
+                }
+            }
         }
-
-
-        return null;
+        DefectDayVO resVo = new DefectDayVO();
+        resVo.setRowList(rowList);
+        return resVo;
     }
 
     /**

@@ -31,7 +31,7 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
-    <select id="defectDay" resultType="com.steccn.pms.dto.PmsDefectDayRowDTO">
+    <select id="defectDay" resultType="com.steccn.pms.dto.PmsDefectDayOrderBasicDTO">
         SELECT
         o.id as produceOrderId,
         o.`code` as produceOrderCode,

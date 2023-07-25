@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("不良日报表行视图对象")
-public class PmsDefectDayRowDTO implements Serializable {
+public class PmsDefectDayOrderBasicDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
