@@ -6,9 +6,16 @@ import java.util.List;
 
 public interface HikvisionService {
 
+    /**
+     * 获取监控点树-平铺结构
+     *
+     * @return
+     */
+    List<CameraVO> flatCameraList();
 
     /**
      * 获取监控点树
+     *
      * @return
      */
     List<CameraVO> cameraSearchTree();
@@ -16,6 +23,7 @@ public interface HikvisionService {
 
     /**
      * 获取监控点预览流
+     *
      * @param cameraIndexCode
      * @param protocol
      * @return

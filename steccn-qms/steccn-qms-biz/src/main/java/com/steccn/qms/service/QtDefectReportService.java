@@ -1,0 +1,63 @@
+package com.steccn.qms.service;
+
+import com.steccn.common.constant.ResultCode;
+import com.steccn.qms.dto.QtDefectReportDTO;
+import com.steccn.qms.vo.*;
+
+import java.util.List;
+
+/**
+ * @author yequan
+ * @desc 不良报表接口
+ * @date 2023/7/11
+ */
+public interface QtDefectReportService {
+
+
+    /**
+     * 缺陷列表
+     *
+     * @param dto 请求
+     * @return vo
+     */
+    QtDefectReportVO defectList(QtDefectReportDTO dto);
+
+    /**
+     * 落板记录列表
+     *
+     * @param dto - 请求
+     * @return 落板记录报表
+     */
+    List<QtDefectFallingVO> falling(QtDefectReportDTO dto);
+
+    /**
+     * 厚度报表
+     *
+     * @param dto 请求
+     * @return 报表
+     */
+    QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto);
+
+    /**
+     * 毛边宽报表
+     *
+     * @param dto 请求
+     * @return 报表
+     */
+    QtCheckItemMultiAvgVO rbwAvg(QtDefectReportDTO dto);
+
+    /**
+     * 粗糙度报表
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    QtCheckItemSingleAvgVO roughness(QtDefectReportDTO dto);
+
+    /**
+     * 透光率报表
+     * @param dto – 请求参数
+     * @return
+     */
+    QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
+}

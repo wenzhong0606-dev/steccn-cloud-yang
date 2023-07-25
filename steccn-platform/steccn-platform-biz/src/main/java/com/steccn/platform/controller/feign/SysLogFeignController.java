@@ -33,6 +33,9 @@ public class SysLogFeignController {
      */
     @PostMapping
     public R<Boolean> add(@RequestBody SysLogDTO sysLogDTO) {
+        if (sysLogDTO.getRequestUri().indexOf("/feign") != -1) {
+            return R.success(Boolean.TRUE);
+        }
         return R.success(sysLogService.add(sysLogDTO));
     }
 }

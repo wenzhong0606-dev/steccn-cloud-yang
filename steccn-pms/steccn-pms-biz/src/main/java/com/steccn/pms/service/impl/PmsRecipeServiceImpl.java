@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -179,6 +180,10 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         BigDecimal dryBasisQuantityAll = BigDecimal.ZERO;
         for(PmsRecipeRaw tmp:pmsRecipeRawList){
             PmsRecipeRawVO rawTmp = new PmsRecipeRawVO();
+            if(Objects.nonNull(tmp.getWetBasisQuantity())){
+                //设置两位小数
+                tmp.setWetBasisQuantity(tmp.getWetBasisQuantity().setScale(2,RoundingMode.HALF_UP));
+            }
             BeanUtil.copyProperties(tmp, rawTmp);
             //便于前端判断
             if (Objects.isNull(rawTmp.getWetBasisWaterRate())) {
@@ -214,6 +219,16 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             pmsRecipeVO.setRawRate(new BigDecimal(100));
         }else {
             pmsRecipeVO.setRawRate(BigDecimalUtil.subtract(new BigDecimal(100),pmsRecipeVO.getClinkerRate()));
+        }
+        //6、产品改需求只显示后两位
+        if(Objects.nonNull(pmsRecipeVO.getDryBasisQuantityAll())){
+            pmsRecipeVO.setDryBasisQuantityAll(pmsRecipeVO.getDryBasisQuantityAll().setScale(2, RoundingMode.HALF_UP));
+        }
+        if(Objects.nonNull(pmsRecipeVO.getClinkerQuantity())){
+            pmsRecipeVO.setClinkerQuantity(pmsRecipeVO.getClinkerQuantity().setScale(2, RoundingMode.HALF_UP));
+        }
+        if(Objects.nonNull(pmsRecipeVO.getBatchWaterQuantity())){
+            pmsRecipeVO.setBatchWaterQuantity(pmsRecipeVO.getBatchWaterQuantity().setScale(2, RoundingMode.HALF_UP));
         }
         return pmsRecipeVO;
     }

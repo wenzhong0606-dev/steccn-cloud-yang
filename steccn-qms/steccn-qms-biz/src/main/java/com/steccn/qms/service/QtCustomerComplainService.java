@@ -68,4 +68,11 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     Boolean approve(OaProcessNotifyDTO dto);
+
+    /**
+     * 查询是否存在组件序列号
+     * @param modelNo
+     * @return
+     */
+    Boolean modelNoFlag(String modelNo);
 }

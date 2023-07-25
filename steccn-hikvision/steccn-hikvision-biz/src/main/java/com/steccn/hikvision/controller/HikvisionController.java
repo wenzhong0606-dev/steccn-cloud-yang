@@ -22,7 +22,10 @@ public class HikvisionController {
 
     private final HikvisionService hikvisionService;
 
-
+    @GetMapping("/camera/search/flat")
+    public R<List<CameraVO>> flatCameraList() {
+        return R.success(hikvisionService.flatCameraList());
+    }
     /**
      * 监控点树
      *

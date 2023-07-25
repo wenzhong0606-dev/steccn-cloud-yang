@@ -24,28 +24,30 @@ public class EpDwController {
 
     @GetMapping("/meter/read")
     @ApiOperation(value = "抄表归档-ep_meter_read_distant")
-    public R<Boolean> meterRead(@RequestParam("date") LocalDate date) {
+    public R<Integer> meterRead(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.meterRead(date));
     }
 
     @PostMapping("/meter/read")
     @ApiOperation(value = "抄表归档-ep_meter_read_distant")
-    public R<Boolean> meterRead(@RequestBody List<LocalDate> date) {
+    public R<Integer> meterRead(@RequestBody List<LocalDate> date) {
+        Integer count = 0;
         for (LocalDate ele : date) {
-            epDwService.meterRead(ele);
+            Integer num = epDwService.meterRead(ele);
+            count += num;
         }
-        return R.success(Boolean.TRUE);
+        return R.success(count);
     }
 
     @GetMapping("/electric/money")
     @ApiOperation(value = "电费归档")
-    public R<Boolean> electricMoney(@RequestParam("date") LocalDate date) {
+    public R<Integer> electricMoney(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.electricMoney(date));
     }
 
     @GetMapping("/meter/chao")
     @ApiOperation(value = "抄表-ep_meter_read")
-    public R<Boolean> meterChao(@RequestParam("date") LocalDate date) {
+    public R<Integer> meterChao(@RequestParam("date") LocalDate date) {
         return R.success(epDwService.read(date));
     }
 

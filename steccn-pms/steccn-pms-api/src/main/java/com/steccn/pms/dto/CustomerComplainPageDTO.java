@@ -73,4 +73,39 @@ public class CustomerComplainPageDTO extends BasePageDTO {
      */
     private LocalDateTime endTime;
 
+    /**
+     * 回复客户开始日期
+     */
+    private LocalDate replyClientStartDate;
+
+
+    /**
+     * 回复客户结束日期
+     */
+    private LocalDate replyClientEndDate;
+
+
+    /**
+     * 回复客户筛选开始时间
+     */
+    private LocalDateTime replyClientStartTime;
+
+
+    /**
+     * 回复客户筛选结束时间
+     */
+    private LocalDateTime replyClientEndTime;
+
+
+    /**
+     * 组件序列号
+     */
+    private String moduleNumber;
+
+    /**
+     * 客户定制箱号
+     */
+    private String clientCaseNo;
+
+
 }
