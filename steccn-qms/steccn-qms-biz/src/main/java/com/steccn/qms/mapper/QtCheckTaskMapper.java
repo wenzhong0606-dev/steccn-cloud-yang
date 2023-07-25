@@ -231,10 +231,20 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @return
      */
     List<QtCheckItemMaterialAvgDTO> coatingFilmMonth(@Param("lineIdList") List<Integer> lineIdList,
-                                                        @Param("start") LocalDateTime start,
-                                                        @Param("end") LocalDateTime end,
-                                                        @Param("categoryId") Integer categoryId);
+                                                     @Param("start") LocalDateTime start,
+                                                     @Param("end") LocalDateTime end,
+                                                     @Param("categoryId") Integer categoryId);
 
+    /**
+     * 不良日报表
+     * @param lineIdList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> defectDay(@Param("lineIdList") List<Integer> lineIdList,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end);
 }
 
 

@@ -21,6 +21,8 @@ import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
@@ -76,6 +78,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -567,15 +570,28 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime over = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<PmsDefectDayOrderBasicDTO> pmsList = FeignOptional.of(() -> remotePmsFeignApi.defectDay(new TripleDTO<>(dto.getProductLineList(), begin, over)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         SteccnTableAssertUtil.notEmpty(pmsList, "暂无符合条件的订单");
+
+        DefectDayVO resVo = new DefectDayVO();
+        //获取符合条件的表头
+        Map<String, List<String>> codeMap = getDefectDayHead(resVo);
+        List<QtCheckItemMaterialAvgDTO> dataList = qtCheckTaskMapper.defectDay(dto.getProductLineList(), begin, over);
+
         //存放订单的基础信息
         Map<String, PmsDefectDayOrderBasicDTO> orderBasicMap = Maps.newHashMap();
         pmsList.forEach(ele -> orderBasicMap.put(ele.getProduceOrderCode(), ele));
         //根据开始日期和结束日期
         List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), begin, over);
         List<DefectDayRowVO> rowList = Lists.newArrayList();
+        //获取物料规格
+        Set<Long> materialIdSet = Sets.newHashSet();
         Set<Integer> officeIdSet = Sets.newHashSet(dto.getProductLineList());
-        pmsList.forEach(ele -> officeIdSet.add(ele.getCustomerId()));
+        pmsList.forEach(ele -> {
+            officeIdSet.add(ele.getCustomerId());
+            materialIdSet.add(ele.getMaterialId());
+        });
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
 
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -601,13 +617,59 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     row.setProduceOrderNo(orderBasicInfo.getProduceOrderCode());
                     row.setType(0);
                     row.setClassGroupName(classGroupMap.getOrDefault(classDateStr + ":" + row.getClassName(), new OaGroupCountDTO()).getGroupName());
+                    EqpSpareVO eqpSpareVO = spareMap.getOrDefault(orderBasicInfo.getMaterialId(), new EqpSpareVO());
+                    //物料信息
+                    List<FurtherValueStrVO> module = Lists.newArrayList();
+                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getHighQuantity(), 2))));
+                    row.setModule(module);
                     rowList.add(row);
                 }
             }
         }
-        DefectDayVO resVo = new DefectDayVO();
         resVo.setRowList(rowList);
         return resVo;
+    }
+
+    /**
+     * 获取不良日报表表头
+     *
+     * @param resVo 请求参数
+     * @return
+     */
+    private Map<String, List<String>> getDefectDayHead(DefectDayVO resVo) {
+        //考虑返回
+        Map<String, List<String>> codeMap = Maps.newLinkedHashMap();
+        List<BaseReportHeaderVO> headList = Lists.newArrayList();
+        headList.add(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
+        headList.add(new BaseReportHeaderVO("使用量", Arrays.asList("片", "㎡")));
+        headList.add(new BaseReportHeaderVO("入库数", Arrays.asList("片", "㎡")));
+        headList.add(new BaseReportHeaderVO("不良数", Arrays.asList("片", "㎡")));
+        headList.add(new BaseReportHeaderVO("漏检", Arrays.asList("片", "㎡", "漏检率%")));
+        List<String> categoryNameList = Arrays.asList("原片不良", "磨边不良", "钻孔不良", "丝印不良", "镀膜不良", "钢化不良");
+        List<QtItemCategory> categoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>().in(QtItemCategory::getName, categoryNameList).eq(QtItemCategory::getShowFlag, MpConstant.YES));
+        Assert.notEmpty(categoryList, "缺陷类别不可为空");
+        Set<Integer> categoryIdSet = categoryList.stream().map(QtItemCategory::getId).collect(Collectors.toSet());
+        //根据类别查询缺陷项
+        List<QtDefectiveItem> defectItemList = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>()
+                .in(QtDefectiveItem::getCategoryId, categoryIdSet)
+                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES));
+        Assert.notEmpty(defectItemList, "缺陷项不可为空");
+        Map<String, QtItemCategory> categoryMap = Maps.newHashMap();
+        categoryList.forEach(ele -> categoryMap.put(ele.getName(), ele));
+        for (String cn : categoryNameList) {
+            QtItemCategory category = categoryMap.get(cn);
+            if (Objects.nonNull(category)) {
+                List<QtDefectiveItem> defectList = defectItemList.stream().filter(ele -> category.getId().equals(ele.getCategoryId())).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(defectList)) {
+                    List<String> nameList = defectList.stream().map(QtDefectiveItem::getName).collect(Collectors.toList());
+                    List<String> codeList = defectList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toList());
+                    codeMap.put(cn, codeList);
+                    headList.add(new BaseReportHeaderVO(cn, nameList));
+                }
+            }
+        }
+        resVo.setHeaderList(headList);
+        return codeMap;
     }
 
     /**

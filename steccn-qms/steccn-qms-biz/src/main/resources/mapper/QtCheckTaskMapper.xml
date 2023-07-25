@@ -629,4 +629,39 @@
             item.`code`
 
     </select>
+    <select id="defectDay" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        select
+            tmp.line,
+            tmp.class_time,
+            tmp.classes_id,
+            tmp.product_order,
+            defect.`code`,
+            tmp.VALUE from qt_defective_item defect join (
+
+            SELECT
+                task.product_line ->> '$.id' AS line,
+                class_time,
+                classes_id,
+                product_order,
+                jt.defectId,
+                sum( jt.defectNum ) AS VALUE
+            FROM
+                qt_check_task task
+                JOIN qt_check_task_detail detail ON detail.task_id = task.id ,
+                JSON_TABLE (detail.defect_num, '$[*]' COLUMNS ( `defectId` INT PATH '$.defectId', `defectNum` INT PATH '$.defectNum' )) AS jt
+            WHERE
+                task_type = 3
+              AND `status` = 2
+              AND task.product_order is not null
+            GROUP BY
+                task.product_line ->> '$.id',
+                class_time,
+                classes_id,
+                product_order,
+                jt.defectId
+            HAVING `value` is not null
+        )  as tmp on tmp.defectId = defect.id
+
+
+    </select>
 </mapper>
