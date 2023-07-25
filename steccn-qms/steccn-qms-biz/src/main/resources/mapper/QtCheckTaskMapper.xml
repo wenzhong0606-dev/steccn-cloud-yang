@@ -480,4 +480,153 @@
         task.product_line ->> '$.id',
         item.code
     </select>
+    <select id="microBubble" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        SELECT
+        task.product_line ->> '$.id' as product_line_id,
+        DATE_FORMAT(spot_time, '%Y-%m-%d') as class_date,
+        task.station ->> '$.name' AS station,
+        sum( detail.check_result ) as value
+        FROM
+        qt_check_task task
+        JOIN qt_check_task_detail detail ON detail.task_id = task.id
+        WHERE
+        task.del_flag = 0
+        AND task.product_line ->> '$.id' IN
+        <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        AND detail.item_id IN
+        <foreach collection="itemIdList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND task.STATUS = 2
+        AND task.classes_id = #{classId}
+        AND task.task_type = 4
+        AND check_result IS NOT NULL
+        AND DATE_FORMAT( spot_time, '%H:%i:%s' ) &gt;  #{time1}
+        AND DATE_FORMAT( spot_time, '%H:%i:%s' ) &lt;=  #{time2}
+        AND spot_time &gt;= #{start}
+        AND spot_time &lt; #{end}
+        GROUP BY
+        task.product_line ->> '$.id' ,
+        DATE_FORMAT( spot_time, '%Y-%m-%d' ),
+        task.station ->> '$.name'
+    </select>
+    <select id="originalDefectDay" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        SELECT
+            tmp.defectId,
+            tmp.VALUE,
+            tmp.product_line_id,
+            tmp.class_date
+        FROM
+            (
+                SELECT
+                    jt.defectId,
+                    task.product_line ->> '$.id' AS product_line_id,
+                    class_time as class_date,
+                    sum( jt.defectNum ) AS VALUE
+                FROM
+                    qt_check_task task
+                    JOIN qt_check_task_detail detail ON task.id = detail.task_id,
+                    JSON_TABLE (detail.defect_num, '$[*]' COLUMNS ( `defectId` INT PATH '$.defectId', `defectNum` INT PATH '$.defectNum' )) AS jt
+                WHERE
+                  detail.defect_num IS NOT NULL
+                  AND jt.defectNum > 0
+                  AND task.del_flag = 0 AND detail.del_flag = 0
+                  AND task.STATUS = 2
+                  AND task.task_type = 3
+                  AND task.defect_start_time &gt;= #{start}
+                  AND task.defect_end_time &lt; #{end}
+                  AND task.product_line ->> '$.id' IN
+                  <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                  </foreach>
+               GROUP BY
+                    jt.defectId,
+                    task.product_line ->> '$.id',
+                    class_time
+            ) AS tmp
+                JOIN qt_defective_item item ON tmp.defectId = item.id
+                AND item.category_id = #{categoryId}
+    </select>
+    <select id="originalDefectMonth" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        SELECT
+        tmp.defectId,
+        tmp.VALUE,
+        tmp.product_line_id,
+        tmp.classMonth
+        FROM
+        (
+        SELECT
+        jt.defectId,
+        task.product_line ->> '$.id' AS product_line_id,
+        DATE_FORMAT(task.class_time, '%Y-%m') as classMonth,
+        sum( jt.defectNum ) AS VALUE
+        FROM
+        qt_check_task task
+        JOIN qt_check_task_detail detail ON task.id = detail.task_id,
+        JSON_TABLE (detail.defect_num, '$[*]' COLUMNS ( `defectId` INT PATH '$.defectId', `defectNum` INT PATH '$.defectNum' )) AS jt
+        WHERE
+        detail.defect_num IS NOT NULL
+        AND jt.defectNum > 0
+        AND task.del_flag = 0 AND detail.del_flag = 0
+        AND task.STATUS = 2
+        AND task.task_type = 3
+        AND task.defect_start_time &gt;= #{start}
+        AND task.defect_end_time &lt; #{end}
+        AND task.product_line ->> '$.id' IN
+        <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        GROUP BY
+        jt.defectId,
+        task.product_line ->> '$.id',
+        DATE_FORMAT(task.class_time, '%Y-%m')
+        ) AS tmp
+        JOIN qt_defective_item item ON tmp.defectId = item.id
+        AND item.category_id = #{categoryId}
+
+
+    </select>
+    <select id="coatingFilmMonth" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        SELECT
+        item.code,
+        sum(tmp.VALUE) as value,
+        tmp.product_line_id,
+        tmp.classMonth
+        FROM
+            (
+            SELECT
+            jt.defectId,
+            task.product_line ->> '$.id' AS product_line_id,
+            DATE_FORMAT(task.class_time, '%Y-%m') as classMonth,
+            sum( jt.defectNum ) AS VALUE
+            FROM
+            qt_check_task task
+            JOIN qt_check_task_detail detail ON task.id = detail.task_id,
+            JSON_TABLE (detail.defect_num, '$[*]' COLUMNS ( `defectId` INT PATH '$.defectId', `defectNum` INT PATH '$.defectNum' )) AS jt
+            WHERE
+            detail.defect_num IS NOT NULL
+            AND jt.defectNum > 0
+            AND task.del_flag = 0 AND detail.del_flag = 0
+            AND task.STATUS = 2
+            AND task.task_type = 3
+            AND task.defect_start_time &gt;= #{start}
+            AND task.defect_end_time &lt; #{end}
+            AND task.product_line ->> '$.id' IN
+            <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+              #{item}
+            </foreach>
+            GROUP BY
+            jt.defectId,
+            task.product_line ->> '$.id',
+            DATE_FORMAT(task.class_time, '%Y-%m')
+            ) AS tmp
+            JOIN qt_defective_item item ON tmp.defectId = item.id AND item.category_id = 57
+        group by
+            tmp.product_line_id,
+            tmp.classMonth,
+            item.`code`
+
+    </select>
 </mapper>

@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.vo.*;
@@ -62,5 +63,30 @@ public class QtDefectReportController {
     public R<QtCheckItemTransmitVO> transmittance(@RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.transmittance(dto));
     }
+
+    @PostMapping("/micro/bubble")
+    @ApiOperation(value = "微气泡报表")
+    public R<QtMicroBubbleVO> microBubble(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.microBubble(dto));
+    }
+
+    @PostMapping("/original/defect")
+    @ApiOperation(value = "原片不良报表")
+    public R<OriginalDefectVO> originalDefect(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.originalDefect(dto));
+    }
+
+    @PostMapping("/coating/film")
+    @ApiOperation(value = "镀膜不良月报表")
+    public R<CoatingFilmVO> coatingFilm(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.coatingFilm(dto));
+    }
+
+    @PostMapping("/defect/day")
+    @ApiOperation(value = "不良日报表")
+    public R<DefectDayVO> defectDay(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.defectDay(dto));
+    }
+
 }
 

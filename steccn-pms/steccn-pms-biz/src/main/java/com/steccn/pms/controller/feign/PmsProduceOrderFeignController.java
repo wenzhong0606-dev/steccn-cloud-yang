@@ -1,11 +1,13 @@
 package com.steccn.pms.controller.feign;
 
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.DwProduceOrderDTO;
+import com.steccn.pms.dto.PmsDefectDayRowDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
@@ -100,5 +102,11 @@ public class PmsProduceOrderFeignController {
     @GetMapping("/getMaterialIdByClassTime")
     public R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime") LocalDateTime endTime) {
         return R.success(pmsProduceOrderService.getMaterialCodeByClassTime(startTime, endTime));
+    }
+
+    @ApiOperation("查询不良日报表")
+    @PostMapping("/defect")
+    R<List<PmsDefectDayRowDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto){
+        return R.success(pmsWorkOrderBatchService.defectDay(dto.getField1(),dto.getField2(),dto.getField3()));
     }
 }

@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -329,7 +330,7 @@ public class BigDecimalUtil {
      * @param valueList 值集合
      * @return
      */
-    public static BigDecimal sum(List<BigDecimal> valueList) {
+    public static BigDecimal sum(Collection<BigDecimal> valueList) {
         //集合为空，则返回null
         if (CollUtil.isEmpty(valueList)) {
             return null;

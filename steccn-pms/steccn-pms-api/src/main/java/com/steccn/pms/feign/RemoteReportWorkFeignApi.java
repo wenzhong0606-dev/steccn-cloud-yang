@@ -56,4 +56,16 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("获取车间班次日期中班次报工最多的班组")
     @PostMapping("/feign/pms/report/work/workshop/class/group")
     R<Map<String, Long>> workshopClassGroupMap(TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO);
+
+
+
+    /**
+     *
+     * 原料耗用量
+     * @param tripleDTO
+     * @return
+     */
+    @ApiOperation("原料耗用量")
+    @PostMapping("/feign/pms/report/work/original/consume")
+    R<Map<String, BigDecimal>> getUseCount(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
 }

@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
+import com.steccn.pms.dto.PmsUseCountDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -98,6 +100,18 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return 报工记录详情数据
      */
     List<PmsReportWorkVO> listReportWorkInfo(@Param("lineIds") List<Integer> lineIds,@Param("start")  LocalDateTime start,@Param("end") LocalDateTime end);
+
+    /**
+     * 获取原片耗量
+     *
+     * @param lineList 产线集合
+     * @param start    开始时间
+     * @param end      结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> getUseCount(@Param("lineList") List<Integer> lineList,
+                                     @Param("start") LocalDateTime start,
+                                     @Param("end") LocalDateTime end);
 }
 
 
