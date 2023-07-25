@@ -33,7 +33,7 @@ public class PmsDefectDayRowDTO implements Serializable {
     private Integer customerId;
 
     @ApiModelProperty("物料")
-    private Integer materialId;
+    private Long materialId;
 
     @ApiModelProperty("物料名称")
     private String materialName;

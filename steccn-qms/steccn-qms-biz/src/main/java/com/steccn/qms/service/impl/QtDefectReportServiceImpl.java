@@ -565,7 +565,17 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime over = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<PmsDefectDayRowDTO> pmsList = FeignOptional.of(() -> remotePmsFeignApi.defectDay(new TripleDTO<>(dto.getProductLineList(), begin, over)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         SteccnTableAssertUtil.notEmpty(pmsList, "暂无符合条件的订单");
-        //
+        //根据开始日期和结束日期
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), begin, over);
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDateTime startTmp = timeList.get(i - 1);
+            LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
+            Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
+//            pmsList.stream().filter(ele -> ele.get)
+
+
+
+        }
 
 
         return null;
