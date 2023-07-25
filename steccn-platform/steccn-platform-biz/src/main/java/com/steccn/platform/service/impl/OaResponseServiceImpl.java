@@ -61,13 +61,6 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final SysEqpSpareService sysEqpSpareService;
     private final RemoteMesFeignApi remoteMesFeignApi;
     private final RemoteWsFeignApi remoteWsFeignApi;
-    private final RemotePmsFeignApi remotePmsFeignApi;
-
-    private final RemoteCustomerComplainFeignApi remoteCustomerComplainFeignApi;
-
-    private final RemoteDefectProductFeignApi remoteDefectProductFeignApi;
-
-    private final RemoteImproveProgressFeignApi remoteImproveProgressFeignApi;
     private final OaProcessHandler oaProcessHandler;
 
     @Override
@@ -77,6 +70,12 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         model.setType(OaDataConstant.Oa_Data_Type.PROCESS.getCode());
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
+        try {
+            R<String> wsRes = remoteWsFeignApi.pushOa(Long.parseLong(dto.getUsername()));
+            log.debug("{}", wsRes.getData());
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
         return save(model);
     }
 
@@ -111,8 +110,15 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
         //2、根据工作流id调用对应的业务
-//        OaProcessDataDTO data = dto.getData();
         oaProcessHandler.handler(dto);
+        try {
+            MsgPushDTO msgPushDTO = new MsgPushDTO();
+            msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.OA.getType());
+            R<MsgPushDTO> wsRes = remoteWsFeignApi.pushRefreshMsg(msgPushDTO);
+            log.debug("{}", wsRes.getData());
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
         return save(model);
     }
 
