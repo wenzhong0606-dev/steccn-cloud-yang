@@ -1,7 +1,6 @@
 package com.steccn.pms.controller.feign;
 
 import cn.hutool.core.lang.Assert;
-import com.google.common.collect.Maps;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
@@ -11,7 +10,10 @@ import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,9 +36,9 @@ public class PmsReportWorkFeignController {
 
     @PostMapping("/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
-    public R<List<PmsReportWorkVO>> listByClassTime(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO) {
-        Assert.notNull(tupleDTO.getField1(),"开始时间不能为空");
-        Assert.notNull(tupleDTO.getField2(),"结束时间不能为空");
+    public R<List<PmsReportWorkVO>> listByClassTime(@RequestBody TupleDTO<LocalDateTime, LocalDateTime> tupleDTO) {
+        Assert.notNull(tupleDTO.getField1(), "开始时间不能为空");
+        Assert.notNull(tupleDTO.getField2(), "结束时间不能为空");
         return R.success(pmsReportWorkService.listByClassTime(tupleDTO.getField1(), tupleDTO.getField2()));
     }
 
@@ -48,7 +50,7 @@ public class PmsReportWorkFeignController {
 
     @ApiOperation("获取深加工产线-订单的报工记录")
     @PostMapping("/sjg/order/rw")
-    R<List<EpMeterReadRowDTO>> sjgOrderRw(@RequestBody List<EpMeterReadRowDTO> sjgDataList){
+    R<List<EpMeterReadRowDTO>> sjgOrderRw(@RequestBody List<EpMeterReadRowDTO> sjgDataList) {
         return R.success(pmsReportWorkService.sjgOrderRw(sjgDataList));
     }
 
@@ -60,14 +62,19 @@ public class PmsReportWorkFeignController {
 
     @ApiOperation("获取车间班次日期中班次报工最多的班组")
     @PostMapping("/workshop/class/group")
-    R<Map<String, Long>> workshopClassGroupMap(@RequestBody TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO){
-       return R.success(pmsReportWorkService.workshopClassGroupMap(tupleDTO.getField1(),tupleDTO.getField2()));
+    R<Map<String, Long>> workshopClassGroupMap(@RequestBody TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO) {
+        return R.success(pmsReportWorkService.workshopClassGroupMap(tupleDTO.getField1(), tupleDTO.getField2()));
     }
 
     @ApiOperation("原料耗用量")
     @PostMapping("/original/consume")
     R<Map<String, BigDecimal>> getUseCount(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
-        Map<String, BigDecimal> useCountMap = pmsReportWorkService.getUseCount(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3());
-        return R.success(useCountMap);
+        return R.success(pmsReportWorkService.getUseCount(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
+
+    @ApiOperation("原料耗用量-每个订单")
+    @PostMapping("/feign/pms/report/work/original/consume/perOrder")
+    R<Map<String, BigDecimal>> useCountPerOrder(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
+        return R.success(pmsReportWorkService.useCountPerOrder(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
 }

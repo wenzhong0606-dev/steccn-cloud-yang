@@ -15,13 +15,13 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
@@ -79,6 +79,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -217,7 +218,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
     @Override
     public QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto) {
-        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000100").select(QtCheckItem::getId));
+        //去配置文件中查询
+        String itemHd = itemCodeFromCf("QMS_DEFECT_JYX", "ITEM_HD");
+        Assert.notNull(itemHd,"厚度检验项配置未配置");
+        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemHd).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
         QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
         return resVo;
@@ -225,7 +229,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
     @Override
     public QtCheckItemMultiAvgVO rbwAvg(QtDefectReportDTO dto) {
-        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000072").select(QtCheckItem::getId));
+        String itemMbk = itemCodeFromCf("QMS_DEFECT_JYX", "ITEM_MBK");
+        Assert.notNull(itemMbk,"毛边宽检验项未配置");
+        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemMbk).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "毛边宽检验项不存在");
         QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
         return resVo;
@@ -233,7 +239,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
     @Override
     public QtCheckItemSingleAvgVO roughness(QtDefectReportDTO dto) {
-        List<QtCheckItem> roughnessItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000105").select(QtCheckItem::getId));
+        String itemCcd = itemCodeFromCf("QMS_DEFECT_JYX", "ITEM_CCD");
+        Assert.notNull(itemCcd,"粗糙度检验项未配置");
+        List<QtCheckItem> roughnessItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemCcd).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(roughnessItemList, "粗糙度检验项不存在");
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
@@ -410,7 +418,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     public QtMicroBubbleVO microBubble(QtDefectReportDTO dto) {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
-        List<QtCheckItem> qpQtCheckItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, "JYX000074").select(QtCheckItem::getId));
+        String itemQp = itemCodeFromCf("QMS_DEFECT_JYX", "ITEM_QP");
+        Assert.notNull(itemQp,"粗糙度检验项未配置");
+        List<QtCheckItem> qpQtCheckItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemQp).select(QtCheckItem::getId));
         Assert.notEmpty(qpQtCheckItemList, "气泡检验项为空");
         List<Integer> qpItemIdList = qpQtCheckItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
         List<QtCheckItemMaterialAvgDTO> timeList1 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(8, 0), LocalTime.of(12, 0), 0);
@@ -592,6 +602,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+//        remotePmsFeignApi.useCountPerOrder(new TripleDTO<>(dto.getProductLineList(),begin,over));
 
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -619,8 +630,32 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     row.setClassGroupName(classGroupMap.getOrDefault(classDateStr + ":" + row.getClassName(), new OaGroupCountDTO()).getGroupName());
                     EqpSpareVO eqpSpareVO = spareMap.getOrDefault(orderBasicInfo.getMaterialId(), new EqpSpareVO());
                     //物料信息
-                    List<FurtherValueStrVO> module = Lists.newArrayList();
+                    List<FurtherValueStrVO> module = new LinkedList<>();
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getHighQuantity(), 2))));
+                    //遍历map
+                    BigDecimal defectSum = null;
+                    for (Map.Entry<String, List<String>> codeEntry : codeMap.entrySet()) {
+                        List<String> valueList = Lists.newArrayList();
+                        BigDecimal sum = null;
+                        for (String code : codeEntry.getValue()) {
+                            Optional<QtCheckItemMaterialAvgDTO> first = dataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classId.equals(ele.getClassId()) && order.equals(ele.getProductOrderNo()) && code.equals(ele.getCode())).findFirst();
+                            if (first.isPresent()) {
+                                BigDecimal currentValue = first.get().getValue();
+                                valueList.add(String.valueOf(currentValue));
+                                sum = BigDecimalUtil.add(sum, currentValue);
+                                defectSum = BigDecimalUtil.add(defectSum, currentValue);
+                            } else {
+                                valueList.add(null);
+                            }
+                        }
+                        valueList.add(BigDecimalUtil.format(sum, 0));
+                        module.add(new FurtherValueStrVO(valueList));
+                    }
+                    //不良品
+                    BigDecimal defectRate = BigDecimalUtil.multiply(defectSum, eqpSpareVO.getLengthQuantity());
+                    defectRate = BigDecimalUtil.multiply(defectRate, eqpSpareVO.getWideQuantity());
+                    defectRate = BigDecimalUtil.divide(defectRate, new BigDecimal("1000000"));
+                    module.add(1, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(defectSum, 0), BigDecimalUtil.format(defectRate, 2))));
                     row.setModule(module);
                     rowList.add(row);
                 }
@@ -663,6 +698,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 if (CollUtil.isNotEmpty(defectList)) {
                     List<String> nameList = defectList.stream().map(QtDefectiveItem::getName).collect(Collectors.toList());
                     List<String> codeList = defectList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toList());
+                    codeList.add("小计");
                     codeMap.put(cn, codeList);
                     headList.add(new BaseReportHeaderVO(cn, nameList));
                 }
@@ -1082,4 +1118,19 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         return sb.toString();
     }
 
+    /**
+     * 从配置文件中获取数据
+     *
+     * @param key1 键1
+     * @param key2 键2
+     * @return
+     */
+    private String itemCodeFromCf(String key1, String key2) {
+        Map<String, List<String>> eleMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(key1, Sets.newHashSet(key2), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<String> valueList = eleMap.get(key2);
+        if (CollUtil.isNotEmpty(valueList)) {
+            return valueList.get(0);
+        }
+        return null;
+    }
 }

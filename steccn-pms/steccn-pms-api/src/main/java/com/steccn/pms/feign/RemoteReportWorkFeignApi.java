@@ -68,4 +68,16 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("原料耗用量")
     @PostMapping("/feign/pms/report/work/original/consume")
     R<Map<String, BigDecimal>> getUseCount(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
+
+
+    /**
+     *
+     * 原料耗用量-每个订单
+     * @param tripleDTO
+     * @return
+     */
+    @ApiOperation("原料耗用量")
+    @PostMapping("/feign/pms/report/work/original/consume/perOrder")
+    R<Map<String, BigDecimal>> useCountPerOrder(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
+
 }

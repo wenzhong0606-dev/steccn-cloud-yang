@@ -636,8 +636,7 @@
             tmp.classes_id as classId,
             tmp.product_order as productOrderNo,
             defect.`code`,
-            tmp.VALUE from qt_defective_item defect join (
-
+            sum(tmp.VALUE) as value from qt_defective_item defect join (
             SELECT
                 task.product_line ->> '$.id' AS line,
                 task.class_time,
@@ -654,6 +653,8 @@
               AND task.task_type = 3
               AND task.`status` = 2
               AND task.product_order is not null
+              AND task.defect_start_time &gt;= #{start}
+              AND task.defect_end_time &lt; #{end}
               AND task.product_line ->> '$.id' IN
               <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
                 #{item}
@@ -666,7 +667,11 @@
                 jt.defectId
             HAVING `value` is not null
         )  as tmp on tmp.defectId = defect.id
-
-
+          group by
+          tmp.line ,
+          tmp.class_time ,
+          tmp.classes_id ,
+          tmp.product_order ,
+          defect.code
     </select>
 </mapper>
