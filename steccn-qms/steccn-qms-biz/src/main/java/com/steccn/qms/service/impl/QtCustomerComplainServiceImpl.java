@@ -181,7 +181,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 .eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan())
                 .eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay())
-                .eq(QtCustomerComplainDetail::getDelFlag,QtManagerConstant.NUM_0)
+//                .eq(QtCustomerComplainDetail::getDelFlag,QtManagerConstant.NUM_0)
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime())
                         , QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime())
                 .between(Objects.nonNull(dto.getReplyClientStartTime()) && Objects.nonNull(dto.getReplyClientEndTime())
