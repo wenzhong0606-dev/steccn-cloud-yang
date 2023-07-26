@@ -248,4 +248,13 @@ public interface OaInfoService {
     @ApiOperation("获取班组长信息")
     @PostMapping("/feign/oa/group/workshop/leader")
     R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop);
+
+    /**
+     * 根据id和日期获取用户班组班次信息
+     * @param dto
+     * @return
+     */
+    @ApiOperation("获取用户班组班次信息")
+    @PostMapping("/feign/oa/user/class")
+    R<OaClassVO> getUserClass(@RequestBody TupleDTO<LocalDate,Integer> dto);
 }

@@ -8,19 +8,28 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
+import com.steccn.oa.domain.KqGroup;
 import com.steccn.oa.domain.KqGroupmember;
+import com.steccn.oa.dto.OaRosterRecordDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.mapper.KqGroupMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
+import com.steccn.oa.service.OaService;
+import com.steccn.oa.vo.OaClassVO;
 import com.steccn.oa.vo.OaMesUserVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +49,10 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     private final KqGroupmemberMapper kqGroupmemberMapper;
 
     private final RemoteMesFeignApi remoteMesFeignApi;
+
+    private final OaService oaService;
+
+    private final KqGroupMapper kqGroupMapper;
 
     @Override
     public Long getIdByWorkCode(String workCode) {
@@ -197,6 +210,49 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             dto.add(tmpDTO);
         });
         return remoteMesFeignApi.synchronizeUser(dto);
+    }
+
+    @Override
+    public OaClassVO getClassByUserId(TupleDTO<LocalDate, Integer> dto) {
+        if(Objects.isNull(dto.getField1())||Objects.isNull(dto.getField2())){
+            throw new BusinessException("必传值不能为空");
+        }
+        OaClassVO result = new OaClassVO();
+        //先查询人相关id
+        Hrmresource hrmresource = getOne(new LambdaQueryWrapper<Hrmresource>().select(Hrmresource::getLastname, Hrmresource::getJobtitle,Hrmresource::getWorkcode)
+                .eq(Hrmresource::getId, dto.getField2()), false);
+        if(Objects.isNull(hrmresource)){
+            throw new BusinessException("该人员不存在");
+        }
+        result.setUserId(dto.getField2());
+        result.setUserName(hrmresource.getLastname());
+        //班组信息
+        KqGroupmember groupId = kqGroupmemberMapper.selectOne(new LambdaQueryWrapper<KqGroupmember>()
+                .select(KqGroupmember::getGroupid)
+                .isNull(KqGroupmember::getIsdelete)
+                .eq(KqGroupmember::getTypevalue, dto.getField2())
+                .last("LIMIT 1"));
+        if(Objects.nonNull(groupId)){
+            KqGroup kqGroup = kqGroupMapper.selectOne(new LambdaQueryWrapper<KqGroup>()
+                    .select(KqGroup::getGroupname)
+                    .eq(KqGroup::getId, groupId.getGroupid())
+                    .last("LIMIT 1"));
+            if(Objects.nonNull(kqGroup)){
+                result.setClassGroup(kqGroup.getGroupname());
+            }
+        }
+        if(Objects.nonNull(hrmresource.getJobtitle())){
+            OaRosterRecordDTO recordDTO = new OaRosterRecordDTO();
+            recordDTO.setStartdate(dto.getField1().toString());
+            recordDTO.setEnddate(dto.getField2().toString());
+            recordDTO.setJobtitle(hrmresource.getJobtitle().toString());
+            List<OaRosterRecordVO> rosterRecord = oaService.getRosterRecord(recordDTO);
+            OaRosterRecordVO oaRosterRecordVO = rosterRecord.stream().filter(v -> v.getWorkcode().equals(hrmresource.getWorkcode())).findFirst().orElse(null);
+            if(Objects.nonNull(oaRosterRecordVO)){
+                result.setClassGroup(oaRosterRecordVO.getSerial());
+            }
+        }
+        return result;
     }
 }
 

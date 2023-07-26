@@ -6,10 +6,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.service.*;
-import com.steccn.oa.vo.OaDepartmentVO;
-import com.steccn.oa.vo.OaGroupIdAndNameVO;
-import com.steccn.oa.vo.OaJobTitleVO;
-import com.steccn.oa.vo.OaSaveDocVO;
+import com.steccn.oa.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -107,5 +104,11 @@ public class OaFeignController {
     @PostMapping("/group/workshop/leader")
     public R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop ){
         return R.success(hrmdepartmentService.getClassUserName(productWorkShop));
+    }
+
+    @ApiOperation("获取用户班组班次信息")
+    @PostMapping("/user/class")
+    public R<OaClassVO> getUserClass(@RequestBody TupleDTO<LocalDate,Integer> dto){
+        return R.success(hrmresourceService.getClassByUserId(dto));
     }
 }
