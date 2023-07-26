@@ -31,7 +31,7 @@
         <result property="productLine" column="productLine"
                 typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
         <result property="classId" column="classId" jdbcType="INTEGER"/>
-        <result property="classTime" column="classTime" jdbcType="TIMESTAMP"/>
+        <result property="classTime" column="classTime" jdbcType="DATE"/>
         <result property="itemName" column="itemName" jdbcType="VARCHAR"/>
         <result property="checkResult" column="checkResult" jdbcType="VARCHAR"/>
     </resultMap>

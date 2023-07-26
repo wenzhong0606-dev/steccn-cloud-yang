@@ -2,12 +2,10 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.steccn.pms.dto.PmsDefectDayRowDTO;
+import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.security.core.parameters.P;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,9 +26,9 @@ public interface PmsWorkOrderBatchMapper extends BaseMapper<PmsWorkOrderBatch> {
      * @param over     结束时间
      * @return
      */
-    List<PmsDefectDayRowDTO> defectDay(@Param("lineList") List<Integer> lineList,
-                                       @Param("begin") LocalDateTime begin,
-                                       @Param("over") LocalDateTime over);
+    List<PmsDefectDayOrderBasicDTO> defectDay(@Param("lineList") List<Integer> lineList,
+                                              @Param("begin") LocalDateTime begin,
+                                              @Param("over") LocalDateTime over);
 }
 
 
