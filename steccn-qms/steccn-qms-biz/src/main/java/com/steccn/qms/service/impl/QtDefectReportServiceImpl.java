@@ -591,6 +591,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+//        remotePmsFeignApi.useCountPerOrder(new TripleDTO<>(dto.getProductLineList(),begin,over));
 
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -626,7 +627,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         List<String> valueList = Lists.newArrayList();
                         BigDecimal sum = null;
                         for (String code : codeEntry.getValue()) {
-                            Optional<QtCheckItemMaterialAvgDTO> first = dataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classId.equals(ele.getClassId()) && code.equals(ele.getCode())).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> first = dataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classId.equals(ele.getClassId()) && order.equals(ele.getProductOrderNo()) && code.equals(ele.getCode())).findFirst();
                             if (first.isPresent()) {
                                 BigDecimal currentValue = first.get().getValue();
                                 valueList.add(String.valueOf(currentValue));

@@ -909,6 +909,13 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return resMap;
     }
 
+    @Override
+    public Map<String, BigDecimal> useCountPerOrder(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+
+
+        return null;
+    }
+
     /**
      * 更新物料消耗
      * @param dto dto信息
