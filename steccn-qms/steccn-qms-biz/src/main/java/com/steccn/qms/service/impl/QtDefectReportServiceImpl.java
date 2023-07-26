@@ -15,7 +15,6 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -619,8 +618,32 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     row.setClassGroupName(classGroupMap.getOrDefault(classDateStr + ":" + row.getClassName(), new OaGroupCountDTO()).getGroupName());
                     EqpSpareVO eqpSpareVO = spareMap.getOrDefault(orderBasicInfo.getMaterialId(), new EqpSpareVO());
                     //物料信息
-                    List<FurtherValueStrVO> module = Lists.newArrayList();
+                    List<FurtherValueStrVO> module = new LinkedList<>();
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getHighQuantity(), 2))));
+                    //遍历map
+                    BigDecimal defectSum = null;
+                    for (Map.Entry<String, List<String>> codeEntry : codeMap.entrySet()) {
+                        List<String> valueList = Lists.newArrayList();
+                        BigDecimal sum = null;
+                        for (String code : codeEntry.getValue()) {
+                            Optional<QtCheckItemMaterialAvgDTO> first = dataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && classId.equals(ele.getClassId()) && code.equals(ele.getCode())).findFirst();
+                            if (first.isPresent()) {
+                                BigDecimal currentValue = first.get().getValue();
+                                valueList.add(String.valueOf(currentValue));
+                                sum = BigDecimalUtil.add(sum, currentValue);
+                                defectSum = BigDecimalUtil.add(defectSum, currentValue);
+                            } else {
+                                valueList.add(null);
+                            }
+                        }
+                        valueList.add(BigDecimalUtil.format(sum, 0));
+                        module.add(new FurtherValueStrVO(valueList));
+                    }
+                    //不良品
+                    BigDecimal defectRate = BigDecimalUtil.multiply(defectSum, eqpSpareVO.getLengthQuantity());
+                    defectRate = BigDecimalUtil.multiply(defectRate, eqpSpareVO.getWideQuantity());
+                    defectRate = BigDecimalUtil.divide(defectRate, new BigDecimal("1000000"));
+                    module.add(1, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(defectSum, 0), BigDecimalUtil.format(defectRate, 2))));
                     row.setModule(module);
                     rowList.add(row);
                 }
@@ -663,6 +686,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 if (CollUtil.isNotEmpty(defectList)) {
                     List<String> nameList = defectList.stream().map(QtDefectiveItem::getName).collect(Collectors.toList());
                     List<String> codeList = defectList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toList());
+                    codeList.add("小计");
                     codeMap.put(cn, codeList);
                     headList.add(new BaseReportHeaderVO(cn, nameList));
                 }
