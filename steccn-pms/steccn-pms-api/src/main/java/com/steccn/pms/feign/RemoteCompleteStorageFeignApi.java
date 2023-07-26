@@ -1,6 +1,7 @@
 package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
@@ -12,8 +13,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author chenhuan
@@ -36,5 +39,9 @@ public interface RemoteCompleteStorageFeignApi {
     @GetMapping("/feign/pms/complete/storage/code")
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
     R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code);
+
+    @PostMapping("/feign/pms/complete/storage/order/num")
+    @ApiOperation("查询订单入库量")
+    R<Map<String, BigDecimal>> inStorage(TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
 
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -17,6 +18,9 @@ public class FurtherProduceReportDataVO implements Serializable {
 
     @ApiModelProperty("产线id")
     private Integer productLineId;
+
+    @ApiModelProperty("班次日期")
+    private LocalDate classDate;
 
     @ApiModelProperty("班次id")
     private Long classesId;

@@ -8,7 +8,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
@@ -16,6 +20,7 @@ import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,7 +38,10 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
+@RequiredArgsConstructor
 public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteStorageInfoMapper, PmsCompleteStorageInfo> implements PmsCompleteStorageInfoService {
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public Boolean existCaseNo(Long typeId, Set<String> caseNoSet) {
@@ -94,6 +102,24 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                         resMap.put(ele.getMaterialId(), classMap);
                     }
                 });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> inStorage(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        List<FurtherProduceReportDataVO> resList = baseMapper.inStorage(lineList, start, end);
+        if (CollUtil.isNotEmpty(resList)) {
+            Set<Long> dictIdSet = resList.stream().map(FurtherProduceReportDataVO::getClassesId).collect(Collectors.toSet());
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(Lists.newArrayList(dictIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            resList.forEach(ele -> ele.setClassDate(LocalDateUtil.getClassDate(ele.getCreateTime(), Boolean.FALSE)));
+            for (FurtherProduceReportDataVO data : resList) {
+                SysDictVO sysDictVO = dictMap.get(data.getClassesId());
+                if (Objects.nonNull(sysDictVO)) {
+                    resMap.put(data.getProductLineId() + "_" + data.getClassDate() + "_" + sysDictVO.getCode() + "_" + data.getProduceOrderId(), data.getProcessQuantity());
+                }
             }
         }
         return resMap;
