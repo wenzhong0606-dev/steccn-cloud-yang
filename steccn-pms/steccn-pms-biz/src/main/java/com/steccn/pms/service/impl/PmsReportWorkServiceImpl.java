@@ -14,17 +14,21 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaClassVO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
@@ -36,6 +40,7 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmsReportWorkHourVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
@@ -107,6 +112,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsProduceOrderCraftService pmsProduceOrderCraftService;
     @Autowired
     private PmProcessService pmProcessService;
+    @Autowired
+    private OaInfoService oaInfoService;
 
 
     @Override
@@ -883,6 +890,15 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return resMap;
+    }
+
+    @Override
+    public ReportWorkPreinstallValueVO preinstallValue(LocalDate localDate) {
+        TupleDTO<LocalDate,Integer> dto = new TupleDTO<>();
+        dto.setField1(localDate);
+        dto.setField2(Math.toIntExact(SecurityUtils.getUser().getUserId()));
+        OaClassVO oaClassVO = FeignOptional.of(() -> oaInfoService.getUserClass(dto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        return BeanUtil.copyProperties(oaClassVO, ReportWorkPreinstallValueVO.class);
     }
 
     /**
