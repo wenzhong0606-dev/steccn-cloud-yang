@@ -43,6 +43,8 @@ public class OaFeignController {
 
     private final HrmjobtitlesService hrmjobtitlesService;
 
+    private final HrmClassInfoService hrmClassInfoService;
+
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
     public R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList) {
@@ -109,6 +111,6 @@ public class OaFeignController {
     @ApiOperation("获取用户班组班次信息")
     @PostMapping("/user/class")
     public R<OaClassVO> getUserClass(@RequestBody TupleDTO<LocalDate,Integer> dto){
-        return R.success(hrmresourceService.getClassByUserId(dto));
+        return R.success(hrmClassInfoService.getClassByUserId(dto));
     }
 }

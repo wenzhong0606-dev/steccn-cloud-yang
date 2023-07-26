@@ -87,10 +87,4 @@ public interface HrmresourceService extends IService<Hrmresource> {
      */
     String synchronizeUser();
 
-    /**
-     * 根据用户id获取班次和班组
-     * @param dto
-     * @return
-     */
-    OaClassVO getClassByUserId(TupleDTO<LocalDate,Integer> dto);
 }
