@@ -93,6 +93,27 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/delivery/add")
     R<Boolean> generateOutStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
 
+    /**
+     * 创建出库单
+     *
+     * @param dto
+     * @return
+     */
+    @ApiOperation("创建出库单")
+    @PostMapping(value = "/feign/wms/inventory/delivery/create")
+    R<Boolean> createDelivery(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
+
+
+    /**
+     * 创建调拨单
+     * @param dto
+     * @return
+     */
+    @ApiOperation("创建调拨单")
+    @PostMapping(value = "/feign/wms/transfer/slip/create")
+    R<Boolean> createTransferSlip(@Validated(InsertGroup.class) @RequestBody WmsTransferSlipDTO dto);
+
+
     @ApiOperation("入库凭证确认")
     @PutMapping("/wms/storage/receipt/affirm/code")
     R<Boolean> affirm(@RequestBody WmsStorageReceiptDTO dto);

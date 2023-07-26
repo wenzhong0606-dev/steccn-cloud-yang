@@ -6,14 +6,10 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
-import com.steccn.pms.dto.MaterialRequisitionDTO;
-import com.steccn.pms.dto.MaterialRequisitionPageDTO;
-import com.steccn.pms.dto.MaterialRequisitionPlanDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.service.PmsMaterialRequisitionWorkflowService;
-import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -95,5 +92,11 @@ public class MaterialRequisitionController {
     @PostMapping("/quantity")
     public Map<Long, BigDecimal> quantityMap(@RequestBody TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO){
         return pmsMaterialRequisitionInfoService.quantityMap(tupleDTO);
+    }
+
+    @ApiOperation("领用单扫描生成入库单/调拨单")
+    @PostMapping("/scan")
+    public R<Boolean> scan(@RequestBody ScanDto scanDto){
+        return R.success(pmsMaterialRequisitionService.scan(scanDto));
     }
 }

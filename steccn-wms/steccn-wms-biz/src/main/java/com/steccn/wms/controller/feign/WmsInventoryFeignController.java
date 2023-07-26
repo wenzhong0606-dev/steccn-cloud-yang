@@ -7,6 +7,7 @@ import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsStorageReceiptService;
+import com.steccn.wms.service.WmsTransferSlipService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,8 @@ public class WmsInventoryFeignController {
     private final WmsStorageReceiptService wmsStorageReceiptService;
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
+
+    private final WmsTransferSlipService wmsTransferSlipService;
 
     @ApiOperation("根据箱号获取仓库货架信息")
     @PostMapping("/stockByCaseNo")
@@ -75,6 +78,18 @@ public class WmsInventoryFeignController {
     @PostMapping("/delivery/add")
     public R<Boolean> deliveryAdd(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto) {
         return R.success(wmsDeliveryReceiptService.generateDelivery(dto));
+    }
+
+    @ApiOperation("创建出库单")
+    @PostMapping("/delivery/create")
+    public R<Boolean> deliveryCreate(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto) {
+        return R.success(wmsDeliveryReceiptService.add(dto));
+    }
+
+    @ApiOperation("创建调拨单")
+    @PostMapping("/transfer/slip/create")
+    public R<Boolean> createTransferSlip(@Validated(InsertGroup.class) @RequestBody WmsTransferSlipDTO dto) {
+        return R.success(wmsTransferSlipService.add(dto));
     }
 
     @ApiOperation("根据货架获取物料信息")
