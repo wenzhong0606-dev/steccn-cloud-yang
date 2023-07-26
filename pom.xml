@@ -29,6 +29,7 @@
         <module>steccn-data-platform-come</module>
         <module>steccn-handle-data</module>
         <module>steccn-hikvision</module>
+        <module>steccn-mes</module>
     </modules>
 
     <properties>
