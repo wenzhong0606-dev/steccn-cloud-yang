@@ -73,7 +73,7 @@ public class PmsReportWorkFeignController {
     }
 
     @ApiOperation("原料耗用量-每个订单")
-    @PostMapping("/feign/pms/report/work/original/consume/perOrder")
+    @PostMapping("/original/consume/perOrder")
     R<Map<String, BigDecimal>> useCountPerOrder(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
         return R.success(pmsReportWorkService.useCountPerOrder(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }

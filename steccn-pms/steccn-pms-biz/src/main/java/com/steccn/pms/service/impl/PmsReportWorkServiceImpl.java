@@ -150,6 +150,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         });
         return page;
     }
+
     /**
      * 拼接条件时间
      *
@@ -247,12 +248,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 //                if (!consumeSet.containsAll(materialIdSet)) {
 //                    throw new BusinessException("部分物料库存不足，请补库存");
 //                }
-                //可用数量必须大于实际数量
-                for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
-                    if (Objects.nonNull(materialListDTO.getQuantity()) && Objects.nonNull(materialListDTO.getAvailableQuantity()) && materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
-                        throw new BusinessException("物料消耗实际数量不可以大于可用数量");
-                    }
+            //可用数量必须大于实际数量
+            for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
+                if (Objects.nonNull(materialListDTO.getQuantity()) && Objects.nonNull(materialListDTO.getAvailableQuantity()) && materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
+                    throw new BusinessException("物料消耗实际数量不可以大于可用数量");
                 }
+            }
             //去除物料消耗list
             List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId()) || Objects.nonNull(v.getId())).collect(Collectors.toList());
             dto.setMaterialConsumeList(materialListDTOList);
@@ -616,7 +617,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         Assert.notNull(model, "编辑的报工记录不存在");
         getReportWork(dto, model);
         //设置报工的班次日期
-        model.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(),Boolean.FALSE));
+        model.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(), Boolean.FALSE));
         updateById(model);
         //更新报工工时信息
         reportWorkHourService.updateHour(dto.getId(), dto.getHourDTOList());
@@ -631,21 +632,21 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
         PmsReportWork pmsReportWork = getById(id);
-        Assert.notNull(pmsReportWork,"报工信息不存在");
+        Assert.notNull(pmsReportWork, "报工信息不存在");
         //删除报工信息
         removeById(id);
         //删除工时信息
         reportWorkHourService.remove(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, id));
         //删除能耗信息
-        pmsReportWorkConsumeService.remove(new LambdaQueryWrapper<PmsReportWorkConsume>().eq(PmsReportWorkConsume::getReportWorkId,id));
+        pmsReportWorkConsumeService.remove(new LambdaQueryWrapper<PmsReportWorkConsume>().eq(PmsReportWorkConsume::getReportWorkId, id));
         //根据物料消耗信息生成
         PmsCompleteDelivery delivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, id).last(MpConstant.STR_LIMIT_1));
-        if(Objects.nonNull(delivery)){
+        if (Objects.nonNull(delivery)) {
             List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, delivery.getId()));
             //生成对应的入库单【冲销报工入库】
             ProcessReportWorkSubmitDTO dto = new ProcessReportWorkSubmitDTO();
-            BeanUtils.copyProperties(pmsReportWork,dto);
-            pmsCompleteStorageService.generateByDelivery(dto,infoList);
+            BeanUtils.copyProperties(pmsReportWork, dto);
+            pmsCompleteStorageService.generateByDelivery(dto, infoList);
         }
         return Boolean.TRUE;
     }
@@ -655,26 +656,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //深加工产量 = 将满足下列条件的报工记录上报的片数折算成面积，单位为㎡
         //报工记录关联的生产订单为当前行的生产订单
         //报工记录的时段在当前行的班次时段内
-        if(CollUtil.isNotEmpty(sjgDataList)){
+        if (CollUtil.isNotEmpty(sjgDataList)) {
             //获取生产订单主键集合
             Set<Long> orderIdSet = sjgDataList.stream().map(EpMeterReadRowDTO::getProduceOrderId).collect(Collectors.toSet());
             List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProduceOrderId, orderIdSet));
-            if(CollUtil.isNotEmpty(dbList)){
+            if (CollUtil.isNotEmpty(dbList)) {
                 Map<Long, List<PmsReportWork>> orderMap = dbList.stream().collect(Collectors.groupingBy(PmsReportWork::getProduceOrderId));
                 //获取生产订单集合
                 List<PmsProduceOrder> orderList = produceOrderService.listByIds(orderIdSet);
                 //定义生产订单的所有物料，用于物料的单位转换
                 Set<Long> materialIdSet = Sets.newHashSet();
                 //key-生产订单主键 value-物料主键
-                Map<Long,Long> orderMaterialMap = Maps.newHashMap();
-                orderList.forEach(order ->{
-                      materialIdSet.add(order.getMaterialId());
-                      orderMaterialMap.put(order.getId(),order.getMaterialId());
+                Map<Long, Long> orderMaterialMap = Maps.newHashMap();
+                orderList.forEach(order -> {
+                    materialIdSet.add(order.getMaterialId());
+                    orderMaterialMap.put(order.getId(), order.getMaterialId());
                 });
                 //获取平方米单位数据字典
                 SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_PFM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                sjgDataList.forEach(ele ->{
+                sjgDataList.forEach(ele -> {
                     //获取订单报工数据集合
                     List<PmsReportWork> orderRwList = orderMap.getOrDefault(ele.getProduceOrderId(), Lists.newArrayList());
                     //定义班次开始时间，班次结束时间
@@ -758,7 +759,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     /**
      * 获取每一个订单的最后一道工序
-     * @param orderIdSet 订单id集合
+     *
+     * @param orderIdSet   订单id集合
      * @param processIdSet 工序id集合
      * @return map
      */
@@ -840,18 +842,18 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, PmsProduceOrder> orderMap = produceOrderService.orderList(collect);
             for (PmsReportWork pmsReportWork : list) {
                 PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
-                BeanUtil.copyProperties(pmsReportWork,pmsReportWorkVO);
+                BeanUtil.copyProperties(pmsReportWork, pmsReportWorkVO);
                 pmsReportWorkVO.setMaterialId(orderMap.get(pmsReportWork.getProduceOrderId()).getMaterialId());
                 pmsReportWorkVO.setProduceOrder(orderMap.get(pmsReportWork.getProduceOrderId()).getCode());
                 pmsReportWorkVO.setProduceOrderId(orderMap.get(pmsReportWork.getProduceOrderId()).getId());
                 pmsReportWorkVO.setClassGroupId(pmsReportWork.getClassGroupId());
                 pmsReportWorkVO.setClasses(PmManagerConstant.NIGHT_SHIFT);
-                if (foreShiftId.equals(pmsReportWork.getClassesId())){
+                if (foreShiftId.equals(pmsReportWork.getClassesId())) {
                     pmsReportWorkVO.setClasses(PmManagerConstant.FORE_SHIFT);
                 }
                 resList.add(pmsReportWorkVO);
                 List<PmsReportWorkHour> pmsReportWorkHours1 = reportWorkHoursMap.get(pmsReportWork.getId());
-                if (CollUtil.isNotEmpty(pmsReportWorkHours1)){
+                if (CollUtil.isNotEmpty(pmsReportWorkHours1)) {
                     pmsReportWorkVO.setList(BeanUtil.copyToList(pmsReportWorkHours1, PmsReportWorkHourVO.class));
                 }
             }
@@ -866,20 +868,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         LocalDateTime start = LocalDateUtil.getMorning(date.withDayOfMonth(1));
         //当前日期的晚班结束时间
         LocalDateTime end = LocalDateUtil.getMorning(date).plusDays(1);
-        List<PmsReportWorkVO> list =  baseMapper.listReportWorkInfo(lineIds,start,end);
+        List<PmsReportWorkVO> list = baseMapper.listReportWorkInfo(lineIds, start, end);
         return list;
     }
 
     @Override
     public Map<Long, Long> mainMaterialByReportWork(Set<Long> reportIds) {
-        Map<Long,Long> resMap =  Maps.newHashMap();
-        if (CollUtil.isNotEmpty(reportIds)){
+        Map<Long, Long> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(reportIds)) {
             List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getId, reportIds));
-            if (CollUtil.isNotEmpty(list)){
+            if (CollUtil.isNotEmpty(list)) {
                 Set<Long> orderIds = list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet());
                 Map<Long, Long> orderMap = produceOrderService.maiMaterialAByOrderId(orderIds);
                 for (PmsReportWork pmsReportWork : list) {
-                    resMap.put(pmsReportWork.getId(),orderMap.get(pmsReportWork.getProduceOrderId()));
+                    resMap.put(pmsReportWork.getId(), orderMap.get(pmsReportWork.getProduceOrderId()));
                 }
             }
         }
@@ -911,14 +913,34 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     @Override
     public Map<String, BigDecimal> useCountPerOrder(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
-
-
-        return null;
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        //获取(start,end)时间范围内的报工信息
+        List<PmsUseCountDTO> dbList = baseMapper.useCountPerOrder(lineList, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Set<Long> dictIdSet = dbList.stream().map(PmsUseCountDTO::getClassId).collect(Collectors.toSet());
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(Lists.newArrayList(dictIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取磨边工位
+            SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+            parentDTO.setParentIds(Sets.newHashSet(lineList));
+            parentDTO.setOfficeType(PmManagerConstant.NUM_13);
+            //获取产线下的工位
+            List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //包含磨边工位的
+            Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+            dbList.forEach(ele -> {
+                if (stationIds.contains(ele.getStationId()) && dictMap.containsKey(ele.getClassId())) {
+                    SysDictVO sysDictVO = dictMap.get(ele.getClassId());
+                    resMap.put(ele.getProductLineId() + "_" + ele.getClassDate() + "_" + sysDictVO.getCode() + "_" + ele.getProduceOrderNo(), ele.getQuantity());
+                }
+            });
+        }
+        return resMap;
     }
 
     /**
      * 更新物料消耗
-     * @param dto dto信息
+     *
+     * @param dto                 dto信息
      * @param materialConsumeList 物料消耗集合
      */
     private void updateMaterialConsume(ProcessReportWorkSubmitDTO dto, List<ProcessReportWorkMaterialListDTO> materialConsumeList) {
@@ -927,7 +949,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //删除的物料消耗，需要创建入库单+明细
         List<ProcessReportWorkMaterialListDTO> existList = Lists.newArrayList();
         List<ProcessReportWorkMaterialListDTO> insertList = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(materialConsumeList)){
+        if (CollUtil.isNotEmpty(materialConsumeList)) {
             materialConsumeList.forEach(ele -> {
                 if (Objects.nonNull(ele.getId())) {
                     existList.add(ele);
@@ -944,12 +966,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
         //获取出库单-出库单和明细可能不存在，因为无物料消耗
         PmsCompleteDelivery pmsCompleteDelivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, dto.getId()).last(MpConstant.STR_LIMIT_1));
-        if(Objects.isNull(pmsCompleteDelivery)){
+        if (Objects.isNull(pmsCompleteDelivery)) {
             pmsCompleteDelivery = new PmsCompleteDelivery();
 
         }
         List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
-        if(Objects.isNull(infoList)){
+        if (Objects.isNull(infoList)) {
             infoList = Lists.newArrayList();
         }
 
@@ -976,7 +998,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 .notIn(CollUtil.isNotEmpty(existIdSet), PmsCompleteDeliveryInfo::getId, existIdSet));
         //保存出库单明细
         if (CollUtil.isNotEmpty(newInfoList)) {
-            if(Objects.isNull(pmsCompleteDelivery.getId())){
+            if (Objects.isNull(pmsCompleteDelivery.getId())) {
                 SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 pmsCompleteDelivery.setCode(maxOutVouchCode());
                 pmsCompleteDelivery.setOutStorageVoucher(pmsCompleteDelivery.getCode());
@@ -1005,7 +1027,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     /**
      * 转换成出库单明细
-     * @param deliveryId 出库单id
+     *
+     * @param deliveryId  出库单id
      * @param materialDTO 物料消耗明细
      * @return 转换后的对象
      */
@@ -1028,6 +1051,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     /**
      * 获取
+     *
      * @param dto
      * @return
      */

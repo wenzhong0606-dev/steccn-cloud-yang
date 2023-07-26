@@ -602,7 +602,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-//        remotePmsFeignApi.useCountPerOrder(new TripleDTO<>(dto.getProductLineList(),begin,over));
+        //获取原料耗用量
+        Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountPerOrder(new TripleDTO<>(dto.getProductLineList(), begin, over)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -631,6 +632,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     EqpSpareVO eqpSpareVO = spareMap.getOrDefault(orderBasicInfo.getMaterialId(), new EqpSpareVO());
                     //物料信息
                     List<FurtherValueStrVO> module = new LinkedList<>();
+                    //使用量
+                    BigDecimal useCount = useCountMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderCode());
+                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 2), null)));
+                    //入库量
+
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getHighQuantity(), 2))));
                     //遍历map
                     BigDecimal defectSum = null;
@@ -655,7 +661,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     BigDecimal defectRate = BigDecimalUtil.multiply(defectSum, eqpSpareVO.getLengthQuantity());
                     defectRate = BigDecimalUtil.multiply(defectRate, eqpSpareVO.getWideQuantity());
                     defectRate = BigDecimalUtil.divide(defectRate, new BigDecimal("1000000"));
-                    module.add(1, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(defectSum, 0), BigDecimalUtil.format(defectRate, 2))));
+                    module.add(2, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(defectSum, 0), BigDecimalUtil.format(defectRate, 2))));
                     row.setModule(module);
                     rowList.add(row);
                 }

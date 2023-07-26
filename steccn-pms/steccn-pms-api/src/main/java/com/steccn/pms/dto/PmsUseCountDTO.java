@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * @author yequan
@@ -18,6 +19,15 @@ public class PmsUseCountDTO implements Serializable {
 
     @ApiModelProperty("产线")
     private String productLineId;
+
+    @ApiModelProperty("班次日期")
+    private LocalDate classDate;
+
+    @ApiModelProperty("班次")
+    private Long classId;
+
+    @ApiModelProperty("班次生产订单编码")
+    private String produceOrderNo;
 
     @ApiModelProperty("月份")
     private String monthStr;
