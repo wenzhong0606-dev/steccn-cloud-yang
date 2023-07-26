@@ -17,6 +17,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
@@ -33,6 +34,7 @@ import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.DefectDayRowVO;
 import com.steccn.pms.vo.DefectDayVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
+import com.steccn.qms.constant.DefectDayConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
@@ -624,6 +626,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
 
         for (Integer line : dto.getProductLineList()) {
+            Map<String, BigDecimal> countMap = Maps.newHashMap();
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < timeList.size(); i++) {
                 LocalDateTime startTmp = timeList.get(i - 1);
@@ -652,11 +655,16 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     BigDecimal useCount = useCountMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderCode());
                     BigDecimal useCountConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), Objects.nonNull(dict1) ? dict1.getId() : null, Objects.nonNull(dict2) ? dict2.getId() : null, useCount);
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 2), BigDecimalUtil.format(useCountConvert, 2))));
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_0, useCount);
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_1, useCountConvert);
 
                     //入库量
                     BigDecimal inStorage = inStorageMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderId());
                     BigDecimal inStorageConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), Objects.nonNull(dict1) ? dict1.getId() : null, Objects.nonNull(dict2) ? dict2.getId() : null, useCount);
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(inStorage, 2), BigDecimalUtil.format(inStorageConvert, 2))));
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.RKS_0, inStorage);
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.RKS_1, inStorageConvert);
+
                     //遍历map
                     BigDecimal defectSum = null;
                     //原片不良小计
@@ -670,12 +678,16 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                                 BigDecimal currentValue = first.get().getValue();
                                 valueList.add(String.valueOf(currentValue));
                                 sum = BigDecimalUtil.add(sum, currentValue);
+                                //产线总计
                                 defectSum = BigDecimalUtil.add(defectSum, currentValue);
+                                BigDecimalUtil.accumulate(countMap, codeEntry.getKey() + "-" + code, currentValue);
                             } else {
                                 valueList.add(null);
                             }
                         }
-                        if(codeEntry.getKey().equals("原片不良")){
+                        //产线总计
+                        BigDecimalUtil.accumulate(countMap, codeEntry.getKey(), sum);
+                        if (codeEntry.getKey().equals("原片不良")) {
                             ypblSum = sum;
                         }
                         valueList.add(BigDecimalUtil.format(sum, 0));
@@ -685,6 +697,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     BigDecimal defectArea = BigDecimalUtil.multiply(defectSum, eqpSpareVO.getLengthQuantity());
                     defectArea = BigDecimalUtil.multiply(defectArea, eqpSpareVO.getWideQuantity());
                     defectArea = BigDecimalUtil.divide(defectArea, new BigDecimal("1000000"));
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.BLP_0, defectSum);
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.BLP_1, defectArea);
+
                     module.add(3, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(defectSum, 0), BigDecimalUtil.format(defectArea, 2))));
                     //不良率 ( 所在行不良品（片）- 所在行原片不良小计 ) / 所在行 使用数（片）* 100%，小数点后保留2位
                     BigDecimal defectRate = BigDecimalUtil.subtract(defectSum, ypblSum);
@@ -697,16 +712,40 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     louArea = BigDecimalUtil.multiply(louArea, eqpSpareVO.getWideQuantity());
                     louArea = BigDecimalUtil.divide(louArea, new BigDecimal("1000000"));
                     BigDecimal louRate = BigDecimalUtil.divide(louArea, useCountConvert, 4);
-                    louRate = BigDecimalUtil.multiply(louRate,new BigDecimal("100"));
+                    louRate = BigDecimalUtil.multiply(louRate, new BigDecimal("100"));
                     module.add(4, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(louSum, 0), BigDecimalUtil.format(louArea, 2), BigDecimalUtil.format(louRate, 2))));
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.LOU_0, louSum);
+                    BigDecimalUtil.accumulate(countMap, DefectDayConstant.LOU_1, louArea);
                     row.setDefectRate(defectRate);
                     row.setModule(module);
                     rowList.add(row);
                 }
+                rowList.add(countSum(1, "合计（单产线）", countMap, codeMap));
             }
         }
         resVo.setRowList(rowList);
         return resVo;
+    }
+
+    /**
+     * 行合计 总计
+     *
+     * @param type     类型
+     * @param lineName 产线名称
+     * @param countMap 汇总map
+     * @param codeMap  动态表头
+     * @return 行
+     */
+    private DefectDayRowVO countSum(int type, String lineName, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
+        DefectDayRowVO countRow = new DefectDayRowVO();
+        countRow.setType(type);
+        countRow.setProductLineName(lineName);
+        List<FurtherValueStrVO> module = Lists.newArrayList();
+        countRow.setModule(module);
+        BigDecimal syl0 = countMap.get(DefectDayConstant.SYL_0);
+        BigDecimal syl1 = countMap.get(DefectDayConstant.SYL_1);
+        module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(syl0, 0), BigDecimalUtil.format(syl1, 0))));
+        return countRow;
     }
 
     /**
