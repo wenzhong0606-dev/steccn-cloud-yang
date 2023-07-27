@@ -628,6 +628,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //总计
         Map<String, BigDecimal> sumMap = Maps.newHashMap();
         for (Integer line : dto.getProductLineList()) {
+            Boolean flag = Boolean.FALSE;
             Map<String, BigDecimal> countMap = Maps.newHashMap();
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < timeList.size(); i++) {
@@ -640,6 +641,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 Collections.sort(orderNoList);
                 String classDateStr = LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN);
                 for (String order : orderNoList) {
+                    flag = Boolean.TRUE;
                     PmsDefectDayOrderBasicDTO orderBasicInfo = orderBasicMap.get(order);
                     DefectDayRowVO row = new DefectDayRowVO();
                     row.setProductLineName(lineName);
@@ -732,10 +734,12 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     row.setModule(module);
                     rowList.add(row);
                 }
+            }
+            if (flag) {
                 rowList.add(countSum(1, "合计（单产线）", countMap, codeMap));
             }
-            rowList.add(countSum(2, "总计", countMap, codeMap));
         }
+        rowList.add(countSum(2, "总计", sumMap, codeMap));
         resVo.setRowList(rowList);
         return resVo;
     }
