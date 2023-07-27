@@ -29,28 +29,35 @@ public class QtCustomerComplainDetailServiceImpl extends ServiceImpl<QtCustomerC
 
     @Override
     public Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO) {
-        List<QtCustomerComplainDetail> list = Lists.newArrayList();
-        Set<Long> idSet = Sets.newHashSet();
-        //处理数据
-        qtCustomerComplainDTO.getDetails().forEach(detail->{
-            QtCustomerComplainDetail customerComplainDetail = new QtCustomerComplainDetail();
-            BeanUtil.copyProperties(detail,customerComplainDetail);
-            customerComplainDetail.setCustomerComplainId(qtCustomerComplainDTO.getId());
-            if (Objects.nonNull(customerComplainDetail.getCustomerComplainId())){
-                list.add(customerComplainDetail);
-                idSet.add(customerComplainDetail.getId());
-            } else {
-                list.add(customerComplainDetail);
+
+
+        if (Objects.nonNull(qtCustomerComplainDTO.getDetails())) {
+            List<QtCustomerComplainDetail> list = Lists.newArrayList();
+            Set<Long> idSet = Sets.newHashSet();
+            //处理数据
+            qtCustomerComplainDTO.getDetails().forEach(detail->{
+                QtCustomerComplainDetail customerComplainDetail = new QtCustomerComplainDetail();
+                BeanUtil.copyProperties(detail,customerComplainDetail);
+                customerComplainDetail.setCustomerComplainId(qtCustomerComplainDTO.getId());
+                if (Objects.nonNull(customerComplainDetail.getCustomerComplainId())){
+                    list.add(customerComplainDetail);
+                    idSet.add(customerComplainDetail.getId());
+                } else {
+                    list.add(customerComplainDetail);
+                }
+            });
+            //删除多余的数据
+            if (CollUtil.isNotEmpty(idSet)) {
+                remove(new LambdaQueryWrapper<QtCustomerComplainDetail>()
+                        .eq(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplainDTO.getId())
+                        .notIn(QtCustomerComplainDetail::getId,idSet));
             }
-        });
-        //删除多余的数据
-        if (CollUtil.isNotEmpty(idSet)) {
-            remove(new LambdaQueryWrapper<QtCustomerComplainDetail>()
-                    .eq(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplainDTO.getId())
-                    .notIn(QtCustomerComplainDetail::getId,idSet));
+            //批量修改新增
+            return saveOrUpdateBatch(list);
+        }else {
+            return remove(new LambdaQueryWrapper<QtCustomerComplainDetail>().in(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplainDTO.getId()));
         }
-        //批量修改新增
-        return saveOrUpdateBatch(list);
+
     }
 }
 
