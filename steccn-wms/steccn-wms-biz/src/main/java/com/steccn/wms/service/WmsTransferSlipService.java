@@ -55,4 +55,11 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     WmsTransferSlipVO get(Long id);
+
+    /**
+     * 同步erp
+     * @param id
+     * @return
+     */
+    Boolean linkErp(Long id);
 }

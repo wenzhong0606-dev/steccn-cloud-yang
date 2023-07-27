@@ -12,6 +12,9 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.mes.dto.ErpTransferSaveDTO;
+import com.steccn.mes.dto.ErpTransferSaveDetailDTO;
+import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.wms.constant.WmsManagerConstant;
@@ -65,7 +68,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
-    private final RemoteWmsMessFeignApi remoteWmsMessFeignApi;
+    private final RemoteErpFeignApi remoteErpFeignApi;
 
     private final WmsInventoryService wmsInventoryService;
 
@@ -428,6 +431,31 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             infoVOList.forEach(info -> info.setUnitName(dict.get(info.getUnit())));
         }
         return wmsTransferSlipVO;
+    }
+
+    @Override
+    public Boolean linkErp(Long id) {
+        //获取详情
+        WmsTransferSlipVO wmsTransferSlipVO = get(id);
+        //组erp数据
+        ErpTransferSaveDTO erpDTO = new ErpTransferSaveDTO();
+        erpDTO.setFmesbillid(wmsTransferSlipVO.getId().toString());
+        erpDTO.setFmesbillno(wmsTransferSlipVO.getCode());
+        erpDTO.setFdate(wmsTransferSlipVO.getCreateTime().toLocalDate());
+        //组erp详情
+        List<ErpTransferSaveDetailDTO> erpDetails = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(wmsTransferSlipVO.getList())){
+            //获取所有仓库信息
+//            Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for(WmsTransferSlipInfoVO tmp: wmsTransferSlipVO.getList()){
+                ErpTransferSaveDetailDTO erpDetail = new ErpTransferSaveDetailDTO();
+                erpDetail.setFmesentryid(tmp.getId().toString());
+                erpDetail.setFmatno(tmp.getMaterialCode());
+                erpDetail.setFqty(tmp.getQuantity());
+//                erpDetail.setFsrcstockno(tmp.get);
+            }
+        }
+        return null;
     }
 
     /**

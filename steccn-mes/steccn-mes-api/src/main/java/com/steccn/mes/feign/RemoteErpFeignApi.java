@@ -3,6 +3,7 @@ package com.steccn.mes.feign;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.ErpCustomerDTO;
+import com.steccn.mes.dto.ErpTransferSaveDTO;
 import com.steccn.mes.vo.ErpCustomerVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -30,4 +31,15 @@ public interface RemoteErpFeignApi {
     @PostMapping("/api/tcmes/getcust")
     @ApiOperation("获取erp客户信息")
     R<List<ErpCustomerVO>> getErpCustomer(@RequestBody ErpCustomerDTO dto);
+
+    /**
+     * 保存直接调拨单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savetransferdirect")
+    @ApiOperation("保存直接调拨单")
+    R<List<String>> saveTransfer(@RequestBody ErpTransferSaveDTO dto);
+
+
 }

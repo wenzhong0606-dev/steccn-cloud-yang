@@ -175,6 +175,18 @@
                 <artifactId>steccn-hikvision-api</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+            <!-- steccn-mes-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-mes-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!-- steccn-mes-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-mes-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
 
             <!--redis-->
             <dependency>
