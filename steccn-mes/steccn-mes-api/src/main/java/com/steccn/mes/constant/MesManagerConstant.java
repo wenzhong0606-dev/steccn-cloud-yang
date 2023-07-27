@@ -13,7 +13,9 @@ public interface MesManagerConstant {
     String customerGroup = "CUCC8013";
 
     Integer NUM_0 = 0;
+    Integer NUM_1 = 1;
     Integer NUM_30 = 30;
+    String ERP = "erp";
 
     /**
      * 客户类型
