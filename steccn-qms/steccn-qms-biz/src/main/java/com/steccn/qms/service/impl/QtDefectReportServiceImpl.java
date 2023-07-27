@@ -17,11 +17,9 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.MapUtil;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
-import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
@@ -31,8 +29,8 @@ import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
-import com.steccn.pms.vo.DefectDayRowVO;
-import com.steccn.pms.vo.DefectDayVO;
+import com.steccn.qms.vo.DefectDayRowVO;
+import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.DefectDayConstant;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -742,6 +740,15 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         rowList.add(countSum(2, "总计", sumMap, codeMap));
         resVo.setRowList(rowList);
         return resVo;
+    }
+
+    @Override
+    public List<DefectWeekRowVO> defectWeek(QtDefectReportDTO dto) {
+        List<DefectWeekRowVO> rowList = Lists.newArrayList();
+        //根据
+
+
+        return null;
     }
 
     /**
