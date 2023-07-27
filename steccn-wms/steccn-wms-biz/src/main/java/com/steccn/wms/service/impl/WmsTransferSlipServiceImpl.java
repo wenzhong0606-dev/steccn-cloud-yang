@@ -441,6 +441,9 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     public Boolean linkErp(Long id) {
         //获取详情
         WmsTransferSlipVO wmsTransferSlipVO = get(id);
+        if(!wmsTransferSlipVO.getStatus().equals(OaConstant.NUM_1)){
+            throw new BusinessException("只有已确认状态才可以同步");
+        }
         String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getSourceWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         String targetCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getTargetWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //组erp数据
@@ -459,6 +462,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 erpDetail.setFqty(tmp.getQuantity());
                 erpDetail.setFsrcstockno(sourceCode);
                 erpDetail.setFdeststockno(targetCode);
+                erpDetail.setFlot(tmp.getBatch());
                 erpDetails.add(erpDetail);
             }
         }
@@ -466,13 +470,15 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //调用EPR
         String listR = remoteErpFeignApi.saveTransfer(erpDTO);
         JSONObject jsonObject = JSONObject.parseObject(listR);
-        if(jsonObject.getBoolean("success")){
+        if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
             WmsTransferSlip wmsTransferSlip = new WmsTransferSlip();
             wmsTransferSlip.setId(id);
             wmsTransferSlip.setStatus(OaConstant.NUM_2);
             updateById(wmsTransferSlip);
         }else {
-            throw new BusinessException("同步失败");
+            String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+            log.error(error);
+            throw new BusinessException(error);
         }
         return true;
     }

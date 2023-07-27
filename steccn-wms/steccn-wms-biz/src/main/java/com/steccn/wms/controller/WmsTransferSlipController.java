@@ -73,4 +73,10 @@ public class WmsTransferSlipController {
     public R<Page<WmsTransferSlipVO>> pageList(@RequestBody WmsTransferSlipPageDTO dto) {
         return R.success(wmsTransferSlipService.pageList(dto));
     }
+
+    @ApiOperation("调拨单详情")
+    @GetMapping("/linkErp")
+    public R<Boolean> linkErp(@ApiParam("调拨单id") @RequestParam("id") Long id){
+        return R.success(wmsTransferSlipService.linkErp(id));
+    }
 }

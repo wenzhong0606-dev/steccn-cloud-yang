@@ -20,6 +20,10 @@ public interface WmsManagerConstant {
      */
     String WAREHOUSING_TYPE = "warehousing_type";
 
+    String JSON_SUCCESS = "success";
+
+    String JSON_MESSAGE = "message";
+
 
     /**
      * 是否
