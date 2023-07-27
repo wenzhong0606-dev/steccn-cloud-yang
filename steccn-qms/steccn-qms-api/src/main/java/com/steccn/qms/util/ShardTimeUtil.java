@@ -261,4 +261,22 @@ public class ShardTimeUtil {
         LocalDate with2 = with.with(weekFields.dayOfWeek(), 7);
         return new LocalDate[]{with1, with2};
     }
+
+    /**
+     * 日期转年+周
+     *
+     * @param date 日期
+     * @return
+     */
+    public static String date2Week(LocalDate date) {
+        WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY, 7);
+        int week = date.get(weekFields.weekOfYear());
+        int year = date.getYear();
+        if (date.getMonthValue() == 1 && week == 0) {
+            return date2Week(LocalDate.of(year - 1, 12, 31));
+        }
+        String weekStr = week < 10 ? "0" + week : week + "";
+        return year + weekStr;
+    }
+
 }
