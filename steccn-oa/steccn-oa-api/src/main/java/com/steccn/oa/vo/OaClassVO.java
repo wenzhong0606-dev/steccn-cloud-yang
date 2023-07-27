@@ -3,6 +3,7 @@ package com.steccn.oa.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * oa班次班组用户VO
@@ -28,4 +29,12 @@ public class OaClassVO implements Serializable {
      * 班组
      */
     private String classGroup;
+    /**
+     * 开始时间
+     */
+    private LocalDateTime startTime;
+    /**
+     * 结束时间
+     */
+    private LocalDateTime endTime;
 }

@@ -1,25 +1,25 @@
 package com.steccn.oa.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.oa.domain.Hrmresource;
-import com.steccn.oa.domain.KqGroup;
-import com.steccn.oa.domain.KqGroupmember;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.OaRosterRecordDTO;
-import com.steccn.oa.mapper.HrmresourceMapper;
-import com.steccn.oa.mapper.KqGroupMapper;
-import com.steccn.oa.mapper.KqGroupmemberMapper;
+import com.steccn.oa.mapper.*;
 import com.steccn.oa.service.HrmClassInfoService;
 import com.steccn.oa.service.OaService;
-import com.steccn.oa.vo.OaClassVO;
-import com.steccn.oa.vo.OaRosterRecordVO;
+import com.steccn.oa.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 类说明
@@ -34,6 +34,8 @@ public class HrmClassInfoServiceImpl implements HrmClassInfoService {
     private final KqGroupmemberMapper kqGroupmemberMapper;
     private final KqGroupMapper kqGroupMapper;
     private final OaService oaService;
+    private final KqShiftmanagementMapper kqShiftmanagementMapper;
+    private final KqShiftonoffworksectionsMapper kqShiftonoffworksectionsMapper;
 
     @Override
     public OaClassVO getClassByUserId(TupleDTO<LocalDate, Integer> dto) {
@@ -73,9 +75,94 @@ public class HrmClassInfoServiceImpl implements HrmClassInfoService {
             List<OaRosterRecordVO> rosterRecord = oaService.getRosterRecord(recordDTO);
             OaRosterRecordVO oaRosterRecordVO = rosterRecord.stream().filter(v -> v.getWorkcode().equals(hrmresource.getWorkcode())).findFirst().orElse(null);
             if(Objects.nonNull(oaRosterRecordVO)){
-                result.setClassGroup(oaRosterRecordVO.getSerial());
+                result.setClassOrder(oaRosterRecordVO.getSerial());
+                //找出班次的开始结束时间
+                //班次信息
+                KqShiftmanagement shiftManagement = kqShiftmanagementMapper.selectOne(new LambdaQueryWrapper<KqShiftmanagement>()
+                        .select(KqShiftmanagement::getId, KqShiftmanagement::getSerial)
+                        .eq(KqShiftmanagement::getSerial,oaRosterRecordVO.getSerial())
+                        .isNull(KqShiftmanagement::getIsdelete));
+                //班次开始、结束时间
+                //班次详情
+                if(Objects.nonNull(shiftManagement)){
+                    List<KqShiftonoffworksections> shiftManagementDetailList = kqShiftonoffworksectionsMapper.selectList(new LambdaQueryWrapper<KqShiftonoffworksections>()
+                            .select(KqShiftonoffworksections::getSerialid,KqShiftonoffworksections::getAcross,KqShiftonoffworksections::getTimes,KqShiftonoffworksections::getRecord,KqShiftonoffworksections::getOnoffworktype)
+                            .eq(KqShiftonoffworksections::getSerialid,shiftManagement.getId())
+                            .isNull(KqShiftonoffworksections::getIsdelete));
+                    if(CollUtil.isNotEmpty(shiftManagementDetailList)){
+                        OaKqGroupTimeRangeVO timeRange = findShiftManage(shiftManagement, shiftManagementDetailList).getTimeRange();
+                        result.setStartTime(dto.getField1().atTime(timeRange.getStartTime()));
+                        if(timeRange.getIsAcross().equals(OaConstant.NUM_1)){
+                            result.setEndTime(dto.getField1().plusDays(1).atTime(timeRange.getEndTime()));
+                        }else {
+                            result.setEndTime(dto.getField1().atTime(timeRange.getEndTime()));
+                        }
+                    }
+                }
             }
         }
         return result;
+    }
+
+    /**
+     * 组班次数据
+     * @return
+     */
+    private OaKqGroupShiftManageVO findShiftManage(KqShiftmanagement kqShiftmanagement, List<KqShiftonoffworksections> kqShiftonoffworksections){
+        OaKqGroupShiftManageVO shiftManageVO = new OaKqGroupShiftManageVO();
+        shiftManageVO.setId(kqShiftmanagement.getId());
+        shiftManageVO.setName(kqShiftmanagement.getSerial());
+        //班次详情
+        List<OaKqGroupShiftOnOffVO> timeDetail = Lists.newArrayList();
+        kqShiftonoffworksections.forEach(kqShiftonoffworksection->{
+            OaKqGroupShiftOnOffVO oaKqGroupShiftOnOffVO = new OaKqGroupShiftOnOffVO();
+            oaKqGroupShiftOnOffVO.setAcross(kqShiftonoffworksection.getAcross());
+            oaKqGroupShiftOnOffVO.setTimes(kqShiftonoffworksection.getTimes());
+            oaKqGroupShiftOnOffVO.setOnOffWorkType(kqShiftonoffworksection.getOnoffworktype());
+            oaKqGroupShiftOnOffVO.setRecord(kqShiftonoffworksection.getRecord());
+            timeDetail.add(oaKqGroupShiftOnOffVO);
+        });
+        if(CollUtil.isNotEmpty(kqShiftonoffworksections)){
+            OaKqGroupTimeRangeVO timeRange = new OaKqGroupTimeRangeVO();
+            //开始
+            List<KqShiftonoffworksections> start = kqShiftonoffworksections.stream().filter(v -> v.getOnoffworktype().equals("start")).collect(Collectors.toList());
+            LocalTime startTime = LocalTime.now();
+            for(int i = 0; i < start.size(); i++){
+                if(i==0){
+                    startTime = LocalTime.parse(start.get(i).getTimes());
+                    continue;
+                }
+                LocalTime tmpTime = LocalTime.parse(start.get(i).getTimes());
+                if(tmpTime.isBefore(startTime)){
+                    startTime = tmpTime;
+                }
+            }
+            timeRange.setStartTime(startTime);
+            //结束
+            List<KqShiftonoffworksections> end = kqShiftonoffworksections.stream().filter(v -> v.getOnoffworktype().equals("end")).collect(Collectors.toList());
+            LocalTime endTime = LocalTime.now();
+            Integer across = 0;
+            for(int i = 0; i < start.size(); i++){
+                if(i==0){
+                    endTime = LocalTime.parse(end.get(i).getTimes());
+                    across = Integer.parseInt(end.get(i).getAcross());
+                    continue;
+                }
+                LocalTime tmpTime = LocalTime.parse(end.get(i).getTimes());
+                int tmpAcross = Integer.parseInt(end.get(i).getAcross());
+                //先判断是否跨天
+                if(tmpAcross>across){
+                    across = tmpAcross;
+                    endTime = tmpTime;
+                }else if(tmpTime.isAfter(endTime)){
+                    endTime = tmpTime;
+                }
+            }
+            timeRange.setEndTime(endTime);
+            timeRange.setIsAcross(across);
+            shiftManageVO.setTimeRange(timeRange);
+        }
+        shiftManageVO.setTimeDetail(timeDetail);
+        return shiftManageVO;
     }
 }
