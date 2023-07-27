@@ -39,7 +39,7 @@ public interface RemoteErpFeignApi {
      */
     @PostMapping("/api/tcmes/savetransferdirect")
     @ApiOperation("保存直接调拨单")
-    R<List<String>> saveTransfer(@RequestBody ErpTransferSaveDTO dto);
+    String saveTransfer(@RequestBody ErpTransferSaveDTO dto);
 
 
 }

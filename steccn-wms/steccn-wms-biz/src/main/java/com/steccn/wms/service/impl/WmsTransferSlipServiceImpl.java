@@ -3,18 +3,22 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.mes.dto.ErpTransferSaveDTO;
 import com.steccn.mes.dto.ErpTransferSaveDetailDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.wms.constant.WmsManagerConstant;
@@ -437,6 +441,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     public Boolean linkErp(Long id) {
         //获取详情
         WmsTransferSlipVO wmsTransferSlipVO = get(id);
+        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getSourceWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String targetCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getTargetWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //组erp数据
         ErpTransferSaveDTO erpDTO = new ErpTransferSaveDTO();
         erpDTO.setFmesbillid(wmsTransferSlipVO.getId().toString());
@@ -446,16 +452,29 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         List<ErpTransferSaveDetailDTO> erpDetails = Lists.newArrayList();
         if(CollUtil.isNotEmpty(wmsTransferSlipVO.getList())){
             //获取所有仓库信息
-//            Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             for(WmsTransferSlipInfoVO tmp: wmsTransferSlipVO.getList()){
                 ErpTransferSaveDetailDTO erpDetail = new ErpTransferSaveDetailDTO();
                 erpDetail.setFmesentryid(tmp.getId().toString());
                 erpDetail.setFmatno(tmp.getMaterialCode());
                 erpDetail.setFqty(tmp.getQuantity());
-//                erpDetail.setFsrcstockno(tmp.get);
+                erpDetail.setFsrcstockno(sourceCode);
+                erpDetail.setFdeststockno(targetCode);
+                erpDetails.add(erpDetail);
             }
         }
-        return null;
+        erpDTO.setFentry(erpDetails);
+        //调用EPR
+        String listR = remoteErpFeignApi.saveTransfer(erpDTO);
+        JSONObject jsonObject = JSONObject.parseObject(listR);
+        if(jsonObject.getBoolean("success")){
+            WmsTransferSlip wmsTransferSlip = new WmsTransferSlip();
+            wmsTransferSlip.setId(id);
+            wmsTransferSlip.setStatus(OaConstant.NUM_2);
+            updateById(wmsTransferSlip);
+        }else {
+            throw new BusinessException("同步失败");
+        }
+        return true;
     }
 
     /**
