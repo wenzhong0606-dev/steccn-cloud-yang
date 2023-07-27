@@ -23,17 +23,16 @@ public class ErpSynchronousTask {
     private final JsSysOfficeService jsSysOfficeService;
     /**
      * @desc 每天 2点同步昨天数据
-     * 08:10:00
-     * 20:10:00
+     *
      */
     @XxlJob("synchronousErpCustomer")
     public void synchronousErpCustomer() {
-        XxlJobHelper.log("计算拉引量-任务开始");
+        XxlJobHelper.log("同步客户-任务开始");
         LocalDateTime now = LocalDateTime.now();
         ErpCustomerDTO dto = new ErpCustomerDTO();
         dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
         jsSysOfficeService.synchronousCustomer(dto);
-        XxlJobHelper.log("计算拉引量-任务开始");
+        XxlJobHelper.log("同步客户-任务结束");
     }
 }
