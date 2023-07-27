@@ -38,7 +38,7 @@ public class WmsDeliveryReceiptDTO {
 
     @ApiModelProperty("仓库Id")
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库id不能为空")
-    private Long warehouseId;
+    private Integer warehouseId;
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;

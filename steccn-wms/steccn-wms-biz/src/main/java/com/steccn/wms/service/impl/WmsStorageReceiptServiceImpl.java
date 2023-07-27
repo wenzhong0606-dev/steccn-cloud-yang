@@ -572,7 +572,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //生成出库单
                 WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = new WmsDeliveryReceiptDTO();
                 wmsDeliveryReceiptDTO.setType(sysDictVO.getId());
-                wmsDeliveryReceiptDTO.setWarehouseId(Long.valueOf(wmsStorageReceiptVO.getWarehouseId()));
+                wmsDeliveryReceiptDTO.setWarehouseId(wmsStorageReceiptVO.getWarehouseId());
                 List<WmsDeliveryReceiptInfoDTO> infoDTOList = Lists.newArrayList();
                 List<WmsInventory> wmsInventoryList = Lists.newArrayList();
                 for (WmsStorageReceiptInfoVO info : list) {

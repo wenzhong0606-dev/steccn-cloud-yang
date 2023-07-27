@@ -637,7 +637,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = new WmsDeliveryReceiptDTO();
             SysDictVO dict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "outbound_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             wmsDeliveryReceiptDTO.setType(dict.getId());
-            wmsDeliveryReceiptDTO.setWarehouseId(Long.valueOf(scanDto.getList().get(0).getWarehouseId()));
+            wmsDeliveryReceiptDTO.setWarehouseId(scanDto.getList().get(0).getWarehouseId());
             List<WmsDeliveryReceiptInfoDTO> wmsDeliveryReceiptInfoDTOS = BeanUtil.copyToList(scanDto.getList(), WmsDeliveryReceiptInfoDTO.class);
             wmsDeliveryReceiptDTO.setList(wmsDeliveryReceiptInfoDTOS);
            return FeignOptional.of(() -> remoteWmsInventoryFeignApi.createDelivery(wmsDeliveryReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
