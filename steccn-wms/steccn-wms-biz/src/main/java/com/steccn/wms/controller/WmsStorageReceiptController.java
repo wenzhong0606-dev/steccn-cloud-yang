@@ -106,4 +106,10 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.excelImportData(dto));
     }
 
+    @ApiOperation("入库凭证同步erp")
+    @GetMapping("/linkErp")
+    public R<Boolean> linkErp(@ApiParam("入库单id") @RequestParam("id") Long id){
+        return R.success(wmsStorageReceiptService.linkErp(id));
+    }
+
 }

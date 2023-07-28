@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,11 +25,14 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysErpOfficeVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
+import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
@@ -84,6 +88,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
 
     private final RemoteErpFeignApi remoteErpFeignApi;
+
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
 
     @Override
@@ -587,11 +593,32 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
                     erpCommonSaveDetail.setSlot(tmp.getBatch());
                     erpCommonSaveDetail.setFstockno(sourceCode);
+                    if(Objects.isNull(tmp.getAssociatedNo())){
+                        throw new BusinessException("没有关联生产订单");
+                    }
+                    PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(tmp.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                    //拿到epr关联的code
+                    SysErpOfficeVO sysErpOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.getErpCodeByOfficeId(pmsProduceOrderVO.getProductionLineId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    erpCommonSaveDetail.setFdeptno(sysErpOfficeVO.getErpCode());
+                    erpCommonSaveDetails.add(erpCommonSaveDetail);
                 }
             }
-            remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
+            erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
+            String listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
+            //判断是否保存成功
+            JSONObject jsonObject = JSONObject.parseObject(listR);
+            if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
+                WmsStorageReceipt wmsStorageReceipt = new WmsStorageReceipt();
+                wmsStorageReceipt.setId(id);
+                wmsStorageReceipt.setStatus(OaConstant.NUM_2);
+                updateById(wmsStorageReceipt);
+            }else {
+                String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+                log.error(error);
+                throw new BusinessException(error);
+            }
         }
-        return null;
+        return true;
     }
 
     WmsDeliveryReceiptDTO chargeAgainst(Long id, String userName) {

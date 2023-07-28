@@ -8,6 +8,7 @@ import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.vo.SysErpOfficeVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
@@ -288,4 +289,8 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/child/workshop")
     @ApiOperation("查询节点的子节点-车间")
     R<Map<Integer, List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet);
+
+    @GetMapping("/feign/platform/sys/office/erp/code")
+    @ApiOperation("根据id获取erp中的code")
+    R<SysErpOfficeVO> getErpCodeByOfficeId(@RequestParam Integer officeId);
 }
