@@ -1,0 +1,17 @@
+server:
+  port: 9130
+spring:
+  application:
+    name: steccn-mes
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.34.140:8848
+        namespace: steccn_dev
+      config:
+        server-addr: 192.168.34.140:8848
+        file-extension: yaml
+        shared-configs:
+          - data-id: application.yaml
+            refresh: true
+        namespace: steccn_dev
