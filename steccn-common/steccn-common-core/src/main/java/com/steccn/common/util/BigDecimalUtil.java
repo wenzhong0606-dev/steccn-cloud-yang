@@ -345,4 +345,19 @@ public class BigDecimalUtil {
         return sumValue;
     }
 
+    /**
+     * value1 / value2 * 100 %
+     *
+     * @param value1 值1
+     * @param value2 值2
+     * @param scale  保留几位小数
+     * @return
+     */
+    public static BigDecimal percent(BigDecimal value1, BigDecimal value2, int scale) {
+        if (Objects.isNull(value1) || Objects.isNull(value2) || equals(value2, BigDecimal.ZERO)) {
+            return null;
+        }
+        BigDecimal percent = value1.divide(value2, scale + 2, RoundingMode.HALF_UP).multiply(HUNDRED);
+        return percent;
+    }
 }

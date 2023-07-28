@@ -783,29 +783,45 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 //获取使用量和成品数
                 row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
                 row.setInStorageNum(inStorageMap.get(line + "_" + weekStr));
+                BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
+                BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
+                BigDecimalUtil.accumulate(countMap, 7, row.getInStorageNum());
+                BigDecimalUtil.accumulate(sumMap, 7, row.getInStorageNum());
                 List<QtCheckItemMaterialAvgDTO> filterDataList = dataList.stream().filter(ele -> weekStr.equals(ele.getClassMonth()) && line.equals(ele.getProductLineId())).collect(Collectors.toList());
                 row.setOriginDefectNum(getDefectNum(filterDataList, categoryMap.get(0)));
+                row.setOriginDefectRate(BigDecimalUtil.percent(row.getOriginDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 0, row.getOriginDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 0, row.getOriginDefectNum());
                 row.setEdgeDefectNum(getDefectNum(filterDataList, categoryMap.get(1)));
+                row.setEdgeDefectRate(BigDecimalUtil.percent(row.getEdgeDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 1, row.getEdgeDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 1, row.getEdgeDefectNum());
                 row.setDrillDefectNum(getDefectNum(filterDataList, categoryMap.get(2)));
+                row.setDrillDefectRate(BigDecimalUtil.percent(row.getDrillDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 2, row.getDrillDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 2, row.getDrillDefectNum());
                 row.setSilkDefectNum(getDefectNum(filterDataList, categoryMap.get(3)));
+                row.setSilkDefectRate(BigDecimalUtil.percent(row.getSilkDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 3, row.getSilkDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 3, row.getSilkDefectNum());
                 row.setCoatDefectNum(getDefectNum(filterDataList, categoryMap.get(4)));
+                row.setCoatDefectRate(BigDecimalUtil.percent(row.getCoatDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 4, row.getCoatDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 4, row.getCoatDefectNum());
                 row.setTemperDefectNum(getDefectNum(filterDataList, categoryMap.get(5)));
+                row.setTemperDefectRate(BigDecimalUtil.percent(row.getTemperDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 5, row.getTemperDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 5, row.getTemperDefectNum());
                 BigDecimal sum1 = BigDecimalUtil.sum(Arrays.asList(row.getOriginDefectNum(), row.getEdgeDefectNum(), row.getDrillDefectNum(), row.getSilkDefectNum(), row.getCoatDefectNum(), row.getTemperDefectNum()));
                 BigDecimal sum2 = BigDecimalUtil.sum(Arrays.asList(row.getEdgeDefectNum(), row.getDrillDefectNum(), row.getSilkDefectNum(), row.getCoatDefectNum(), row.getTemperDefectNum()));
                 row.setTotalDefectNum(sum1);
                 row.setTotalDeepDefectNum(sum2);
+                BigDecimalUtil.accumulate(countMap, 8, row.getTotalDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 8, row.getTotalDefectNum());
+                BigDecimalUtil.accumulate(countMap, 9, row.getTotalDeepDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 9, row.getTotalDeepDefectNum());
+                row.setTotalDefectRate(BigDecimalUtil.percent(row.getTotalDefectNum(), row.getUseCountNum(), 2));
+                row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
             rowList.add(countWeek(weekStr, 1, "合计（单周）", countMap));
@@ -834,10 +850,18 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         row.setSilkDefectNum(countMap.get(3));
         row.setCoatDefectNum(countMap.get(4));
         row.setTemperDefectNum(countMap.get(5));
-        BigDecimal sum1 = BigDecimalUtil.sum(Arrays.asList(row.getOriginDefectNum(), row.getEdgeDefectNum(), row.getDrillDefectNum(), row.getSilkDefectNum(), row.getCoatDefectNum(), row.getTemperDefectNum()));
-        BigDecimal sum2 = BigDecimalUtil.sum(Arrays.asList(row.getEdgeDefectNum(), row.getDrillDefectNum(), row.getSilkDefectNum(), row.getCoatDefectNum(), row.getTemperDefectNum()));
-        row.setTotalDefectNum(sum1);
-        row.setTotalDeepDefectNum(sum2);
+        row.setUseCountNum(countMap.get(6));
+        row.setInStorageNum(countMap.get(7));
+        row.setTotalDefectNum(countMap.get(8));
+        row.setTotalDeepDefectNum(countMap.get(9));
+        row.setOriginDefectRate(BigDecimalUtil.percent(row.getOriginDefectNum(), row.getUseCountNum(), 2));
+        row.setEdgeDefectRate(BigDecimalUtil.percent(row.getEdgeDefectNum(), row.getUseCountNum(), 2));
+        row.setDrillDefectRate(BigDecimalUtil.percent(row.getDrillDefectNum(), row.getUseCountNum(), 2));
+        row.setSilkDefectRate(BigDecimalUtil.percent(row.getSilkDefectNum(), row.getUseCountNum(), 2));
+        row.setCoatDefectRate(BigDecimalUtil.percent(row.getCoatDefectNum(), row.getUseCountNum(), 2));
+        row.setTemperDefectRate(BigDecimalUtil.percent(row.getTemperDefectRate(), row.getUseCountNum(), 2));
+        row.setTotalDefectRate(BigDecimalUtil.percent(row.getTotalDefectNum(), row.getUseCountNum(), 2));
+        row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
         return row;
     }
 
