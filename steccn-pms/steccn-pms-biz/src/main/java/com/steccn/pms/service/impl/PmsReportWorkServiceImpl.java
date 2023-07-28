@@ -894,9 +894,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     @Override
     public ReportWorkPreinstallValueVO preinstallValue(LocalDate localDate) {
-        TupleDTO<LocalDate,Integer> dto = new TupleDTO<>();
-        dto.setField1(localDate);
-        dto.setField2(Math.toIntExact(SecurityUtils.getUser().getUserId()));
+        TupleDTO<LocalDate,Integer> dto = new TupleDTO<>(localDate,Math.toIntExact( SecurityUtils.getUser().getUserId()));
         OaClassVO oaClassVO = FeignOptional.of(() -> oaInfoService.getUserClass(dto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         return BeanUtil.copyProperties(oaClassVO, ReportWorkPreinstallValueVO.class);
     }

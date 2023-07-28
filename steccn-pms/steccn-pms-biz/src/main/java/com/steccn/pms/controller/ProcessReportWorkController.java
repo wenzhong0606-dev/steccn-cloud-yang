@@ -130,9 +130,9 @@ public class ProcessReportWorkController {
     }
 
 
-    @PostMapping("/preinstall/value")
+    @GetMapping("/preinstall/value")
     @ApiOperation("获取报工预填值（班次/班组 开始时间 结束时间）")
-    public R<ReportWorkPreinstallValueVO> preinstallValue(@RequestBody LocalDate localDate){
+    public R<ReportWorkPreinstallValueVO> preinstallValue(@RequestParam("localDate") LocalDate localDate){
         return R.success(pmsReportWorkService.preinstallValue(localDate));
     }
 }
