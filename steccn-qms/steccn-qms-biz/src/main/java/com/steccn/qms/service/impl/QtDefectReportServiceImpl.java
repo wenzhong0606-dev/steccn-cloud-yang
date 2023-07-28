@@ -744,8 +744,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
-    public List<DefectWeekRowVO> defectWeek(QtDefectReportDTO dto) {
-        List<DefectWeekRowVO> rowList = Lists.newArrayList();
+    public List<DefectCountRowVO> defectWeek(QtDefectReportDTO dto) {
+        List<DefectCountRowVO> rowList = Lists.newArrayList();
         //查询缺陷类别
         List<String> categoryNameList = Arrays.asList("原片不良", "磨边不良", "钻孔不良", "丝印不良", "镀膜不良", "钢化不良");
         List<QtItemCategory> categoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>().in(QtItemCategory::getName, categoryNameList).eq(QtItemCategory::getShowFlag, MpConstant.YES));
@@ -776,9 +776,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             LocalDateTime begin = timeList.get(i - 1);
             String weekStr = ShardTimeUtil.date2Week(begin.toLocalDate());
             for (Integer line : dto.getProductLineList()) {
-                DefectWeekRowVO row = new DefectWeekRowVO();
+                DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
-                row.setWeekStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
+                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
                 row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
@@ -824,24 +824,112 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
-            rowList.add(countWeek(weekStr, 1, "合计（单周）", countMap));
+            rowList.add(countWm(weekStr, 1, "合计（单周）", countMap));
         }
-        rowList.add(countWeek("总计", 2, "总计", sumMap));
+        rowList.add(countWm("总计", 2, "总计", sumMap));
+        return rowList;
+    }
+
+    @Override
+    public List<DefectCountRowVO> defectMonth(QtDefectReportDTO dto) {
+        List<DefectCountRowVO> rowList = Lists.newArrayList();
+        //查询缺陷类别
+        List<String> categoryNameList = Arrays.asList("原片不良", "磨边不良", "钻孔不良", "丝印不良", "镀膜不良", "钢化不良");
+        List<QtItemCategory> categoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>().in(QtItemCategory::getName, categoryNameList).eq(QtItemCategory::getShowFlag, MpConstant.YES));
+        Assert.notEmpty(categoryList, "缺陷类别不可为空");
+        Set<Integer> categoryIdSet = categoryList.stream().map(QtItemCategory::getId).collect(Collectors.toSet());
+        Map<Integer, Integer> categoryMap = Maps.newHashMap();
+        for (QtItemCategory category : categoryList) {
+            int idx = categoryNameList.indexOf(category.getName());
+            categoryMap.put(idx, category.getId());
+        }
+        //时间
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<QtCheckItemMaterialAvgDTO> dataList = qtCheckTaskMapper.defectMonth(categoryIdSet, dto.getProductLineList(), start, end);
+        SteccnTableAssertUtil.notEmpty(dataList, "缺陷类别暂无数据");
+        //查询产线
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //查询每周的原片耗用量和入库量
+        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.inStorageWeek(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountWeek(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+
+        //根据开始时间和结束时间 区分不同周
+        Map<Integer, BigDecimal> sumMap = Maps.newHashMap();
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.WEEK.getType(), start, end);
+        for (int i = 1; i < timeList.size(); i++) {
+            Map<Integer, BigDecimal> countMap = Maps.newHashMap();
+            LocalDateTime begin = timeList.get(i - 1);
+
+            String weekStr = null;
+            for (Integer line : dto.getProductLineList()) {
+                DefectCountRowVO row = new DefectCountRowVO();
+                row.setType(0);
+                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
+                row.setProductLineName(lineIdNameMap.get(line));
+                //获取使用量和成品数
+                row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
+                row.setInStorageNum(inStorageMap.get(line + "_" + weekStr));
+                BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
+                BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
+                BigDecimalUtil.accumulate(countMap, 7, row.getInStorageNum());
+                BigDecimalUtil.accumulate(sumMap, 7, row.getInStorageNum());
+                List<QtCheckItemMaterialAvgDTO> filterDataList = dataList.stream().filter(ele -> weekStr.equals(ele.getClassMonth()) && line.equals(ele.getProductLineId())).collect(Collectors.toList());
+                row.setOriginDefectNum(getDefectNum(filterDataList, categoryMap.get(0)));
+                row.setOriginDefectRate(BigDecimalUtil.percent(row.getOriginDefectNum(), row.getUseCountNum(), 2));
+                BigDecimalUtil.accumulate(countMap, 0, row.getOriginDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 0, row.getOriginDefectNum());
+                row.setEdgeDefectNum(getDefectNum(filterDataList, categoryMap.get(1)));
+                row.setEdgeDefectRate(BigDecimalUtil.percent(row.getEdgeDefectNum(), row.getUseCountNum(), 2));
+                BigDecimalUtil.accumulate(countMap, 1, row.getEdgeDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 1, row.getEdgeDefectNum());
+                row.setDrillDefectNum(getDefectNum(filterDataList, categoryMap.get(2)));
+                row.setDrillDefectRate(BigDecimalUtil.percent(row.getDrillDefectNum(), row.getUseCountNum(), 2));
+                BigDecimalUtil.accumulate(countMap, 2, row.getDrillDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 2, row.getDrillDefectNum());
+                row.setSilkDefectNum(getDefectNum(filterDataList, categoryMap.get(3)));
+                row.setSilkDefectRate(BigDecimalUtil.percent(row.getSilkDefectNum(), row.getUseCountNum(), 2));
+                BigDecimalUtil.accumulate(countMap, 3, row.getSilkDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 3, row.getSilkDefectNum());
+                row.setCoatDefectNum(getDefectNum(filterDataList, categoryMap.get(4)));
+                row.setCoatDefectRate(BigDecimalUtil.percent(row.getCoatDefectNum(), row.getUseCountNum(), 2));
+                BigDecimalUtil.accumulate(countMap, 4, row.getCoatDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 4, row.getCoatDefectNum());
+                row.setTemperDefectNum(getDefectNum(filterDataList, categoryMap.get(5)));
+                row.setTemperDefectRate(BigDecimalUtil.percent(row.getTemperDefectNum(), row.getUseCountNum(), 2));
+                BigDecimalUtil.accumulate(countMap, 5, row.getTemperDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 5, row.getTemperDefectNum());
+                BigDecimal sum1 = BigDecimalUtil.sum(Arrays.asList(row.getOriginDefectNum(), row.getEdgeDefectNum(), row.getDrillDefectNum(), row.getSilkDefectNum(), row.getCoatDefectNum(), row.getTemperDefectNum()));
+                BigDecimal sum2 = BigDecimalUtil.sum(Arrays.asList(row.getEdgeDefectNum(), row.getDrillDefectNum(), row.getSilkDefectNum(), row.getCoatDefectNum(), row.getTemperDefectNum()));
+                row.setTotalDefectNum(sum1);
+                row.setTotalDeepDefectNum(sum2);
+                BigDecimalUtil.accumulate(countMap, 8, row.getTotalDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 8, row.getTotalDefectNum());
+                BigDecimalUtil.accumulate(countMap, 9, row.getTotalDeepDefectNum());
+                BigDecimalUtil.accumulate(sumMap, 9, row.getTotalDeepDefectNum());
+                row.setTotalDefectRate(BigDecimalUtil.percent(row.getTotalDefectNum(), row.getUseCountNum(), 2));
+                row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
+                rowList.add(row);
+            }
+            rowList.add(countWm(weekStr, 1, "合计（单周）", countMap));
+        }
+        rowList.add(countWm("总计", 2, "总计", sumMap));
         return rowList;
     }
 
     /**
-     * 不良周报表 合计 | 总计
+     * 不良周|月报表 合计 | 总计
      *
-     * @param week     周
+     * @param timeStr     周
      * @param type     类型
      * @param lineName 产线名称
      * @param countMap 统计
      * @return
      */
-    private DefectWeekRowVO countWeek(String week, int type, String lineName, Map<Integer, BigDecimal> countMap) {
-        DefectWeekRowVO row = new DefectWeekRowVO();
-        row.setWeekStr(week);
+    private DefectCountRowVO countWm(String timeStr, int type, String lineName, Map<Integer, BigDecimal> countMap) {
+        DefectCountRowVO row = new DefectCountRowVO();
+        row.setTimeStr(timeStr);
         row.setType(type);
         row.setProductLineName(lineName);
         row.setOriginDefectNum(countMap.get(0));

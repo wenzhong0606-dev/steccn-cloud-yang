@@ -101,5 +101,12 @@ public interface QtDefectReportService {
      * @param dto 请求参数
      * @return
      */
-    List<DefectWeekRowVO> defectWeek(QtDefectReportDTO dto);
+    List<DefectCountRowVO> defectWeek(QtDefectReportDTO dto);
+
+    /**
+     * 不良月报表
+     * @param dto – 请求参数
+     * @return
+     */
+    List<DefectCountRowVO> defectMonth(QtDefectReportDTO dto);
 }

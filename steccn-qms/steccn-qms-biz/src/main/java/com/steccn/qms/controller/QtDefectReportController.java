@@ -90,8 +90,14 @@ public class QtDefectReportController {
 
     @PostMapping("/defect/week")
     @ApiOperation(value = "不良周报表")
-    public R<List<DefectWeekRowVO>> defectWeek(@RequestBody QtDefectReportDTO dto) {
+    public R<List<DefectCountRowVO>> defectWeek(@RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.defectWeek(dto));
+    }
+
+    @PostMapping("/defect/month")
+    @ApiOperation(value = "不良月报表")
+    public R<List<DefectCountRowVO>> defectMonth(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.defectMonth(dto));
     }
 }
 
