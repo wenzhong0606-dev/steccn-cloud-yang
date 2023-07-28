@@ -91,11 +91,11 @@ public class HrmClassInfoServiceImpl implements HrmClassInfoService {
                             .isNull(KqShiftonoffworksections::getIsdelete));
                     if(CollUtil.isNotEmpty(shiftManagementDetailList)){
                         OaKqGroupTimeRangeVO timeRange = findShiftManage(shiftManagement, shiftManagementDetailList).getTimeRange();
-                        result.setStartTime(dto.getField1().atTime(timeRange.getStartTime()));
+                        result.setStartTime(dto.getField1().atTime(timeRange.getStartTime()).withSecond(0));
                         if(timeRange.getIsAcross().equals(OaConstant.NUM_1)){
-                            result.setEndTime(dto.getField1().plusDays(1).atTime(timeRange.getEndTime()));
+                            result.setEndTime(dto.getField1().plusDays(1).atTime(timeRange.getEndTime()).withSecond(0));
                         }else {
-                            result.setEndTime(dto.getField1().atTime(timeRange.getEndTime()));
+                            result.setEndTime(dto.getField1().atTime(timeRange.getEndTime()).withSecond(0));
                         }
                     }
                 }
