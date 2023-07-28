@@ -10,6 +10,7 @@ import com.steccn.pms.vo.PmsCompleteStorageVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +67,16 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      */
     Map<Long, Map<Long, BigDecimal>> materialMap(Set<Long> materialSet , LocalDate date);
 
+
+    /**
+     * 入库
+     *
+     * @param lineList 产线集合
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return map key为物料id value 【key为班次id，value为数量】
+     */
+    Map<String, BigDecimal> inStorage(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
 
     /**
      * 查询物料的入库 （截至当前日期的当月数据）

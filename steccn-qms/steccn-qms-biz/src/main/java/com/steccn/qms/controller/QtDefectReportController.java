@@ -1,7 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
-import com.steccn.pms.vo.DefectDayVO;
+import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.vo.*;
@@ -88,5 +88,10 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.defectDay(dto));
     }
 
+    @PostMapping("/defect/week")
+    @ApiOperation(value = "不良周报表")
+    public R<List<DefectWeekRowVO>> defectWeek(@RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.defectWeek(dto));
+    }
 }
 

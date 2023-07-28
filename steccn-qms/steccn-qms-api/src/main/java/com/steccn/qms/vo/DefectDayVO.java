@@ -1,5 +1,6 @@
-package com.steccn.pms.vo;
+package com.steccn.qms.vo;
 
+import com.steccn.pms.vo.BaseReportHeaderVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
