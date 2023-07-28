@@ -139,6 +139,18 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     }
 
     @Override
+    public Map<String, BigDecimal> inStorageMonth(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        List<FurtherProduceReportDataVO> resList = baseMapper.inStorageMonth(lineList, start, end);
+        if (CollUtil.isNotEmpty(resList)) {
+            for (FurtherProduceReportDataVO data : resList) {
+                resMap.put(data.getProductLineId() + "_" + data.getWeekStr(), data.getProcessQuantity());
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<Long, Map<Long, BigDecimal>> materialByDateMap(Set<Long> materialSet, LocalDate date) {
         Map<Long, Map<Long, BigDecimal>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {

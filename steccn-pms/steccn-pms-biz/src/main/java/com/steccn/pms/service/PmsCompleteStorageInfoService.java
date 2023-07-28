@@ -97,7 +97,7 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
     List<FurtherProduceReportDataVO> materialByDateList(Set<Long> materialSet , LocalDate date);
 
     /**
-     * 入库数
+     * 入库数 - 周
      *
      * @param lineList 产线集合
      * @param start    开始时间
@@ -105,4 +105,14 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return map key为产线id+"_"+week value 【key为班次id，value为数量】
      */
     Map<String, BigDecimal> inStorageWeek(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * 入库数 - 月
+     *
+     * @param lineList 产线集合
+     * @param start    开始时间
+     * @param end      结束时间
+     * @return map key为产线id + "_" + month  value 【key为班次id，value为数量】
+     */
+    Map<String, BigDecimal> inStorageMonth(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
 }

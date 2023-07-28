@@ -852,30 +852,30 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //查询每周的原片耗用量和入库量
-        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.inStorageWeek(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-        Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountWeek(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.inStorageMonth(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountMonth(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
         //根据开始时间和结束时间 区分不同周
         Map<Integer, BigDecimal> sumMap = Maps.newHashMap();
-        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.WEEK.getType(), start, end);
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.MONTH.getType(), start, end);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
         for (int i = 1; i < timeList.size(); i++) {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
-
-            String weekStr = null;
+            String timeStr = formatter.format(begin);
             for (Integer line : dto.getProductLineList()) {
                 DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
-                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
+                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin));
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
-                row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
-                row.setInStorageNum(inStorageMap.get(line + "_" + weekStr));
+                row.setUseCountNum(useCountMap.get(line + "_" + timeStr));
+                row.setInStorageNum(inStorageMap.get(line + "_" + timeStr));
                 BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
                 BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
                 BigDecimalUtil.accumulate(countMap, 7, row.getInStorageNum());
                 BigDecimalUtil.accumulate(sumMap, 7, row.getInStorageNum());
-                List<QtCheckItemMaterialAvgDTO> filterDataList = dataList.stream().filter(ele -> weekStr.equals(ele.getClassMonth()) && line.equals(ele.getProductLineId())).collect(Collectors.toList());
+                List<QtCheckItemMaterialAvgDTO> filterDataList = dataList.stream().filter(ele -> timeStr.equals(ele.getClassMonth()) && line.equals(ele.getProductLineId())).collect(Collectors.toList());
                 row.setOriginDefectNum(getDefectNum(filterDataList, categoryMap.get(0)));
                 row.setOriginDefectRate(BigDecimalUtil.percent(row.getOriginDefectNum(), row.getUseCountNum(), 2));
                 BigDecimalUtil.accumulate(countMap, 0, row.getOriginDefectNum());
@@ -912,7 +912,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
-            rowList.add(countWm(weekStr, 1, "合计（单周）", countMap));
+            rowList.add(countWm(timeStr, 1, "合计（单月）", countMap));
         }
         rowList.add(countWm("总计", 2, "总计", sumMap));
         return rowList;
@@ -921,7 +921,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     /**
      * 不良周|月报表 合计 | 总计
      *
-     * @param timeStr     周
+     * @param timeStr  周
      * @param type     类型
      * @param lineName 产线名称
      * @param countMap 统计

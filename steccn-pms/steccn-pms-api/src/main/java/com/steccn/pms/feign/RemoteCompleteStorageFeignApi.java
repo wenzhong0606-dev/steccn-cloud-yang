@@ -46,4 +46,7 @@ public interface RemoteCompleteStorageFeignApi {
     @ApiOperation("查询订单入库量-产线|周")
     R<Map<String, BigDecimal>> inStorageWeek(@RequestBody TripleDTO<List<Integer>,LocalDateTime, LocalDateTime> dto);
 
+    @PostMapping("/feign/pms/complete/storage/month/num")
+    @ApiOperation("查询订单入库量-产线|月")
+    R<Map<String, BigDecimal>> inStorageMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
 }

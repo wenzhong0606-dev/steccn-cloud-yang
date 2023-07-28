@@ -118,4 +118,24 @@
         pbp.production_line,
         YEARWEEK(si.create_time,7)
     </select>
+    <select id="inStorageMonth" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
+        SELECT
+        pbp.production_line as productLineId,
+        EXTRACT(YEAR_MONTH from (si.create_time))	as weekStr,
+        sum( si.quantity) as processQuantity
+        FROM
+        `pms_complete_storage_info` si
+        JOIN pms_barcode_print pbp ON pbp.case_no = si.case_no
+        WHERE
+        si.del_flag = 0
+        AND si.create_time &gt;= #{start}
+        AND si.create_time &lt;= #{end}
+        AND pbp.production_line in
+        <foreach collection="lineList" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY
+        pbp.production_line,
+        EXTRACT(YEAR_MONTH from (si.create_time))
+    </select>
 </mapper>

@@ -83,4 +83,10 @@ public class PmsReportWorkFeignController {
     R<Map<String, BigDecimal>> useCountWeek(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
         return R.success(pmsReportWorkService.useCountWeek(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
+
+    @ApiOperation("原料耗用量-月|产线")
+    @PostMapping("/original/consume/month")
+    R<Map<String, BigDecimal>> useCountMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
+        return R.success(pmsReportWorkService.useCountMonth(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
 }

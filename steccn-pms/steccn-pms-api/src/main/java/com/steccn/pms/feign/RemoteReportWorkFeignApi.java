@@ -83,4 +83,8 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("原料耗用量-周|产线")
     @PostMapping("/feign/pms/report/work/original/consume/week")
     R<Map<String, BigDecimal>> useCountWeek(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
+
+    @ApiOperation("原料耗用量-月|产线")
+    @PostMapping("/feign/pms/report/work/original/consume/month")
+    R<Map<String, BigDecimal>> useCountMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
 }
