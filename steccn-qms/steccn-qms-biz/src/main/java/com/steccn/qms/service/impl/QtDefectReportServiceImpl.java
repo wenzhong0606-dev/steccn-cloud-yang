@@ -722,8 +722,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     BigDecimal louArea = BigDecimalUtil.multiply(louSum, eqpSpareVO.getLengthQuantity());
                     louArea = BigDecimalUtil.multiply(louArea, eqpSpareVO.getWideQuantity());
                     louArea = BigDecimalUtil.divide(louArea, new BigDecimal("1000000"));
-                    BigDecimal louRate = BigDecimalUtil.divide(louArea, useCountConvert, 4);
-                    louRate = BigDecimalUtil.multiply(louRate, new BigDecimal("100"));
+                    BigDecimal louRate = BigDecimalUtil.percent(louArea, useCountConvert, 2);
                     module.add(4, new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(louSum, 0), BigDecimalUtil.format(louArea, 2), BigDecimalUtil.format(louRate, 2))));
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.LOU_0, louSum);
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.LOU_1, louArea);
@@ -996,8 +995,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         BigDecimal lou0 = countMap.get(DefectDayConstant.LOU_0);
         BigDecimal lou1 = countMap.get(DefectDayConstant.LOU_1);
         //所在行漏检（㎡）/ 所在行使用量（㎡） * 100%，小数点后保留2位
-        BigDecimal lou2 = BigDecimalUtil.divide(lou1, syl1, 4);
-        lou2 = BigDecimalUtil.multiply(lou2, new BigDecimal("100"));
+        BigDecimal lou2 = BigDecimalUtil.percent(lou1, syl1, 2);
         module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(lou0, 0), BigDecimalUtil.format(lou0, 0), BigDecimalUtil.format(lou2, 2))));
         BigDecimal defectSum = null;
         for (Map.Entry<String, List<String>> codeEntry : codeMap.entrySet()) {
@@ -1014,8 +1012,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         }
         //( 所在行不良品（片）- 所在行原片不良小计 ) / 所在行 使用数（片）* 100%，小数点后保留2位
         BigDecimal defectRate = BigDecimalUtil.subtract(blp0, defectSum);
-        defectRate = BigDecimalUtil.divide(defectRate, syl0, 4);
-        defectRate = BigDecimalUtil.multiply(defectRate, new BigDecimal("100"));
+        defectRate = BigDecimalUtil.percent(defectRate, syl0, 2);
         countRow.setDefectRate(defectRate);
         return countRow;
     }
