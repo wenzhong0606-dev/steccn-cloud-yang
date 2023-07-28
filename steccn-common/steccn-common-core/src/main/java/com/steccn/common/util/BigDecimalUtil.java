@@ -222,18 +222,7 @@ public class BigDecimalUtil {
      * @param <K>
      */
     public static <K> void accumulate(Map<K, BigDecimal> map, K key, BigDecimal value) {
-        //如果value为空，则默认为0
-        if (Objects.isNull(value)) {
-            value = BigDecimal.ZERO;
-        }
-        BigDecimal finalValue = value;
-        map.compute(key, (p, q) -> {
-            if (Objects.isNull(q)) {
-                q = BigDecimal.ZERO;
-            }
-            q = q.add(finalValue);
-            return q;
-        });
+        map.compute(key, (p, q) -> add(q, value));
     }
 
     /**
@@ -248,17 +237,12 @@ public class BigDecimalUtil {
      * @param <K1,K2>
      */
     public static <K1, K2> void biAccumulate(Map<K1, Map<K2, BigDecimal>> map, K1 k1, K2 k2, BigDecimal value) {
-        //如果value为空，则默认为0
-        if (Objects.isNull(value)) {
-            value = BigDecimal.ZERO;
-        }
-        BigDecimal finalValue = value;
         map.compute(k1, (p, q) -> {
             if (Objects.isNull(q)) {
                 q = Maps.newHashMap();
-                q.put(k2, finalValue);
+                q.put(k2, value);
             } else {
-                q.put(k2, add(q.get(k2), finalValue));
+                q.put(k2, add(q.get(k2), value));
             }
             return q;
         });
