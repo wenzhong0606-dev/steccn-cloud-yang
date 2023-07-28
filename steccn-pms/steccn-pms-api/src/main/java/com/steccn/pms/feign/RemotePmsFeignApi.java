@@ -81,6 +81,16 @@ public interface RemotePmsFeignApi {
     R<PmsProduceOrderVO> code(@ApiParam("生产订单号") @RequestParam("code") String code);
 
     /**
+     * 根据生产订单号查询正在执行中任务的产线,批次,车间信息
+     *
+     * @param code
+     * @return
+     */
+    @ApiOperation("根据生产订单号查询产线,批次,车间信息")
+    @GetMapping("/feign/pms/produce/order/allCode")
+    R<PmsProduceOrderVO> allcode(@ApiParam("生产订单号") @RequestParam("code") String code);
+
+    /**
      * 根据物料查询当前正在执行订单信息
      *
      * @param materialIds

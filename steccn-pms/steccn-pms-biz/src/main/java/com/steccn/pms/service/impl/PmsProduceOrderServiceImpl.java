@@ -768,6 +768,18 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
+    public PmsProduceOrderVO allCode(String code) {
+        //1.根据生产订单号来查询当前正在执行中的记录
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, code));
+        //2.校验数据
+        Assert.notNull(order, "没有对应code的订单");
+        //3.复制数据传入VO
+        PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
+        BeanUtils.copyProperties(order, pmsProduceOrderVO);
+        return pmsProduceOrderVO;
+    }
+
+    @Override
     public List<PmsProduceOrderVO> executionOfOrder(Set<Integer> ids) {
         //查询产线正在执行的订单
         List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getProductionLineId, ids).notIn(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.ZERO.getCode(), PmManagerConstant.OrderStateEnum.SIX.getCode(), PmManagerConstant.OrderStateEnum.SEVEN.getCode()));

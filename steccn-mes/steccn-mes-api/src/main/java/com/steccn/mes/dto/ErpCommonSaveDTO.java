@@ -13,7 +13,7 @@ import java.util.List;
  * @date 2023/07/27
  */
 @Data
-public class ErpTransferSaveDTO implements Serializable {
+public class ErpCommonSaveDTO<T> implements Serializable {
     /**
      * mes单据内码
      */
@@ -30,5 +30,5 @@ public class ErpTransferSaveDTO implements Serializable {
     /**
      * 分录明细实体
      */
-    List<ErpTransferSaveDetailDTO> fentry;
+    List<T> fentry;
 }

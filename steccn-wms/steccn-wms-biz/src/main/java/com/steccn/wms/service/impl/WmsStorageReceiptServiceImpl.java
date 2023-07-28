@@ -9,11 +9,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.mes.dto.ErpCommonSaveDTO;
+import com.steccn.mes.dto.ErpSpinStockSaveDetailDTO;
+import com.steccn.mes.feign.RemoteErpFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -77,6 +82,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
+
+    private final RemoteErpFeignApi remoteErpFeignApi;
 
 
     @Override
@@ -551,6 +558,40 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         WmsStorageReceipt wmsStorageReceipt = getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getCode, code));
         Assert.isTrue(Objects.nonNull(wmsStorageReceipt), "单据不存在");
         return chargeAgainst(wmsStorageReceipt.getId(), userName);
+    }
+
+    @Override
+    public Boolean linkErp(Long id) {
+        //先获取入库单详情
+        WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
+        //判断是否是已确认状态
+        if(!wmsStorageReceiptVO.getStatus().equals(OaConstant.NUM_1)){
+            throw new BusinessException("只有已确认状态才可以同步");
+        }
+        //仓库编码
+        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //类型为生产完工入库
+        if(wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)){
+            ErpCommonSaveDTO<ErpSpinStockSaveDetailDTO> erpCommonSaveDTO = new ErpCommonSaveDTO<>();
+            erpCommonSaveDTO.setFdate(wmsStorageReceiptVO.getCreateTime().toLocalDate());
+            erpCommonSaveDTO.setFmesbillid(wmsStorageReceiptVO.getId());
+            erpCommonSaveDTO.setFmesbillno(wmsStorageReceiptVO.getCode());
+            //引入详细信息
+            List<ErpSpinStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
+            if(CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())){
+                for(WmsStorageReceiptInfoVO tmp:wmsStorageReceiptVO.getList()){
+                    ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
+                    erpCommonSaveDetail.setFmesentryid(tmp.getId().toString());
+                    erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
+                    erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
+                    erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
+                    erpCommonSaveDetail.setSlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFstockno(sourceCode);
+                }
+            }
+            remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
+        }
+        return null;
     }
 
     WmsDeliveryReceiptDTO chargeAgainst(Long id, String userName) {

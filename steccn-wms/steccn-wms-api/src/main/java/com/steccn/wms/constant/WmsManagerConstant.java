@@ -24,6 +24,11 @@ public interface WmsManagerConstant {
 
     String JSON_MESSAGE = "message";
 
+    /**
+     * 入库单类型1
+     */
+    String RECEIPT_TYPE_1 = "生产完工入库";
+
 
     /**
      * 是否
