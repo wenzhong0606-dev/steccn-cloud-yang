@@ -2,10 +2,8 @@ package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
-import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +39,11 @@ public interface RemoteCompleteStorageFeignApi {
     R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code);
 
     @PostMapping("/feign/pms/complete/storage/order/num")
-    @ApiOperation("查询订单入库量")
-    R<Map<String, BigDecimal>> inStorage(TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
+    @ApiOperation("查询订单入库量-产线|班次日期|班次|订单")
+    R<Map<String, BigDecimal>> inStorage(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> dto);
+
+    @PostMapping("/feign/pms/complete/storage/week/num")
+    @ApiOperation("查询订单入库量-产线|周")
+    R<Map<String, BigDecimal>> inStorageWeek(@RequestBody TripleDTO<List<Integer>,LocalDateTime, LocalDateTime> dto);
 
 }

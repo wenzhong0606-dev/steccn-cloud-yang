@@ -124,6 +124,18 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<PmsUseCountDTO> useCountPerOrder(@Param("lineList") List<Integer> lineList,
                                           @Param("start") LocalDateTime start,
                                           @Param("end") LocalDateTime end);
+
+    /**
+     * 获取原片耗量-每个订单，班次日期
+     *
+     * @param lineList 产线集合
+     * @param start    开始时间
+     * @param end      结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> useCountWeek(@Param("lineList") List<Integer> lineList,
+                                      @Param("start") LocalDateTime start,
+                                      @Param("end") LocalDateTime end);
 }
 
 

@@ -125,6 +125,19 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         return resMap;
     }
 
+
+    @Override
+    public Map<String, BigDecimal> inStorageWeek(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        List<FurtherProduceReportDataVO> resList = baseMapper.inStorageWeek(lineList, start, end);
+        if (CollUtil.isNotEmpty(resList)) {
+            for (FurtherProduceReportDataVO data : resList) {
+                resMap.put(data.getProductLineId() + "_" + data.getWeekStr(), data.getProcessQuantity());
+            }
+        }
+        return resMap;
+    }
+
     @Override
     public Map<Long, Map<Long, BigDecimal>> materialByDateMap(Set<Long> materialSet, LocalDate date) {
         Map<Long, Map<Long, BigDecimal>> resMap = Maps.newHashMap();
@@ -152,7 +165,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     @Override
     public List<FurtherProduceReportDataVO> materialByDateList(Set<Long> materialSet, LocalDate date) {
         List<FurtherProduceReportDataVO> resList = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)){
+        if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {
             //当前日期的一号早八点
             LocalDateTime start = LocalDateUtil.getMorning(date.withDayOfMonth(1));
             //当前日期的晚班结束时间
@@ -161,6 +174,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         }
         return resList;
     }
+
 }
 
 

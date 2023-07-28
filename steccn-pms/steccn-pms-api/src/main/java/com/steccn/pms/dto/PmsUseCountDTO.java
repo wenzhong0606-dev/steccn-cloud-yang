@@ -20,6 +20,9 @@ public class PmsUseCountDTO implements Serializable {
     @ApiModelProperty("产线")
     private String productLineId;
 
+    @ApiModelProperty("周")
+    private String weekStr;
+
     @ApiModelProperty("班次日期")
     private LocalDate classDate;
 

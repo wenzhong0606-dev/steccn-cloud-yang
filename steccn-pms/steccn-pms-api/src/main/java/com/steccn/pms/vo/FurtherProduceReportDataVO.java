@@ -42,4 +42,7 @@ public class FurtherProduceReportDataVO implements Serializable {
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty("周")
+    private String weekStr;
 }

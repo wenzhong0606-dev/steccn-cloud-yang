@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
@@ -95,4 +96,13 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      */
     List<FurtherProduceReportDataVO> materialByDateList(Set<Long> materialSet , LocalDate date);
 
+    /**
+     * 入库数
+     *
+     * @param lineList 产线集合
+     * @param start    开始时间
+     * @param end      结束时间
+     * @return map key为产线id+"_"+week value 【key为班次id，value为数量】
+     */
+    Map<String, BigDecimal> inStorageWeek(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
 }

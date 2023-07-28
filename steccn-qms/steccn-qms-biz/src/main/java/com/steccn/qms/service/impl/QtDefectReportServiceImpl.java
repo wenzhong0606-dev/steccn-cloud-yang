@@ -764,6 +764,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //查询产线
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+        //查询每周的原片耗用量和入库量
+        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.inStorageWeek(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountWeek(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+
         //根据开始时间和结束时间 区分不同周
         Map<Integer, BigDecimal> sumMap = Maps.newHashMap();
         List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.WEEK.getType(), start, end);
@@ -776,6 +780,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setType(0);
                 row.setWeekStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
                 row.setProductLineName(lineIdNameMap.get(line));
+                //获取使用量和成品数
+                row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
+                row.setInStorageNum(inStorageMap.get(line + "_" + weekStr));
                 List<QtCheckItemMaterialAvgDTO> filterDataList = dataList.stream().filter(ele -> weekStr.equals(ele.getClassMonth()) && line.equals(ele.getProductLineId())).collect(Collectors.toList());
                 row.setOriginDefectNum(getDefectNum(filterDataList, categoryMap.get(0)));
                 BigDecimalUtil.accumulate(countMap, 0, row.getOriginDefectNum());

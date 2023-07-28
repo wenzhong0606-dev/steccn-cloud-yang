@@ -339,4 +339,24 @@
               </foreach>
         group by rw.product_line_id,rw.produce_order_no,  class_date , classes_id,  rw.station_id
     </select>
+    <select id="useCountWeek" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id,
+        YEARWEEK(class_date,7) as weekStr,
+        rw.station_id ,
+        sum(de.quantity) as quantity
+        from pms_report_work rw join pms_complete_delivery de on rw.id = de.report_work_id
+        where rw.del_flag = 0 AND de.del_flag = 0
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by
+        rw.product_line_id,
+        YEARWEEK(class_date,7),
+        rw.station_id
+
+    </select>
 </mapper>
