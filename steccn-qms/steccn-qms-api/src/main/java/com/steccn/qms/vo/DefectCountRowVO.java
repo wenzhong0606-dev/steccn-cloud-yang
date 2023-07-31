@@ -13,16 +13,16 @@ import java.math.BigDecimal;
  * @date 2023/7/27
  */
 @Data
-@ApiModel("不良周报表")
-public class DefectWeekRowVO implements Serializable {
+@ApiModel("不良周|月报表")
+public class DefectCountRowVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("type 0-数据 1-合计（每周） 2-总计")
     private Integer type;
 
-    @ApiModelProperty("周")
-    private String weekStr;
+    @ApiModelProperty("周,月份")
+    private String timeStr;
 
     @ApiModelProperty("产线")
     private String productLineName;
