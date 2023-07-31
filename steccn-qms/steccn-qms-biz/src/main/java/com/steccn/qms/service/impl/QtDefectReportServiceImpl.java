@@ -982,6 +982,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         countRow.setProductLineName(lineName);
         List<FurtherValueStrVO> module = Lists.newArrayList();
         countRow.setModule(module);
+        //规格
+        module.add(new FurtherValueStrVO(Arrays.asList("", "", "")));
         BigDecimal syl0 = countMap.get(DefectDayConstant.SYL_0);
         BigDecimal syl1 = countMap.get(DefectDayConstant.SYL_1);
         module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(syl0, 0), BigDecimalUtil.format(syl1, 0))));
