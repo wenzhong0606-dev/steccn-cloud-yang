@@ -693,7 +693,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     LocalDateTime finalClassStart = classStart;
                     LocalDateTime finalClassEnd = classEnd;
                     //获取满足条件的报工数据
-                    List<PmsReportWork> passRwList = orderRwList.stream().filter(v -> LocalDateUtil.isRange(v.getStartTime(), finalClassStart, finalClassEnd, true, true)).collect(Collectors.toList());
+                    List<PmsReportWork> passRwList = orderRwList.stream().filter(v -> LocalDateUtil.isRange(v.getStartTime(), finalClassStart, finalClassEnd, true, false)).collect(Collectors.toList());
                     Set<Long> rwIdSet = Sets.newHashSet();
                     //定义加工的片数
                     BigDecimal yieldPs = BigDecimal.ZERO;
