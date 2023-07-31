@@ -139,7 +139,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 //根据缺陷记录时段来过滤数据集
                 QtDefectReportDataVO row = new QtDefectReportDataVO();
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
-                row.setType(1);
+                row.setType(0);
                 row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
                 row.setProductLineName(lineName);
                 Integer classId = LocalDateUtil.getClassId(begin, false);
@@ -168,7 +168,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             }
             dataList.add(count(1, lineName, "合计（单产线）", lineValueMap, defectIdList));
         }
-        dataList.add(count(1, "总计", "总计", allValueMap, defectIdList));
+        dataList.add(count(2, "总计", "总计", allValueMap, defectIdList));
         return resVo;
     }
 
