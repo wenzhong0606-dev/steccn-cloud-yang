@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -25,6 +26,7 @@ public class SafetyTokenController {
 
     @GetMapping("/token")
     @ApiOperation(value = "获取安环系统token")
+    @ResponseBody
     public R<SafetyTokenVO> getToken() {
         return R.success(safetyTokenService.getSafetyToken());
     }

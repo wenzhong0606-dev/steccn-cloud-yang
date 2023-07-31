@@ -7,6 +7,7 @@ import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SafetyUserNameDTO;
 import com.steccn.platform.feign.RemoteSafetyFeignApi;
 import com.steccn.platform.service.SafetyTokenService;
+import com.steccn.platform.vo.SafetyTokenPageMapVO;
 import com.steccn.platform.vo.SafetyTokenVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,10 +35,8 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
         JSONObject jsonObject = JSONObject.parseObject(json);
         Integer status = jsonObject.getInteger("status");
         if(status.equals(OaConstant.NO)){
-            //获取token
-            String token = jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).getString("token");
-            result.setToken(token);
-            result.setUserInfo(jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).toJSONString().replace("\"", ""));
+            //获取json下的对象
+            result = jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).toJavaObject(SafetyTokenVO.class);
         }else {
             throw new BusinessException("安环系统中没有该用户,请联系管理员");
         }
