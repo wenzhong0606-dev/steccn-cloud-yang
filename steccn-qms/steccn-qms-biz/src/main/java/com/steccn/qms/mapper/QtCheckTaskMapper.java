@@ -9,6 +9,7 @@ import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -101,7 +102,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值
      *
-     * @param lineIdList 产线集合
+     * @param lineIdList      产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
@@ -117,7 +118,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值--班组
      *
-     * @param lineIdList 产线集合
+     * @param lineIdList      产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
@@ -132,7 +133,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值--班次日期
      *
-     * @param lineIdList 产线集合
+     * @param lineIdList      产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
@@ -147,7 +148,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
     /**
      * 获取巡检的厚度平均值的平均值--班次日期
      *
-     * @param lineIdList 产线集合
+     * @param lineIdList      产线集合
      * @param thickItemIdList 检验项id集合
      * @param start           开始时间
      * @param end             结束时间
@@ -163,9 +164,9 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * 透光率
      *
      * @param lineIdList 产线集合
-     * @param start           开始时间
-     * @param end             结束时间
-     * @param codeList        检验项code
+     * @param start      开始时间
+     * @param end        结束时间
+     * @param codeList   检验项code
      * @return
      */
     List<QtCheckItemMaterialAvgDTO> transmittance(@Param("lineIdList") List<Integer> lineIdList,
@@ -177,11 +178,11 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * 微气泡数量统计
      *
      * @param lineIdList 产线集合
-     * @param start           开始时间
-     * @param end             结束时间
-     * @param itemIdList      检验项微气泡id
-     * @param time1           时间段
-     * @param time2           时间段
+     * @param start      开始时间
+     * @param end        结束时间
+     * @param itemIdList 检验项微气泡id
+     * @param time1      时间段
+     * @param time2      时间段
      * @return 微气泡
      */
     List<QtCheckItemMaterialAvgDTO> microBubble(@Param("lineIdList") List<Integer> lineIdList,
@@ -196,9 +197,9 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * 获取原片不良数据-班次日期
      *
      * @param lineIdList 产线集合
-     * @param start           开始时间
-     * @param end             结束时间
-     * @param categoryId      原片不良类别id
+     * @param start      开始时间
+     * @param end        结束时间
+     * @param categoryId 原片不良类别id
      * @return
      */
     List<QtCheckItemMaterialAvgDTO> originalDefectDay(@Param("lineIdList") List<Integer> lineIdList,
@@ -211,23 +212,23 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * 获取原片不良数据-月份
      *
      * @param lineIdList 产线集合
-     * @param start           开始时间
-     * @param end             结束时间
-     * @param categoryId      原片不良类别id
+     * @param start      开始时间
+     * @param end        结束时间
+     * @param categoryId 原片不良类别id
      * @return
      */
     List<QtCheckItemMaterialAvgDTO> originalDefectMonth(@Param("lineIdList") List<Integer> lineIdList,
-                                                      @Param("start") LocalDateTime start,
-                                                      @Param("end") LocalDateTime end,
-                                                      @Param("categoryId") Integer categoryId);
+                                                        @Param("start") LocalDateTime start,
+                                                        @Param("end") LocalDateTime end,
+                                                        @Param("categoryId") Integer categoryId);
 
     /**
      * 获取镀膜不良数据-月份
      *
      * @param lineIdList 产线集合
-     * @param start           开始时间
-     * @param end             结束时间
-     * @param categoryId      原片不良类别id
+     * @param start      开始时间
+     * @param end        结束时间
+     * @param categoryId 原片不良类别id
      * @return
      */
     List<QtCheckItemMaterialAvgDTO> coatingFilmMonth(@Param("lineIdList") List<Integer> lineIdList,
@@ -237,14 +238,44 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
 
     /**
      * 不良日报表
+     *
      * @param lineIdList 产线集合
-     * @param start           开始时间
-     * @param end             结束时间
+     * @param start      开始时间
+     * @param end        结束时间
      * @return
      */
     List<QtCheckItemMaterialAvgDTO> defectDay(@Param("lineIdList") List<Integer> lineIdList,
                                               @Param("start") LocalDateTime start,
                                               @Param("end") LocalDateTime end);
+
+    /**
+     * 不良周报表
+     *
+     * @param categoryIdSet 类别集合
+     * @param lineIdList    产线集合
+     * @param start         开始时间
+     * @param end           结束时间
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> defectWeek(@Param("categoryIdSet") Set<Integer> categoryIdSet,
+                                               @Param("lineIdList") List<Integer> lineIdList,
+                                               @Param("start") LocalDateTime start,
+                                               @Param("end") LocalDateTime end);
+
+
+    /**
+     * 不良周报表
+     *
+     * @param categoryIdSet 类别集合
+     * @param lineIdList    产线集合
+     * @param start         开始时间
+     * @param end           结束时间
+     * @return
+     */
+    List<QtCheckItemMaterialAvgDTO> defectMonth(@Param("categoryIdSet") Set<Integer> categoryIdSet,
+                                               @Param("lineIdList") List<Integer> lineIdList,
+                                               @Param("start") LocalDateTime start,
+                                               @Param("end") LocalDateTime end);
 }
 
 

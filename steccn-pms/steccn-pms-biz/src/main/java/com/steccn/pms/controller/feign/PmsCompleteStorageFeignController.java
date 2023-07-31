@@ -51,4 +51,17 @@ public class PmsCompleteStorageFeignController {
     public R<Map<String, BigDecimal>> inStorage(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
         return R.success(pmsCompleteStorageInfoService.inStorage(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
+
+    @PostMapping("/week/num")
+    @ApiOperation("查询订单入库量-产线|周")
+    R<Map<String, BigDecimal>> inStorageWeek(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
+        return R.success(pmsCompleteStorageInfoService.inStorageWeek(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
+
+    @PostMapping("/month/num")
+    @ApiOperation("查询订单入库量-产线|月")
+    R<Map<String, BigDecimal>> inStorageMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO){
+        return R.success(pmsCompleteStorageInfoService.inStorageMonth(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
+
 }

@@ -1343,7 +1343,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum LossReportType {
-        CLASS(0, "班次", "C"), DAY(1, "日","D"), MONTH(2, "月","M");
+        CLASS(0, "班次", "C"), DAY(1, "日", "D"), MONTH(2, "月", "M"), WEEK(3, "周", "W");
 
         private Integer code;
         private String name;
