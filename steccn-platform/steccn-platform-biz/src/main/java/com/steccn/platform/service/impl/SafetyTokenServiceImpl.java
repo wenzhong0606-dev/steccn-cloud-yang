@@ -37,6 +37,7 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
             //获取token
             String token = jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).getString("token");
             result.setToken(token);
+            result.setUserInfo(jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).toJSONString().replace("\"", ""));
         }else {
             throw new BusinessException("安环系统中没有该用户,请联系管理员");
         }
