@@ -84,6 +84,12 @@ public class PmsProduceOrderFeignController {
         return R.success(pmsProduceOrderService.code(code));
     }
 
+    @ApiOperation("根据生产订单号查询产线,车间,批次信息")
+    @GetMapping("/allCode")
+    public R<PmsProduceOrderVO> allCode(@ApiParam("订单号") @RequestParam("code") String code) {
+        return R.success(pmsProduceOrderService.allCode(code));
+    }
+
     @PostMapping("/material/ids")
     @ApiOperation("根据物料查询当前正在执行订单信息")
     public R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds) {

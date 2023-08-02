@@ -20,6 +20,15 @@ public interface WmsManagerConstant {
      */
     String WAREHOUSING_TYPE = "warehousing_type";
 
+    String JSON_SUCCESS = "success";
+
+    String JSON_MESSAGE = "message";
+
+    /**
+     * 入库单类型1
+     */
+    String RECEIPT_TYPE_1 = "生产完工入库";
+
 
     /**
      * 是否

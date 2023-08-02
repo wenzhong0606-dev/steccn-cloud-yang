@@ -10,7 +10,9 @@ import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.service.SysOfficeErpJoinService;
 import com.steccn.platform.service.SysOfficeService;
+import com.steccn.platform.vo.SysErpOfficeVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
@@ -33,6 +35,7 @@ import java.util.Set;
 @RequestMapping("/feign/platform/sys/office")
 public class SysOfficeFeignController {
     private final SysOfficeService sysOfficeService;
+    private final SysOfficeErpJoinService sysOfficeErpJoinService;
 
     @GetMapping()
     public R<List<SysOfficeVO>> listFlatDataByType(@RequestParam String type) {
@@ -91,6 +94,12 @@ public class SysOfficeFeignController {
             return R.success(Maps.newHashMap());
         }
         return R.success(sysOfficeService.listByCodeSet(codeSet));
+    }
+
+    @GetMapping("erp/code")
+    @ApiOperation("根据id获取erp中的code")
+    R<SysErpOfficeVO> getErpCodeByOfficeId(@RequestParam Integer officeId) {
+        return R.success(sysOfficeErpJoinService.getErpCodeById(officeId));
     }
 
     @ApiOperation("根据父id获取下级节点数据")

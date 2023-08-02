@@ -1,15 +1,14 @@
 package com.steccn.mes.feign;
 
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.ErpCustomerDTO;
+import com.steccn.mes.dto.ErpCommonSaveDTO;
 import com.steccn.mes.vo.ErpCustomerVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -30,4 +29,22 @@ public interface RemoteErpFeignApi {
     @PostMapping("/api/tcmes/getcust")
     @ApiOperation("获取erp客户信息")
     R<List<ErpCustomerVO>> getErpCustomer(@RequestBody ErpCustomerDTO dto);
+
+    /**
+     * 保存直接调拨单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savetransferdirect")
+    @ApiOperation("保存直接调拨单")
+    String saveTransfer(@RequestBody ErpCommonSaveDTO dto);
+
+    /**
+     * 保存
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savespinstock")
+    @ApiOperation("保存简单生产入库单")
+    String saveSpinStock(@RequestBody ErpCommonSaveDTO dto);
 }

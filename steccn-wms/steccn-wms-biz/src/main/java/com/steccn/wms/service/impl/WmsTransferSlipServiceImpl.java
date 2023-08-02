@@ -3,27 +3,30 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.mes.dto.ErpCommonSaveDTO;
+import com.steccn.mes.dto.ErpTransferSaveDetailDTO;
+import com.steccn.mes.feign.RemoteErpFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipInfoDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
-import com.steccn.wms.feign.RemoteWmsMessFeignApi;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsTransferSlipInfoService;
 import com.steccn.wms.service.WmsTransferSlipService;
@@ -65,7 +68,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
-    private final RemoteWmsMessFeignApi remoteWmsMessFeignApi;
+    private final RemoteErpFeignApi remoteErpFeignApi;
 
     private final WmsInventoryService wmsInventoryService;
 
@@ -428,6 +431,52 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             infoVOList.forEach(info -> info.setUnitName(dict.get(info.getUnit())));
         }
         return wmsTransferSlipVO;
+    }
+
+    @Override
+    public Boolean linkErp(Long id) {
+        //获取详情
+        WmsTransferSlipVO wmsTransferSlipVO = get(id);
+        if(!wmsTransferSlipVO.getStatus().equals(OaConstant.NUM_1)){
+            throw new BusinessException("只有已确认状态才可以同步");
+        }
+        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getSourceWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String targetCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getTargetWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //组erp数据
+        ErpCommonSaveDTO<ErpTransferSaveDetailDTO> erpDTO = new ErpCommonSaveDTO();
+        erpDTO.setFmesbillid(wmsTransferSlipVO.getId().toString());
+        erpDTO.setFmesbillno(wmsTransferSlipVO.getCode());
+        erpDTO.setFdate(wmsTransferSlipVO.getCreateTime().toLocalDate());
+        //组erp详情
+        List<ErpTransferSaveDetailDTO> erpDetails = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(wmsTransferSlipVO.getList())){
+            //获取所有仓库信息
+            for(WmsTransferSlipInfoVO tmp: wmsTransferSlipVO.getList()){
+                ErpTransferSaveDetailDTO erpDetail = new ErpTransferSaveDetailDTO();
+                erpDetail.setFmesentryid(tmp.getId().toString());
+                erpDetail.setFmatno(tmp.getMaterialCode());
+                erpDetail.setFqty(tmp.getQuantity());
+                erpDetail.setFsrcstockno(sourceCode);
+                erpDetail.setFdeststockno(targetCode);
+                erpDetail.setFlot(tmp.getBatch());
+                erpDetails.add(erpDetail);
+            }
+        }
+        erpDTO.setFentry(erpDetails);
+        //调用EPR
+        String listR = remoteErpFeignApi.saveTransfer(erpDTO);
+        JSONObject jsonObject = JSONObject.parseObject(listR);
+        if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
+            WmsTransferSlip wmsTransferSlip = new WmsTransferSlip();
+            wmsTransferSlip.setId(id);
+            wmsTransferSlip.setStatus(OaConstant.NUM_2);
+            updateById(wmsTransferSlip);
+        }else {
+            String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+            log.error(error);
+            throw new BusinessException(error);
+        }
+        return true;
     }
 
     /**

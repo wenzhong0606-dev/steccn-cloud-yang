@@ -92,4 +92,11 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     WmsDeliveryReceiptDTO chargeAgainstByCode(String code,String userName);
+
+    /**
+     * 同步erp
+     * @param id
+     * @return
+     */
+    Boolean linkErp(Long id);
 }
