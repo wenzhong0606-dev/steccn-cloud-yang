@@ -34,6 +34,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsReportWorkHourVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
@@ -661,13 +662,30 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Set<Long> orderIdSet = sjgDataList.stream().map(EpMeterReadRowDTO::getProduceOrderId).collect(Collectors.toSet());
             List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProduceOrderId, orderIdSet));
             if (CollUtil.isNotEmpty(dbList)) {
-                Map<Long, List<PmsReportWork>> orderMap = dbList.stream().collect(Collectors.groupingBy(PmsReportWork::getProduceOrderId));
                 //获取生产订单集合
                 List<PmsProduceOrder> orderList = produceOrderService.listByIds(orderIdSet);
                 //定义生产订单的所有物料，用于物料的单位转换
                 Set<Long> materialIdSet = Sets.newHashSet();
                 //key-生产订单主键 value-物料主键
                 Map<Long, Long> orderMaterialMap = Maps.newHashMap();
+                //工序id集合
+                Set<Long> processIdSet = dbList.stream().map(PmsReportWork::getProcessId).collect(Collectors.toSet());
+                //查询工序的信息
+                List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
+                Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
+                List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
+                SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList, "工序信息不可为空");
+                //工序信息转换
+                Map<Long, Long> craftProcessIdMap = Maps.newHashMap();
+                pmsProduceOrderCraftList.forEach(ele -> craftProcessIdMap.put(ele.getId(), ele.getProcessId()));
+                dbList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
+
+                if(CollUtil.isNotEmpty(pmProcessList)){
+                    PmProcess pmProcess = pmProcessList.get(pmProcessList.size() - 1);
+                    //过滤工位
+                    dbList = dbList.stream().filter(ele -> ele.getProcessId().equals(pmProcess.getId())).collect(Collectors.toList());
+                }
+                Map<Long, List<PmsReportWork>> orderMap = dbList.stream().collect(Collectors.groupingBy(PmsReportWork::getProduceOrderId));
                 orderList.forEach(order -> {
                     materialIdSet.add(order.getMaterialId());
                     orderMaterialMap.put(order.getId(), order.getMaterialId());

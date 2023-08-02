@@ -922,15 +922,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         jpNumList.forEach(ele -> {
             EpMeterReadRowDTO jpRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             jpRowDTO.setYield(ele.getPullAmount());
-            //test11
-//            jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
         });
         List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         sjgNumList.forEach(ele -> {
             EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             sjgRowDTO.setYield(ele.getYield());
-            //test11
-//            sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
         });
 
         //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
@@ -965,12 +961,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //保证当前节点
                 if (Objects.nonNull(account) && Objects.nonNull(account.getEntityTable())) {
                     EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
-                    if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && (sjgLineSet.contains(epPartition.getOfficeId()) || jpLineSet.contains(epPartition.getOfficeId()))) {
+                    Integer lineId = parentLineMap.get(epPartition.getOfficeId());
+                    if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && (sjgLineSet.contains(lineId) || jpLineSet.contains(lineId))) {
                         //若空格所在列的节点是产线节点L或L的下级节点，则查询条件为“产线 = L”
                         //过滤出相同的班次日期，相同班次，相同厚度的订单
                         List<BigDecimal> yieldSumList = orderRowList.stream().filter(ele -> ele.getReadDate().equals(consumeDTO.getReadDate()) &&
                                 Objects.equals(ele.getClassId(), consumeDTO.getClassId()) &&
-                                Objects.equals(ele.getThick(), consumeDTO.getThick())).filter(ele -> epPartition.getOfficeId().equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+                                Objects.equals(ele.getThick(), consumeDTO.getThick())  &&
+                                Objects.equals(ele.getMeterId(),account.getId())
+                        ).filter(ele -> lineId.equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
                         BigDecimal yieldSum = BigDecimalUtil.sum(yieldSumList);
                         unitMap.put(epPartition.getId(), yieldSum);
                         //获取当前节点的所有孩子节点
