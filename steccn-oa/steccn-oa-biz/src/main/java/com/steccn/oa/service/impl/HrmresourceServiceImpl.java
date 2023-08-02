@@ -9,9 +9,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.domain.Hrmdepartment;
+import com.steccn.oa.domain.Hrmjobtitles;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.domain.KqGroupmember;
 import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.mapper.HrmdepartmentMapper;
+import com.steccn.oa.mapper.HrmjobtitlesMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
@@ -40,6 +44,10 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     private final KqGroupmemberMapper kqGroupmemberMapper;
 
     private final RemoteMesFeignApi remoteMesFeignApi;
+
+    private final HrmdepartmentMapper hrmdepartmentMapper;
+
+    private final HrmjobtitlesMapper hrmjobtitlesMapper;
 
     @Override
     public Long getIdByWorkCode(String workCode) {
@@ -187,13 +195,36 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     public String synchronizeUser() {
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().ne(Hrmresource::getStatus, OaConstant.NUM_5));
         List<MesUserDTO> dto = Lists.newArrayList();
+        List<Hrmjobtitles> hrmjobtitles = hrmjobtitlesMapper.selectList(new LambdaQueryWrapper<Hrmjobtitles>()
+                .isNull(Hrmjobtitles::getCanceled));
+        List<Hrmdepartment> hrmdepartments = hrmdepartmentMapper.selectList(new LambdaQueryWrapper<Hrmdepartment>()
+                .isNull(Hrmdepartment::getCanceled));
         list.forEach(tmp->{
             MesUserDTO tmpDTO = new MesUserDTO();
             tmpDTO.setUserName(tmp.getLastname());
             tmpDTO.setLoginCode(tmp.getLoginid());
-            tmpDTO.setOfficeCode("Unallocated");
-            tmpDTO.setOfficeName("待分配部门");
-            tmpDTO.setIsNewRecord(true);
+            //传值为岗位名称
+            tmpDTO.setOfficeCode(hrmjobtitles.stream().filter(v->v.getId().equals(tmp.getJobtitle())).findFirst().get().getJobtitlename());
+            //传值为部门名称
+            Hrmdepartment hrmdepartment = hrmdepartments.stream().filter(v -> v.getId().equals(tmp.getDepartmentid())).findFirst().get();
+            if(hrmdepartment.getDepartmentname().equals("深加工二车间")){
+                hrmdepartment.setDepartmentname("深加工二车间（东线）");
+            }
+            if(hrmdepartment.getDepartmentname().equals("深加工三车间")){
+                hrmdepartment.setDepartmentname("深加工三车间（西线）");
+            }
+            String parentName = "";
+            if(!hrmdepartment.getSupdepid().equals(0)){
+                Hrmdepartment hrmParentDepartment = hrmdepartments.stream().filter(v -> v.getId().equals(hrmdepartment.getSupdepid())).findFirst().get();
+                if(hrmParentDepartment.getDepartmentname().equals("深加工二车间")){
+                    hrmParentDepartment.setDepartmentname("深加工二车间（东线）");
+                }
+                if(hrmParentDepartment.getDepartmentname().equals("深加工三车间")){
+                    hrmParentDepartment.setDepartmentname("深加工三车间（西线）");
+                }
+                parentName = hrmParentDepartment.getDepartmentname();
+            }
+            tmpDTO.setOfficeName(parentName+"/"+hrmdepartment.getDepartmentname());
             dto.add(tmpDTO);
         });
         return remoteMesFeignApi.synchronizeUser(dto);

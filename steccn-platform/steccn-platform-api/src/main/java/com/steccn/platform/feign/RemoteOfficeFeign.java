@@ -292,5 +292,5 @@ public interface RemoteOfficeFeign {
 
     @GetMapping("/feign/platform/sys/office/erp/code")
     @ApiOperation("根据id获取erp中的code")
-    R<SysErpOfficeVO> getErpCodeByOfficeId(@RequestParam Integer officeId);
+    R<SysErpOfficeVO> getErpCodeByOfficeId(@RequestParam("officeId") Integer officeId);
 }
