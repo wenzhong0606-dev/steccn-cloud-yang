@@ -734,10 +734,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 }
             }
             if (flag) {
-                rowList.add(countSum(1, "合计（单产线）", countMap, codeMap));
+                rowList.add(countSum(1, lineName, "合计（单产线）", countMap, codeMap));
             }
         }
-        rowList.add(countSum(2, "总计", sumMap, codeMap));
+        rowList.add(countSum(2, null, "总计", sumMap, codeMap));
         resVo.setRowList(rowList);
         return resVo;
     }
@@ -976,10 +976,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param codeMap  动态表头
      * @return 行
      */
-    private DefectDayRowVO countSum(int type, String lineName, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
+    private DefectDayRowVO countSum(int type, String lineName,String classDateStr, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
         DefectDayRowVO countRow = new DefectDayRowVO();
         countRow.setType(type);
         countRow.setProductLineName(lineName);
+        countRow.setClassDateStr(classDateStr);
         List<FurtherValueStrVO> module = Lists.newArrayList();
         countRow.setModule(module);
         //规格
