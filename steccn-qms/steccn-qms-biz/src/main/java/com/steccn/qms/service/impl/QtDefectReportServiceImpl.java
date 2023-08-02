@@ -575,10 +575,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 BigDecimalUtil.accumulate(sumMap, "-2", row.getDefectSum());
             }
             //月份合计
-            rowList.add(countRow(itemList, countMap, 1, "合计（单月）"));
+            rowList.add(countRow(itemList, countMap, 1, monthStr, "合计（单月）"));
         }
         //总计
-        rowList.add(countRow(itemList, sumMap, 2, "合计"));
+        rowList.add(countRow(itemList, sumMap, 2, null, "合计"));
         return resVo;
     }
 
@@ -976,7 +976,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param codeMap  动态表头
      * @return 行
      */
-    private DefectDayRowVO countSum(int type, String lineName,String classDateStr, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
+    private DefectDayRowVO countSum(int type, String lineName, String classDateStr, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
         DefectDayRowVO countRow = new DefectDayRowVO();
         countRow.setType(type);
         countRow.setProductLineName(lineName);
@@ -1072,9 +1072,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param hintName 提示语
      * @return
      */
-    private CoatingFilmRowVO countRow(List<QtDefectiveItem> itemList, Map<String, BigDecimal> map, int type, String hintName) {
+    private CoatingFilmRowVO countRow(List<QtDefectiveItem> itemList, Map<String, BigDecimal> map, int type, String monthStr, String hintName) {
         CoatingFilmRowVO row = new CoatingFilmRowVO();
         row.setType(type);
+        row.setMonthStr(monthStr);
         row.setProductLineName(hintName);
         row.setDefectSum(BigDecimalUtil.sum(map.values()));
         List<BigDecimal> valueList = Lists.newArrayList();
