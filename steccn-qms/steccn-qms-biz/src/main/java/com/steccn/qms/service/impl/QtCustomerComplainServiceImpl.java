@@ -529,7 +529,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //标题
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KSBT, dto.getTitle()));
         //问题描述
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, dto.getDescription()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, saveDoc(dto.getDescUrl()+qtCustomerComplain.getId(),"描述").getDocid().toString()));
         //投诉客户
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSKH, dto.getComplainCustomerName()));
         //投诉日期
@@ -759,6 +759,16 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         return titleName + QtManagerConstant.WHIPPTREE + createName + QtManagerConstant.WHIPPTREE + LocalDate.now();
     }
 
+
+    /**
+     * 保存infourl的详情内容
+     * @param infoUrl
+     * @param docName
+     * @return
+     */
+    private OaSaveDocVO saveDoc(String infoUrl, String docName) {
+        return FeignOptional.of(() -> oaInfoService.saveDoc(infoUrl, docName), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+    }
 }
 
 
