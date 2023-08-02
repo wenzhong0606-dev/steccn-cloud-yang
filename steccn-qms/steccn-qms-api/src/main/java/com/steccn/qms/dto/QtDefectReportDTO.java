@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -20,18 +22,23 @@ import java.util.List;
 public class QtDefectReportDTO implements Serializable {
 
     @ApiModelProperty("产线集合")
+    @NotNull(message = "产线不能为空")
+    @Size(min = 1, message = "产线不能为空")
     private List<Integer> productLineList;
 
     /**
      * @see QtManagerConstant.LossReportType
      */
     @ApiModelProperty("粒度")
+    @NotNull(message = "粒度不能为空")
     private Integer granularity;
 
     @ApiModelProperty("开始日期")
+    @NotNull(message = "开始日期不能为空")
     private LocalDate startDate;
 
     @ApiModelProperty("结束日期")
+    @NotNull(message = "结束日期不能为空")
     private LocalDate endDate;
 
 }

@@ -59,6 +59,28 @@ public interface PmsCompleteStorageInfoMapper extends BaseMapper<PmsCompleteStor
     List<FurtherProduceReportDataVO> inStorage(@Param("lineList") List<Integer> lineList,
                                                @Param("start") LocalDateTime start,
                                                @Param("end") LocalDateTime end);
+
+    /**
+     * 入库数量 - 周
+     * @param lineList 产线id
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return list
+     */
+    List<FurtherProduceReportDataVO> inStorageWeek(@Param("lineList") List<Integer> lineList,
+                                                   @Param("start") LocalDateTime start,
+                                                   @Param("end") LocalDateTime end);
+
+    /**
+     * 入库数量 - 月
+     * @param lineList 产线id
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return list
+     */
+    List<FurtherProduceReportDataVO> inStorageMonth(@Param("lineList") List<Integer> lineList,
+                                                    @Param("start") LocalDateTime start,
+                                                    @Param("end") LocalDateTime end);
 }
 
 

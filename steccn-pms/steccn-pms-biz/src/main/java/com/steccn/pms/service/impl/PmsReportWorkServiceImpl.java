@@ -693,7 +693,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     LocalDateTime finalClassStart = classStart;
                     LocalDateTime finalClassEnd = classEnd;
                     //获取满足条件的报工数据
-                    List<PmsReportWork> passRwList = orderRwList.stream().filter(v -> LocalDateUtil.isRange(v.getStartTime(), finalClassStart, finalClassEnd, true, true)).collect(Collectors.toList());
+                    List<PmsReportWork> passRwList = orderRwList.stream().filter(v -> LocalDateUtil.isRange(v.getStartTime(), finalClassStart, finalClassEnd, true, false)).collect(Collectors.toList());
                     Set<Long> rwIdSet = Sets.newHashSet();
                     //定义加工的片数
                     BigDecimal yieldPs = BigDecimal.ZERO;
@@ -931,6 +931,52 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 if (stationIds.contains(ele.getStationId()) && dictMap.containsKey(ele.getClassId())) {
                     SysDictVO sysDictVO = dictMap.get(ele.getClassId());
                     resMap.put(ele.getProductLineId() + "_" + ele.getClassDate() + "_" + sysDictVO.getCode() + "_" + ele.getProduceOrderNo(), ele.getQuantity());
+                }
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> useCountWeek(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        //获取(start,end)时间范围内的报工信息
+        List<PmsUseCountDTO> dbList = baseMapper.useCountWeek(lineList, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取磨边工位
+            SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+            parentDTO.setParentIds(Sets.newHashSet(lineList));
+            parentDTO.setOfficeType(PmManagerConstant.NUM_13);
+            //获取产线下的工位
+            List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //包含磨边工位的
+            Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+            dbList.forEach(ele -> {
+                if (stationIds.contains(ele.getStationId())) {
+                    resMap.put(ele.getProductLineId() + "_" + ele.getWeekStr(), ele.getQuantity());
+                }
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> useCountMonth(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        //获取(start,end)时间范围内的报工信息
+        List<PmsUseCountDTO> dbList = baseMapper.useCountMonth(lineList, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取磨边工位
+            SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+            parentDTO.setParentIds(Sets.newHashSet(lineList));
+            parentDTO.setOfficeType(PmManagerConstant.NUM_13);
+            //获取产线下的工位
+            List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //包含磨边工位的
+            Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+            dbList.forEach(ele -> {
+                if (stationIds.contains(ele.getStationId())) {
+                    resMap.put(ele.getProductLineId() + "_" + ele.getWeekStr(), ele.getQuantity());
                 }
             });
         }

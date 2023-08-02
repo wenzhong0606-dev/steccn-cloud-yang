@@ -46,6 +46,7 @@ public class QtCheckItemMaterialAvgDTO implements Serializable {
 
     @ApiModelProperty("生产订单编码")
     private String productOrderNo;
-
-
+    
+    @ApiModelProperty("类别id")
+    private Integer categoryId;
 }
