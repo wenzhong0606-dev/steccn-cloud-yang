@@ -196,7 +196,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //整改标题
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT, qtImproveRecord.getTitle()));
             //描述
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, qtImproveRecord.getDescription()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,saveDoc(dto.getDescUrl()+qtImproveRecord.getId(),"描述").getDocid().toString()));
             //创建人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
             //创建时间
@@ -290,7 +290,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //整改标题
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT, record.getTitle()));
         //描述
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, record.getDescription()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,saveDoc(dto.getDescUrl()+record.getId(),"描述").getDocid().toString()));
         //创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
         //创建时间
@@ -989,6 +989,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
+            qtImproveRecordVO.setDisposeFlag(QtManagerConstant.NUM_1);
         } else if ((qtImproveRecordVO.getStatus() <= QtManagerConstant.NUM_7 && qtImproveRecordVO.getStatus() >= QtManagerConstant.NUM_3) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
