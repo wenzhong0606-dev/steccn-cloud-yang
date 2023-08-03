@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -17,9 +18,11 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.PmsMrpInfo;
@@ -84,6 +87,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
     private final RedissonClient redissonClient;
 
     private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
 
     @Override
@@ -157,12 +162,25 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlan> addProducePlanList = new ArrayList<>();
         //需要修改的list
         List<PmsProducePlan> updateProducePlanList = new ArrayList<>();
+        SysOfficeVO sysOfficeVO = null;
+        if(dto.getCustomerId()!=null){
+            sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getCustomerId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getCustomerId());
+        }else if(StrUtil.isNotBlank(dto.getCustomerCode())){
+            sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(Sets.newHashSet(dto.getCustomerCode())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getCustomerCode());
+        }
 
         for (PmsProducePlanDetailsDTO planDetailsDTO : dto.getProducePlanDetailsDTOList()) {
             PmsProducePlan pmsProducePlan = new PmsProducePlan();
             pmsProducePlan.setMaterialId(dto.getMaterialId());
             pmsProducePlan.setPlanDate(planDetailsDTO.getPlanDate());
             pmsProducePlan.setQuantity(planDetailsDTO.getQuantity());
+            pmsProducePlan.setPosition(dto.getPosition());
+            //加入客户
+            if(Objects.nonNull(sysOfficeVO)){
+                pmsProducePlan.setCustomerId(sysOfficeVO.getId());
+                pmsProducePlan.setCustomerCode(sysOfficeVO.getOfficeCode());
+                pmsProducePlan.setCustomerName(sysOfficeVO.getOfficeName());
+            }
 
             //如果有id就修改，没有就新增
             if (Objects.isNull(planDetailsDTO.getId())) {

@@ -25,6 +25,14 @@ public class PmsProducePlanVO {
 
     private Long id;
 
+    private String position;
+
+    private Integer customerId;
+
+    private String customerCode;
+
+    private String customerName;
+
     /**
      * 创建时间
      */

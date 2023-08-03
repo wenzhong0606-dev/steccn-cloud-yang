@@ -33,6 +33,26 @@ public class PmsProducePlan implements Serializable {
     private LocalDate planDate;
 
     /**
+     * 客户id
+     */
+    private Integer customerId;
+
+    /**
+     * 客户名称
+     */
+    private String customerName;
+
+    /**
+     * 客户code
+     */
+    private String customerCode;
+
+    /**
+     * 地区
+     */
+    private String position;
+
+    /**
      * 数量
      */
     @TableField(updateStrategy = FieldStrategy.IGNORED)
