@@ -1,7 +1,7 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
-import com.steccn.pms.vo.DefectDayVO;
+import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.vo.*;
 
@@ -57,6 +57,7 @@ public interface QtDefectReportService {
 
     /**
      * 透光率报表
+     *
      * @param dto – 请求参数
      * @return
      */
@@ -64,6 +65,7 @@ public interface QtDefectReportService {
 
     /**
      * 微气泡
+     *
      * @param dto 请求参数
      * @return vo
      */
@@ -71,6 +73,7 @@ public interface QtDefectReportService {
 
     /**
      * 原片不良报表
+     *
      * @param dto 请求参数
      * @return 原片不良报表
      */
@@ -78,6 +81,7 @@ public interface QtDefectReportService {
 
     /**
      * 镀膜不良报表
+     *
      * @param dto 请求参数
      * @return
      */
@@ -85,8 +89,24 @@ public interface QtDefectReportService {
 
     /**
      * 不良日报表
+     *
      * @param dto 请求参数
      * @return
      */
     DefectDayVO defectDay(QtDefectReportDTO dto);
+
+    /**
+     * 不良周报表
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    List<DefectCountRowVO> defectWeek(QtDefectReportDTO dto);
+
+    /**
+     * 不良月报表
+     * @param dto – 请求参数
+     * @return
+     */
+    List<DefectCountRowVO> defectMonth(QtDefectReportDTO dto);
 }

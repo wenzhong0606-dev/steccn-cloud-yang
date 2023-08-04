@@ -1,10 +1,9 @@
 package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
-import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author chenhuan
@@ -37,4 +38,15 @@ public interface RemoteCompleteStorageFeignApi {
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
     R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code);
 
+    @PostMapping("/feign/pms/complete/storage/order/num")
+    @ApiOperation("查询订单入库量-产线|班次日期|班次|订单")
+    R<Map<String, BigDecimal>> inStorage(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> dto);
+
+    @PostMapping("/feign/pms/complete/storage/week/num")
+    @ApiOperation("查询订单入库量-产线|周")
+    R<Map<String, BigDecimal>> inStorageWeek(@RequestBody TripleDTO<List<Integer>,LocalDateTime, LocalDateTime> dto);
+
+    @PostMapping("/feign/pms/complete/storage/month/num")
+    @ApiOperation("查询订单入库量-产线|月")
+    R<Map<String, BigDecimal>> inStorageMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
 }
