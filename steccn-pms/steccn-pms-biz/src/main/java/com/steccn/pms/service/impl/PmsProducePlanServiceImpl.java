@@ -16,7 +16,6 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -42,7 +41,6 @@ import com.steccn.wms.dto.MaterialInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.catalina.Manager;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
@@ -62,7 +60,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE;
 
@@ -171,6 +168,13 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         for (PmsProducePlanDetailsDTO planDetailsDTO : dto.getProducePlanDetailsDTOList()) {
             PmsProducePlan pmsProducePlan = new PmsProducePlan();
+            if(dto.getMaterialCode()!=null && dto.getMaterialId()==null){
+                EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(com.google.common.collect.Lists.newArrayList(dto.getMaterialCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getMaterialCode());
+                if(Objects.isNull(eqpSpareVO)){
+                    throw new BusinessException("物料不存在");
+                }
+                dto.setMaterialId(eqpSpareVO.getId());
+            }
             pmsProducePlan.setMaterialId(dto.getMaterialId());
             pmsProducePlan.setPlanDate(planDetailsDTO.getPlanDate());
             pmsProducePlan.setQuantity(planDetailsDTO.getQuantity());
