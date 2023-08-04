@@ -66,6 +66,12 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
         return orderBatch;
     }
 
+    @Override
+    public List<PmsWorkOrderBatch> getAllBatchByOrderId(Long orderId) {
+        List<PmsWorkOrderBatch> orderBatch = list(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, orderId));
+        return orderBatch;
+    }
+
 
     @Override
     public Boolean add(ProduceOrderBatchDto dto) {

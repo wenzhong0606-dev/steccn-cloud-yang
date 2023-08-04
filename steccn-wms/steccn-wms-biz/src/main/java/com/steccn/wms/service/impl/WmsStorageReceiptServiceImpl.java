@@ -33,6 +33,7 @@ import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
@@ -137,6 +138,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         try {
             //1.校验数据是否存在
             Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
+
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(dto.getType())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            int receiptType = 0;
+            if(dictMap.get(dto.getType()).equals(WmsManagerConstant.RECEIPT_TYPE_1)){
+                receiptType = 1;
+            }
             //2.定义数据模型
             WmsStorageReceipt model = new WmsStorageReceipt();
             BeanUtil.copyProperties(dto, model);
@@ -153,6 +160,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsStorageReceiptInfoDTO> list = dto.getList();
                 List<String> caseNos = Lists.newArrayList();
                 for (WmsStorageReceiptInfoDTO info : list) {
+                    //如果是生产完工入库关联单据必填且查询生产订单，生产订单必须要有批次信息，批次为生产订单带出
+                    if(receiptType==1){
+                        PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(info.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                        if(pmsProduceOrderVO.getId()==null){
+                            throw new BusinessException("关联的生产订单不存在");
+                        }
+                        List<PmsWorkOrderBatchVO> pmsWorkOrderBatchVOS = FeignOptional.of(() -> remotePmsFeignApi.getAllBatchByOrderId(pmsProduceOrderVO.getId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                        if(CollUtil.isEmpty(pmsWorkOrderBatchVOS)){
+                            throw new BusinessException("该订单下没有批次信息");
+                        }
+                        if(Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v->v.getCode().equals(info.getBatch())).findFirst().orElse(null))){
+                            throw new BusinessException("与该订单下的批次信息不符合");
+                        }
+                    }
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
@@ -190,6 +211,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         try {
             //1.校验数据是否存在
             Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(dto.getType())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            int receiptType = 0;
+            if(dictMap.get(dto.getType()).equals(WmsManagerConstant.RECEIPT_TYPE_1)){
+                receiptType = 1;
+            }
             //2.定义数据模型
             WmsStorageReceipt model = new WmsStorageReceipt();
             BeanUtil.copyProperties(dto, model);
@@ -207,6 +233,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 Long caseNo = getCaseNo();
                 List<WmsStorageReceiptInfoDTO> infoList = dto.getList();
                 for (WmsStorageReceiptInfoDTO info : infoList) {
+                    //如果是生产完工入库关联单据必填且查询生产订单，生产订单必须要有批次信息，批次为生产订单带出
+                    if(receiptType==1){
+                        PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(info.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                        if(pmsProduceOrderVO.getId()==null){
+                            throw new BusinessException("关联的生产订单不存在");
+                        }
+                        List<PmsWorkOrderBatchVO> pmsWorkOrderBatchVOS = FeignOptional.of(() -> remotePmsFeignApi.getAllBatchByOrderId(pmsProduceOrderVO.getId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                        if(CollUtil.isEmpty(pmsWorkOrderBatchVOS)){
+                            throw new BusinessException("该订单下没有批次信息");
+                        }
+                        if(Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v->v.getCode().equals(info.getBatch())).findFirst().orElse(null))){
+                            throw new BusinessException("与该订单下的批次信息不符合");
+                        }
+                    }
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
@@ -739,6 +779,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         }
         return currentMax;
     }
+
 }
 
 

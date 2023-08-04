@@ -110,6 +110,16 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据物料查询当前正在执行订单信息")
     R<PmsWorkOrderBatchVO> getByOrderId(@RequestParam("id") Long id);
 
+    /**
+     * 根据订单表中的订单id查询批次表中所有批次
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/feign/pms/produce/all/order/batch/id")
+    @ApiOperation("根据物料查询当前正在执行订单信息")
+    R<List<PmsWorkOrderBatchVO>> getAllBatchByOrderId(@RequestParam("id") Long id);
+
     @ApiOperation("根据班次时间查询物料id")
     @GetMapping("/feign/pms/produce/order/getThickByClassTime")
     R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime")LocalDateTime endTime);
