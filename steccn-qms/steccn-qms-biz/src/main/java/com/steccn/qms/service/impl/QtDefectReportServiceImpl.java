@@ -774,10 +774,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
             String weekStr = ShardTimeUtil.date2Week(begin.toLocalDate());
+            String xAxis = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin);
             for (Integer line : dto.getProductLineList()) {
                 DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
-                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
+                row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
                 row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
@@ -823,7 +824,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
-            rowList.add(countWm(weekStr, 1, "合计（单周）", countMap));
+            rowList.add(countWm(xAxis, 1, "合计（单周）", countMap));
         }
         rowList.add(countWm("总计", 2, "总计", sumMap));
         return rowList;
