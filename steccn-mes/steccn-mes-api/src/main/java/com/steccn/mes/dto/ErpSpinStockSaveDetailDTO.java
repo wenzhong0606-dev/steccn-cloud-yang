@@ -41,6 +41,6 @@ public class ErpSpinStockSaveDetailDTO implements Serializable {
     /**
      * 批号
      */
-    private String slot;
+    private String flot;
 
 }

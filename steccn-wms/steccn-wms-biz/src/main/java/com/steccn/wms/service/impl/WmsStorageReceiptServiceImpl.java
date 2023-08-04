@@ -17,7 +17,9 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.mes.dto.ErpCommonSaveDTO;
+import com.steccn.mes.dto.ErpReturnStockSaveDTO;
 import com.steccn.mes.dto.ErpSpinStockSaveDetailDTO;
+import com.steccn.mes.dto.ErpStockSaveDetailDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -35,7 +37,9 @@ import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.*;
+import com.steccn.wms.domain.WmsInventory;
+import com.steccn.wms.domain.WmsStorageReceipt;
+import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsStorageReceiptMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
@@ -58,7 +62,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -631,7 +638,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setSlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFlot(tmp.getBatch());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     if(Objects.isNull(tmp.getAssociatedNo())){
                         throw new BusinessException("没有关联生产订单");
