@@ -53,6 +53,11 @@ public class PmsProducePlan implements Serializable {
     private String position;
 
     /**
+     * 采购销售唯一单据号
+     */
+    private String orderCode;
+
+    /**
      * 数量
      */
     @TableField(updateStrategy = FieldStrategy.IGNORED)

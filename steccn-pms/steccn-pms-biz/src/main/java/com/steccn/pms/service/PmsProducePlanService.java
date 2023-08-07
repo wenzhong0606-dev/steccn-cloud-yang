@@ -35,6 +35,11 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
     Boolean addOrEditBatch(PmsProducePlanDTO dto);
 
     /**
+     * 批量新增物料
+     */
+    Boolean addMaterialBatch(List<PmsProducePlanDTO> dto);
+
+    /**
      * excel导入
      *
      * @param dto

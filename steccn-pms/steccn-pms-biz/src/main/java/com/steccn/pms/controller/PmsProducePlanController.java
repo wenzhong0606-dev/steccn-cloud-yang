@@ -89,9 +89,9 @@ public class PmsProducePlanController {
 
     @ApiOperation("月计划批量新增")
     @PostMapping("/thirdparty")
-    public R<Boolean> addBatch(@RequestBody PmsProducePlanDTO dto,HttpServletRequest request) {
+    public R<Boolean> addBatch(@RequestBody List<PmsProducePlanDTO> dto,HttpServletRequest request) {
         validRequestHeader(request);
-        return R.success(pmsProducePlanService.addOrEditBatch(dto));
+        return R.success(pmsProducePlanService.addMaterialBatch(dto));
     }
 
     /**

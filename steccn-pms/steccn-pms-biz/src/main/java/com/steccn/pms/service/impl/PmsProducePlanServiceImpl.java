@@ -217,6 +217,17 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return true;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean addMaterialBatch(List<PmsProducePlanDTO> dto) {
+        if(CollUtil.isNotEmpty(dto)){
+            for(PmsProducePlanDTO tmp:dto){
+                this.addOrEditBatch(tmp);
+            }
+        }
+        return true;
+    }
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
