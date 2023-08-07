@@ -16,4 +16,6 @@ public interface HrmjobtitlesService extends IService<Hrmjobtitles> {
      * @return
      */
     OaJobTitleVO getJobInfoById(Integer id);
+
+
 }

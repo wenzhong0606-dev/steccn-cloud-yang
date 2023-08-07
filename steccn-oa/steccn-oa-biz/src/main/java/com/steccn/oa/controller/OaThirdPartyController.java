@@ -11,6 +11,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.KqGroup;
@@ -18,6 +19,7 @@ import com.steccn.oa.service.HrmdepartmentService;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.KqGroupService;
 import com.steccn.oa.vo.OaDepartmentTreeVO;
+import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaKqGroupDetailVO;
 import com.steccn.oa.vo.OaMesUserVO;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
@@ -29,6 +31,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -55,6 +58,13 @@ public class OaThirdPartyController {
     public R<List<OaDepartmentTreeVO>> screenData(HttpServletRequest request, @PathVariable("id") Integer subId) {
         validRequestHeader(request);
         return R.success(hrmdepartmentService.getDepartmentTree(subId));
+    }
+
+    @PostMapping("/thirdParty/allDepartment")
+    @ApiOperation(value = "获取所有部门")
+    public R<List<OaDepartmentVO>> getAllDepartment(HttpServletRequest request, @RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        validRequestHeader(request);
+        return R.success(hrmdepartmentService.getAllDepartment(dto));
     }
 
     @GetMapping("/thirdParty/kqGroup")

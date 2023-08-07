@@ -3,6 +3,7 @@ package com.steccn.oa.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * Oa岗位信息VO
@@ -28,4 +29,9 @@ public class OaJobTitleVO implements Serializable {
      * 岗位Code
      */
     private String jobTitleCode;
+
+    /**
+     * 修改时间
+     */
+    private LocalDateTime updateTime;
 }
