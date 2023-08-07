@@ -495,7 +495,7 @@ public class ReportServiceImpl implements ReportService {
         SubstrateDayReportListVO lyl = rowData(productLine, Lists.newArrayList(morningBigDecimal, nightBigDecimal, sum), "拉引量(T)");
 
         productLineVOList.add(lyl);
-        BigDecimalUtil.accumulate(workshopCountMap, 0, morningBigDecimal.add(nightBigDecimal));
+        BigDecimalUtil.accumulate(workshopCountMap, 0, BigDecimalUtil.add(morningBigDecimal,nightBigDecimal));
 
         BigDecimal dayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap1.get(5));
         BigDecimal nightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap2.get(5));
@@ -505,7 +505,7 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal sumNum = BigDecimalUtil.add(countMap1.get(5), countMap2.get(5));
         BigDecimal rateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), sum);
         SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "产量合格率(%)");
-        BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
+        BigDecimalUtil.accumulate(workshopCountMap, 1, BigDecimalUtil.add(morningRate,nightRate));
 
         BigDecimal inDayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap1.get(2));
         BigDecimal inNightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap2.get(2));
@@ -515,7 +515,7 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal inSumNum = BigDecimalUtil.add(countMap1.get(2), countMap2.get(2));
         BigDecimal inRateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), inSumNum);
         SubstrateDayReportListVO inRateVo = rowData(productLine, Arrays.asList(inMorningRate, inNightRate, inRateSum), "入库合格率(%)");
-        BigDecimalUtil.accumulate(workshopCountMap, 7, morningRate.add(nightRate));
+        BigDecimalUtil.accumulate(workshopCountMap, 7, BigDecimalUtil.add(morningRate,nightRate));
         productLineVOList.add(rateVo);
         productLineVOList.add(inRateVo);
         //0耗电量 1耗水量 2耗气量 3耗油量
