@@ -469,7 +469,7 @@ public interface QtManagerConstant {
     /**
      * 描述
      */
-    String WORKFLOW_MS = "ms";
+    String WORKFLOW_MS = "mswd";
 
     /**
      * 投诉客户
