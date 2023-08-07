@@ -29,6 +29,11 @@ public interface WmsManagerConstant {
      */
     String RECEIPT_TYPE_1 = "生产完工入库";
 
+    /**
+     * 入库单类型2
+     */
+    String RECEIPT_TYPE_2 = "采购入库";
+
 
     /**
      * 是否
