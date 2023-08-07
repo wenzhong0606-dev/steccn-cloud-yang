@@ -179,6 +179,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlan.setPlanDate(planDetailsDTO.getPlanDate());
             pmsProducePlan.setQuantity(planDetailsDTO.getQuantity());
             pmsProducePlan.setPosition(dto.getPosition());
+            pmsProducePlan.setOrderCode(dto.getOrderCode());
             //加入客户
             if(Objects.nonNull(sysOfficeVO)){
                 pmsProducePlan.setCustomerId(sysOfficeVO.getId());
