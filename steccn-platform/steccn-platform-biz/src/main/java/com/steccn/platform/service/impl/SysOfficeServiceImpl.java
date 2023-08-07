@@ -443,7 +443,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public Boolean delete(SysOfficeDTO sysOfficeDTO) {
         //根据机构编码查询
-        SysOffice office = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, sysOfficeDTO.getOfficeCode()));
+        SysOffice office = getOne(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeCode, sysOfficeDTO.getOfficeCode())
+                .eq(SysOffice::getOfficeType, sysOfficeDTO.getOfficeType()));
         if (Objects.nonNull(office)) {
             office.setStatus(SysOfficeConstant.DEL_FLAG);
             return updateById(office);
