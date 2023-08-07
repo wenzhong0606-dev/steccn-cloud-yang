@@ -492,7 +492,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     @Override
     public Boolean modelNoFlag(String modelNo) {
-        QtCustomerComplainModule one = qtCustomerComplainModuleService.getOne(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getModuleNumber, modelNo));
+        QtCustomerComplainModule one = qtCustomerComplainModuleService.getOne(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getModuleNumber, modelNo).last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(one)) {
             return Boolean.TRUE;
         }
