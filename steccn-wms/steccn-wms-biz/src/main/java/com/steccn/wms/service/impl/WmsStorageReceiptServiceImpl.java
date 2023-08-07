@@ -16,10 +16,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.mes.dto.ErpCommonSaveDTO;
-import com.steccn.mes.dto.ErpReturnStockSaveDTO;
-import com.steccn.mes.dto.ErpSpinStockSaveDetailDTO;
-import com.steccn.mes.dto.ErpStockSaveDetailDTO;
+import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -652,6 +649,54 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             }
             erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
             String listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
+            //判断是否保存成功
+            JSONObject jsonObject = JSONObject.parseObject(listR);
+            if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
+                WmsStorageReceipt wmsStorageReceipt = new WmsStorageReceipt();
+                wmsStorageReceipt.setId(id);
+                wmsStorageReceipt.setStatus(OaConstant.NUM_2);
+                updateById(wmsStorageReceipt);
+            }else {
+                String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+                log.error(error);
+                throw new BusinessException(error);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean purchaseLinkErp(Long id) {
+        //先获取入库单详情
+        WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
+        //判断是否是已确认状态
+        if(!wmsStorageReceiptVO.getStatus().equals(OaConstant.NUM_1)){
+            throw new BusinessException("只有已确认状态才可以同步");
+        }
+        //仓库编码
+        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //类型为采购入库
+        if(wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
+            ErpStockSaveDTO erpCommonSaveDTO = new ErpStockSaveDTO();
+            erpCommonSaveDTO.setFdate(wmsStorageReceiptVO.getCreateTime().toLocalDate());
+            erpCommonSaveDTO.setFmesbillid(wmsStorageReceiptVO.getId());
+            erpCommonSaveDTO.setFmesbillno(wmsStorageReceiptVO.getCode());
+            //引入详细信息
+            List<ErpStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
+            if(CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())){
+                for(WmsStorageReceiptInfoVO tmp:wmsStorageReceiptVO.getList()){
+                    ErpStockSaveDetailDTO erpCommonSaveDetail = new ErpStockSaveDetailDTO();
+                    erpCommonSaveDetail.setFmesentryid(tmp.getId().toString());
+                    erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
+                    erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
+                    erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
+                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFstockno(sourceCode);
+                    erpCommonSaveDetails.add(erpCommonSaveDetail);
+                }
+            }
+            erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
+            String listR = remoteErpFeignApi.saveInStock(erpCommonSaveDTO);
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
             if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){

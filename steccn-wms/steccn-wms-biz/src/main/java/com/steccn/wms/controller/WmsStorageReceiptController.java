@@ -112,4 +112,12 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.linkErp(id));
     }
 
+    @ApiOperation("采购入库同步erp")
+    @GetMapping("/purchase/linkErp")
+    public R<Boolean> purchaseLinkErp(@ApiParam("入库单id") @RequestParam("id") Long id){
+        return R.success(wmsStorageReceiptService.purchaseLinkErp(id));
+    }
+
+
+
 }
