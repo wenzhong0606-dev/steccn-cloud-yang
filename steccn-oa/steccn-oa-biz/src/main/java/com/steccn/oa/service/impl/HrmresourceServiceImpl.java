@@ -251,6 +251,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                         .isNull(Hrmjobtitles::getCanceled)
                         .le(Hrmresource::getModified, dto.getField2().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .ge(Hrmresource::getModified, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+        oaUserVOS = oaUserVOS.stream().filter(v->StrUtil.isNotBlank(v.getUserName())).collect(Collectors.toList());
         return oaUserVOS;
     }
 }
