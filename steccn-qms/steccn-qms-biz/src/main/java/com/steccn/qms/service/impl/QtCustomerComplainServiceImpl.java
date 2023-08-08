@@ -210,6 +210,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getDealWayName);
             } else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE.equals(dto.getSortField())) {
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getReplyClientDate);
+            }else {
+                between.orderByDesc(QtCustomerComplain::getCreateTime);
             }
         }
         //2.定义分页对象
