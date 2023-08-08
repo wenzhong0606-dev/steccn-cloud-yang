@@ -272,6 +272,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                     qtCustomerComplainVO.setDealWayName(wayMap.get(qtCustomerComplainVO.getDealWay()));
                 }
             });
+            qtCustomerComplainVOList =  qtCustomerComplainVOList.stream().distinct().collect(Collectors.toList());
         }
         return page.setRecords(qtCustomerComplainVOList);
     }
@@ -331,6 +332,13 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             List<QtImproveRecord> recordList = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getCustomerComplainId, customerComplain.getId()));
             if (CollUtil.isNotEmpty(recordList)) {
                 qtCustomerComplainVO.setImproveRecordList(BeanUtil.copyToList(recordList, QtImproveRecordVO.class));
+            }
+        }
+        //处理权限
+        if (QtManagerConstant.NUM_0.equals(qtCustomerComplainVO.getStatus())) {
+            //获取当前登陆人是否有处理按钮的权限
+            if (qtCustomerComplainVO.getDealMan().equals(SecurityUtils.getUser().getUserId())) {
+                qtCustomerComplainVO.setDisposeFlag(QtManagerConstant.NUM_1);
             }
         }
         return qtCustomerComplainVO;
@@ -492,7 +500,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     @Override
     public Boolean modelNoFlag(String modelNo) {
-        QtCustomerComplainModule one = qtCustomerComplainModuleService.getOne(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getModuleNumber, modelNo));
+        QtCustomerComplainModule one = qtCustomerComplainModuleService.getOne(new LambdaQueryWrapper<QtCustomerComplainModule>().in(QtCustomerComplainModule::getModuleNumber, modelNo).last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(one)) {
             return Boolean.TRUE;
         }
@@ -570,7 +578,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //标题
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KSBT, dto.getTitle()));
         //问题描述
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, dto.getDescription()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, "点击查看详情"));
         //投诉客户
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSKH, dto.getComplainCustomerName()));
         //投诉日期
