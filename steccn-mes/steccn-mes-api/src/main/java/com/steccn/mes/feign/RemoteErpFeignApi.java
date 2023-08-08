@@ -111,11 +111,11 @@ public interface RemoteErpFeignApi {
     String saveMisdelivery(@RequestBody ErpReturnStockSaveDTO dto);
 
     /**
-     * 保存简单生产领料单
+     * 保存简单生产退料单
      * @param dto
      * @return
      */
     @PostMapping("/api/tcmes/savespreturnmtrl")
-    @ApiOperation("保存简单生产领料单")
+    @ApiOperation("保存简单生产退料单")
     String saveSpreturnMtrl(@RequestBody ErpSppickMtrlSaveDTO dto);
 }
