@@ -170,25 +170,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             dto.setReplyClientEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
         //1.定义查询条件查询数据
-        MPJLambdaWrapper<QtCustomerComplain> between = new MPJLambdaWrapper<QtCustomerComplain>()
-                .leftJoin(QtCustomerComplainModule.class, QtCustomerComplainModule::getCustomerComplainId, QtCustomerComplain::getId)
-                .leftJoin(QtCustomerComplainDetail.class, QtCustomerComplainDetail::getCustomerComplainId, QtCustomerComplain::getId)
-                .like(Objects.nonNull(dto.getCode()), QtCustomerComplain::getCode, dto.getCode())
-                .like(Objects.nonNull(dto.getTitle()), QtCustomerComplain::getTitle, dto.getTitle())
-                .eq(Objects.nonNull(dto.getComplainCustomer()), QtCustomerComplain::getComplainCustomer, dto.getComplainCustomer())
-                .eq(Objects.nonNull(dto.getComplainReceiver()), QtCustomerComplain::getComplainReceiver, dto.getComplainReceiver())
-                .eq(Objects.nonNull(dto.getComplainType()), QtCustomerComplain::getComplainType, dto.getComplainType())
-                .eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan())
-                .eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus())
-                .eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay())
+        MPJLambdaWrapper<QtCustomerComplain> between = new MPJLambdaWrapper<QtCustomerComplain>().leftJoin(QtCustomerComplainModule.class, QtCustomerComplainModule::getCustomerComplainId, QtCustomerComplain::getId).leftJoin(QtCustomerComplainDetail.class, QtCustomerComplainDetail::getCustomerComplainId, QtCustomerComplain::getId).like(Objects.nonNull(dto.getCode()), QtCustomerComplain::getCode, dto.getCode()).like(Objects.nonNull(dto.getTitle()), QtCustomerComplain::getTitle, dto.getTitle()).eq(Objects.nonNull(dto.getComplainCustomer()), QtCustomerComplain::getComplainCustomer, dto.getComplainCustomer()).eq(Objects.nonNull(dto.getComplainReceiver()), QtCustomerComplain::getComplainReceiver, dto.getComplainReceiver()).eq(Objects.nonNull(dto.getComplainType()), QtCustomerComplain::getComplainType, dto.getComplainType()).eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan()).eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay())
 //                .eq(QtCustomerComplainDetail::getDelFlag,QtManagerConstant.NUM_0)
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime())
-                        , QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime())
-                .between(Objects.nonNull(dto.getReplyClientStartTime()) && Objects.nonNull(dto.getReplyClientEndTime())
-                        , QtCustomerComplain::getReplyClientDate, dto.getReplyClientStartTime(), dto.getReplyClientEndTime())
-                .like(Objects.nonNull(dto.getClientCaseNo()), QtCustomerComplainDetail::getClientCaseNo, dto.getClientCaseNo())
-                .like(Objects.nonNull(dto.getModuleNumber()), QtCustomerComplainModule::getModuleNumber, dto.getModuleNumber())
-                .selectAll(QtCustomerComplain.class);
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime()).between(Objects.nonNull(dto.getReplyClientStartTime()) && Objects.nonNull(dto.getReplyClientEndTime()), QtCustomerComplain::getReplyClientDate, dto.getReplyClientStartTime(), dto.getReplyClientEndTime()).like(Objects.nonNull(dto.getClientCaseNo()), QtCustomerComplainDetail::getClientCaseNo, dto.getClientCaseNo()).like(Objects.nonNull(dto.getModuleNumber()), QtCustomerComplainModule::getModuleNumber, dto.getModuleNumber()).selectAll(QtCustomerComplain.class);
 
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
@@ -210,9 +194,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getDealWayName);
             } else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_REPLY_CLIENT_DATE.equals(dto.getSortField())) {
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getReplyClientDate);
-            }else {
-                between.orderByDesc(QtCustomerComplain::getCreateTime);
             }
+        } else {
+            between.orderByDesc(QtCustomerComplain::getCreateTime);
         }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -274,7 +258,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                     qtCustomerComplainVO.setDealWayName(wayMap.get(qtCustomerComplainVO.getDealWay()));
                 }
             });
-            qtCustomerComplainVOList =  qtCustomerComplainVOList.stream().distinct().collect(Collectors.toList());
+            qtCustomerComplainVOList = qtCustomerComplainVOList.stream().distinct().collect(Collectors.toList());
         }
         return page.setRecords(qtCustomerComplainVOList);
     }
@@ -325,8 +309,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             }
             //获取客诉进度信息
             //获取进度信息
-            List<QtComplainDefectProgress> progresses = qtComplainDefectProgressService.list(new LambdaQueryWrapper<QtComplainDefectProgress>()
-                    .eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
+            List<QtComplainDefectProgress> progresses = qtComplainDefectProgressService.list(new LambdaQueryWrapper<QtComplainDefectProgress>().eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
             if (CollUtil.isNotEmpty(progresses)) {
                 qtCustomerComplainVO.setProgressList(BeanUtil.copyToList(progresses, QtComplainDefectProgressVO.class));
             }
@@ -429,8 +412,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         QtCustomerComplain customerComplain = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(customerComplain), "当前业务数据不存在");
         //获取节点操作人信息
-        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
-                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()), Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_1.equals(customerComplain.getStatus()), "当前状态不可审批通过");
@@ -580,7 +562,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //标题
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KSBT, dto.getTitle()));
         //问题描述
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, saveDoc(dto.getDescUrl()+qtCustomerComplain.getId(),"点击查看详情").getDocid().toString()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, saveDoc(dto.getDescUrl() + qtCustomerComplain.getId(), "点击查看详情").getDocid().toString()));
         //投诉客户
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSKH, dto.getComplainCustomerName()));
         //投诉日期
@@ -618,8 +600,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
         List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
         //获取客诉明细数据
-        List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>()
-                .eq(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplain.getId()));
+        List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>().eq(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplain.getId()));
         if (CollUtil.isNotEmpty(list)) {
             Set<Long> dictIds = list.stream().map(QtCustomerComplainDetail::getBadJudgeBasis).collect(Collectors.toSet());
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -789,9 +770,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             recordIds.addAll(customerComplainList.stream().map(QtCustomerComplain::getId).collect(Collectors.toSet()));
         }
         //获取审批人为自己的记录或者抄送人为自己
-        List<QtComplainDefectImproveMan> qtComplainDefectImproveManList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>()
-                .eq(QtComplainDefectImproveMan::getUserId, SecurityUtils.getUser())
-                .eq(QtComplainDefectImproveMan::getBusiType, QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN));
+        List<QtComplainDefectImproveMan> qtComplainDefectImproveManList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getUserId, SecurityUtils.getUser()).eq(QtComplainDefectImproveMan::getBusiType, QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN));
         if (CollUtil.isNotEmpty(qtComplainDefectImproveManList)) {
             recordIds.addAll(qtComplainDefectImproveManList.stream().map(QtComplainDefectImproveMan::getBusiId).collect(Collectors.toSet()));
         }
@@ -813,6 +792,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     /**
      * 保存infourl的详情内容
+     *
      * @param infoUrl
      * @param docName
      * @return
