@@ -196,7 +196,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //整改标题
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT, qtImproveRecord.getTitle()));
             //描述
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,saveDoc(dto.getDescUrl()+qtImproveRecord.getId(),"描述").getDocid().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,saveDoc(dto.getDescUrl()+qtImproveRecord.getId(),"点击查看详情").getDocid().toString()));
             //创建人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
             //创建时间
@@ -290,7 +290,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //整改标题
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT, record.getTitle()));
         //描述
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,saveDoc(dto.getDescUrl()+record.getId(),"描述").getDocid().toString()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,saveDoc(dto.getDescUrl()+record.getId(),"点击查看详情").getDocid().toString()));
         //创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
         //创建时间
