@@ -1,9 +1,15 @@
 package com.steccn.pms.controller;
 
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsProducePlanDTO;
 import com.steccn.pms.dto.PmsProducePlanExcelDTO;
@@ -32,6 +38,8 @@ import java.util.Set;
 public class PmsProducePlanController {
 
     private final PmsProducePlanService pmsProducePlanService;
+
+    private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
     @ApiOperation("月计划列表")
     @GetMapping("/list")
@@ -79,4 +87,22 @@ public class PmsProducePlanController {
         pmsProducePlanService.download(response);
     }
 
+    @ApiOperation("月计划批量新增")
+    @PostMapping("/thirdparty")
+    public R<Boolean> addBatch(@RequestBody List<PmsProducePlanDTO> dto,HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(pmsProducePlanService.addMaterialBatch(dto));
+    }
+
+    /**
+     * 校验请求头信息
+     *
+     * @param request 请求
+     */
+    private void validRequestHeader(HttpServletRequest request) {
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String clientId = request.getHeader(OaConstant.CLIENT_ID);
+        Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
+        Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
+    }
 }

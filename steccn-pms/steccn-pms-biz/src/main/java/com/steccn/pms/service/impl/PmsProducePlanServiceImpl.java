@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,11 +16,12 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.PmsMrpInfo;
@@ -39,7 +41,6 @@ import com.steccn.wms.dto.MaterialInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.catalina.Manager;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
@@ -59,7 +60,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE;
 
@@ -84,6 +84,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
     private final RedissonClient redissonClient;
 
     private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
 
     @Override
@@ -157,12 +159,33 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlan> addProducePlanList = new ArrayList<>();
         //需要修改的list
         List<PmsProducePlan> updateProducePlanList = new ArrayList<>();
+        SysOfficeVO sysOfficeVO = null;
+        if(dto.getCustomerId()!=null){
+            sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getCustomerId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getCustomerId());
+        }else if(StrUtil.isNotBlank(dto.getCustomerCode())){
+            sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(Sets.newHashSet(dto.getCustomerCode())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getCustomerCode());
+        }
 
         for (PmsProducePlanDetailsDTO planDetailsDTO : dto.getProducePlanDetailsDTOList()) {
             PmsProducePlan pmsProducePlan = new PmsProducePlan();
+            if(dto.getMaterialCode()!=null && dto.getMaterialId()==null){
+                EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(com.google.common.collect.Lists.newArrayList(dto.getMaterialCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getMaterialCode());
+                if(Objects.isNull(eqpSpareVO)){
+                    throw new BusinessException("物料不存在");
+                }
+                dto.setMaterialId(eqpSpareVO.getId());
+            }
             pmsProducePlan.setMaterialId(dto.getMaterialId());
             pmsProducePlan.setPlanDate(planDetailsDTO.getPlanDate());
             pmsProducePlan.setQuantity(planDetailsDTO.getQuantity());
+            pmsProducePlan.setPosition(dto.getPosition());
+            pmsProducePlan.setOrderCode(dto.getOrderCode());
+            //加入客户
+            if(Objects.nonNull(sysOfficeVO)){
+                pmsProducePlan.setCustomerId(sysOfficeVO.getId());
+                pmsProducePlan.setCustomerCode(sysOfficeVO.getOfficeCode());
+                pmsProducePlan.setCustomerName(sysOfficeVO.getOfficeName());
+            }
 
             //如果有id就修改，没有就新增
             if (Objects.isNull(planDetailsDTO.getId())) {
@@ -192,6 +215,17 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         // 处理MRP 计算逻辑
 //        addProducePlanList.addAll(updateProducePlanList);
 ////        return pmsMrpInfoService.add(dto);
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean addMaterialBatch(List<PmsProducePlanDTO> dto) {
+        if(CollUtil.isNotEmpty(dto)){
+            for(PmsProducePlanDTO tmp:dto){
+                this.addOrEditBatch(tmp);
+            }
+        }
         return true;
     }
 

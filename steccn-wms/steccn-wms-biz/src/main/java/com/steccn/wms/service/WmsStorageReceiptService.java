@@ -99,4 +99,11 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Boolean linkErp(Long id);
+
+    /**
+     * 采购入库同步erp
+     * @param id
+     * @return
+     */
+    Boolean purchaseLinkErp(Long id);
 }

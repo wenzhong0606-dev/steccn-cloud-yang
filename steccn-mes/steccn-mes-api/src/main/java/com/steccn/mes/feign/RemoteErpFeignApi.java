@@ -1,8 +1,7 @@
 package com.steccn.mes.feign;
 
 import com.steccn.common.vo.R;
-import com.steccn.mes.dto.ErpCustomerDTO;
-import com.steccn.mes.dto.ErpCommonSaveDTO;
+import com.steccn.mes.dto.*;
 import com.steccn.mes.vo.ErpCustomerVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -40,11 +39,83 @@ public interface RemoteErpFeignApi {
     String saveTransfer(@RequestBody ErpCommonSaveDTO dto);
 
     /**
-     * 保存
+     * 保存简单生产入库单
      * @param dto
      * @return
      */
     @PostMapping("/api/tcmes/savespinstock")
     @ApiOperation("保存简单生产入库单")
     String saveSpinStock(@RequestBody ErpCommonSaveDTO dto);
+
+    /**
+     * 保存采购入库单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/saveinstock")
+    @ApiOperation("保存采购入库单")
+    String saveInStock(@RequestBody ErpStockSaveDTO dto);
+
+    /**
+     * 保存销售退货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savereturnstock")
+    @ApiOperation("保存销售退货单")
+    String saveReturnStock(@RequestBody ErpReturnStockSaveDTO dto);
+
+    /**
+     * 保存简单生产领料单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savesppickmtrl")
+    @ApiOperation("保存简单生产领料单")
+    String saveSppickmtrl(@RequestBody ErpSppickMtrlSaveDTO dto);
+
+    /**
+     * 保存其他入库单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savemiscellaneous")
+    @ApiOperation("保存其他入库单")
+    String saveMiscellaneous(@RequestBody ErpStockSaveDTO dto);
+
+    /**
+     * 保存采购退料单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savepurmrb")
+    @ApiOperation("保存采购退料单")
+    String savepurmrb(@RequestBody ErpStockSaveDTO dto);
+
+    /**
+     * 保存销售出库单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/saveoutstock")
+    @ApiOperation("保存销售出库单")
+    String saveOutStock(@RequestBody ErpReturnStockSaveDTO dto);
+
+    /**
+     * 保存其他出库单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savemisdelivery")
+    @ApiOperation("保存其他出库单")
+    String saveMisdelivery(@RequestBody ErpReturnStockSaveDTO dto);
+
+    /**
+     * 保存简单生产退料单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savespreturnmtrl")
+    @ApiOperation("保存简单生产退料单")
+    String saveSpreturnMtrl(@RequestBody ErpSppickMtrlSaveDTO dto);
 }
