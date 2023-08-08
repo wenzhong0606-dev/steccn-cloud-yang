@@ -1,8 +1,12 @@
 package com.steccn.oa.service;
 
-import com.steccn.oa.domain.Hrmjobtitles;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.oa.domain.Hrmjobtitles;
 import com.steccn.oa.vo.OaJobTitleVO;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
 * @author Admin
@@ -17,5 +21,10 @@ public interface HrmjobtitlesService extends IService<Hrmjobtitles> {
      */
     OaJobTitleVO getJobInfoById(Integer id);
 
-
+    /**
+     * 获取所有岗位信息
+     * @param dto
+     * @return
+     */
+    List<OaJobTitleVO> getAllJobTitle(TupleDTO<LocalDateTime,LocalDateTime> dto);
 }
