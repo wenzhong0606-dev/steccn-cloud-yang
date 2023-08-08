@@ -36,4 +36,8 @@ public class OaUserVO implements Serializable {
      * 岗位名称
      */
     private String jobTitleName;
+    /**
+     * 登录名
+     */
+    private String loginCode;
 }

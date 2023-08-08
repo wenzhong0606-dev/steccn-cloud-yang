@@ -244,6 +244,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                         .selectAs(Hrmjobtitles::getJobtitlename, OaUserVO::getJobTitleName)
                         .selectAs(Hrmresource::getDepartmentid, OaUserVO::getDepartmentId)
                         .selectAs(Hrmdepartment::getDepartmentname, OaUserVO::getDepartmentName)
+                        .selectAs(Hrmresource::getLoginid,OaUserVO::getLoginCode)
                         .leftJoin(Hrmjobtitles.class, Hrmjobtitles::getId, Hrmresource::getJobtitle)
                         .leftJoin(Hrmdepartment.class, Hrmdepartment::getId, Hrmresource::getDepartmentid)
                         .eq(Hrmresource::getStatus, OaConstant.NUM_5)
