@@ -342,7 +342,7 @@
     <select id="checkItemMaterialAvg" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
         task.product_line ->> '$.id' as product_line_id,
-        DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+        class_time as class_date,
         material_id,
         class_group_id,
         ROUND(avg(check_result ), #{bit}) as value
@@ -364,8 +364,8 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT(class_time,'%Y-%m-%d')
-        ,class_group_id,
+        class_time,
+        class_group_id,
         task.product_line ->> '$.id',
         material_id
 
@@ -373,7 +373,7 @@
     <select id="checkItemAvgClassGroup" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
             task.product_line ->> '$.id' as product_line_id,
-            DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+            class_time as class_date,
             class_group_id,
             ROUND(avg(check_result ), #{bit}) as value
         FROM
@@ -394,14 +394,14 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT(class_time,'%Y-%m-%d'),
+        class_time,
         class_group_id,
         task.product_line ->> '$.id'
     </select>
     <select id="checkItemAvgDay" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
         task.product_line ->> '$.id' as product_line_id,
-        DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+        class_time as class_date,
         ROUND(avg(check_result ), #{bit}) as value
         FROM
         qt_check_task task
@@ -421,7 +421,7 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT(class_time,'%Y-%m-%d'),
+        class_time,
         task.product_line ->> '$.id'
     </select>
     <select id="checkItemAvgMonth" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
@@ -487,7 +487,7 @@
     <select id="transmittance" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
             task.product_line ->> '$.id' AS product_line_id,
-            DATE_FORMAT( class_time, '%Y-%m-%d' ) AS class_date,
+            class_time AS class_date,
             class_group_id,
             ROUND( avg( check_result ), 2 ) AS VALUE,
             item.code
@@ -509,7 +509,7 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT( class_time, '%Y-%m-%d' ),
+        class_time,
         class_group_id,
         task.product_line ->> '$.id',
         item.code
