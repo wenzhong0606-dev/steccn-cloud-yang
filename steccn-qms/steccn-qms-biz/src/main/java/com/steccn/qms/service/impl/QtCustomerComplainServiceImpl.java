@@ -201,7 +201,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //判断当前用户的角色是否是客诉管理员
-        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getUsername());
         if (CollUtil.isNotEmpty(role.getStringList())) {
             if (!role.getStringList().contains(QtManagerConstant.COMPLAINT_MANAGER)) {
                 //不是整改管理员

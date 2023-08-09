@@ -424,7 +424,7 @@ public interface QtManagerConstant {
     /**
      * 客诉管理员角色编码
      */
-    String COMPLAINT_MANAGER = " complaintManager";
+    String COMPLAINT_MANAGER = "complaintManager";
 
 
     /**
