@@ -453,7 +453,7 @@
     <select id="microBubble" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
         task.product_line ->> '$.id' as product_line_id,
-        DATE_FORMAT(spot_time, '%Y-%m-%d') as class_date,
+        class_time as class_date,
         task.station ->> '$.name' AS station,
         sum( detail.check_result ) as value
         FROM
@@ -481,7 +481,7 @@
         AND spot_time &lt; #{end}
         GROUP BY
         task.product_line ->> '$.id' ,
-        DATE_FORMAT( spot_time, '%Y-%m-%d' ),
+        class_time,
         task.station ->> '$.name'
     </select>
     <select id="transmittance" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
