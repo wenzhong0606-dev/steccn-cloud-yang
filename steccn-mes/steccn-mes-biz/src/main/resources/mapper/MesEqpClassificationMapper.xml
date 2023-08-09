@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEqpClassificationMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEqpClassification">
+            <id property="id" column="ID" jdbcType="VARCHAR"/>
+            <result property="companyCode" column="COMPANY_CODE" jdbcType="VARCHAR"/>
+            <result property="classificationCode" column="CLASSIFICATION_CODE" jdbcType="VARCHAR"/>
+            <result property="name" column="NAME" jdbcType="VARCHAR"/>
+            <result property="classifyType" column="CLASSIFY_TYPE" jdbcType="VARCHAR"/>
+            <result property="classifyStatus" column="CLASSIFY_STATUS" jdbcType="VARCHAR"/>
+            <result property="parentCode" column="PARENT_CODE" jdbcType="VARCHAR"/>
+            <result property="parentCodes" column="PARENT_CODES" jdbcType="VARCHAR"/>
+            <result property="treeSort" column="TREE_SORT" jdbcType="DECIMAL"/>
+            <result property="treeSorts" column="TREE_SORTS" jdbcType="VARCHAR"/>
+            <result property="treeLeaf" column="TREE_LEAF" jdbcType="CHAR"/>
+            <result property="treeLevel" column="TREE_LEVEL" jdbcType="DECIMAL"/>
+            <result property="treeNames" column="TREE_NAMES" jdbcType="VARCHAR"/>
+            <result property="remarks" column="REMARKS" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,COMPANY_CODE,CLASSIFICATION_CODE,
+        NAME,CLASSIFY_TYPE,CLASSIFY_STATUS,
+        PARENT_CODE,PARENT_CODES,TREE_SORT,
+        TREE_SORTS,TREE_LEAF,TREE_LEVEL,
+        TREE_NAMES,REMARKS
+    </sql>
+</mapper>

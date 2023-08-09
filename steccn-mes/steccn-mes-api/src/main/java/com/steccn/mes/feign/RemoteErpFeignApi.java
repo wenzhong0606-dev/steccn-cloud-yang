@@ -3,6 +3,7 @@ package com.steccn.mes.feign;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.vo.ErpCustomerVO;
+import com.steccn.mes.vo.ErpMaterialVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,4 +119,13 @@ public interface RemoteErpFeignApi {
     @PostMapping("/api/tcmes/savespreturnmtrl")
     @ApiOperation("保存简单生产退料单")
     String saveSpreturnMtrl(@RequestBody ErpSppickMtrlSaveDTO dto);
+
+    /**
+     * 获取物料信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/getmaterial")
+    @ApiOperation("获取erp客户信息")
+    R<List<ErpMaterialVO>> getErpMaterial(@RequestBody ErpCustomerDTO dto);
 }

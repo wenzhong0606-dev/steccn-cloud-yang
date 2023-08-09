@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Data;
 
@@ -19,7 +20,7 @@ public class MesEqpSpare implements Serializable {
     /**
      * ID
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
@@ -120,7 +121,7 @@ public class MesEqpSpare implements Serializable {
     /**
      * 创建时间
      */
-    private Date createDate;
+    private LocalDateTime createDate;
 
     /**
      * 更新者
@@ -130,7 +131,7 @@ public class MesEqpSpare implements Serializable {
     /**
      * 更新时间
      */
-    private Date updateDate;
+    private LocalDateTime updateDate;
 
     /**
      * 类型

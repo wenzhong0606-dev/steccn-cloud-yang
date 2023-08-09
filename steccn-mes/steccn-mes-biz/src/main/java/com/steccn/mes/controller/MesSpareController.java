@@ -1,14 +1,14 @@
 package com.steccn.mes.controller;
 
 import com.alibaba.excel.EasyExcel;
+import com.steccn.common.vo.R;
+import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.service.MesEqpSpareService;
 import com.steccn.mes.vo.MesSpareDownloadVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -38,5 +38,11 @@ public class MesSpareController {
         String fileName = URLEncoder.encode("备品备件", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         EasyExcel.write(response.getOutputStream(), MesSpareDownloadVO.class).sheet("备品备件").doWrite(mesEqpSpareService.downloadSpare());
+    }
+
+    @PostMapping("/synchronousSpare")
+    @ApiOperation(value = "同步物料")
+    public R<Boolean> synchronousSpare(@RequestBody ErpCustomerDTO dto) {
+        return R.success(mesEqpSpareService.synchronousSpare(dto));
     }
 }

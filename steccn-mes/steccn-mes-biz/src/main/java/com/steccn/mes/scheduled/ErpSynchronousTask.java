@@ -2,6 +2,7 @@ package com.steccn.mes.scheduled;
 
 import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.service.JsSysOfficeService;
+import com.steccn.mes.service.MesEqpSpareService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 @Component
 public class ErpSynchronousTask {
     private final JsSysOfficeService jsSysOfficeService;
+    private final MesEqpSpareService mesEqpSpareService;
     /**
      * @desc 每天 2点同步昨天数据
      *
@@ -34,5 +36,20 @@ public class ErpSynchronousTask {
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
         jsSysOfficeService.synchronousCustomer(dto);
         XxlJobHelper.log("同步客户-任务结束");
+    }
+
+    /**
+     * @desc 每天 2点10分同步昨天数据
+     *
+     */
+    @XxlJob("synchronousErpMaterial")
+    public void synchronousErpMaterial() {
+        XxlJobHelper.log("同步物料-任务开始");
+        LocalDateTime now = LocalDateTime.now();
+        ErpCustomerDTO dto = new ErpCustomerDTO();
+        dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
+        dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
+        mesEqpSpareService.synchronousSpare(dto);
+        XxlJobHelper.log("同步物料-任务结束");
     }
 }

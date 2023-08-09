@@ -2,6 +2,7 @@ package com.steccn.mes.service;
 
 import com.steccn.mes.domain.MesEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.vo.MesSpareDownloadVO;
 
 import java.util.List;
@@ -17,4 +18,10 @@ public interface MesEqpSpareService extends IService<MesEqpSpare> {
      */
     List<MesSpareDownloadVO> downloadSpare();
 
+    /**
+     * 同步物料数据
+     * @param dto
+     * @return
+     */
+    Boolean synchronousSpare(ErpCustomerDTO dto);
 }

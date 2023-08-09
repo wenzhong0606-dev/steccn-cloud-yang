@@ -224,7 +224,7 @@ public interface OaInfoService {
     R<OaDepartmentVO> getDepartmentInfoById(@RequestParam("id") Integer id);
 
     @ApiOperation("根据岗位id获取岗位信息")
-    @GetMapping("/jobTitle/info")
+    @GetMapping("/feign/oa/jobTitle/info")
     R<OaJobTitleVO> getJobInfoById(@RequestParam("id") Integer id);
 
     @ApiOperation("获取班组长信息")
