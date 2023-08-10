@@ -1,6 +1,7 @@
 package com.steccn.platform.vo;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.steccn.platform.serializer.StringToJsonSerializer;
 import lombok.Data;
 
@@ -78,4 +79,8 @@ public class SafetyTokenVO implements Serializable {
     private String userLabelType;
     private String userLabelTypeName;
     private SafetyTokenPageMapVO mainPageMap;
+    @JsonIgnore
+    private Boolean isSuccess;
+    @JsonIgnore
+    private Long userId;
 }

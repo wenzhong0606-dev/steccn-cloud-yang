@@ -10,6 +10,7 @@ import com.steccn.platform.service.SafetyTokenService;
 import com.steccn.platform.vo.SafetyTokenPageMapVO;
 import com.steccn.platform.vo.SafetyTokenVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,6 +26,15 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
 
     @Override
     public SafetyTokenVO getSafetyToken() {
+        SafetyTokenVO result = this.getSafetyTokenCache();
+        if(result.getIsSuccess().equals(OaConstant.NO)){
+            throw new BusinessException("安环系统中没有该用户,请联系管理员");
+        }
+        return result;
+    }
+
+    @Cacheable(cacheNames = "SecurityToken#10800",key = "#result.userId",unless = "#result.isSuccess == false")
+    public SafetyTokenVO getSafetyTokenCache(){
         SafetyTokenVO result = new SafetyTokenVO();
         SafetyUserNameDTO dto = new SafetyUserNameDTO();
         //获取登录用户的用户名
@@ -37,8 +47,10 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
         if(status.equals(OaConstant.NO)){
             //获取json下的对象
             result = jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).toJavaObject(SafetyTokenVO.class);
+            result.setIsSuccess(true);
+            result.setUserId(SecurityUtils.getUser().getUserId());
         }else {
-            throw new BusinessException("安环系统中没有该用户,请联系管理员");
+            result.setIsSuccess(false);
         }
         return result;
     }
