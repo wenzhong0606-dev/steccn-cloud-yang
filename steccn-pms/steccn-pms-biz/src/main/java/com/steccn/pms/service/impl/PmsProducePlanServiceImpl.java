@@ -222,18 +222,20 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
     @Override
     public Boolean addMaterialBatch(List<PmsProducePlanDTO> dto) {
         if(CollUtil.isNotEmpty(dto)){
+            //添加时先删除相关数据
             List<String> materialCodes = dto.stream()
                     .map(PmsProducePlanDTO::getMaterialCode)
                     .collect(Collectors.toList());
             Map<String, EqpSpareVO> spareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(materialCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             for(PmsProducePlanDTO tmp:dto){
-                //添加时先删除相关数据
                 LocalDate planDate = tmp.getProducePlanDetailsDTOList().get(0).getPlanDate();
                 remove(new LambdaQueryWrapper<PmsProducePlan>()
                         .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
                         .eq(PmsProducePlan::getMaterialId,spareVO.get(tmp.getMaterialCode()).getId())
                         .eq(PmsProducePlan::getOrderCode,tmp.getOrderCode())
                         .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
+            }
+            for(PmsProducePlanDTO tmp:dto){
                 this.addOrEditBatch(tmp);
             }
         }
