@@ -42,6 +42,12 @@ public class MesOfficeController {
         return R.success(jsSysOfficeService.synchronousCustomer(dto));
     }
 
+    @PostMapping("/synchronousSupplier")
+    @ApiOperation(value = "同步供应商")
+    public R<Boolean> synchronousSupplier(@RequestBody ErpCustomerDTO dto) {
+        return R.success(jsSysOfficeService.synchronousSupplier(dto));
+    }
+
     @PostMapping("/thirdparty/customer")
     @ApiOperation(value = "三方拉取客户")
     public R<List<MesCutomerVO>> getAllCustomer(HttpServletRequest request, @RequestBody ErpCustomerDTO dto) {

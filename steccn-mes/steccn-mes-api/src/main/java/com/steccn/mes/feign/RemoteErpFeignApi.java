@@ -126,6 +126,15 @@ public interface RemoteErpFeignApi {
      * @return
      */
     @PostMapping("/api/tcmes/getmaterial")
-    @ApiOperation("获取erp客户信息")
+    @ApiOperation("获取erp物料信息")
     R<List<ErpMaterialVO>> getErpMaterial(@RequestBody ErpCustomerDTO dto);
+
+    /**
+     * 获取供应商信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/getsupplier")
+    @ApiOperation("获取供应商信息")
+    R<List<ErpCustomerVO>> getErpSupplier(@RequestBody ErpCustomerDTO dto);
 }

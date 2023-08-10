@@ -29,4 +29,11 @@ public interface JsSysOfficeService extends IService<JsSysOffice> {
      * @return
      */
     List<MesCutomerVO> getAllCustomer(ErpCustomerDTO dto);
+
+    /**
+     * 同步供应商
+     * @param dto
+     * @return
+     */
+    Boolean synchronousSupplier(ErpCustomerDTO dto);
 }

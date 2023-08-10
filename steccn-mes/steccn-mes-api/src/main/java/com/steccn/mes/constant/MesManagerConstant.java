@@ -11,6 +11,10 @@ public interface MesManagerConstant {
      * 所有的客户放在这个下面
      */
     String customerGroup = "CUCC8013";
+    /**
+     * 所有供应商在这个下面
+     */
+    String supplierGroup = "CUCC1012";
 
     Integer NUM_0 = 0;
     Integer NUM_1 = 1;
@@ -21,4 +25,9 @@ public interface MesManagerConstant {
      * 客户类型
      */
     String CUSTOMER_TYPE = "7";
+
+    /**
+     * 供应商类型
+     */
+    String SUPPLIER_TYPE = "11";
 }
