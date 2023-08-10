@@ -197,9 +197,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
         }
         if (CollectionUtils.isNotEmpty(addProducePlanList)) {
-            List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
-            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
-                    .in(PmsProducePlan::getPlanDate, localDateList));
+//            List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
+//            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
+//                    .in(PmsProducePlan::getPlanDate, localDateList));
             //需求修改,物料可重复
 //            if (CollectionUtils.isNotEmpty(list)) {
 //                throw new BusinessException("该物料已存在生产计划，新增失败");
