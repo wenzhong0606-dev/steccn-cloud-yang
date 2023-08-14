@@ -1127,8 +1127,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             for (int i = 1; i < shardTimeList.size(); i++) {
                 LocalDateTime startLdt = shardTimeList.get(i - 1);
                 LocalDate classDate = LocalDateUtil.getClassDate(startLdt, false);
-                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).findFirst();
-                BigDecimal value = first.isPresent() ? first.get().getValue() : null;
+                List<BigDecimal> filterDataList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
+                BigDecimal value = BigDecimalUtil.sum(filterDataList);
                 sum = BigDecimalUtil.add(sum, value);
                 columnSumMap.put(classDate, BigDecimalUtil.add(columnSumMap.get(classDate), value));
                 dateDataList.add(String.valueOf(value));
@@ -1191,8 +1191,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             for (int i = 1; i < shardTimeList.size(); i++) {
                 LocalDateTime startLdt = shardTimeList.get(i - 1);
                 String classMonth = formatter.format(startLdt);
-                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classMonth.equals(ele.getClassMonth())).findFirst();
-                BigDecimal value = first.isPresent() ? first.get().getValue() : null;
+                List<BigDecimal> filterDataList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classMonth.equals(ele.getClassMonth())).map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
+                BigDecimal value = BigDecimalUtil.sum(filterDataList);
                 sum = BigDecimalUtil.add(sum, value);
                 columnSumMap.put(classMonth, BigDecimalUtil.add(columnSumMap.get(classMonth), value));
                 dateDataList.add(String.valueOf(value));
