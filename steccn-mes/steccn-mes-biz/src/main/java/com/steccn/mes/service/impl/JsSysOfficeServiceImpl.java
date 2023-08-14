@@ -50,7 +50,15 @@ public class JsSysOfficeServiceImpl extends ServiceImpl<JsSysOfficeMapper, JsSys
         if(jsonArray.size() > 0){
             for(int i = 0; i < jsonArray.size(); i++){
                 ErpCustomerVO erpCustomerVO = jsonArray.getJSONObject(i).toJavaObject(ErpCustomerVO.class);
-                erpCustomerVO.setFCONTACTLIST(jsonArray.getJSONObject(i).getJSONArray("FCONTACT").toJavaList(String.class));
+                System.out.println(i);
+                List<String> fContactList = Lists.newArrayList();
+                JSONArray contactArray = jsonArray.getJSONObject(i).getJSONArray("FCONTACT");
+                if(contactArray.size() > 0){
+                    for(int j = 0;j < fContactList.size();j++){
+                        fContactList.add(contactArray.getJSONObject(i).getString("FCONTACTNAME"));
+                    }
+                }
+                erpCustomerVO.setFCONTACTLIST(fContactList);
                 erpData.add(erpCustomerVO);
             }
         }

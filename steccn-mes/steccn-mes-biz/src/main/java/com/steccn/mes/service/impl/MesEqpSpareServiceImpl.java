@@ -17,6 +17,7 @@ import com.steccn.mes.service.MesEqpSpareService;
 import com.steccn.mes.mapper.MesEqpSpareMapper;
 import com.steccn.mes.vo.ErpMaterialVO;
 import com.steccn.mes.vo.MesSpareDownloadVO;
+import com.steccn.oa.constant.OaConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -80,10 +81,13 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     model.setUpdateDate(LocalDateTime.now());
                     MesEqpClassification mesEqpClassification = mesEqpClassificationMapper.selectOne(new LambdaQueryWrapper<MesEqpClassification>()
                             .eq(MesEqpClassification::getClassificationCode, tmp.getFmaterialgroupno()));
-                    if(Objects.isNull(mesEqpClassification)){
+                    if(Objects.isNull(mesEqpClassification)&&!tmp.getFmaterialgroupid().equals(OaConstant.NO.toString())){
+                        System.out.println(tmp.getFmaterialgroupno());
                         throw new BusinessException("没有分类类型");
                     }
-                    model.setType(mesEqpClassification.getId());
+                    if(!tmp.getFmaterialgroupid().equals(OaConstant.NO.toString())){
+                        model.setType(mesEqpClassification.getId());
+                    }
                     save(model);
                 }
             });

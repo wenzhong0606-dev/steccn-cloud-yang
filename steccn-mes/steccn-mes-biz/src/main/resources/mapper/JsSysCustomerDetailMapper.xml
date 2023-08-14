@@ -21,7 +21,7 @@
             <result property="invoiceBankAccount" column="invoice_bank_account" jdbcType="VARCHAR"/>
             <result property="invoiceTel" column="invoice_tel" jdbcType="VARCHAR"/>
             <result property="invoiceAddress" column="invoice_address" jdbcType="VARCHAR"/>
-            <result property="contactList" column="contact_list" jdbcType="OTHER"/>
+            <result property="contactList" column="contact_list" jdbcType="OTHER" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="contactName" column="contact_name" jdbcType="VARCHAR"/>
             <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
             <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>

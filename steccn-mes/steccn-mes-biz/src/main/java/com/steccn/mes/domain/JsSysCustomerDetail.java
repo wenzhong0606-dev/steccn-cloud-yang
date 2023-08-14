@@ -5,13 +5,16 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
  * 客户详情表
  * @TableName js_sys_customer_detail
  */
-@TableName(value ="js_sys_customer_detail")
+@TableName(value ="js_sys_customer_detail",autoResultMap = true)
 @Data
 public class JsSysCustomerDetail implements Serializable {
     /**
@@ -98,7 +101,8 @@ public class JsSysCustomerDetail implements Serializable {
     /**
      * 联系人
      */
-    private Object contactList;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> contactList;
 
     /**
      * 联系人名称
