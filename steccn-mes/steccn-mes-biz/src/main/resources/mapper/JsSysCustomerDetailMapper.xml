@@ -10,7 +10,7 @@
             <result property="customerStatus" column="customer_status" jdbcType="VARCHAR"/>
             <result property="forbidStatus" column="forbid_status" jdbcType="VARCHAR"/>
             <result property="orgName" column="org_name" jdbcType="VARCHAR"/>
-            <result property="approverId" column="approver_id" jdbcType="VARCHAR"/>
+            <result property="approverName" column="approver_name" jdbcType="VARCHAR"/>
             <result property="approveDate" column="approve_date" jdbcType="TIMESTAMP"/>
             <result property="groupName" column="group_name" jdbcType="VARCHAR"/>
             <result property="registerAddress" column="register_address" jdbcType="VARCHAR"/>
@@ -32,7 +32,7 @@
 
     <sql id="Base_Column_List">
         id,office_code,customer_status,
-        forbid_status,org_name,approver_id,
+        forbid_status,org_name,approver_name,
         approve_date,group_name,register_address,
         tax_register_code,invoice_title,invoice_bank_name,
         social_cre_code,invoice_bank_account,invoice_tel,
