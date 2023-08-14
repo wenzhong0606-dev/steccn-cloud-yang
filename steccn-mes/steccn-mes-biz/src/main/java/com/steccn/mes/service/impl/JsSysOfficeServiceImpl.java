@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.mes.constant.MesManagerConstant;
@@ -40,6 +41,8 @@ public class JsSysOfficeServiceImpl extends ServiceImpl<JsSysOfficeMapper, JsSys
     private final RemoteErpFeignApi remoteErpFeignApi;
 
     private final JsSysCustomerDetailMapper jsSysCustomerDetailMapper;
+
+    private final JsSysOfficeMapper jsSysOfficeMapper;
 
     @Override
     @Transactional
@@ -140,19 +143,32 @@ public class JsSysOfficeServiceImpl extends ServiceImpl<JsSysOfficeMapper, JsSys
             throw new BusinessException("开始时间和结束时间不能为空");
         }
         List<MesCutomerVO> results = Lists.newArrayList();
-        List<JsSysOffice> jsSysOffices = list(new LambdaQueryWrapper<JsSysOffice>()
-                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName,JsSysOffice::getUpdateDate)
+        List<MesCutomerVO> resultTmp = jsSysOfficeMapper.selectJoinList(MesCutomerVO.class,new MPJLambdaWrapper<JsSysOffice>()
+                .selectAs(JsSysOffice::getOfficeCode,MesCutomerVO::getCustomerCode)
+                .selectAs(JsSysOffice::getOfficeName,MesCutomerVO::getName)
+                .selectAs(JsSysOffice::getUpdateDate,MesCutomerVO::getLastModifiedDateTime)
+                .selectAs(JsSysCustomerDetail::getCustomerStatus,MesCutomerVO::getCustomerStatus)
+                .selectAs(JsSysCustomerDetail::getForbidStatus,MesCutomerVO::getForbidStatus)
+                .selectAs(JsSysCustomerDetail::getOrgName,MesCutomerVO::getOrgName)
+                .selectAs(JsSysCustomerDetail::getApproverName,MesCutomerVO::getApproverName)
+                .selectAs(JsSysCustomerDetail::getApproveDate,MesCutomerVO::getApproveDate)
+                .selectAs(JsSysCustomerDetail::getGroupName,MesCutomerVO::getGroupName)
+                .selectAs(JsSysCustomerDetail::getRegisterAddress,MesCutomerVO::getRegisterAddress)
+                .selectAs(JsSysCustomerDetail::getTaxRegisterCode,MesCutomerVO::getTaxRegisterCode)
+                .selectAs(JsSysCustomerDetail::getInvoiceTitle,MesCutomerVO::getInvoiceTitle)
+                .selectAs(JsSysCustomerDetail::getInvoiceBankName,MesCutomerVO::getInvoiceBankName)
+                .selectAs(JsSysCustomerDetail::getSocialCreCode,MesCutomerVO::getSocialCreCode)
+                .selectAs(JsSysCustomerDetail::getInvoiceBankAccount,MesCutomerVO::getInvoiceBankAccount)
+                .selectAs(JsSysCustomerDetail::getInvoiceTel,MesCutomerVO::getInvoiceTel)
+                .selectAs(JsSysCustomerDetail::getInvoiceAddress,MesCutomerVO::getInvoiceAddress)
+                .selectAs(JsSysCustomerDetail::getContactList,MesCutomerVO::getContactList)
+                .selectAs(JsSysCustomerDetail::getContactName,MesCutomerVO::getContactName)
+                .leftJoin(JsSysCustomerDetail.class,JsSysCustomerDetail::getOfficeCode,JsSysOffice::getOfficeCode)
                 .eq(JsSysOffice::getStatus, MesManagerConstant.NUM_0)
                 .eq(JsSysOffice::getOfficeType, MesManagerConstant.CUSTOMER_TYPE)
                 .between(JsSysOffice::getUpdateDate, dto.getStartfmodifydate(), dto.getStopfmodifydate()));
-        if(CollUtil.isNotEmpty(jsSysOffices)){
-            for(JsSysOffice tmp:jsSysOffices){
-                MesCutomerVO result = new MesCutomerVO();
-                result.setCustomerCode(tmp.getOfficeCode());
-                result.setName(tmp.getOfficeName());
-                result.setLastModifiedDateTime(tmp.getUpdateDate());
-                results.add(result);
-            }
+        if(CollUtil.isNotEmpty(resultTmp)){
+            results = resultTmp;
         }
         return results;
     }
