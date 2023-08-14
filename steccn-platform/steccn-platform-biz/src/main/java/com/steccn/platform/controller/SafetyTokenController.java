@@ -1,5 +1,6 @@
 package com.steccn.platform.controller;
 
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SafetyTokenService;
 import com.steccn.platform.vo.SafetyTokenVO;
@@ -28,6 +29,6 @@ public class SafetyTokenController {
     @ApiOperation(value = "获取安环系统token")
     @ResponseBody
     public R<SafetyTokenVO> getToken() {
-        return R.success(safetyTokenService.getSafetyToken());
+        return R.success(safetyTokenService.getSafetyToken(SecurityUtils.getUser().getUserId()));
     }
 }

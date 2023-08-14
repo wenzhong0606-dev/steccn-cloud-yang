@@ -25,15 +25,12 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
     private final RemoteSafetyFeignApi remoteSafetyTokenService;
 
     @Override
-    public SafetyTokenVO getSafetyToken() {
+    @Cacheable(cacheNames = "SecurityToken#10800",key = "#userId")
+    public SafetyTokenVO getSafetyToken(Long userId) {
         SafetyTokenVO result = this.getSafetyTokenCache();
-        if(result.getIsSuccess().equals(OaConstant.NO)){
-            throw new BusinessException("安环系统中没有该用户,请联系管理员");
-        }
         return result;
     }
 
-    @Cacheable(cacheNames = "SecurityToken#10800",key = "#result.userId",unless = "#result.isSuccess == false")
     public SafetyTokenVO getSafetyTokenCache(){
         SafetyTokenVO result = new SafetyTokenVO();
         SafetyUserNameDTO dto = new SafetyUserNameDTO();
@@ -47,10 +44,8 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
         if(status.equals(OaConstant.NO)){
             //获取json下的对象
             result = jsonObject.getJSONObject("data").getJSONArray("data_0").getJSONObject(0).toJavaObject(SafetyTokenVO.class);
-            result.setIsSuccess(true);
-            result.setUserId(SecurityUtils.getUser().getUserId());
         }else {
-            result.setIsSuccess(false);
+            throw new BusinessException("安环系统中没有该用户,请联系管理员");
         }
         return result;
     }

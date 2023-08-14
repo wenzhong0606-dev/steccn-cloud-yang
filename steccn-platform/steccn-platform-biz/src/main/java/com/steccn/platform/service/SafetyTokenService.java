@@ -13,5 +13,5 @@ public interface SafetyTokenService {
      * 获取安环token
      * @return
      */
-    SafetyTokenVO getSafetyToken();
+    SafetyTokenVO getSafetyToken(Long userId);
 }

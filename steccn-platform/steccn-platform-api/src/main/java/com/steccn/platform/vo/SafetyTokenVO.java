@@ -1,8 +1,10 @@
 package com.steccn.platform.vo;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.steccn.platform.serializer.StringToJsonSerializer;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -20,6 +22,9 @@ public class SafetyTokenVO implements Serializable {
     private Integer version;
     private String createBy;
     private String createdByName;
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdDt;
     private String updateBy;
     private String updateByName;
@@ -39,6 +44,9 @@ public class SafetyTokenVO implements Serializable {
     private String phone2;
     private String groupId;
     private String shiftId;
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime pwdModifyDate;
     private String userSecurityRoles;
     private String shortName;
@@ -79,8 +87,4 @@ public class SafetyTokenVO implements Serializable {
     private String userLabelType;
     private String userLabelTypeName;
     private SafetyTokenPageMapVO mainPageMap;
-    @JsonIgnore
-    private Boolean isSuccess;
-    @JsonIgnore
-    private Long userId;
 }
