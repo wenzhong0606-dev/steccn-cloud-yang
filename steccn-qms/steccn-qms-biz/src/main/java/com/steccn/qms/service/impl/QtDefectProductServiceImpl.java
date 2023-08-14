@@ -172,6 +172,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             } else if (QtManagerConstant.QT_DEFECT_PRODUCT_STATUS.equals(dto.getSortField())) {
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getStatus);
             }
+        }else {
+            between.orderByDesc(QtDefectProduct::getCreateTime);
         }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
