@@ -638,7 +638,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), ele.getEndTime(), Boolean.TRUE, Boolean.FALSE)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
                 List<String> orderNoList = new ArrayList<>(orderNoSet);
                 Collections.sort(orderNoList);
-                String classDateStr = LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN);
+                String classDateStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, startTmp);
                 for (String order : orderNoList) {
                     flag = Boolean.TRUE;
                     PmsDefectDayOrderBasicDTO orderBasicInfo = orderBasicMap.get(order);
@@ -858,11 +858,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //根据开始时间和结束时间 区分不同周
         Map<Integer, BigDecimal> sumMap = Maps.newHashMap();
         List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.MONTH.getType(), start, end);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
         for (int i = 1; i < timeList.size(); i++) {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
-            String timeStr = formatter.format(begin);
+            String timeStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin);
             for (Integer line : dto.getProductLineList()) {
                 DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
