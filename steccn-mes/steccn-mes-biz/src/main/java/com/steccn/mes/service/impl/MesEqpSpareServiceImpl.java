@@ -54,18 +54,19 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
     public Boolean synchronousSpare(ErpCustomerDTO dto) {
         List<ErpMaterialVO> erpMaterial = remoteErpFeignApi.getErpMaterial(dto).getData();
         if(CollUtil.isNotEmpty(erpMaterial)){
+            List<MesEqpSpare> lists = list(new LambdaQueryWrapper<MesEqpSpare>()
+                    .select(MesEqpSpare::getCode,MesEqpSpare::getName,MesEqpSpare::getId)
+                    .eq(MesEqpSpare::getStatus, "0"));
             erpMaterial.forEach(tmp->{
                 //先查看是否有该物料
-                MesEqpSpare one = getOne(new LambdaQueryWrapper<MesEqpSpare>()
-                        .eq(MesEqpSpare::getCode, tmp.getFnumber())
-                        .eq(MesEqpSpare::getStatus, "0"), false);
+                MesEqpSpare one = lists.stream().filter(v->v.getCode().equals(tmp.getFnumber())).findFirst().orElse(null);
                 if(Objects.nonNull(one)&&!one.getName().equals(tmp.getFname())){
                     MesEqpSpare model = new MesEqpSpare();
                     model.setId(one.getId());
                     model.setName(tmp.getFname());
                     model.setSpecifications(tmp.getFspecification());
                     updateById(model);
-                }else {
+                }else if(Objects.isNull(one)){
                     MesEqpSpare model = new MesEqpSpare();
                     model.setCode(tmp.getFnumber());
                     model.setName(tmp.getFname());

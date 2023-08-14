@@ -21,4 +21,12 @@ public class ErpCustomerDTO implements Serializable {
      * 结束时间
      */
     private LocalDateTime stopfmodifydate;
+    /**
+     * 每页显示条数
+     */
+    private Integer pagesize;
+    /**
+     * 页码
+     */
+    private Integer pageindex;
 }

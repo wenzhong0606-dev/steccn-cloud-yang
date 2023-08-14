@@ -34,6 +34,8 @@ public class ErpSynchronousTask {
         ErpCustomerDTO dto = new ErpCustomerDTO();
         dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
+        dto.setPageindex(1);
+        dto.setPagesize(1000);
         jsSysOfficeService.synchronousCustomer(dto);
         XxlJobHelper.log("同步客户-任务结束");
     }
@@ -49,6 +51,8 @@ public class ErpSynchronousTask {
         ErpCustomerDTO dto = new ErpCustomerDTO();
         dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
+        dto.setPageindex(1);
+        dto.setPagesize(1000);
         mesEqpSpareService.synchronousSpare(dto);
         XxlJobHelper.log("同步物料-任务结束");
     }
@@ -64,6 +68,8 @@ public class ErpSynchronousTask {
         ErpCustomerDTO dto = new ErpCustomerDTO();
         dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
+        dto.setPageindex(1);
+        dto.setPagesize(1000);
         jsSysOfficeService.synchronousSupplier(dto);
         XxlJobHelper.log("同步供应商-任务结束");
     }

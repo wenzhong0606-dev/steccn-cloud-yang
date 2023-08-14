@@ -3,6 +3,7 @@ package com.steccn.mes.feign;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.vo.ErpCustomerVO;
+import com.steccn.mes.vo.ErpSupplierVO;
 import com.steccn.mes.vo.ErpMaterialVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -28,7 +29,7 @@ public interface RemoteErpFeignApi {
      */
     @PostMapping("/api/tcmes/getcust")
     @ApiOperation("获取erp客户信息")
-    R<List<ErpCustomerVO>> getErpCustomer(@RequestBody ErpCustomerDTO dto);
+    String getErpCustomer(@RequestBody ErpCustomerDTO dto);
 
     /**
      * 保存直接调拨单
@@ -136,5 +137,5 @@ public interface RemoteErpFeignApi {
      */
     @PostMapping("/api/tcmes/getsupplier")
     @ApiOperation("获取供应商信息")
-    R<List<ErpCustomerVO>> getErpSupplier(@RequestBody ErpCustomerDTO dto);
+    R<List<ErpSupplierVO>> getErpSupplier(@RequestBody ErpCustomerDTO dto);
 }
