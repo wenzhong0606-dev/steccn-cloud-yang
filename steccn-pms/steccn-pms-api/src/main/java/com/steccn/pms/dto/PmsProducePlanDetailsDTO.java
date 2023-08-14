@@ -27,4 +27,7 @@ public class PmsProducePlanDetailsDTO implements Serializable {
     private LocalDate planDate;
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "数量不能为空")
     private BigDecimal quantity;
+    private Integer customerId;
+    private String customerCode;
+    private String customerName;
 }

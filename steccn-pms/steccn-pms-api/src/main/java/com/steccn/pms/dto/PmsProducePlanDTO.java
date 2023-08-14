@@ -26,6 +26,7 @@ public class PmsProducePlanDTO implements Serializable {
     private BigDecimal total;
     private Integer customerId;
     private String customerCode;
+    private String customerName;
     private String position;
     /**
      * 单据编码 三方对接
