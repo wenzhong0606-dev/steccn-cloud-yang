@@ -2,6 +2,7 @@ package com.steccn.authserver.exception;
 
 import cn.hutool.core.util.StrUtil;
 import com.google.common.collect.Lists;
+import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.common.util.DingDingUtils;
 import com.steccn.common.vo.R;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,19 @@ public class SteccnExceptionControllerAdvice {
     public R handleBusinessException(BusinessException businessException) {
         log.error("错误：", businessException);
         return R.failure(businessException.getLocalizedMessage());
+    }
+
+    /**
+     * 业务异常捕获
+     *
+     * @param steccnRuntimeException
+     * @return
+     */
+    @ExceptionHandler(value = SteccnRuntimeException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public R handleSteccnRuntimeException(SteccnRuntimeException steccnRuntimeException) {
+        log.error("错误：", steccnRuntimeException);
+        return R.failure(steccnRuntimeException.getLocalizedMessage());
     }
 
     /**
