@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import cn.hutool.core.util.StrUtil;
+import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtThirdPartyConstant;
 import com.steccn.qms.dto.QtThirdPartyDefectiveDTO;
@@ -42,6 +43,6 @@ public class QtThirdPartyController {
 //            return R.failure("非法访问，请携带正确的client-id");
 //        }
 //        return qtThirdPartyService.saveDefective(dto);
-         throw new RuntimeException("接口过期");
+         throw new SteccnRuntimeException("接口过期");
     }
 }

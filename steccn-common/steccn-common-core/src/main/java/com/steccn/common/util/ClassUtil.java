@@ -3,6 +3,7 @@ package com.steccn.common.util;
 import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Lists;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.exception.SteccnRuntimeException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.*;
@@ -201,7 +202,7 @@ public class ClassUtil {
         } else if (NIGHT.equals(classId)) {
             return NIGHT_START_TIME;
         }
-        throw new RuntimeException("班次只能是早班或者夜班");
+        throw new SteccnRuntimeException("班次只能是早班或者夜班");
     }
 
 
