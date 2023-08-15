@@ -734,7 +734,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
             qtCheckTask.setFinishedTime(LocalDateTime.now());
             //计算班次时间
-            QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
+            //如果是在线检则根据缺陷开始时间
+            QtTaskClassCalculate taskClassCalculate = new QtTaskClassCalculate();
+            if(oldModel.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())&&oldModel.getDefectStartTime()!=null){
+                taskClassCalculate = CalculateDateUtil.calculateClassTime(oldModel.getDefectStartTime());
+            }else {
+                taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
+            }
             qtCheckTask.setClassesId(taskClassCalculate.getClassType());
             qtCheckTask.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         }
@@ -1197,7 +1203,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             taskModel.setFinishedName(SecurityUtils.getUser().getName());
             taskModel.setFinishedTime(LocalDateTime.now());
             //计算班次时间
-            QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(taskModel.getFinishedTime());
+            QtTaskClassCalculate taskClassCalculate = new QtTaskClassCalculate();
+            if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())&&tasKDetail.getDefectStartTime()!=null){
+                taskClassCalculate = CalculateDateUtil.calculateClassTime(tasKDetail.getDefectStartTime());
+            }else {
+                taskClassCalculate = CalculateDateUtil.calculateClassTime(taskModel.getFinishedTime());
+            }
             taskModel.setClassesId(taskClassCalculate.getClassType());
             taskModel.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         }
@@ -1261,12 +1272,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
         qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
         qtCheckTask.setFinishedTime(LocalDateTime.now());
+        QtCheckTask task = getById(dto.getId());
         //计算班次时间
-        QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
+        QtTaskClassCalculate taskClassCalculate = new QtTaskClassCalculate();
+        if(task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())&&task.getDefectStartTime()!=null){
+            taskClassCalculate = CalculateDateUtil.calculateClassTime(task.getDefectStartTime());
+        }else {
+            taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
+        }
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
         qtCheckTask.setClassTime(taskClassCalculate.getClassDate().toLocalDate());
         //配料抽检任务完成,发送消息给岗位为"配料工"的当前班次人员;
-        QtCheckTask task = getById(dto.getId());
         if (QtManagerConstant.NUM_7.equals(task.getTaskType())){
             sendMessage();
         }
