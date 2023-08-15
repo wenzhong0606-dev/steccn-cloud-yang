@@ -204,8 +204,11 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getUsername());
         if (CollUtil.isNotEmpty(role.getStringList())) {
             if (!role.getStringList().contains(QtManagerConstant.COMPLAINT_MANAGER)) {
-                //不是整改管理员
-                between.in(QtCustomerComplain::getId, getUserAuthData());
+                //获取当前用户拥有的数据权限
+                Set<Long> userAuthData = getUserAuthData();
+                if (CollUtil.isNotEmpty(userAuthData)){
+                    between.in(QtCustomerComplain::getId,userAuthData);
+                }
             }
         } else {
             Set<Long> userAuthData = getUserAuthData();
