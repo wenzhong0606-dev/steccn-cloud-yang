@@ -90,8 +90,24 @@ public class SteccnExceptionControllerAdvice {
         return success;
     }
 
+
     /**
-     * 异常捕获
+     * 参数异常
+     *
+     * @param argumentException 参数异常
+     * @return
+     */
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public R handleIllegalArgumentException(IllegalArgumentException argumentException) {
+        log.error("错误：", argumentException);
+        R success = R.success();
+        success.setMsg(argumentException.getLocalizedMessage());
+        return success;
+    }
+
+    /**
+     * 参数不合法异常
      *
      * @param accessDeniedException
      * @return
@@ -111,11 +127,11 @@ public class SteccnExceptionControllerAdvice {
      */
     @ExceptionHandler(value = RuntimeException.class)
     @ResponseStatus(HttpStatus.OK)
-    public R handleRuntimeException(HttpServletRequest request,RuntimeException runtimeException) {
+    public R handleRuntimeException(HttpServletRequest request, RuntimeException runtimeException) {
         log.error("错误：", runtimeException);
         try {
-            DingDingUtils.sendTextMsg("接口异常- \n 请求方式:"+request.getRequestURI() + "\n异常信息:"+ runtimeException.getLocalizedMessage(), Lists.newArrayList("13601717164"), null, false);
-        }catch (Exception e){
+            DingDingUtils.sendTextMsg("接口异常 \n 请求方式:" + request.getRequestURI() + "\n异常信息:" + runtimeException.getLocalizedMessage(), Lists.newArrayList("13601717164"), null, false);
+        } catch (Exception e) {
             log.error(e.getLocalizedMessage());
         }
         return R.failure("接口请求异常，请联系管理员");
@@ -131,8 +147,8 @@ public class SteccnExceptionControllerAdvice {
     public R handleException(HttpServletRequest request, Throwable throwable) {
         log.error("错误：", throwable);
         try {
-            DingDingUtils.sendTextMsg("接口异常- \n请求方式:"+request.getRequestURI() + "\n异常信息:"+ throwable.getLocalizedMessage(), Lists.newArrayList("13601717164"), null, false);
-        }catch (Exception e){
+            DingDingUtils.sendTextMsg("接口异常 \n请求方式:" + request.getRequestURI() + "\n异常信息:" + throwable.getLocalizedMessage(), Lists.newArrayList("13601717164"), null, false);
+        } catch (Exception e) {
             log.error(e.getLocalizedMessage());
         }
         return R.failure("接口请求异常，请联系管理员");
