@@ -208,6 +208,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 Set<Long> userAuthData = getUserAuthData();
                 if (CollUtil.isNotEmpty(userAuthData)){
                     between.in(QtCustomerComplain::getId,userAuthData);
+                }else {
+                    return page;
                 }
             }
         } else {
