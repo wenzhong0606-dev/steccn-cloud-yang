@@ -1392,7 +1392,7 @@ public class ReportServiceImpl implements ReportService {
         //避免重复值合计,一条产线只合计一次
         Map<String,Integer> dayProductLineCount = dayData.stream()
                 .map(OutputQualityDataVO::getProductionLine).distinct().collect(Collectors.toMap(name -> name,name -> 0));
-        Map<String,Integer> nightProductLineCount = dayData.stream()
+        Map<String,Integer> nightProductLineCount = nightData.stream()
                 .map(OutputQualityDataVO::getProductionLine).distinct().collect(Collectors.toMap(name -> name,name -> 0));
         for (OutputQualityDataVO foreDatum : dayData) {
             if (!dayProductLineCount.get(foreDatum.getProductionLine()).equals(QtManagerConstant.NUM_0)) {
