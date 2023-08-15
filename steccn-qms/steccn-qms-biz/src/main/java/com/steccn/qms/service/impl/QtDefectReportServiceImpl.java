@@ -858,14 +858,16 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //根据开始时间和结束时间 区分不同周
         Map<Integer, BigDecimal> sumMap = Maps.newHashMap();
         List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.MONTH.getType(), start, end);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
         for (int i = 1; i < timeList.size(); i++) {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
-            String timeStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin);
+            String timeStr = formatter.format(begin);
+            String xAxis = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin);
             for (Integer line : dto.getProductLineList()) {
                 DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
-                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin));
+                row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
                 row.setUseCountNum(useCountMap.get(line + "_" + timeStr));
@@ -911,7 +913,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
-            rowList.add(countWm(timeStr, 1, "合计（单月）", countMap));
+            rowList.add(countWm(xAxis, 1, "合计（单月）", countMap));
         }
         rowList.add(countWm("总计", 2, "总计", sumMap));
         return rowList;
