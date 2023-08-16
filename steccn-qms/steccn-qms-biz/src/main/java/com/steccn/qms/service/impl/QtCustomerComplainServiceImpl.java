@@ -644,6 +644,10 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRXXJG, detail.getSurveyResult()));
                 //勘察确认初步结论
                 valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRCBJ, detail.getSurveyConclusion()));
+                //客户定制箱号
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KHDZXH,detail.getClientCaseNo()));
+                //备注
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BZ,detail.getRemarks()));
                 oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(valueDTOS);
                 workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
             });
@@ -671,6 +675,29 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             oaWorkFlowDetail2.setWorkflowRequestTableRecords(workflowRequestTableRecords2);
             detailDataList.add(oaWorkFlowDetail2);
         }
+        //明细表3
+        OaWorkFlowDetailObjDTO oaWorkFlowDetail3 = new OaWorkFlowDetailObjDTO();
+        //表名
+        oaWorkFlowDetail3.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL3);
+        //表中详情数据
+        List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords3 = Lists.newArrayList();
+        //获取组件数据
+        List<QtCustomerComplainModule> moduleList = qtCustomerComplainModuleService.list(new LambdaQueryWrapper<QtCustomerComplainModule>().eq(QtCustomerComplainModule::getCustomerComplainId, qtCustomerComplain.getId()));
+        if (CollUtil.isNotEmpty(moduleList)){
+            moduleList.forEach(model->{
+                OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+                List<OaWorkFlowNameValueDTO> valueDTOS = Lists.newArrayList();
+                //组件序列号
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZJXLH, model.getModuleNumber()));
+                //投诉原因
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSYY,model.getComplaintReason()));
+                oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(valueDTOS);
+                workflowRequestTableRecords3.add(oaWorkFlowDetailDataListDTO);
+            });
+        }
+        oaWorkFlowDetail3.setWorkflowRequestTableRecords(workflowRequestTableRecords3);
+        detailDataList.add(oaWorkFlowDetail3);
+        //数据详情
         if (Objects.nonNull(linkDTO.getId())) {
             //调用OA 提交流程
             OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();

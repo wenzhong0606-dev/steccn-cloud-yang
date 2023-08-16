@@ -512,6 +512,16 @@ public interface QtManagerConstant {
     String WORKFLOW_XH = "xh";
 
     /**
+     * 组件序列号
+     */
+    String WORKFLOW_ZJXLH = "zjxlh";
+
+    /**
+     * 投诉原因
+     */
+    String WORKFLOW_TSYY ="tsyy";
+
+    /**
      * 生产批次号
      */
     String WORKFLOW_SCPCH = "scpch";
@@ -567,6 +577,11 @@ public interface QtManagerConstant {
      * 勘察确认初步结论
      */
     String WORKFLOW_KCQRCBJ = "kcqrcbj";
+
+    /**
+     * 客户定制箱号
+     */
+    String WORKFLOW_KHDZXH = "khdzxh";
 
     String WORKFLOW_GLZG = "glzg";
 
@@ -793,6 +808,11 @@ public interface QtManagerConstant {
      * oa客诉明细表2
      */
     String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL2 = "formtable_main_372_dt2";
+
+    /**
+     * oa客诉明细表2
+     */
+    String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL3 = "formtable_main_372_dt3";
     /**
      * 数字
      */

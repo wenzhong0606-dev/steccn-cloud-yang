@@ -111,5 +111,10 @@ public class QtCustomerComplainDetailDTO implements Serializable {
      */
     private Long customerComplainId;
 
+    /**
+     * 备注
+     */
+    private String remarks;
+
 
 }
