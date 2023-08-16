@@ -82,22 +82,17 @@
             <artifactId>steccn-oa-api</artifactId>
             <version>1.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.3.5</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.httpcomponents</groupId>-->
+<!--            <artifactId>httpclient</artifactId>-->
+<!--            <version>4.3.5</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-oauth</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.3.5</version>
-        </dependency>
         <!--添加actuator依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
