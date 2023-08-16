@@ -105,4 +105,10 @@ public class QtCustomerComplainDetailVO implements Serializable {
     private Long customerComplainId;
 
 
+    /**
+     * 备注
+     */
+    private String remarks;
+
+
 }

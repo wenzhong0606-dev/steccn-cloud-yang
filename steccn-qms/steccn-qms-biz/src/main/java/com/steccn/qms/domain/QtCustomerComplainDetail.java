@@ -107,6 +107,11 @@ public class QtCustomerComplainDetail implements Serializable {
     private Long customerComplainId;
 
     /**
+     * 备注
+     */
+    private String remarks;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

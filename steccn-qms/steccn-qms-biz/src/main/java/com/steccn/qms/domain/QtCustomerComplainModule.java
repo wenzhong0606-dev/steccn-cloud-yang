@@ -33,6 +33,11 @@ public class QtCustomerComplainModule implements Serializable {
     private String moduleNumber;
 
     /**
+     * 投诉原因
+     */
+    private String complaintReason;
+
+    /**
      * 创建人id
      */
     private Long createBy;
