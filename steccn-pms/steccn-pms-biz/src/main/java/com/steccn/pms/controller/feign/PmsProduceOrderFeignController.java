@@ -100,8 +100,14 @@ public class PmsProduceOrderFeignController {
     @GetMapping("/batch/id")
     @SysLog("查询当前批次信息")
     public R<PmsWorkOrderBatch> getByOrderId(@RequestParam("id") Long id) {
-
         return R.success(pmsWorkOrderBatchService.getByOrderId(id));
+    }
+
+    @ApiOperation("查询所有订单相关的批次信息")
+    @GetMapping("/all/batch/id")
+    @SysLog("查询当前批次信息")
+    public R<List<PmsWorkOrderBatch>> getAllBatchByOrderId(@RequestParam("id") Long id) {
+        return R.success(pmsWorkOrderBatchService.getAllBatchByOrderId(id));
     }
 
     @ApiOperation("根据班次时间查询物料id")

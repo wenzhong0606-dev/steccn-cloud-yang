@@ -35,6 +35,11 @@ public class QtCustomerComplainDTO {
     private String description;
 
     /**
+     * 描述url
+     */
+    private String descUrl;
+
+    /**
      * 投诉客户
      */
     private Integer complainCustomer;

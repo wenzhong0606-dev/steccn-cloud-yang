@@ -6,13 +6,12 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.oa.domain.Hrmdepartment;
-import com.steccn.oa.domain.Hrmjobtitles;
-import com.steccn.oa.domain.Hrmresource;
-import com.steccn.oa.domain.KqGroupmember;
+import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.mapper.HrmdepartmentMapper;
 import com.steccn.oa.mapper.HrmjobtitlesMapper;
@@ -20,11 +19,14 @@ import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.vo.OaMesUserVO;
+import com.steccn.oa.vo.OaUserVO;
 import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,8 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     private final HrmdepartmentMapper hrmdepartmentMapper;
 
     private final HrmjobtitlesMapper hrmjobtitlesMapper;
+
+    private final HrmresourceMapper hrmresourceMapper;
 
     @Override
     public Long getIdByWorkCode(String workCode) {
@@ -228,6 +232,27 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             dto.add(tmpDTO);
         });
         return remoteMesFeignApi.synchronizeUser(dto);
+    }
+
+    @Override
+    public List<OaUserVO> getAllOaUser(TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        List<OaUserVO> oaUserVOS = hrmresourceMapper.selectJoinList(OaUserVO.class,
+                new MPJLambdaWrapper<OaUserVO>()
+                        .selectAs(Hrmresource::getId, OaUserVO::getId)
+                        .selectAs(Hrmresource::getLastname, OaUserVO::getName)
+                        .selectAs(Hrmresource::getJobtitle, OaUserVO::getJobTitleId)
+                        .selectAs(Hrmresource::getLoginid,OaUserVO::getUserName)
+                        .selectAs(Hrmjobtitles::getJobtitlename, OaUserVO::getJobTitleName)
+                        .selectAs(Hrmresource::getDepartmentid, OaUserVO::getDepartmentId)
+                        .selectAs(Hrmdepartment::getDepartmentname, OaUserVO::getDepartmentName)
+                        .leftJoin(Hrmjobtitles.class, Hrmjobtitles::getId, Hrmresource::getJobtitle)
+                        .leftJoin(Hrmdepartment.class, Hrmdepartment::getId, Hrmresource::getDepartmentid)
+                        .ne(Hrmresource::getStatus, OaConstant.NUM_5)
+                        .isNull(Hrmjobtitles::getCanceled)
+                        .le(Hrmresource::getModified, dto.getField2().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                        .ge(Hrmresource::getModified, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+        oaUserVOS = oaUserVOS.stream().filter(v->StrUtil.isNotBlank(v.getUserName())).collect(Collectors.toList());
+        return oaUserVOS;
     }
 }
 

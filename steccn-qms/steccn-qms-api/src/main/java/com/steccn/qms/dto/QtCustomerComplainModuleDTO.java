@@ -24,4 +24,9 @@ public class QtCustomerComplainModuleDTO {
      */
     private String moduleNumber;
 
+    /**
+     * 投诉原因
+     */
+    private String complaintReason;
+
 }

@@ -165,7 +165,6 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         }else if(StrUtil.isNotBlank(dto.getCustomerCode())){
             sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(Sets.newHashSet(dto.getCustomerCode())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getCustomerCode());
         }
-
         for (PmsProducePlanDetailsDTO planDetailsDTO : dto.getProducePlanDetailsDTOList()) {
             PmsProducePlan pmsProducePlan = new PmsProducePlan();
             if(dto.getMaterialCode()!=null && dto.getMaterialId()==null){
@@ -179,6 +178,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlan.setPlanDate(planDetailsDTO.getPlanDate());
             pmsProducePlan.setQuantity(planDetailsDTO.getQuantity());
             pmsProducePlan.setPosition(dto.getPosition());
+            pmsProducePlan.setOrderCode(dto.getOrderCode());
             //加入客户
             if(Objects.nonNull(sysOfficeVO)){
                 pmsProducePlan.setCustomerId(sysOfficeVO.getId());
@@ -196,12 +196,13 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
         }
         if (CollectionUtils.isNotEmpty(addProducePlanList)) {
-            List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
-            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
-                    .in(PmsProducePlan::getPlanDate, localDateList));
-            if (CollectionUtils.isNotEmpty(list)) {
-                throw new BusinessException("该物料已存在生产计划，新增失败");
-            }
+//            List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
+//            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
+//                    .in(PmsProducePlan::getPlanDate, localDateList));
+            //需求修改,物料可重复
+//            if (CollectionUtils.isNotEmpty(list)) {
+//                throw new BusinessException("该物料已存在生产计划，新增失败");
+//            }
             if (!saveBatch(addProducePlanList)) {
                 throw new BusinessException("生产月计划新增失败");
             }
@@ -214,6 +215,30 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         // 处理MRP 计算逻辑
 //        addProducePlanList.addAll(updateProducePlanList);
 ////        return pmsMrpInfoService.add(dto);
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean addMaterialBatch(List<PmsProducePlanDTO> dto) {
+        if(CollUtil.isNotEmpty(dto)){
+            //添加时先删除相关数据
+            List<String> materialCodes = dto.stream()
+                    .map(PmsProducePlanDTO::getMaterialCode)
+                    .collect(Collectors.toList());
+            Map<String, EqpSpareVO> spareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(materialCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for(PmsProducePlanDTO tmp:dto){
+                LocalDate planDate = tmp.getProducePlanDetailsDTOList().get(0).getPlanDate();
+                remove(new LambdaQueryWrapper<PmsProducePlan>()
+                        .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
+                        .eq(PmsProducePlan::getMaterialId,spareVO.get(tmp.getMaterialCode()).getId())
+                        .eq(PmsProducePlan::getOrderCode,tmp.getOrderCode())
+                        .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
+            }
+            for(PmsProducePlanDTO tmp:dto){
+                this.addOrEditBatch(tmp);
+            }
+        }
         return true;
     }
 

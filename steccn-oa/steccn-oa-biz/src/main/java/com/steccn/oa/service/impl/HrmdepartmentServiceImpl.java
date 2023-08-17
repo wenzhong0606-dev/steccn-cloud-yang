@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmdepartment;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.service.HrmdepartmentService;
@@ -16,6 +17,7 @@ import com.steccn.oa.vo.OaDepartmentVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -95,6 +97,30 @@ public class HrmdepartmentServiceImpl extends ServiceImpl<HrmdepartmentMapper, H
             }
         }
         return treeList;
+    }
+
+    @Override
+    public List<OaDepartmentVO> getAllDepartment(TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        //部门列表
+        List<Hrmdepartment> departmentList = list(new LambdaQueryWrapper<Hrmdepartment>()
+                .isNull(Hrmdepartment::getCanceled)
+                .le(Objects.nonNull(dto.getField2()),Hrmdepartment::getModified,dto.getField2())
+                .ge(Objects.nonNull(dto.getField1()),Hrmdepartment::getModified,dto.getField1()));
+        List<OaDepartmentVO> results = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(departmentList)){
+            departmentList.stream().forEach(tmp->{
+                OaDepartmentVO oaDepartmentVO = new OaDepartmentVO();
+                oaDepartmentVO.setId(tmp.getId());
+                oaDepartmentVO.setSuperId(tmp.getSupdepid());
+                oaDepartmentVO.setDepartmentName(tmp.getDepartmentname());
+                oaDepartmentVO.setTLevel(tmp.getTlevel());
+                oaDepartmentVO.setShowOrder(tmp.getShoworder());
+                oaDepartmentVO.setShowOrderOfTree(tmp.getShoworderoftree());
+                oaDepartmentVO.setUpdateTime(tmp.getModified());
+                results.add(oaDepartmentVO);
+            });
+        }
+        return results;
     }
 }
 

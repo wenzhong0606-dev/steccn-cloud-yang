@@ -3,6 +3,7 @@ package com.steccn.common.util;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.steccn.common.constant.RegularConstant;
+import com.steccn.common.exception.SteccnRuntimeException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -38,7 +39,7 @@ public class RegularUtil {
                 matcher = pattern.matcher(rawStr);
                 matcher.find();
             } catch (Exception e) {
-                throw new RuntimeException("正则表达式错误");
+                throw new SteccnRuntimeException("正则表达式错误");
             }
             try {
                 trim = matcher.group();

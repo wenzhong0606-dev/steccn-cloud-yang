@@ -26,6 +26,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-redis</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-data</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

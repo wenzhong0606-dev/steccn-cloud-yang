@@ -1,11 +1,14 @@
 package com.steccn.oa.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmresource;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.vo.OaMesUserVO;
+import com.steccn.oa.vo.OaUserVO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -83,4 +86,10 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     String synchronizeUser();
+
+    /**
+     * 获取所有oa用户
+     * @return
+     */
+    List<OaUserVO> getAllOaUser(TupleDTO<LocalDateTime,LocalDateTime> dto);
 }

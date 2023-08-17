@@ -3,6 +3,8 @@ package com.steccn.oa.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * oa部门VO
@@ -30,7 +32,22 @@ public class OaDepartmentVO implements Serializable {
     private String departmentName;
 
     /**
-     * 排序
+     * 树层级
      */
     private Integer tLevel;
+
+    /**
+     * 显示层级
+     */
+    private BigDecimal showOrder;
+
+    /**
+     *  树状层级
+     */
+    private Integer showOrderOfTree;
+
+    /**
+     * 修改时间
+     */
+    private LocalDateTime updateTime;
 }

@@ -30,6 +30,11 @@ public class QtImproveRecordDTO {
     private String title;
 
     /**
+     * 描述url
+     */
+    private String descUrl;
+
+    /**
      * 描述
      */
     private String description;

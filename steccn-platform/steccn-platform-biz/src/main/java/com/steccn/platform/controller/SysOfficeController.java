@@ -5,10 +5,7 @@ import com.google.common.collect.Lists;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysOffice;
-import com.steccn.platform.dto.SysOfficeDTO;
-import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.dto.SysOfficeParentIdsDTO;
-import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
@@ -23,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 机构数据
@@ -75,15 +73,32 @@ public class SysOfficeController {
     @PostMapping("/warehouse")
     @ApiOperation("根据机构类型查询下拉选项树结构")
     public R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList) {
+        return R.success(typeDataList(typeList));
+    }
+
+    /**
+     * 根据组织机构类型获取数据
+     * @param typeList 类型集合
+     * @return
+     */
+    private List<SysOfficeVO> typeDataList(List<String> typeList) {
         if (typeList.size() == 3 && typeList.contains(SysOfficeConstant.WORKSHOP) && typeList.contains(SysOfficeConstant.PRODUCT_LINE) && typeList.contains(SysOfficeConstant.STATION)) {
-            return R.success(sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION)));
+            return sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION));
         } else if (typeList.size() == 2 && typeList.contains(SysOfficeConstant.WORKSHOP) && typeList.contains(SysOfficeConstant.PRODUCT_LINE)) {
-            return R.success(sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE)));
+            return sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE));
         } else if (typeList.size() == 2 && typeList.contains(SysOfficeConstant.PRODUCT_LINE) && typeList.contains(SysOfficeConstant.STATION)) {
-            return R.success(sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION)));
+            return sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION));
         } else {
-            return R.success(sysOfficeService.warehouseAndShelf(typeList));
+            return sysOfficeService.warehouseAndShelf(typeList);
         }
+    }
+
+    @PostMapping("/multi/tree")
+    @ApiOperation("根据机构类型+根节点查询下拉选项树结构")
+    public R<List<SysOfficeVO>> multiTree(@RequestBody SysOfficeMultiTreeDTO dto) {
+        List<SysOfficeVO> sysOfficeVOList = typeDataList(dto.getOfficeTypeList());
+        List<SysOfficeVO> collect = sysOfficeVOList.stream().filter(ele -> dto.getRootCodeList().contains(ele.getOfficeCode())).collect(Collectors.toList());
+        return R.success(collect);
     }
 
     @ApiOperation("货架的仓库")

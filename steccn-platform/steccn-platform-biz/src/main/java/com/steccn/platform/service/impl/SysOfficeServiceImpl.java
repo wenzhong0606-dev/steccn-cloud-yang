@@ -141,7 +141,11 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public List<SysOfficeVO> findDataByPCodeAndType(SysOfficeParentDTO dto) {
-        List<SysOffice> dataList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).and(wrapper -> wrapper.eq(SysOffice::getOfficeType, dto.getOfficeType())).and(wrapper -> wrapper.eq(SysOffice::getParentCode, dto.getParentCode())));
+        List<SysOffice> dataList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .and(wrapper -> wrapper.eq(SysOffice::getOfficeType, dto.getOfficeType()))
+                .and(wrapper -> wrapper.eq(SysOffice::getParentCode, dto.getParentCode()))
+                .orderByAsc(SysOffice::getTreeSort));
         List<SysOfficeVO> vos = Lists.newArrayList();
         if (!CollUtil.isEmpty(dataList)) {
             dataList.forEach(tmp -> {
@@ -443,7 +447,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public Boolean delete(SysOfficeDTO sysOfficeDTO) {
         //根据机构编码查询
-        SysOffice office = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, sysOfficeDTO.getOfficeCode()));
+        SysOffice office = getOne(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeCode, sysOfficeDTO.getOfficeCode())
+                .eq(SysOffice::getOfficeType, sysOfficeDTO.getOfficeType()));
         if (Objects.nonNull(office)) {
             office.setStatus(SysOfficeConstant.DEL_FLAG);
             return updateById(office);

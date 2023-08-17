@@ -126,7 +126,7 @@ public class Hrmdepartment implements Serializable {
     /**
      * 
      */
-    private Date modified;
+    private LocalDateTime modified;
 
     /**
      * 

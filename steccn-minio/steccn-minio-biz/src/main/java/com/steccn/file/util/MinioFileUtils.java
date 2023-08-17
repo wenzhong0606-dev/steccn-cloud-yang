@@ -1,6 +1,7 @@
 package com.steccn.file.util;
 
 
+import com.steccn.common.exception.SteccnRuntimeException;
 import io.minio.MinioClient;
 import io.minio.PutObjectOptions;
 import io.minio.errors.*;
@@ -56,7 +57,7 @@ public class MinioFileUtils {
             return url;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("文件上传失败");
+            throw new SteccnRuntimeException("文件上传失败");
         }
     }
 
@@ -72,7 +73,7 @@ public class MinioFileUtils {
             return url;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("文件上传失败");
+            throw new SteccnRuntimeException("文件上传失败");
         }
     }
 

@@ -424,7 +424,7 @@ public interface QtManagerConstant {
     /**
      * 客诉管理员角色编码
      */
-    String COMPLAINT_MANAGER = " complaintManager";
+    String COMPLAINT_MANAGER = "complaintManager";
 
 
     /**
@@ -469,7 +469,7 @@ public interface QtManagerConstant {
     /**
      * 描述
      */
-    String WORKFLOW_MS = "ms";
+    String WORKFLOW_MS = "mswd";
 
     /**
      * 投诉客户
@@ -510,6 +510,16 @@ public interface QtManagerConstant {
      * 箱号
      */
     String WORKFLOW_XH = "xh";
+
+    /**
+     * 组件序列号
+     */
+    String WORKFLOW_ZJXLH = "zjxlh";
+
+    /**
+     * 投诉原因
+     */
+    String WORKFLOW_TSYY ="tsyy";
 
     /**
      * 生产批次号
@@ -567,6 +577,11 @@ public interface QtManagerConstant {
      * 勘察确认初步结论
      */
     String WORKFLOW_KCQRCBJ = "kcqrcbj";
+
+    /**
+     * 客户定制箱号
+     */
+    String WORKFLOW_KHDZXH = "khdzxh";
 
     String WORKFLOW_GLZG = "glzg";
 
@@ -793,6 +808,11 @@ public interface QtManagerConstant {
      * oa客诉明细表2
      */
     String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL2 = "formtable_main_372_dt2";
+
+    /**
+     * oa客诉明细表2
+     */
+    String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL3 = "formtable_main_372_dt3";
     /**
      * 数字
      */

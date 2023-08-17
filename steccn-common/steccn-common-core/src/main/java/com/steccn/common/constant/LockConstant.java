@@ -122,5 +122,10 @@ public interface LockConstant {
      * 拉引量计算
      */
     String pullAmountCalculate = "pullAmountCalculate";
+
+    /**
+     * CDC新增或修改用户
+     */
+    String CDC_USER_ADD = "CDC_USER_ADD";
 }
 

@@ -10,6 +10,7 @@ import com.steccn.platform.service.SafetyTokenService;
 import com.steccn.platform.vo.SafetyTokenPageMapVO;
 import com.steccn.platform.vo.SafetyTokenVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,7 +25,13 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
     private final RemoteSafetyFeignApi remoteSafetyTokenService;
 
     @Override
-    public SafetyTokenVO getSafetyToken() {
+    @Cacheable(cacheNames = "SecurityToken#10800",key = "#userId")
+    public SafetyTokenVO getSafetyToken(Long userId) {
+        SafetyTokenVO result = this.getSafetyTokenCache();
+        return result;
+    }
+
+    public SafetyTokenVO getSafetyTokenCache(){
         SafetyTokenVO result = new SafetyTokenVO();
         SafetyUserNameDTO dto = new SafetyUserNameDTO();
         //获取登录用户的用户名

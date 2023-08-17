@@ -342,7 +342,7 @@
     <select id="checkItemMaterialAvg" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
         task.product_line ->> '$.id' as product_line_id,
-        DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+        class_time as class_date,
         material_id,
         class_group_id,
         ROUND(avg(check_result ), #{bit}) as value
@@ -364,8 +364,8 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT(class_time,'%Y-%m-%d')
-        ,class_group_id,
+        class_time,
+        class_group_id,
         task.product_line ->> '$.id',
         material_id
 
@@ -373,7 +373,7 @@
     <select id="checkItemAvgClassGroup" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
             task.product_line ->> '$.id' as product_line_id,
-            DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+            class_time as class_date,
             class_group_id,
             ROUND(avg(check_result ), #{bit}) as value
         FROM
@@ -394,14 +394,14 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT(class_time,'%Y-%m-%d'),
+        class_time,
         class_group_id,
         task.product_line ->> '$.id'
     </select>
     <select id="checkItemAvgDay" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
         task.product_line ->> '$.id' as product_line_id,
-        DATE_FORMAT(class_time,'%Y-%m-%d') as class_date,
+        class_time as class_date,
         ROUND(avg(check_result ), #{bit}) as value
         FROM
         qt_check_task task
@@ -421,7 +421,7 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT(class_time,'%Y-%m-%d'),
+        class_time,
         task.product_line ->> '$.id'
     </select>
     <select id="checkItemAvgMonth" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
@@ -450,10 +450,44 @@
         DATE_FORMAT(class_time,'%Y-%m'),
         task.product_line ->> '$.id'
     </select>
+    <select id="microBubble" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
+        SELECT
+        task.product_line ->> '$.id' as product_line_id,
+        class_time as class_date,
+        task.station ->> '$.name' AS station,
+        sum( detail.check_result ) as value
+        FROM
+        qt_check_task task
+        JOIN qt_check_task_detail detail ON detail.task_id = task.id
+        WHERE
+        task.del_flag = 0
+        AND task.product_line ->> '$.id' IN
+        <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        AND detail.item_id IN
+        <foreach collection="itemIdList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND task.STATUS = 2
+        AND task.classes_id = #{classId}
+        AND task.task_type = 4
+        AND check_result IS NOT NULL
+        AND DATE_FORMAT( spot_time, '%H:%i:%s' ) &gt;  #{time1}
+        <if test="time2 != null">
+            AND DATE_FORMAT( spot_time, '%H:%i:%s' ) &lt;=  #{time2}
+        </if>
+        AND spot_time &gt;= #{start}
+        AND spot_time &lt; #{end}
+        GROUP BY
+        task.product_line ->> '$.id' ,
+        class_time,
+        task.station ->> '$.name'
+    </select>
     <select id="transmittance" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT
             task.product_line ->> '$.id' AS product_line_id,
-            DATE_FORMAT( class_time, '%Y-%m-%d' ) AS class_date,
+            class_time AS class_date,
             class_group_id,
             ROUND( avg( check_result ), 2 ) AS VALUE,
             item.code
@@ -475,42 +509,10 @@
         AND spot_time &gt;= #{start}
         AND spot_time &lt; #{end}
         GROUP BY
-        DATE_FORMAT( class_time, '%Y-%m-%d' ),
+        class_time,
         class_group_id,
         task.product_line ->> '$.id',
         item.code
-    </select>
-    <select id="microBubble" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
-        SELECT
-        task.product_line ->> '$.id' as product_line_id,
-        DATE_FORMAT(spot_time, '%Y-%m-%d') as class_date,
-        task.station ->> '$.name' AS station,
-        sum( detail.check_result ) as value
-        FROM
-        qt_check_task task
-        JOIN qt_check_task_detail detail ON detail.task_id = task.id
-        WHERE
-        task.del_flag = 0
-        AND task.product_line ->> '$.id' IN
-        <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
-        AND detail.item_id IN
-        <foreach collection="itemIdList" item="id" open="(" close=")" separator=",">
-            #{id}
-        </foreach>
-        AND task.STATUS = 2
-        AND task.classes_id = #{classId}
-        AND task.task_type = 4
-        AND check_result IS NOT NULL
-        AND DATE_FORMAT( spot_time, '%H:%i:%s' ) &gt;  #{time1}
-        AND DATE_FORMAT( spot_time, '%H:%i:%s' ) &lt;=  #{time2}
-        AND spot_time &gt;= #{start}
-        AND spot_time &lt; #{end}
-        GROUP BY
-        task.product_line ->> '$.id' ,
-        DATE_FORMAT( spot_time, '%Y-%m-%d' ),
-        task.station ->> '$.name'
     </select>
     <select id="originalDefectDay" resultType="com.steccn.qms.dto.QtCheckItemMaterialAvgDTO">
         SELECT

@@ -1,6 +1,9 @@
 package com.steccn.authserver.exception;
 
 import cn.hutool.core.util.StrUtil;
+import com.google.common.collect.Lists;
+import com.steccn.common.exception.SteccnRuntimeException;
+import com.steccn.common.util.DingDingUtils;
 import com.steccn.common.vo.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,6 +63,19 @@ public class SteccnExceptionControllerAdvice {
     }
 
     /**
+     * 业务异常捕获
+     *
+     * @param steccnRuntimeException
+     * @return
+     */
+    @ExceptionHandler(value = SteccnRuntimeException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public R handleSteccnRuntimeException(SteccnRuntimeException steccnRuntimeException) {
+        log.error("错误：", steccnRuntimeException);
+        return R.failure(steccnRuntimeException.getLocalizedMessage());
+    }
+
+    /**
      * 图表异常捕获
      *
      * @param chartException 图表异常
@@ -73,8 +90,24 @@ public class SteccnExceptionControllerAdvice {
         return success;
     }
 
+
     /**
-     * 异常捕获
+     * 参数异常
+     *
+     * @param argumentException 参数异常
+     * @return
+     */
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public R handleIllegalArgumentException(IllegalArgumentException argumentException) {
+        log.error("错误：", argumentException);
+        R success = R.success();
+        success.setMsg(argumentException.getLocalizedMessage());
+        return success;
+    }
+
+    /**
+     * 参数不合法异常
      *
      * @param accessDeniedException
      * @return
@@ -94,9 +127,14 @@ public class SteccnExceptionControllerAdvice {
      */
     @ExceptionHandler(value = RuntimeException.class)
     @ResponseStatus(HttpStatus.OK)
-    public R handleRuntimeException(RuntimeException runtimeException) {
+    public R handleRuntimeException(HttpServletRequest request, RuntimeException runtimeException) {
         log.error("错误：", runtimeException);
-        return R.failure(runtimeException.getLocalizedMessage());
+        try {
+            DingDingUtils.sendTextMsg("接口异常 \n 请求方式:" + request.getRequestURI() + "\n异常信息:" + runtimeException.getLocalizedMessage(), Lists.newArrayList("13601717164"), null, false);
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+        }
+        return R.failure("接口请求异常，请联系管理员");
     }
 
     /**
@@ -106,8 +144,13 @@ public class SteccnExceptionControllerAdvice {
      * @return
      */
     @ExceptionHandler(value = Throwable.class)
-    public R handleException(Throwable throwable) {
+    public R handleException(HttpServletRequest request, Throwable throwable) {
         log.error("错误：", throwable);
-        return R.failure(throwable.getLocalizedMessage());
+        try {
+            DingDingUtils.sendTextMsg("接口异常 \n请求方式:" + request.getRequestURI() + "\n异常信息:" + throwable.getLocalizedMessage(), Lists.newArrayList("13601717164"), null, false);
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+        }
+        return R.failure("接口请求异常，请联系管理员");
     }
 }

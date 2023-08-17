@@ -434,7 +434,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         List<QtCheckItemMaterialAvgDTO> timeList1 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(8, 0), LocalTime.of(12, 0), 0);
         List<QtCheckItemMaterialAvgDTO> timeList2 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(12, 0), LocalTime.of(16, 0), 0);
         List<QtCheckItemMaterialAvgDTO> timeList3 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(16, 0), LocalTime.of(20, 0), 0);
-        List<QtCheckItemMaterialAvgDTO> timeList4 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(20, 0), LocalTime.of(0, 0), 1);
+        List<QtCheckItemMaterialAvgDTO> timeList4 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(20, 0), null, 1);
         List<QtCheckItemMaterialAvgDTO> timeList5 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(0, 0), LocalTime.of(4, 0), 1);
         List<QtCheckItemMaterialAvgDTO> timeList6 = qtCheckTaskMapper.microBubble(dto.getProductLineList(), start, end, qpItemIdList, LocalTime.of(4, 0), LocalTime.of(8, 0), 1);
 
@@ -575,10 +575,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 BigDecimalUtil.accumulate(sumMap, "-2", row.getDefectSum());
             }
             //月份合计
-            rowList.add(countRow(itemList, countMap, 1, "合计（单月）"));
+            rowList.add(countRow(itemList, countMap, 1, monthStr, "合计（单月）"));
         }
         //总计
-        rowList.add(countRow(itemList, sumMap, 2, "合计"));
+        rowList.add(countRow(itemList, sumMap, 2, null, "合计"));
         return resVo;
     }
 
@@ -638,7 +638,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), ele.getEndTime(), Boolean.TRUE, Boolean.FALSE)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
                 List<String> orderNoList = new ArrayList<>(orderNoSet);
                 Collections.sort(orderNoList);
-                String classDateStr = LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN);
+                String classDateStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, startTmp);
                 for (String order : orderNoList) {
                     flag = Boolean.TRUE;
                     PmsDefectDayOrderBasicDTO orderBasicInfo = orderBasicMap.get(order);
@@ -774,10 +774,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
             String weekStr = ShardTimeUtil.date2Week(begin.toLocalDate());
+            String xAxis = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin);
             for (Integer line : dto.getProductLineList()) {
                 DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
-                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.WEEK, begin));
+                row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
                 row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
@@ -823,7 +824,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
-            rowList.add(countWm(weekStr, 1, "合计（单周）", countMap));
+            rowList.add(countWm(xAxis, 1, "合计（单周）", countMap));
         }
         rowList.add(countWm("总计", 2, "总计", sumMap));
         return rowList;
@@ -862,10 +863,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
             String timeStr = formatter.format(begin);
+            String xAxis = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin);
             for (Integer line : dto.getProductLineList()) {
                 DefectCountRowVO row = new DefectCountRowVO();
                 row.setType(0);
-                row.setTimeStr(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin));
+                row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
                 row.setUseCountNum(useCountMap.get(line + "_" + timeStr));
@@ -911,7 +913,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
             }
-            rowList.add(countWm(timeStr, 1, "合计（单月）", countMap));
+            rowList.add(countWm(xAxis, 1, "合计（单月）", countMap));
         }
         rowList.add(countWm("总计", 2, "总计", sumMap));
         return rowList;
@@ -976,7 +978,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param codeMap  动态表头
      * @return 行
      */
-    private DefectDayRowVO countSum(int type, String lineName,String classDateStr, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
+    private DefectDayRowVO countSum(int type, String lineName, String classDateStr, Map<String, BigDecimal> countMap, Map<String, List<String>> codeMap) {
         DefectDayRowVO countRow = new DefectDayRowVO();
         countRow.setType(type);
         countRow.setProductLineName(lineName);
@@ -1072,9 +1074,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param hintName 提示语
      * @return
      */
-    private CoatingFilmRowVO countRow(List<QtDefectiveItem> itemList, Map<String, BigDecimal> map, int type, String hintName) {
+    private CoatingFilmRowVO countRow(List<QtDefectiveItem> itemList, Map<String, BigDecimal> map, int type, String monthStr, String hintName) {
         CoatingFilmRowVO row = new CoatingFilmRowVO();
         row.setType(type);
+        row.setMonthStr(monthStr);
         row.setProductLineName(hintName);
         row.setDefectSum(BigDecimalUtil.sum(map.values()));
         List<BigDecimal> valueList = Lists.newArrayList();
@@ -1125,8 +1128,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             for (int i = 1; i < shardTimeList.size(); i++) {
                 LocalDateTime startLdt = shardTimeList.get(i - 1);
                 LocalDate classDate = LocalDateUtil.getClassDate(startLdt, false);
-                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).findFirst();
-                BigDecimal value = first.isPresent() ? first.get().getValue() : null;
+                List<BigDecimal> filterDataList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
+                BigDecimal value = BigDecimalUtil.sum(filterDataList);
                 sum = BigDecimalUtil.add(sum, value);
                 columnSumMap.put(classDate, BigDecimalUtil.add(columnSumMap.get(classDate), value));
                 dateDataList.add(String.valueOf(value));
@@ -1189,8 +1192,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             for (int i = 1; i < shardTimeList.size(); i++) {
                 LocalDateTime startLdt = shardTimeList.get(i - 1);
                 String classMonth = formatter.format(startLdt);
-                Optional<QtCheckItemMaterialAvgDTO> first = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classMonth.equals(ele.getClassMonth())).findFirst();
-                BigDecimal value = first.isPresent() ? first.get().getValue() : null;
+                List<BigDecimal> filterDataList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classMonth.equals(ele.getClassMonth())).map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
+                BigDecimal value = BigDecimalUtil.sum(filterDataList);
                 sum = BigDecimalUtil.add(sum, value);
                 columnSumMap.put(classMonth, BigDecimalUtil.add(columnSumMap.get(classMonth), value));
                 dateDataList.add(String.valueOf(value));

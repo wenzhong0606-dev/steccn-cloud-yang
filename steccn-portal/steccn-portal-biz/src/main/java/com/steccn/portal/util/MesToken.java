@@ -1,6 +1,7 @@
 package com.steccn.portal.util;
 
 import com.alibaba.nacos.common.utils.MD5Utils;
+import com.steccn.common.exception.SteccnRuntimeException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -93,11 +94,11 @@ public class MesToken {
     /**
      * 将CheckedException转换为UncheckedException.
      */
-    public static RuntimeException unchecked(Exception e) {
-        if (e instanceof RuntimeException) {
-            return (RuntimeException) e;
+    public static SteccnRuntimeException unchecked(Exception e) {
+        if (e instanceof SteccnRuntimeException) {
+            return (SteccnRuntimeException) e;
         } else {
-            return new RuntimeException(e);
+            return new SteccnRuntimeException(e);
         }
     }
 }

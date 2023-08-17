@@ -1,5 +1,6 @@
 package com.steccn.oa.mapper;
 
+import com.github.yulichang.base.mapper.MPJJoinMapper;
 import com.steccn.oa.domain.Hrmresource;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.steccn.oa.domain.Hrmresource
 */
 @Mapper
-public interface HrmresourceMapper extends BaseMapper<Hrmresource> {
+public interface HrmresourceMapper extends MPJJoinMapper<Hrmresource> {
 
 }
 

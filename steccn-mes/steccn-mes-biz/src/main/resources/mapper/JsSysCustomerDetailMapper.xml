@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.JsSysCustomerDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.JsSysCustomerDetail">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="officeCode" column="office_code" jdbcType="VARCHAR"/>
+            <result property="customerStatus" column="customer_status" jdbcType="VARCHAR"/>
+            <result property="forbidStatus" column="forbid_status" jdbcType="VARCHAR"/>
+            <result property="orgName" column="org_name" jdbcType="VARCHAR"/>
+            <result property="approverName" column="approver_name" jdbcType="VARCHAR"/>
+            <result property="approveDate" column="approve_date" jdbcType="TIMESTAMP"/>
+            <result property="groupName" column="group_name" jdbcType="VARCHAR"/>
+            <result property="registerAddress" column="register_address" jdbcType="VARCHAR"/>
+            <result property="taxRegisterCode" column="tax_register_code" jdbcType="VARCHAR"/>
+            <result property="invoiceTitle" column="invoice_title" jdbcType="VARCHAR"/>
+            <result property="invoiceBankName" column="invoice_bank_name" jdbcType="VARCHAR"/>
+            <result property="socialCreCode" column="social_cre_code" jdbcType="VARCHAR"/>
+            <result property="invoiceBankAccount" column="invoice_bank_account" jdbcType="VARCHAR"/>
+            <result property="invoiceTel" column="invoice_tel" jdbcType="VARCHAR"/>
+            <result property="invoiceAddress" column="invoice_address" jdbcType="VARCHAR"/>
+            <result property="contactList" column="contact_list" jdbcType="OTHER" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="contactName" column="contact_name" jdbcType="VARCHAR"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,office_code,customer_status,
+        forbid_status,org_name,approver_name,
+        approve_date,group_name,register_address,
+        tax_register_code,invoice_title,invoice_bank_name,
+        social_cre_code,invoice_bank_account,invoice_tel,
+        invoice_address,contact_list,contact_name,
+        update_by,update_date,create_by,
+        create_date,del_flag
+    </sql>
+</mapper>

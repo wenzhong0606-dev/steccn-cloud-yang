@@ -471,6 +471,20 @@ public interface PmManagerConstant {
     }
 
     /**
+     * 0：出库单 1：领用单
+     */
+
+    @Getter
+    @AllArgsConstructor
+    enum OrderEnum {
+        ZERO(0, "出库单"), ONE(1, "领用单");
+
+        private final Integer code;
+
+        private final String name;
+    }
+
+    /**
      * 对比类型
      */
     @Getter

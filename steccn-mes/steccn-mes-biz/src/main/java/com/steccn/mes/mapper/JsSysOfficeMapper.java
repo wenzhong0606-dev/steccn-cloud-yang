@@ -1,5 +1,6 @@
 package com.steccn.mes.mapper;
 
+import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.mes.domain.JsSysOffice;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.steccn.mes.domain.JsSysOffice
 */
 @Mapper
-public interface JsSysOfficeMapper extends BaseMapper<JsSysOffice> {
+public interface JsSysOfficeMapper extends MPJBaseMapper<JsSysOffice> {
 
 }
 

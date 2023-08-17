@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Data;
 
@@ -79,7 +80,7 @@ public class Hrmjobtitles implements Serializable {
     /**
      * 
      */
-    private Date created;
+    private LocalDateTime created;
 
     /**
      * 
@@ -89,7 +90,7 @@ public class Hrmjobtitles implements Serializable {
     /**
      * 
      */
-    private Date modified;
+    private LocalDateTime modified;
 
     /**
      * 

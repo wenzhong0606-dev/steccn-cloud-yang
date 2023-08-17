@@ -1,11 +1,13 @@
 package com.steccn.oa.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmdepartment;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.vo.OaDepartmentTreeVO;
 import com.steccn.oa.vo.OaDepartmentVO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,4 +39,11 @@ public interface HrmdepartmentService extends IService<Hrmdepartment> {
      * @return
      */
     List<OaDepartmentTreeVO> getDepartmentTree(Integer subCompanyId);
+
+    /**
+     * 获取所有部门节点
+     * @param dto
+     * @return
+     */
+    List<OaDepartmentVO> getAllDepartment(TupleDTO<LocalDateTime,LocalDateTime> dto);
 }
