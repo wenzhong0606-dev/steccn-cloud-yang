@@ -77,11 +77,11 @@ public interface RemoteWmsInventoryFeignApi {
      * 入库凭证新增
      *
      * @param dto
-     * @return
+     * @return wms 入库单编码
      */
     @ApiOperation("生成入库单")
-    @PostMapping(value = "/feign/wms/inventory/storage/add")
-    R<Boolean> generateInStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsStorageReceiptDTO dto);
+    @PostMapping(value = "/feign/wms/inventory/storage/add/code")
+    R<String> generateInStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsStorageReceiptDTO dto);
 
     /**
      * 出库凭证新增

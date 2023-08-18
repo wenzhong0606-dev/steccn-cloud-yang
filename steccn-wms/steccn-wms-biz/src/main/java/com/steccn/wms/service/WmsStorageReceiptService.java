@@ -34,6 +34,16 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      */
     Boolean add(WmsStorageReceiptDTO dto);
 
+
+    /**
+     * 新增
+     * @param dto
+     * @return code
+     */
+    String addReturnCode(WmsStorageReceiptDTO dto);
+
+
+
     /**
      * 编辑
      * @param dto
