@@ -184,6 +184,61 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     @Override
     @Transactional(readOnly = false)
+    public String addReturnCode(WmsStorageReceiptDTO dto) {
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_STORAGE_RECEIPT);
+        lock.lock();
+        try {
+            //1.校验数据是否存在
+            Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
+            //2.定义数据模型
+            WmsStorageReceipt model = new WmsStorageReceipt();
+            BeanUtil.copyProperties(dto, model);
+            //3.给当前入库单生成编码
+            model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+            model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
+            //4.保存入库单信息
+            save(model);
+            //5.保存入库单明细信息
+            if (Objects.nonNull(dto.getList())) {
+                List<WmsInventoryDTO> infoList = Lists.newArrayList();
+                List<WmsStorageReceiptInfo> receiptInfoList = Lists.newArrayList();
+                Long caseNo = getCaseNo();
+                List<WmsStorageReceiptInfoDTO> list = dto.getList();
+                List<String> caseNos = Lists.newArrayList();
+                for (WmsStorageReceiptInfoDTO info : list) {
+                    if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+                        //生成箱号
+                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
+                        caseNo++;
+                    }
+                    WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                    wmsInventoryDTO.setWarehouseId(dto.getWarehouseId());
+                    wmsInventoryDTO.setWarehouseName(dto.getWarehouseName());
+                    BeanUtil.copyProperties(info, wmsInventoryDTO);
+                    WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
+                    wmsStorageReceiptInfo.setStorageReceiptId(model.getId());
+                    BeanUtil.copyProperties(info, wmsStorageReceiptInfo);
+                    caseNos.add(wmsInventoryDTO.getCaseNo());
+                    infoList.add(wmsInventoryDTO);
+                    receiptInfoList.add(wmsStorageReceiptInfo);
+                }
+                long count = infoList.stream().distinct().count();
+                Assert.isFalse(count < infoList.size(), "箱号重复，请修改");
+                //增加库存信息
+                wmsInventoryService.addInfo(infoList);
+                //保存明细信息
+                wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
+            }
+            return model.getCode();
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+
+    @Override
+    @Transactional(readOnly = false)
     public Boolean edit(WmsStorageReceiptDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_STORAGE_RECEIPT);
         lock.lock();

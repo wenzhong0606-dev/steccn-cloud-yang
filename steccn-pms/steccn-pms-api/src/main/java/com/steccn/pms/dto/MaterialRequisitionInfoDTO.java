@@ -49,7 +49,7 @@ public class MaterialRequisitionInfoDTO {
 //    private List<String> organizationName;
 
     @ApiModelProperty("需求数量")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "需求数量不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "需求数量不能为空")
     @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="需求数量应大于0")
     @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="需求数量大小应小于99999999.999")
     @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "整数位上限为8位，小数位上限位3位")
