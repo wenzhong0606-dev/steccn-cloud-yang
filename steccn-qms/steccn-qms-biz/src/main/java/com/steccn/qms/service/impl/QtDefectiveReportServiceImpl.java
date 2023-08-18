@@ -1208,16 +1208,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 try {
                     String line = refMap.get(ele.getLine());
                     vo.setProductLineId(Integer.parseInt(line));
-                    //避免detail数据错误，若结束时间卡在8点则减1秒钟
-                    QtTaskClassCalculate qtTaskClassCalculate = new QtTaskClassCalculate();
-                    if(vo.getDefectEndTime().getHour()==8 && vo.getDefectStartTime().toLocalDate().equals(vo.getDefectEndTime().toLocalDate())){
-                        qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime().minusSeconds(1));
-                    }else {
-                        qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
-                    }
-                    vo.setClassTime(qtTaskClassCalculate.getClassDate().toLocalDate());
-                    vo.setClassId(qtTaskClassCalculate.getClassType());
-                    vo.setClassesDate(vo.getClassTime());
+                    LocalDate classDate = LocalDateUtil.getClassDate(vo.getDefectStartTime(), Boolean.FALSE);
+                    Integer classId = LocalDateUtil.getClassId(vo.getDefectEndTime(), Boolean.TRUE);
+                    vo.setClassTime(classDate);
+                    vo.setClassId(classId);
+                    vo.setClassesDate(classDate);
                     vo.setDefectNum(ele.getDefectCount());
                     //配置缺陷项
                     QtDefectiveItem qtDefectiveItem = resMap.get(ele.getDefectType());
