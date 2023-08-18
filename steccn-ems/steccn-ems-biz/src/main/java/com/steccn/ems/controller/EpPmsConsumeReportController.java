@@ -34,5 +34,10 @@ public class EpPmsConsumeReportController {
         return R.success(consumeReportService.consumeUse(officeId, date));
     }
 
+    @GetMapping("/consume/electric")
+    @ApiOperation(value = "能耗信息-电耗")
+    public R<List<EpPmsConsumeVO>> electric(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success();
+    }
 
 }
