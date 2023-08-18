@@ -1999,7 +1999,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
 //                return true;
 //        now = now.of(2023,5,15,8,0);
-//        while(now.getMonthValue()!=6||now.getDayOfMonth()!=27){
+//        while(now.getMonthValue()!=8||now.getDayOfMonth()!=18){
 //            for(int i = 0;i<2;i++){
 //                if(i==0){
 //                    now = now.withHour(8);
