@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -18,7 +19,10 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.ClassUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -191,6 +195,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
             Long produceOrderId = dtoList.get(0).getProduceOrderId();
             LocalDateTime enterTime = dtoList.get(0).getEnterTime();
+            Integer classId = LocalDateUtil.getClassId(enterTime, Boolean.TRUE);
+            //根据班次id查询数据字典班次id
+            SysDictDTO sysDictDTO = new SysDictDTO();
+            sysDictDTO.setCode(String.valueOf(classId));
+            sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
+            Map<String, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO classIdSysDict = dictMap.get(sysDictDTO.getCode());
+            Assert.notNull(classIdSysDict,"班次不存在");
+
             PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
             Assert.notNull(pmsProduceOrder, "生产订单不存在");
             pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
@@ -220,6 +233,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 PmsBarcodePrint pmsBarcodePrint = caseMap.getOrDefault(modelInfo.getCaseNo(), defaultPmsBarcodePrint);
                 modelInfo.setClassesId(pmsBarcodePrint.getClassesId());
                 modelInfo.setClassGroupId(pmsBarcodePrint.getClassGroupId());
+                modelInfo.setClassesId(classIdSysDict.getId());
                 modelInfoList.add(modelInfo);
 
                 WmsStorageReceiptInfoDTO wmsStorageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
