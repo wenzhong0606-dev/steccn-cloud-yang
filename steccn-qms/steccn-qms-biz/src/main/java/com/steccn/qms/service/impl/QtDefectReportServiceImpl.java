@@ -1273,7 +1273,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<Integer> thickItemIdList = checkItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
-        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, 1);
+        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, 2);
         SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
         //获取产线集合
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
