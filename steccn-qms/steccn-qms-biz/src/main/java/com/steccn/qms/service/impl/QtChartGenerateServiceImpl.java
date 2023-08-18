@@ -308,9 +308,33 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                             .collect(Collectors.toList());
                                 }
                                 if (CollUtil.isNotEmpty(fuDetails)) {
+                                    List<QtCheckTaskDetail> fuDetailsTmp = Lists.newArrayList();
+                                    //对一个任务下的负载进行分组
+                                    Map<Long,List<QtCheckTaskDetail>> fuDetailsMap = fuDetails.stream()
+                                            .collect(Collectors.groupingBy(QtCheckTaskDetail::getTaskId));
+                                    //算同一个任务下的负载平均值
+                                    for(Map.Entry<Long,List<QtCheckTaskDetail>> fuDetailEntry:fuDetailsMap.entrySet()){
+                                        List<QtCheckTaskDetail> value = fuDetailEntry.getValue();
+                                        BigDecimal totalFuItem = BigDecimal.ZERO;
+                                        BigDecimal totalFuCount = BigDecimal.ZERO;
+                                        for (QtCheckTaskDetail tmp : value) {
+                                            if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                                BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                                totalFuItem = BigDecimalUtil.add(totalFuItem, decimalTmp);
+                                                totalFuCount = BigDecimalUtil.add(totalFuCount, new BigDecimal(1));
+                                            }
+                                        }
+                                        QtCheckTaskDetail fu = new QtCheckTaskDetail();
+                                        BigDecimal fuDetailRes =BigDecimalUtil.divide(totalFuItem, totalFuCount,4);
+                                        if(fuDetailRes.compareTo(BigDecimal.ZERO)!=0){
+                                            fu.setCheckResult(fuDetailRes.toString());
+                                        }
+                                        fuDetailsTmp.add(fu);
+                                    }
+                                    //算所有的负载平均值
                                     BigDecimal totalFuItem = BigDecimal.ZERO;
                                     BigDecimal totalFuCount = BigDecimal.ZERO;
-                                    for (QtCheckTaskDetail tmp : fuDetails) {
+                                    for (QtCheckTaskDetail tmp : fuDetailsTmp) {
                                         if (StrUtil.isNotBlank(tmp.getCheckResult())) {
                                             BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
                                             totalFuItem = BigDecimalUtil.add(totalFuItem, decimalTmp);
@@ -1871,9 +1895,33 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                             .collect(Collectors.toList());
                                 }
                                 if (CollUtil.isNotEmpty(fuDetails)) {
+                                    List<QtCheckTaskDetail> fuDetailsTmp = Lists.newArrayList();
+                                    //对一个任务下的负载进行分组
+                                    Map<Long,List<QtCheckTaskDetail>> fuDetailsMap = fuDetails.stream()
+                                            .collect(Collectors.groupingBy(QtCheckTaskDetail::getTaskId));
+                                    //算同一个任务下的负载平均值
+                                    for(Map.Entry<Long,List<QtCheckTaskDetail>> fuDetailEntry:fuDetailsMap.entrySet()){
+                                        List<QtCheckTaskDetail> value = fuDetailEntry.getValue();
+                                        BigDecimal totalFuItem = BigDecimal.ZERO;
+                                        BigDecimal totalFuCount = BigDecimal.ZERO;
+                                        for (QtCheckTaskDetail tmp : value) {
+                                            if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                                BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                                totalFuItem = BigDecimalUtil.add(totalFuItem, decimalTmp);
+                                                totalFuCount = BigDecimalUtil.add(totalFuCount, new BigDecimal(1));
+                                            }
+                                        }
+                                        QtCheckTaskDetail fu = new QtCheckTaskDetail();
+                                        BigDecimal fuDetailRes =BigDecimalUtil.divide(totalFuItem, totalFuCount,4);
+                                        if(fuDetailRes.compareTo(BigDecimal.ZERO)!=0){
+                                            fu.setCheckResult(fuDetailRes.toString());
+                                        }
+                                        fuDetailsTmp.add(fu);
+                                    }
+                                    //算所有的负载平均值
                                     BigDecimal totalFuItem = BigDecimal.ZERO;
                                     BigDecimal totalFuCount = BigDecimal.ZERO;
-                                    for (QtCheckTaskDetail tmp : fuDetails) {
+                                    for (QtCheckTaskDetail tmp : fuDetailsTmp) {
                                         if (StrUtil.isNotBlank(tmp.getCheckResult())) {
                                             BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
                                             totalFuItem = BigDecimalUtil.add(totalFuItem, decimalTmp);
