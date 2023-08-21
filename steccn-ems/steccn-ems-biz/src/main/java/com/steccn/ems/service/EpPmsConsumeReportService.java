@@ -1,6 +1,8 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.ems.vo.EpPmsConsumeVO;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -11,12 +13,39 @@ import java.util.List;
  */
 public interface EpPmsConsumeReportService {
 
+    /**
+     * 获取今日用电量
+     *
+     * @param officeId 单位id
+     * @param date     日期
+     * @return
+     */
+    EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate date);
 
     /**
-     * 获取今日用电量，今日用水量，今日天然气使用量，今日重油使用量
+     * 获取今日用水量
+     *
      * @param officeId 单位id
-     * @param date 日期
-     * @return list
+     * @param date     日期
+     * @return
      */
-    List<EpPmsConsumeVO> consumeUse(Integer officeId, LocalDate date);
+    EpPmsConsumeVO consumeUseWater(Integer officeId, LocalDate date);
+
+    /**
+     * 获取今日天然气使用量
+     *
+     * @param officeId 单位id
+     * @param date     日期
+     * @return
+     */
+    EpPmsConsumeVO consumeUseGas(Integer officeId, LocalDate date);
+
+    /**
+     * 获取今日重油使用量
+     *
+     * @param officeId 单位id
+     * @param date     日期
+     * @return
+     */
+    EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date);
 }

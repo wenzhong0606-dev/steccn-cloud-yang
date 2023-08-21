@@ -28,10 +28,28 @@ public class EpPmsConsumeReportController {
 
     private final EpPmsConsumeReportService consumeReportService;
 
-    @GetMapping("/consume/use")
-    @ApiOperation(value = "获取今日用电量，今日用水量，今日天然气使用量，今日重油使用量")
-    public R<List<EpPmsConsumeVO>> consumeUse(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-        return R.success(consumeReportService.consumeUse(officeId, date));
+    @GetMapping("/consume/use/electric")
+    @ApiOperation(value = "获取今日用电量")
+    public R<EpPmsConsumeVO> consumeUseElectric(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success(consumeReportService.consumeUseElectric(officeId, date));
+    }
+
+    @GetMapping("/consume/use/water")
+    @ApiOperation(value = "获取今日用水量")
+    public R<EpPmsConsumeVO> consumeUseWater(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success(consumeReportService.consumeUseWater(officeId, date));
+    }
+
+    @GetMapping("/consume/use/gas")
+    @ApiOperation(value = "获取今日天然气使用量")
+    public R<EpPmsConsumeVO> consumeUseGas(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success(consumeReportService.consumeUseGas(officeId, date));
+    }
+
+    @GetMapping("/consume/use/oil")
+    @ApiOperation(value = "获取今日重油使用量")
+    public R<EpPmsConsumeVO> consumeUseOil(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success(consumeReportService.consumeUseOil(officeId, date));
     }
 
     @GetMapping("/consume/electric")

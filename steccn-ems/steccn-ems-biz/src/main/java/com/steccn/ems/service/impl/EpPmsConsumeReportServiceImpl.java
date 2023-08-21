@@ -7,20 +7,23 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.ems.domain.EpEnergyType;
-import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
-import com.steccn.ems.service.*;
+import com.steccn.ems.service.EpEnergyTypeService;
+import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.service.EpPmsConsumeReportService;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -36,29 +39,37 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     private final EpEnergyTypeService epEnergyTypeService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpPartitionService epPartitionService;
-    private final EpInstrumentAccountService accountService;
     private final EpMeterReadService epMeterReadService;
 
     @Override
-    public List<EpPmsConsumeVO> consumeUse(Integer officeId, LocalDate date) {
-        //获取单位
-        List<EpEnergyType> energyTypeList = epEnergyTypeService.listByIds(Arrays.asList(1, 2, 3, 4));
-        Assert.notEmpty(energyTypeList, "能源信息为空");
-        //根据能源排序
-        Collections.sort(energyTypeList, Comparator.comparing(EpEnergyType::getId));
-        //根据能源的单位id获取单位的中文
-        Set<Long> idList = energyTypeList.stream().map(ele -> ele.getMeasureUnit()).collect(Collectors.toSet());
-        Map<Long, String> measureUnitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(idList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        //定义返回
-        List<EpPmsConsumeVO> resList = Lists.newArrayList();
+    public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate date) {
+        return consumeUse(officeId, date, 1);
+    }
 
-        for (EpEnergyType ele : energyTypeList) {
-            EpPartition nodeInfo = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeId).eq(EpPartition::getType, ele.getId()), Boolean.FALSE);
-            Set<LocalDate> dateSet = Sets.newHashSet(date.minusDays(1), date);
-            List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, ele.getId(), Arrays.asList(nodeInfo.getId()));
-            List<BigDecimal> collect = classDateAllData.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
-            resList.add(new EpPmsConsumeVO(BigDecimalUtil.sum(collect), measureUnitMap.get(ele.getMeasureUnit())));
-        }
-        return resList;
+    @Override
+    public EpPmsConsumeVO consumeUseWater(Integer officeId, LocalDate date) {
+        return consumeUse(officeId, date, 2);
+    }
+
+    @Override
+    public EpPmsConsumeVO consumeUseGas(Integer officeId, LocalDate date) {
+        return consumeUse(officeId, date, 3);
+    }
+
+    @Override
+    public EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date) {
+        return consumeUse(officeId, date, 4);
+    }
+
+    private EpPmsConsumeVO consumeUse(Integer officeId, LocalDate date, Integer type) {
+        //获取单位
+        EpEnergyType epEnergyType = epEnergyTypeService.getById(type);
+        Assert.notNull(epEnergyType, "能源信息为空");
+        Map<Long, String> measureUnitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(epEnergyType.getMeasureUnit())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        EpPartition nodeInfo = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeId).eq(EpPartition::getType, epEnergyType.getId()), Boolean.FALSE);
+        Set<LocalDate> dateSet = Sets.newHashSet(date.minusDays(1), date);
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, epEnergyType.getId(), Arrays.asList(nodeInfo.getId()));
+        List<BigDecimal> collect = classDateAllData.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+        return new EpPmsConsumeVO(BigDecimalUtil.sum(collect), measureUnitMap.get(epEnergyType.getMeasureUnit()));
     }
 }
