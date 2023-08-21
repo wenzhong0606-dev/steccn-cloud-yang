@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -149,7 +150,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String generateInfo(List<CompleteStorageScanDTO> dtoList) {
         String code = generate(dtoList);
         //调用确认入库单接口
@@ -249,14 +249,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             }
             completeStorageInfoService.saveBatch(modelInfoList);
             //生成code 规则：SI-20220905-0001
-            pmsCompleteStorage.setCode(maxCompleteCode());
+//            pmsCompleteStorage.setCode(maxCompleteCode());
             pmsCompleteStorage.setQuantity(sumQuantity);
-            pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
+//            pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
             pmsCompleteStorage.setTypeId(sysDictVO.getId());
             pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
             //连线入库 入库时间
             pmsCompleteStorage.setEnterTime(enterTime);
-            save(pmsCompleteStorage);
+
             //生成入库单
 
             wmsStorageReceiptDTO.setType(sysDictVO.getId());
@@ -264,11 +264,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             wmsStorageReceiptDTO.setList(materialList);
             wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
             try {
-                Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 //入库必定要成功
-                if (!aBoolean) {
+                if (StringUtils.isEmpty(code)) {
                     log.info("入库单 -> 失败");
                 }
+                pmsCompleteStorage.setCode(code);
+                pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
+                save(pmsCompleteStorage);
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("入库单创建失败");
@@ -438,7 +441,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> completeStorageReviseStatue(String code, String confirmName) {
         if (Objects.isNull(code) || Objects.isNull(confirmName)) {
             throw new BusinessException("确认用户名或者入库单编码不能为空");

@@ -52,6 +52,16 @@ public interface PmManagerConstant {
     String QMS_TASK_ITEM_STONE = "结石掉落物";
 
     /**
+     * 白班0
+     */
+    Integer FORE_SHIFT_0 = 0;
+
+    /**
+     * 夜班1
+     */
+    Integer NIGHT_SHIFT_1 = 1;
+
+    /**
      * 白班
      */
     String FORE_SHIFT = "早班";
