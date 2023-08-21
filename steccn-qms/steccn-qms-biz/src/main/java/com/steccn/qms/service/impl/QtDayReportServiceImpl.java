@@ -164,6 +164,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             tableData.add(vo);
                             List<FurtherValueStrVO> module = Lists.newArrayList();
                             vo.setModule(module);
+                            BigDecimal rowTotal = null;
                             //遍历类别
                             for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
                                 FurtherValueStrVO strVO = new FurtherValueStrVO();
@@ -176,10 +177,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                     BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));
                                     BigDecimalUtil.accumulate(allMap, defectId, BigDecimal.valueOf(sum));
                                     value.add(String.valueOf(sum));
+                                    rowTotal = BigDecimalUtil.add(rowTotal, BigDecimal.valueOf(sum));
                                 }
                                 strVO.setValue(value);
                                 module.add(strVO);
                             }
+                            vo.setRowTotal(BigDecimalUtil.setScale(rowTotal, 0));
                         }
                     }
                 }
@@ -333,15 +336,18 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<FurtherValueStrVO> module = Lists.newArrayList();
         vo.setModule(module);
         vo.setClassId(classId);
+        BigDecimal rowTotal = null;
         for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
             FurtherValueStrVO strVO = new FurtherValueStrVO();
             List<String> value = Lists.newArrayList();
             for (Integer defectId : categoryDefectEntry.getValue()) {
                 value.add(BigDecimalUtil.format(classCountMap.get(defectId), 0));
+                rowTotal = BigDecimalUtil.add(rowTotal, classCountMap.get(defectId));
             }
             strVO.setValue(value);
             module.add(strVO);
         }
+        vo.setRowTotal(BigDecimalUtil.setScale(rowTotal, 0));
         return vo;
     }
 
@@ -360,6 +366,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         commonHeadList.add(new QtSpcHeadTitleVO("物料名称", "materialName"));
         commonHeadList.add(new QtSpcHeadTitleVO("缺陷记录时段", "defectTimeStr"));
         commonHeadList.add(new QtSpcHeadTitleVO("备注", "note"));
+        commonHeadList.add(new QtSpcHeadTitleVO("合计", "rowTotal"));
         return commonHeadList;
     }
 
