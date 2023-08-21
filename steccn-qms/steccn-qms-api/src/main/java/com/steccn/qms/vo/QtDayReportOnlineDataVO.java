@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -71,6 +72,9 @@ public class QtDayReportOnlineDataVO implements Serializable {
 
     @ApiModelProperty("客户主键")
     private Integer customerId;
+
+    @ApiModelProperty("行合计")
+    private BigDecimal rowTotal;
 
     @ApiModelProperty("数据")
     private List<FurtherValueStrVO> module;
