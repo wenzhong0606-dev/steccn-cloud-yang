@@ -20,6 +20,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
@@ -639,6 +640,20 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         updateWrapper.in(PmsCompleteStorageInfo::getCaseNo, caseNoList);
         updateWrapper.setSql("print_flag =1 , print_count = IFNULL(print_count , 0) + 1");
         return completeStorageInfoService.update(updateWrapper);
+    }
+
+    @Override
+    public Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet) {
+        Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(caseNoSet)){
+            List<PmsCompleteStorageInfo> dbList = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>().in(PmsCompleteStorageInfo::getCaseNo, caseNoSet));
+            if(CollUtil.isNotEmpty(dbList)){
+                for (PmsCompleteStorageInfo info : dbList) {
+                    resMap.put(info.getCaseNo(),new TupleDTO(info.getPrintFlag(),info.getPrintCount()));
+                }
+            }
+        }
+        return resMap;
     }
 
     /**

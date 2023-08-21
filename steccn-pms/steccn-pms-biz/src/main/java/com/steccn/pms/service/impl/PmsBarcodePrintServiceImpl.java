@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.lang.Tuple;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -17,6 +18,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -165,8 +167,12 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
             //处理单位数据
             Set<Long> orderSet = page.getRecords().stream().map(PmsBarcodePrint::getProduceOrderId).collect(Collectors.toSet());
+            //箱号
+            Set<String> caseNoSet = voList.stream().map(BarcodePrintRecordVO::getCaseNo).collect(Collectors.toSet());
             Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
             Map<Long, PmsProduceOrder> map = pmsProduceOrderService.orderList(Lists.newArrayList(orderSet));
+
+            Map<String, TupleDTO<Integer,Integer>> caseCntMap = pmsCompleteStorageService.casePrintAndCnt(caseNoSet);
 
             voList.forEach(barcodePrintRecordVO -> {
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(barcodePrintRecordVO.getProduceOrderId());
@@ -178,6 +184,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 if (Objects.nonNull(pmsProduceOrder)) {
                     barcodePrintRecordVO.setMinPackageQuantity(pmsProduceOrder.getMinPackageQuantity());
                 }
+                TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(),new TupleDTO<>());
+                barcodePrintRecordVO.setPrintFlag(tupleDTO.getField1());
+                barcodePrintRecordVO.setPrintCount(tupleDTO.getField2());
             });
             resPage.setRecords(voList);
         }

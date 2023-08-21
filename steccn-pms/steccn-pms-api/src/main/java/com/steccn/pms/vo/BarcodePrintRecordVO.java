@@ -46,4 +46,11 @@ public class BarcodePrintRecordVO implements Serializable {
 
     @ApiModelProperty("生产订单id")
     private Long produceOrderId;
+
+    @ApiModelProperty("是否已打印")
+    private Integer printFlag;
+
+    @ApiModelProperty("条数")
+    private Integer printCount;
+
 }

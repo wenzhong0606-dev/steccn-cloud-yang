@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
@@ -14,6 +15,7 @@ import com.steccn.pms.vo.PmsCompleteStorageVO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -122,4 +124,11 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return 是否
      */
     Boolean casePrint(List<String> caseNoList);
+
+    /**
+     * 获取箱号的打印次数和是否已打印
+     * @param caseNoSet 箱号集合
+     * @return
+     */
+    Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet);
 }
