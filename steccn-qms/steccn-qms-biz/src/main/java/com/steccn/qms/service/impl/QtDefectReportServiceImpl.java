@@ -470,20 +470,20 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         //根据classDate去查询
                         if (classesEnum.equals(QtManagerConstant.QtClassesEnum.DAY)) {
                             //time1 , time2 ,time3
-                            Optional<QtCheckItemMaterialAvgDTO> first = timeList1.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> second = timeList2.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> third = timeList3.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            dateValueList.add(first.isPresent() ? String.valueOf(first.get().getValue()) : null);
-                            dateValueList.add(second.isPresent() ? String.valueOf(second.get().getValue()) : null);
-                            dateValueList.add(third.isPresent() ? String.valueOf(third.get().getValue()) : null);
+                            Optional<QtCheckItemMaterialAvgDTO> first = timeList1.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> second = timeList2.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> third = timeList3.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            dateValueList.add(first.isPresent() ? BigDecimalUtil.format(first.get().getValue(), 0) : null);
+                            dateValueList.add(second.isPresent() ? BigDecimalUtil.format(second.get().getValue(), 0) : null);
+                            dateValueList.add(third.isPresent() ? BigDecimalUtil.format(third.get().getValue(), 0) : null);
                         } else {
                             //time4, time5 ,time6
-                            Optional<QtCheckItemMaterialAvgDTO> forth = timeList4.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> fifth = timeList5.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> sixth = timeList6.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            dateValueList.add(forth.isPresent() ? String.valueOf(forth.get().getValue()) : null);
-                            dateValueList.add(fifth.isPresent() ? String.valueOf(fifth.get().getValue()) : null);
-                            dateValueList.add(sixth.isPresent() ? String.valueOf(sixth.get().getValue()) : null);
+                            Optional<QtCheckItemMaterialAvgDTO> forth = timeList4.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> fifth = timeList5.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> sixth = timeList6.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            dateValueList.add(forth.isPresent() ? BigDecimalUtil.format(forth.get().getValue(), 0) : null);
+                            dateValueList.add(fifth.isPresent() ? BigDecimalUtil.format(fifth.get().getValue(), 0) : null);
+                            dateValueList.add(sixth.isPresent() ? BigDecimalUtil.format(sixth.get().getValue(), 0) : null);
                         }
                     }
                 }
@@ -553,7 +553,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setType(0);
                 List<BigDecimal> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
-                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(monthStr + "_" + line), 2));
+                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(monthStr + "_" + line), 0));
                 rowList.add(row);
                 row.setProductLineName(lineName);
                 row.setMonthStr(monthStr);
@@ -657,7 +657,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     //使用量
                     BigDecimal useCount = useCountMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderCode());
                     BigDecimal useCountConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), Objects.nonNull(dict1) ? dict1.getId() : null, Objects.nonNull(dict2) ? dict2.getId() : null, useCount);
-                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 2), BigDecimalUtil.format(useCountConvert, 2))));
+                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 0), BigDecimalUtil.format(useCountConvert, 2))));
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_0, useCount);
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_1, useCountConvert);
                     BigDecimalUtil.accumulate(sumMap, DefectDayConstant.SYL_0, useCount);
@@ -781,7 +781,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
-                row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
+                row.setUseCountNum(BigDecimalUtil.setScale(useCountMap.get(line + "_" + weekStr),0));
                 row.setInStorageNum(inStorageMap.get(line + "_" + weekStr));
                 BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
                 BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
@@ -870,7 +870,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
-                row.setUseCountNum(useCountMap.get(line + "_" + timeStr));
+                row.setUseCountNum(BigDecimalUtil.setScale(useCountMap.get(line + "_" + timeStr),0));
                 row.setInStorageNum(inStorageMap.get(line + "_" + timeStr));
                 BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
                 BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
