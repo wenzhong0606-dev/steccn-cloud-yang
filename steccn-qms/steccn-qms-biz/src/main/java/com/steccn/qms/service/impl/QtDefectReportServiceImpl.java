@@ -473,17 +473,17 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                             Optional<QtCheckItemMaterialAvgDTO> first = timeList1.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
                             Optional<QtCheckItemMaterialAvgDTO> second = timeList2.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
                             Optional<QtCheckItemMaterialAvgDTO> third = timeList3.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            dateValueList.add(first.isPresent() ? String.valueOf(first.get().getValue()) : null);
-                            dateValueList.add(second.isPresent() ? String.valueOf(second.get().getValue()) : null);
-                            dateValueList.add(third.isPresent() ? String.valueOf(third.get().getValue()) : null);
+                            dateValueList.add(first.isPresent() ? BigDecimalUtil.format(first.get().getValue(), 0) : null);
+                            dateValueList.add(second.isPresent() ?  BigDecimalUtil.format(second.get().getValue(), 0) : null);
+                            dateValueList.add(third.isPresent() ?  BigDecimalUtil.format(third.get().getValue(), 0) : null);
                         } else {
                             //time4, time5 ,time6
                             Optional<QtCheckItemMaterialAvgDTO> forth = timeList4.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
                             Optional<QtCheckItemMaterialAvgDTO> fifth = timeList5.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
                             Optional<QtCheckItemMaterialAvgDTO> sixth = timeList6.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            dateValueList.add(forth.isPresent() ? String.valueOf(forth.get().getValue()) : null);
-                            dateValueList.add(fifth.isPresent() ? String.valueOf(fifth.get().getValue()) : null);
-                            dateValueList.add(sixth.isPresent() ? String.valueOf(sixth.get().getValue()) : null);
+                            dateValueList.add(forth.isPresent() ? BigDecimalUtil.format(forth.get().getValue(),0) : null);
+                            dateValueList.add(fifth.isPresent() ? BigDecimalUtil.format(fifth.get().getValue(),0) : null);
+                            dateValueList.add(sixth.isPresent() ? BigDecimalUtil.format(sixth.get().getValue(),0) : null);
                         }
                     }
                 }
