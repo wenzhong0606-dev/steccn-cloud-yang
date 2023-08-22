@@ -657,7 +657,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     //使用量
                     BigDecimal useCount = useCountMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderCode());
                     BigDecimal useCountConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), Objects.nonNull(dict1) ? dict1.getId() : null, Objects.nonNull(dict2) ? dict2.getId() : null, useCount);
-                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 2), BigDecimalUtil.format(useCountConvert, 2))));
+                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 0), BigDecimalUtil.format(useCountConvert, 2))));
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_0, useCount);
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_1, useCountConvert);
                     BigDecimalUtil.accumulate(sumMap, DefectDayConstant.SYL_0, useCount);
@@ -781,7 +781,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
-                row.setUseCountNum(useCountMap.get(line + "_" + weekStr));
+                row.setUseCountNum(BigDecimalUtil.setScale(useCountMap.get(line + "_" + weekStr),0));
                 row.setInStorageNum(inStorageMap.get(line + "_" + weekStr));
                 BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
                 BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
@@ -870,7 +870,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
                 //获取使用量和成品数
-                row.setUseCountNum(useCountMap.get(line + "_" + timeStr));
+                row.setUseCountNum(BigDecimalUtil.setScale(useCountMap.get(line + "_" + timeStr),0));
                 row.setInStorageNum(inStorageMap.get(line + "_" + timeStr));
                 BigDecimalUtil.accumulate(countMap, 6, row.getUseCountNum());
                 BigDecimalUtil.accumulate(sumMap, 6, row.getUseCountNum());
