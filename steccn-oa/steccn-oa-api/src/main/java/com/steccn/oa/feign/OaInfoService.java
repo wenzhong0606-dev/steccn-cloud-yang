@@ -12,6 +12,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -248,4 +249,8 @@ public interface OaInfoService {
     @ApiOperation("获取班组长信息")
     @PostMapping("/feign/oa/group/workshop/leader")
     R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop);
+
+    @PostMapping("/feign/oa/thirdParty/allDepartment")
+    @ApiOperation(value = "获取所有部门")
+    R<List<OaDepartmentVO>> getAllDepartment(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
 }
