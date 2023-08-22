@@ -553,7 +553,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setType(0);
                 List<BigDecimal> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
-                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(monthStr + "_" + line), 2));
+                row.setUseCount(BigDecimalUtil.setScale(useCountMap.get(monthStr + "_" + line), 0));
                 rowList.add(row);
                 row.setProductLineName(lineName);
                 row.setMonthStr(monthStr);

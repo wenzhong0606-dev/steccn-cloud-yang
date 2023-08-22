@@ -310,9 +310,9 @@
             rw.product_line_id,
             DATE_FORMAT(rw.class_date, '%Y-%m') as month_str,
             rw.station_id ,
-            sum(de.quantity) as quantity
-        from pms_report_work rw join pms_complete_delivery de on rw.id = de.report_work_id
-        where rw.del_flag = 0 AND de.del_flag = 0
+            sum(rw.process_quantity) as quantity
+        from pms_report_work rw
+        where rw.del_flag = 0
           AND rw.start_time &gt;= #{start}
           AND rw.start_time &lt; #{end}
           AND rw.product_line_id in
