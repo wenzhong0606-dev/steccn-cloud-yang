@@ -16,6 +16,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
+import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
@@ -77,6 +78,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal)
                 .in(SysOffice::getOfficeType,officeTypeList));
         List<OaDepartmentVO> allDepartment = oaInfoService.getAllDepartment(new TupleDTO<>(LocalDateTime.of(2000, 1, 1, 0, 0, 0), LocalDateTime.now())).getData();
+        List<OaJobTitleVO> allJobTitle = oaInfoService.getAllJobTitle(new TupleDTO<>(LocalDateTime.of(2000, 1, 1, 0, 0, 0), LocalDateTime.now())).getData();
         //如果数据为空,直接返回空集
         if (CollUtil.isEmpty(list)) {
             return Lists.newArrayList();
@@ -87,9 +89,16 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             SysOfficeVO vo = new SysOfficeVO();
             BeanUtil.copyProperties(tmp,vo);
             //塞入oa
-            OaDepartmentVO oaDepartmentVO = allDepartment.stream().filter(v -> v.getDepartmentName().equals(vo.getOfficeName())).findFirst().orElse(null);
-            if(Objects.nonNull(oaDepartmentVO)){
-                vo.setOaId(oaDepartmentVO.getId());
+            if(!tmp.getOfficeType().equals(SysOfficeConstant.POST)){
+                OaDepartmentVO oaDepartmentVO = allDepartment.stream().filter(v -> v.getDepartmentName().equals(vo.getOfficeName())).findFirst().orElse(null);
+                if(Objects.nonNull(oaDepartmentVO)){
+                    vo.setOaId(oaDepartmentVO.getId());
+                }
+            }else {
+                OaJobTitleVO oaJobTitleVO = allJobTitle.stream().filter(v -> v.getJobTitleName().equals(vo.getOfficeName())).findFirst().orElse(null);
+                if(Objects.nonNull(oaJobTitleVO)){
+                    vo.setOaId(oaJobTitleVO.getId());
+                }
             }
             vos.add(vo);
         });

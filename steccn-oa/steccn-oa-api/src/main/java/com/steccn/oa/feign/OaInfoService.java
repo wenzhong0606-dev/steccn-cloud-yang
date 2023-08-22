@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -250,7 +251,21 @@ public interface OaInfoService {
     @PostMapping("/feign/oa/group/workshop/leader")
     R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop);
 
+    /**
+     * 获取所有部门
+     * @param dto
+     * @return
+     */
     @PostMapping("/feign/oa/thirdParty/allDepartment")
     @ApiOperation(value = "获取所有部门")
     R<List<OaDepartmentVO>> getAllDepartment(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 获取所有岗位
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/oa/thirdParty/allJobTitle")
+    @ApiOperation(value = "获取所有岗位")
+    R<List<OaJobTitleVO>> getAllJobTitle(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
 }

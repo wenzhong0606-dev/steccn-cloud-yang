@@ -116,4 +116,10 @@ public class OaFeignController {
     public R<List<OaDepartmentVO>> getAllDepartment(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(hrmdepartmentService.getAllDepartment(dto));
     }
+
+    @PostMapping("/thirdParty/allJobTitle")
+    @ApiOperation(value = "获取所有岗位")
+    public R<List<OaJobTitleVO>> getAllJobTitle(HttpServletRequest request, @RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        return R.success(hrmjobtitlesService.getAllJobTitle(dto));
+    }
 }
