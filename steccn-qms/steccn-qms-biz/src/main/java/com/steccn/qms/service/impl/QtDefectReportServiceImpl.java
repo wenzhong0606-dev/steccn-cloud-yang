@@ -470,20 +470,20 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         //根据classDate去查询
                         if (classesEnum.equals(QtManagerConstant.QtClassesEnum.DAY)) {
                             //time1 , time2 ,time3
-                            Optional<QtCheckItemMaterialAvgDTO> first = timeList1.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> second = timeList2.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> third = timeList3.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> first = timeList1.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> second = timeList2.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> third = timeList3.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
                             dateValueList.add(first.isPresent() ? BigDecimalUtil.format(first.get().getValue(), 0) : null);
-                            dateValueList.add(second.isPresent() ?  BigDecimalUtil.format(second.get().getValue(), 0) : null);
-                            dateValueList.add(third.isPresent() ?  BigDecimalUtil.format(third.get().getValue(), 0) : null);
+                            dateValueList.add(second.isPresent() ? BigDecimalUtil.format(second.get().getValue(), 0) : null);
+                            dateValueList.add(third.isPresent() ? BigDecimalUtil.format(third.get().getValue(), 0) : null);
                         } else {
                             //time4, time5 ,time6
-                            Optional<QtCheckItemMaterialAvgDTO> forth = timeList4.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> fifth = timeList5.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            Optional<QtCheckItemMaterialAvgDTO> sixth = timeList6.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId())).findFirst();
-                            dateValueList.add(forth.isPresent() ? BigDecimalUtil.format(forth.get().getValue(),0) : null);
-                            dateValueList.add(fifth.isPresent() ? BigDecimalUtil.format(fifth.get().getValue(),0) : null);
-                            dateValueList.add(sixth.isPresent() ? BigDecimalUtil.format(sixth.get().getValue(),0) : null);
+                            Optional<QtCheckItemMaterialAvgDTO> forth = timeList4.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> fifth = timeList5.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            Optional<QtCheckItemMaterialAvgDTO> sixth = timeList6.stream().filter(ele -> classDate.equals(ele.getClassDate()) && line.equals(ele.getProductLineId()) && ele.getStation().contains(site)).findFirst();
+                            dateValueList.add(forth.isPresent() ? BigDecimalUtil.format(forth.get().getValue(), 0) : null);
+                            dateValueList.add(fifth.isPresent() ? BigDecimalUtil.format(fifth.get().getValue(), 0) : null);
+                            dateValueList.add(sixth.isPresent() ? BigDecimalUtil.format(sixth.get().getValue(), 0) : null);
                         }
                     }
                 }
