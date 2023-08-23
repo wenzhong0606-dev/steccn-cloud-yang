@@ -31,4 +31,11 @@ public class SafetyTokenController {
     public R<SafetyTokenVO> getToken() {
         return R.success(safetyTokenService.getSafetyToken(SecurityUtils.getUser().getUserId()));
     }
+
+    @GetMapping("/removeToken")
+    @ApiOperation(value = "删除安环系统token缓存")
+    @ResponseBody
+    public R<String> removeToken() {
+        return R.success(safetyTokenService.removeSecurityToken());
+    }
 }
