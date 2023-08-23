@@ -1354,6 +1354,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 List<QtDestoryInfoFallDTO> dataList = tempList.get(idx);
                 if (rowCt < dataList.size()) {
                     QtDestoryInfoFallDTO qtDestoryInfoFallDTO = dataList.get(rowCt);
+                    column.setReason(qtDestoryInfoFallDTO.getDestoryReason());
                     column.setBeginStr(LocalDateUtil.format(qtDestoryInfoFallDTO.getDestoryStartTime(), "HH:mm"));
                     column.setOverStr(LocalDateUtil.format(qtDestoryInfoFallDTO.getDestoryEndTime(), "HH:mm"));
                     LocalDateTime ldt1 = qtDestoryInfoFallDTO.getDestoryStartTime().withSecond(0).withNano(0);
