@@ -288,6 +288,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             SysOfficeVO sysOfficeVO = lineIdNameMap.getOrDefault(line, new SysOfficeVO());
                             vo.setProductLineName(sysOfficeVO.getOfficeName());
                             vo.setProductLineSort(sysOfficeVO.getTreeSort());
+                            //落板工位（南） 落板工位（北）
+                            String station = QtManagerConstant.FallStationEnum.getByCode(destroy.getDestoryWorkStation());
+                            vo.setDestoryWorkStationStr(station);
                             fallList.add(vo);
                         }
                     }

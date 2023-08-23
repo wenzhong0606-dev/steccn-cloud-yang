@@ -1410,4 +1410,24 @@ public interface QtManagerConstant {
     }
 
 
+    @Getter
+    @AllArgsConstructor
+    enum FallStationEnum {
+        SOUTH(1, "落板工位（南）"),
+        NORTH(2, "落板工位（北）"),
+        SOUTH_AND_NORTH(3, "落板工位（南），落板工位（北）");
+
+        private Integer code;
+        private String name;
+
+        public static String getByCode(Integer code) {
+            for (FallStationEnum value : FallStationEnum.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
+
 }
