@@ -1507,7 +1507,7 @@ public class ReportServiceImpl implements ReportService {
         //获取产线下的工位
         List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //包含磨边工位的
-        Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("钢化工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取报工记录
         List<PmsReportWorkVO> pmsReportWorkVOS = pmsReportWorkService.listBylineIds(lineIds, dto.getDate());
         Set<Long> reportIds = pmsReportWorkVOS.stream().map(PmsReportWorkVO::getId).collect(Collectors.toSet());
@@ -1658,10 +1658,11 @@ public class ReportServiceImpl implements ReportService {
                             outputQualitySjgDataVO.setInStorageSlice(slice);
                             outputQualitySjgDataVO.setCurrentClassSquare(square);
                         }
-                        //加工产量（该产线下的磨边工位的报工数据）
+                        //加工产量（该产线下的钢化工位的报工数据）
                         BigDecimal processQuantity = BigDecimal.ZERO;
                         if (stationIds.contains(reportWork.getStationId())) {
-                            processQuantity = reportWork.getProcessQuantity();
+                            //加工产量：根据该产线钢化工位，该产品当班报工记录，合格数量累加，根据片数计算平方米
+                            processQuantity = BigDecimalUtil.subtract(reportWork.getProcessQuantity(), reportWork.getBadnessQuantity());
                             //单位转换
                             BigDecimal slice = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), processQuantity, 0);
                             BigDecimal square = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), processQuantity, 2);
