@@ -157,23 +157,23 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
                 for (Integer defectId : defectIdList) {
-                    int sum = 0 ;
+                    List<Integer> valueTmpList = Lists.newArrayList();
                     if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
-                        sum = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                        valueTmpList = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.isNull(ele)).collect(Collectors.toList());
                     } else {
                         //根据班次日期遍历
                         LocalDateTime timeTmp = begin;
                         while (LocalDateUtil.lt(timeTmp, shardTimeList.get(i))) {
                             LocalDate cld = LocalDateUtil.getClassDate(timeTmp, false);
-                            int sum1 = sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                            int sum2 = sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                            sum = sum + sum2 + sum1;
+                            valueTmpList.addAll(sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectId), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList()));
+                            valueTmpList.addAll(sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectId), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList()));
                             timeTmp = timeTmp.plusDays(1L);
                         }
                     }
-                    valueList.add(String.valueOf(sum));
-                    lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + sum);
-                    allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + sum);
+                    Integer sum = CollUtil.isEmpty(valueTmpList) ? null : valueTmpList.stream().mapToInt(Integer::intValue).sum();
+                    valueList.add(Objects.isNull(sum) ? null : String.valueOf(sum));
+                    lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + (Objects.isNull(sum) ? 0 : sum));
+                    allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + (Objects.isNull(sum) ? 0 : sum));
                 }
                 dataList.add(row);
             }
