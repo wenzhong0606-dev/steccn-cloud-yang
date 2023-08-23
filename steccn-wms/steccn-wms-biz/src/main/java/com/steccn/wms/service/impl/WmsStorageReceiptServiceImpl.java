@@ -412,17 +412,21 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         BeanUtil.copyProperties(order, wmsStorageReceiptVO);
         Set<Long> dictSet = Sets.newHashSet();
         Set<Integer> officeSet = Sets.newHashSet();
+        List<Long> materialIds = Lists.newArrayList();
         dictSet.add(wmsStorageReceiptVO.getType());
         officeSet.add(wmsStorageReceiptVO.getWarehouseId());
         //处理明细数据
         list.forEach(wmsStorageReceiptInfo -> {
             dictSet.add(wmsStorageReceiptInfo.getUnit());
+            materialIds.add(wmsStorageReceiptInfo.getMaterialId());
         });
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(list, WmsStorageReceiptInfoVO.class);
         wmsStorageReceiptInfoVOS.forEach(wmsStorageReceiptInfoVO -> {
             wmsStorageReceiptInfoVO.setUnitName(dictMap.get(wmsStorageReceiptInfoVO.getUnit()));
+            wmsStorageReceiptInfoVO.setSpecification(materialMap.get(wmsStorageReceiptInfoVO.getMaterialId()).getSpecifications());
         });
         wmsStorageReceiptVO.setWarehouseName(officeMap.get(wmsStorageReceiptVO.getWarehouseId()));
         wmsStorageReceiptVO.setTypeName(dictMap.get(wmsStorageReceiptVO.getType()));
