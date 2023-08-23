@@ -118,6 +118,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //获取粒度
         QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
         Assert.notNull(granularityEntity, "粒度不存在");
+        QtManagerConstant.QtGranularityEnum typeEnum = QtManagerConstant.QtGranularityEnum.getByType(granularityEntity.getType());
+        Assert.notNull(typeEnum, "转换粒度不存在");
+
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
         //获取产线的中文
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -140,7 +143,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 QtDefectReportDataVO row = new QtDefectReportDataVO();
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
                 row.setType(0);
-                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+                //行显示
+                String convert = XAxisUtil.convert(typeEnum, begin);
+                row.setClassDateStr(convert);
                 row.setProductLineName(lineName);
                 Integer classId = LocalDateUtil.getClassId(begin, false);
                 if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
@@ -152,13 +157,19 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
                 for (Integer defectId : defectIdList) {
-                    int sum;
+                    int sum = 0 ;
                     if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
                         sum = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                     } else {
-                        int sum1 = sourceMap.getOrDefault(key(line, classDate, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                        int sum2 = sourceMap.getOrDefault(key(line, classDate, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                        sum = sum2 + sum1;
+                        //根据班次日期遍历
+                        LocalDateTime timeTmp = begin;
+                        while (LocalDateUtil.lt(timeTmp, shardTimeList.get(i))) {
+                            LocalDate cld = LocalDateUtil.getClassDate(timeTmp, false);
+                            int sum1 = sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                            int sum2 = sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectId), Lists.newArrayList()).stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                            sum = sum + sum2 + sum1;
+                            timeTmp = timeTmp.plusDays(1L);
+                        }
                     }
                     valueList.add(String.valueOf(sum));
                     lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + sum);

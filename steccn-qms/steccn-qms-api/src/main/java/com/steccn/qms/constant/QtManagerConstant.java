@@ -987,7 +987,14 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtGranularityEnum {
         //粒度 小时 天 周 月 季度 年
-        HOUR(0, "小时", "H"), DAY(1, "天", "D"), WEEK(2, "周", "W"), MONTH(3, "月", "M"), QUARTER(4, "季度", "Q"), YEAR(5, "年", "Y"), NONE(6, "无粒度", "N"), CLASS(7, "班次", "C");
+        HOUR(0, "小时", "H"),
+        DAY(1, "天", "D"),
+        WEEK(2, "周", "W"),
+        MONTH(3, "月", "M"),
+        QUARTER(4, "季度", "Q"),
+        YEAR(5, "年", "Y"),
+        NONE(6, "无粒度", "N"),
+        CLASS(7, "班次", "C");
 
         private Integer code;
         private String name;
@@ -996,6 +1003,20 @@ public interface QtManagerConstant {
         public static QtGranularityEnum getByName(String name) {
             for (QtGranularityEnum value : QtGranularityEnum.values()) {
                 if (value.getName().equals(name)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * 根据type获取时间粒度
+         * @param type
+         * @return
+         */
+        public static QtGranularityEnum getByType(String type) {
+            for (QtGranularityEnum value : QtGranularityEnum.values()) {
+                if (value.getType().equals(type)) {
                     return value;
                 }
             }
@@ -1363,7 +1384,10 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum LossReportType {
-        CLASS(0, "班次", "C"), DAY(1, "日", "D"), MONTH(2, "月", "M"), WEEK(3, "周", "W");
+        CLASS(0, "班次", "C"),
+        DAY(1, "日", "D"),
+        MONTH(2, "月", "M"),
+        WEEK(3, "周", "W");
 
         private Integer code;
         private String name;
