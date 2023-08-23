@@ -601,7 +601,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
         //明细表一
         OaWorkFlowDetailObjDTO oaWorkFlowDetailObjDTO = new OaWorkFlowDetailObjDTO();
-        oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL1);
+        oaWorkFlowDetailObjDTO.setTableDBName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL1);
 
         List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
         //获取客诉明细数据
@@ -657,7 +657,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //明细表2
         OaWorkFlowDetailObjDTO oaWorkFlowDetail2 = new OaWorkFlowDetailObjDTO();
         //表名
-        oaWorkFlowDetail2.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL2);
+        oaWorkFlowDetail2.setTableDBName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL2);
         //表中详情数据
         List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords2 = Lists.newArrayList();
         //数据详情
@@ -678,7 +678,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //明细表3
         OaWorkFlowDetailObjDTO oaWorkFlowDetail3 = new OaWorkFlowDetailObjDTO();
         //表名
-        oaWorkFlowDetail3.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL3);
+        oaWorkFlowDetail3.setTableDBName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL3);
         //表中详情数据
         List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords3 = Lists.newArrayList();
         //获取组件数据

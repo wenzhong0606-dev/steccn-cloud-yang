@@ -340,7 +340,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //2、详细数据
                 List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
                 OaWorkFlowDetailObjDTO oaWorkFlowDetailObjDTO = new OaWorkFlowDetailObjDTO();
-                oaWorkFlowDetailObjDTO.setTableDbName(PmManagerConstant.WORKFLOW_REQ_TABLE_NAME);
+                oaWorkFlowDetailObjDTO.setTableDBName(PmManagerConstant.WORKFLOW_REQ_TABLE_NAME);
                 List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
                 //拿到物料详细数据
                 List<PmsMaterialRequisitionInfo> detailList = pmsMaterialRequisitionInfoService.list(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>().eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, dto.getId()));
