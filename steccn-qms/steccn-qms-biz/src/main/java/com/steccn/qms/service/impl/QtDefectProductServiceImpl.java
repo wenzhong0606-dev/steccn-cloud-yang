@@ -569,7 +569,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             //详细数据
             List<OaWorkFlowDetailObjDTO> detailList = Lists.newArrayList();
             OaWorkFlowDetailObjDTO oaWorkFlowDetailObjDTO = new OaWorkFlowDetailObjDTO();
-            oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_DEFECT_PRODUCT);
+            oaWorkFlowDetailObjDTO.setTableDBName(QtManagerConstant.WORKFLOW_TABLE_DEFECT_PRODUCT);
             List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
             //保存url
             if (CollUtil.isNotEmpty(improveRecords)){

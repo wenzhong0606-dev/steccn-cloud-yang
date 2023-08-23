@@ -14,4 +14,10 @@ public interface SafetyTokenService {
      * @return
      */
     SafetyTokenVO getSafetyToken(Long userId);
+
+    /**
+     * 移除缓存中安环系统的token
+     * @return
+     */
+    String removeSecurityToken();
 }

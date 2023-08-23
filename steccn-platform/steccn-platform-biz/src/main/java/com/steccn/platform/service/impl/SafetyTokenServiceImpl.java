@@ -11,7 +11,10 @@ import com.steccn.platform.vo.SafetyTokenPageMapVO;
 import com.steccn.platform.vo.SafetyTokenVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.Set;
 
 /**
  * 获取安环token实现类
@@ -23,12 +26,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SafetyTokenServiceImpl implements SafetyTokenService {
     private final RemoteSafetyFeignApi remoteSafetyTokenService;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     @Cacheable(cacheNames = "SecurityToken#10800",key = "#userId")
     public SafetyTokenVO getSafetyToken(Long userId) {
         SafetyTokenVO result = this.getSafetyTokenCache();
         return result;
+    }
+
+    @Override
+    public String removeSecurityToken() {
+        Set<String> keys = stringRedisTemplate.keys("SecurityToken*");
+        Long deleteCount = stringRedisTemplate.delete(keys);
+        return "共删除"+deleteCount+"个值";
     }
 
     public SafetyTokenVO getSafetyTokenCache(){
