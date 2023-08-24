@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.feign.RemoteSafetyFeignApi;
 import com.steccn.platform.feign.RemoteSrmFeignApi;
@@ -25,7 +26,7 @@ public class SrmTokenServiceImpl implements SrmTokenService {
     private final RemoteSrmFeignApi remoteSrmFeignApi;
     @Override
     public SrmTokenVO getSrmToken() {
-        String token = remoteSrmFeignApi.getToken();
+        String token = remoteSrmFeignApi.getToken(SecurityUtils.getUser().getUsername(),"sso-client","implicit");
         SrmTokenVO srmTokenVO = JSONObject.parseObject(token).toJavaObject(SrmTokenVO.class);
         if(!srmTokenVO.getMessage().equals(OaDataConstant.SUCCESS)){
             log.info(token);
