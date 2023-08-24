@@ -39,10 +39,7 @@ import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsMaterialRequisitionMapper;
 import com.steccn.pms.util.PmsCodeUtil;
-import com.steccn.pms.vo.MaterialRequisitionInfoVO;
-import com.steccn.pms.vo.MaterialRequisitionPlanVO;
-import com.steccn.pms.vo.MaterialRequisitionVO;
-import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import io.swagger.models.auth.In;
@@ -154,10 +151,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 materialRequisitionInfo.setMaterialRequisitionId(model.getId());
                 materialRequisitionInfo.setId(IdUtil.getSnowflake().nextId());
                 list.add(materialRequisitionInfo);
-                if (CollUtil.isNotEmpty(materialRequisitionInfoDTO.getDemanderDtoList())){
-                    materialRequisitionInfoDTO.getDemanderDtoList().forEach( demander->{
+                if (CollUtil.isNotEmpty(materialRequisitionInfoDTO.getDemanderList())) {
+                    materialRequisitionInfoDTO.getDemanderList().forEach(demander -> {
                         PmsMaterialRequisitionDemander pmsMaterialRequisitionDemander = new PmsMaterialRequisitionDemander();
-                        BeanUtil.copyProperties(demander,pmsMaterialRequisitionDemander);
+                        BeanUtil.copyProperties(demander, pmsMaterialRequisitionDemander);
                         pmsMaterialRequisitionDemander.setMaterialRequisitionId(model.getId());
                         pmsMaterialRequisitionDemander.setRequisitionInfoId(materialRequisitionInfo.getId());
                         demanderList.add(pmsMaterialRequisitionDemander);
@@ -240,6 +237,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         officeIdSet.add(materialRequisitionVO.getDepartmentId());
         officeIdSet.add(materialRequisitionVO.getWarehouseId());
         List<MaterialRequisitionInfoVO> infoList = Lists.newArrayList();
+        Set<Long> infoIds = Sets.newHashSet();
         if (CollUtil.isNotEmpty(list)) {
             list.forEach(info -> {
                 MaterialRequisitionInfoVO model = new MaterialRequisitionInfoVO();
@@ -247,6 +245,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 dictIdSet.add(model.getUnitId());
                 officeIdSet.add(model.getShelfId());
                 materialIdSet.add(model.getMaterialId());
+                infoIds.add(model.getId());
                 if (CollUtil.isNotEmpty(model.getOrganization())) {
                     model.getOrganization().forEach(officeId -> {
                         officeIdSet.add(officeId);
@@ -260,8 +259,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO eqpSpareVO = new EqpSpareVO();
+        Map<Long, List<PmsMaterialRequisitionDemander>> demanderMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(infoIds)) {
+            List<PmsMaterialRequisitionDemander> demanders = pmsMaterialRequisitionDemanderService.list(new LambdaQueryWrapper<PmsMaterialRequisitionDemander>().eq(PmsMaterialRequisitionDemander::getMaterialRequisitionId, pmsMaterialRequisition.getId()).in(PmsMaterialRequisitionDemander::getRequisitionInfoId, infoIds));
+            demanderMap = demanders.stream().collect(Collectors.groupingBy(PmsMaterialRequisitionDemander::getRequisitionInfoId));
+        }
         if (CollUtil.isNotEmpty(infoList)) {
-            infoList.forEach(infoVO -> {
+            for (MaterialRequisitionInfoVO infoVO : infoList) {
                 EqpSpareVO orDefault = materialMap.getOrDefault(infoVO.getMaterialId(), eqpSpareVO);
                 infoVO.setMaterialName(orDefault.getName());
                 infoVO.setShelfName(officeMap.get(infoVO.getShelfId()));
@@ -272,7 +276,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     organizationList.add(officeMap.get(integer));
                 });
                 infoVO.setOrganizationName(organizationList);
-            });
+                if (CollUtil.isNotEmpty(demanderMap)) {
+                    infoVO.setDemanderList(BeanUtil.copyToList(demanderMap.get(infoVO.getId()), MaterialRequisitionInfoDemanderVO.class));
+                }
+            }
+
         }
         materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
         materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
@@ -654,7 +662,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             wmsDeliveryReceiptDTO.setWarehouseId(scanDto.getList().get(0).getWarehouseId());
             List<WmsDeliveryReceiptInfoDTO> wmsDeliveryReceiptInfoDTOS = BeanUtil.copyToList(scanDto.getList(), WmsDeliveryReceiptInfoDTO.class);
             wmsDeliveryReceiptDTO.setList(wmsDeliveryReceiptInfoDTOS);
-           return FeignOptional.of(() -> remoteWmsInventoryFeignApi.createDelivery(wmsDeliveryReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            return FeignOptional.of(() -> remoteWmsInventoryFeignApi.createDelivery(wmsDeliveryReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         } else {
             //生成调拨单
             WmsTransferSlipDTO wmsTransferSlipDTO = new WmsTransferSlipDTO();

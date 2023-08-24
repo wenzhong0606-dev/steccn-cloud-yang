@@ -66,8 +66,8 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
             } else {
                 list.add(materialRequisitionInfo);
             }
-            if (CollUtil.isNotEmpty(materialRequisitionInfoDTO.getDemanderDtoList())){
-                materialRequisitionInfoDTO.getDemanderDtoList().forEach( demander->{
+            if (CollUtil.isNotEmpty(materialRequisitionInfoDTO.getDemanderList())){
+                materialRequisitionInfoDTO.getDemanderList().forEach( demander->{
                     PmsMaterialRequisitionDemander pmsMaterialRequisitionDemander = new PmsMaterialRequisitionDemander();
                     BeanUtil.copyProperties(demander,pmsMaterialRequisitionDemander);
                     pmsMaterialRequisitionDemander.setMaterialRequisitionId(materialRequisitionDTO.getId());

@@ -80,5 +80,5 @@ public class MaterialRequisitionInfoDTO {
     private String unitName;
 
     @ApiModelProperty("需求人")
-    private List<MaterialRequisitionDemanderDto> demanderDtoList;
+    private List<MaterialRequisitionDemanderDTO> demanderList;
 }

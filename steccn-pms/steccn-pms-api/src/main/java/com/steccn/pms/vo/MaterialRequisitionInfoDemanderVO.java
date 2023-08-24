@@ -1,12 +1,13 @@
-package com.steccn.pms.dto;
+package com.steccn.pms.vo;
+
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-@ApiModel("领用单明细需求人dto")
-@Data
-public class MaterialRequisitionDemanderDto {
 
+@Data
+@ApiModel("领料单明细dto")
+public class MaterialRequisitionInfoDemanderVO {
 
     /**
      * 需求人id
