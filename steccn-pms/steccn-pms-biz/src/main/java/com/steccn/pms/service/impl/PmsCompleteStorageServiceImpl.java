@@ -175,21 +175,20 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
         SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+        //校验一箱货只能存在于一个入库单中
+        Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
+        //校验重复扫码问题
+        Assert.isTrue(caseNoSet.size() == dtoList.size(), "存在重复扫码，请检查");
+        Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
+        //校验生产订单的产线是否相同不同，不可以创建入库单
+        Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
+        List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getId, orderSet)
+                .groupBy(PmsProduceOrder::getProductionLineId));
+        if (!(CollUtil.isNotEmpty(list) && list.size() == 1)) {
+            throw new BusinessException("不同产线的订单不可以一起生成入库单");
+        }
         try {
-            //校验一箱货只能存在于一个入库单中
-            Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
-            //校验重复扫码问题
-            Assert.isTrue(caseNoSet.size() == dtoList.size(), "存在重复扫码，请检查");
-
-            Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
-            //校验生产订单的产线是否相同不同，不可以创建入库单
-            Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
-            List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
-                    .in(PmsProduceOrder::getId, orderSet)
-                    .groupBy(PmsProduceOrder::getProductionLineId));
-            if (!(CollUtil.isNotEmpty(list) && list.size() == 1)) {
-                throw new BusinessException("不同产线的订单不可以一起生成入库单");
-            }
             //校验箱子不能重复出现在不同的入库单
             List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
             //创建主表
