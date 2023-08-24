@@ -86,16 +86,6 @@ public class PmsCompleteStorageInfo implements Serializable {
     private Long completeStorageId;
 
     /**
-     * 是否已打印
-     */
-    private Integer printFlag;
-
-    /**
-     * 打印次数
-     */
-    private Integer printCount;
-
-    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
