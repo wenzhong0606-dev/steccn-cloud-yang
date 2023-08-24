@@ -7,6 +7,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
@@ -32,6 +33,7 @@ import java.util.List;
 public class CompleteStorageController {
 
     private final PmsCompleteStorageService pmsCompleteStorageService;
+    private final PmsBarcodePrintService pmsBarcodePrintService;
 
     @GetMapping("/scan")
     @ApiOperation("摄像头扫描箱号")
@@ -77,7 +79,7 @@ public class CompleteStorageController {
     @PostMapping("/case/print")
     @ApiOperation("生产订单的箱号批量打印")
     public R<Boolean> casePrint(@RequestBody List<String> caseNoList) {
-        return R.success(pmsCompleteStorageService.casePrint(caseNoList));
+        return R.success(pmsBarcodePrintService.casePrint(caseNoList));
     }
 
     @PostMapping("/complete")

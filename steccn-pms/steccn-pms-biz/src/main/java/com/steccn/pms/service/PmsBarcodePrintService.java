@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
@@ -120,4 +121,19 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return
      */
     List<WorkOrderMaterialVO> getMaterialByBatchNo(String batchNo);
+
+    /**
+     * 生产订单的箱号批量打印
+     * @param caseNoList 箱号集合
+     * @return
+     */
+    Boolean casePrint(List<String> caseNoList);
+
+
+    /**
+     * 获取箱号的打印次数和是否已打印
+     * @param caseNoSet 箱号集合
+     * @return
+     */
+    Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet);
 }
