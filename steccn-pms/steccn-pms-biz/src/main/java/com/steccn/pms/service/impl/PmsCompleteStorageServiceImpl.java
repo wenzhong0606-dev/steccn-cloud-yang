@@ -178,6 +178,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         try {
             //校验一箱货只能存在于一个入库单中
             Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
+            //校验重复扫码问题
+            Assert.isTrue(caseNoSet.size() == dtoList.size(), "存在重复扫码，请检查");
+
             Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
             //校验生产订单的产线是否相同不同，不可以创建入库单
             Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
