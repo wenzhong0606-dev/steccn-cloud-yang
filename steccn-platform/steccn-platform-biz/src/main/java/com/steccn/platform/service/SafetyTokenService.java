@@ -1,6 +1,9 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.vo.SafetyTodoListVO;
 import com.steccn.platform.vo.SafetyTokenVO;
+
+import java.util.List;
 
 /**
  * 安环系统service
@@ -20,4 +23,5 @@ public interface SafetyTokenService {
      * @return
      */
     String removeSecurityToken();
+
 }
