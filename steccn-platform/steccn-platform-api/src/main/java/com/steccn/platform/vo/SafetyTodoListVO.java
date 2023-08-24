@@ -18,4 +18,5 @@ public class SafetyTodoListVO implements Serializable {
     private String remindCode;
     private String page;
     private SafetyTodoListRouterObjVO routerObj;
+    private SafetyTokenVO userInfo;
 }

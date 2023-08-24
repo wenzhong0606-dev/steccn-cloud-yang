@@ -52,6 +52,7 @@ public class SafetyTodoListServiceImpl implements SafetyTodoListService {
                     routerObj.setPage(tmp.getPage());
                     routerObj.setRemind_code(tmp.getRemindCode());
                     tmp.setRouterObj(routerObj);
+                    tmp.setUserInfo(safetyToken);
                 });
             }
         }else {
