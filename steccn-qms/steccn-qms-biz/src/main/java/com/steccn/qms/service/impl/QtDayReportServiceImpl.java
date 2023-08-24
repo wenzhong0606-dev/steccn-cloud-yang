@@ -131,6 +131,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 Map<Integer, BigDecimal> classCountMap = Maps.newHashMap();
                 Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
                 for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
+                    Map<Integer, BigDecimal> manCountMap = Maps.newHashMap();
                     //根据缺陷记录时段分组
                     Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime() + "~" + v.getDefectEndTime()));
                     for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
@@ -173,6 +174,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                     //获取该缺陷下的所有数据
                                     List<QtCheckTaskDetailReportVO> defectDataList = taskEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
                                     int sum = defectDataList.stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                                    BigDecimalUtil.accumulate(manCountMap, defectId, BigDecimal.valueOf(sum));
                                     BigDecimalUtil.accumulate(countMap, defectId, BigDecimal.valueOf(sum));
                                     BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));
                                     BigDecimalUtil.accumulate(allMap, defectId, BigDecimal.valueOf(sum));
@@ -184,6 +186,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             }
                             vo.setRowTotal(BigDecimalUtil.setScale(rowTotal, 0));
                         }
+                    }
+                    //早班或晚班人工检验的各个缺陷项的数量加总 ，仅当该行数据全为0时隐藏该行，否则显示该行
+                    if (dataSourceEntry.getKey() == 0) {
+                        QtDayReportOnlineDataVO vo = insertCount(4, categoryDefectMap, classEntry.getKey(), manCountMap, productLineName, treeSort);
+                        vo.setDataSource(0);
+                        tableData.add(vo);
                     }
                 }
                 QtDayReportOnlineDataVO vo = insertCount(1, categoryDefectMap, classEntry.getKey(), classCountMap, productLineName, treeSort);
@@ -224,6 +232,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //对比数据来源
             if (!o1.getDataSource().equals(o2.getDataSource())) {
                 return o1.getDataSource() - o2.getDataSource();
+            }
+            //对比type
+            if(o1.getType() != o2.getType()){
+                return o1.getType() - o2.getType();
             }
             //对比缺陷记录时段
             if (!o1.getDefectStartTime().equals(o2.getDefectStartTime())) {
@@ -288,6 +300,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             SysOfficeVO sysOfficeVO = lineIdNameMap.getOrDefault(line, new SysOfficeVO());
                             vo.setProductLineName(sysOfficeVO.getOfficeName());
                             vo.setProductLineSort(sysOfficeVO.getTreeSort());
+                            //落板工位（南） 落板工位（北）
+                            String station = QtManagerConstant.FallStationEnum.getByCode(destroy.getDestoryWorkStation());
+                            vo.setDestoryWorkStationStr(station);
                             fallList.add(vo);
                         }
                     }
