@@ -7,15 +7,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
+import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
@@ -42,6 +45,7 @@ import java.util.stream.Collectors;
 public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteStorageInfoMapper, PmsCompleteStorageInfo> implements PmsCompleteStorageInfoService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final PmsBarcodePrintService barcodePrintService;
 
     @Override
     public Boolean existCaseNo(Long typeId, Set<String> caseNoSet) {
@@ -51,7 +55,17 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
 
     @Override
     public Page<PmsCompleteStorageVO> pageByOrderId(PmsCompleteStorageDTO dto) {
-        return this.baseMapper.pageByOrderId(new Page(dto.getCurrent(), dto.getSize()), dto.getProduceOrderId());
+        Page<PmsCompleteStorageVO> page = this.baseMapper.pageByOrderId(new Page(dto.getCurrent(), dto.getSize()), dto.getProduceOrderId());
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            Set<String> caseNoList = page.getRecords().stream().map(PmsCompleteStorageVO::getCaseNo).collect(Collectors.toSet());
+            Map<String, TupleDTO<Integer, Integer>> cntMap = barcodePrintService.casePrintAndCnt(caseNoList);
+            page.getRecords().forEach(ele -> {
+                TupleDTO<Integer, Integer> tupleDTO = cntMap.getOrDefault(ele.getCaseNo(), new TupleDTO<>());
+                ele.setPrintFlag(tupleDTO.getField1());
+                ele.setPrintCount(tupleDTO.getField2());
+            });
+        }
+        return page;
     }
 
     @Override

@@ -37,9 +37,7 @@
             a.quantity,
             a.unit_id,
             a.case_no,
-            a.batch_no,
-            a.print_flag,
-            a.print_count
+            a.batch_no
         FROM
             pms_complete_storage_info a
                 JOIN pms_complete_storage b ON a.complete_storage_id = b.id
