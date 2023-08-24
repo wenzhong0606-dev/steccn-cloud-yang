@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,10 +13,12 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.feign.RemoteStationWarehouseFeignApi;
 import com.steccn.platform.vo.SysStationWarehouseVO;
+import com.steccn.pms.domain.PmsMaterialRequisitionDemander;
 import com.steccn.pms.domain.PmsMaterialRequisitionInfo;
 import com.steccn.pms.dto.BomStationDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.mapper.PmsMaterialRequisitionInfoMapper;
+import com.steccn.pms.service.PmsMaterialRequisitionDemanderService;
 import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import com.steccn.pms.vo.MaterialRequisitionInfoVO;
 import lombok.RequiredArgsConstructor;
@@ -43,29 +46,44 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
         implements PmsMaterialRequisitionInfoService {
 
     private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+    private final PmsMaterialRequisitionDemanderService pmsMaterialRequisitionDemanderService;
 
     @Override
     public Boolean editList(MaterialRequisitionDTO materialRequisitionDTO) {
         //1.定义修改的数据集合和新增的数据集合
         List<PmsMaterialRequisitionInfo> list = Lists.newArrayList();
         Set<Long> idSet = Sets.newHashSet();
+        List<PmsMaterialRequisitionDemander> demanderList = Lists.newArrayList();
         //2.处理数据
         materialRequisitionDTO.getList().forEach(materialRequisitionInfoDTO -> {
             PmsMaterialRequisitionInfo materialRequisitionInfo = new PmsMaterialRequisitionInfo();
             BeanUtil.copyProperties(materialRequisitionInfoDTO, materialRequisitionInfo);
             materialRequisitionInfo.setMaterialRequisitionId(materialRequisitionDTO.getId());
+            materialRequisitionInfo.setId(IdUtil.getSnowflake().nextId());
             if (Objects.nonNull(materialRequisitionInfo.getId())) {
                 list.add(materialRequisitionInfo);
                 idSet.add(materialRequisitionInfo.getId());
             } else {
                 list.add(materialRequisitionInfo);
             }
+            if (CollUtil.isNotEmpty(materialRequisitionInfoDTO.getDemanderDtoList())){
+                materialRequisitionInfoDTO.getDemanderDtoList().forEach( demander->{
+                    PmsMaterialRequisitionDemander pmsMaterialRequisitionDemander = new PmsMaterialRequisitionDemander();
+                    BeanUtil.copyProperties(demander,pmsMaterialRequisitionDemander);
+                    pmsMaterialRequisitionDemander.setMaterialRequisitionId(materialRequisitionDTO.getId());
+                    pmsMaterialRequisitionDemander.setRequisitionInfoId(materialRequisitionInfo.getId());
+                    demanderList.add(pmsMaterialRequisitionDemander);
+                });
+            }
         });
         //3.删除其他多余的数据
         remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
                 .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, materialRequisitionDTO.getId())
                 .notIn(CollUtil.isNotEmpty(idSet), PmsMaterialRequisitionInfo::getId, idSet));
+        pmsMaterialRequisitionDemanderService.remove(new LambdaQueryWrapper<PmsMaterialRequisitionDemander>()
+                .eq(PmsMaterialRequisitionDemander::getMaterialRequisitionId, materialRequisitionDTO.getId()));
         //4.批量修改新增
+        pmsMaterialRequisitionDemanderService.saveBatch(demanderList);
         return saveOrUpdateBatch(list);
     }
 

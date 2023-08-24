@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -78,6 +79,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
     private final PmsMaterialRequisitionWorkflowService pmsMaterialRequisitionWorkflowService;
     private final OaInfoService oaInfoService;
+    private final PmsMaterialRequisitionDemanderService pmsMaterialRequisitionDemanderService;
 
     @Override
     public Page<MaterialRequisitionVO> pageList(MaterialRequisitionPageDTO dto) {
@@ -145,13 +147,25 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         save(model);
         if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
             List<PmsMaterialRequisitionInfo> list = Lists.newArrayList();
+            List<PmsMaterialRequisitionDemander> demanderList = Lists.newArrayList();
             materialRequisitionDTO.getList().forEach(materialRequisitionInfoDTO -> {
                 PmsMaterialRequisitionInfo materialRequisitionInfo = new PmsMaterialRequisitionInfo();
                 BeanUtil.copyProperties(materialRequisitionInfoDTO, materialRequisitionInfo);
                 materialRequisitionInfo.setMaterialRequisitionId(model.getId());
+                materialRequisitionInfo.setId(IdUtil.getSnowflake().nextId());
                 list.add(materialRequisitionInfo);
+                if (CollUtil.isNotEmpty(materialRequisitionInfoDTO.getDemanderDtoList())){
+                    materialRequisitionInfoDTO.getDemanderDtoList().forEach( demander->{
+                        PmsMaterialRequisitionDemander pmsMaterialRequisitionDemander = new PmsMaterialRequisitionDemander();
+                        BeanUtil.copyProperties(demander,pmsMaterialRequisitionDemander);
+                        pmsMaterialRequisitionDemander.setMaterialRequisitionId(model.getId());
+                        pmsMaterialRequisitionDemander.setRequisitionInfoId(materialRequisitionInfo.getId());
+                        demanderList.add(pmsMaterialRequisitionDemander);
+                    });
+                }
             });
             pmsMaterialRequisitionInfoService.saveBatch(list);
+            pmsMaterialRequisitionDemanderService.saveBatch(demanderList);
         }
         return Boolean.TRUE;
     }

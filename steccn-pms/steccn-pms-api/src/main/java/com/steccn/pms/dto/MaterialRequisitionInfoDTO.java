@@ -42,7 +42,7 @@ public class MaterialRequisitionInfoDTO {
     private String materialName;
 
     @ApiModelProperty("机构id")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "机构不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "机构不能为空")
     private List<Integer> organization;
 
 //    @ApiModelProperty("机构名称")
@@ -66,7 +66,7 @@ public class MaterialRequisitionInfoDTO {
     private LocalDate requireDate;
 
     @ApiModelProperty("货架id")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "货架不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "货架不能为空")
     private Integer shelfId;
 
     @ApiModelProperty("货架名称")
@@ -78,4 +78,7 @@ public class MaterialRequisitionInfoDTO {
 
     @ApiModelProperty("单位名称")
     private String unitName;
+
+    @ApiModelProperty("需求人")
+    private List<MaterialRequisitionDemanderDto> demanderDtoList;
 }
