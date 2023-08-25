@@ -29,7 +29,7 @@ public interface PmManagerConstant {
     /**
      * 排序条件-物料名称
      */
-    String PMS_MATERIAL_NAME ="materialName";
+    String PMS_MATERIAL_NAME = "materialName";
 
     /**
      * 排序条件- 物料编码
@@ -536,16 +536,65 @@ public interface PmManagerConstant {
             return null;
         }
     }
+
     @Getter
     @AllArgsConstructor
     enum BadnessType {
-        RAW_CLASS("原片不良"),
-        EDGING("磨边不良"),
-        PUNCHING("打孔不良"),
-        SILK_SCREEN("丝印不良"),
-        TEMPERING("钢化不良");
+        RAW_CLASS("原片不良"), EDGING("磨边不良"), PUNCHING("打孔不良"), SILK_SCREEN("丝印不良"), TEMPERING("钢化不良");
 
-        private  String name;
+        private String name;
 
+    }
+
+
+    /**
+     * 甲班：A；乙班：B；丙班C
+     */
+    @Getter
+    @AllArgsConstructor
+    enum classesType {
+        A(1,"早班"),
+
+        B(2,"晚班");
+
+        private Integer code;
+        private String name;
+
+        public static Integer getCodeByName(String name) {
+            for (classesType value : classesType.values()) {
+                if (value.getName().equals(name)) {
+                    return value.getCode();
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 甲班：A；乙班：B；丙班C
+     */
+    @Getter
+    @AllArgsConstructor
+    enum classGroupType {
+
+        A("A","甲班"),
+
+        B("B","乙班"),
+
+        C("C","丙班");
+
+        private String code;
+        private String name;
+
+
+
+        public static String getCodeByName(String name) {
+            for (classGroupType value : classGroupType.values()) {
+                if (value.getName().equals(name)) {
+                    return value.getCode();
+                }
+            }
+            return null;
+        }
     }
 }
