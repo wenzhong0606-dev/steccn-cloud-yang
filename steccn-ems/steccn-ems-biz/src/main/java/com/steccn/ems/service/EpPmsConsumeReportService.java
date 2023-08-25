@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.ems.vo.EpPmsConsumeVO;
+import com.steccn.ems.vo.PmElectricConsumeVO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -48,4 +49,13 @@ public interface EpPmsConsumeReportService {
      * @return
      */
     EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date);
+
+    /**
+     * 查询电耗范围
+     * @param officeId 组织机构id
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    List<PmElectricConsumeVO> electricRange(Integer officeId, LocalDate start, LocalDate end);
 }

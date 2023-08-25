@@ -3,6 +3,7 @@ package com.steccn.ems.controller;
 import com.steccn.common.vo.R;
 import com.steccn.ems.service.EpPmsConsumeReportService;
 import com.steccn.ems.vo.EpPmsConsumeVO;
+import com.steccn.ems.vo.PmElectricConsumeVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -54,8 +55,9 @@ public class EpPmsConsumeReportController {
 
     @GetMapping("/consume/electric")
     @ApiOperation(value = "能耗信息-电耗")
-    public R<List<EpPmsConsumeVO>> electric(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-//       List<PmElectricConsumeVO> resList=
+    public R<List<EpPmsConsumeVO>> electricRange(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate end, @RequestParam("timeCode") Integer timeCode) {
+       LocalDate start = LocalDate.now();
+       List<PmElectricConsumeVO> resList= consumeReportService.electricRange(officeId, start, end);
         return R.success();
     }
 
