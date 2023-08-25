@@ -32,39 +32,64 @@ public class HbCollectController {
     private final HbCollectService hbCollectService;
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
+    /**
+     * 能源绩效-远传仪表
+     * @param request
+     * @param dto
+     * @return
+     */
     @PostMapping("/ep/meter")
-    @ApiOperation(value = "能源绩效-远传仪表")
     public R<Boolean> epMeter(HttpServletRequest request, @RequestBody CollectCommonDTO<EpMeterCollectDTO> dto) {
         validRequestHeader(request);
         Assert.notEmpty(dto.getData(), "数据集合为空");
         return R.success(hbCollectService.epMeter(dto));
     }
 
+    /**
+     * 生产管理-进出站计数
+     * @param request
+     * @param dto
+     * @return
+     */
     @PostMapping("/pm/station")
-    @ApiOperation(value = "生产管理-进出站计数")
     public R<Boolean> pmStation(HttpServletRequest request, @RequestBody CollectCommonDTO<PmStationCollectDTO> dto) {
         validRequestHeader(request);
         Assert.notEmpty(dto.getData(), "数据集合为空");
         return R.success(hbCollectService.pmStation(dto));
     }
 
+    /**
+     * 保存推送过来的缺陷项
+     * @param request
+     * @param dto
+     * @return
+     */
     @PostMapping("/qt/defect")
-    @ApiOperation("保存推送过来的缺陷项")
     public R<Boolean> saveDefective(HttpServletRequest request, @RequestBody QtThirdPartyDefectiveDTO dto) {
         validRequestHeader(request);
         return R.success(hbCollectService.saveDefective(dto));
     }
 
+    /**
+     * 设备管理-设备启停信号
+     * @param request
+     * @param dto
+     * @return
+     */
     @PostMapping("/mes/signal")
-    @ApiOperation(value = "设备管理-设备启停信号")
     public R<Boolean> mesEqpSignal(HttpServletRequest request, @RequestBody @Validated CollectCommonValidDTO<MesEqpSignalDTO> dto) {
         validRequestHeader(request);
         Assert.notEmpty(dto.getData(), "数据集合为空");
         return R.success(hbCollectService.mesEqpSignal(dto));
     }
 
+    /**
+     * 设备管理-设备启停信号
+     * @param request
+     * @param dto
+     * @return
+     */
     @PostMapping("/qt/screen")
-    @ApiOperation(value = "设备管理-设备启停信号")
     public R<Boolean> screenData(HttpServletRequest request, @RequestBody @Validated CollectCommonValidDTO<ScreenDataDTO> dto) {
         validRequestHeader(request);
         Assert.notEmpty(dto.getData(), "数据集合为空");

@@ -43,6 +43,11 @@ public interface OaDataConstant {
      */
     String WORKFLOW_CREATE = "创建";
 
+    /**
+     * 成功
+     */
+    String SUCCESS = "success";
+
 
 
 
