@@ -220,7 +220,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             ids.add(dto.getClassesId());
             ids.add(dto.getClassGroupId());
             Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            String viewCode = FeignOptional.of(() -> remoteOfficeFeign.listById(new HashSet<>(dto.getProductionLine())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getProductionLine()).getViewCode();
+            Set<Integer> lineIds = new HashSet<>();
+            lineIds.add(dto.getProductionLine());
+            String viewCode = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getProductionLine()).getViewCode();
             Integer classesCode = PmManagerConstant.classesType.getCodeByName(dictMap.get(dto.getClassesId()).getName());
             String classesGroupCode = PmManagerConstant.classGroupType.getCodeByName(dictMap.get(dto.getClassGroupId()).getName());
             //遍历打印条数
