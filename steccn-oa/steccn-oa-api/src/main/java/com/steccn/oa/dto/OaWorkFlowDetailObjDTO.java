@@ -16,7 +16,7 @@ public class OaWorkFlowDetailObjDTO implements Serializable {
     /**
      * 数据库表名称
      */
-    private String tableDbName;
+    private String tableDBName;
 
     /**
      * 详情数据

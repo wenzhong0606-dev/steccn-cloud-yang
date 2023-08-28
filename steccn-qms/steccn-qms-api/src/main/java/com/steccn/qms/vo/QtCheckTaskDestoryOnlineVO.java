@@ -51,5 +51,8 @@ public class QtCheckTaskDestoryOnlineVO implements Serializable {
     @ApiModelProperty("产线排序")
     private Integer productLineSort;
 
+    @ApiModelProperty("工位")
+    private String destoryWorkStationStr;
+
     private static final long serialVersionUID = 1L;
 }

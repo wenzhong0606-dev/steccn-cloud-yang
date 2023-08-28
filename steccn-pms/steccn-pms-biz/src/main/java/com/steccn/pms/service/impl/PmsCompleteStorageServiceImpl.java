@@ -1,10 +1,12 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,7 +20,11 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.ClassUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -144,7 +150,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String generateInfo(List<CompleteStorageScanDTO> dtoList) {
         String code = generate(dtoList);
         //调用确认入库单接口
@@ -191,6 +196,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
             Long produceOrderId = dtoList.get(0).getProduceOrderId();
             LocalDateTime enterTime = dtoList.get(0).getEnterTime();
+            Integer classId = LocalDateUtil.getClassId(enterTime, Boolean.TRUE);
+            //根据班次id查询数据字典班次id
+            SysDictDTO sysDictDTO = new SysDictDTO();
+            sysDictDTO.setCode(String.valueOf(classId));
+            sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
+            Map<String, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO classIdSysDict = dictMap.get(sysDictDTO.getCode());
+            Assert.notNull(classIdSysDict,"班次不存在");
+
             PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
             Assert.notNull(pmsProduceOrder, "生产订单不存在");
             pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
@@ -220,6 +234,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 PmsBarcodePrint pmsBarcodePrint = caseMap.getOrDefault(modelInfo.getCaseNo(), defaultPmsBarcodePrint);
                 modelInfo.setClassesId(pmsBarcodePrint.getClassesId());
                 modelInfo.setClassGroupId(pmsBarcodePrint.getClassGroupId());
+                modelInfo.setClassesId(classIdSysDict.getId());
                 modelInfoList.add(modelInfo);
 
                 WmsStorageReceiptInfoDTO wmsStorageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
@@ -234,14 +249,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             }
             completeStorageInfoService.saveBatch(modelInfoList);
             //生成code 规则：SI-20220905-0001
-            pmsCompleteStorage.setCode(maxCompleteCode());
+//            pmsCompleteStorage.setCode(maxCompleteCode());
             pmsCompleteStorage.setQuantity(sumQuantity);
-            pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
+//            pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
             pmsCompleteStorage.setTypeId(sysDictVO.getId());
             pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
             //连线入库 入库时间
             pmsCompleteStorage.setEnterTime(enterTime);
-            save(pmsCompleteStorage);
+
             //生成入库单
 
             wmsStorageReceiptDTO.setType(sysDictVO.getId());
@@ -249,11 +264,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             wmsStorageReceiptDTO.setList(materialList);
             wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
             try {
-                Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 //入库必定要成功
-                if (!aBoolean) {
+                if (StringUtils.isEmpty(code)) {
                     log.info("入库单 -> 失败");
                 }
+                pmsCompleteStorage.setCode(code);
+                pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
+                save(pmsCompleteStorage);
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("入库单创建失败");
@@ -423,7 +441,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> completeStorageReviseStatue(String code, String confirmName) {
         if (Objects.isNull(code) || Objects.isNull(confirmName)) {
             throw new BusinessException("确认用户名或者入库单编码不能为空");
@@ -623,6 +640,20 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         updateWrapper.in(PmsCompleteStorageInfo::getCaseNo, caseNoList);
         updateWrapper.setSql("print_flag =1 , print_count = IFNULL(print_count , 0) + 1");
         return completeStorageInfoService.update(updateWrapper);
+    }
+
+    @Override
+    public Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet) {
+        Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(caseNoSet)){
+            List<PmsCompleteStorageInfo> dbList = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>().in(PmsCompleteStorageInfo::getCaseNo, caseNoSet));
+            if(CollUtil.isNotEmpty(dbList)){
+                for (PmsCompleteStorageInfo info : dbList) {
+                    resMap.put(info.getCaseNo(),new TupleDTO(info.getPrintFlag(),info.getPrintCount()));
+                }
+            }
+        }
+        return resMap;
     }
 
     /**

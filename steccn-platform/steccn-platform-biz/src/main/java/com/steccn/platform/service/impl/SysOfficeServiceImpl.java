@@ -11,6 +11,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.vo.R;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaDepartmentVO;
+import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
@@ -22,9 +28,11 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.mapper.SysOfficeMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,8 +42,9 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-02 16:25:59
  */
 @Service
-
+@RequiredArgsConstructor
 public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice> implements SysOfficeService {
+    private final OaInfoService oaInfoService;
 
     @Override
     public List<SysOfficeVO> sysList(String officeType) {
@@ -68,6 +77,8 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         officeTypeList.add(SysOfficeConstant.POST_GROUP);
         List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal)
                 .in(SysOffice::getOfficeType,officeTypeList));
+        List<OaDepartmentVO> allDepartment = oaInfoService.getAllDepartment(new TupleDTO<>(LocalDateTime.of(2000, 1, 1, 0, 0, 0), LocalDateTime.now())).getData();
+        List<OaJobTitleVO> allJobTitle = oaInfoService.getAllJobTitle(new TupleDTO<>(LocalDateTime.of(2000, 1, 1, 0, 0, 0), LocalDateTime.now())).getData();
         //如果数据为空,直接返回空集
         if (CollUtil.isEmpty(list)) {
             return Lists.newArrayList();
@@ -77,6 +88,18 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         list.forEach(tmp->{
             SysOfficeVO vo = new SysOfficeVO();
             BeanUtil.copyProperties(tmp,vo);
+            //塞入oa
+            if(!tmp.getOfficeType().equals(SysOfficeConstant.POST)){
+                OaDepartmentVO oaDepartmentVO = allDepartment.stream().filter(v -> v.getDepartmentName().equals(vo.getOfficeName())).findFirst().orElse(null);
+                if(Objects.nonNull(oaDepartmentVO)){
+                    vo.setOaId(oaDepartmentVO.getId());
+                }
+            }else {
+                OaJobTitleVO oaJobTitleVO = allJobTitle.stream().filter(v -> v.getJobTitleName().equals(vo.getOfficeName())).findFirst().orElse(null);
+                if(Objects.nonNull(oaJobTitleVO)){
+                    vo.setOaId(oaJobTitleVO.getId());
+                }
+            }
             vos.add(vo);
         });
         //构建部门Code与部门对象的映射关系

@@ -483,6 +483,7 @@ public class OaService {
         if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
             vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
         }else {
+            log.info(result);
             if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
                 vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
             }

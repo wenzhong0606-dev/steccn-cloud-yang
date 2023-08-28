@@ -44,6 +44,7 @@ import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.vo.OutputQualityDetailVO;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -1068,14 +1069,21 @@ public class ReportServiceImpl implements ReportService {
         Assert.isTrue(Objects.nonNull(dto.getDate()), "日期不能为空");
         //查询缺陷数据
         List<OutputQualityDetailVO> defectiveData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
-        //缺陷数量根据班组拆分
-        Map<String, List<OutputQualityDetailVO>> groupQualityMap = defectiveData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
-        //甲班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-        //乙班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-        //丙班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+//        //缺陷数量根据班组拆分
+//        Map<String, List<OutputQualityDetailVO>> groupQualityMap = defectiveData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
+//        //甲班缺陷数据
+//        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+//        //乙班缺陷数据
+//        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+//        //丙班缺陷数据
+//        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+
+        //缺陷数量根据班次拆分
+        Map<Integer, List<OutputQualityDetailVO>> groupQualityMap = defectiveData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
+        //白班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> dayShiftQuantityMap  =  Optional.ofNullable(groupQualityMap.get(PmManagerConstant.FORE_SHIFT_0)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+        //夜班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> nightShiftQuantityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.NIGHT_SHIFT_1)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo ->Objects.toString(vo.getProductOrder(),"")));
         //获取车间的名称
         Map<Integer, String> workshopMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(new HashSet<>(dto.getProductWorkshop())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<String> workshopName = workshopMap.values().stream().collect(Collectors.toSet());
@@ -1090,14 +1098,19 @@ public class ReportServiceImpl implements ReportService {
         Optional<List<OutputQualityDetailVO>> optionalPlyData = Optional.ofNullable(FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.listPollingDate(outputQualityDetailDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get());
         List<OutputQualityDetailVO> plyData = optionalPlyData.get();
         //将平均厚度根据班组拆分
-        Map<String, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
-        //甲班
-        Map<String, List<OutputQualityDetailVO>> methylPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
-        //乙班
-        Map<String, List<OutputQualityDetailVO>> ethylPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
-        //丙班
-        Map<String, List<OutputQualityDetailVO>> propylPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
-
+//        Map<String, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
+//        //甲班
+//        Map<String, List<OutputQualityDetailVO>> methylPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+//        //乙班
+//        Map<String, List<OutputQualityDetailVO>> ethylPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+//        //丙班
+//        Map<String, List<OutputQualityDetailVO>> propylPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+        //将平均厚度根据班次拆分
+        Map<Integer, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
+        //早班
+        Map<String, List<OutputQualityDetailVO>> dayShiftPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.FORE_SHIFT_0)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+        //晚班
+        Map<String, List<OutputQualityDetailVO>> nightShiftPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.NIGHT_SHIFT_1)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
         //获取当班拉引量数据
         Map<Integer, List<PmsPullForce>> pullForceMap = pmsPullForceService.pullForceDayByWorkshop(dto.getDate(), dto.getProductWorkshop());
         //获取截至当前日期的当月拉引量数据
@@ -1154,28 +1167,38 @@ public class ReportServiceImpl implements ReportService {
                     String classGroupName = classMap.get(reportWork.getClassGroupId());
                     //班组
                     outputQualityDataVO.setClassGroup(classGroupName);
+                    //班次
+                    String classes = classMap.get(reportWork.getClassesId());
+                    outputQualityDataVO.setClasses(classes);
                     //获取缺陷数据
                     List<OutputQualityDetailVO> outputQualityDetailVOS = Lists.newArrayList();
                     //平均厚度
                     List<OutputQualityDetailVO> plyDataList = new ArrayList<>();
-                    if (PmManagerConstant.METHYL_CLASS_NAME.equals(classGroupName)) {
-                        outputQualityDetailVOS = methylQualityMap.get(reportWork.getProduceOrder());
-                        plyDataList = methylPlyDataMap.get(reportWork.getProduceOrder());
+                    if (PmManagerConstant.FORE_SHIFT.equals(classes)){
+                       outputQualityDetailVOS = dayShiftQuantityMap.get(reportWork.getProduceOrder());
+                        plyDataList = dayShiftPlyDataMap.get(reportWork.getProduceOrder());
                     }
-                    if (PmManagerConstant.ETHYL_CLASS_NAME.equals(classGroupName)) {
-                        outputQualityDetailVOS = ethylQualityMap.get(reportWork.getProduceOrder());
-                        plyDataList = ethylPlyDataMap.get(reportWork.getProduceOrder());
+                    if (PmManagerConstant.NIGHT_SHIFT.equals(classes)){
+                        outputQualityDetailVOS = nightShiftQuantityMap.get(reportWork.getProduceOrder());
+                        plyDataList = nightShiftPlyDataMap.get(reportWork.getProduceOrder());
                     }
-                    if (PmManagerConstant.PROPYLENE_CLASS_NAME.equals(classGroupName)) {
-                        outputQualityDetailVOS = propyleneQualityMap.get(reportWork.getProduceOrder());
-                        plyDataList = propylPlyDataMap.get(reportWork.getProduceOrder());
-                    }
+//                    if (PmManagerConstant.METHYL_CLASS_NAME.equals(claclassGroupNamesses)) {
+//                        outputQualityDetailVOS = methylQualityMap.get(reportWork.getProduceOrder());
+//                        plyDataList = methylPlyDataMap.get(reportWork.getProduceOrder());
+//                    }
+//                    if (PmManagerConstant.ETHYL_CLASS_NAME.equals(classGroupName)) {
+//                        outputQualityDetailVOS = ethylQualityMap.get(reportWork.getProduceOrder());
+//                        plyDataList = ethylPlyDataMap.get(reportWork.getProduceOrder());
+//                    }
+//                    if (PmManagerConstant.PROPYLENE_CLASS_NAME.equals(classGroupName)) {
+//                        outputQualityDetailVOS = propyleneQualityMap.get(reportWork.getProduceOrder());
+//                        plyDataList = propylPlyDataMap.get(reportWork.getProduceOrder());
+//                    }
                     //获取厚度以及规格
                     outputQualityDataVO.setThickQuantity(eqpSpareVO.getThickQuantity());
                     outputQualityDataVO.setSpecifications(eqpSpareVO.getSpecifications());
                     BigDecimal quantity = reportWork.getProcessQuantity();
-                    //班次
-                    outputQualityDataVO.setClasses(classMap.get(reportWork.getClassesId()));
+
                     Integer shutUp = 0;
                     Integer startToTalk = 0;
                     Integer stone = 0;
@@ -1213,7 +1236,9 @@ public class ReportServiceImpl implements ReportService {
                     //平均厚度
                     if (CollUtil.isNotEmpty(plyDataList)) {
                         for (OutputQualityDetailVO outputQualityDetailVO : plyDataList) {
-                            averageThickness = averageThickness.add(new BigDecimal(outputQualityDetailVO.getCheckResult()));
+                            if (Objects.nonNull(outputQualityDetailVO.getCheckResult())){
+                                averageThickness = averageThickness.add(new BigDecimal(outputQualityDetailVO.getCheckResult()));
+                            }
                         }
                     }
 
@@ -1452,14 +1477,21 @@ public class ReportServiceImpl implements ReportService {
         Assert.isTrue(Objects.nonNull(dto.getDate()), "日期不能为空");
         //获取缺陷数据
         List<OutputQualityDetailVO> qmsTaskDefectData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
-        //缺陷数量根据班组拆分
-        Map<String, List<OutputQualityDetailVO>> groupQualityMap = qmsTaskDefectData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
-        //甲班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-        //乙班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-        //丙班缺陷数据
-        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+//        //缺陷数量根据班组拆分
+//        Map<String, List<OutputQualityDetailVO>> groupQualityMap = qmsTaskDefectData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
+//        //甲班缺陷数据
+//        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+//        //乙班缺陷数据
+//        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+//        //丙班缺陷数据
+//        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+
+        //缺陷数量根据班次拆分
+        Map<Integer, List<OutputQualityDetailVO>> groupQualityMap = qmsTaskDefectData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
+        //白班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> dayShiftQuantityMap  =  Optional.ofNullable(groupQualityMap.get(PmManagerConstant.FORE_SHIFT_0)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+        //夜班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> nightShiftQuantityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.NIGHT_SHIFT_1)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo ->Objects.toString(vo.getProductOrder(),"")));
         //获取车间下的产线
         Map<Integer, List<Integer>> integerListMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(dto.getProductWorkshop()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取产线合集
@@ -1475,7 +1507,7 @@ public class ReportServiceImpl implements ReportService {
         //获取产线下的工位
         List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //包含磨边工位的
-        Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        Set<Integer> stationIds = officeList.stream().filter(office -> office.getOfficeName().contains("钢化工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取报工记录
         List<PmsReportWorkVO> pmsReportWorkVOS = pmsReportWorkService.listBylineIds(lineIds, dto.getDate());
         Set<Long> reportIds = pmsReportWorkVOS.stream().map(PmsReportWorkVO::getId).collect(Collectors.toSet());
@@ -1546,14 +1578,21 @@ public class ReportServiceImpl implements ReportService {
                         outputQualitySjgDataVO.setSpecifications(eqpSpareVO.getSpecifications());
                         //缺陷数据
                         List<OutputQualityDetailVO> defectData = new ArrayList<>();
-                        if (PmManagerConstant.METHYL_CLASS_NAME.equals(classGroupName)) {
-                            defectData = methylQualityMap.get(reportWork.getProduceOrder());
+//                        if (PmManagerConstant.METHYL_CLASS_NAME.equals(classGroupName)) {
+//                            defectData = methylQualityMap.get(reportWork.getProduceOrder());
+//                        }
+//                        if (PmManagerConstant.ETHYL_CLASS_NAME.equals(classGroupName)) {
+//                            defectData = ethylQualityMap.get(reportWork.getProduceOrder());
+//                        }
+//                        if (PmManagerConstant.PROPYLENE_CLASS_NAME.equals(classGroupName)) {
+//                            defectData = propyleneQualityMap.get(reportWork.getProduceOrder());
+//                        }
+
+                        if (PmManagerConstant.FORE_SHIFT.equals(className)){
+                            defectData = dayShiftQuantityMap.get(reportWork.getProduceOrder());
                         }
-                        if (PmManagerConstant.ETHYL_CLASS_NAME.equals(classGroupName)) {
-                            defectData = ethylQualityMap.get(reportWork.getProduceOrder());
-                        }
-                        if (PmManagerConstant.PROPYLENE_CLASS_NAME.equals(classGroupName)) {
-                            defectData = propyleneQualityMap.get(reportWork.getProduceOrder());
+                        if (PmManagerConstant.NIGHT_SHIFT.equals(className)){
+                            defectData = nightShiftQuantityMap.get(reportWork.getProduceOrder());
                         }
                         //原片不良
                         Integer rawClassBadness = 0;
@@ -1619,10 +1658,11 @@ public class ReportServiceImpl implements ReportService {
                             outputQualitySjgDataVO.setInStorageSlice(slice);
                             outputQualitySjgDataVO.setCurrentClassSquare(square);
                         }
-                        //加工产量（该产线下的磨边工位的报工数据）
+                        //加工产量（该产线下的钢化工位的报工数据）
                         BigDecimal processQuantity = BigDecimal.ZERO;
                         if (stationIds.contains(reportWork.getStationId())) {
-                            processQuantity = reportWork.getProcessQuantity();
+                            //加工产量：根据该产线钢化工位，该产品当班报工记录，合格数量累加，根据片数计算平方米
+                            processQuantity = BigDecimalUtil.subtract(reportWork.getProcessQuantity(), reportWork.getBadnessQuantity());
                             //单位转换
                             BigDecimal slice = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), processQuantity, 0);
                             BigDecimal square = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), processQuantity, 2);

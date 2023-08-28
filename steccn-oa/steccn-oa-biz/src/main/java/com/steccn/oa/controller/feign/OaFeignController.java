@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,5 +109,17 @@ public class OaFeignController {
     @PostMapping("/group/workshop/leader")
     public R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop ){
         return R.success(hrmdepartmentService.getClassUserName(productWorkShop));
+    }
+
+    @PostMapping("/thirdParty/allDepartment")
+    @ApiOperation(value = "获取所有部门")
+    public R<List<OaDepartmentVO>> getAllDepartment(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        return R.success(hrmdepartmentService.getAllDepartment(dto));
+    }
+
+    @PostMapping("/thirdParty/allJobTitle")
+    @ApiOperation(value = "获取所有岗位")
+    public R<List<OaJobTitleVO>> getAllJobTitle(HttpServletRequest request, @RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        return R.success(hrmjobtitlesService.getAllJobTitle(dto));
     }
 }

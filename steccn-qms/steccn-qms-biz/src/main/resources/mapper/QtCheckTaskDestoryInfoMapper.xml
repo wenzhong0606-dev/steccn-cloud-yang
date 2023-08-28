@@ -7,7 +7,7 @@
     <select id="falling" resultType="com.steccn.qms.dto.QtDestoryInfoFallDTO">
         SELECT
         task.task_type,
-        task.product_line ->> '$.id' as product_line,
+        task.product_line ->> '$.id' as productLineId,
         task.class_time,
         task.classes_id as classId,
         task.class_group_id,

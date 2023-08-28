@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.lang.Tuple;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -17,22 +18,22 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.PmsBarcodePrint;
-import com.steccn.pms.domain.PmsCompleteStorage;
-import com.steccn.pms.domain.PmsCompleteStorageInfo;
-import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.service.PmsBarcodePrintRecordService;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.mapper.PmsBarcodePrintMapper;
 import com.steccn.pms.service.PmsCompleteStorageService;
@@ -52,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,9 +78,12 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private RedissonClient redissonClient;
     @Autowired
     private TransactionTemplate transactionTemplate;
-
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private PmsBarcodePrintRecordService pmsBarcodePrintRecordService;
 
 
     @Override
@@ -95,13 +100,54 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         lock.lock();
         try {
             //获取当前订单最大的
-            long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
+            long currentMaxNo = newOrderMaxCaseNo(dto.getProduceOrderId(), dto.getClassesId(), dto.getClassGroupId(), dto.getProductionLine());
+            //获取打印的订单流水
+            PmsBarcodePrintRecord record = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
+                    .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
+                    .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
+                    .eq(PmsBarcodePrintRecord::getProduceOrderId, dto.getProduceOrderId())
+                    .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                    .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
+                    .last(MpConstant.STR_LIMIT_1));
+            Integer num = 1;
+            if (Objects.isNull(record)) {
+                PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
+                        .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
+                        .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
+                        .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                        .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
+                        .last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(pmsBarcodePrintRecord)) {
+                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
+                }
+                //增加一条记录
+                PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
+                printRecord.setClassesId(dto.getClassesId());
+                printRecord.setClassGroupId(dto.getClassGroupId());
+                printRecord.setPrintDate(LocalDate.now());
+                printRecord.setProduceOrderId(dto.getProduceOrderId());
+                printRecord.setSerialNum(num);
+                pmsBarcodePrintRecordService.save(printRecord);
+            } else {
+                num = record.getSerialNum();
+            }
+            List<Long> ids = Lists.newArrayList();
+            ids.add(dto.getClassesId());
+            ids.add(dto.getClassGroupId());
+            Set<Integer> lineIds = new HashSet<>();
+            lineIds.add(dto.getProductionLine());
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            String viewCode = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getProductionLine()).getViewCode();
+            Integer classesCode = PmManagerConstant.classesType.getCodeByName(dictMap.get(dto.getClassesId()).getName());
+            String classesGroupCode = PmManagerConstant.classGroupType.getCodeByName(dictMap.get(dto.getClassGroupId()).getName());
+
             //遍历打印条数
             for (int count = 0; count < printStrip; count++) {
                 PmsBarcodePrint printModel = new PmsBarcodePrint();
                 BeanUtils.copyProperties(dto, printModel);
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
-                printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
+                String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+                printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
                 if (Objects.isNull(dto.getShelfId())) {
                     printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
                 }
@@ -131,11 +177,59 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         lock.lock();
         try {
             //获取当前订单最大的
-            long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
+//            long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
+            //获取当前订单最大的
+            long currentMaxNo = newOrderMaxCaseNo(dto.getProduceOrderId(), dto.getClassesId(), dto.getClassGroupId(), dto.getProductionLine());
+            //获取打印的订单流水
+            PmsBarcodePrintRecord record = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
+                    .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
+                    .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
+//                    .eq(PmsBarcodePrintRecord::getProduceOrderId, dto.getProduceOrderId())
+                    .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                    .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
+                    .last(MpConstant.STR_LIMIT_1));
+            Integer num = 01;
+            if (Objects.isNull(record)) {
+                //增加一条记录
+                PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
+                printRecord.setClassesId(dto.getClassesId());
+                printRecord.setClassGroupId(dto.getClassGroupId());
+                printRecord.setPrintDate(LocalDate.now());
+                printRecord.setProduceOrderId(dto.getProduceOrderId());
+                printRecord.setSerialNum(num);
+                pmsBarcodePrintRecordService.save(printRecord);
+            } else {
+                if (!dto.getProduceOrderId().equals(record.getProduceOrderId())) {
+                    //增加一条记录
+                    PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
+                    printRecord.setClassesId(dto.getClassesId());
+                    printRecord.setClassGroupId(dto.getClassGroupId());
+                    printRecord.setPrintDate(LocalDate.now());
+                    printRecord.setProduceOrderId(dto.getProduceOrderId());
+                    printRecord.setSerialNum(record.getSerialNum() + 1);
+                    pmsBarcodePrintRecordService.save(printRecord);
+                    num = printRecord.getSerialNum();
+                } else {
+                    num = record.getSerialNum();
+                }
+
+            }
+
+            List<Long> ids = Lists.newArrayList();
+            ids.add(dto.getClassesId());
+            ids.add(dto.getClassGroupId());
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Set<Integer> lineIds = new HashSet<>();
+            lineIds.add(dto.getProductionLine());
+            String viewCode = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(dto.getProductionLine()).getViewCode();
+            Integer classesCode = PmManagerConstant.classesType.getCodeByName(dictMap.get(dto.getClassesId()).getName());
+            String classesGroupCode = PmManagerConstant.classGroupType.getCodeByName(dictMap.get(dto.getClassGroupId()).getName());
             //遍历打印条数
             BeanUtils.copyProperties(dto, printModel);
             printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
-            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
+//            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
+            String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+            printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
             if (Objects.isNull(dto.getShelfId())) {
                 printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
             }
@@ -165,8 +259,12 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
             //处理单位数据
             Set<Long> orderSet = page.getRecords().stream().map(PmsBarcodePrint::getProduceOrderId).collect(Collectors.toSet());
+            //箱号
+            Set<String> caseNoSet = voList.stream().map(BarcodePrintRecordVO::getCaseNo).collect(Collectors.toSet());
             Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
             Map<Long, PmsProduceOrder> map = pmsProduceOrderService.orderList(Lists.newArrayList(orderSet));
+
+            Map<String, TupleDTO<Integer, Integer>> caseCntMap = pmsCompleteStorageService.casePrintAndCnt(caseNoSet);
 
             voList.forEach(barcodePrintRecordVO -> {
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(barcodePrintRecordVO.getProduceOrderId());
@@ -178,6 +276,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 if (Objects.nonNull(pmsProduceOrder)) {
                     barcodePrintRecordVO.setMinPackageQuantity(pmsProduceOrder.getMinPackageQuantity());
                 }
+                TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(), new TupleDTO<>());
+                barcodePrintRecordVO.setPrintFlag(tupleDTO.getField1());
+                barcodePrintRecordVO.setPrintCount(tupleDTO.getField2());
             });
             resPage.setRecords(voList);
         }
@@ -315,10 +416,10 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     public List<WorkOrderMaterialVO> getMaterialByCaseNo(String code) {
         List<WorkOrderMaterialVO> list = Lists.newArrayList();
         List<PmsBarcodePrint> printList = list(new LambdaQueryWrapper<PmsBarcodePrint>().like(PmsBarcodePrint::getCaseNo, code));
-        if (CollUtil.isNotEmpty(printList)){
+        if (CollUtil.isNotEmpty(printList)) {
             List<Long> materialIds = printList.stream().map(PmsBarcodePrint::getMaterialId).collect(Collectors.toList());
             Map<Long, EqpSpareVO> map = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            printList.forEach(pmsBarcodePrint ->{
+            printList.forEach(pmsBarcodePrint -> {
                 WorkOrderMaterialVO workOrderMaterialVO = new WorkOrderMaterialVO();
                 workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
                 workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
@@ -335,10 +436,10 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     public List<WorkOrderMaterialVO> getMaterialByBatchNo(String batchNo) {
         List<WorkOrderMaterialVO> list = Lists.newArrayList();
         List<PmsBarcodePrint> printList = list(new LambdaQueryWrapper<PmsBarcodePrint>().like(PmsBarcodePrint::getBatchNo, batchNo));
-        if (CollUtil.isNotEmpty(printList)){
+        if (CollUtil.isNotEmpty(printList)) {
             List<Long> materialIds = printList.stream().map(PmsBarcodePrint::getMaterialId).collect(Collectors.toList());
             Map<Long, EqpSpareVO> map = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            printList.forEach(pmsBarcodePrint ->{
+            printList.forEach(pmsBarcodePrint -> {
                 WorkOrderMaterialVO workOrderMaterialVO = new WorkOrderMaterialVO();
                 workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
                 workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
@@ -372,6 +473,34 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         }
         return currentMax;
     }
+
+
+    /**
+     * 生产订单最大箱号
+     *
+     * @param produceOrderId 生产订单id
+     * @return 最大箱号
+     */
+    private long newOrderMaxCaseNo(Long produceOrderId, Long classesId, Long classGroupId, Integer productionLine) {
+        PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>()
+                .eq(PmsBarcodePrint::getProduceOrderId, produceOrderId)
+                .eq(PmsBarcodePrint::getClassesId, classesId)
+                .eq(PmsBarcodePrint::getClassGroupId, classGroupId)
+                .eq(PmsBarcodePrint::getProductionLine, productionLine)
+                .orderByDesc(PmsBarcodePrint::getCaseNo)
+                .last(MpConstant.STR_LIMIT_1));
+        long currentMax = PmsCodeUtil.DEFAULT_PADDING;
+        if (Objects.nonNull(one)) {
+            String substring = one.getCaseNo().substring(one.getCaseNo().length() - PmsCodeUtil.NUM_BIT_2);
+            try {
+                currentMax = Long.parseLong(substring);
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
+    }
+
 }
 
 

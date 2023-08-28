@@ -1187,7 +1187,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (dto.getCheckNum() != null) {
             taskModel.setCheckNum(dto.getCheckNum());
         }
-        if (StringUtils.isNotBlank(dto.getNote())) {
+        if (dto.getNote() != null) {
             taskModel.setNote(dto.getNote());
         }
         if (StringUtils.isNotBlank(dto.getResult())) {

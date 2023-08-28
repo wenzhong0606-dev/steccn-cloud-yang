@@ -74,6 +74,12 @@ public class WmsInventoryFeignController {
         return R.success(wmsStorageReceiptService.add(dto));
     }
 
+    @ApiOperation("入库凭证新增")
+    @PostMapping("/storage/add/code")
+    public R<String> storageAddCode(@Validated(InsertGroup.class) @RequestBody WmsStorageReceiptDTO dto) {
+        return R.success(wmsStorageReceiptService.addReturnCode(dto));
+    }
+
     @ApiOperation("出库凭证新增")
     @PostMapping("/delivery/add")
     public R<Boolean> deliveryAdd(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto) {
