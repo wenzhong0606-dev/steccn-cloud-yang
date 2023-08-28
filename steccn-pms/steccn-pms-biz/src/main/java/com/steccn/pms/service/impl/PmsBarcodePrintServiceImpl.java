@@ -110,15 +110,15 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                     .last(MpConstant.STR_LIMIT_1));
             Integer num = 1;
-            if (Objects.isNull(record)){
+            if (Objects.isNull(record)) {
                 PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
                         .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
                         .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
                         .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
                         .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                         .last(MpConstant.STR_LIMIT_1));
-                if (Objects.nonNull(pmsBarcodePrintRecord)){
-                    num = pmsBarcodePrintRecord.getSerialNum()+1;
+                if (Objects.nonNull(pmsBarcodePrintRecord)) {
+                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
                 }
                 //增加一条记录
                 PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
@@ -128,7 +128,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 printRecord.setProduceOrderId(dto.getProduceOrderId());
                 printRecord.setSerialNum(num);
                 pmsBarcodePrintRecordService.save(printRecord);
-            }else {
+            } else {
                 num = record.getSerialNum();
             }
             List<Long> ids = Lists.newArrayList();
@@ -146,9 +146,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 PmsBarcodePrint printModel = new PmsBarcodePrint();
                 BeanUtils.copyProperties(dto, printModel);
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
-                printModel.setCaseNo(PmsCodeUtil.getNextCode(LocalDate.now() + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
-
-
+                String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+                printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
                 if (Objects.isNull(dto.getShelfId())) {
                     printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
                 }
@@ -229,7 +228,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             BeanUtils.copyProperties(dto, printModel);
             printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
 //            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
-            printModel.setCaseNo(PmsCodeUtil.getNextCode(LocalDate.now() + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
+            String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+            printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
             if (Objects.isNull(dto.getShelfId())) {
                 printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
             }
