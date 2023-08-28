@@ -45,5 +45,16 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.produceNumRate(workShopId, date));
     }
 
+    @GetMapping("/in/storage/today")
+    @ApiOperation("今日入库数（单位/T/片/㎡）")
+    public R<List<BigDecimal>> inStorageToday(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.inStorageToday(workShopId, date));
+    }
+
+    @GetMapping("/in/storage/rate")
+    @ApiOperation("入库合格率")
+    public R<BigDecimal> inStorageRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.inStorageRate(workShopId, date));
+    }
 
 }

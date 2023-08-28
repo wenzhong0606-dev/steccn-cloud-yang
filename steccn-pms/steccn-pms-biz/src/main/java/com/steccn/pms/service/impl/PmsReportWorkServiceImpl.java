@@ -680,7 +680,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 pmsProduceOrderCraftList.forEach(ele -> craftProcessIdMap.put(ele.getId(), ele.getProcessId()));
                 dbList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
 
-                if(CollUtil.isNotEmpty(pmProcessList)){
+                if (CollUtil.isNotEmpty(pmProcessList)) {
                     PmProcess pmProcess = pmProcessList.get(pmProcessList.size() - 1);
                     //过滤工位
                     dbList = dbList.stream().filter(ele -> ele.getProcessId().equals(pmProcess.getId())).collect(Collectors.toList());
@@ -960,6 +960,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     /**
      * 获取这些产线磨边工位
+     *
      * @param lineList 产线集合
      * @return
      */
@@ -1022,6 +1023,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     });
                 });
             }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, Map<Integer, BigDecimal>> getTodayInStorage(List<Integer> lineIdList, LocalDate date) {
+        Map<Long, Map<Integer, BigDecimal>> resMap = Maps.newHashMap();
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = start.plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getTodayInStorage(lineIdList, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> collect = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            collect.forEach((k, v) -> {
+                Map<Integer, BigDecimal> lineNumMap = Maps.newHashMap();
+                resMap.put(k, lineNumMap);
+                v.forEach(ele -> {
+                    lineNumMap.put(ele.getProductLineId(), ele.getQuantity());
+                });
+
+            });
         }
         return resMap;
     }

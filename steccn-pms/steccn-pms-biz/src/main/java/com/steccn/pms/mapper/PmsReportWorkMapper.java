@@ -156,6 +156,18 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return
      */
     List<PmsUseCountDTO> getTodayPm(@Param("lineList") List<Integer> lineList, @Param("today") LocalDate today);
+
+    /**
+     * 获取今日入库量
+     *
+     * @param lineIdList 产线集合
+     * @param start      班次日期
+     * @param end      班次日期
+     * @return
+     */
+    List<PmsUseCountDTO> getTodayInStorage(@Param("lineList") List<Integer> lineIdList,
+                                           @Param("start") LocalDateTime start,
+                                           @Param("end") LocalDateTime end);
 }
 
 

@@ -219,4 +219,13 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Long, Map<Integer, BigDecimal>> getTodayPm(List<Integer> lineList, LocalDate today, Integer type);
+
+    /**
+     * 获取产线的当天入库数量
+     *
+     * @param lineIdList 产线集合
+     * @param date       班次时间
+     * @return
+     */
+    Map<Long, Map<Integer, BigDecimal>> getTodayInStorage(List<Integer> lineIdList, LocalDate date);
 }

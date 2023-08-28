@@ -40,4 +40,21 @@ public interface PmsReportDashboardService {
      * @return
      */
     BigDecimal produceNumRate(Integer workShopId, LocalDate date);
+
+    /**
+     * 今日入库数（单位/T/片/㎡）
+     * @param workShopId 车间id
+     * @param date       班次日期
+     * @return
+     */
+    List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date);
+
+    /**
+     * 入库合格率
+     *
+     * @param workShopId 车间id
+     * @param date       班次日期
+     * @return
+     */
+    BigDecimal inStorageRate(Integer workShopId, LocalDate date);
 }
