@@ -18,7 +18,7 @@ import java.time.LocalDate;
 public class PmsUseCountDTO implements Serializable {
 
     @ApiModelProperty("产线")
-    private String productLineId;
+    private Integer productLineId;
 
     @ApiModelProperty("周")
     private String weekStr;

@@ -14,6 +14,7 @@ import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.service.EpPmsConsumeReportService;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
+import com.steccn.ems.vo.PmElectricConsumeVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,11 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     @Override
     public EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date) {
         return consumeUse(officeId, date, 4);
+    }
+
+    @Override
+    public List<PmElectricConsumeVO> electricRange(Integer officeId, LocalDate start, LocalDate end) {
+        return null;
     }
 
     private EpPmsConsumeVO consumeUse(Integer officeId, LocalDate date, Integer type) {
