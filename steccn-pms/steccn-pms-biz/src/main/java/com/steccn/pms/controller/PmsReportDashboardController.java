@@ -39,4 +39,11 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.produceNumToday(workShopId, date));
     }
 
+    @GetMapping("/produce/num/rate")
+    @ApiOperation("产量合格率")
+    public R<BigDecimal> produceNumRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.produceNumRate(workShopId, date));
+    }
+
+
 }

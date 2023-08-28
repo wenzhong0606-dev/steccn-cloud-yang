@@ -63,7 +63,6 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     @Override
     public List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date) {
-
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeMap, "车间不能为空");
         SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
@@ -71,7 +70,6 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //根据车间区分深加工还是基片
         //①基片产量：所有报工加工数之和
         //②深加工产量:磨边工位报工加工数之和
-
         //根据车间获取产线集合
         SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
         sysOfficeParent.setId(wsOffice.getId());
@@ -100,6 +98,13 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum1, sum2, sum3);
+        return Arrays.asList(sum2, sum1, sum3);
+    }
+
+    @Override
+    public BigDecimal produceNumRate(Integer workShopId, LocalDate date) {
+        BigDecimal num = produceNumToday(workShopId, date).get(0);
+        BigDecimal pullForce = pullForceToday(workShopId, date);
+        return BigDecimalUtil.percent(num, pullForce, 2);
     }
 }

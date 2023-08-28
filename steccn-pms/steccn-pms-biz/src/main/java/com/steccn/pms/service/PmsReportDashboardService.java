@@ -31,4 +31,13 @@ public interface PmsReportDashboardService {
      * @return
      */
     List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date);
+
+    /**
+     * 产量合格率
+     *
+     * @param workShopId 车间id
+     * @param date       班次日期
+     * @return
+     */
+    BigDecimal produceNumRate(Integer workShopId, LocalDate date);
 }
