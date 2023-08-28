@@ -38,6 +38,9 @@ public class PmsUseCountDTO implements Serializable {
     @ApiModelProperty("工位")
     private Integer stationId;
 
+    @ApiModelProperty("物料主键")
+    private Long materialId;
+
     @ApiModelProperty("数量")
     private BigDecimal quantity;
 

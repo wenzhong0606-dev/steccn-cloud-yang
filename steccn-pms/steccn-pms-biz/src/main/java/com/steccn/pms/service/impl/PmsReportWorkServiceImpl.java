@@ -992,27 +992,37 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<Long , Map<Integer, BigDecimal>> getTodayPm(List<Integer> lineList, LocalDate today, Integer type) {
-        Map<Long , Map<Integer, BigDecimal>> resMap = Maps.newHashMap();
-//        List<PmsUseCountDTO> dbList = baseMapper.getTodayPm(lineList, today);
-//        if (CollUtil.isNotEmpty(dbList)) {
-//            if (type == 0) {
-//                //基片
-//                Map<Integer, List<PmsUseCountDTO>> collect = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getProductLineId));
-//                collect.forEach((k, v) -> {
-//                    List<BigDecimal> valueList = v.stream().map(PmsUseCountDTO::getQuantity).collect(Collectors.toList());
-//                    resMap.put(k, BigDecimalUtil.sum(valueList));
-//                });
-//            } else {
-//                Set<Integer> stationIds = getEdgStation(lineList);
-//                //深加工
-//                dbList.forEach(ele -> {
-//                    if (stationIds.contains(ele.getStationId())) {
-//                        resMap.put(ele.getProductLineId(), ele.getQuantity());
-//                    }
-//                });
-//            }
-//        }
+    public Map<Long, Map<Integer, BigDecimal>> getTodayPm(List<Integer> lineList, LocalDate today, Integer type) {
+        Map<Long, Map<Integer, BigDecimal>> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.getTodayPm(lineList, today);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> materialMap = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            if (type == 0) {
+                //基片
+                materialMap.forEach((k, v) -> {
+                    Map<Integer, BigDecimal> lineNumMap = Maps.newHashMap();
+                    resMap.put(k, lineNumMap);
+                    Map<Integer, List<PmsUseCountDTO>> lineMap = v.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getProductLineId));
+                    lineMap.forEach((k1, v1) -> {
+                        List<BigDecimal> valueList = v.stream().map(PmsUseCountDTO::getQuantity).collect(Collectors.toList());
+                        lineNumMap.put(k1, BigDecimalUtil.sum(valueList));
+                    });
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(lineList);
+
+                materialMap.forEach((k, v) -> {
+                    Map<Integer, BigDecimal> lineNumMap = Maps.newHashMap();
+                    resMap.put(k, lineNumMap);
+                    //深加工
+                    v.forEach(ele -> {
+                        if (stationIds.contains(ele.getStationId())) {
+                            lineNumMap.put(ele.getProductLineId(), ele.getQuantity());
+                        }
+                    });
+                });
+            }
+        }
         return resMap;
     }
 
