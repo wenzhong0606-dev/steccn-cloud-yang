@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
+import com.steccn.pms.vo.DashboardProducePageVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,8 +58,9 @@ public class PmsReportDashboardController {
 
     @PostMapping("/produce/page")
     @ApiOperation("产线加工信息")
-    public R<BigDecimal> producePage(@RequestBody DashboardProducePageDTO dto) {
-        return R.success(pmsReportDashboardService.inStorageRate(null, null));
+    public R<DashboardProducePageVO> producePage(@RequestBody DashboardProducePageDTO dto) {
+//        return R.success(pmsReportDashboardService.producePage(dto));
+        return null;
     }
 
 
