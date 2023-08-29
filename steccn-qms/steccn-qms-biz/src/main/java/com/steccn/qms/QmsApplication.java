@@ -14,7 +14,6 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 @EnableOpenApi
 @EnableFeignClients(basePackages = "com.steccn")
 @EnableAsync
-@EnableScheduling
 public class QmsApplication {
 
     public static void main(String[] args) {
