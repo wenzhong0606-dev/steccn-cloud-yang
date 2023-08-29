@@ -2,50 +2,46 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
-import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.steccn.authserver.util.FeignOptional;
-import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.authserver.util.SteccnUser;
-import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.domain.OaResponse;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.RemoteMesFeignApi;
+import com.steccn.platform.feign.RemoteSrmFeignApi;
+import com.steccn.platform.mapper.OaResponseMapper;
 import com.steccn.platform.service.OaProcessHandler;
 import com.steccn.platform.service.OaResponseService;
-import com.steccn.platform.mapper.OaResponseMapper;
+import com.steccn.platform.service.SrmTokenService;
 import com.steccn.platform.service.SysEqpSpareService;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.MesClassificationVO;
 import com.steccn.platform.vo.OaMaterialVO;
-import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
-import com.steccn.pms.feign.RemotePmsFeignApi;
-import com.steccn.qms.feign.RemoteCustomerComplainFeignApi;
-import com.steccn.qms.feign.RemoteDefectProductFeignApi;
-import com.steccn.qms.feign.RemoteImproveProgressFeignApi;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
 * @author Admin
@@ -62,6 +58,10 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final RemoteMesFeignApi remoteMesFeignApi;
     private final RemoteWsFeignApi remoteWsFeignApi;
     private final OaProcessHandler oaProcessHandler;
+    private final SrmTokenService srmTokenService;
+    private final RemoteSrmFeignApi remoteSrmFeignApi;
+    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
@@ -108,6 +108,25 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
             dto.setCreationTimeStr(dto.getCreationTime().format(fmt));
         }
         JSONObject jsonObject = new JSONObject(dto);
+        //发送消息给三方系统
+        poolExecutor.execute(()->{
+            try {
+                String srmOauthToken = srmTokenService.getSrmOauthToken();
+                MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
+                headers.add("Authorization","Bearer "+srmOauthToken);
+                SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
+                oaMsg.setPayload(jsonObject.toString());
+                String sendOaWorkFlowMsg = remoteSrmFeignApi.sendOaWorkFlowMsg(headers,oaMsg);
+                String status = com.alibaba.fastjson.JSONObject.parseObject(sendOaWorkFlowMsg).getString("status");
+                if(status==null
+                        ||!status.equals(MpConstant.STATUS_200)){
+                    log.error(sendOaWorkFlowMsg);
+                }
+
+            }catch (Exception e) {
+                log.error("SrmSend",e.getLocalizedMessage());
+            }
+        });
         model.setContentJson(jsonObject.toString());
         //2、根据工作流id调用对应的业务
         oaProcessHandler.handler(dto);
