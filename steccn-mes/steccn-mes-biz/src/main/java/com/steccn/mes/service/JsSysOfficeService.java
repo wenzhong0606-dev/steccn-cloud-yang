@@ -36,4 +36,11 @@ public interface JsSysOfficeService extends IService<JsSysOffice> {
      * @return
      */
     Boolean synchronousSupplier(ErpCustomerDTO dto);
+
+    /**
+     * 同步仓库
+     * @param dto
+     * @return
+     */
+    Boolean synchronousStock(ErpCustomerDTO dto);
 }

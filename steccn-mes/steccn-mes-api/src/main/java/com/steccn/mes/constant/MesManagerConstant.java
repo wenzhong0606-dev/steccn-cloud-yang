@@ -16,6 +16,11 @@ public interface MesManagerConstant {
      */
     String supplierGroup = "CUCC1012";
 
+    /**
+     * 所有仓库在这个下面
+     */
+    String STOCK_GROUP = "STOCKGROUP";
+
     Integer NUM_0 = 0;
     Integer NUM_1 = 1;
     Integer NUM_30 = 30;
@@ -30,4 +35,9 @@ public interface MesManagerConstant {
      * 供应商类型
      */
     String SUPPLIER_TYPE = "11";
+
+    /**
+     * 仓库类型
+     */
+    String STOCK_TYPE = "12";
 }
