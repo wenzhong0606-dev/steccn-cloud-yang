@@ -342,6 +342,6 @@ public class BigDecimalUtil {
             return null;
         }
         BigDecimal percent = value1.divide(value2, scale + 2, RoundingMode.HALF_UP).multiply(HUNDRED);
-        return percent;
+        return percent.setScale(scale, RoundingMode.HALF_UP);
     }
 }
