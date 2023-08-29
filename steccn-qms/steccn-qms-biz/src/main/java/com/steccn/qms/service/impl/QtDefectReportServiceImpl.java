@@ -211,21 +211,24 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             List<QtDestoryInfoFallDTO> sourceList = dealReasonDataList.stream().filter(ele -> line.equals(ele.getProductLineId())).collect(Collectors.toList());
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < shardTimeList.size(); i++) {
-                QtDefectFallingVO row = new QtDefectFallingVO();
                 LocalDateTime begin = shardTimeList.get(i - 1);
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
                 Integer classId = LocalDateUtil.getClassId(begin, false);
-                row.setType(0);
-                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
-                row.setProductLineName(lineName);
                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
-                row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
-                OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
-                row.setClassGroupName(oaGroupCountDTO.getGroupName());
                 List<QtDestoryInfoFallDTO> tempSourceList = sourceList.stream().filter(ele -> classDate.isEqual(ele.getClassTime().toLocalDate()) && classId.equals(ele.getClassId())).collect(Collectors.toList());
                 List<List<QtDefectFallingDetailVO>> rowList = getDetailList(countMap, lineCountMap, tempSourceList);
-                row.setDetailList(rowList);
-                resList.add(row);
+                //遍历
+                rowList.forEach(ele -> {
+                    QtDefectFallingVO row = new QtDefectFallingVO();
+                    row.setType(0);
+                    row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+                    row.setProductLineName(lineName);
+                    row.setDetailList(ele);
+                    row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
+                    row.setClassGroupName(oaGroupCountDTO.getGroupName());
+                    resList.add(row);
+                });
             }
             //增加合计（单产线）
             resList.add(reasonCount(1, "合计（单产线）", lineCountMap));
@@ -1391,16 +1394,14 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         QtDefectFallingVO countRow = new QtDefectFallingVO();
         countRow.setType(type);
         countRow.setProductLineName(lineName);
-        List<List<QtDefectFallingDetailVO>> detailCount = Lists.newArrayList();
         List<QtDefectFallingDetailVO> detailList = Lists.newArrayList();
-        detailCount.add(detailList);
         for (int i = 0; i < 4; i++) {
             QtDefectFallingDetailVO detailVO = new QtDefectFallingDetailVO();
             BigDecimal bigDecimal = lineCountMap.get(i);
             detailVO.setIntervalHour(bigDecimal);
             detailList.add(detailVO);
         }
-        countRow.setDetailList(detailCount);
+        countRow.setDetailList(detailList);
         return countRow;
     }
 
