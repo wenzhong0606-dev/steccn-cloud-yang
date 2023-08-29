@@ -1,14 +1,12 @@
 package com.steccn.pms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -56,5 +54,12 @@ public class PmsReportDashboardController {
     public R<BigDecimal> inStorageRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
         return R.success(pmsReportDashboardService.inStorageRate(workShopId, date));
     }
+
+    @PostMapping("/produce/page")
+    @ApiOperation("产线加工信息")
+    public R<BigDecimal> producePage(@RequestBody DashboardProducePageDTO dto) {
+        return R.success(pmsReportDashboardService.inStorageRate(null, null));
+    }
+
 
 }
