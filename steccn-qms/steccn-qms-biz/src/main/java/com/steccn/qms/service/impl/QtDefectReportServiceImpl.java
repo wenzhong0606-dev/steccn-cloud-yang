@@ -572,17 +572,25 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setProductLineName(lineName);
                 row.setMonthStr(monthStr);
                 BigDecimal rowSum = null;
+
+                //计算rowSum
+                for (QtDefectiveItem defectItem : itemList) {
+                    Optional<QtCheckItemMaterialAvgDTO> dataOp = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && defectItem.getCode().equals(ele.getCode()) && monthStr.equals(ele.getClassMonth())).findFirst();
+                    BigDecimal value = dataOp.isPresent() ? dataOp.get().getValue() : null;
+                    rowSum = BigDecimalUtil.add(value, rowSum);
+                }
+
                 for (QtDefectiveItem defectItem : itemList) {
                     Optional<QtCheckItemMaterialAvgDTO> dataOp = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && defectItem.getCode().equals(ele.getCode()) && monthStr.equals(ele.getClassMonth())).findFirst();
                     BigDecimal value = dataOp.isPresent() ? dataOp.get().getValue() : null;
                     valueList.add(value);
                     BigDecimalUtil.accumulate(countMap, defectItem.getCode(), value);
                     BigDecimalUtil.accumulate(sumMap, defectItem.getCode(), value);
-                    rowSum = BigDecimalUtil.add(value, rowSum);
-                    valueList.add(BigDecimalUtil.divide(value, row.getUseCount(), 2));
+                    //不良率
+                    valueList.add(BigDecimalUtil.percent(value, rowSum, 2));
                 }
                 row.setDefectSum(BigDecimalUtil.setScale(rowSum, 0));
-                row.setDefectRate(BigDecimalUtil.divide(rowSum, row.getUseCount(), 2));
+                row.setDefectRate(BigDecimalUtil.percent(rowSum, row.getUseCount(), 2));
                 BigDecimalUtil.accumulate(countMap, "-1", row.getUseCount());
                 BigDecimalUtil.accumulate(countMap, "-2", row.getDefectSum());
                 BigDecimalUtil.accumulate(sumMap, "-1", row.getUseCount());
@@ -1095,15 +1103,15 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         row.setProductLineName(hintName);
         row.setDefectSum(BigDecimalUtil.sum(map.values()));
         List<BigDecimal> valueList = Lists.newArrayList();
+        row.setDefectSum(BigDecimalUtil.setScale(map.get("-2"), 0));
         for (QtDefectiveItem defectItem : itemList) {
             BigDecimal defectValue = map.get(defectItem.getCode());
             valueList.add(BigDecimalUtil.setScale(defectValue, 0));
-            valueList.add(BigDecimalUtil.divide(defectValue, row.getUseCount(), 2));
+            valueList.add(BigDecimalUtil.percent(defectValue, row.getDefectSum(), 2));
         }
         row.setValueList(valueList);
         row.setUseCount(BigDecimalUtil.setScale(map.get("-1"), 0));
-        row.setDefectSum(BigDecimalUtil.setScale(map.get("-2"), 0));
-        row.setDefectRate(BigDecimalUtil.divide(row.getDefectSum(), row.getUseCount(), 2));
+        row.setDefectRate(BigDecimalUtil.percent(row.getDefectSum(), row.getUseCount(), 2));
         return row;
     }
 
