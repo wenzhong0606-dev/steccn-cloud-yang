@@ -110,9 +110,9 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         JSONObject jsonObject = new JSONObject(dto);
         //发送消息给三方系统
         //推给srm
-        List<Integer> srmWorkFlowId = Lists.newArrayList(161,163,158,159,160);
-        if(srmWorkFlowId.contains(dto.getData().getWorkflowId())){
-            poolExecutor.execute(()->{
+        List<String> srmWorkFlowId = Lists.newArrayList("161","163","158","159","160");
+        poolExecutor.execute(()->{
+            if(srmWorkFlowId.contains(dto.getData().getWorkflowId())){
                 try {
                     String srmOauthToken = srmTokenService.getSrmOauthToken();
                     MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
@@ -129,8 +129,8 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
                 }catch (Exception e) {
                     log.error("SrmSend",e.getLocalizedMessage());
                 }
-            });
-        }
+            }
+        });
         model.setContentJson(jsonObject.toString());
         //2、根据工作流id调用对应的业务
         oaProcessHandler.handler(dto);
