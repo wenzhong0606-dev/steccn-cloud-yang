@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
@@ -11,24 +12,32 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsPullForce;
-import com.steccn.pms.service.PmsReportDashboardService;
-import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.domain.PmsWorkOrderBatch;
+import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
+import com.steccn.pms.vo.DashboardProducePageListVO;
+import com.steccn.pms.vo.DashboardProducePageVO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +55,10 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final PmsReportWorkService pmsReportWorkService;
     private final RemoteSpareUnitConvertFeignApi spareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final PmsProduceOrderService pmsProduceOrderService;
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -98,6 +111,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     /**
      * 获取车间的产线集合
+     *
      * @param wsOffice 车间
      * @return
      */
@@ -154,5 +168,76 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         BigDecimal num = inStorageToday(workShopId, date).get(0);
         BigDecimal pullForce = pullForceToday(workShopId, date);
         return BigDecimalUtil.percent(num, pullForce, 2);
+    }
+
+    @Override
+    public DashboardProducePageVO producePage(DashboardProducePageDTO dto) {
+        DashboardProducePageVO resVo = new DashboardProducePageVO();
+        //获取当前产线正在执行的订单批次
+        PmsProduceOrder currentOrder = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                .eq(PmsProduceOrder::getState, 2)
+                .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId()), false);
+        if (Objects.nonNull(currentOrder)) {
+            //根据当前订单获取当前批次
+            PmsWorkOrderBatch currentBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, currentOrder.getId()).eq(PmsWorkOrderBatch::getCurrentBatchFlag, 1), false);
+            if (Objects.nonNull(currentBatch)) {
+                resVo.setBatchNo(currentBatch.getCode());
+                resVo.setStartTime(currentBatch.getStartTime());
+                //批次加工总数：入库单中明细批次为本批次的数量汇总，数量需转换为重量T
+                List<PmsCompleteStorageInfo> csList = pmsCompleteStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
+                        .eq(PmsCompleteStorageInfo::getProduceOrderId, currentOrder.getId())
+                        .eq(PmsCompleteStorageInfo::getBatchNo, currentBatch.getCode()));
+                if (CollUtil.isNotEmpty(csList)) {
+                    List<BigDecimal> completeQuantityList = csList.stream().map(PmsCompleteStorageInfo::getQuantity).collect(Collectors.toList());
+                    resVo.setCompleteQuantity(BigDecimalUtil.sum(completeQuantityList));
+                }
+            }
+            //获取物料规格
+            EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getById(currentOrder.getMaterialId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (Objects.nonNull(eqpSpareVO)) {
+                resVo.setSpecifications(eqpSpareVO.getSpecifications());
+            }
+        }
+        //10、工单列表：展示本产线所有订单（对应状态 已下达  已暂停 暂停中 执行中）
+        //状态（0 ：已创建  1：已下单  2：执行中 3：暂停中  4：已暂停 5：完成中 6：已完成 7：已关闭 ）
+        //分页获取订单，按创建时间倒序
+        Page<PmsProduceOrder> page = pmsProduceOrderService.page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getState, Arrays.asList(1, 3, 4, 2))
+                .eq(Objects.nonNull(dto.getState()), PmsProduceOrder::getState, dto.getState())
+                .orderByDesc(PmsProduceOrder::getCreateTime));
+        //获取到订单
+        List<DashboardProducePageListVO> resList = new ArrayList<>();
+        //获取所有的规格
+        Set<Long> materialIdSet = Sets.newHashSet();
+        List<Integer> lineList = Lists.newArrayList();
+        Set<Long> orderIdSet = Sets.newHashSet();
+        page.getRecords().forEach(ele -> {
+            materialIdSet.add(ele.getMaterialId());
+            lineList.add(ele.getProductionLineId());
+            orderIdSet.add(ele.getId());
+        });
+        Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
+        Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
+
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        page.getRecords().forEach(ele -> {
+            DashboardProducePageListVO res = new DashboardProducePageListVO();
+            BeanUtils.copyProperties(ele, res);
+            res.setPlanQuantity(ele.getQuantity());
+            res.setOrderId(ele.getId());
+            res.setSpecifications(spareMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
+            //完工数量：订单对应的报工数量汇总
+            res.setCompleteQuantity(pmByOrderMap.get(ele.getId()));
+            //入库数量：订单对应的入库单数量汇总
+            res.setInStorageQuantity(inStorageMap.get(ele.getId()));
+            //欠额：计划数量 - 入库数量
+            res.setDebtQuantity(BigDecimalUtil.subtract(res.getPlanQuantity(), res.getInStorageQuantity()));
+            resList.add(res);
+        });
+        Page<DashboardProducePageListVO> resPage = new Page<>();
+        BeanUtils.copyProperties(page, resPage);
+        resPage.setRecords(resList);
+        resVo.setPageList(resPage);
+        return resVo;
     }
 }

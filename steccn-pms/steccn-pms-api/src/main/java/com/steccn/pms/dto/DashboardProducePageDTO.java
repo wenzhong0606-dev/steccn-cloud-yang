@@ -4,7 +4,6 @@ import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import java.time.LocalDate;
 
 /**
@@ -21,4 +20,7 @@ public class DashboardProducePageDTO extends BasePageDTO {
 
     @ApiModelProperty("日期")
     private LocalDate date;
+
+    @ApiModelProperty("状态（0 ：已创建  1：已下单  2：执行中 3：暂停中  4：已暂停 5：完成中 6：已完成 7：已关闭 ）")
+    private Integer state;
 }

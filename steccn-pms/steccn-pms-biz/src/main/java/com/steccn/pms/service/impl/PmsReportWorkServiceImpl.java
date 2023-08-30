@@ -23,6 +23,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
@@ -1049,6 +1050,41 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     lineNumMap.put(ele.getProductLineId(), ele.getQuantity());
                 });
 
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, BigDecimal> getPmByOrder(List<Integer> lineList, Set<Long> orderIdSet, Integer type) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.getPmByOrder(orderIdSet);
+        if (CollUtil.isNotEmpty(dbList)) {
+            if (type == 0) {
+                //基片
+                //所有工位报工汇总
+                dbList.forEach(ele -> {
+                    MapUtil.add(resMap, ele.getProduceOrderId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(lineList);
+                dbList.forEach(ele -> {
+                    if (stationIds.contains(ele.getStationId())) {
+                        MapUtil.add(resMap, ele.getProduceOrderId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, BigDecimal> getInStorageByOrder(Set<Long> orderIdSet) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.getInStorageByOrder(orderIdSet);
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                resMap.put(ele.getProduceOrderId(), ele.getQuantity());
             });
         }
         return resMap;

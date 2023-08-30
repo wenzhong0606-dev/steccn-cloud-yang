@@ -415,4 +415,34 @@
         ppo.material_id
 
     </select>
+    <select id="getInStorageByOrder" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        SELECT
+        ppo.id as produceOrderId,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND ppo.id in
+        <foreach collection="orderIdSet" item="orderId" open="(" close=")" separator=",">
+            #{orderId}
+        </foreach>
+        GROUP BY
+        ppo.id
+    </select>
+    <select id="getPmByOrder" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        de.id as produceOrderId,
+        rw.station_id ,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
+        where rw.del_flag = 0 AND de.del_flag = 0
+        AND de.id in
+        <foreach collection="orderIdSet" item="orderId" open="(" close=")" separator=",">
+            #{orderId}
+        </foreach>
+        group by de.id, rw.station_id
+    </select>
 </mapper>

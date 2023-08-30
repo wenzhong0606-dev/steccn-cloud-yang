@@ -59,9 +59,6 @@ public class PmsReportDashboardController {
     @PostMapping("/produce/page")
     @ApiOperation("产线加工信息")
     public R<DashboardProducePageVO> producePage(@RequestBody DashboardProducePageDTO dto) {
-//        return R.success(pmsReportDashboardService.producePage(dto));
-        return null;
+        return R.success(pmsReportDashboardService.producePage(dto));
     }
-
-
 }

@@ -277,6 +277,58 @@ public class JsSysOfficeServiceImpl extends ServiceImpl<JsSysOfficeMapper, JsSys
         }
         return true;
     }
+
+    @Override
+    public Boolean synchronousStock(ErpCustomerDTO dto) {
+        List<ErpStockVO> erpData = remoteErpFeignApi.getStock(dto).getData();
+        if(CollUtil.isNotEmpty(erpData)){
+            //拿到仓库分组节点
+            JsSysOffice customerPoint = getOne(new LambdaQueryWrapper<JsSysOffice>()
+                    .eq(JsSysOffice::getOfficeCode, MesManagerConstant.STOCK_GROUP)
+                    .last("LIMIT 1"));
+            //拿到表中已有的供应商
+            List<JsSysOffice> supplierList = list(new LambdaQueryWrapper<JsSysOffice>()
+                    .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                    .eq(JsSysOffice::getOfficeType, MesManagerConstant.STOCK_TYPE)
+                    .eq(JsSysOffice::getStatus, MesManagerConstant.NUM_0.toString()));
+            for(ErpStockVO tmp:erpData){
+                JsSysOffice officeOne = supplierList.stream().filter(v -> v.getOfficeCode().equals(tmp.getFnumber())).findFirst().orElse(null);
+                //名字不同的情况则需要修改
+                if(Objects.nonNull(officeOne)&&!officeOne.getOfficeName().equals(tmp.getFname())){
+                    JsSysOffice officeModel = new JsSysOffice();
+                    officeModel.setTreeNames(customerPoint.getOfficeName()+"/"+tmp.getFname());
+                    officeModel.setOfficeName(tmp.getFname());
+                    officeModel.setUpdateDate(LocalDateTime.now());
+                    officeModel.setFullName(tmp.getFname());
+                    officeModel.setUpdateBy(MesManagerConstant.ERP);
+                    update(officeModel,new LambdaQueryWrapper<JsSysOffice>().eq(JsSysOffice::getOfficeCode,tmp.getFnumber()));
+                }else if(Objects.isNull(officeOne)){
+                    //没有值则新增
+                    JsSysOffice officeModel = new JsSysOffice();
+                    officeModel.setOfficeCode(tmp.getFnumber());
+                    officeModel.setParentCode(MesManagerConstant.STOCK_GROUP);
+                    officeModel.setParentCodes("0,"+MesManagerConstant.STOCK_GROUP+",");
+                    officeModel.setTreeSort(MesManagerConstant.NUM_30);
+                    officeModel.setTreeSorts(customerPoint.getTreeSorts()+"0000000030,");
+                    officeModel.setTreeLeaf(MesManagerConstant.NUM_1.toString());
+                    officeModel.setTreeLevel(MesManagerConstant.NUM_1);
+                    officeModel.setTreeNames(customerPoint.getOfficeName()+"/"+tmp.getFname());
+                    officeModel.setViewCode(tmp.getFnumber());
+                    officeModel.setOfficeName(tmp.getFname());
+                    officeModel.setFullName(tmp.getFname());
+                    officeModel.setOfficeType(MesManagerConstant.STOCK_TYPE);
+                    officeModel.setStatus(MesManagerConstant.NUM_0.toString());
+                    officeModel.setCreateBy(MesManagerConstant.ERP);
+                    officeModel.setCreateDate(LocalDateTime.now());
+                    officeModel.setUpdateBy(MesManagerConstant.ERP);
+                    officeModel.setUpdateDate(LocalDateTime.now());
+                    officeModel.setCorpCode(MesManagerConstant.NUM_0.toString());
+                    save(officeModel);
+                }
+            }
+        }
+        return true;
+    }
 }
 
 
