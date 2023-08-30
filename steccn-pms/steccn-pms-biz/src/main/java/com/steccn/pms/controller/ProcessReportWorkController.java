@@ -8,14 +8,13 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.PmsReportWorkVO;
-import com.steccn.pms.vo.ProcessReportWorkInfoVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,4 +129,10 @@ public class ProcessReportWorkController {
         return R.success(Boolean.TRUE);
     }
 
+
+    @GetMapping("/preinstall/value")
+    @ApiOperation("获取报工预填值（班次/班组 开始时间 结束时间）")
+    public R<ReportWorkPreinstallValueVO> preinstallValue(@RequestParam("localDate") LocalDate localDate){
+        return R.success(pmsReportWorkService.preinstallValue(localDate));
+    }
 }
