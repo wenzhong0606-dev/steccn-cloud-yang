@@ -11,6 +11,7 @@ import com.steccn.platform.vo.SafetyTokenVO;
 import com.steccn.platform.vo.SrmTokenVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -33,5 +34,13 @@ public class SrmTokenServiceImpl implements SrmTokenService {
             throw new BusinessException("获取SRM系统token失败");
         }
         return srmTokenVO;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "SrmOauthToken#82800")
+    public String getSrmOauthToken() {
+        String token = remoteSrmFeignApi.getOauthToken();
+        String accessToken = JSONObject.parseObject(token).getString("access_token");
+        return accessToken;
     }
 }

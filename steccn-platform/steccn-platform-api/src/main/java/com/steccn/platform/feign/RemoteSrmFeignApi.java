@@ -1,9 +1,9 @@
 package com.steccn.platform.feign;
 
+import com.steccn.platform.dto.SrmOaWorkFlowDTO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * SRM系统API
@@ -23,4 +23,22 @@ public interface RemoteSrmFeignApi {
     @GetMapping(value = "/oauth/public/sso/access-token")
     @ResponseBody
     String getToken(@RequestParam("loginCode")String loginCode,@RequestParam("client_id")String clientId,@RequestParam("grant_type")String grantType);
+
+    /**
+     * 获取请求api的token
+     * @return
+     */
+    @PostMapping(value = "/oauth/oauth/token?grant_type=client_credentials&client_id=oa&client_secret=secret")
+    @ResponseBody
+    String getOauthToken();
+
+    /**
+     * 推送oa消息给SRM
+     * @param headers
+     * @return
+     */
+    @PostMapping(value = "/hitf/v1/rest/invoke?namespace=SRM&serverCode=OA_TO_SRM&interfaceCode=srm-interface.cux-oa-to-srm.oaCallback")
+    @ResponseBody
+    String sendOaWorkFlowMsg(@RequestHeader MultiValueMap<String,String> headers, @RequestBody SrmOaWorkFlowDTO dto);
+
 }

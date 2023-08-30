@@ -1651,7 +1651,7 @@ public class ReportServiceImpl implements ReportService {
                         //根据班次计算入库数量
                         BigDecimal completeStorageNum = BigDecimal.ZERO;
                         if (CollUtil.isNotEmpty(longBigDecimalMap)) {
-                            completeStorageNum = longBigDecimalMap.get(reportWork.getClassesId());
+                            completeStorageNum = longBigDecimalMap.getOrDefault(reportWork.getClassesId(),completeStorageNum);
                             //单位转换
                             BigDecimal slice = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), completeStorageNum, 0);
                             BigDecimal square = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), completeStorageNum, 2);

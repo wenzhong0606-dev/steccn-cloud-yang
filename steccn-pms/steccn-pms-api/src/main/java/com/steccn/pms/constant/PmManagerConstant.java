@@ -348,10 +348,21 @@ public interface PmManagerConstant {
      * 副主任id
      */
     Integer DIRECTOR_ID = 151;
+
+    /**
+     * 配料副段长id
+     */
+    Integer DIRECTOR_ID_LINE2 = 414284;
+
     /**
      * 原料车间id
      */
     Integer DEPARTMENT_YUANLIAO_ID = 37;
+
+    /**
+     * 原料二车间，配料工段
+     */
+    Integer DEPARTMENT_YUANLIAO_2_PEILIAO_ID = 166;
 
     /**
      * 流程字段-申请人岗位

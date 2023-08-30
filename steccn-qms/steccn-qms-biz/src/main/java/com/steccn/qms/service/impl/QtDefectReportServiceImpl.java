@@ -211,21 +211,24 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             List<QtDestoryInfoFallDTO> sourceList = dealReasonDataList.stream().filter(ele -> line.equals(ele.getProductLineId())).collect(Collectors.toList());
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < shardTimeList.size(); i++) {
-                QtDefectFallingVO row = new QtDefectFallingVO();
                 LocalDateTime begin = shardTimeList.get(i - 1);
                 LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
                 Integer classId = LocalDateUtil.getClassId(begin, false);
-                row.setType(0);
-                row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
-                row.setProductLineName(lineName);
                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
-                row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
-                OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
-                row.setClassGroupName(oaGroupCountDTO.getGroupName());
                 List<QtDestoryInfoFallDTO> tempSourceList = sourceList.stream().filter(ele -> classDate.isEqual(ele.getClassTime().toLocalDate()) && classId.equals(ele.getClassId())).collect(Collectors.toList());
                 List<List<QtDefectFallingDetailVO>> rowList = getDetailList(countMap, lineCountMap, tempSourceList);
-                row.setDetailList(rowList);
-                resList.add(row);
+                //遍历
+                rowList.forEach(ele -> {
+                    QtDefectFallingVO row = new QtDefectFallingVO();
+                    row.setType(0);
+                    row.setClassDateStr(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+                    row.setProductLineName(lineName);
+                    row.setDetailList(ele);
+                    row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
+                    row.setClassGroupName(oaGroupCountDTO.getGroupName());
+                    resList.add(row);
+                });
             }
             //增加合计（单产线）
             resList.add(reasonCount(1, "合计（单产线）", lineCountMap));
@@ -569,17 +572,25 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setProductLineName(lineName);
                 row.setMonthStr(monthStr);
                 BigDecimal rowSum = null;
+
+                //计算rowSum
+                for (QtDefectiveItem defectItem : itemList) {
+                    Optional<QtCheckItemMaterialAvgDTO> dataOp = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && defectItem.getCode().equals(ele.getCode()) && monthStr.equals(ele.getClassMonth())).findFirst();
+                    BigDecimal value = dataOp.isPresent() ? dataOp.get().getValue() : null;
+                    rowSum = BigDecimalUtil.add(value, rowSum);
+                }
+
                 for (QtDefectiveItem defectItem : itemList) {
                     Optional<QtCheckItemMaterialAvgDTO> dataOp = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && defectItem.getCode().equals(ele.getCode()) && monthStr.equals(ele.getClassMonth())).findFirst();
                     BigDecimal value = dataOp.isPresent() ? dataOp.get().getValue() : null;
                     valueList.add(value);
                     BigDecimalUtil.accumulate(countMap, defectItem.getCode(), value);
                     BigDecimalUtil.accumulate(sumMap, defectItem.getCode(), value);
-                    rowSum = BigDecimalUtil.add(value, rowSum);
-                    valueList.add(BigDecimalUtil.divide(value, row.getUseCount(), 2));
+                    //不良率
+                    valueList.add(BigDecimalUtil.percent(value, rowSum, 2));
                 }
                 row.setDefectSum(BigDecimalUtil.setScale(rowSum, 0));
-                row.setDefectRate(BigDecimalUtil.divide(rowSum, row.getUseCount(), 2));
+                row.setDefectRate(BigDecimalUtil.percent(rowSum, row.getUseCount(), 2));
                 BigDecimalUtil.accumulate(countMap, "-1", row.getUseCount());
                 BigDecimalUtil.accumulate(countMap, "-2", row.getDefectSum());
                 BigDecimalUtil.accumulate(sumMap, "-1", row.getUseCount());
@@ -1092,15 +1103,15 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         row.setProductLineName(hintName);
         row.setDefectSum(BigDecimalUtil.sum(map.values()));
         List<BigDecimal> valueList = Lists.newArrayList();
+        row.setDefectSum(BigDecimalUtil.setScale(map.get("-2"), 0));
         for (QtDefectiveItem defectItem : itemList) {
             BigDecimal defectValue = map.get(defectItem.getCode());
             valueList.add(BigDecimalUtil.setScale(defectValue, 0));
-            valueList.add(BigDecimalUtil.divide(defectValue, row.getUseCount(), 2));
+            valueList.add(BigDecimalUtil.percent(defectValue, row.getDefectSum(), 2));
         }
         row.setValueList(valueList);
         row.setUseCount(BigDecimalUtil.setScale(map.get("-1"), 0));
-        row.setDefectSum(BigDecimalUtil.setScale(map.get("-2"), 0));
-        row.setDefectRate(BigDecimalUtil.divide(row.getDefectSum(), row.getUseCount(), 2));
+        row.setDefectRate(BigDecimalUtil.percent(row.getDefectSum(), row.getUseCount(), 2));
         return row;
     }
 
@@ -1391,16 +1402,14 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         QtDefectFallingVO countRow = new QtDefectFallingVO();
         countRow.setType(type);
         countRow.setProductLineName(lineName);
-        List<List<QtDefectFallingDetailVO>> detailCount = Lists.newArrayList();
         List<QtDefectFallingDetailVO> detailList = Lists.newArrayList();
-        detailCount.add(detailList);
         for (int i = 0; i < 4; i++) {
             QtDefectFallingDetailVO detailVO = new QtDefectFallingDetailVO();
             BigDecimal bigDecimal = lineCountMap.get(i);
             detailVO.setIntervalHour(bigDecimal);
             detailList.add(detailVO);
         }
-        countRow.setDetailList(detailCount);
+        countRow.setDetailList(detailList);
         return countRow;
     }
 
