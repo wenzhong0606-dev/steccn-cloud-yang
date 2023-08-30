@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
 
@@ -66,4 +67,12 @@ public interface PmsReportDashboardService {
      * @return
      */
     DashboardProducePageVO producePage(DashboardProducePageDTO dto);
+
+    /**
+     * 产线拉引量
+     * @param workShopId 车间
+     * @param date 日期
+     * @return 柱状图
+     */
+    QtLineChartBarDTO linePullForce(Integer workShopId, LocalDate date);
 }

@@ -4,11 +4,19 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.EpChartGraphUtil;
+import com.steccn.common.util.MapUtil;
+import com.steccn.common.util.StackGraphUtil;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -19,10 +27,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.PmsCompleteStorageInfo;
-import com.steccn.pms.domain.PmsProduceOrder;
-import com.steccn.pms.domain.PmsPullForce;
-import com.steccn.pms.domain.PmsWorkOrderBatch;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
@@ -119,10 +124,32 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //根据车间获取产线集合
         SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
         sysOfficeParent.setId(wsOffice.getId());
+        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
         List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(lineOfficeList, "车间下暂无产线");
         List<Integer> lineIdList = lineOfficeList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         return lineIdList;
+    }
+
+    /**
+     * 获取车间的产线集合
+     *
+     * @param wsOffice
+     * @return
+     */
+    private Map<Integer, SysOfficeVO> getWsLineMap(SysOfficeVO wsOffice) {
+        //根据车间获取产线集合
+        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
+        sysOfficeParent.setId(wsOffice.getId());
+        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
+        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(lineOfficeList, "车间下暂无产线");
+        Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
+        lineOfficeList.forEach(ele -> {
+            resMap.put(ele.getId(), ele);
+
+        });
+        return resMap;
     }
 
     @Override
@@ -239,5 +266,43 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         resPage.setRecords(resList);
         resVo.setPageList(resPage);
         return resVo;
+    }
+
+    @Override
+    public QtLineChartBarDTO linePullForce(Integer workShopId, LocalDate date) {
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
+        Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        //获取班次拉引量
+        List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
+        //获取早晚班
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+
+        //对line排序
+        List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        Map<Integer, List<PmsPullForce>> lineMap = list.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));
+        Map<Integer, List<PmsPullForce>> objMap = Maps.newLinkedHashMap();
+        sortLineList.forEach(ele -> objMap.put(ele.getId(), lineMap.getOrDefault(ele.getId(), Lists.newArrayList())));
+
+        for (Map.Entry<Integer, List<PmsPullForce>> lineEntry : objMap.entrySet()) {
+            List<PmsPullForce> value = lineEntry.getValue();
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            String officeName = wsLineMap.get(lineEntry.getKey()).getOfficeName();
+            stackGraphDTO.setXAxis(officeName);
+            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+            PmsPullForce morning = value.stream().filter(ele -> morningDict.getId().equals(ele.getClassesId())).findFirst().orElse(new PmsPullForce());
+            PmsPullForce night = value.stream().filter(ele -> nightDict.getId().equals(ele.getClassesId())).findFirst().orElse(new PmsPullForce());
+            datList.add(new TupleDTO<>("产线总拉引量", BigDecimalUtil.add(morning.getQuantity(), night.getQuantity())));
+            datList.add(new TupleDTO<>("白班拉引量", morning.getQuantity()));
+            datList.add(new TupleDTO<>("夜班拉引量", morning.getQuantity()));
+            stackGraphDTO.setData(datList);
+            dataList.add(stackGraphDTO);
+        }
+        return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
 }

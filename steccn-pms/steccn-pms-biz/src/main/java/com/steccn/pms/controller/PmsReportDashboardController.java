@@ -1,5 +1,6 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
@@ -61,4 +62,12 @@ public class PmsReportDashboardController {
     public R<DashboardProducePageVO> producePage(@RequestBody DashboardProducePageDTO dto) {
         return R.success(pmsReportDashboardService.producePage(dto));
     }
+
+    @GetMapping("/line/pull/force")
+    @ApiOperation("产线拉引量")
+    public R<QtLineChartBarDTO> linePullForce(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.linePullForce(workShopId, date));
+    }
+
+
 }
