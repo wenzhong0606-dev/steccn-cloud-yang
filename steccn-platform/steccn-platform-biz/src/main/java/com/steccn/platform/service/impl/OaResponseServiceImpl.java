@@ -109,24 +109,28 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         }
         JSONObject jsonObject = new JSONObject(dto);
         //发送消息给三方系统
-        poolExecutor.execute(()->{
-            try {
-                String srmOauthToken = srmTokenService.getSrmOauthToken();
-                MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
-                headers.add("Authorization","Bearer "+srmOauthToken);
-                SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
-                oaMsg.setPayload(jsonObject.toString());
-                String sendOaWorkFlowMsg = remoteSrmFeignApi.sendOaWorkFlowMsg(headers,oaMsg);
-                String status = com.alibaba.fastjson.JSONObject.parseObject(sendOaWorkFlowMsg).getString("status");
-                if(status==null
-                        ||!status.equals(MpConstant.STATUS_200)){
-                    log.error(sendOaWorkFlowMsg);
-                }
+        //推给srm
+        List<Integer> srmWorkFlowId = Lists.newArrayList(161,163,158,159,160);
+        if(srmWorkFlowId.contains(dto.getData().getWorkflowId())){
+            poolExecutor.execute(()->{
+                try {
+                    String srmOauthToken = srmTokenService.getSrmOauthToken();
+                    MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
+                    headers.add("Authorization","Bearer "+srmOauthToken);
+                    SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
+                    oaMsg.setPayload(jsonObject.toString());
+                    String sendOaWorkFlowMsg = remoteSrmFeignApi.sendOaWorkFlowMsg(headers,oaMsg);
+                    String status = com.alibaba.fastjson.JSONObject.parseObject(sendOaWorkFlowMsg).getString("status");
+                    if(status==null
+                            ||!status.equals(MpConstant.STATUS_200)){
+                        log.error(sendOaWorkFlowMsg);
+                    }
 
-            }catch (Exception e) {
-                log.error("SrmSend",e.getLocalizedMessage());
-            }
-        });
+                }catch (Exception e) {
+                    log.error("SrmSend",e.getLocalizedMessage());
+                }
+            });
+        }
         model.setContentJson(jsonObject.toString());
         //2、根据工作流id调用对应的业务
         oaProcessHandler.handler(dto);
