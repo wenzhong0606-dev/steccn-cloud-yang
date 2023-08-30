@@ -3,6 +3,7 @@ package com.steccn.mes.feign;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.vo.ErpCustomerVO;
+import com.steccn.mes.vo.ErpStockVO;
 import com.steccn.mes.vo.ErpSupplierVO;
 import com.steccn.mes.vo.ErpMaterialVO;
 import io.swagger.annotations.ApiOperation;
@@ -138,4 +139,13 @@ public interface RemoteErpFeignApi {
     @PostMapping("/api/tcmes/getsupplier")
     @ApiOperation("获取供应商信息")
     R<List<ErpSupplierVO>> getErpSupplier(@RequestBody ErpCustomerDTO dto);
+
+    /**
+     * 获取erp仓库信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/getstock")
+    @ApiOperation("获取erp仓库信息")
+    R<List<ErpStockVO>> getStock(@RequestBody ErpCustomerDTO dto);
 }

@@ -639,15 +639,24 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             }
         }
 
+
+//        OaHrmDTO hrm = new OaHrmDTO();
+//        hrm.setJobtitle(PmManagerConstant.PEILIAO_DUANZHANG);
+//        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+//        if (CollUtil.isNotEmpty(oaEmpVOS)) {
+//            oaEmpVOS.forEach(tmp -> {
+//                longIds.add(tmp.getId().longValue());
+//            });
+//        }
         //岗位为二线配料副段长
-        OaHrmDTO hrm = new OaHrmDTO();
-        hrm.setJobtitle(PmManagerConstant.PEILIAO_DUANZHANG);
-        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        if (CollUtil.isNotEmpty(oaEmpVOS)) {
-            oaEmpVOS.forEach(tmp -> {
+        //部门为“原料二车间”/“配料工段”且岗位为“配料副段长”的人员
+        List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_YUANLIAO_2_PEILIAO_ID, PmManagerConstant.DIRECTOR_ID_LINE2), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
+            oaUserIdAndNames1.forEach(tmp -> {
                 longIds.add(tmp.getId().longValue());
             });
         }
+
 
         //部门为“原料车间”且岗位为“副主任”的人员
         List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_YUANLIAO_ID, PmManagerConstant.DIRECTOR_ID), FeignConstant.STECCN_OA_SERVICE_NAME).get();

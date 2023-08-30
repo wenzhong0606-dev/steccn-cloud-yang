@@ -73,4 +73,21 @@ public class ErpSynchronousTask {
         jsSysOfficeService.synchronousSupplier(dto);
         XxlJobHelper.log("同步供应商-任务结束");
     }
+
+    /**
+     * @desc 每天 2点30分同步昨天数据
+     *
+     */
+    @XxlJob("synchronousErpStock")
+    public void synchronousErpStock() {
+        XxlJobHelper.log("同步仓库-任务开始");
+        LocalDateTime now = LocalDateTime.now();
+        ErpCustomerDTO dto = new ErpCustomerDTO();
+        dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
+        dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
+        dto.setPageindex(1);
+        dto.setPagesize(1000);
+        jsSysOfficeService.synchronousStock(dto);
+        XxlJobHelper.log("同步仓库-任务结束");
+    }
 }

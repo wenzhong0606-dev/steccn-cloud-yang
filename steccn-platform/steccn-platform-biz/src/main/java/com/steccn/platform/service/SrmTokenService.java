@@ -15,4 +15,10 @@ public interface SrmTokenService {
      * @return
      */
     SrmTokenVO getSrmToken();
+
+    /**
+     * 获取SrmToken
+     * @return
+     */
+    String getSrmOauthToken();
 }

@@ -40,4 +40,19 @@ public interface MpConstant {
      */
     Integer YES = 1;
     Integer NO = 0;
+
+    /**
+     * app下载前缀
+     */
+    String DOWNLOAD_APP_PREFIX = "tongcheng.cnbmmom.com";
+
+    /**
+     * app下载源地址
+     */
+    String ORIGINAL_APP_PREFIX = "192.168.16.252";
+
+    /**
+     * 状态-启用
+     */
+    String STATUS_200 = "200";
 }

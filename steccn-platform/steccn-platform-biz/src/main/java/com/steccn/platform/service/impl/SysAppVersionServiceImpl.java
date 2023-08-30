@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -67,7 +68,11 @@ public class SysAppVersionServiceImpl extends ServiceImpl<SysAppVersionMapper, S
             ids.add(version.getFileId());
             Map<Long, FileInfoVO> fileInfoMap = FeignOptional.of(() -> remoteFileFeignApi.listById(ids), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
             BeanUtil.copyProperties(version, sysAppVersionVO);
-            sysAppVersionVO.setFileUrl(fileInfoMap.get(sysAppVersionVO.getFileId()).getFileUrl());
+            String url = fileInfoMap.get(sysAppVersionVO.getFileId()).getFileUrl();
+            if(StrUtil.isNotBlank(url)){
+                url = url.replace(MpConstant.ORIGINAL_APP_PREFIX,MpConstant.DOWNLOAD_APP_PREFIX);
+            }
+            sysAppVersionVO.setFileUrl(url);
             return sysAppVersionVO;
         } else {
             return null;
