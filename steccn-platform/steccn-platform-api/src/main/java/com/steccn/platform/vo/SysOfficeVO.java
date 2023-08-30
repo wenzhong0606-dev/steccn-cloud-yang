@@ -35,6 +35,9 @@ public class SysOfficeVO implements Serializable {
     @ApiModelProperty("编码")
     private String officeCode;
 
+    @ApiModelProperty("viewCode")
+    private String viewCode;
+
     @ApiModelProperty("本级排序号（升序）")
     private Integer treeSort;
 

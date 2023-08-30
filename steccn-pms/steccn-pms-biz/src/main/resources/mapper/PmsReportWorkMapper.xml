@@ -378,4 +378,41 @@
         EXTRACT(YEAR_MONTH from (rw.class_date)) ,
         rw.station_id
     </select>
+    <select id="getTodayPm" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id,
+        rw.station_id ,
+        de.material_id,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
+        where rw.del_flag = 0 AND de.del_flag = 0
+        AND rw.class_date = #{today}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id , rw.station_id , de.material_id
+    </select>
+    <select id="getTodayInStorage" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        SELECT
+        ppo.production_line_id as product_line_id,
+        ppo.material_id,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND ppo.production_line_id in
+        <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND pcs.enter_time &gt;= #{start}
+        AND pcs.enter_time &lt;= #{end}
+        GROUP BY
+        ppo.production_line_id,
+        ppo.material_id
+
+    </select>
 </mapper>
