@@ -45,4 +45,7 @@ public class MaterialRequisitionPageDTO extends BasePageDTO {
 
     @ApiModelProperty("创建时间-结束")
     private LocalDateTime endCreateTime;
+
+    @ApiModelProperty("状态")
+    private Long status;
 }

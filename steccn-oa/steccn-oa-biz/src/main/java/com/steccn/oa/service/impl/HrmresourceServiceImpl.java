@@ -254,6 +254,20 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         oaUserVOS = oaUserVOS.stream().filter(v->StrUtil.isNotBlank(v.getUserName())).collect(Collectors.toList());
         return oaUserVOS;
     }
+
+    @Override
+    public OaUserVO getOaUserByLoginCode(String loginCode) {
+        Hrmresource one = getOne(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getLoginid, loginCode).last("LIMIT 1"));
+        OaUserVO result = new OaUserVO();
+        if(Objects.nonNull(one)){
+            result.setId(one.getId());
+            result.setDepartmentId(one.getDepartmentid());
+            result.setName(one.getLastname());
+            result.setJobTitleId(one.getJobtitle());
+        }
+        return result;
+    }
 }
 
 

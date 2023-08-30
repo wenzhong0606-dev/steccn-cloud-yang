@@ -101,6 +101,12 @@ public class OaThirdPartyController {
         return R.success(hrmresourceService.synchronizeUser());
     }
 
+    @GetMapping("/thirdParty/mes/oaUser")
+    @ApiOperation(value = "获取Oa用户")
+    public R<OaUserVO> getOaUser(@RequestParam("loginCode") String loginCode) {
+        return R.success(hrmresourceService.getOaUserByLoginCode(loginCode));
+    }
+
     /**
      * 校验请求头信息
      *
