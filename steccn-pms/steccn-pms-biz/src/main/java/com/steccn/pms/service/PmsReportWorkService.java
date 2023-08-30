@@ -9,6 +9,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkInfoVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -170,6 +171,8 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return key 报工id value 物料id
      */
     Map<Long,Long> mainMaterialByReportWork(Set<Long> reportIds);
+
+    ReportWorkPreinstallValueVO preinstallValue(LocalDate localDate);
 
     /**
      * 原料耗用量

@@ -1,6 +1,5 @@
 package com.steccn.oa.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -15,9 +14,9 @@ import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.mapper.HrmdepartmentMapper;
 import com.steccn.oa.mapper.HrmjobtitlesMapper;
+import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.service.HrmresourceService;
-import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.vo.OaMesUserVO;
 import com.steccn.oa.vo.OaUserVO;
 import com.steccn.platform.dto.MesUserDTO;
@@ -233,6 +232,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         });
         return remoteMesFeignApi.synchronizeUser(dto);
     }
+
 
     @Override
     public List<OaUserVO> getAllOaUser(TupleDTO<LocalDateTime,LocalDateTime> dto) {
