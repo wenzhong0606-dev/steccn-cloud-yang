@@ -43,6 +43,9 @@
             <if test="dto.typeId != null and dto.typeId != ''">
                 and a.type_id = #{dto.typeId}
             </if>
+            <if test="dto.status != null and dto.status != ''">
+                and a.status = #{dto.status}
+            </if>
             <if test="dto.materialCode != null and dto.materialCode != ''">
                 and b.material_code LIKE CONCAT('%',#{dto.materialCode},'%')
             </if>
