@@ -277,7 +277,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 if (Objects.nonNull(pmsProduceOrder)) {
                     barcodePrintRecordVO.setMinPackageQuantity(pmsProduceOrder.getMinPackageQuantity());
                 }
-                TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(), new TupleDTO<>());
+                TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(),new TupleDTO<>());
                 barcodePrintRecordVO.setPrintFlag(tupleDTO.getField1());
                 barcodePrintRecordVO.setPrintCount(tupleDTO.getField2());
             });
