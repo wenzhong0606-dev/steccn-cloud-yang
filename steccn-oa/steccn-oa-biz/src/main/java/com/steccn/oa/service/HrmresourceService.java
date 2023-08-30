@@ -95,4 +95,11 @@ public interface HrmresourceService extends IService<Hrmresource> {
      */
     List<OaUserVO> getAllOaUser(TupleDTO<LocalDateTime,LocalDateTime> dto);
 
+    /**
+     * 根据登录名获取oa信息
+     * @param loginCode
+     * @return
+     */
+    OaUserVO getOaUserByLoginCode(String loginCode);
+
 }
