@@ -60,7 +60,7 @@ public class SysMsgController {
     @SysLog("mes发送消息")
     @PostMapping("/mes")
     @ApiOperation("发送消息")
-    public R<Boolean> sendMesMsg(@Valid @RequestBody SysMsgSendMesDTO sysMsgDTO) {
+    public R<Boolean> sendMesMsg(@RequestBody SysMsgSendMesDTO sysMsgDTO) {
         return R.success(sysMsgService.sendMesMsg(sysMsgDTO));
     }
 
