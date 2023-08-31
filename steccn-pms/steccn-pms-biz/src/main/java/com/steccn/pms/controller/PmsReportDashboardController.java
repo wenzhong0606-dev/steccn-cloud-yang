@@ -74,4 +74,10 @@ public class PmsReportDashboardController {
     public R<QtLineChartBarDTO> lineComplete(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
         return R.success(pmsReportDashboardService.lineComplete(workShopId, date));
     }
+
+    @GetMapping("/line/in/storage")
+    @ApiOperation("产线入库信息")
+    public R<QtLineChartBarDTO> lineInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.lineInStorage(workShopId, date));
+    }
 }

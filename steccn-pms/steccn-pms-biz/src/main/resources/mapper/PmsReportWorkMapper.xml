@@ -407,7 +407,7 @@
             #{productLineId}
         </foreach>
         AND pcs.enter_time &gt;= #{start}
-        AND pcs.enter_time &lt;= #{end}
+        AND pcs.enter_time &lt; #{end}
         GROUP BY
         ppo.production_line_id,
         ppo.material_id
@@ -448,6 +448,7 @@
         de.production_line_id as productLineId,
         rw.classes_id as classId,
         rw.station_id ,
+        de.material_id,
         sum(rw.process_quantity) as quantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
@@ -456,6 +457,29 @@
             #{productLineId}
         </foreach>
         AND rw.class_date = #{date}
-        group by de.production_line_id, rw.classes_id, rw.station_id
+        group by de.production_line_id, rw.classes_id, rw.station_id , de.material_id
+    </select>
+    <select id="getInStorageByLineClass" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        SELECT
+        ppo.production_line_id as product_line_id,
+        ppo.material_id,
+        pcsi.classes_id as classId ,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND ppo.production_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        AND pcs.enter_time &gt;= #{start}
+        AND pcs.enter_time &lt; #{end}
+        GROUP BY
+        ppo.production_line_id,
+        ppo.material_id,
+        pcsi.classes_id
     </select>
 </mapper>

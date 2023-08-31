@@ -259,4 +259,13 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type);
+
+    /**
+     * 获取产线班次入库数量
+     *
+     * @param lineIdSet 产线
+     * @param date      班次日期
+     * @return
+     */
+    Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date);
 }

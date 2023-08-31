@@ -191,6 +191,17 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return
      */
     List<PmsUseCountDTO> getPmByLineClass(@Param("lineList") Set<Integer> lineIdSet, @Param("date") LocalDate date);
+
+    /**
+     * 获取产线班次的入库量
+     * @param lineIdSet 产线id
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> getInStorageByLineClass(@Param("lineList") Set<Integer> lineIdSet,
+                                                 @Param("start") LocalDateTime start,
+                                                 @Param("end") LocalDateTime end);
 }
 
 

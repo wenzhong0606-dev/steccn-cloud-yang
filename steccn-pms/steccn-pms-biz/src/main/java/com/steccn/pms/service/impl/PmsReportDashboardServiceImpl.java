@@ -361,4 +361,58 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
+
+    @Override
+    public QtLineChartBarDTO lineInStorage(Integer workShopId, LocalDate date) {
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
+        Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        //获取班次产量
+        Map<String, BigDecimal> inStorageMap = pmsReportWorkService.lineClassInStorage(wsLineMap.keySet(), date);
+        List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
+        Map<String, BigDecimal> pfMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(ele -> pfMap.put(ele.getProductLineId() + "_" + ele.getClassesId(), ele.getQuantity()));
+        }
+        //获取早晚班
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+        List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        //根据产量map获取合格率
+        Map<Integer, List<BigDecimal>> valueMap = Maps.newHashMap();
+        sortLineList.forEach(x -> {
+            Integer ele = x.getId();
+            BigDecimal morning = inStorageMap.get(ele + "_" + morningDict.getId());
+            BigDecimal night = inStorageMap.get(ele + "_" + nightDict.getId());
+            BigDecimal sum = BigDecimalUtil.add(morning, night);
+            MapUtil.compute(valueMap, ele, sum);
+            MapUtil.compute(valueMap, ele, morning);
+            MapUtil.compute(valueMap, ele, night);
+            BigDecimal pfMorning = pfMap.get(ele + "_" + morningDict.getId());
+            BigDecimal pfNight = pfMap.get(ele + "_" + nightDict.getId());
+            BigDecimal pfSum = BigDecimalUtil.add(pfMorning, pfNight);
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(sum, pfSum, 2));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(morning, pfMorning, 2));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(night, pfNight, 2));
+        });
+        sortLineList.forEach(ele -> {
+            String officeName = wsLineMap.get(ele.getId()).getOfficeName();
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            stackGraphDTO.setXAxis(officeName);
+            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+            datList.add(new TupleDTO<>("产线总入库数", valueMap.get(ele.getId()).get(0)));
+            datList.add(new TupleDTO<>("白班总入库数", valueMap.get(ele.getId()).get(1)));
+            datList.add(new TupleDTO<>("夜班总入库数", valueMap.get(ele.getId()).get(2)));
+            datList.add(new TupleDTO<>("产线产量合格率", valueMap.get(ele.getId()).get(3)));
+            datList.add(new TupleDTO<>("白班产量合格率", valueMap.get(ele.getId()).get(4)));
+            datList.add(new TupleDTO<>("夜班产量合格率", valueMap.get(ele.getId()).get(5)));
+            stackGraphDTO.setData(datList);
+            dataList.add(stackGraphDTO);
+        });
+        return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
 }

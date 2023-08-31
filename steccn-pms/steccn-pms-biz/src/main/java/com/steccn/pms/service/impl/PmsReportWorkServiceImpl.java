@@ -1095,6 +1095,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         List<PmsUseCountDTO> dbList = baseMapper.getPmByLineClass(lineIdSet, date);
         if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+
             if (type == 0) {
                 //基片
                 //所有工位报工汇总
@@ -1109,6 +1111,22 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     }
                 });
             }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = start.plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getInStorageByLineClass(lineIdSet, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+
+            dbList.forEach(ele -> {
+                resMap.put(ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity());
+            });
         }
         return resMap;
     }
