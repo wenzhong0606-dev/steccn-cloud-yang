@@ -355,6 +355,21 @@ public interface PmManagerConstant {
     Integer DIRECTOR_ID_LINE2 = 414284;
 
     /**
+     * 配电工段副段长
+     */
+    Integer DIRECTOR_ID_PEIDIANFU = 160;
+
+    /**
+     * 机修段长
+     */
+    Integer DIRECTOR_ID_JIXIU = 172;
+
+    /**
+     * 机修段长
+     */
+    Integer DIRECTOR_ID_JIXIU_FU = 178;
+
+    /**
      * 原料车间id
      */
     Integer DEPARTMENT_YUANLIAO_ID = 37;
@@ -363,6 +378,16 @@ public interface PmManagerConstant {
      * 原料二车间，配料工段
      */
     Integer DEPARTMENT_YUANLIAO_2_PEILIAO_ID = 166;
+
+    /**
+     * 原料二车间，高压电力工段
+     */
+    Integer DEPARTMENT_GAOYADIANLI = 140;
+
+    /**
+     * 机修工段
+     */
+    Integer DEPARTMENT_JIXIUGONGDUAN = 143;
 
     /**
      * 流程字段-申请人岗位
@@ -451,6 +476,25 @@ public interface PmManagerConstant {
      */
     String BATCHER_ID = "191";
 
+    /**
+     * 电工1
+     */
+    String DIAN_GONG1 = "173";
+
+    /**
+     * 电工2
+     */
+    String DIAN_GONG2 = "118";
+
+    /**
+     * 机修工1
+     */
+    String JXIU_GONG1 = "175";
+
+    /**
+     * 机修工2
+     */
+    String JXIU_GONG2 = "119";
     /**
      * 入库出库凭证状态
      */

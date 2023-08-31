@@ -14,6 +14,7 @@ import org.springframework.security.core.parameters.P;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -168,6 +169,20 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<PmsUseCountDTO> getTodayInStorage(@Param("lineList") List<Integer> lineIdList,
                                            @Param("start") LocalDateTime start,
                                            @Param("end") LocalDateTime end);
+
+    /**
+     * 获取生产订单的入库量
+     * @param orderIdSet 订单id集合
+     * @return
+     */
+    List<PmsUseCountDTO> getInStorageByOrder(@Param("orderIdSet") Set<Long> orderIdSet);
+
+    /**
+     * 获取生产订单的产量
+     * @param orderIdSet 订单id集合
+     * @return
+     */
+    List<PmsUseCountDTO> getPmByOrder(@Param("orderIdSet") Set<Long> orderIdSet);
 }
 
 

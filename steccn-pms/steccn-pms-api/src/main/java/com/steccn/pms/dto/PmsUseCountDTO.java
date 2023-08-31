@@ -29,7 +29,10 @@ public class PmsUseCountDTO implements Serializable {
     @ApiModelProperty("班次")
     private Long classId;
 
-    @ApiModelProperty("班次生产订单编码")
+    @ApiModelProperty("生产订单主键")
+    private Long produceOrderId;
+
+    @ApiModelProperty("生产订单编码")
     private String produceOrderNo;
 
     @ApiModelProperty("月份")

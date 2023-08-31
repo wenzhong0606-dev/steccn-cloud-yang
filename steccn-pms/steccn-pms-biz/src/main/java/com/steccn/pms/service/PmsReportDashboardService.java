@@ -2,6 +2,9 @@ package com.steccn.pms.service;
 
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.vo.DashboardProducePageVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -57,4 +60,19 @@ public interface PmsReportDashboardService {
      * @return
      */
     BigDecimal inStorageRate(Integer workShopId, LocalDate date);
+
+    /**
+     * 产线加工信息
+     * @param dto 请求参数
+     * @return
+     */
+    DashboardProducePageVO producePage(DashboardProducePageDTO dto);
+
+    /**
+     * 产线拉引量
+     * @param workShopId 车间
+     * @param date 日期
+     * @return 柱状图
+     */
+    QtLineChartBarDTO linePullForce(Integer workShopId, LocalDate date);
 }

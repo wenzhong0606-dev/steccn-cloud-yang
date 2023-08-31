@@ -231,4 +231,24 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Long, Map<Integer, BigDecimal>> getTodayInStorage(List<Integer> lineIdList, LocalDate date);
+
+
+    /**
+     * 获取生产订单的产量
+     *
+     * @param orderIdSet 生产订单集合
+     * @param lineList 产线集合
+     * @param type       类型 0基片 1深加工
+     * @return
+     */
+    Map<Long, BigDecimal> getPmByOrder(List<Integer> lineList, Set<Long> orderIdSet, Integer type);
+
+    /**
+     * 获取生产订单的入库数量
+     *
+     * @param orderIdSet 生产订单集合
+     * @return
+     */
+    Map<Long, BigDecimal> getInStorageByOrder(Set<Long> orderIdSet);
+
 }

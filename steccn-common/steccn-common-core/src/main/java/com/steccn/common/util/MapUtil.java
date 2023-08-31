@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * @author yequan
@@ -76,4 +77,21 @@ public class MapUtil {
             return v;
         });
     }
+
+
+    /**
+     * 单层map 相同key存放到list中
+     *
+     * @param map   map集合
+     * @param key   键
+     * @param value 值
+     * @param <K>   key泛型
+     * @param <V>   value泛型
+     */
+    public static <K, V> void add(Map<K, V> map, K key, V value, BiFunction<V, V, V> function) {
+        map.compute(key, (k, v) -> {
+            return function.apply(v, value);
+        });
+    }
+
 }
