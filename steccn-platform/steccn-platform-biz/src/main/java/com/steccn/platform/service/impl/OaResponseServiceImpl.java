@@ -9,13 +9,19 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.domain.OaResponse;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.RemoteMesFeignApi;
+import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSrmFeignApi;
 import com.steccn.platform.mapper.OaResponseMapper;
 import com.steccn.platform.service.OaProcessHandler;
@@ -60,6 +66,8 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final OaProcessHandler oaProcessHandler;
     private final SrmTokenService srmTokenService;
     private final RemoteSrmFeignApi remoteSrmFeignApi;
+    private final RemoteSalesFeignApi remoteSalesFeignApi;
+    private final OaInfoService oaInfoService;
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
@@ -118,11 +126,37 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
                     MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
                     headers.add("Authorization","Bearer "+srmOauthToken);
                     SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
-                    oaMsg.setPayload(jsonObject.toString());
+                    //加入操作人信息
+                    OaUserIdAndName oaUserIdAndName = FeignOptional.of(() -> oaInfoService.getOperator(new TupleDTO<>(Integer.parseInt(dto.getData().getRequestId()), Integer.parseInt(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                    dto.getData().setOperatorId(oaUserIdAndName.getId());
+                    dto.getData().setOperatorName(oaUserIdAndName.getName());
+                    oaMsg.setPayload(new JSONObject(dto).toString());
                     String sendOaWorkFlowMsg = remoteSrmFeignApi.sendOaWorkFlowMsg(headers,oaMsg);
                     String status = com.alibaba.fastjson.JSONObject.parseObject(sendOaWorkFlowMsg).getString("status");
                     if(status==null
                             ||!status.equals(MpConstant.STATUS_200)){
+                        log.error(sendOaWorkFlowMsg);
+                    }
+
+                }catch (Exception e) {
+                    log.error("SrmSend",e.getLocalizedMessage());
+                }
+            }
+        });
+        //发给crm
+        List<String> crmWorkFlowId = Lists.newArrayList("179","190","191");
+        poolExecutor.execute(()->{
+            if(crmWorkFlowId.contains(dto.getData().getWorkflowId())){
+                try {
+                    SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
+                    //加入操作人信息
+                    OaUserIdAndName oaUserIdAndName = FeignOptional.of(() -> oaInfoService.getOperator(new TupleDTO<>(Integer.parseInt(dto.getData().getRequestId()), Integer.parseInt(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                    dto.getData().setOperatorId(oaUserIdAndName.getId());
+                    dto.getData().setOperatorName(oaUserIdAndName.getName());
+                    oaMsg.setPayload(new JSONObject(dto).toString());
+                    String sendOaWorkFlowMsg = remoteSalesFeignApi.oaCallBack(oaMsg);
+                    Boolean status = com.alibaba.fastjson.JSONObject.parseObject(sendOaWorkFlowMsg).getJSONObject("result").getBoolean("success");
+                    if(!status){
                         log.error(sendOaWorkFlowMsg);
                     }
 

@@ -277,4 +277,13 @@ public interface OaInfoService {
     @PostMapping("/feign/oa/thirdParty/allJobTitle")
     @ApiOperation(value = "获取所有岗位")
     R<List<OaJobTitleVO>> getAllJobTitle(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 获取当前节点操作人
+     * @param dto E1 requestId E2 nodeId
+     * @return
+     */
+    @ApiOperation("获取当前节点操作人")
+    @PostMapping("/feign/oa/workflow/operator")
+    R<OaUserIdAndName> getOperator(@RequestBody TupleDTO<Integer,Integer> dto);
 }
