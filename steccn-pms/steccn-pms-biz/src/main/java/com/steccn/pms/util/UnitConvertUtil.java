@@ -40,4 +40,28 @@ public class UnitConvertUtil {
         }
         return null;
     }
+
+
+    /**
+     * 单位转换map
+     *
+     * @param convertList  单位转换
+     * @param sourceUnitId 源单位主键
+     * @param targetUnitId 目标单位主键
+     * @param quantity     数量
+     * @return
+     */
+    public static BigDecimal convertMaterial(List<SysSpareUnitConversionVO> convertList, Long sourceUnitId, Long targetUnitId, BigDecimal quantity, Integer scale) {
+        if (CollUtil.isNotEmpty(convertList) && Objects.nonNull(sourceUnitId) && Objects.nonNull(targetUnitId) && Objects.nonNull(quantity) && !BigDecimalUtil.equals(quantity, BigDecimal.ZERO)) {
+            Optional<SysSpareUnitConversionVO> sourceOp = convertList.stream().filter(ele -> sourceUnitId.equals(ele.getUnitId()) && targetUnitId.equals(ele.getConversionUnitId())).findFirst();
+            if (sourceOp.isPresent()) {
+                SysSpareUnitConversionVO source = sourceOp.get();
+                BigDecimal res = BigDecimalUtil.divide(source.getQuantity(), source.getConversionQuantity(), BigDecimalUtil.SCALE_4);
+                BigDecimal multiply = BigDecimalUtil.multiply(res, quantity);
+                return BigDecimalUtil.setScale(multiply, scale);
+            }
+        }
+        return null;
+    }
+
 }

@@ -39,6 +39,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsReportWorkHourVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
@@ -46,6 +47,7 @@ import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import feign.Feign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
@@ -117,6 +119,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmProcessService pmProcessService;
     @Autowired
     private OaInfoService oaInfoService;
+    @Autowired
+    private RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
 
     @Override
@@ -1098,18 +1102,27 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<PmsUseCountDTO> dbList = baseMapper.getPmByLineClass(lineIdSet, date);
         if (CollUtil.isNotEmpty(dbList)) {
             //考虑物料的单位转换
-
+            //考虑物料的单位转换
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "转换单位[T]不存在");
             if (type == 0) {
                 //基片
                 //所有工位报工汇总
                 dbList.forEach(ele -> {
-                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                    BigDecimal convert = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), convert, (x, y) -> BigDecimalUtil.add(x, y));
                 });
             } else {
                 Set<Integer> stationIds = getEdgStation(new ArrayList<>(lineIdSet));
                 dbList.forEach(ele -> {
                     if (stationIds.contains(ele.getStationId())) {
-                        MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                        BigDecimal convert = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                        MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), convert, (x, y) -> BigDecimalUtil.add(x, y));
                     }
                 });
             }
@@ -1125,9 +1138,16 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<PmsUseCountDTO> dbList = baseMapper.getInStorageByLineClass(lineIdSet, start, end);
         if (CollUtil.isNotEmpty(dbList)) {
             //考虑物料的单位转换
-
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1,"转换单位[片]不存在");
+            Assert.notNull(sysDict2,"转换单位[T]不存在");
             dbList.forEach(ele -> {
-                resMap.put(ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity());
+                BigDecimal convert = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), convert, (x, y) -> BigDecimalUtil.add(x, y));
             });
         }
         return resMap;

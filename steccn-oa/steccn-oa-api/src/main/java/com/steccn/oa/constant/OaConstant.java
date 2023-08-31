@@ -77,6 +77,31 @@ public class OaConstant {
     public static final String GROUP_LEADER = "班长";
     public static final String JOB_TITLE_ZHIJIAN = "183";
 
+    /**
+     * 熔化工
+     */
+    public static final String JOB_RONGHUA_ID_1 = "44";
+    public static final String JOB_RONGHUA_ID_2 = "207";
+    public static final String JOB_RONGHUA_ID_3 = "414295";
+
+    /**
+     * 熔化班长
+     */
+    public static final String JOB_RONGHUABANZHANG_ID_1 = "206";
+    public static final String JOB_RONGHUABANZHANG_ID_2 = "414292";
+    public static final String JOB_RONGHUABANZHANG_ID_3 = "43";
+
+    /**
+     * 成型班长
+     */
+    public static final String JOB_CHENGXINGBANZHANG_ID_1 = "208";
+    public static final String JOB_CHENGXINGBANZHANG_ID_2 = "256";
+    public static final String JOB_CHENGXINGBANZHANG_ID_3 = "45";
+    /**
+     *
+     */
+    public static final String JOB_CHENGPINBANZHANG_ID = "414298";
+
     public static final String CLIENT_ID = "client-id";
 
     public static final Integer NUM_1 = 1;

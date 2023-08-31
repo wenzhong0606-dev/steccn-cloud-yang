@@ -280,4 +280,10 @@ public class OaController {
     public R<List<OaNewsVO>> getOaNewsInfo(){
         return R.success(oaService.getNewsInfo());
     }
+
+    @ApiOperation("获取当班信息")
+    @GetMapping("/todayClass/info")
+    public R<OaTodayClassVO> getTodayClassInfo(){
+        return R.success(kqGroupmemberService.getTodayClassInfo());
+    }
 }
