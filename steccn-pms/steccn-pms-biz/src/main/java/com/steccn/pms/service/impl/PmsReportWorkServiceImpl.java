@@ -1091,6 +1091,47 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.getPmByLineClass(lineIdSet, date);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+
+            if (type == 0) {
+                //基片
+                //所有工位报工汇总
+                dbList.forEach(ele -> {
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(new ArrayList<>(lineIdSet));
+                dbList.forEach(ele -> {
+                    if (stationIds.contains(ele.getStationId())) {
+                        MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = start.plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getInStorageByLineClass(lineIdSet, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+
+            dbList.forEach(ele -> {
+                resMap.put(ele.getProductLineId() + "_" + ele.getClassId(), ele.getQuantity());
+            });
+        }
+        return resMap;
+    }
+
+    @Override
     public ReportWorkPreinstallValueVO preinstallValue(LocalDate localDate) {
         TupleDTO<LocalDate,Integer> dto = new TupleDTO<>(localDate,Math.toIntExact( SecurityUtils.getUser().getUserId()));
         OaClassVO oaClassVO = FeignOptional.of(() -> oaInfoService.getUserClass(dto), FeignConstant.STECCN_OA_SERVICE_NAME).get();

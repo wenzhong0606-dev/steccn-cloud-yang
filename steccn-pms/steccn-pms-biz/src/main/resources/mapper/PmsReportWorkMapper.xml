@@ -96,20 +96,20 @@
     </select>
     <select id="substrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">
         SELECT
-            1 AS type,
-            prw.produce_order_id,
-            ppo.production_line_id as productLineId,
-            ppo.material_id,
-            any_value(ppo.material_code),
-            any_value(ppo.material_name),
-            prw.classes_id,
-            sum( prw.process_quantity ) AS quantity,
-            any_value(prw.unit_id)
+        1 AS type,
+        prw.produce_order_id,
+        ppo.production_line_id as productLineId,
+        ppo.material_id,
+        any_value(ppo.material_code),
+        any_value(ppo.material_name),
+        prw.classes_id,
+        sum( prw.process_quantity ) AS quantity,
+        any_value(prw.unit_id)
         FROM
-            pms_report_work prw
-                JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
         WHERE
-            prw.del_flag = 0 AND ppo.del_flag = 0
+        prw.del_flag = 0 AND ppo.del_flag = 0
         <if test="classesIdList !=null and classesIdList.size > 0">
             AND prw.classes_id in
             <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
@@ -122,28 +122,28 @@
                 #{productLineId}
             </foreach>
         </if>
-          AND prw.start_time &gt;= #{start}
-          AND prw.end_time &lt;= #{end}
+        AND prw.start_time &gt;= #{start}
+        AND prw.end_time &lt;= #{end}
         GROUP BY
-            prw.produce_order_id,
-            ppo.production_line_id,
-            ppo.material_id,
-            prw.classes_id
+        prw.produce_order_id,
+        ppo.production_line_id,
+        ppo.material_id,
+        prw.classes_id
         UNION ALL
         SELECT
-            0 AS type,
-            ppo.id as produceOrderId,
-            ppo.production_line_id as productLineId,
-            ppo.material_id,
-            any_value(ppo.material_code),
-            any_value(ppo.material_name),
-            pcsi.classes_id,
-            sum( pcsi.quantity ) AS quantity,
-            any_value(pcsi.unit_id)
+        0 AS type,
+        ppo.id as produceOrderId,
+        ppo.production_line_id as productLineId,
+        ppo.material_id,
+        any_value(ppo.material_code),
+        any_value(ppo.material_name),
+        pcsi.classes_id,
+        sum( pcsi.quantity ) AS quantity,
+        any_value(pcsi.unit_id)
         FROM
-           pms_complete_storage pcs
-           JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
-                JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
         <if test="classesIdList !=null and classesIdList.size > 0">
@@ -161,33 +161,31 @@
         AND pcs.enter_time &gt;= #{start}
         AND pcs.enter_time &lt;= #{end}
         GROUP BY
-            ppo.id,
-            ppo.production_line_id,
-            ppo.material_id,
-            pcsi.classes_id
+        ppo.id,
+        ppo.production_line_id,
+        ppo.material_id,
+        pcsi.classes_id
     </select>
     <select id="dateProductNum" resultType="com.steccn.pms.domain.PmsReportWork">
-        SELECT
-            classes_id , sum(process_quantity) as process_quantity
-        FROM
-            pms_report_work
+        SELECT classes_id,
+               sum(process_quantity) as process_quantity
+        FROM pms_report_work
         where product_line_id = #{productLineId}
-          AND DATE_FORMAT(create_time, '%Y-%m-%d' ) = #{date}
-        GROUP BY
-            classes_id
+          AND DATE_FORMAT(create_time, '%Y-%m-%d') = #{date}
+        GROUP BY classes_id
     </select>
     <select id="furtherProduceReport" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
         SELECT
-            prw.product_line_id,
-            prw.classes_id,
-            prw.process_id,
-            ppo.material_id,
-            prw.produce_order_id,
-            sum( prw.process_quantity ) as process_quantity,
-            sum( prw.badness_quantity ) as badness_quantity
+        prw.product_line_id,
+        prw.classes_id,
+        prw.process_id,
+        ppo.material_id,
+        prw.produce_order_id,
+        sum( prw.process_quantity ) as process_quantity,
+        sum( prw.badness_quantity ) as badness_quantity
         FROM
-            pms_report_work prw
-                JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
         WHERE
         prw.del_flag = 0 AND ppo.del_flag = 0
         <if test="classesIdList != null and classesIdList.size  != ''">
@@ -205,25 +203,25 @@
         AND prw.start_time &gt;= #{start}
         AND prw.end_time &lt;= #{end}
         GROUP BY
-            prw.produce_order_id,
-            prw.product_line_id,
-            prw.classes_id,
-            prw.process_id,
-            ppo.material_id
+        prw.produce_order_id,
+        prw.product_line_id,
+        prw.classes_id,
+        prw.process_id,
+        ppo.material_id
 
     </select>
 
     <select id="selectAllGroupByDate" resultType="com.steccn.pms.vo.PmsReportWorkGroupVO">
         SELECT
-            o.material_id materialId,
-            c.create_time date,
-            c.classes_id classesId,
-            c.product_line_id productLineId,
-            c.process_quantity quantity
+        o.material_id materialId,
+        c.create_time date,
+        c.classes_id classesId,
+        c.product_line_id productLineId,
+        c.process_quantity quantity
         FROM
-            pms_report_work c inner join pms_produce_order o on c.produce_order_id = o.id
+        pms_report_work c inner join pms_produce_order o on c.produce_order_id = o.id
         WHERE
-            c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime}
+        c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime}
         <if test="productLineIdList != null and productLineIdList.size  != ''">
             AND c.product_line_id in
             <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
@@ -233,44 +231,63 @@
     </select>
     <select id="furtherIngredient" resultType="com.steccn.pms.vo.FurtherIngredientMapperVO">
         SELECT
-            ppo.id as produceOrderId,
-            ppo.material_id,
-            prw.process_id,
-            prw.product_line_id,
-            prw.classes_id
+        ppo.id as produceOrderId,
+        ppo.material_id,
+        prw.process_id,
+        prw.product_line_id,
+        prw.classes_id
         FROM
-            pms_report_work prw
-                JOIN pms_produce_order ppo ON ppo.id = prw.produce_order_id
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON ppo.id = prw.produce_order_id
         WHERE
-            prw.del_flag = 0 AND ppo.del_flag = 0
-            <if test="classesIdList != null and classesIdList.size  != ''">
-                AND prw.classes_id in
-                <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
-                    #{classesId}
-                </foreach>
-            </if>
-            <if test="productLineIdList != null and productLineIdList.size  != ''">
-                AND prw.product_line_id in
-                <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
-                    #{productLineId}
-                </foreach>
-            </if>
-            AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
+        prw.del_flag = 0 AND ppo.del_flag = 0
+        <if test="classesIdList != null and classesIdList.size  != ''">
+            AND prw.classes_id in
+            <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
+                #{classesId}
+            </foreach>
+        </if>
+        <if test="productLineIdList != null and productLineIdList.size  != ''">
+            AND prw.product_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+        AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
         GROUP BY
-            ppo.id,
-            prw.product_line_id,
-            prw.classes_id,
-            ppo.material_id,
-            prw.process_id
+        ppo.id,
+        prw.product_line_id,
+        prw.classes_id,
+        ppo.material_id,
+        prw.process_id
 
     </select>
     <select id="currentDateReportWork" resultType="com.steccn.pms.dto.DwCurrentReportWorkDTO">
+        SELECT prw.product_line_id,
+               prw.station_id,
+               prw.start_time as start,
+               prw.end_time as end,
+        prw.id as reportWorkId,
+        ppo.material_id,
+        prw.classes_id
+        FROM
+            pms_report_work prw
+            JOIN pms_produce_order ppo
+        ON prw.produce_order_id = ppo.id
+        WHERE
+            prw.start_time &gt;= #{start}
+          AND prw.start_time &lt;= #{end}
+
+    </select>
+    <select id="listReportWorkInfo" resultType="com.steccn.pms.vo.PmsReportWorkVO">
         SELECT
         prw.product_line_id,
         prw.station_id,
-        prw.start_time as start,
-        prw.end_time as end,
-        prw.id as reportWorkId,
+        prw.start_time as startTime,
+        prw.end_time as endTime,
+        prw.create_time,
+        prw.process_quantity as processQuantity,
+        prw.id,
         ppo.material_id,
         prw.classes_id
         FROM
@@ -278,26 +295,7 @@
         JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
         WHERE
         prw.start_time &gt;= #{start}
-        AND prw.start_time &lt;= #{end}
-
-    </select>
-    <select id="listReportWorkInfo" resultType="com.steccn.pms.vo.PmsReportWorkVO">
-        SELECT
-            prw.product_line_id,
-            prw.station_id,
-            prw.start_time as startTime,
-            prw.end_time as endTime,
-            prw.create_time,
-            prw.process_quantity as processQuantity,
-        prw.id,
-        ppo.material_id,
-        prw.classes_id
-        FROM
-            pms_report_work prw
-            JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
-        WHERE
-            prw.start_time &gt;= #{start}
-          AND prw.start_time &lt; #{end}
+        AND prw.start_time &lt; #{end}
         <if test="lineIds != null and lineIds.size  != ''">
             AND prw.product_line_id in
             <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
@@ -307,18 +305,18 @@
     </select>
     <select id="getUseCount" resultType="com.steccn.pms.dto.PmsUseCountDTO">
         select
-            rw.product_line_id,
-            DATE_FORMAT(rw.class_date, '%Y-%m') as month_str,
-            rw.station_id ,
-            sum(rw.process_quantity) as quantity
+        rw.product_line_id,
+        DATE_FORMAT(rw.class_date, '%Y-%m') as month_str,
+        rw.station_id ,
+        sum(rw.process_quantity) as quantity
         from pms_report_work rw
         where rw.del_flag = 0
-          AND rw.start_time &gt;= #{start}
-          AND rw.start_time &lt; #{end}
-          AND rw.product_line_id in
-          <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
             #{lineId}
-          </foreach>
+        </foreach>
         group by rw.product_line_id, DATE_FORMAT(rw.class_date, '%Y-%m') , rw.station_id
     </select>
     <select id="useCountPerOrder" resultType="com.steccn.pms.dto.PmsUseCountDTO">
@@ -331,13 +329,13 @@
         sum(rw.process_quantity) as quantity
         from pms_report_work rw
         where rw.del_flag = 0
-              AND rw.start_time &gt;= #{start}
-              AND rw.start_time &lt; #{end}
-              AND rw.product_line_id in
-              <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
-                     #{lineId}
-              </foreach>
-        group by rw.product_line_id,rw.produce_order_no,  class_date , classes_id,  rw.station_id
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id,rw.produce_order_no, class_date , classes_id, rw.station_id
     </select>
     <select id="useCountWeek" resultType="com.steccn.pms.dto.PmsUseCountDTO">
         select
@@ -409,7 +407,7 @@
             #{productLineId}
         </foreach>
         AND pcs.enter_time &gt;= #{start}
-        AND pcs.enter_time &lt;= #{end}
+        AND pcs.enter_time &lt; #{end}
         GROUP BY
         ppo.production_line_id,
         ppo.material_id
@@ -444,5 +442,44 @@
             #{orderId}
         </foreach>
         group by de.id, rw.station_id
+    </select>
+    <select id="getPmByLineClass" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        de.production_line_id as productLineId,
+        rw.classes_id as classId,
+        rw.station_id ,
+        de.material_id,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
+        where rw.del_flag = 0 AND de.del_flag = 0
+        AND de.production_line_id in
+        <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.class_date = #{date}
+        group by de.production_line_id, rw.classes_id, rw.station_id , de.material_id
+    </select>
+    <select id="getInStorageByLineClass" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        SELECT
+        ppo.production_line_id as product_line_id,
+        ppo.material_id,
+        pcsi.classes_id as classId ,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND ppo.production_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        AND pcs.enter_time &gt;= #{start}
+        AND pcs.enter_time &lt; #{end}
+        GROUP BY
+        ppo.production_line_id,
+        ppo.material_id,
+        pcsi.classes_id
     </select>
 </mapper>

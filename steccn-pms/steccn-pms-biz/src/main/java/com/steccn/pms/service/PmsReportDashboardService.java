@@ -75,4 +75,20 @@ public interface PmsReportDashboardService {
      * @return 柱状图
      */
     QtLineChartBarDTO linePullForce(Integer workShopId, LocalDate date);
+
+    /**
+     * 产线完工信息
+     * @param workShopId 车间
+     * @param date 日期
+     * @return
+     */
+    QtLineChartBarDTO lineComplete(Integer workShopId, LocalDate date);
+
+    /**
+     * 产线入库信息
+     * @param workShopId 车间
+     * @param date 日期
+     * @return
+     */
+    QtLineChartBarDTO lineInStorage(Integer workShopId, LocalDate date);
 }
