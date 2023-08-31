@@ -252,7 +252,7 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<Long, BigDecimal> getInStorageByOrder(Set<Long> orderIdSet);
 
     /**
-     * 获取产线班次产量
+     * 获取产线班次产量  单位为T
      * @param lineIdSet 产线
      * @param date 班次日期
      * @param type 0基片 1深加工
@@ -261,7 +261,7 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type);
 
     /**
-     * 获取产线班次入库数量
+     * 获取产线班次入库数量 单位为T
      *
      * @param lineIdSet 产线
      * @param date      班次日期
