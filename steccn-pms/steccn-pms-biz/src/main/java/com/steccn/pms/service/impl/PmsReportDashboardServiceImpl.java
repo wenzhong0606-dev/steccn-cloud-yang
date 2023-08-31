@@ -305,4 +305,42 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         }
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
+
+    @Override
+    public QtLineChartBarDTO lineComplete(Integer workShopId, LocalDate date) {
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
+        Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        //获取班次拉引量
+        List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
+        //获取早晚班
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+
+        //对line排序
+        List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        Map<Integer, List<PmsPullForce>> lineMap = list.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));
+        Map<Integer, List<PmsPullForce>> objMap = Maps.newLinkedHashMap();
+        sortLineList.forEach(ele -> objMap.put(ele.getId(), lineMap.getOrDefault(ele.getId(), Lists.newArrayList())));
+
+        for (Map.Entry<Integer, List<PmsPullForce>> lineEntry : objMap.entrySet()) {
+            List<PmsPullForce> value = lineEntry.getValue();
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            String officeName = wsLineMap.get(lineEntry.getKey()).getOfficeName();
+            stackGraphDTO.setXAxis(officeName);
+            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+            PmsPullForce morning = value.stream().filter(ele -> morningDict.getId().equals(ele.getClassesId())).findFirst().orElse(new PmsPullForce());
+            PmsPullForce night = value.stream().filter(ele -> nightDict.getId().equals(ele.getClassesId())).findFirst().orElse(new PmsPullForce());
+            datList.add(new TupleDTO<>("产线", BigDecimalUtil.add(morning.getQuantity(), night.getQuantity())));
+            datList.add(new TupleDTO<>("白班拉引量", morning.getQuantity()));
+            datList.add(new TupleDTO<>("夜班拉引量", morning.getQuantity()));
+            stackGraphDTO.setData(datList);
+            dataList.add(stackGraphDTO);
+        }
+        return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
 }

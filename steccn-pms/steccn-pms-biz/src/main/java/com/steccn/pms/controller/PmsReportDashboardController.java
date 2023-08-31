@@ -69,5 +69,9 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.linePullForce(workShopId, date));
     }
 
-
+    @GetMapping("/line/complete")
+    @ApiOperation("产线完工信息")
+    public R<QtLineChartBarDTO> lineComplete(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.lineComplete(workShopId, date));
+    }
 }
