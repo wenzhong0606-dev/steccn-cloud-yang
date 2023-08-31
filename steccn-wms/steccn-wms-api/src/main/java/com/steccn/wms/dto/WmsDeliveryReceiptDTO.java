@@ -1,5 +1,7 @@
 package com.steccn.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
@@ -10,6 +12,7 @@ import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -52,4 +55,15 @@ public class WmsDeliveryReceiptDTO {
 
     @ApiModelProperty("冲销入库单code")
     private String chargeAgainstCode;
+
+
+    /**
+     * 是否自动确认 0：否 1：是
+     */
+    private String affirmFlag;
+
+    private Long createBy;
+
+    private String createName;
+
 }
