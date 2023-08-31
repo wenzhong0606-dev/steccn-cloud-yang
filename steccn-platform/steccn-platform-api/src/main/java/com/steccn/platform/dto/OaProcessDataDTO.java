@@ -93,4 +93,12 @@ public class OaProcessDataDTO implements Serializable {
      * 节点类型
      */
     private String nodeType;
+    /**
+     * 操作人Id
+     */
+    private Integer operatorId;
+    /**
+     * 操作人名称
+     */
+    private String operatorName;
 }
