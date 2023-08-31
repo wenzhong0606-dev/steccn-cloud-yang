@@ -2,6 +2,7 @@ package com.steccn.platform.feign;
 
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SalesUserNameDTO;
+import com.steccn.platform.dto.SrmOaWorkFlowDTO;
 import com.steccn.platform.vo.SalesTokenVO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -27,4 +28,14 @@ public interface RemoteSalesFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String getToken(@RequestBody SalesUserNameDTO dto);
+
+    /**
+     * oa回调接口
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sync/oa/approve")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String oaCallBack(@RequestBody SrmOaWorkFlowDTO dto);
 }

@@ -322,9 +322,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDeliveryService.save(completeDelivery);
             completeDeliveryInfoService.saveBatch(modelList);
             //物料消耗 ，扣除库存
-
             wmsDeliveryReceiptDTO.setType(sysDictVO.getId());
             wmsDeliveryReceiptDTO.setList(materialList);
+            wmsDeliveryReceiptDTO.setAffirmFlag(PmManagerConstant.NUM_1);
+            wmsDeliveryReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
+            wmsDeliveryReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
             R<Boolean> booleanR = null;
             try {
                 booleanR = remoteWmsInventoryFeignApi.generateOutStorageVoucher(wmsDeliveryReceiptDTO);

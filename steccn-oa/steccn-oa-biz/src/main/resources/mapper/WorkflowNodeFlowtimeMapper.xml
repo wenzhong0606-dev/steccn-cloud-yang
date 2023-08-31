@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.WorkflowNodeFlowtimeMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.WorkflowNodeFlowtime">
+            <result property="requestid" column="requestid" jdbcType="INTEGER"/>
+            <result property="workflowid" column="workflowid" jdbcType="INTEGER"/>
+            <result property="nodeid" column="nodeid" jdbcType="INTEGER"/>
+            <result property="nodeoperator" column="nodeoperator" jdbcType="INTEGER"/>
+            <result property="receivedate" column="receivedate" jdbcType="VARCHAR"/>
+            <result property="flowtime" column="flowtime" jdbcType="BIGINT"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="isovertime" column="isovertime" jdbcType="CHAR"/>
+            <result property="departmentid" column="departmentid" jdbcType="INTEGER"/>
+            <result property="subcompanyid1" column="subcompanyid1" jdbcType="INTEGER"/>
+            <result property="userstatus" column="userstatus" jdbcType="INTEGER"/>
+            <result property="createdate" column="createdate" jdbcType="VARCHAR"/>
+            <result property="workflowtype" column="workflowtype" jdbcType="INTEGER"/>
+            <result property="receivetime" column="receivetime" jdbcType="CHAR"/>
+            <result property="overflowtime" column="overflowtime" jdbcType="BIGINT"/>
+            <result property="islasttimes" column="islasttimes" jdbcType="INTEGER"/>
+            <result property="viewtype" column="viewtype" jdbcType="INTEGER"/>
+            <result property="usertype" column="usertype" jdbcType="INTEGER"/>
+            <result property="groupid" column="groupid" jdbcType="INTEGER"/>
+            <result property="createtime" column="createtime" jdbcType="CHAR"/>
+            <result property="isremark" column="isremark" jdbcType="INTEGER"/>
+            <result property="seclevel" column="seclevel" jdbcType="CHAR"/>
+            <result property="overtime" column="overtime" jdbcType="VARCHAR"/>
+            <result property="viewdate" column="viewdate" jdbcType="VARCHAR"/>
+            <result property="viewtime" column="viewtime" jdbcType="CHAR"/>
+            <result property="preisremark" column="preisremark" jdbcType="INTEGER"/>
+            <result property="takisremark" column="takisremark" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        requestid,workflowid,nodeid,
+        nodeoperator,receivedate,flowtime,
+        status,isovertime,departmentid,
+        subcompanyid1,userstatus,createdate,
+        workflowtype,receivetime,overflowtime,
+        islasttimes,viewtype,usertype,
+        groupid,createtime,isremark,
+        seclevel,overtime,viewdate,
+        viewtime,preisremark,takisremark
+    </sql>
+</mapper>
