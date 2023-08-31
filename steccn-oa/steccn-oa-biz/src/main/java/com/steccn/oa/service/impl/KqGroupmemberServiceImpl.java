@@ -9,7 +9,11 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.domain.Hrmjobtitles;
@@ -18,15 +22,21 @@ import com.steccn.oa.domain.KqGroup;
 import com.steccn.oa.domain.KqGroupmember;
 import com.steccn.oa.dto.OaGroupDTO;
 import com.steccn.oa.dto.OaGroupLeaderDTO;
+import com.steccn.oa.dto.OaRosterRecordDTO;
+import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.mapper.KqGroupMapper;
 import com.steccn.oa.service.KqGroupService;
 import com.steccn.oa.service.KqGroupmemberService;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
+import com.steccn.oa.vo.OaTodayClassVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +55,8 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
     private final KqGroupmemberMapper kqGroupmemberMapper;
 
     private final KqGroupService kqGroupService;
+
+    private final OaInfoService oaInfoService;
 
     @Override
     public List<OaGroupIdAndNameVO> findGroupByUserId(Set<Long> userId) {
@@ -126,6 +138,64 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
             resultMap = result.stream().collect(Collectors.toMap(OaGroupLeaderDTO::getGroupId, Function.identity(), (key1, key2) -> key2));
         }
         return resultMap;
+    }
+
+    @Override
+    public OaTodayClassVO getTodayClassInfo() {
+        OaTodayClassVO result = new OaTodayClassVO();
+        //算当前班次
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        //获取熔化工
+        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_1);
+        List<OaRosterRecordVO> oaRosterRecordVOS = Lists.newArrayList();
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_2);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_3);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        Set<Long> userId = Sets.newHashSet();
+        //过滤当前班次
+        String classStr = "";
+        if (qtTaskClassCalculate.getClassType().equals(0)) {
+            result.setClassOrder("早班");
+            classStr = "白班";
+        } else {
+            result.setClassOrder("晚班");
+            classStr = "夜班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到熔化工id
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    oaUserIdAndNames.forEach(tmp -> {
+                        userId.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
+        List<OaGroupIdAndNameVO> groupByUserId = this.findGroupByUserId(userId);
+        //拿到出现次数最多的班组
+        if(CollUtil.isNotEmpty(groupByUserId)){
+            String groupName = groupByUserId.stream()
+                    .collect(Collectors.groupingBy(OaGroupIdAndNameVO::getClassGroupName, Collectors.counting()))
+                    .entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(null);
+            result.setClassGroup(groupName);
+        }
+
+        return result;
     }
 
 

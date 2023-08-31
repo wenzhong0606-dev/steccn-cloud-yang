@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
+import com.steccn.oa.vo.OaTodayClassVO;
 
 import java.util.List;
 import java.util.Map;
@@ -42,4 +43,10 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
      * @return
      */
     Map<Integer, OaGroupLeaderDTO> getLeaderByGroupId(Set<Integer> groupIds);
+
+    /**
+     * oa获取当班信息
+     * @return
+     */
+    OaTodayClassVO getTodayClassInfo();
 }

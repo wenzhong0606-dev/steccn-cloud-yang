@@ -77,6 +77,13 @@ public class OaConstant {
     public static final String GROUP_LEADER = "班长";
     public static final String JOB_TITLE_ZHIJIAN = "183";
 
+    /**
+     * 熔化工
+     */
+    public static final String JOB_RONGHUA_ID_1 = "44";
+    public static final String JOB_RONGHUA_ID_2 = "207";
+    public static final String JOB_RONGHUA_ID_3 = "414295";
+
     public static final String CLIENT_ID = "client-id";
 
     public static final Integer NUM_1 = 1;
