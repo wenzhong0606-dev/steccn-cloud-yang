@@ -194,7 +194,50 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
                     .orElse(null);
             result.setClassGroup(groupName);
         }
-
+        //获取班组长
+        String leader = "";
+        //拿到当班的熔化班长
+        rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_1);
+        String leader1Name = getLeaderName(rosterDto);
+        if(StrUtil.isBlank(leader1Name)){
+            rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_2);
+            leader1Name = getLeaderName(rosterDto);
+            if(StrUtil.isBlank(leader1Name)){
+                rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_3);
+                leader1Name = getLeaderName(rosterDto);
+            }
+        }
+        leader = leader1Name;
+        //拿到当班的成型班长
+        rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_1);
+        String leader2Name = getLeaderName(rosterDto);
+        if(StrUtil.isBlank(leader2Name)){
+            rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_2);
+            leader2Name = getLeaderName(rosterDto);
+            if(StrUtil.isBlank(leader2Name)){
+                rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_3);
+                leader2Name = getLeaderName(rosterDto);
+            }
+        }
+        if(StrUtil.isNotBlank(leader2Name)){
+            if(StrUtil.isBlank(leader)){
+                leader = leader2Name;
+            }else {
+                leader = leader + "/" +leader2Name;
+            }
+        }
+        //拿到当班的成品班长
+        rosterDto.setJobtitle(OaConstant.JOB_CHENGPINBANZHANG_ID);
+        String leader3Name = getLeaderName(rosterDto);
+        if(StrUtil.isNotBlank(leader3Name)){
+            if(StrUtil.isBlank(leader)){
+                leader = leader3Name;
+            }else {
+                leader = leader + "/" +leader3Name;
+            }
+        }
+        //拿到当班的成品班长
+        result.setClassLeader(leader);
         return result;
     }
 
@@ -214,6 +257,32 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
             });
         }
         return resultList;
+    }
+
+    /**
+     * 获取对应的班组长名称
+     *
+     * @param rosterDto
+     * @return
+     */
+    private String getLeaderName(OaRosterRecordDTO rosterDto){
+        String result = "";
+        List<OaRosterRecordVO> leader = Lists.newArrayList();
+        leader.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        if (CollUtil.isNotEmpty(leader)) {
+            List<String> workCodes = Lists.newArrayList();
+            leader.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到熔化班长名称
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    result = oaUserIdAndNames.get(0).getName();
+                }
+            }
+        }
+        return result;
     }
 }
 
