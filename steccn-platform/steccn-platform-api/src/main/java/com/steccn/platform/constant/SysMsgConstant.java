@@ -51,7 +51,8 @@ public interface SysMsgConstant {
         SPC_SERIAL_DOWN_WARN(15, "SPC连续下降告警", MsgCategoryEnum.SYS_REMIND.code, "SPC名称: %s \r\n物料名称: %s\r\n检验项: %s",0),
         BATCH_CHECK_UPDATE(16,"配料抽检日报表更新",MsgCategoryEnum.SYS_REMIND.code,"%s更新了配料抽检日报表",1),
         UNIT_CONSUME_ALARM(17,"能源单耗超标",MsgCategoryEnum.SYS_REMIND.code,"%s日单耗%s,超过%s",0),
-        SHIPPING_NOTICE(18,"发货通知单",MsgCategoryEnum.SYS_REMIND.code,"发货通知单单号为%s,%s客户%s产品%s规格%s数量，请备货，谢谢！",0);
+        SHIPPING_NOTICE(18,"发货通知单",MsgCategoryEnum.SYS_REMIND.code,"发货通知单单号为%s,%s客户%s产品%s规格%s数量，请备货，谢谢！",0),
+        DEFECT_NOTICE(19,"缺陷通知",MsgCategoryEnum.SYS_REMIND.code,"设备%S的%s部位发生%s类型的缺陷",0);
 
 
         private Integer code;

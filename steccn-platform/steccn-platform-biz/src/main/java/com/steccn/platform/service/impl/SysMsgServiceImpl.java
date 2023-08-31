@@ -12,7 +12,15 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.dto.OaHrmDTO;
+import com.steccn.oa.dto.OaRosterRecordDTO;
+import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
@@ -23,6 +31,7 @@ import com.steccn.platform.mapper.SysMsgMapper;
 import com.steccn.platform.service.SysMsgUserService;
 import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +49,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -137,7 +147,47 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                 log.error("用户id为空");
                 return false;
             }
-        }else {
+        }else if(sysMsgMesDTO.getType().equals(SysMsgConstant.MsgTypeEnum.DEFECT_NOTICE.getCode())){
+            //如果是缺陷类型则查找oa中发送人
+            //值班人员以及钳工段长/电工段长——电气故障通知电工段长，机械故障通知钳工段长
+            Set<Long> longIds = Sets.newHashSet();
+            if(sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NO.toString())
+                    || sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NUM_2.toString())){
+                //电器故障或者全部
+                //发给电工段长
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_GAOYADIANLI, PmManagerConstant.DIRECTOR_ID_PEIDIANFU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
+                    oaUserIdAndNames.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+                //发送当班电工
+                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG1));
+                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG2));
+            }
+
+            if(sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NUM_1.toString())
+                    || sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NUM_2.toString())){
+                //机械故障或者全部
+                //发给机修工段段长或者副段长
+                List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_JIXIUGONGDUAN, PmManagerConstant.DIRECTOR_ID_JIXIU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
+                    oaUserIdAndNames1.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_JIXIUGONGDUAN, PmManagerConstant.DIRECTOR_ID_JIXIU_FU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
+                    oaUserIdAndNames.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+                //发送当班机修工
+                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
+                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
+            }
+
+        } else {
             log.error("mes传过来的用户名为空");
             return false;
         }
@@ -221,4 +271,45 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         }
         return resCount;
     }
+
+    /**
+     * 获取当班员工
+     * @param jobTitle
+     * @return
+     */
+    private Set<Long> getCurrentClassWorker(String jobTitle){
+        Set<Long> results = Sets.newHashSet();
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setJobtitle(jobTitle);
+        List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //过滤当前班次
+        String classStr = "";
+        if (qtTaskClassCalculate.getClassType().equals(0)) {
+            classStr = "白班";
+        } else {
+            classStr = "夜班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到配料工id
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    oaUserIdAndNames.forEach(tmp -> {
+                        results.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
+        return results;
+    }
+
 }
