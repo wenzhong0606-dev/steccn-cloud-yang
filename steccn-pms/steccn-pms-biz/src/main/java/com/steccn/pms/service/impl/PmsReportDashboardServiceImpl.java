@@ -316,6 +316,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
         //获取班次产量
         Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, 0);
+        SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(list)) {
@@ -370,6 +371,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
         //获取班次产量
         Map<String, BigDecimal> inStorageMap = pmsReportWorkService.lineClassInStorage(wsLineMap.keySet(), date);
+        SteccnTableAssertUtil.notEmpty(inStorageMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(list)) {
