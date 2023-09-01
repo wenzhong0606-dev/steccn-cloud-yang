@@ -47,8 +47,7 @@ public class OaFeignController {
 
     private final HrmClassInfoService hrmClassInfoService;
 
-    private final WorkflowNodeFlowtimeService workflowNodeFlowtimeService;
-
+    private final WorkflowRequestlogService workflowRequestlogService;
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
     public R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList) {
@@ -133,6 +132,6 @@ public class OaFeignController {
     @ApiOperation("获取当前节点操作人")
     @PostMapping("/workflow/operator")
     public R<OaUserIdAndName> getOperator(@RequestBody TupleDTO<Integer,Integer> dto){
-        return R.success(workflowNodeFlowtimeService.getOperator(dto));
+        return R.success(workflowRequestlogService.getOperator(dto));
     }
 }

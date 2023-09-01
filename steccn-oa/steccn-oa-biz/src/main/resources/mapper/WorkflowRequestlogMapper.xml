@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.WorkflowRequestlogMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.WorkflowRequestlog">
+            <result property="requestid" column="REQUESTID" jdbcType="INTEGER"/>
+            <result property="workflowid" column="WORKFLOWID" jdbcType="INTEGER"/>
+            <result property="nodeid" column="NODEID" jdbcType="INTEGER"/>
+            <result property="logtype" column="LOGTYPE" jdbcType="CHAR"/>
+            <result property="operatedate" column="OPERATEDATE" jdbcType="CHAR"/>
+            <result property="operatetime" column="OPERATETIME" jdbcType="CHAR"/>
+            <result property="operator" column="OPERATOR" jdbcType="INTEGER"/>
+            <result property="remark1" column="REMARK1" jdbcType="VARCHAR"/>
+            <result property="clientip" column="clientip" jdbcType="VARCHAR"/>
+            <result property="operatortype" column="OPERATORTYPE" jdbcType="INTEGER"/>
+            <result property="destnodeid" column="DESTNODEID" jdbcType="INTEGER"/>
+            <result property="receivedpersons1" column="RECEIVEDPERSONS_1" jdbcType="VARCHAR"/>
+            <result property="showorder" column="SHOWORDER" jdbcType="INTEGER"/>
+            <result property="agentorbyagentid" column="AGENTORBYAGENTID" jdbcType="INTEGER"/>
+            <result property="agenttype" column="AGENTTYPE" jdbcType="CHAR"/>
+            <result property="logid" column="LOGID" jdbcType="INTEGER"/>
+            <result property="remark" column="REMARK" jdbcType="VARCHAR"/>
+            <result property="annexdocids" column="ANNEXDOCIDS" jdbcType="VARCHAR"/>
+            <result property="requestlogid" column="REQUESTLOGID" jdbcType="INTEGER"/>
+            <result property="operatordept" column="OPERATORDEPT" jdbcType="INTEGER"/>
+            <result property="signdocids" column="SIGNDOCIDS" jdbcType="VARCHAR"/>
+            <result property="signworkflowids" column="SIGNWORKFLOWIDS" jdbcType="VARCHAR"/>
+            <result property="receivedpersons" column="RECEIVEDPERSONS" jdbcType="VARCHAR"/>
+            <result property="ismobile" column="ISMOBILE" jdbcType="CHAR"/>
+            <result property="handwrittensign" column="HandWrittenSign" jdbcType="VARCHAR"/>
+            <result property="speechattachment" column="SPEECHATTACHMENT" jdbcType="INTEGER"/>
+            <result property="receivedpersonids" column="RECEIVEDPERSONIDS" jdbcType="VARCHAR"/>
+            <result property="remarklocation" column="REMARKLOCATION" jdbcType="VARCHAR"/>
+            <result property="issubmitdirect" column="isSubmitDirect" jdbcType="CHAR"/>
+            <result property="remarkquote" column="remarkquote" jdbcType="VARCHAR"/>
+            <result property="fulltextannotation" column="fulltextannotation" jdbcType="VARCHAR"/>
+            <result property="speechattachmente9" column="speechattachmente9" jdbcType="VARCHAR"/>
+            <result property="uuid" column="uuid" jdbcType="VARCHAR"/>
+            <result property="operatorsub" column="operatorSub" jdbcType="INTEGER"/>
+            <result property="operatorjob" column="operatorJob" jdbcType="INTEGER"/>
+            <result property="isrobotnode" column="isRobotNode" jdbcType="CHAR"/>
+            <result property="seclevel" column="seclevel" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        REQUESTID,WORKFLOWID,NODEID,
+        LOGTYPE,OPERATEDATE,OPERATETIME,
+        OPERATOR,REMARK1,clientip,
+        OPERATORTYPE,DESTNODEID,RECEIVEDPERSONS_1,
+        SHOWORDER,AGENTORBYAGENTID,AGENTTYPE,
+        LOGID,REMARK,ANNEXDOCIDS,
+        REQUESTLOGID,OPERATORDEPT,SIGNDOCIDS,
+        SIGNWORKFLOWIDS,RECEIVEDPERSONS,ISMOBILE,
+        HandWrittenSign,SPEECHATTACHMENT,RECEIVEDPERSONIDS,
+        REMARKLOCATION,isSubmitDirect,remarkquote,
+        fulltextannotation,speechattachmente9,uuid,
+        operatorSub,operatorJob,isRobotNode,
+        seclevel
+    </sql>
+</mapper>

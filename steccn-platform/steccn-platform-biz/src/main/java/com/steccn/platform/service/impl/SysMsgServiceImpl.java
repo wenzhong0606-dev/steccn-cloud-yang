@@ -162,8 +162,8 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                     });
                 }
                 //发送当班电工
-                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG1));
-                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG2));
+//                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG1));
+//                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG2));
             }
 
             if(sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NUM_1.toString())
@@ -183,10 +183,10 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                     });
                 }
                 //发送当班机修工
-                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
-                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
+//                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
+//                longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
                 //测试，发送给傅圣杰
-                longIds.add(940L);
+//                longIds.add(940L);
                 sysMsgMesDTO.setUserList(longIds);
             }
 
