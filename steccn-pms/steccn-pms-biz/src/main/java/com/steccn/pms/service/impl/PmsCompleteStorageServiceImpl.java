@@ -173,9 +173,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_COMPLETE_STORAGE);
         lock.lock();
         PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
-        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
         try {
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //校验一箱货只能存在于一个入库单中
             Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
             Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
