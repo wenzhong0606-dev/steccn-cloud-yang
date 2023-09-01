@@ -768,6 +768,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return true;
     }
 
+    @Override
+    public String inStorageCodeRepeat(LocalDate current) {
+        Long aLong = currentMaxCode();
+        return Objects.isNull(aLong) ? String.valueOf(1) : String.valueOf(aLong);
+    }
+
     WmsDeliveryReceiptDTO chargeAgainst(Long id, String userName) {
         RLock lock = redissonClient.getLock(LockConstant.WMS_CHARGE_AGAINST);
         lock.lock();
@@ -834,6 +840,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
 
+
+
     /**
      * 当前最大的code值
      *
@@ -850,7 +858,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + WmsCodeUtil.NUM_BIT_12);
+                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + 10);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;
