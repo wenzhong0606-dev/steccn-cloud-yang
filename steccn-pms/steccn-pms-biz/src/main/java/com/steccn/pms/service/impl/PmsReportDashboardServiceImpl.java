@@ -231,37 +231,39 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //分页获取订单，按创建时间倒序
         Page<PmsProduceOrder> page = pmsProduceOrderService.page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsProduceOrder>()
                 .in(PmsProduceOrder::getState, Arrays.asList(1, 3, 4, 2))
+                .eq(Objects.nonNull(dto.getProductLineId()), PmsProduceOrder::getProductionLineId, dto.getProductLineId())
                 .eq(Objects.nonNull(dto.getState()), PmsProduceOrder::getState, dto.getState())
                 .orderByDesc(PmsProduceOrder::getCreateTime));
         //获取到订单
         List<DashboardProducePageListVO> resList = new ArrayList<>();
-        //获取所有的规格
-        Set<Long> materialIdSet = Sets.newHashSet();
-        List<Integer> lineList = Lists.newArrayList();
-        Set<Long> orderIdSet = Sets.newHashSet();
-        page.getRecords().forEach(ele -> {
-            materialIdSet.add(ele.getMaterialId());
-            lineList.add(ele.getProductionLineId());
-            orderIdSet.add(ele.getId());
-        });
-        Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
-        Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
-
-        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        page.getRecords().forEach(ele -> {
-            DashboardProducePageListVO res = new DashboardProducePageListVO();
-            BeanUtils.copyProperties(ele, res);
-            res.setPlanQuantity(ele.getQuantity());
-            res.setOrderId(ele.getId());
-            res.setSpecifications(spareMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
-            //完工数量：订单对应的报工数量汇总
-            res.setCompleteQuantity(pmByOrderMap.get(ele.getId()));
-            //入库数量：订单对应的入库单数量汇总
-            res.setInStorageQuantity(inStorageMap.get(ele.getId()));
-            //欠额：计划数量 - 入库数量
-            res.setDebtQuantity(BigDecimalUtil.subtract(res.getPlanQuantity(), res.getInStorageQuantity()));
-            resList.add(res);
-        });
+        if(CollUtil.isNotEmpty(page.getRecords())){
+            //获取所有的规格
+            Set<Long> materialIdSet = Sets.newHashSet();
+            List<Integer> lineList = Lists.newArrayList();
+            Set<Long> orderIdSet = Sets.newHashSet();
+            page.getRecords().forEach(ele -> {
+                materialIdSet.add(ele.getMaterialId());
+                lineList.add(ele.getProductionLineId());
+                orderIdSet.add(ele.getId());
+            });
+            Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
+            Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
+            Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach(ele -> {
+                DashboardProducePageListVO res = new DashboardProducePageListVO();
+                BeanUtils.copyProperties(ele, res);
+                res.setPlanQuantity(ele.getQuantity());
+                res.setOrderId(ele.getId());
+                res.setSpecifications(spareMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
+                //完工数量：订单对应的报工数量汇总
+                res.setCompleteQuantity(pmByOrderMap.get(ele.getId()));
+                //入库数量：订单对应的入库单数量汇总
+                res.setInStorageQuantity(inStorageMap.get(ele.getId()));
+                //欠额：计划数量 - 入库数量
+                res.setDebtQuantity(BigDecimalUtil.subtract(res.getPlanQuantity(), res.getInStorageQuantity()));
+                resList.add(res);
+            });
+        }
         Page<DashboardProducePageListVO> resPage = new Page<>();
         BeanUtils.copyProperties(page, resPage);
         resPage.setRecords(resList);
