@@ -3,7 +3,9 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.ems.domain.EpEnergyType;
@@ -19,12 +21,10 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -73,6 +73,9 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         Assert.notNull(epEnergyType, "能源信息为空");
         Map<Long, String> measureUnitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(epEnergyType.getMeasureUnit())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EpPartition nodeInfo = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeId).eq(EpPartition::getType, epEnergyType.getId()), Boolean.FALSE);
+        if (Objects.isNull(nodeInfo)) {
+            throw new SteccnChartException("当前节点不存在于能源树");
+        }
         Set<LocalDate> dateSet = Sets.newHashSet(date.minusDays(1), date);
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, epEnergyType.getId(), Arrays.asList(nodeInfo.getId()));
         List<BigDecimal> collect = classDateAllData.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
