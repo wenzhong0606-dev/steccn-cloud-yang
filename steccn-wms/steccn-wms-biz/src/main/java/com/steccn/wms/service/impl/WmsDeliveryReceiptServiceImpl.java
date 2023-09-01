@@ -16,6 +16,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
@@ -118,6 +119,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //3.给当前出库单生成编码
             model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
             model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
+            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())){
+                model.setCreateBy(dto.getCreateBy());
+                model.setCreateName(dto.getCreateName());
+            }
             //4.保存出库单信息
             save(model);
             //5.保存出库单明细信息
@@ -139,10 +144,41 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 //保存明细信息
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
+            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
+                affirm(model.getId(),dto.getCreateName());
+            }
         } finally {
             lock.unlock();
         }
         return true;
+    }
+
+    public Boolean affirm(Long id,String affirmName) {
+        //1.查询出库单
+        WmsDeliveryReceipt receipt = getById(id);
+        //2.判断单状态
+        Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getStatus())
+                , "当前状态不可确认");
+        //3.确认
+        //3.1获取该单据的信息
+        List<WmsDeliveryReceiptInfo> list = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>()
+                .eq(WmsDeliveryReceiptInfo::getDeliveryReceiptId, id));
+        if (CollUtil.isNotEmpty(list)) {
+            //解锁改该单冻结的库存，并调整库存数量修改数量
+            List<WmsInventoryDTO> inventoryDTOList = Lists.newArrayList();
+            list.forEach(info -> {
+                WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                wmsInventoryDTO.setId(info.getInventoryId());
+                wmsInventoryDTO.setQuantity(info.getQuantity());
+                inventoryDTOList.add(wmsInventoryDTO);
+            });
+            wmsInventoryService.affirmLockQuantity(inventoryDTOList);
+        }
+        //4.修改确认单状态
+        receipt.setAffirmName(affirmName);
+        receipt.setAffirmTime(LocalDateTime.now());
+        receipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
+        return updateById(receipt);
     }
 
     @Override
@@ -303,13 +339,12 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 //库存发生变化，不生成单据
                 return Boolean.FALSE;
             } else {
-                //保存出库单
+                //保存出库单并自动确认
                 return add(dto);
             }
         }
         return Boolean.TRUE;
     }
-
 
 
     /**
