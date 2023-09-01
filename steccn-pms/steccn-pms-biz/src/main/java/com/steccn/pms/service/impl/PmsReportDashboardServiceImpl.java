@@ -112,7 +112,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum3, sum1, sum2);
+        return Arrays.asList(sum2, sum1, sum3);
     }
 
     /**
@@ -188,7 +188,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum3, sum1, sum2);
+        return Arrays.asList(sum2, sum1, sum3);
     }
 
     @Override
