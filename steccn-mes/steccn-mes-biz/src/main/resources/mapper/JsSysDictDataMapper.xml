@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.JsSysDictDataMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.JsSysDictData">
+            <id property="dictCode" column="dict_code" jdbcType="VARCHAR"/>
+            <result property="parentCode" column="parent_code" jdbcType="VARCHAR"/>
+            <result property="parentCodes" column="parent_codes" jdbcType="VARCHAR"/>
+            <result property="treeSort" column="tree_sort" jdbcType="DECIMAL"/>
+            <result property="treeSorts" column="tree_sorts" jdbcType="VARCHAR"/>
+            <result property="treeLeaf" column="tree_leaf" jdbcType="CHAR"/>
+            <result property="treeLevel" column="tree_level" jdbcType="DECIMAL"/>
+            <result property="treeNames" column="tree_names" jdbcType="VARCHAR"/>
+            <result property="dictLabel" column="dict_label" jdbcType="VARCHAR"/>
+            <result property="dictValue" column="dict_value" jdbcType="VARCHAR"/>
+            <result property="dictType" column="dict_type" jdbcType="VARCHAR"/>
+            <result property="isSys" column="is_sys" jdbcType="CHAR"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="cssStyle" column="css_style" jdbcType="VARCHAR"/>
+            <result property="cssClass" column="css_class" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="corpName" column="corp_name" jdbcType="VARCHAR"/>
+            <result property="extendS1" column="extend_s1" jdbcType="VARCHAR"/>
+            <result property="extendS2" column="extend_s2" jdbcType="VARCHAR"/>
+            <result property="extendS3" column="extend_s3" jdbcType="VARCHAR"/>
+            <result property="extendS4" column="extend_s4" jdbcType="VARCHAR"/>
+            <result property="extendS5" column="extend_s5" jdbcType="VARCHAR"/>
+            <result property="extendS6" column="extend_s6" jdbcType="VARCHAR"/>
+            <result property="extendS7" column="extend_s7" jdbcType="VARCHAR"/>
+            <result property="extendS8" column="extend_s8" jdbcType="VARCHAR"/>
+            <result property="extendI1" column="extend_i1" jdbcType="DECIMAL"/>
+            <result property="extendI2" column="extend_i2" jdbcType="DECIMAL"/>
+            <result property="extendI3" column="extend_i3" jdbcType="DECIMAL"/>
+            <result property="extendI4" column="extend_i4" jdbcType="DECIMAL"/>
+            <result property="extendF1" column="extend_f1" jdbcType="DECIMAL"/>
+            <result property="extendF2" column="extend_f2" jdbcType="DECIMAL"/>
+            <result property="extendF3" column="extend_f3" jdbcType="DECIMAL"/>
+            <result property="extendF4" column="extend_f4" jdbcType="DECIMAL"/>
+            <result property="extendD1" column="extend_d1" jdbcType="TIMESTAMP"/>
+            <result property="extendD2" column="extend_d2" jdbcType="TIMESTAMP"/>
+            <result property="extendD3" column="extend_d3" jdbcType="TIMESTAMP"/>
+            <result property="extendD4" column="extend_d4" jdbcType="TIMESTAMP"/>
+            <result property="dictIcon" column="dict_icon" jdbcType="VARCHAR"/>
+            <result property="extendJson" column="extend_json" jdbcType="VARCHAR"/>
+            <result property="corpCode" column="corp_code" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        dict_code,parent_code,parent_codes,
+        tree_sort,tree_sorts,tree_leaf,
+        tree_level,tree_names,dict_label,
+        dict_value,dict_type,is_sys,
+        description,css_style,css_class,
+        status,create_by,create_date,
+        update_by,update_date,remarks,
+        corp_name,extend_s1,extend_s2,
+        extend_s3,extend_s4,extend_s5,
+        extend_s6,extend_s7,extend_s8,
+        extend_i1,extend_i2,extend_i3,
+        extend_i4,extend_f1,extend_f2,
+        extend_f3,extend_f4,extend_d1,
+        extend_d2,extend_d3,extend_d4,
+        dict_icon,extend_json,corp_code
+    </sql>
+</mapper>

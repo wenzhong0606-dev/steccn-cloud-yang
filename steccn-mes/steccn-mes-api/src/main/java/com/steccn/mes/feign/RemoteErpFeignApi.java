@@ -2,10 +2,7 @@ package com.steccn.mes.feign;
 
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
-import com.steccn.mes.vo.ErpCustomerVO;
-import com.steccn.mes.vo.ErpStockVO;
-import com.steccn.mes.vo.ErpSupplierVO;
-import com.steccn.mes.vo.ErpMaterialVO;
+import com.steccn.mes.vo.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -130,6 +127,15 @@ public interface RemoteErpFeignApi {
     @PostMapping("/api/tcmes/getmaterial")
     @ApiOperation("获取erp物料信息")
     R<List<ErpMaterialVO>> getErpMaterial(@RequestBody ErpCustomerDTO dto);
+
+    /**
+     * 获取物料信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/getmaterial")
+    @ApiOperation("获取erp物料单位")
+    R<List<ErpMaterialUnitVO>> getErpMaterialUnit(@RequestBody ErpCustomerDTO dto);
 
     /**
      * 获取供应商信息
