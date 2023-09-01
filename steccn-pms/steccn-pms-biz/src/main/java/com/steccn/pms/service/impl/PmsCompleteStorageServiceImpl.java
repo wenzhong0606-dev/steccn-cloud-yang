@@ -170,13 +170,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Assert.notEmpty(dtoList, "请选择箱子");
         //分布式锁 ，保证最大入库单号
         //加锁
+        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_COMPLETE_STORAGE);
         lock.lock();
-        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
         try {
-            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //校验一箱货只能存在于一个入库单中
             Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
+            //校验重复扫码问题
+            Assert.isTrue(caseNoSet.size() == dtoList.size(), "存在重复扫码，请检查");
             Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
             //校验生产订单的产线是否相同不同，不可以创建入库单
             Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
@@ -277,6 +279,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             }
             //箱状态修改成待入库
             pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet), PmManagerConstant.CaseStateEnum.PREPARE.getCode());
+        }catch (IllegalArgumentException e){
+            throw new BusinessException(e.getLocalizedMessage());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             throw new BusinessException("入库单创建失败");
