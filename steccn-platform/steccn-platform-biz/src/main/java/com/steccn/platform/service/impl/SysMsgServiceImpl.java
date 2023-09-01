@@ -185,12 +185,16 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                 //发送当班机修工
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
+                //测试，发送给傅圣杰
+                longIds.add(940L);
+                sysMsgMesDTO.setUserList(longIds);
             }
 
         } else {
             log.error("mes传过来的用户名为空");
             return false;
         }
+
         this.sendMsg(sysMsgMesDTO);
         return true;
     }
@@ -287,13 +291,6 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //过滤当前班次
         String classStr = "";
-        if (qtTaskClassCalculate.getClassType().equals(0)) {
-            classStr = "白班";
-        } else {
-            classStr = "夜班";
-        }
-        String finalClassStr = classStr;
-        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
             List<String> workCodes = Lists.newArrayList();
             oaRosterRecordVOS.forEach(tmp -> {
