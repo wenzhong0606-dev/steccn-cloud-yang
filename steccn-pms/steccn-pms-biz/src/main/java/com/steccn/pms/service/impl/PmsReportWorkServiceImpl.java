@@ -1019,7 +1019,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     resMap.put(k, lineNumMap);
                     Map<Integer, List<PmsUseCountDTO>> lineMap = v.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getProductLineId));
                     lineMap.forEach((k1, v1) -> {
-                        List<BigDecimal> valueList = v.stream().map(PmsUseCountDTO::getQuantity).collect(Collectors.toList());
+                        List<BigDecimal> valueList = v1.stream().map(PmsUseCountDTO::getQuantity).collect(Collectors.toList());
                         lineNumMap.put(k1, BigDecimalUtil.sum(valueList));
                     });
                 });
