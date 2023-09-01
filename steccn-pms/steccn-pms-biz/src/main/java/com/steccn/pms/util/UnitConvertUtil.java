@@ -56,7 +56,7 @@ public class UnitConvertUtil {
             Optional<SysSpareUnitConversionVO> sourceOp = convertList.stream().filter(ele -> sourceUnitId.equals(ele.getUnitId()) && targetUnitId.equals(ele.getConversionUnitId())).findFirst();
             if (sourceOp.isPresent()) {
                 SysSpareUnitConversionVO source = sourceOp.get();
-                BigDecimal res = BigDecimalUtil.divide(source.getQuantity(), source.getConversionQuantity(), BigDecimalUtil.SCALE_4);
+                BigDecimal res = BigDecimalUtil.divide(source.getConversionQuantity(), source.getQuantity(), BigDecimalUtil.SCALE_4);
                 BigDecimal multiply = BigDecimalUtil.multiply(res, quantity);
                 return BigDecimalUtil.setScale(multiply, scale);
             }
