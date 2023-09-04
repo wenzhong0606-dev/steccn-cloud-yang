@@ -43,7 +43,7 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
         List<MesEquipment> mesEquipments = list(new LambdaQueryWrapper<MesEquipment>()
                 .select(MesEquipment::getId, MesEquipment::getEquipmentCode, MesEquipment::getEquipmentName, MesEquipment::getRemarks, MesEquipment::getModel)
                 .eq(MesEquipment::getStatus, MpConstant.NO.toString())
-                .eq(MesEquipment::getIsEqp, MpConstant.YES.toString()));
+                .eq(MesEquipment::getIsEqp, MpConstant.NO.toString()));
         mesEquipments.forEach(tmp ->{
             MesEqpVo vo = new MesEqpVo();
             BeanUtil.copyProperties(tmp,vo);
