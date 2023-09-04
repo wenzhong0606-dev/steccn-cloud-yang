@@ -55,7 +55,20 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
-        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId()).eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId()).like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode()).like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName()).like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo()).like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName()).like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch()).orderByDesc(WmsInventory::getUpdateTime);
+        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                .notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or()
+                .notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO).or()
+                .orderByDesc(WmsInventory::getUpdateTime);
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
@@ -385,7 +398,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Map<Long, List<WmsInventory>> inventoryMap(Set<Long> materialIds) {
         Map<Long, List<WmsInventory>> map = new HashMap<>();
-        if (CollUtil.isNotEmpty(materialIds)){
+        if (CollUtil.isNotEmpty(materialIds)) {
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
             if (CollUtil.isNotEmpty(list)) {
                 map = list.stream().collect(Collectors.groupingBy(WmsInventory::getMaterialId));
@@ -500,12 +513,12 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
         Map<Integer, List<WmsStockInventoryDTO>> res = Maps.newHashMap();
         if (CollUtil.isNotEmpty(set)) {
-            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getWarehouseId, set).gt(WmsInventory::getAvailableQuantity,BigDecimal.ZERO));
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getWarehouseId, set).gt(WmsInventory::getAvailableQuantity, BigDecimal.ZERO));
             if (CollUtil.isNotEmpty(list)) {
                 List<WmsStockInventoryDTO> wmsStockInventoryDTOS = Lists.newArrayList();
                 list.forEach(wmsInventory -> {
                     WmsStockInventoryDTO wmsStockInventoryDTO = new WmsStockInventoryDTO();
-                    BeanUtil.copyProperties(wmsInventory,wmsStockInventoryDTO);
+                    BeanUtil.copyProperties(wmsInventory, wmsStockInventoryDTO);
                     wmsStockInventoryDTO.setBatchNo(wmsInventory.getBatch());
                     wmsStockInventoryDTO.setInventoryId(wmsInventory.getId());
                     wmsStockInventoryDTOS.add(wmsStockInventoryDTO);
@@ -518,7 +531,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public Boolean deduct(List<WmsInventory> wmsInventoryList) {
-      return updateBatchById(wmsInventoryList);
+        return updateBatchById(wmsInventoryList);
     }
 
 
