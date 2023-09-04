@@ -76,6 +76,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         if (CollUtil.isNotEmpty(dbList)) {
             List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
             resVal = BigDecimalUtil.sum(collect);
+            resVal = BigDecimalUtil.setScale(resVal, 1);
         }
         return resVal;
     }
@@ -112,7 +113,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum2, sum1, sum3);
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
     }
 
     /**
@@ -188,7 +189,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum2, sum1, sum3);
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
     }
 
     @Override
@@ -236,7 +237,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 .orderByDesc(PmsProduceOrder::getCreateTime));
         //获取到订单
         List<DashboardProducePageListVO> resList = new ArrayList<>();
-        if(CollUtil.isNotEmpty(page.getRecords())){
+        if (CollUtil.isNotEmpty(page.getRecords())) {
             //获取所有的规格
             Set<Long> materialIdSet = Sets.newHashSet();
             List<Integer> lineList = Lists.newArrayList();
