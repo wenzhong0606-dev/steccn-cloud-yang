@@ -59,7 +59,9 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
 
     @Override
     public EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date) {
-        return consumeUse(officeId, date, 4);
+        EpPmsConsumeVO epPmsConsumeVO = consumeUse(officeId, date, 4);
+        epPmsConsumeVO.setSum(BigDecimalUtil.setScale(epPmsConsumeVO.getSum(), 0));
+        return epPmsConsumeVO;
     }
 
     @Override
