@@ -14,6 +14,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
+import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -67,6 +68,32 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         });
         //自定义转换工具
         return StackGraphUtil.convertData(stackGraphDTOList);
+    }
+
+    @Override
+    public SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate date, String unit, Integer bit) {
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        SjgDashboardLineProduceVO resVo = new SjgDashboardLineProduceVO();
+        Map<Integer, BigDecimal> todayPmMap = reportWorkService.getTodayPmUnit(lineIdList, date, 1, unit);
+        Map<Integer, BigDecimal> todayInStorageMap = reportWorkService.getTodayInStorageUnit(lineIdList, date, unit);
+        Map<String, BigDecimal> todayUseCountMap = reportWorkService.getUseCountUnit(lineIdList, LocalDateUtil.getMorning(date), LocalDateUtil.getMorning(date).plusDays(1), unit);
+        List<String> headList = Lists.newArrayList();
+        List<BigDecimal> pmList = Lists.newArrayList();
+        List<BigDecimal> inStorageList = Lists.newArrayList();
+        List<BigDecimal> consumeList = Lists.newArrayList();
+        wsLineList.forEach(ele -> {
+            headList.add(ele.getOfficeName());
+            pmList.add(BigDecimalUtil.setScale(todayPmMap.get(ele.getId()), bit));
+            inStorageList.add(BigDecimalUtil.setScale(todayInStorageMap.get(ele.getId()), bit));
+            consumeList.add(BigDecimalUtil.setScale(todayUseCountMap.get(date + "_" + ele.getId()), bit));
+        });
+        resVo.setHeadList(headList);
+        resVo.setPmList(pmList);
+        resVo.setInStorageList(inStorageList);
+        resVo.setConsumeList(consumeList);
+        return resVo;
     }
 
 

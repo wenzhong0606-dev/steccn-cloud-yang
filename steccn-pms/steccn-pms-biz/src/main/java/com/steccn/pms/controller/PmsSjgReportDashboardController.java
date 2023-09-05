@@ -7,6 +7,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
+import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,14 @@ public class PmsSjgReportDashboardController {
         TupleDTO<String, Integer> unit = unit(unitType);
         return R.success(pmsSjgReportDashboardService.lineProduce(workShopId, date, unit.getField1(), unit.getField2()));
     }
+
+    @GetMapping("/line/produce/detail")
+    @ApiOperation("产线产量表格")
+    public R<SjgDashboardLineProduceVO> lineProduceDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date, @RequestParam("unitType") Integer unitType) {
+        TupleDTO<String, Integer> unit = unit(unitType);
+        return R.success(pmsSjgReportDashboardService.lineProduceDetail(workShopId, date, unit.getField1(), unit.getField2()));
+    }
+
 
     /**
      * 根据单位类型，获取转换单位
