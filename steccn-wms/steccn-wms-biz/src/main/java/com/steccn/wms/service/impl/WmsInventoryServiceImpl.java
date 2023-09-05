@@ -27,11 +27,13 @@ import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, WmsInventory> implements WmsInventoryService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
@@ -532,6 +535,28 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Boolean deduct(List<WmsInventory> wmsInventoryList) {
         return updateBatchById(wmsInventoryList);
+    }
+
+    @Override
+    public Boolean deleteData() {
+        log.info("开始时间："+ LocalDateTime.now());
+        Set<String> names = new HashSet<>();
+        names.add("备品备件库");
+        names.add("包装材料库");
+        names.add("辅助材料库-光伏");
+        //获取仓库id
+        Map<String, SysOfficeVO> map = FeignOptional.of(() -> remoteOfficeFeign.listByName(names), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Long> ids = new HashSet<>();
+        map.values().forEach( office ->ids.add(Long.valueOf(office.getId())));
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getWarehouseId, ids));
+        list.forEach( wmsInventory -> {
+            wmsInventory.setDelFlag(1);
+            wmsInventory.setCreateBy(System.currentTimeMillis());
+        });
+        boolean b = updateBatchById(list);
+        log.info("删除库存信息："+list.size() + b);
+        log.info("结束时间："+ LocalDateTime.now());
+        return true;
     }
 
 
