@@ -116,4 +116,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Boolean purchaseLinkErp(Long id);
+
+    Boolean deleteData();
 }

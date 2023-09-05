@@ -119,5 +119,12 @@ public class WmsStorageReceiptController {
     }
 
 
+    @ApiOperation("根据仓库批量删除入库单数据")
+    @PostMapping("/delete/data")
+    public R<Boolean> deleteData (){
+        return R.success(wmsStorageReceiptService.deleteData());
+    }
+
+
 
 }
