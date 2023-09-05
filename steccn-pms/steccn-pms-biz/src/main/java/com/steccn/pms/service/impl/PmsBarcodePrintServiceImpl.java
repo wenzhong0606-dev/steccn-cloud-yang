@@ -199,6 +199,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
                     .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
 //                    .eq(PmsBarcodePrintRecord::getProduceOrderId, dto.getProduceOrderId())
+                            .eq(PmsBarcodePrintRecord::getProduceLineId,dto.getProductionLine())
                     .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
                     .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                     .last(MpConstant.STR_LIMIT_1));
@@ -209,6 +210,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 printRecord.setClassesId(dto.getClassesId());
                 printRecord.setClassGroupId(dto.getClassGroupId());
                 printRecord.setPrintDate(LocalDate.now());
+                printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
                 printRecord.setProduceOrderId(dto.getProduceOrderId());
                 printRecord.setSerialNum(num);
                 pmsBarcodePrintRecordService.save(printRecord);
@@ -219,6 +221,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     printRecord.setClassesId(dto.getClassesId());
                     printRecord.setClassGroupId(dto.getClassGroupId());
                     printRecord.setPrintDate(LocalDate.now());
+                    printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
                     printRecord.setProduceOrderId(dto.getProduceOrderId());
                     printRecord.setSerialNum(record.getSerialNum() + 1);
                     pmsBarcodePrintRecordService.save(printRecord);
