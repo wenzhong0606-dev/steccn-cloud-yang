@@ -107,30 +107,44 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
                     .eq(PmsBarcodePrintRecord::getProduceOrderId, dto.getProduceOrderId())
                     .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                    .eq(PmsBarcodePrintRecord::getProduceLineId,dto.getProductionLine())
                     .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                     .last(MpConstant.STR_LIMIT_1));
             Integer num = 1;
-            if (Objects.isNull(record)) {
-                PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
-                        .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
-                        .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
-                        .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
-                        .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
-                        .last(MpConstant.STR_LIMIT_1));
-                if (Objects.nonNull(pmsBarcodePrintRecord)) {
-                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
-                }
-                //增加一条记录
-                PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
-                printRecord.setClassesId(dto.getClassesId());
-                printRecord.setClassGroupId(dto.getClassGroupId());
-                printRecord.setPrintDate(LocalDate.now());
-                printRecord.setProduceOrderId(dto.getProduceOrderId());
-                printRecord.setSerialNum(num);
-                pmsBarcodePrintRecordService.save(printRecord);
-            } else {
-                num = record.getSerialNum();
+//            if (Objects.isNull(record)) {
+//                PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
+//                        .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
+//                        .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
+//                        .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+//                        .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
+//                        .last(MpConstant.STR_LIMIT_1));
+//                if (Objects.nonNull(pmsBarcodePrintRecord)) {
+//                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
+//                }
+//                //增加一条记录
+//                PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
+//                printRecord.setClassesId(dto.getClassesId());
+//                printRecord.setClassGroupId(dto.getClassGroupId());
+//                printRecord.setPrintDate(LocalDate.now());
+//                printRecord.setProduceOrderId(dto.getProduceOrderId());
+//                printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
+//                printRecord.setSerialNum(num);
+//                pmsBarcodePrintRecordService.save(printRecord);
+//            } else {
+//                num = record.getSerialNum()+1;
+//            }
+            if (Objects.nonNull(record)){
+                num = record.getSerialNum()+1;
             }
+            //增加一条记录流水
+            PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
+            printRecord.setClassesId(dto.getClassesId());
+            printRecord.setClassGroupId(dto.getClassGroupId());
+            printRecord.setPrintDate(LocalDate.now());
+            printRecord.setProduceOrderId(dto.getProduceOrderId());
+            printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
+            printRecord.setSerialNum(num);
+            pmsBarcodePrintRecordService.save(printRecord);
             List<Long> ids = Lists.newArrayList();
             ids.add(dto.getClassesId());
             ids.add(dto.getClassGroupId());
