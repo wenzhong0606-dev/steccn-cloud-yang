@@ -115,6 +115,17 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                      @Param("end") LocalDateTime end);
 
     /**
+     * *
+     * @param lineIdSet
+     * @param start
+     * @param end
+     * @return
+     */
+    List<PmsUseCountDTO> getUseCountClassDate(@Param("lineList") List<Integer> lineIdSet,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end);
+
+    /**
      * 获取原片耗量-每个订单，班次日期
      *
      * @param lineList 产线集合
@@ -202,6 +213,7 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<PmsUseCountDTO> getInStorageByLineClass(@Param("lineList") Set<Integer> lineIdSet,
                                                  @Param("start") LocalDateTime start,
                                                  @Param("end") LocalDateTime end);
+
 }
 
 

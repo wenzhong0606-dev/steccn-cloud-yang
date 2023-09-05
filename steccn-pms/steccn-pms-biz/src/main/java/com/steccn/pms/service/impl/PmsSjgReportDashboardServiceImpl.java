@@ -6,6 +6,8 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,7 +39,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
-    public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate date) {
+    public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate date, String unit, Integer bit) {
         //产量：钢化工序的合格数（加工数-不良数）
         //入库：选择时间端内，该产线入库数量汇总
         //耗用：磨边工序的加工数
@@ -45,18 +48,20 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
 
-        Map<Long, Map<Integer, BigDecimal>> todayPmMap = reportWorkService.getTodayPm(lineIdList, date, 1);
+        Map<Integer, BigDecimal> todayPmMap = reportWorkService.getTodayPmUnit(lineIdList, date, 1, unit);
+        Map<Integer, BigDecimal> todayInStorageMap = reportWorkService.getTodayInStorageUnit(lineIdList, date, unit);
+        Map<String, BigDecimal> todayUseCountMap = reportWorkService.getUseCountUnit(lineIdList, LocalDateUtil.getMorning(date), LocalDateUtil.getMorning(date).plusDays(1), unit);
 
         //定义数据集合
-        List<StackGraphDTO<String, Integer>> stackGraphDTOList = Lists.newArrayList();
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         wsLineList.forEach(ele -> {
-            StackGraphDTO<String, Integer> stackGraphDTO = new StackGraphDTO<>();
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             stackGraphDTO.setXAxis(ele.getOfficeName());
-            List<TupleDTO<String, Integer>> dataList = Lists.newArrayList();
+            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
             //产量，入库，耗用
-            dataList.add(new TupleDTO<>("产量", null));
-            dataList.add(new TupleDTO<>("入库", null));
-            dataList.add(new TupleDTO<>("耗用", null));
+            dataList.add(new TupleDTO<>("产量", BigDecimalUtil.setScale(todayPmMap.get(ele.getId()), bit)));
+            dataList.add(new TupleDTO<>("入库", BigDecimalUtil.setScale(todayInStorageMap.get(ele.getId()), bit)));
+            dataList.add(new TupleDTO<>("耗用", BigDecimalUtil.setScale(todayUseCountMap.get(date + "_" + ele.getId()), bit)));
             stackGraphDTO.setData(dataList);
             stackGraphDTOList.add(stackGraphDTO);
         });

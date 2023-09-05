@@ -1,6 +1,5 @@
 package com.steccn.pms.service;
 
-import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 
 import java.time.LocalDate;
@@ -17,7 +16,9 @@ public interface PmsSjgReportDashboardService {
      *
      * @param workShopId 车间id
      * @param date       日期
+     * @param unit       单位
+     * @param bit        位数
      * @return
      */
-    QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate date);
+    QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate date, String unit, Integer bit);
 }
