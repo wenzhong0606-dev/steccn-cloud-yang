@@ -58,19 +58,20 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
-        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
+                .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
                 .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
                 .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
                 .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
                 .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
                 .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
-                .notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or()
-                .notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
-                .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
-                .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
-                .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
-                .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO).or()
+                .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or()
+                        .notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                        .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                        .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                        .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                        .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO))
                 .orderByDesc(WmsInventory::getUpdateTime);
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
