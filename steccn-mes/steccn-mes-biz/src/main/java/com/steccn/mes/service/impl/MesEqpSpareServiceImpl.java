@@ -93,6 +93,12 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     if(!tmp.getFmaterialgroupid().equals(OaConstant.NO.toString())){
                         model.setType(mesEqpClassification.getId());
                     }
+                    //单位
+                    JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                            .eq(JsSysDictData::getDictLabel, tmp.getFbaseunitname())
+                            .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    model.setUnit(measureUnit.getDictLabel());
+                    model.setUnitId(Long.parseLong(measureUnit.getDictCode()));
                     save(model);
                 }
             });

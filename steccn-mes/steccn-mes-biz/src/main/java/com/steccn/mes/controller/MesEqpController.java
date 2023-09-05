@@ -6,7 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.mes.service.MesEquipmentService;
-import com.steccn.mes.vo.MesEqpVo;
+import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.ApiOperation;
@@ -33,7 +33,7 @@ public class MesEqpController {
 
     @GetMapping("/thirdParty")
     @ApiOperation(value = "获取设备信息")
-    public R<List<MesEqpVo>> getEqpInfo(HttpServletRequest request) {
+    public R<List<MesEqpVO>> getEqpInfo(HttpServletRequest request) {
         validRequestHeader(request);
         return R.success(mesEquipmentService.getEqpInfo());
     }
