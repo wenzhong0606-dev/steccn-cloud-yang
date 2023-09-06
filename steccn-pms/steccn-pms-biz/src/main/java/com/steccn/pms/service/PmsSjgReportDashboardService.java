@@ -40,7 +40,7 @@ public interface PmsSjgReportDashboardService {
     SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
 
     /**
-     * 产线产量-表格
+     * 产线产量
      *
      * @param workShopId 车间id
      * @param start       日期
@@ -50,4 +50,16 @@ public interface PmsSjgReportDashboardService {
      * @return
      */
     QtLineChartBarDTO lineProduceClassGroup(Integer workShopId, LocalDate start ,LocalDate end, String unit, Integer bit);
+
+    /**
+     * 产线产量-表格
+     *
+     * @param workShopId 车间id
+     * @param start       日期
+     * @param end       日期
+     * @param unit       单位
+     * @param bit        位数
+     * @return
+     */
+    SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
 }

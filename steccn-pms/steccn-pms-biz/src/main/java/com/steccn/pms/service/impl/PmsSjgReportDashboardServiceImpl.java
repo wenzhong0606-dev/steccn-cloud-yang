@@ -3,14 +3,11 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
-import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -22,10 +19,8 @@ import com.steccn.pms.service.PmsSjgReportDashboardService;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.asm.Advice;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -139,6 +134,35 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         return qtLineChartBarDTO;
     }
 
+    @Override
+    public SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        SjgDashboardLineProduceVO resVo = new SjgDashboardLineProduceVO();
+        Map<String, BigDecimal> pmMap = reportWorkService.lineClassPm(lineIdList, start, end, 1, unit);
+        Map<String, BigDecimal> inStorageMap = reportWorkService.lineClassInStorage(lineIdList, start, end, unit);
+        Map<String, BigDecimal> useCountMap = reportWorkService.lineClassUseCount(lineIdList, start, end, unit);
+        List<String> headList = Lists.newArrayList();
+        List<BigDecimal> pmList = Lists.newArrayList();
+        List<BigDecimal> inStorageList = Lists.newArrayList();
+        List<BigDecimal> consumeList = Lists.newArrayList();
+        //获取白班与夜班
+        List<SysDictVO> sysDictList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        wsLineList.forEach(line -> {
+            headList.add(line.getOfficeName());
+            for (SysDictVO sysDict : sysDictList) {
+                pmList.add(BigDecimalUtil.setScale(pmMap.get(line.getId() + "_" + sysDict.getId()), bit));
+                inStorageList.add(BigDecimalUtil.setScale(inStorageMap.get(line.getId() + "_" + sysDict.getId()), bit));
+                consumeList.add(BigDecimalUtil.setScale(useCountMap.get(line.getId() + "_" + sysDict.getId()), bit));
+            }
+        });
+        resVo.setHeadList(headList);
+        resVo.setPmList(pmList);
+        resVo.setInStorageList(inStorageList);
+        resVo.setConsumeList(consumeList);
+        return resVo;
+    }
 
     /**
      * 获取车间的产线集合
