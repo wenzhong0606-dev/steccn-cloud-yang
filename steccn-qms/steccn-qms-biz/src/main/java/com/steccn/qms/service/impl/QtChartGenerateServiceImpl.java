@@ -762,7 +762,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         dr = Duration.between(info.getDestoryStartTime(), info.getDestoryEndTime());
                                     }
                                     luoDateRange = BigDecimalUtil.divide(new BigDecimal(dr.toMinutes()), new BigDecimal(60),4);
-
+                                    //如果选了南工位和北工位则时长乘以2
+                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
+                                        luoDateRange = BigDecimalUtil.multiply(luoDateRange,new BigDecimal(2));
+                                    }
                                     //任意落板原因r导致损耗重量 = r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
                                     //r导致的落板时长 * 拉引时速
                                     BigDecimal firstStep = BigDecimalUtil.multiply(luoDateRange, avgLaItem);
@@ -772,12 +775,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     BigDecimal thirdStep = BigDecimalUtil.multiply(secondStep, avgDanItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
 //                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
-                                    //落版原因，产品改需求不需要除法
-                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1),4);
+                                    //落版原因，产品改需求除以二
+                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(2),4);
                                     //如果选了南工位和北工位则乘以二
-                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
-                                        reasonResult = BigDecimalUtil.multiply(reasonResult,new BigDecimal(2));
-                                    }
+//                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
+//                                        reasonResult = BigDecimalUtil.multiply(reasonResult,new BigDecimal(2));
+//                                    }
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
