@@ -7,7 +7,6 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -43,18 +41,17 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
-    public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate date, String unit, Integer bit) {
+    public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start , LocalDate end, String unit, Integer bit) {
         //产量：钢化工序的合格数（加工数-不良数）
         //入库：选择时间端内，该产线入库数量汇总
         //耗用：磨边工序的加工数
-
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
 
-        Map<Integer, BigDecimal> todayPmMap = reportWorkService.getTodayPmUnit(lineIdList, date, 1, unit);
-        Map<Integer, BigDecimal> todayInStorageMap = reportWorkService.getTodayInStorageUnit(lineIdList, date, unit);
-        Map<String, BigDecimal> todayUseCountMap = reportWorkService.getUseCountUnit(lineIdList, LocalDateUtil.getMorning(date), LocalDateUtil.getMorning(date).plusDays(1), unit);
+        Map<Integer, BigDecimal> dateRangePmMap = reportWorkService.getDateRangePmUnit(lineIdList, start, end, 1, unit);
+        Map<Integer, BigDecimal> dateRangeInStorageMap = reportWorkService.getDateRangeInStorageUnit(lineIdList, start, end, unit);
+        Map<Integer, BigDecimal> dateRangeUseCountMap = reportWorkService.getDateRangeUseCountUnit(lineIdList, start, end, unit);
 
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
@@ -63,9 +60,9 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             stackGraphDTO.setXAxis(ele.getOfficeName());
             List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
             //产量，入库，耗用
-            dataList.add(new TupleDTO<>("产量", BigDecimalUtil.setScale(todayPmMap.get(ele.getId()), bit)));
-            dataList.add(new TupleDTO<>("入库", BigDecimalUtil.setScale(todayInStorageMap.get(ele.getId()), bit)));
-            dataList.add(new TupleDTO<>("耗用", BigDecimalUtil.setScale(todayUseCountMap.get(date + "_" + ele.getId()), bit)));
+            dataList.add(new TupleDTO<>("产量", BigDecimalUtil.setScale(dateRangePmMap.get(ele.getId()), bit)));
+            dataList.add(new TupleDTO<>("入库", BigDecimalUtil.setScale(dateRangeInStorageMap.get(ele.getId()), bit)));
+            dataList.add(new TupleDTO<>("耗用", BigDecimalUtil.setScale(dateRangeUseCountMap.get(ele.getId()), bit)));
             stackGraphDTO.setData(dataList);
             stackGraphDTOList.add(stackGraphDTO);
         });
@@ -74,23 +71,23 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     }
 
     @Override
-    public SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate date, String unit, Integer bit) {
+    public SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         SjgDashboardLineProduceVO resVo = new SjgDashboardLineProduceVO();
-        Map<Integer, BigDecimal> todayPmMap = reportWorkService.getTodayPmUnit(lineIdList, date, 1, unit);
-        Map<Integer, BigDecimal> todayInStorageMap = reportWorkService.getTodayInStorageUnit(lineIdList, date, unit);
-        Map<String, BigDecimal> todayUseCountMap = reportWorkService.getUseCountUnit(lineIdList, LocalDateUtil.getMorning(date), LocalDateUtil.getMorning(date).plusDays(1), unit);
+        Map<Integer, BigDecimal> dateRangePmMap = reportWorkService.getDateRangePmUnit(lineIdList, start, end, 1, unit);
+        Map<Integer, BigDecimal> dateRangeInStorageMap = reportWorkService.getDateRangeInStorageUnit(lineIdList, start, end, unit);
+        Map<Integer, BigDecimal> dateRangeUseCountMap = reportWorkService.getDateRangeUseCountUnit(lineIdList, start, end, unit);
         List<String> headList = Lists.newArrayList();
         List<BigDecimal> pmList = Lists.newArrayList();
         List<BigDecimal> inStorageList = Lists.newArrayList();
         List<BigDecimal> consumeList = Lists.newArrayList();
         wsLineList.forEach(ele -> {
             headList.add(ele.getOfficeName());
-            pmList.add(BigDecimalUtil.setScale(todayPmMap.get(ele.getId()), bit));
-            inStorageList.add(BigDecimalUtil.setScale(todayInStorageMap.get(ele.getId()), bit));
-            consumeList.add(BigDecimalUtil.setScale(todayUseCountMap.get(date + "_" + ele.getId()), bit));
+            pmList.add(BigDecimalUtil.setScale(dateRangePmMap.get(ele.getId()), bit));
+            inStorageList.add(BigDecimalUtil.setScale(dateRangeInStorageMap.get(ele.getId()), bit));
+            consumeList.add(BigDecimalUtil.setScale(dateRangeUseCountMap.get(ele.getId()), bit));
         });
         resVo.setHeadList(headList);
         resVo.setPmList(pmList);

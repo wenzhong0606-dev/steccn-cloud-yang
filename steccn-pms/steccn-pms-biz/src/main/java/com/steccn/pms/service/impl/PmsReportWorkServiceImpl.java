@@ -40,14 +40,12 @@ import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
-import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsReportWorkHourVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import feign.Feign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
@@ -970,6 +968,42 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return resMap;
     }
 
+
+    @Override
+    public Map<Integer, BigDecimal> getDateRangeUseCountUnit(List<Integer> lineList, LocalDate start, LocalDate end, String unit) {
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeUseCount(lineList, startLdt, endLdt);
+        //单位转换
+        SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysDict1, "换算单位1不存在");
+        Assert.notNull(sysDict2, "换算单位2不存在");
+
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        //获取(start,end)时间范围内的报工信息
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> materialMap = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            //根据单位查询转换关系
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取磨边工位
+            Set<Integer> stationIds = getEdgStation(lineList);
+            materialMap.forEach((k,v) ->{
+                List<SysSpareUnitConversionVO> relationList = convertMap.get(k);
+                v.forEach(ele ->{
+                    if (stationIds.contains(ele.getStationId())) {
+                        BigDecimal quantity = ele.getQuantity();
+                        if(!sysDict1.equals(sysDict2)){
+                            quantity = UnitConvertUtil.convertMaterial(relationList,sysDict1.getId(),sysDict2.getId(),quantity,3);
+                        }
+                        MapUtil.add(resMap, ele.getProductLineId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                    }
+                });
+            });
+        }
+        return resMap;
+    }
+
     @Override
     public Map<String, BigDecimal> useCountPerOrder(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
@@ -1075,14 +1109,27 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<Integer, BigDecimal> getTodayPmUnit(List<Integer> lineList, LocalDate today, Integer type, String unit) {
+    public Map<Integer, BigDecimal> getDateRangePmUnit(List<Integer> lineList, LocalDate start, LocalDate end, int type, String unit) {
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangePm(lineList, start, end);
+        return linePmUnit(dbList, lineList, type, unit);
+    }
+
+    /**
+     * 获取产线的产量-包含单位转换
+     *
+     * @param lineList 产线集合
+     * @param dbList   数据集合
+     * @param type     类型-0基片 1深加工
+     * @param unit     单位转换
+     * @return
+     */
+    private Map<Integer, BigDecimal> linePmUnit(List<PmsUseCountDTO> dbList, List<Integer> lineList, Integer type, String unit) {
         //单位转换
         SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(sysDict1, "换算单位1不存在");
         Assert.notNull(sysDict2, "换算单位2不存在");
         Map<Integer, BigDecimal> resMap = Maps.newHashMap();
-        List<PmsUseCountDTO> dbList = baseMapper.getTodayPm(lineList, today);
         if (CollUtil.isNotEmpty(dbList)) {
             Map<Long, List<PmsUseCountDTO>> materialMap = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
             //根据单位查询转换关系
@@ -1123,12 +1170,13 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return resMap;
     }
 
+
     @Override
     public Map<Long, Map<Integer, BigDecimal>> getTodayInStorage(List<Integer> lineIdList, LocalDate date) {
         Map<Long, Map<Integer, BigDecimal>> resMap = Maps.newHashMap();
         LocalDateTime start = LocalDateUtil.getMorning(date);
         LocalDateTime end = start.plusDays(1);
-        List<PmsUseCountDTO> dbList = baseMapper.getTodayInStorage(lineIdList, start, end);
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeInStorage(lineIdList, start, end);
         if (CollUtil.isNotEmpty(dbList)) {
             Map<Long, List<PmsUseCountDTO>> collect = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
             collect.forEach((k, v) -> {
@@ -1144,22 +1192,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<Integer, BigDecimal> getTodayInStorageUnit(List<Integer> lineIdList, LocalDate date, String unit) {
+    public Map<Integer, BigDecimal> getDateRangeInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeInStorage(lineIdList, startLdt, endLdt);
         //单位转换
         SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(sysDict1, "换算单位1不存在");
         Assert.notNull(sysDict2, "换算单位2不存在");
         Map<Integer, BigDecimal> resMap = Maps.newHashMap();
-        LocalDateTime start = LocalDateUtil.getMorning(date);
-        LocalDateTime end = start.plusDays(1);
-        List<PmsUseCountDTO> dbList = baseMapper.getTodayInStorage(lineIdList, start, end);
         if (CollUtil.isNotEmpty(dbList)) {
             Map<Long, List<PmsUseCountDTO>> collect = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
-
             //根据单位查询转换关系
             Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(collect.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
             collect.forEach((k, v) -> {
                 List<SysSpareUnitConversionVO> converRelationMap = convertMap.get(k);
                 v.forEach(ele -> {
@@ -1169,7 +1215,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     }
                     MapUtil.add(resMap, ele.getProductLineId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                 });
-
             });
         }
         return resMap;

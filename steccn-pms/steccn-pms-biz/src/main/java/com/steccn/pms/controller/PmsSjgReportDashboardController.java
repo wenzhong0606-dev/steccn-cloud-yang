@@ -36,16 +36,16 @@ public class PmsSjgReportDashboardController {
 
     @GetMapping("/line/produce")
     @ApiOperation("产线产量")
-    public R<QtLineChartBarDTO> lineProduce(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date, @RequestParam("unitType") Integer unitType) {
+    public R<QtLineChartBarDTO> lineProduce(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = unit(unitType);
-        return R.success(pmsSjgReportDashboardService.lineProduce(workShopId, date, unit.getField1(), unit.getField2()));
+        return R.success(pmsSjgReportDashboardService.lineProduce(workShopId, start, end, unit.getField1(), unit.getField2()));
     }
 
     @GetMapping("/line/produce/detail")
     @ApiOperation("产线产量表格")
-    public R<SjgDashboardLineProduceVO> lineProduceDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date, @RequestParam("unitType") Integer unitType) {
+    public R<SjgDashboardLineProduceVO> lineProduceDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = unit(unitType);
-        return R.success(pmsSjgReportDashboardService.lineProduceDetail(workShopId, date, unit.getField1(), unit.getField2()));
+        return R.success(pmsSjgReportDashboardService.lineProduceDetail(workShopId, start, end, unit.getField1(), unit.getField2()));
     }
 
     @GetMapping("/line/produce/classgroup")
