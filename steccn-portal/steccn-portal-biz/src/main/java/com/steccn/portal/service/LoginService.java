@@ -15,6 +15,7 @@ import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysUserClientRefDTO;
 import com.steccn.platform.feign.RemoteSysUserClientFeignApi;
 import com.steccn.portal.constant.TokenConstant;
+import com.steccn.portal.feign.RemotePortalMesFeignApi;
 import com.steccn.portal.vo.SteccnTokenVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class LoginService {
     private final RemoteTokenApi remoteTokenApi;
     private final OaInfoService oaInfoService;
     private final MesMenuService mesMenuService;
+    private final RemotePortalMesFeignApi remotePortalMesFeignApi;
     private final RemoteSysUserClientFeignApi remoteSysUserClientFeignApi;
 
     /**
@@ -88,6 +90,9 @@ public class LoginService {
             steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
             steccnTokenVO.setRealName(oaUserInfo.getName());
             steccnTokenVO.setOaUserId(oaUserInfo.getOaUserId());
+
+            String userCode = remotePortalMesFeignApi.getUserCode(username);
+            steccnTokenVO.setUsercode(userCode);
 
 //            //3.用户oa登录
 //            OaLoginParam oaLoginParam = new OaLoginParam();
