@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -12,16 +13,22 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.asm.Advice;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,9 +46,10 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
 
     private final PmsReportWorkServiceImpl reportWorkService;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
-    public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start , LocalDate end, String unit, Integer bit) {
+    public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
         //产量：钢化工序的合格数（加工数-不良数）
         //入库：选择时间端内，该产线入库数量汇总
         //耗用：磨边工序的加工数
@@ -97,13 +105,38 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     }
 
     @Override
-    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> lineProduceClassGroup(Integer workShopId, LocalDate date, String unit, Integer bit) {
+    public QtLineChartBarDTO lineProduceClassGroup(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        Map<String, BigDecimal> linePmMap = reportWorkService.lineClassPm(lineIdList, date, 1, unit);
-        Map<String, BigDecimal> todayInStorageMap = reportWorkService.lineClassInStorage(lineIdList, date, unit);
-        return null;
+        Map<String, BigDecimal> pmMap = reportWorkService.lineClassPm(lineIdList, start, end, 1, unit);
+        Map<String, BigDecimal> inStorageMap = reportWorkService.lineClassInStorage(lineIdList, start, end, unit);
+        Map<String, BigDecimal> useCountMap = reportWorkService.lineClassUseCount(lineIdList, start, end, unit);
+        //获取白班与夜班
+        List<SysDictVO> sysDictList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        //组装数据
+        List<String> xAxisList1 = Lists.newArrayList();
+        List<String> xAxisList2 = Lists.newArrayList();
+        for (SysOfficeVO line : wsLineList) {
+            for (SysDictVO sysDict : sysDictList) {
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                stackGraphDTO.setXAxis(sysDict.getName());
+                List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+                //产量，入库，耗用
+                dataList.add(new TupleDTO<>("产量", BigDecimalUtil.setScale(pmMap.get(line.getId() + "_" + sysDict.getId()), bit)));
+                dataList.add(new TupleDTO<>("入库", BigDecimalUtil.setScale(inStorageMap.get(line.getId() + "_" + sysDict.getId()), bit)));
+                dataList.add(new TupleDTO<>("耗用", BigDecimalUtil.setScale(useCountMap.get(line.getId() + "_" + sysDict.getId()), bit)));
+                stackGraphDTO.setData(dataList);
+                stackGraphDTOList.add(stackGraphDTO);
+                xAxisList2.add(sysDict.getName());
+            }
+            xAxisList1.add(line.getOfficeName());
+        }
+        //自定义转换工具
+        QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
+        qtLineChartBarDTO.setXData(Arrays.asList(xAxisList1, xAxisList2));
+        return qtLineChartBarDTO;
     }
 
 

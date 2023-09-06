@@ -298,22 +298,36 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<Long, BigDecimal> getInStorageByOrder(Set<Long> orderIdSet);
 
     /**
-     * 获取产线班次产量  单位为T
+     * 获取产线班次产量  单位为unit
      * @param lineIdSet 产线
-     * @param date 班次日期
+     * @param start 班次日期-开始
+     * @param end 班次日期-结束
      * @param type 0基片 1深加工
      * @param unit 单位
      * @return
      */
-    Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type, String unit);
+    Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit);
 
     /**
-     * 获取产线班次入库数量 单位为T
+     * 获取产线班次入库数量 单位为unit
      *
      * @param lineIdSet 产线
-     * @param date      班次日期
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param unit      单位
      * @return
      */
-    Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date,String unit);
+    Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate start, LocalDate end, String unit);
+
+    /**
+     * 获取产线班次耗用数量 单位为unit
+     *
+     * @param lineIdSet 产线
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param unit      单位
+     * @return
+     */
+    Map<String, BigDecimal> lineClassUseCount(Set<Integer> lineIdSet, LocalDate start, LocalDate end, String unit);
 
 }

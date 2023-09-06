@@ -1256,9 +1256,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type, String unit) {
+    public Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
-        List<PmsUseCountDTO> dbList = baseMapper.getPmByLineClass(lineIdSet, date);
+        List<PmsUseCountDTO> dbList = baseMapper.getPmByLineClass(lineIdSet, start, end);
         if (CollUtil.isNotEmpty(dbList)) {
             //考虑物料的单位转换
             //考虑物料的单位转换
@@ -1296,11 +1296,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date, String unit) {
+    public Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate start , LocalDate end, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
-        LocalDateTime start = LocalDateUtil.getMorning(date);
-        LocalDateTime end = start.plusDays(1);
-        List<PmsUseCountDTO> dbList = baseMapper.getInStorageByLineClass(lineIdSet, start, end);
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getInStorageByLineClass(lineIdSet, startLdt, endLdt);
         if (CollUtil.isNotEmpty(dbList)) {
             //考虑物料的单位转换
             Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
@@ -1317,6 +1317,36 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 }
                 MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
             });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> lineClassUseCount(Set<Integer> lineIdSet, LocalDate start, LocalDate end, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        //获取(start,end)时间范围内的报工信息
+        List<PmsUseCountDTO> dbList = baseMapper.getUserCountByLineClass(lineIdSet, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            Set<Integer> stationIds = getEdgStation(new ArrayList<>(lineIdSet));
+            for (PmsUseCountDTO ele : dbList) {
+                if (stationIds.contains(ele.getStationId())) {
+                    BigDecimal quantity = ele.getQuantity();
+                    if (!sysDict1.equals(sysDict2)) {
+                        quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                    }
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                }
+            }
         }
         return resMap;
     }

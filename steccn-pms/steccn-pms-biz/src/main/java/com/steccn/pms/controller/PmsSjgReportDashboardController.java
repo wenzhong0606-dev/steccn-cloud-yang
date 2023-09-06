@@ -50,9 +50,9 @@ public class PmsSjgReportDashboardController {
 
     @GetMapping("/line/produce/classgroup")
     @ApiOperation("产线产量表格")
-    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> lineProduceClassGroup(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date, @RequestParam("unitType") Integer unitType) {
+    public R<QtLineChartBarDTO> lineProduceClassGroup(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = unit(unitType);
-        return R.success(pmsSjgReportDashboardService.lineProduceClassGroup(workShopId, date, unit.getField1(), unit.getField2()));
+        return R.success(pmsSjgReportDashboardService.lineProduceClassGroup(workShopId, start, end, unit.getField1(), unit.getField2()));
     }
 
     /**
