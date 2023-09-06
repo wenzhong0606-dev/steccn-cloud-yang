@@ -694,11 +694,24 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             partitionList.remove(jpEle);
             partitionList.add(jpEle);
         }
+
+        Optional<TripleDTO<Long, Integer, String>> glOp = partitionList.stream().filter(ele -> ele.getField3().indexOf("锅炉") != -1).findFirst();
+        if (glOp.isPresent()) {
+            partitionList.remove(glOp.get());
+        }
+
         Map<LocalDate, BigDecimal> otherMap = Maps.newHashMap();
         for (TripleDTO<Long, Integer, String> tripleDTO : partitionList) {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
             List<BigDecimal> consumeList = Lists.newArrayList();
-            List<EpMeterReadAllDataVO> dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1())).collect(Collectors.toList());
+            //需求改动余热发电 + 锅炉 => 余热发电
+            List<EpMeterReadAllDataVO> dataList;
+            if(tripleDTO.getField3().equals("余热发电") && glOp.isPresent()){
+                dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1()) || v.getOfficeId().equals(glOp.get().getField1())).collect(Collectors.toList());
+            }else{
+                dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1())).collect(Collectors.toList());
+            }
+
             List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
             for (LocalDate classDate : timeList) {
                 List<BigDecimal> valueList = dataList.stream().filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
