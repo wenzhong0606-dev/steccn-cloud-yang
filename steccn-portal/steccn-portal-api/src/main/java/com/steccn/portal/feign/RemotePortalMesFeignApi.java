@@ -25,4 +25,16 @@ public interface RemotePortalMesFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String getSid(@RequestParam("userName")String userName);
+
+
+    /**
+     * 获取mes的sid
+     * @param userName
+     * @return
+     */
+    @GetMapping(value = "/web/user/getUserCode")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String getUserCode(@RequestParam("loginCode") String userName);
+
 }
