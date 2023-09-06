@@ -111,7 +111,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                     .last(MpConstant.STR_LIMIT_1));
             Integer num = 1;
-//            if (Objects.isNull(record)) {
+            if (Objects.isNull(record)) {
 //                PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
 //                        .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
 //                        .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
@@ -121,30 +121,18 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
 //                if (Objects.nonNull(pmsBarcodePrintRecord)) {
 //                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
 //                }
-//                //增加一条记录
-//                PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
-//                printRecord.setClassesId(dto.getClassesId());
-//                printRecord.setClassGroupId(dto.getClassGroupId());
-//                printRecord.setPrintDate(LocalDate.now());
-//                printRecord.setProduceOrderId(dto.getProduceOrderId());
-//                printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
-//                printRecord.setSerialNum(num);
-//                pmsBarcodePrintRecordService.save(printRecord);
-//            } else {
-//                num = record.getSerialNum()+1;
-//            }
-            if (Objects.nonNull(record)){
-                num = record.getSerialNum()+1;
+                //增加一条记录
+                PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
+                printRecord.setClassesId(dto.getClassesId());
+                printRecord.setClassGroupId(dto.getClassGroupId());
+                printRecord.setPrintDate(LocalDate.now());
+                printRecord.setProduceOrderId(dto.getProduceOrderId());
+                printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
+                printRecord.setSerialNum(num);
+                pmsBarcodePrintRecordService.save(printRecord);
+            } else {
+                num = record.getSerialNum();
             }
-            //增加一条记录流水
-            PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
-            printRecord.setClassesId(dto.getClassesId());
-            printRecord.setClassGroupId(dto.getClassGroupId());
-            printRecord.setPrintDate(LocalDate.now());
-            printRecord.setProduceOrderId(dto.getProduceOrderId());
-            printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
-            printRecord.setSerialNum(num);
-            pmsBarcodePrintRecordService.save(printRecord);
             List<Long> ids = Lists.newArrayList();
             ids.add(dto.getClassesId());
             ids.add(dto.getClassGroupId());
