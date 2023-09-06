@@ -9,6 +9,8 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -94,6 +97,16 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         resVo.setInStorageList(inStorageList);
         resVo.setConsumeList(consumeList);
         return resVo;
+    }
+
+    @Override
+    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> lineProduceClassGroup(Integer workShopId, LocalDate date, String unit, Integer bit) {
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        Map<String, BigDecimal> linePmMap = reportWorkService.lineClassPm(lineIdList, date, 1, unit);
+        Map<String, BigDecimal> todayInStorageMap = reportWorkService.lineClassInStorage(lineIdList, date, unit);
+        return null;
     }
 
 

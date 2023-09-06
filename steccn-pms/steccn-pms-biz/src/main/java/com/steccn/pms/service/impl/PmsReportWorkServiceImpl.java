@@ -1211,32 +1211,38 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type) {
+    public Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         List<PmsUseCountDTO> dbList = baseMapper.getPmByLineClass(lineIdSet, date);
         if (CollUtil.isNotEmpty(dbList)) {
             //考虑物料的单位转换
             //考虑物料的单位转换
             Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
-            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取吨的单位
             SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Assert.notNull(sysDict1, "转换单位[片]不存在");
-            Assert.notNull(sysDict2, "转换单位[T]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (type == 0) {
                 //基片
                 //所有工位报工汇总
                 dbList.forEach(ele -> {
-                    BigDecimal convert = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
-                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), convert, (x, y) -> BigDecimalUtil.add(x, y));
+                    BigDecimal quantity = ele.getQuantity();
+                    if (!sysDict1.equals(sysDict2)) {
+                        quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                    }
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                 });
             } else {
                 Set<Integer> stationIds = getEdgStation(new ArrayList<>(lineIdSet));
                 dbList.forEach(ele -> {
                     if (stationIds.contains(ele.getStationId())) {
-                        BigDecimal convert = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
-                        MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), convert, (x, y) -> BigDecimalUtil.add(x, y));
+                        BigDecimal quantity = ele.getQuantity();
+                        if (!sysDict1.equals(sysDict2)) {
+                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                        }
+                        MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                     }
                 });
             }
@@ -1245,7 +1251,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date) {
+    public Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime start = LocalDateUtil.getMorning(date);
         LocalDateTime end = start.plusDays(1);
@@ -1256,12 +1262,15 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取吨的单位
             SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Assert.notNull(sysDict1,"转换单位[片]不存在");
-            Assert.notNull(sysDict2,"转换单位[T]不存在");
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
             dbList.forEach(ele -> {
-                BigDecimal convert = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
-                MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), convert, (x, y) -> BigDecimalUtil.add(x, y));
+                BigDecimal quantity = ele.getQuantity();
+                if (!sysDict1.equals(sysDict2)) {
+                    quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                }
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
             });
         }
         return resMap;

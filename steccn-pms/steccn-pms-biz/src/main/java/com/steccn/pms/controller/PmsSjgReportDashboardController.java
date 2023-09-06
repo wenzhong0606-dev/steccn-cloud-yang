@@ -4,6 +4,8 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.lang.Tuple;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -45,6 +48,12 @@ public class PmsSjgReportDashboardController {
         return R.success(pmsSjgReportDashboardService.lineProduceDetail(workShopId, date, unit.getField1(), unit.getField2()));
     }
 
+    @GetMapping("/line/produce/classgroup")
+    @ApiOperation("产线产量表格")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> lineProduceClassGroup(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date, @RequestParam("unitType") Integer unitType) {
+        TupleDTO<String, Integer> unit = unit(unitType);
+        return R.success(pmsSjgReportDashboardService.lineProduceClassGroup(workShopId, date, unit.getField1(), unit.getField2()));
+    }
 
     /**
      * 根据单位类型，获取转换单位

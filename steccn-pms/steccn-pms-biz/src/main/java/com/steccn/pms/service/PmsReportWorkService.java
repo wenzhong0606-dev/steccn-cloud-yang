@@ -293,9 +293,10 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param lineIdSet 产线
      * @param date 班次日期
      * @param type 0基片 1深加工
+     * @param unit 单位
      * @return
      */
-    Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type);
+    Map<String, BigDecimal> lineClassPm(Set<Integer> lineIdSet, LocalDate date, int type, String unit);
 
     /**
      * 获取产线班次入库数量 单位为T
@@ -304,5 +305,5 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param date      班次日期
      * @return
      */
-    Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date);
+    Map<String, BigDecimal> lineClassInStorage(Set<Integer> lineIdSet, LocalDate date,String unit);
 }

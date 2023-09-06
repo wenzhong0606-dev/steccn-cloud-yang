@@ -1,7 +1,12 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -32,4 +37,15 @@ public interface PmsSjgReportDashboardService {
      * @return
      */
     SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate date, String unit, Integer bit);
+
+    /**
+     * 产线产量-表格
+     *
+     * @param workShopId 车间id
+     * @param date       日期
+     * @param unit       单位
+     * @param bit        位数
+     * @return
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> lineProduceClassGroup(Integer workShopId, LocalDate date, String unit, Integer bit);
 }
