@@ -5,6 +5,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.SteccnRow;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -93,9 +95,11 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             consumeList.add(BigDecimalUtil.setScale(dateRangeUseCountMap.get(ele.getId()), bit));
         });
         resVo.setHeadList(headList);
-        resVo.setPmList(pmList);
-        resVo.setInStorageList(inStorageList);
-        resVo.setConsumeList(consumeList);
+        List<SteccnRow<String,List<BigDecimal>>> rowList = Lists.newArrayList();
+        rowList.add(new SteccnRow<>("产量",pmList));
+        rowList.add(new SteccnRow<>("入库",inStorageList));
+        rowList.add(new SteccnRow<>("耗用",consumeList));
+        resVo.setRowList(rowList);
         return resVo;
     }
 
@@ -158,9 +162,11 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             }
         });
         resVo.setHeadList(headList);
-        resVo.setPmList(pmList);
-        resVo.setInStorageList(inStorageList);
-        resVo.setConsumeList(consumeList);
+        List<SteccnRow<String,List<BigDecimal>>> rowList = Lists.newArrayList();
+        rowList.add(new SteccnRow<>("产量",pmList));
+        rowList.add(new SteccnRow<>("入库",inStorageList));
+        rowList.add(new SteccnRow<>("耗用",consumeList));
+        resVo.setRowList(rowList);
         return resVo;
     }
 
