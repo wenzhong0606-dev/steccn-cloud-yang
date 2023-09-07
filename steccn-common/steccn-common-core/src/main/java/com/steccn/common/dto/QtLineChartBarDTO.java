@@ -19,6 +19,8 @@ import java.util.List;
 public class QtLineChartBarDTO<T,Q> implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private Object xAxis;
+
     /**
      * x轴数据
      */
