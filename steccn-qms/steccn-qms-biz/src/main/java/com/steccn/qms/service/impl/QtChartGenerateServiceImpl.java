@@ -1491,7 +1491,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("早班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("早班")) {
                                 zaoAmount = BigDecimalUtil.add(zaoAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(zaoAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOZAO.setField2(zaoAmount);
@@ -1504,7 +1504,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("晚班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("晚班")) {
                                 wanAmount = BigDecimalUtil.add(wanAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(wanAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOWAN.setField2(wanAmount);
@@ -1534,7 +1534,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("甲班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("甲班")) {
                                 jiaAmount = BigDecimalUtil.add(jiaAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(jiaAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOJIA.setField2(jiaAmount);
@@ -1546,7 +1546,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("乙班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("乙班")) {
                                 yiAmount = BigDecimalUtil.add(yiAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(yiAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOYI.setField2(yiAmount);
@@ -1559,7 +1559,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("丙班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("丙班")) {
                                 binAmount = BigDecimalUtil.add(binAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(binAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOBING.setField2(binAmount);
@@ -1588,7 +1588,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             if (orderCompare.get(sysVo.getOfficeName()) != null) {
                                 for (QtChartSubDetailDTO tmp : orderCompare.get(sysVo.getOfficeName())) {
                                     cheAmount = BigDecimalUtil.add(cheAmount, tmp.getLossWeight());
-                                    sunAmount = BigDecimalUtil.add(cheAmount, sunAmount);
+                                    sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                                 }
                             }
                             tupleDTOShop.setField2(cheAmount);
@@ -1618,7 +1618,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             if (orderCompare.get(sysVo.getOfficeName()) != null) {
                                 for (QtChartSubDetailDTO tmp : orderCompare.get(sysVo.getOfficeName())) {
                                     chanAmount = BigDecimalUtil.add(chanAmount, tmp.getLossWeight());
-                                    sunAmount = BigDecimalUtil.add(chanAmount, sunAmount);
+                                    sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                                 }
                             }
                             tupleDTOShop.setField2(chanAmount);
