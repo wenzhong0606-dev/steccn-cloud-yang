@@ -17,6 +17,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
+import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -134,7 +135,8 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         }
         //自定义转换工具
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
-        qtLineChartBarDTO.setXData(Arrays.asList(xAxisList1, xAxisList2));
+        qtLineChartBarDTO.setXData(null);
+        qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
         return qtLineChartBarDTO;
     }
 
