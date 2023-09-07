@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.mes.domain.JsSysDictData;
 import com.steccn.mes.domain.MesEqpClassification;
@@ -21,8 +23,11 @@ import com.steccn.mes.vo.ErpMaterialUnitVO;
 import com.steccn.mes.vo.ErpMaterialVO;
 import com.steccn.mes.vo.MesSpareDownloadVO;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.dto.EqpSpareDto;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +48,7 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
     private final RemoteErpFeignApi remoteErpFeignApi;
     private final MesEqpClassificationMapper mesEqpClassificationMapper;
     private final JsSysDictDataService jsSysDictDataService;
+    private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
 
     @Override
     public List<MesSpareDownloadVO> downloadSpare() {
@@ -122,6 +128,19 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                         .eq(MesEqpSpare::getCode,tmp.getFnumber()));
             });
         }
+        return true;
+    }
+
+    @Override
+    public Boolean synchronousSpareToQms() {
+        List<MesEqpSpare> lists = list(new LambdaQueryWrapper<MesEqpSpare>()
+                .eq(MesEqpSpare::getStatus, "0"));
+        lists.forEach(tmp->{
+            EqpSpareDto dto = new EqpSpareDto();
+            BeanUtils.copyProperties(tmp,dto);
+            dto.setId(Long.parseLong(tmp.getId()));
+            Boolean result = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.synchronizeMaterial(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        });
         return true;
     }
 }

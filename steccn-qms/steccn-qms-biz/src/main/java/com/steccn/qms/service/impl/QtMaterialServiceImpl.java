@@ -1,6 +1,8 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -13,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -34,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.IdGenerator;
 
 import java.util.*;
 
@@ -226,6 +230,28 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
             throw new BusinessException("请先在物料配置中关联检验方案");
         }
         return vos;
+    }
+
+    @Override
+    public Boolean synchronizeMaterial(EqpSpareDto dto) {
+        QtMaterial one = getOne(new LambdaQueryWrapper<QtMaterial>()
+                .eq(QtMaterial::getCode, dto.getCode())
+                .last("limit 1"));
+        if(Objects.isNull(one)){
+            QtMaterial model = new QtMaterial();
+            BeanUtils.copyProperties(dto,model);
+            model.setType(Lists.newArrayList());
+            if(model.getId()==null){
+                model.setId(IdUtil.getSnowflake().nextId());
+            }
+            save(model);
+        }else {
+            QtMaterial model = new QtMaterial();
+            BeanUtils.copyProperties(dto,model);
+            model.setId(one.getId());
+            updateById(model);
+        }
+        return true;
     }
 }
 

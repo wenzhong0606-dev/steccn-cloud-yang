@@ -51,4 +51,10 @@ public class MesSpareController {
     public R<Boolean> synchronousSpareUnit(@RequestBody ErpCustomerDTO dto) {
         return R.success(mesEqpSpareService.synchronousSpareUnit(dto));
     }
+
+    @GetMapping("/synchronousSpareToQms")
+    @ApiOperation(value = "同步物料单位")
+    public R<Boolean> synchronousSpareToQms() {
+        return R.success(mesEqpSpareService.synchronousSpareToQms());
+    }
 }
