@@ -34,8 +34,9 @@ public class UnitConvertUtil {
             Optional<SysSpareUnitConversionVO> sourceOp = convertList.stream().filter(ele -> sourceUnitId.equals(ele.getUnitId()) && targetUnitId.equals(ele.getConversionUnitId())).findFirst();
             if (sourceOp.isPresent()) {
                 SysSpareUnitConversionVO source = sourceOp.get();
-                BigDecimal res = BigDecimalUtil.divide(source.getConversionQuantity(), source.getQuantity(), BigDecimalUtil.SCALE_4);
-                return res.multiply(quantity);
+                BigDecimal multiply = BigDecimalUtil.multiply(quantity, source.getConversionQuantity());
+                BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), BigDecimalUtil.DEFAULT_SCALE);
+                return res;
             }
         }
         return null;
@@ -56,9 +57,9 @@ public class UnitConvertUtil {
             Optional<SysSpareUnitConversionVO> sourceOp = convertList.stream().filter(ele -> sourceUnitId.equals(ele.getUnitId()) && targetUnitId.equals(ele.getConversionUnitId())).findFirst();
             if (sourceOp.isPresent()) {
                 SysSpareUnitConversionVO source = sourceOp.get();
-                BigDecimal res = BigDecimalUtil.divide(source.getConversionQuantity(), source.getQuantity(), BigDecimalUtil.SCALE_4);
-                BigDecimal multiply = BigDecimalUtil.multiply(res, quantity);
-                return BigDecimalUtil.setScale(multiply, scale);
+                BigDecimal multiply = BigDecimalUtil.multiply(source.getConversionQuantity(), quantity);
+                BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), scale);
+                return res;
             }
         }
         return null;

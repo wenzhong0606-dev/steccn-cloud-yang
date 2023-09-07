@@ -11,6 +11,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -38,6 +39,7 @@ import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
@@ -1157,6 +1159,13 @@ public class ReportServiceImpl implements ReportService {
         OutputQualityVO outputQualityVO = new OutputQualityVO();
         outputQualityVO.setType(1);
 
+        SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        cn.hutool.core.lang.Assert.notNull(sysDict1, "换算单位1不存在");
+        cn.hutool.core.lang.Assert.notNull(sysDict2, "换算单位2不存在");
+        cn.hutool.core.lang.Assert.notNull(sysDict3, "换算单位3不存在");
+
         //构建主表格数据
         List<OutputQualityDataVO> outputQualityDataVOS = Lists.newArrayList();
         if (CollUtil.isNotEmpty(materialList)) {
@@ -1243,8 +1252,12 @@ public class ReportServiceImpl implements ReportService {
                     }
 
                     //根据报工数量计算产量 吨/平方米
-                    BigDecimal value1 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 1);
-                    BigDecimal value2 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 2);
+                    List<SysSpareUnitConversionVO> unitConvertList = unitConvertMap.get(eqpSpareVO.getId());
+                    BigDecimal value1 = UnitConvertUtil.convertMaterial(unitConvertList, sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.DEFAULT_SCALE);
+                    BigDecimal value2 = UnitConvertUtil.convertMaterial(unitConvertList, sysDict1.getId(), sysDict3.getId(), quantity, BigDecimalUtil.DEFAULT_SCALE);
+
+//                    BigDecimal value1 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 1);
+//                    BigDecimal value2 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 2);
                     outputQualityDataVO.setOutputTon(value1.compareTo(BigDecimal.ZERO) == 0 ? null : value1);
                     outputQualityDataVO.setOutputSq(value2.compareTo(BigDecimal.ZERO) == 0 ? null : value2);
                     //产线
