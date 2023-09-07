@@ -112,15 +112,16 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .last(MpConstant.STR_LIMIT_1));
             Integer num = 1;
             if (Objects.isNull(record)) {
-//                PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
-//                        .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
-//                        .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
-//                        .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
-//                        .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
-//                        .last(MpConstant.STR_LIMIT_1));
-//                if (Objects.nonNull(pmsBarcodePrintRecord)) {
-//                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
-//                }
+                PmsBarcodePrintRecord pmsBarcodePrintRecord = pmsBarcodePrintRecordService.getOne(new LambdaQueryWrapper<PmsBarcodePrintRecord>()
+                        .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
+                        .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
+                        .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                        .eq(PmsBarcodePrintRecord::getProduceLineId,dto.getProductionLine())
+                        .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
+                        .last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(pmsBarcodePrintRecord)) {
+                    num = pmsBarcodePrintRecord.getSerialNum() + 1;
+                }
                 //增加一条记录
                 PmsBarcodePrintRecord printRecord = new PmsBarcodePrintRecord();
                 printRecord.setClassesId(dto.getClassesId());
