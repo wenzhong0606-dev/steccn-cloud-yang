@@ -62,4 +62,13 @@ public interface PmsSjgReportDashboardService {
      * @return
      */
     SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
+
+    /**
+     *
+     * @param workShopId 车间id
+     * @param start 开始
+     * @param end 结束
+     * @return
+     */
+    QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end);
 }

@@ -170,6 +170,14 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         return resVo;
     }
 
+    @Override
+    public QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end) {
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return null;
+    }
+
     /**
      * 获取车间的产线集合
      *
