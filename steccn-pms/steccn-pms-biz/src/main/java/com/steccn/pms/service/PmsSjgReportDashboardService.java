@@ -64,7 +64,7 @@ public interface PmsSjgReportDashboardService {
     SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
 
     /**
-     *
+     * 产线成品率
      * @param workShopId 车间id
      * @param start 开始
      * @param end 结束

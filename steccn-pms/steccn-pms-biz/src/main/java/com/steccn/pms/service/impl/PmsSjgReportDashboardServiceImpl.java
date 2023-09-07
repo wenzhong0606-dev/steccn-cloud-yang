@@ -1,5 +1,6 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
@@ -16,7 +17,10 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
+import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +49,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     private final PmsReportWorkServiceImpl reportWorkService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final PmsReportWorkMapper pmsReportWorkMapper;
 
     @Override
     public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
@@ -177,7 +182,48 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        return null;
+        //获取全量数据
+        ProcessReportWorkPageDTO dto = new ProcessReportWorkPageDTO();
+        dto.setStartDtStart(start);
+        dto.setStartDtEnd(end);
+        dto.setProductLineIds(lineIdList.stream().collect(Collectors.toList()));
+        List<ProcessReportWorkPageVO> processReportWorkPageVOS = pmsReportWorkMapper.processReportDashBoard(dto);
+        Assert.notNull(processReportWorkPageVOS, "暂无数据");
+        //把所有的工序名称挑出来
+        List<String> processNames = processReportWorkPageVOS.stream().map(ProcessReportWorkPageVO::getProcessName).distinct().collect(Collectors.toList());
+        //开始组数据
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        wsLineList.forEach(ele -> {
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            stackGraphDTO.setXAxis(ele.getOfficeName());
+            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+            List<ProcessReportWorkPageVO> lineData = processReportWorkPageVOS.stream().filter(v -> v.getProductLineId().equals(ele.getId())).collect(Collectors.toList());
+            //对工序进行分组
+            for(String name:processNames){
+                List<ProcessReportWorkPageVO> processData = lineData.stream().filter(v -> v.getProcessName().equals(name)).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(processData)){
+                    BigDecimal processQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
+                    BigDecimal badnessQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
+                    BigDecimal minus = BigDecimalUtil.subtract(processQuantity,badnessQuantity);
+                    dataList.add(new TupleDTO<>(name, BigDecimalUtil.divide(minus,processQuantity,4)));
+                }else {
+                    dataList.add(new TupleDTO<>(name, null));
+                }
+            }
+            List<ProcessReportWorkPageVO> moData = lineData.stream().filter(v -> v.getProcessName().equals("磨边工序")).collect(Collectors.toList());
+            List<ProcessReportWorkPageVO> gangData = lineData.stream().filter(v -> v.getProcessName().equals("钢化工序")).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(moData)&&CollUtil.isNotEmpty(gangData)){
+                BigDecimal moProcessQuantity = BigDecimalUtil.sum(moData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
+                BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
+                BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
+                BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
+                dataList.add(new TupleDTO<>("合计", BigDecimalUtil.divide(minus,moProcessQuantity,4)));
+            }
+            //算合计
+            stackGraphDTO.setData(dataList);
+            stackGraphDTOList.add(stackGraphDTO);
+        });
+        return StackGraphUtil.convertData(stackGraphDTOList);
     }
 
     /**

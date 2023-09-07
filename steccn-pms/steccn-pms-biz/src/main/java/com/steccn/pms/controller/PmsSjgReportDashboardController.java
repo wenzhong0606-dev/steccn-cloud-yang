@@ -63,6 +63,12 @@ public class PmsSjgReportDashboardController {
         return R.success(pmsSjgReportDashboardService.lineProduceClassGroupDetail(workShopId, start, end, unit.getField1(), unit.getField2()));
     }
 
+    @GetMapping("/line/produce/passRate")
+    @ApiOperation("产线合格率")
+    public R<QtLineChartBarDTO> linePassRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.linePassRate(workShopId,start,end));
+    }
+
     /**
      * 根据单位类型，获取转换单位
      *

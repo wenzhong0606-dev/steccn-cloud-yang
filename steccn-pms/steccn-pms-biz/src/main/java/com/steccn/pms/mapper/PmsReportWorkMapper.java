@@ -239,6 +239,13 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<PmsUseCountDTO> getUserCountByLineClass(@Param("lineList") Set<Integer> lineIdSet,
                                                  @Param("start") LocalDateTime start,
                                                  @Param("end") LocalDateTime end);
+    /**
+     * 工序报工展示
+     *
+     * @param dto  条件
+     * @return vo
+     */
+    List<ProcessReportWorkPageVO> processReportDashBoard(@Param("dto") ProcessReportWorkPageDTO dto);
 }
 
 
