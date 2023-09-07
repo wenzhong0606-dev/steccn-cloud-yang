@@ -456,17 +456,21 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         BeanUtil.copyProperties(order, wmsStorageReceiptVO);
         Set<Long> dictSet = Sets.newHashSet();
         Set<Integer> officeSet = Sets.newHashSet();
+        List<Long> materialIds = Lists.newArrayList();
         dictSet.add(wmsStorageReceiptVO.getType());
         officeSet.add(wmsStorageReceiptVO.getWarehouseId());
         //处理明细数据
         list.forEach(wmsStorageReceiptInfo -> {
             dictSet.add(wmsStorageReceiptInfo.getUnit());
+            materialIds.add(wmsStorageReceiptInfo.getMaterialId());
         });
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(list, WmsStorageReceiptInfoVO.class);
         wmsStorageReceiptInfoVOS.forEach(wmsStorageReceiptInfoVO -> {
             wmsStorageReceiptInfoVO.setUnitName(dictMap.get(wmsStorageReceiptInfoVO.getUnit()));
+            wmsStorageReceiptInfoVO.setSpecification(materialMap.get(wmsStorageReceiptInfoVO.getMaterialId()).getSpecifications());
         });
         wmsStorageReceiptVO.setWarehouseName(officeMap.get(wmsStorageReceiptVO.getWarehouseId()));
         wmsStorageReceiptVO.setTypeName(dictMap.get(wmsStorageReceiptVO.getType()));
@@ -768,6 +772,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return true;
     }
 
+    @Override
+    public String inStorageCodeRepeat(LocalDate current) {
+        Long aLong = currentMaxCode();
+        return Objects.isNull(aLong) ? String.valueOf(1) : String.valueOf(aLong);
+    }
+
     WmsDeliveryReceiptDTO chargeAgainst(Long id, String userName) {
         RLock lock = redissonClient.getLock(LockConstant.WMS_CHARGE_AGAINST);
         lock.lock();
@@ -834,6 +844,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
 
+
+
     /**
      * 当前最大的code值
      *
@@ -850,7 +862,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + WmsCodeUtil.NUM_BIT_12);
+                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + 10);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

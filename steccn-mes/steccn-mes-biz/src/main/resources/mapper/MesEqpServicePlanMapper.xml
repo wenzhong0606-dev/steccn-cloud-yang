@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEqpServicePlanMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEqpServicePlan">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+            <result property="eqpId" column="eqp_id" jdbcType="VARCHAR"/>
+            <result property="part" column="part" jdbcType="VARCHAR"/>
+            <result property="maintainMethod" column="maintain_method" jdbcType="VARCHAR"/>
+            <result property="roleId" column="role_id" jdbcType="VARCHAR"/>
+            <result property="isStop" column="is_stop" jdbcType="CHAR"/>
+            <result property="cycle" column="cycle" jdbcType="DOUBLE"/>
+            <result property="cycleUnit" column="cycle_unit" jdbcType="VARCHAR"/>
+            <result property="hoursOfWork" column="hours_of_work" jdbcType="DOUBLE"/>
+            <result property="workUnits" column="work_units" jdbcType="VARCHAR"/>
+            <result property="lead" column="lead" jdbcType="DOUBLE"/>
+            <result property="leadUnit" column="lead_unit" jdbcType="VARCHAR"/>
+            <result property="delayTime" column="delay_time" jdbcType="DOUBLE"/>
+            <result property="delayUnit" column="delay_unit" jdbcType="VARCHAR"/>
+            <result property="fileId" column="file_id" jdbcType="VARCHAR"/>
+            <result property="accendant" column="accendant" jdbcType="VARCHAR"/>
+            <result property="maintenanceTime" column="maintenance_time" jdbcType="TIMESTAMP"/>
+            <result property="post" column="post" jdbcType="VARCHAR"/>
+            <result property="approvalPost" column="approval_post" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,eqp_id,part,
+        maintain_method,role_id,is_stop,
+        cycle,cycle_unit,hours_of_work,
+        work_units,lead,lead_unit,
+        delay_time,delay_unit,file_id,
+        accendant,maintenance_time,post,
+        approval_post
+    </sql>
+</mapper>

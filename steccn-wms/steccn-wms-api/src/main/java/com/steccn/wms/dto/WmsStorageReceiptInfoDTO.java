@@ -60,7 +60,7 @@ public class WmsStorageReceiptInfoDTO {
     private String associatedNo;
 
     @ApiModelProperty("批次")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "批次不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "批次不能为空")
     private String batch;
 
     @ApiModelProperty("箱号")

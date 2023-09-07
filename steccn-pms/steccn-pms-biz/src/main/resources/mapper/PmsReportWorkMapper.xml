@@ -319,6 +319,25 @@
         </foreach>
         group by rw.product_line_id, DATE_FORMAT(rw.class_date, '%Y-%m') , rw.station_id
     </select>
+
+    <select id="getUseCountClassDate" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id,
+        rw.class_date as class_date,
+        rw.station_id ,
+        po.material_id,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
+        where rw.del_flag = 0
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id, rw.class_date , rw.station_id , po.material_id
+    </select>
+
     <select id="useCountPerOrder" resultType="com.steccn.pms.dto.PmsUseCountDTO">
         select
         rw.produce_order_no,
@@ -381,7 +400,7 @@
         rw.product_line_id,
         rw.station_id ,
         de.material_id,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity - rw.badness_quantity) as quantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND rw.class_date = #{today}
@@ -391,7 +410,24 @@
         </foreach>
         group by rw.product_line_id , rw.station_id , de.material_id
     </select>
-    <select id="getTodayInStorage" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+    <select id="getDateRangePm" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id,
+        rw.station_id ,
+        de.material_id,
+        sum(rw.process_quantity - rw.badness_quantity) as quantity
+        from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
+        where rw.del_flag = 0 AND de.del_flag = 0
+        AND rw.class_date &gt;= #{start}
+        AND rw.class_date &lt;= #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id , rw.station_id , de.material_id
+    </select>
+
+    <select id="getDateRangeInStorage" resultType="com.steccn.pms.dto.PmsUseCountDTO">
         SELECT
         ppo.production_line_id as product_line_id,
         ppo.material_id,
@@ -456,7 +492,8 @@
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
         </foreach>
-        AND rw.class_date = #{date}
+        AND rw.class_date &gt;= #{start}
+        AND rw.class_date &lt;= #{end}
         group by de.production_line_id, rw.classes_id, rw.station_id , de.material_id
     </select>
     <select id="getInStorageByLineClass" resultType="com.steccn.pms.dto.PmsUseCountDTO">
@@ -482,4 +519,38 @@
         ppo.material_id,
         pcsi.classes_id
     </select>
+    <select id="getDateRangeUseCount" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id,
+        rw.station_id ,
+        po.material_id,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
+        where rw.del_flag = 0
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id , rw.station_id , po.material_id
+    </select>
+    <select id="getUserCountByLineClass" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id,
+        rw.station_id ,
+        rw.classes_id as class_id ,
+        po.material_id,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
+        where rw.del_flag = 0
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id ,rw.classes_id ,  rw.station_id , po.material_id
+    </select>
+
 </mapper>

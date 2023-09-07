@@ -12,6 +12,7 @@ import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 
 import java.io.IOException;
+import java.time.LocalDate;
 
 /**
 * @author W10
@@ -116,4 +117,7 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Boolean purchaseLinkErp(Long id);
+
+
+    String inStorageCodeRepeat(LocalDate current);
 }

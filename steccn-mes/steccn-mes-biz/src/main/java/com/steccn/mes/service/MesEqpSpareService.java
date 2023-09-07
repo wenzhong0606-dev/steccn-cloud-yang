@@ -24,4 +24,11 @@ public interface MesEqpSpareService extends IService<MesEqpSpare> {
      * @return
      */
     Boolean synchronousSpare(ErpCustomerDTO dto);
+
+    /**
+     * 同步物料单位
+     * @param dto
+     * @return
+     */
+    Boolean synchronousSpareUnit(ErpCustomerDTO dto);
 }

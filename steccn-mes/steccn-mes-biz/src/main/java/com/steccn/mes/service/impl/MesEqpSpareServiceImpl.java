@@ -8,19 +8,23 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.vo.R;
+import com.steccn.mes.domain.JsSysDictData;
 import com.steccn.mes.domain.MesEqpClassification;
 import com.steccn.mes.domain.MesEqpSpare;
 import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.mes.mapper.MesEqpClassificationMapper;
+import com.steccn.mes.service.JsSysDictDataService;
 import com.steccn.mes.service.MesEqpSpareService;
 import com.steccn.mes.mapper.MesEqpSpareMapper;
+import com.steccn.mes.vo.ErpMaterialUnitVO;
 import com.steccn.mes.vo.ErpMaterialVO;
 import com.steccn.mes.vo.MesSpareDownloadVO;
 import com.steccn.oa.constant.OaConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,6 +42,7 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
     implements MesEqpSpareService{
     private final RemoteErpFeignApi remoteErpFeignApi;
     private final MesEqpClassificationMapper mesEqpClassificationMapper;
+    private final JsSysDictDataService jsSysDictDataService;
 
     @Override
     public List<MesSpareDownloadVO> downloadSpare() {
@@ -90,6 +95,25 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     }
                     save(model);
                 }
+            });
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean synchronousSpareUnit(ErpCustomerDTO dto) {
+        List<ErpMaterialUnitVO> erpMaterial = remoteErpFeignApi.getErpMaterialUnit(dto).getData();
+        if(CollUtil.isNotEmpty(erpMaterial)){
+            erpMaterial.forEach(tmp -> {
+                JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                        .eq(JsSysDictData::getDictLabel, tmp.getFbaseunitname())
+                        .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                MesEqpSpare model = new MesEqpSpare();
+                model.setUnit(measureUnit.getDictLabel());
+                model.setUnitId(Long.parseLong(measureUnit.getDictCode()));
+                update(model,new LambdaQueryWrapper<MesEqpSpare>()
+                        .eq(MesEqpSpare::getCode,tmp.getFnumber()));
             });
         }
         return true;

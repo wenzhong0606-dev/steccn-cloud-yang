@@ -129,6 +129,7 @@
                 and plan_start_time between #{dto.actualStartTime} and #{dto.actualEndTime}
             </if>
         </where>
+        order by create_time desc
     </select>
     <select id="reportWorkOrderPage" resultType="com.steccn.pms.vo.PmsProduceOrderVO">
         select

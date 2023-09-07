@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEquipmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEquipment">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="equipmentCode" column="equipment_code" jdbcType="VARCHAR"/>
+            <result property="equipmentName" column="equipment_name" jdbcType="VARCHAR"/>
+            <result property="parentCode" column="parent_code" jdbcType="VARCHAR"/>
+            <result property="parentCodes" column="parent_codes" jdbcType="VARCHAR"/>
+            <result property="treeSort" column="tree_sort" jdbcType="DECIMAL"/>
+            <result property="treeSorts" column="tree_sorts" jdbcType="VARCHAR"/>
+            <result property="treeLeaf" column="tree_leaf" jdbcType="CHAR"/>
+            <result property="treeNames" column="tree_names" jdbcType="VARCHAR"/>
+            <result property="treeLevel" column="tree_level" jdbcType="DECIMAL"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="classification" column="classification" jdbcType="VARCHAR"/>
+            <result property="department" column="department" jdbcType="VARCHAR"/>
+            <result property="isSpecial" column="is_special" jdbcType="CHAR"/>
+            <result property="purchaseTime" column="purchase_time" jdbcType="TIMESTAMP"/>
+            <result property="manufacturer" column="manufacturer" jdbcType="VARCHAR"/>
+            <result property="model" column="model" jdbcType="VARCHAR"/>
+            <result property="propertyCode" column="property_code" jdbcType="VARCHAR"/>
+            <result property="isEqp" column="is_eqp" jdbcType="CHAR"/>
+            <result property="bitNumber" column="bit_number" jdbcType="VARCHAR"/>
+            <result property="state" column="state" jdbcType="CHAR"/>
+            <result property="isSkip" column="is_skip" jdbcType="CHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,equipment_code,equipment_name,
+        parent_code,parent_codes,tree_sort,
+        tree_sorts,tree_leaf,tree_names,
+        tree_level,status,create_by,
+        create_date,update_by,update_date,
+        remarks,classification,department,
+        is_special,purchase_time,manufacturer,
+        model,property_code,is_eqp,
+        bit_number,state,is_skip
+    </sql>
+</mapper>

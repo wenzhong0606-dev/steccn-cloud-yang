@@ -22,4 +22,8 @@ public class SparePageDTO extends BasePageDTO {
 
     @ApiModelProperty("物料编码")
     private String code;
+
+
+    @ApiModelProperty("规格")
+    private String specifications;
 }

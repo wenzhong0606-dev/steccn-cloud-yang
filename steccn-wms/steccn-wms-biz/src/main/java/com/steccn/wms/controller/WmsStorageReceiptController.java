@@ -26,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -118,6 +119,11 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.purchaseLinkErp(id));
     }
 
+    @ApiOperation("入库单号重复-排查")
+    @GetMapping("/in/storage/code")
+    public R<String> inStorageCodeRepeat(@RequestParam("date") LocalDate current) {
+        return R.success(wmsStorageReceiptService.inStorageCodeRepeat(current));
+    }
 
 
 }

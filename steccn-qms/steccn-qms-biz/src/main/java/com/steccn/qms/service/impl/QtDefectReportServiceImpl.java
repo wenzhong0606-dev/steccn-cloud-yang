@@ -401,7 +401,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
                 OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
                 row.setClassGroupName(oaGroupCountDTO.getGroupName());
-                List<QtCheckItemMaterialAvgDTO> filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassGroupId().equals(oaGroupCountDTO.getGroupId())).collect(Collectors.toList());
+                List<QtCheckItemMaterialAvgDTO> filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassId().equals(classId)).collect(Collectors.toList());
                 Map<String, BigDecimal> dataMap = Maps.newHashMap();
                 if (CollUtil.isNotEmpty(filterList)) {
                     filterList.forEach(ele -> dataMap.put(ele.getCode(), ele.getValue()));

@@ -186,7 +186,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
                 //测试，发送给傅圣杰
-                longIds.add(940L);
+//                longIds.add(940L);
                 sysMsgMesDTO.setUserList(longIds);
             }
 

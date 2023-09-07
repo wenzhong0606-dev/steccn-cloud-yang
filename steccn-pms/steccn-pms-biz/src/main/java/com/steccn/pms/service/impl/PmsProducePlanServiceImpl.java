@@ -134,6 +134,12 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
                 if (present.isPresent()) {
                     BeanUtils.copyProperties(present.get(), planDetailsDTO);
+                    if(StrUtil.isNotBlank(present.get().getCustomerCode())){
+                        pmsProducePlanDTO.setCustomerCode(present.get().getCustomerCode());
+                    }
+                    if(StrUtil.isNotBlank(present.get().getCustomerName())){
+                        pmsProducePlanDTO.setCustomerCode(present.get().getCustomerName());
+                    }
                 } else {
                     planDetailsDTO.setPlanDate(localDate);
                 }

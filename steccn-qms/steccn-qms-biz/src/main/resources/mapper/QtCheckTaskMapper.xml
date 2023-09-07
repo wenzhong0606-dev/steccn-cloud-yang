@@ -488,8 +488,8 @@
         SELECT
             task.product_line ->> '$.id' AS product_line_id,
             class_time AS class_date,
-            class_group_id,
-            ROUND( avg( check_result ), 2 ) AS VALUE,
+            classes_id as class_id,
+            CAST(avg( check_result ) AS DECIMAL(9,2)) AS VALUE,
             item.code
         FROM
         qt_check_task task
@@ -510,7 +510,7 @@
         AND spot_time &lt; #{end}
         GROUP BY
         class_time,
-        class_group_id,
+        classes_id,
         task.product_line ->> '$.id',
         item.code
     </select>

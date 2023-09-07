@@ -76,6 +76,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         if (CollUtil.isNotEmpty(dbList)) {
             List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
             resVal = BigDecimalUtil.sum(collect);
+            resVal = BigDecimalUtil.setScale(resVal, 1);
         }
         return resVal;
     }
@@ -112,7 +113,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum2, sum1, sum3);
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
     }
 
     /**
@@ -188,7 +189,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(sum2, sum1, sum3);
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
     }
 
     @Override
@@ -231,37 +232,39 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //分页获取订单，按创建时间倒序
         Page<PmsProduceOrder> page = pmsProduceOrderService.page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsProduceOrder>()
                 .in(PmsProduceOrder::getState, Arrays.asList(1, 3, 4, 2))
+                .eq(Objects.nonNull(dto.getProductLineId()), PmsProduceOrder::getProductionLineId, dto.getProductLineId())
                 .eq(Objects.nonNull(dto.getState()), PmsProduceOrder::getState, dto.getState())
                 .orderByDesc(PmsProduceOrder::getCreateTime));
         //获取到订单
         List<DashboardProducePageListVO> resList = new ArrayList<>();
-        //获取所有的规格
-        Set<Long> materialIdSet = Sets.newHashSet();
-        List<Integer> lineList = Lists.newArrayList();
-        Set<Long> orderIdSet = Sets.newHashSet();
-        page.getRecords().forEach(ele -> {
-            materialIdSet.add(ele.getMaterialId());
-            lineList.add(ele.getProductionLineId());
-            orderIdSet.add(ele.getId());
-        });
-        Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
-        Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
-
-        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        page.getRecords().forEach(ele -> {
-            DashboardProducePageListVO res = new DashboardProducePageListVO();
-            BeanUtils.copyProperties(ele, res);
-            res.setPlanQuantity(ele.getQuantity());
-            res.setOrderId(ele.getId());
-            res.setSpecifications(spareMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
-            //完工数量：订单对应的报工数量汇总
-            res.setCompleteQuantity(pmByOrderMap.get(ele.getId()));
-            //入库数量：订单对应的入库单数量汇总
-            res.setInStorageQuantity(inStorageMap.get(ele.getId()));
-            //欠额：计划数量 - 入库数量
-            res.setDebtQuantity(BigDecimalUtil.subtract(res.getPlanQuantity(), res.getInStorageQuantity()));
-            resList.add(res);
-        });
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            //获取所有的规格
+            Set<Long> materialIdSet = Sets.newHashSet();
+            List<Integer> lineList = Lists.newArrayList();
+            Set<Long> orderIdSet = Sets.newHashSet();
+            page.getRecords().forEach(ele -> {
+                materialIdSet.add(ele.getMaterialId());
+                lineList.add(ele.getProductionLineId());
+                orderIdSet.add(ele.getId());
+            });
+            Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
+            Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
+            Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach(ele -> {
+                DashboardProducePageListVO res = new DashboardProducePageListVO();
+                BeanUtils.copyProperties(ele, res);
+                res.setPlanQuantity(ele.getQuantity());
+                res.setOrderId(ele.getId());
+                res.setSpecifications(spareMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
+                //完工数量：订单对应的报工数量汇总
+                res.setCompleteQuantity(pmByOrderMap.get(ele.getId()));
+                //入库数量：订单对应的入库单数量汇总
+                res.setInStorageQuantity(inStorageMap.get(ele.getId()));
+                //欠额：计划数量 - 入库数量
+                res.setDebtQuantity(BigDecimalUtil.subtract(res.getPlanQuantity(), res.getInStorageQuantity()));
+                resList.add(res);
+            });
+        }
         Page<DashboardProducePageListVO> resPage = new Page<>();
         BeanUtils.copyProperties(page, resPage);
         resPage.setRecords(resList);
@@ -315,7 +318,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
         //获取班次产量
-        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, 0);
+        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, 0, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
@@ -370,7 +373,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
         //获取班次产量
-        Map<String, BigDecimal> inStorageMap = pmsReportWorkService.lineClassInStorage(wsLineMap.keySet(), date);
+        Map<String, BigDecimal> inStorageMap = pmsReportWorkService.lineClassInStorage(wsLineMap.keySet(), date, date, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(inStorageMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();

@@ -1,5 +1,6 @@
 package com.steccn.pms.vo;
 
+import com.steccn.pms.dto.MaterialRequisitionInfoDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -62,4 +63,8 @@ public class MaterialRequisitionInfoVO {
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
+
+
+    @ApiModelProperty("需求人")
+    private List<MaterialRequisitionInfoDemanderVO> demanderList;
 }
