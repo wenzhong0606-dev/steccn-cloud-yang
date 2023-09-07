@@ -18,6 +18,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.IntegerUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.UnitLengthUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.data.dto.DwStationInfoDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
@@ -1255,11 +1256,8 @@ public class ReportServiceImpl implements ReportService {
                     List<SysSpareUnitConversionVO> unitConvertList = unitConvertMap.get(eqpSpareVO.getId());
                     BigDecimal value1 = UnitConvertUtil.convertMaterial(unitConvertList, sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.DEFAULT_SCALE);
                     BigDecimal value2 = UnitConvertUtil.convertMaterial(unitConvertList, sysDict1.getId(), sysDict3.getId(), quantity, BigDecimalUtil.DEFAULT_SCALE);
-
-//                    BigDecimal value1 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 1);
-//                    BigDecimal value2 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 2);
-                    outputQualityDataVO.setOutputTon(value1.compareTo(BigDecimal.ZERO) == 0 ? null : value1);
-                    outputQualityDataVO.setOutputSq(value2.compareTo(BigDecimal.ZERO) == 0 ? null : value2);
+                    outputQualityDataVO.setOutputTon(BigDecimalUtil.setScale(value1, UnitLengthUtil.UNIT_TON_LENGTH));
+                    outputQualityDataVO.setOutputSq(BigDecimalUtil.setScale(value2, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
                     //产线
                     outputQualityDataVO.setProductionLine(lineNameMap.get(reportWork.getProductLineId()).getOfficeName());
                     //产线排序
@@ -1283,9 +1281,7 @@ public class ReportServiceImpl implements ReportService {
                             outputQualityDataVO.setCurrentClass(BigDecimal.ZERO);
                         }
                         //计算成品率
-                        BigDecimal divide = BigDecimalUtil.divide(value1, outputQualityDataVO.getCurrentClass(), 4);
-                        BigDecimal hundred = BigDecimal.valueOf(100);
-                        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
+                        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.percent(value1, outputQualityDataVO.getCurrentClass(), UnitLengthUtil.UNIT_PERCENT_LENGTH));
                     }
                     outputQualityDataVOS.add(outputQualityDataVO);
                 }
@@ -1354,9 +1350,9 @@ public class ReportServiceImpl implements ReportService {
                     }
                 }
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
-                    outputQualityDataVO.setTotalPull(quantity);
+                    outputQualityDataVO.setTotalPull(BigDecimalUtil.setScale(quantity, UnitLengthUtil.UNIT_TON_LENGTH));
                     if (PmManagerConstant.FORE_SHIFT.equals(outputQualityDataVO.getClasses())) {
-                        outputQualityDataVO.setTotalPull(BigDecimalUtil.subtract(quantity, nightQuantity, 4));
+                        outputQualityDataVO.setTotalPull(BigDecimalUtil.subtract(quantity, nightQuantity, UnitLengthUtil.UNIT_TON_LENGTH));
                     }
                 }
             }
@@ -1380,16 +1376,16 @@ public class ReportServiceImpl implements ReportService {
                     }
                 }
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
-                    outputQualityDataVO.setTotalOutput(quantity);
+                    outputQualityDataVO.setTotalOutput(BigDecimalUtil.setScale(quantity, UnitLengthUtil.UNIT_TON_LENGTH));
                     if (PmManagerConstant.FORE_SHIFT.equals(outputQualityDataVO.getClasses())) {
-                        outputQualityDataVO.setTotalOutput(quantity.subtract(nightQuantity));
+                        outputQualityDataVO.setTotalOutput(BigDecimalUtil.subtract(quantity, nightQuantity, UnitLengthUtil.UNIT_TON_LENGTH));
                     }
                 }
             }
             //累计成品率
             for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
-                BigDecimal divide = BigDecimalUtil.divide(outputQualityDataVO.getTotalOutput(),outputQualityDataVO.getTotalPull(),4);
-                outputQualityDataVO.setTotalFinishedProduct(BigDecimalUtil.multiply(divide, new BigDecimal(100)));
+                BigDecimal percent = BigDecimalUtil.percent(outputQualityDataVO.getTotalOutput(), outputQualityDataVO.getTotalPull());
+                outputQualityDataVO.setTotalFinishedProduct(percent);
             }
             //排序
             outputQualityDataVOS = outputQualityDataVOS.stream()
@@ -1464,22 +1460,19 @@ public class ReportServiceImpl implements ReportService {
             nightProductLineCount.computeIfPresent(foreDatum.getProductionLine(), (k, v) -> v + 1);
         }
 
-
         OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
         outputQualityDataVO.setType(2);
         outputQualityDataVO.setProductionLine("合计");
-        outputQualityDataVO.setCurrentClass(currentClass.compareTo(BigDecimal.ZERO) == 0 ? null : currentClass);
-        outputQualityDataVO.setOutputSq(outputSq.compareTo(BigDecimal.ZERO) == 0 ? null : outputSq);
-        outputQualityDataVO.setOutputTon(outputTon.compareTo(BigDecimal.ZERO) == 0 ? null : outputTon);
+        outputQualityDataVO.setCurrentClass(BigDecimalUtil.setScale(currentClass, UnitLengthUtil.UNIT_TON_LENGTH));
+        outputQualityDataVO.setOutputSq(BigDecimalUtil.setScale(outputSq, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
+        outputQualityDataVO.setOutputTon(BigDecimalUtil.setScale(outputTon, UnitLengthUtil.UNIT_TON_LENGTH));
         outputQualityDataVO.setShutUp(shutUp);
         outputQualityDataVO.setStartToTalk(startToTalk);
         outputQualityDataVO.setStone(stone);
         outputQualityDataVO.setVariant(variant);
         outputQualityDataVO.setFlaw(IntegerUtil.add(IntegerUtil.add(shutUp, startToTalk), IntegerUtil.add(stone, variant)));
         outputQualityDataVO.setAverageThickness(averageThickness.divide(new BigDecimal(dayData.size() + nightData.size())));
-        BigDecimal divide = BigDecimalUtil.divide(outputTon, currentClass, 4);
-        BigDecimal hundred = BigDecimal.valueOf(100);
-        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
+        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.percent(outputTon, currentClass));
         outputQualityDataVO.setClasses(null);
         return outputQualityDataVO;
     }
@@ -2438,20 +2431,17 @@ public class ReportServiceImpl implements ReportService {
         OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
         outputQualityDataVO.setType(1);
         outputQualityDataVO.setProductionLine("合计");
-        outputQualityDataVO.setCurrentClass(currentClass.compareTo(BigDecimal.ZERO) == 0 ? null : currentClass);
-        outputQualityDataVO.setOutputSq(outputSq.compareTo(BigDecimal.ZERO) == 0 ? null : outputSq);
-        outputQualityDataVO.setOutputTon(outputTon.compareTo(BigDecimal.ZERO) == 0 ? null : outputTon);
+        outputQualityDataVO.setCurrentClass(BigDecimalUtil.setScale(currentClass, UnitLengthUtil.UNIT_TON_LENGTH));
+        outputQualityDataVO.setOutputSq(BigDecimalUtil.setScale(outputSq, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
+        outputQualityDataVO.setOutputTon(BigDecimalUtil.setScale(outputTon, UnitLengthUtil.UNIT_TON_LENGTH));
         outputQualityDataVO.setShutUp(shutUp);
         outputQualityDataVO.setStartToTalk(startToTalk);
         outputQualityDataVO.setStone(stone);
         outputQualityDataVO.setVariant(variant);
         outputQualityDataVO.setFlaw(IntegerUtil.add(IntegerUtil.add(shutUp, startToTalk), IntegerUtil.add(stone, variant)));
         outputQualityDataVO.setAverageThickness(averageThickness.divide(new BigDecimal(size)));
-        BigDecimal divide = BigDecimalUtil.divide(outputTon, currentClass, 4);
-        BigDecimal hundred = BigDecimal.valueOf(100);
-        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
+        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.percent(outputTon, currentClass));
         outputQualityDataVO.setClasses(data.get(0).getClasses());
-//        outputQualityDataVO.setClassGroup(data.get(0).getClassGroup());
         return outputQualityDataVO;
     }
 
