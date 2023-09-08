@@ -21,7 +21,7 @@ public class OperationStateVO implements Serializable {
     /**
      * 时间
      */
-    private LocalDateTime planTime;
+    private LocalDateTime time;
     /**
      * 百分比
      */

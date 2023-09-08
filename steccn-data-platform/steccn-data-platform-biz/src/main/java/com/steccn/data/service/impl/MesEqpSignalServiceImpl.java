@@ -86,7 +86,7 @@ public class MesEqpSignalServiceImpl extends ServiceImpl<MesEqpSignalMapper, Mes
             }
             OperationStateVO state = new OperationStateVO();
             state.setState(tmp.getValue());
-            state.setPlanTime(tmp.getTimestamp());
+            state.setTime(tmp.getTimestamp());
             state.setPercent(percent);
             states.add(state);
         }
