@@ -54,6 +54,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -151,6 +153,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
                 String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
                 printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
+                printModel.setNumber(currentMaxNo);
                 if (Objects.isNull(dto.getShelfId())) {
                     printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
                 }
@@ -236,6 +239,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
 //            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
             String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
             printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
+            printModel.setNumber(currentMaxNo);
             if (Objects.isNull(dto.getShelfId())) {
                 printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
             }
@@ -259,7 +263,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
                 .eq(Objects.nonNull(dto.getCaseState()), PmsBarcodePrint::getCaseState, dto.getCaseState())
-                .orderByDesc(PmsBarcodePrint::getCreateTime, PmsBarcodePrint::getCaseNo));
+                .orderByDesc(PmsBarcodePrint::getCreateTime, PmsBarcodePrint::getNumber));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
@@ -488,18 +492,22 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
      * @return 最大箱号
      */
     private long newOrderMaxCaseNo(Long produceOrderId, Long classesId, Long classGroupId, Integer productionLine) {
+        LocalDate now = LocalDate.now();
         PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getProduceOrderId, produceOrderId)
                 .eq(PmsBarcodePrint::getClassesId, classesId)
                 .eq(PmsBarcodePrint::getClassGroupId, classGroupId)
                 .eq(PmsBarcodePrint::getProductionLine, productionLine)
-                .orderByDesc(PmsBarcodePrint::getCaseNo)
+                .between(PmsBarcodePrint::getCreateTime,LocalDateTime.of(now, LocalTime.MIN),LocalDateTime.of(now, LocalTime.MAX))
+                .orderByDesc(PmsBarcodePrint::getNumber)
                 .last(MpConstant.STR_LIMIT_1));
         long currentMax = PmsCodeUtil.DEFAULT_PADDING;
         if (Objects.nonNull(one)) {
-            String substring = one.getCaseNo().substring(one.getCaseNo().length() - PmsCodeUtil.NUM_BIT_2);
+//            String[] cases = one.getCaseNo().split(PmsCodeUtil.SHORT_LINE);
+//            String aCase = cases[cases.length - 1];
+//            String substring = one.getCaseNo().substring(one.getCaseNo().length() - PmsCodeUtil.NUM_BIT_2);
             try {
-                currentMax = Long.parseLong(substring);
+                currentMax = one.getNumber();
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
             }

@@ -554,7 +554,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             wmsInventory.setDelFlag(1);
             wmsInventory.setCreateBy(System.currentTimeMillis());
         });
-        boolean b = updateBatchById(list);
+        List<Long> collect = list.stream().map(WmsInventory::getId).collect(Collectors.toList());
+        boolean b = removeByIds(collect);
         log.info("删除库存信息："+list.size() + b);
         log.info("结束时间："+ LocalDateTime.now());
         return true;
