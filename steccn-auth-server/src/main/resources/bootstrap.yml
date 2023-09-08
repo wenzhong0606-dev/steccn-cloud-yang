@@ -7,12 +7,12 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 10.1.103.235:8848
-        namespace: steccn_dev
+        server-addr: 192.168.1.178:8848
+        namespace: 02661da9-6934-416e-b9e8-d1bd0c1b4d1d
       config:
-        server-addr: 10.1.103.235:8848
+        server-addr: 192.168.1.178:8848
         file-extension: yaml
         shared-configs:
           - data-id: application.yaml
             refresh: true
-        namespace: steccn_dev
+        namespace: 02661da9-6934-416e-b9e8-d1bd0c1b4d1d

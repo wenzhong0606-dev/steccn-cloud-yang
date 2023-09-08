@@ -604,13 +604,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
                         for (WmsStorageReceiptInfo info : receiptInfoList) {
                             info.setStorageReceiptId(receipt.getId());
-                            if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
-                                //生成箱号
-                                info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
-                                System.out.println("caseNo:" + WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
-                                caseNo++;
-                                System.out.println(caseNo);
-                            }
+//                            if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+//                                //生成箱号
+//                                info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
+//                                System.out.println("caseNo:" + WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
+//                                caseNo++;
+//                                System.out.println(caseNo);
+//                            }
+                            info.setCaseNo(info.getMaterialCode());
                             //生成库存信息
                             WmsInventory wmsInventory = new WmsInventory();
                             BeanUtil.copyProperties(info, wmsInventory);
@@ -783,19 +784,21 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         map.values().forEach( office ->ids.add(Long.valueOf(office.getId())));
         //删除入库单数据
         List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>().in(WmsStorageReceipt::getWarehouseId, ids));
-        list.forEach( wmsStorageReceipt -> {
-            wmsStorageReceipt.setCreateBy(System.currentTimeMillis());
-            wmsStorageReceipt.setDelFlag(1);
-        });
+//        list.forEach( wmsStorageReceipt -> {
+//            wmsStorageReceipt.setCreateBy(System.currentTimeMillis());
+//            wmsStorageReceipt.setDelFlag(1);
+//        });
         //明细数据
         Set<Long> receiptIdS = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toSet());
         List<WmsStorageReceiptInfo> infos = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().in(WmsStorageReceiptInfo::getStorageReceiptId, receiptIdS));
-        infos.forEach( info ->{
-            info.setCreateBy(System.currentTimeMillis());
-            info.setDelFlag(1);
-        });
-        boolean b = updateBatchById(list);
-        boolean b1 = wmsStorageReceiptInfoService.updateBatchById(infos);
+//        infos.forEach( info ->{
+//            info.setCreateBy(System.currentTimeMillis());
+//            info.setDelFlag(1);
+//        });
+        List<Long> infoIds = infos.stream().map(WmsStorageReceiptInfo::getId).collect(Collectors.toList());
+        List<Long> listIds = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toList());
+        boolean b = removeByIds(listIds);
+        boolean b1 = wmsStorageReceiptInfoService.removeByIds(infoIds);
         log.info("软删入库单数据:"+list.size() + b);
         log.info("软删入库单明细数据:"+infos.size() + b1);
         log.info("结束时间："+LocalDateTime.now());
