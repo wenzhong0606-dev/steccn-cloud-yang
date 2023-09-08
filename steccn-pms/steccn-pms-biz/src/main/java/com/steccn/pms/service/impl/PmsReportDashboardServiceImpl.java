@@ -318,7 +318,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
         //获取班次产量
-        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, 0);
+        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, 0, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
@@ -373,7 +373,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
         //获取班次产量
-        Map<String, BigDecimal> inStorageMap = pmsReportWorkService.lineClassInStorage(wsLineMap.keySet(), date);
+        Map<String, BigDecimal> inStorageMap = pmsReportWorkService.lineClassInStorage(wsLineMap.keySet(), date, date, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(inStorageMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
