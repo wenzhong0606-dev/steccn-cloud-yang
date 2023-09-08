@@ -56,6 +56,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -151,7 +152,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 PmsBarcodePrint printModel = new PmsBarcodePrint();
                 BeanUtils.copyProperties(dto, printModel);
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
-                String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+                String date = LocalDate.now().format(formatter);
                 printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
                 printModel.setNumber(currentMaxNo);
                 if (Objects.isNull(dto.getShelfId())) {
@@ -237,7 +239,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             BeanUtils.copyProperties(dto, printModel);
             printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
 //            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
-            String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+            String date = LocalDate.now().format(formatter);
             printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
             printModel.setNumber(currentMaxNo);
             if (Objects.isNull(dto.getShelfId())) {
