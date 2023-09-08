@@ -71,4 +71,31 @@ public interface PmsSjgReportDashboardService {
      * @return
      */
     QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 产线成品率表格
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgDashboardLineProduceVO linePassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班组成品率
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    QtLineChartBarDTO lineGroupPassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班组成品率表格
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgDashboardLineProduceVO lineGroupPassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
 }

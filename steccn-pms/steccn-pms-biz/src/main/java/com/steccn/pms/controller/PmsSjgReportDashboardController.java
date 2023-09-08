@@ -69,6 +69,24 @@ public class PmsSjgReportDashboardController {
         return R.success(pmsSjgReportDashboardService.linePassRate(workShopId,start,end));
     }
 
+    @GetMapping("/line/produce/passRate/detail")
+    @ApiOperation("产线合格率详情")
+    public R<SjgDashboardLineProduceVO> linePassRateDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.linePassRateDetail(workShopId,start,end));
+    }
+
+    @GetMapping("/line/produce/classPassrate")
+    @ApiOperation("产线班组合格率")
+    public R<QtLineChartBarDTO> lineGroupPassRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.lineGroupPassRate(workShopId,start,end));
+    }
+
+    @GetMapping("/line/produce/classPassrate/detail")
+    @ApiOperation("产线班组合格率详情")
+    public R<SjgDashboardLineProduceVO> lineGroupPassRateDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.lineGroupPassRateDetail(workShopId,start,end));
+    }
+
     /**
      * 根据单位类型，获取转换单位
      *
