@@ -3,6 +3,7 @@ package com.steccn.data.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -21,4 +22,8 @@ public class OperationStateVO implements Serializable {
      * 时间
      */
     private LocalDateTime planTime;
+    /**
+     * 百分比
+     */
+    private BigDecimal percent;
 }

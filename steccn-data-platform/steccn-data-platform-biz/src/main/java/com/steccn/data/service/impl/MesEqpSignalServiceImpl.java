@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.data.domain.MesEqpSignal;
 import com.steccn.data.dto.OperationRecordsDTO;
 import com.steccn.data.service.MesEqpSignalService;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
@@ -61,21 +63,31 @@ public class MesEqpSignalServiceImpl extends ServiceImpl<MesEqpSignalMapper, Mes
         long stopNum = mesEqpSignals.stream().filter(v -> v.getValue().equals(OaConstant.NO)).count();
         result.setStopNum(stopNum);
         List<OperationStateVO> states = Lists.newArrayList();
+        long allTime = DateUtil.between(Date.from(mesEqpSignals.get(0).getTimestamp().atZone(ZoneId.systemDefault()).toInstant()),Date.from(dto.getEndTime().atZone(ZoneId.systemDefault()).toInstant()), DateUnit.MS);
         long miles = 0;
+        BigDecimal percentAll = BigDecimal.ZERO;
         //停机时间
         for(int i = 0; i < mesEqpSignals.size(); i++){
             MesEqpSignal tmp = mesEqpSignals.get(i);
+            BigDecimal percent = BigDecimal.ZERO;
             if(tmp.getValue().equals(OaConstant.NO)){
                 //如果下一个没有
                 if(i+1 == mesEqpSignals.size()){
                     miles = miles + DateUtil.between(Date.from(tmp.getTimestamp().atZone(ZoneId.systemDefault()).toInstant()),Date.from(dto.getEndTime().atZone(ZoneId.systemDefault()).toInstant()), DateUnit.MS);
+                    percent = BigDecimalUtil.subtract(new BigDecimal(1),percentAll);
+                    if(percent.compareTo(new BigDecimal(0))==-1){
+                        percent = BigDecimal.ZERO;
+                    }
                 }else {
                     miles = miles + DateUtil.between(Date.from(tmp.getTimestamp().atZone(ZoneId.systemDefault()).toInstant()),Date.from(mesEqpSignals.get(i+1).getTimestamp().atZone(ZoneId.systemDefault()).toInstant()), DateUnit.MS);
+                    percent = BigDecimalUtil.divide(new BigDecimal(miles),new BigDecimal(allTime));
+                    percentAll = BigDecimalUtil.add(percentAll,percent);
                 }
             }
             OperationStateVO state = new OperationStateVO();
             state.setState(tmp.getValue());
             state.setPlanTime(tmp.getTimestamp());
+            state.setPercent(percent);
             states.add(state);
         }
         String formatSecond = DateUtil.formatBetween(miles, BetweenFormatter.Level.SECOND);
