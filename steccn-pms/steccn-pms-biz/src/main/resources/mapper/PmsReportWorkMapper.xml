@@ -100,8 +100,8 @@
         prw.produce_order_id,
         ppo.production_line_id as productLineId,
         ppo.material_id,
-        any_value(ppo.material_code),
-        any_value(ppo.material_name),
+        any_value(ppo.material_code) as material_code,
+        any_value(ppo.material_name) as material_name,
         prw.classes_id,
         sum( prw.process_quantity ) AS quantity,
         any_value(prw.unit_id)
@@ -135,8 +135,8 @@
         ppo.id as produceOrderId,
         ppo.production_line_id as productLineId,
         ppo.material_id,
-        any_value(ppo.material_code),
-        any_value(ppo.material_name),
+        any_value(ppo.material_code) as material_code,
+        any_value(ppo.material_name) as material_name,
         pcsi.classes_id,
         sum( pcsi.quantity ) AS quantity,
         any_value(pcsi.unit_id)

@@ -147,10 +147,12 @@ public class ReportServiceImpl implements ReportService {
                 Map<Integer, BigDecimal> countMap3 = Maps.newHashMap();
                 //获取当前产线下的数据
                 List<SubstrateDataListVO> productLineDataList = finalRowDataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.toList());
+                //根据规格分组
+                Map<String, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getMaterialCode));
                 //将当前产线下的数据根据物料分组
-                Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getProduceOrderId));
+//                Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getProduceOrderId));
                 //遍历物料分组的数据，来组装数据
-                for (Map.Entry<Long, List<SubstrateDataListVO>> entry : materialMap.entrySet()) {
+                for (Map.Entry<String, List<SubstrateDataListVO>> entry : materialMap.entrySet()) {
                     Long materialId = entry.getValue().get(0).getMaterialId();
                     SubstrateDayReportListVO row = new SubstrateDayReportListVO();
                     row.setType(PmReportConstant.TYPE_0);
@@ -166,7 +168,14 @@ public class ReportServiceImpl implements ReportService {
                         List<SubstrateDataListVO> classData = classDataMap.getOrDefault(c.getId(), defaultSubstrateDataListVOList);
                         //将classData分成不同类型
                         Map<Integer, SubstrateDataListVO> typeMap = Maps.newHashMap();
-                        classData.forEach(cld -> typeMap.put(cld.getType(), cld));
+                        classData.forEach(cld -> {
+                            if (typeMap.containsKey(cld.getType())) {
+                                BigDecimal tmpQuantity = typeMap.get(cld.getType()).getQuantity();
+                                cld.setQuantity(BigDecimalUtil.add(cld.getQuantity(), tmpQuantity));
+                            }
+                            typeMap.put(cld.getType(), cld);
+                        });
+//                        classData.forEach(cld -> typeMap.put(cld.getType(), cld));
                         SubstrateDataListVO typeVO0 = typeMap.getOrDefault(PmReportConstant.TYPE_0, defaultSubstrateDataListVO);
                         SubstrateDataListVO typeVO1 = typeMap.getOrDefault(PmReportConstant.TYPE_1, defaultSubstrateDataListVO);
                         inCount = BigDecimalUtil.add(inCount, typeVO0.getQuantity());
