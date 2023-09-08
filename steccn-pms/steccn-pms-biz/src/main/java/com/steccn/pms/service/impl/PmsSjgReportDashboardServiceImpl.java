@@ -217,7 +217,12 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                 BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                 BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                 BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
-                dataList.add(new TupleDTO<>("合计", BigDecimalUtil.divide(minus,moProcessQuantity,4)));
+                //校验是否比1大
+                BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
+                if(divide.compareTo(new BigDecimal(1))==1){
+                    divide = BigDecimal.ONE;
+                }
+                dataList.add(new TupleDTO<>("合计", divide));
             }
             //算合计
             stackGraphDTO.setData(dataList);
@@ -267,10 +272,10 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             row.setDynamicRow(rowData);
             rowList.add(row);
         }
+        //算合计
+        SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
+        List<BigDecimal> rowData = Lists.newArrayList();
         for(SysOfficeVO tmp:wsLineList){
-            //算合计
-            SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
-            List<BigDecimal> rowData = Lists.newArrayList();
             List<ProcessReportWorkPageVO> processData = processReportWorkPageVOS.stream()
                     .filter(v -> v.getProductLineId().equals(tmp.getId())).collect(Collectors.toList());
             List<ProcessReportWorkPageVO> moData = processData.stream().filter(v -> v.getProcessName().equals("磨边工序")).collect(Collectors.toList());
@@ -280,14 +285,19 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                 BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                 BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                 BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
-                rowData.add(BigDecimalUtil.divide(minus,moProcessQuantity,4));
+                //校验是否比1大
+                BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
+                if(divide.compareTo(new BigDecimal(1))==1){
+                    divide = BigDecimal.ONE;
+                }
+                rowData.add(divide);
             }else {
                 rowData.add(null);
             }
-            row.setFixRow("合计");
-            row.setDynamicRow(rowData);
-            rowList.add(row);
         }
+        row.setFixRow("合计");
+        row.setDynamicRow(rowData);
+        rowList.add(row);
         result.setHeadList(headList);
         result.setRowList(rowList);
         return result;
@@ -315,9 +325,9 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         List<String> xAxisList1 = Lists.newArrayList();
         List<String> xAxisList2 = Lists.newArrayList();
         wsLineList.forEach(ele -> {
-            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
             for (SysDictVO sysDict : sysDictList) {
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
                 stackGraphDTO.setXAxis(sysDict.getName());
                 List<ProcessReportWorkPageVO> classOrderData = processReportWorkPageVOS.stream().filter(v -> v.getProductLineId().equals(ele.getId())&&v.getClassesId().equals(sysDict.getId())).collect(Collectors.toList());
                 //对工序进行分组
@@ -340,15 +350,18 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                     BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                     BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                     BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
-                    dataList.add(new TupleDTO<>("合计", BigDecimalUtil.divide(minus,moProcessQuantity,4)));
+                    //校验是否比1大
+                    BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
+                    if(divide.compareTo(new BigDecimal(1))==1){
+                        divide = BigDecimal.ONE;
+                    }
+                    dataList.add(new TupleDTO<>("合计", divide));
                 }
                 stackGraphDTO.setData(dataList);
                 stackGraphDTOList.add(stackGraphDTO);
                 xAxisList2.add(sysDict.getName());
             }
             xAxisList1.add(ele.getOfficeName());
-            stackGraphDTO.setData(dataList);
-            stackGraphDTOList.add(stackGraphDTO);
         });
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
         qtLineChartBarDTO.setXData(null);
@@ -403,10 +416,10 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             row.setDynamicRow(rowData);
             rowList.add(row);
         }
+        //算合计
+        SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
+        List<BigDecimal> rowData = Lists.newArrayList();
         for(SysOfficeVO tmp:wsLineList){
-            //算合计
-            SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
-            List<BigDecimal> rowData = Lists.newArrayList();
             for(SysDictVO dicTmp:sysDictList){
                 List<ProcessReportWorkPageVO> processData = processReportWorkPageVOS.stream()
                         .filter(v -> v.getProductLineId().equals(tmp.getId())
@@ -418,15 +431,20 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                     BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                     BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                     BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
-                    rowData.add(BigDecimalUtil.divide(minus,moProcessQuantity,4));
+                    //校验是否比1大
+                    BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
+                    if(divide.compareTo(new BigDecimal(1))==1){
+                        divide = BigDecimal.ONE;
+                    }
+                    rowData.add(divide);
                 }else {
                     rowData.add(null);
                 }
             }
-            row.setFixRow("合计");
-            row.setDynamicRow(rowData);
-            rowList.add(row);
         }
+        row.setFixRow("合计");
+        row.setDynamicRow(rowData);
+        rowList.add(row);
         result.setHeadList(headList);
         result.setRowList(rowList);
         return result;

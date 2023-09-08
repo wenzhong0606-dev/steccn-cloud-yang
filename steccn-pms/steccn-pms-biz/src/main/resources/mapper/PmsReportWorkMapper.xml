@@ -559,13 +559,13 @@
             SUM(prw.badness_quantity) AS badnessQuantity,
             prw.classes_id,
             prw.product_line_id,
-            pp.name AS processName,
+            pp.name AS processName
         FROM pms_report_work prw
                  JOIN pms_produce_order_craft pp ON pp.id = prw.process_id
         WHERE
             prw.del_flag = 0 AND pp.del_flag = 0
         AND product_line_id IN
-        <foreach collection="productLineIds" item="lineId" open="(" close=")" separator=",">
+        <foreach collection="dto.productLineIds" item="lineId" open="(" close=")" separator=",">
             #{lineId}
         </foreach>
         <if test="dto.startTimeStart != null">
