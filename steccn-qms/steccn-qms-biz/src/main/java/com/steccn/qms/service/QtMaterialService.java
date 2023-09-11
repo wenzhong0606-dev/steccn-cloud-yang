@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.qms.domain.QtMaterial;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
@@ -52,4 +53,10 @@ public interface QtMaterialService extends IService<QtMaterial> {
      * @return
      */
     List<QtMaterialLinkPlanVO> listLink(Long id,Integer type);
+
+    /**
+     * 同步数据
+     * @return
+     */
+    Boolean synchronizeMaterial(EqpSpareDto dto);
 }

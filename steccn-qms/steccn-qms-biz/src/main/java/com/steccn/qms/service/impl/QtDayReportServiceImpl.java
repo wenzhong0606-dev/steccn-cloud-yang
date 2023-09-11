@@ -1462,11 +1462,18 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             //早班对象和晚班对象
                             if (CollUtil.isNotEmpty(dayData)) {
                                 QtChartSubDetailDTO amountDay = dayData.stream().filter(v -> v.getWorkOrder().equals(className) && v.getReason().equals(tmp)).findFirst().orElse(null);
+                                //找到当天的拉引量,同一天取相同的拉引量
+                                QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v -> v.getWorkOrder().equals(className) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);
                                 BigDecimal lossAmount = BigDecimal.ZERO;
                                 BigDecimal pullAmount = BigDecimal.ZERO;
                                 if (Objects.nonNull(amountDay)) {
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
-                                    pullAmount = BigDecimalUtil.add(pullAmount, amountDay.getPullAmount());
+                                    //找到当天的拉引量,同一天取相同的拉引量
+                                    if(Objects.nonNull(pullAmountDay)&&pullAmountDay.getPullAmount()!=null){
+                                        pullAmount = BigDecimalUtil.add(pullAmount, pullAmountDay.getPullAmount());
+                                    }else {
+                                        pullAmount = BigDecimalUtil.add(pullAmount, amountDay.getPullAmount());
+                                    }
                                 }
                                 lineDataTmp.add(lossAmount.toString());
                                 lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(lossAmount, pullAmount, 4)));

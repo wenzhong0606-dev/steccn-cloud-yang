@@ -18,5 +18,6 @@
         <module>steccn-common-oauth</module>
         <module>steccn-common-log</module>
         <module>steccn-common-xxljob</module>
+        <module>steccn-common-pgdata</module>
     </modules>
 </project>

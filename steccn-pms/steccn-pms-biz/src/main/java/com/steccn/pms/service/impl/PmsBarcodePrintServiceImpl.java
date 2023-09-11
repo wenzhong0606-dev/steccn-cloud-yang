@@ -54,6 +54,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -107,6 +110,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
                     .eq(PmsBarcodePrintRecord::getProduceOrderId, dto.getProduceOrderId())
                     .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                    .eq(PmsBarcodePrintRecord::getProduceLineId,dto.getProductionLine())
                     .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                     .last(MpConstant.STR_LIMIT_1));
             Integer num = 1;
@@ -115,6 +119,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                         .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
                         .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
                         .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
+                        .eq(PmsBarcodePrintRecord::getProduceLineId,dto.getProductionLine())
                         .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                         .last(MpConstant.STR_LIMIT_1));
                 if (Objects.nonNull(pmsBarcodePrintRecord)) {
@@ -126,6 +131,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 printRecord.setClassGroupId(dto.getClassGroupId());
                 printRecord.setPrintDate(LocalDate.now());
                 printRecord.setProduceOrderId(dto.getProduceOrderId());
+                printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
                 printRecord.setSerialNum(num);
                 pmsBarcodePrintRecordService.save(printRecord);
             } else {
@@ -146,8 +152,10 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 PmsBarcodePrint printModel = new PmsBarcodePrint();
                 BeanUtils.copyProperties(dto, printModel);
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
-                String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+                String date = LocalDate.now().format(formatter);
                 printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
+                printModel.setNumber(currentMaxNo);
                 if (Objects.isNull(dto.getShelfId())) {
                     printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
                 }
@@ -185,6 +193,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     .eq(PmsBarcodePrintRecord::getClassesId, dto.getClassesId())
                     .eq(PmsBarcodePrintRecord::getClassGroupId, dto.getClassGroupId())
 //                    .eq(PmsBarcodePrintRecord::getProduceOrderId, dto.getProduceOrderId())
+                            .eq(PmsBarcodePrintRecord::getProduceLineId,dto.getProductionLine())
                     .eq(PmsBarcodePrintRecord::getPrintDate, LocalDate.now())
                     .orderByDesc(PmsBarcodePrintRecord::getSerialNum)
                     .last(MpConstant.STR_LIMIT_1));
@@ -195,6 +204,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 printRecord.setClassesId(dto.getClassesId());
                 printRecord.setClassGroupId(dto.getClassGroupId());
                 printRecord.setPrintDate(LocalDate.now());
+                printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
                 printRecord.setProduceOrderId(dto.getProduceOrderId());
                 printRecord.setSerialNum(num);
                 pmsBarcodePrintRecordService.save(printRecord);
@@ -205,6 +215,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     printRecord.setClassesId(dto.getClassesId());
                     printRecord.setClassGroupId(dto.getClassGroupId());
                     printRecord.setPrintDate(LocalDate.now());
+                    printRecord.setProduceLineId(Long.valueOf(dto.getProductionLine()));
                     printRecord.setProduceOrderId(dto.getProduceOrderId());
                     printRecord.setSerialNum(record.getSerialNum() + 1);
                     pmsBarcodePrintRecordService.save(printRecord);
@@ -228,8 +239,10 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             BeanUtils.copyProperties(dto, printModel);
             printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
 //            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
-            String date = LocalDate.now().toString().replace(PmsCodeUtil.SHORT_LINE, "");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+            String date = LocalDate.now().format(formatter);
             printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
+            printModel.setNumber(currentMaxNo);
             if (Objects.isNull(dto.getShelfId())) {
                 printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
             }
@@ -253,7 +266,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
                 .eq(Objects.nonNull(dto.getCaseState()), PmsBarcodePrint::getCaseState, dto.getCaseState())
-                .orderByDesc(PmsBarcodePrint::getCreateTime, PmsBarcodePrint::getCaseNo));
+                .orderByDesc(PmsBarcodePrint::getCreateTime, PmsBarcodePrint::getNumber));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
@@ -482,18 +495,22 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
      * @return 最大箱号
      */
     private long newOrderMaxCaseNo(Long produceOrderId, Long classesId, Long classGroupId, Integer productionLine) {
+        LocalDate now = LocalDate.now();
         PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getProduceOrderId, produceOrderId)
                 .eq(PmsBarcodePrint::getClassesId, classesId)
                 .eq(PmsBarcodePrint::getClassGroupId, classGroupId)
                 .eq(PmsBarcodePrint::getProductionLine, productionLine)
-                .orderByDesc(PmsBarcodePrint::getCaseNo)
+                .between(PmsBarcodePrint::getCreateTime,LocalDateTime.of(now, LocalTime.MIN),LocalDateTime.of(now, LocalTime.MAX))
+                .orderByDesc(PmsBarcodePrint::getNumber)
                 .last(MpConstant.STR_LIMIT_1));
         long currentMax = PmsCodeUtil.DEFAULT_PADDING;
         if (Objects.nonNull(one)) {
-            String substring = one.getCaseNo().substring(one.getCaseNo().length() - PmsCodeUtil.NUM_BIT_2);
+//            String[] cases = one.getCaseNo().split(PmsCodeUtil.SHORT_LINE);
+//            String aCase = cases[cases.length - 1];
+//            String substring = one.getCaseNo().substring(one.getCaseNo().length() - PmsCodeUtil.NUM_BIT_2);
             try {
-                currentMax = Long.parseLong(substring);
+                currentMax = one.getNumber();
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
             }

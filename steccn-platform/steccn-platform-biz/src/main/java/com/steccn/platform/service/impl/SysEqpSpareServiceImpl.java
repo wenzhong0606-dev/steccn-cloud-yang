@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
@@ -195,6 +196,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     public Page<EqpSpareVO> listPage(SparePageDTO sparePageDTO) {
         //1.自定义查询条件
         LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>()
+                .ne(SysEqpSpare::getStatus, OaConstant.NUM_1.toString())
                 .like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName())
                 .like(StrUtil.isNotBlank(sparePageDTO.getCode()), SysEqpSpare::getCode, sparePageDTO.getCode())
                 .like(StrUtil.isNotBlank(sparePageDTO.getSpecifications()),SysEqpSpare::getSpecifications,sparePageDTO.getSpecifications());

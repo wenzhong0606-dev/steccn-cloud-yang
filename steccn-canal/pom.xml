@@ -66,6 +66,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-qms-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

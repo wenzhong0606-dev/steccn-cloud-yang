@@ -360,6 +360,11 @@ public interface PmManagerConstant {
     Integer DIRECTOR_ID_PEIDIANFU = 160;
 
     /**
+     * 电器维修工段副段长
+     */
+    Integer DIRECTOR_ID_DIANQI = 177;
+
+    /**
      * 机修段长
      */
     Integer DIRECTOR_ID_JIXIU = 172;
@@ -383,6 +388,11 @@ public interface PmManagerConstant {
      * 原料二车间，高压电力工段
      */
     Integer DEPARTMENT_GAOYADIANLI = 140;
+
+    /**
+     * 电工工段
+     */
+    Integer DEPARTMENT_DIANGONG = 144;
 
     /**
      * 机修工段

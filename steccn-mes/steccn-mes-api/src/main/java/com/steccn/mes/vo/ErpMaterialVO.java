@@ -41,5 +41,13 @@ public class ErpMaterialVO implements Serializable {
      * 是否启用批号
      */
     private String fislot;
+    /**
+     * 基本单位编码
+     */
+    private String fbaseunitno;
+    /**
+     * 基本单位名称
+     */
+    private String fbaseunitname;
 
 }

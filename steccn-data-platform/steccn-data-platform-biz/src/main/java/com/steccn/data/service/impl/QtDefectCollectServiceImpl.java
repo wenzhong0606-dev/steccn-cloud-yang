@@ -2,29 +2,23 @@ package com.steccn.data.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.domain.QtDefectCollect;
-import com.steccn.data.domain.QtDefectCollectDetail;
-import com.steccn.data.service.QtDefectCollectDetailService;
-import com.steccn.data.service.QtDefectCollectService;
 import com.steccn.data.mapper.QtDefectCollectMapper;
+import com.steccn.data.service.QtDefectCollectService;
 import com.steccn.data.vo.DwDefectCollectVO;
-import com.steccn.qms.util.ShardTimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author yequan

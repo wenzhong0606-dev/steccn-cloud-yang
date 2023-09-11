@@ -120,4 +120,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
 
 
     String inStorageCodeRepeat(LocalDate current);
+
+    Boolean deleteData();
 }

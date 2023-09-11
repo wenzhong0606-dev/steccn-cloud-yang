@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEqpInsTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEqpInsTask">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="asignee" column="asignee" jdbcType="VARCHAR"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="taskType" column="task_type" jdbcType="VARCHAR"/>
+            <result property="planPeriod" column="plan_period" jdbcType="DOUBLE"/>
+            <result property="planPeriodUnit" column="plan_period_unit" jdbcType="VARCHAR"/>
+            <result property="planTime" column="plan_time" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="finishedTime" column="finished_time" jdbcType="TIMESTAMP"/>
+            <result property="recordCode" column="record_code" jdbcType="VARCHAR"/>
+            <result property="signTime" column="sign_time" jdbcType="TIMESTAMP"/>
+            <result property="planId" column="plan_id" jdbcType="BIGINT"/>
+            <result property="officeCode" column="office_code" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,name,asignee,
+        code,task_type,plan_period,
+        plan_period_unit,plan_time,status,
+        create_by,create_date,update_by,
+        update_date,remarks,finished_time,
+        record_code,sign_time,plan_id,
+        office_code
+    </sql>
+
+    <select id="findTaskCount" resultType="com.steccn.mes.dto.MesInsTaskCountDTO">
+        SELECT count(*) AS num,b.office_auth AS officeCode
+            FROM mes_eqp_ins_task a
+        LEFT JOIN mes_eqp_ins_plan b
+            on a.plan_id = b.id
+        WHERE
+        <if test="dto.statusNe!=null">
+            a.status != #{dto.statusNe}
+        </if>
+        <if test="dto.status!=null">
+            a.status = #{dto.status}
+        </if>
+        <if test="dto.startTime != null">
+            AND a.create_date &gt;= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null">
+            AND a.create_date &lt;= #{dto.endTime}
+        </if>
+        GROUP BY b.office_auth
+    </select>
+
+    <select id="findInsCount" resultType="com.steccn.mes.dto.MesInsTaskCountDTO">
+        SELECT count(*) AS num,c.office_auth AS officeCode
+            FROM mes_eqp_ins_task_eqp_item a
+        LEFT JOIN mes_eqp_ins_task b
+            on a.ins_task_id = b.id
+        LEFT JOIN mes_eqp_ins_plan c
+            ON c.id = b.plan_id
+        WHERE a.is_selected = 1
+        <if test="dto.status!=null">
+            AND a.is_finished = #{dto.status}
+        </if>
+        <if test="dto.startTime != null">
+            AND a.create_date &gt;= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null">
+            AND a.create_date &lt;= #{dto.endTime}
+        </if>
+        GROUP BY c.office_auth
+    </select>
+</mapper>

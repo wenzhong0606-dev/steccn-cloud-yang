@@ -200,4 +200,10 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean deduct(List<WmsInventory> wmsInventoryList);
+
+    /**
+     * 根据仓库批量删除库存数据
+     * @return
+     */
+    Boolean deleteData();
 }
