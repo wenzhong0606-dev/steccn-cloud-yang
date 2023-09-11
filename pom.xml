@@ -97,6 +97,12 @@
                 <artifactId>steccn-common-data</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+            <!--steccn-common-pgdata-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-common-pgdata</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
             <!--steccn-pms-api-->
             <dependency>
                 <groupId>com.steccn</groupId>
