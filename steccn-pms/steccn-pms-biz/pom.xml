@@ -72,10 +72,6 @@
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-common-data</artifactId>
-        </dependency>
 
         <!-- steccn-pms-api-->
         <dependency>
