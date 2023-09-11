@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.TupleDTO;
 
 import java.time.LocalDate;
 
@@ -18,7 +19,8 @@ public interface PmsReportDashboardCtService {
      * @param workShopId 车间主键
      * @param start      开始日期
      * @param end        结束日期
+     * @param unit       单位对象
      * @return
      */
-    QtLineChartBarDTO produceClass(Integer workShopId, LocalDate start, LocalDate end);
+    QtLineChartBarDTO produceClass(Integer workShopId, LocalDate start, LocalDate end, TupleDTO<String, Integer> unit);
 }

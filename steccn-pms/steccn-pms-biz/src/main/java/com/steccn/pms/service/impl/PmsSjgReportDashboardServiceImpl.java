@@ -19,9 +19,10 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
+import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
-import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
+import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardService {
 
-    private final PmsReportWorkServiceImpl reportWorkService;
+    private final PmsReportWorkService reportWorkService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsReportWorkMapper pmsReportWorkMapper;

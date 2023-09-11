@@ -1,8 +1,10 @@
 package com.steccn.pms.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmsReportDashboardCtService;
+import com.steccn.pms.util.PmsUnitUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.time.LocalDate;
 
 /**
@@ -27,8 +30,9 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/produce/class")
     @ApiOperation("累计产量总数")
-    public R<QtLineChartBarDTO> produceClass(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.produceClass(workShopId, start, end));
+    public R<QtLineChartBarDTO> produceClass(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
+        TupleDTO<String, Integer> unit = PmsUnitUtil.unit(unitType);
+        return R.success(pmsReportDashboardCtService.produceClass(workShopId, start, end, unit));
     }
 
 }
