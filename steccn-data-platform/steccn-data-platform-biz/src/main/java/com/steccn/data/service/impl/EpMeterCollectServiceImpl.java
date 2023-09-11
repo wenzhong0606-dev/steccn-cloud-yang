@@ -15,6 +15,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.DingDingUtils;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.data.constant.HbThirdPartyConstant;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.dto.DwMeterReadDTO;
@@ -170,45 +171,43 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
 
     @Override
     public BigDecimal heatPower(LocalDate date) {
-//        //考虑做缓存
-//        LocalDateTime start = LocalDateUtil.getMorning(date);
-//        LocalDateTime end = LocalDateUtil.getMorning(date.plusDays(1));
-////        List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 300);
-//
-//
-//        List<EpMeterCollect> dbList1 = list(new LambdaQueryWrapper<EpMeterCollect>()
-//                .eq(EpMeterCollect::getCode, "LL1003_P_ER")
-//                .in(EpMeterCollect::getRecordTime, shardList)
-//                .gt(EpMeterCollect::getValue, 0)
-//                .orderByAsc(EpMeterCollect::getRecordTime));
-//
-//        List<EpMeterCollect> dbList2 = list(new LambdaQueryWrapper<EpMeterCollect>()
-//                .eq(EpMeterCollect::getCode, "LL1023_P_ER")
-//                .in(EpMeterCollect::getRecordTime, shardList)
-//                .gt(EpMeterCollect::getValue, 0)
-//                .orderByAsc(EpMeterCollect::getRecordTime));
-//        //根据时间取2个集合的交集
-//        List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection = intersection(dbList1, dbList2);
-//
-//        BigDecimal resValue = BigDecimal.ZERO;
-//        if(CollUtil.isNotEmpty(intersection)){
-//            //根据班次日期查询
-//            LocalDateTime preLdt = LocalDateUtil.getMorning(intersection.get(0).getField1());
-//            for (int i = 0; i < intersection.size(); i++) {
-//                TripleDTO<LocalDateTime, BigDecimal, BigDecimal> ele = intersection.get(i);
-//                //和班次开始时间差值
-//                long between = LocalDateTimeUtil.between(preLdt, ele.getField1(), ChronoUnit.MINUTES);
-//                //求均值
-//                BigDecimal sum = BigDecimalUtil.add(ele.getField2(), ele.getField3());
-//                BigDecimal multiply = BigDecimalUtil.multiply(sum, BigDecimal.valueOf(between));
-//                BigDecimal val = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(60));
-//                //计算当前节点属于什么班次日期
-//                resValue = BigDecimalUtil.add(resValue, val);
-//                preLdt = ele.getField1();
-//            }
-//        }
-//        return resValue;
-        return null;
+        //考虑做缓存
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = LocalDateUtil.getMorning(date.plusDays(1));
+        List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 300);
+
+        List<EpMeterCollect> dbList1 = list(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, "LL1003_P_ER")
+                .in(EpMeterCollect::getRecordTime, shardList)
+                .gt(EpMeterCollect::getValue, 0)
+                .orderByAsc(EpMeterCollect::getRecordTime));
+
+        List<EpMeterCollect> dbList2 = list(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, "LL1023_P_ER")
+                .in(EpMeterCollect::getRecordTime, shardList)
+                .gt(EpMeterCollect::getValue, 0)
+                .orderByAsc(EpMeterCollect::getRecordTime));
+        //根据时间取2个集合的交集
+        List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection = intersection(dbList1, dbList2);
+
+        BigDecimal resValue = BigDecimal.ZERO;
+        if(CollUtil.isNotEmpty(intersection)){
+            //根据班次日期查询
+            LocalDateTime preLdt = LocalDateUtil.getMorning(intersection.get(0).getField1());
+            for (int i = 0; i < intersection.size(); i++) {
+                TripleDTO<LocalDateTime, BigDecimal, BigDecimal> ele = intersection.get(i);
+                //和班次开始时间差值
+                long between = LocalDateTimeUtil.between(preLdt, ele.getField1(), ChronoUnit.MINUTES);
+                //求均值
+                BigDecimal sum = BigDecimalUtil.add(ele.getField2(), ele.getField3());
+                BigDecimal multiply = BigDecimalUtil.multiply(sum, BigDecimal.valueOf(between));
+                BigDecimal val = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(60));
+                //计算当前节点属于什么班次日期
+                resValue = BigDecimalUtil.add(resValue, val);
+                preLdt = ele.getField1();
+            }
+        }
+        return resValue;
     }
 
     /**
