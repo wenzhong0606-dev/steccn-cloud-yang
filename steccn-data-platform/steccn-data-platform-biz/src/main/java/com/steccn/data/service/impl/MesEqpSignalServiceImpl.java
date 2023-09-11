@@ -11,19 +11,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.data.domain.MesEqpSignal;
 import com.steccn.data.dto.OperationRecordsDTO;
-import com.steccn.data.service.MesEqpSignalService;
 import com.steccn.data.mapper.MesEqpSignalMapper;
+import com.steccn.data.service.MesEqpSignalService;
 import com.steccn.data.vo.OperationRecordVO;
 import com.steccn.data.vo.OperationStateVO;
 import com.steccn.data.vo.OperationStatusVO;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.qms.vo.QtCheckPlanVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -33,7 +31,6 @@ import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 /**
 * @author Admin

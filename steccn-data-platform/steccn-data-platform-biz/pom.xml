@@ -75,14 +75,14 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-oauth</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-qms-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-common-data</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.steccn</groupId>-->
+<!--            <artifactId>steccn-qms-api</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.steccn</groupId>-->
+<!--            <artifactId>steccn-common-data</artifactId>-->
+<!--        </dependency>-->
         <!--添加actuator依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -103,10 +103,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-log</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-pms-api</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.steccn</groupId>-->
+<!--            <artifactId>steccn-pms-api</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-mes-api</artifactId>
