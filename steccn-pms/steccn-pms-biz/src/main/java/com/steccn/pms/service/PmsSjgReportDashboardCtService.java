@@ -1,0 +1,102 @@
+package com.steccn.pms.service;
+
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/**
+ * @author yequan
+ * @desc 深加工车间看板接口
+ * @date 2023/9/5
+ */
+public interface PmsSjgReportDashboardCtService {
+
+    /**
+     * 产线产量
+     *
+     * @param workShopId 车间id
+     * @param start      日期-开始
+     * @param end        日期-结束
+     * @param unit       单位
+     * @param bit        位数
+     * @return
+     */
+    QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
+
+    /**
+     * 产线产量-表格
+     *
+     * @param workShopId 车间id
+     * @param start      班次日期-开始
+     * @param start      班次日期-结束
+     * @param unit       单位
+     * @param bit        位数
+     * @return
+     */
+    SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
+
+    /**
+     * 产线产量
+     *
+     * @param workShopId 车间id
+     * @param start       日期
+     * @param end       日期
+     * @param unit       单位
+     * @param bit        位数
+     * @return
+     */
+    QtLineChartBarDTO lineProduceClassGroup(Integer workShopId, LocalDate start ,LocalDate end, String unit, Integer bit);
+
+    /**
+     * 产线产量-表格
+     *
+     * @param workShopId 车间id
+     * @param start       日期
+     * @param end       日期
+     * @param unit       单位
+     * @param bit        位数
+     * @return
+     */
+    SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
+
+    /**
+     * 产线成品率
+     * @param workShopId 车间id
+     * @param start 开始
+     * @param end 结束
+     * @return
+     */
+    QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 产线成品率表格
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgDashboardLineProduceVO linePassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班组成品率
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    QtLineChartBarDTO lineGroupPassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班组成品率表格
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgDashboardLineProduceVO lineGroupPassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
+}

@@ -13,10 +13,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.EpChartGraphUtil;
-import com.steccn.common.util.MapUtil;
-import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.util.*;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -113,7 +110,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
     /**
@@ -158,7 +155,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     public BigDecimal produceNumRate(Integer workShopId, LocalDate date) {
         BigDecimal num = produceNumToday(workShopId, date).get(0);
         BigDecimal pullForce = pullForceToday(workShopId, date);
-        return BigDecimalUtil.percent(num, pullForce, 2);
+        return BigDecimalUtil.percent(num, pullForce);
     }
 
     @Override
@@ -189,7 +186,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
     @Override
@@ -400,9 +397,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             BigDecimal pfMorning = pfMap.get(ele + "_" + morningDict.getId());
             BigDecimal pfNight = pfMap.get(ele + "_" + nightDict.getId());
             BigDecimal pfSum = BigDecimalUtil.add(pfMorning, pfNight);
-            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(sum, pfSum, 2));
-            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(morning, pfMorning, 2));
-            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(night, pfNight, 2));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(sum, pfSum));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(morning, pfMorning));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(night, pfNight));
         });
         sortLineList.forEach(ele -> {
             String officeName = wsLineMap.get(ele.getId()).getOfficeName();
