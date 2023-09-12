@@ -45,6 +45,7 @@ import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.util.WmsCodeUtil;
+import com.steccn.wms.vo.WmsStorageFlagInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +99,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
+        //增加产线筛选条件
+        if (Objects.nonNull(dto.getProduceLineId())){
+            //获取在该产线下存在的生产订单
+            List<PmsProduceOrderVO> pmsProduceOrderVOS = FeignOptional.of(() -> remotePmsFeignApi.listOrderByProduceLineId(dto.getProduceLineId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            if (CollUtil.isNotEmpty(pmsProduceOrderVOS)){
+                List<String> orderCodes = pmsProduceOrderVOS.stream().map(PmsProduceOrderVO::getCode).collect(Collectors.toList());
+                dto.setOrderCodes(orderCodes);
+            }
+        }
         //1.处理筛选条件时间格式
         if (Objects.nonNull(dto.getAffirmStartDate())) {
             dto.setAffirmStartTime(LocalDateTime.of(dto.getAffirmStartDate(), LocalTime.MIN));
@@ -144,7 +154,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(dto.getType())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             int receiptType = 0;
-            if(dictMap.get(dto.getType()).equals(WmsManagerConstant.RECEIPT_TYPE_1)){
+            if (dictMap.get(dto.getType()).equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
                 receiptType = 1;
             }
             //2.定义数据模型
@@ -164,16 +174,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<String> caseNos = Lists.newArrayList();
                 for (WmsStorageReceiptInfoDTO info : list) {
                     //如果是生产完工入库关联单据必填且查询生产订单，生产订单必须要有批次信息，批次为生产订单带出
-                    if(receiptType==1){
+                    if (receiptType == 1) {
                         PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(info.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                        if(pmsProduceOrderVO.getId()==null){
+                        if (pmsProduceOrderVO.getId() == null) {
                             throw new BusinessException("关联的生产订单不存在");
                         }
                         List<PmsWorkOrderBatchVO> pmsWorkOrderBatchVOS = FeignOptional.of(() -> remotePmsFeignApi.getAllBatchByOrderId(pmsProduceOrderVO.getId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                        if(CollUtil.isEmpty(pmsWorkOrderBatchVOS)){
+                        if (CollUtil.isEmpty(pmsWorkOrderBatchVOS)) {
                             throw new BusinessException("该订单下没有批次信息");
                         }
-                        if(Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v->v.getCode().equals(info.getBatch())).findFirst().orElse(null))){
+                        if (Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v -> v.getCode().equals(info.getBatch())).findFirst().orElse(null))) {
                             throw new BusinessException("与该订单下的批次信息不符合");
                         }
                     }
@@ -309,7 +319,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(dto.getType())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             int receiptType = 0;
-            if(dictMap.get(dto.getType()).equals(WmsManagerConstant.RECEIPT_TYPE_1)){
+            if (dictMap.get(dto.getType()).equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
                 receiptType = 1;
             }
             //2.定义数据模型
@@ -330,16 +340,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsStorageReceiptInfoDTO> infoList = dto.getList();
                 for (WmsStorageReceiptInfoDTO info : infoList) {
                     //如果是生产完工入库关联单据必填且查询生产订单，生产订单必须要有批次信息，批次为生产订单带出
-                    if(receiptType==1){
+                    if (receiptType == 1) {
                         PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(info.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                        if(pmsProduceOrderVO.getId()==null){
+                        if (pmsProduceOrderVO.getId() == null) {
                             throw new BusinessException("关联的生产订单不存在");
                         }
                         List<PmsWorkOrderBatchVO> pmsWorkOrderBatchVOS = FeignOptional.of(() -> remotePmsFeignApi.getAllBatchByOrderId(pmsProduceOrderVO.getId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                        if(CollUtil.isEmpty(pmsWorkOrderBatchVOS)){
+                        if (CollUtil.isEmpty(pmsWorkOrderBatchVOS)) {
                             throw new BusinessException("该订单下没有批次信息");
                         }
-                        if(Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v->v.getCode().equals(info.getBatch())).findFirst().orElse(null))){
+                        if (Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v -> v.getCode().equals(info.getBatch())).findFirst().orElse(null))) {
                             throw new BusinessException("与该订单下的批次信息不符合");
                         }
                     }
@@ -692,7 +702,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
         //查询该入库单是否在生产入库单中存在，如果存在,则创建对应的出库单
         Boolean aBoolean = FeignOptional.of(() -> remoteCompleteStorageFeignApi.getCompleteStorageByCode(wmsStorageReceiptVO.getCode()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-        if (aBoolean){
+        if (aBoolean) {
             //在pms中创建对应的出库单
             wmsDeliveryReceiptDTO.setChargeAgainstCode(wmsStorageReceiptVO.getCode());
 
@@ -712,21 +722,21 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         //先获取入库单详情
         WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
         //判断是否是已确认状态
-        if(!wmsStorageReceiptVO.getStatus().equals(OaConstant.NUM_1)){
+        if (!wmsStorageReceiptVO.getStatus().equals(OaConstant.NUM_1)) {
             throw new BusinessException("只有已确认状态才可以同步");
         }
         //仓库编码
-        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //类型为生产完工入库
-        if(wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)){
+        if (wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
             ErpCommonSaveDTO<ErpSpinStockSaveDetailDTO> erpCommonSaveDTO = new ErpCommonSaveDTO<>();
             erpCommonSaveDTO.setFdate(wmsStorageReceiptVO.getCreateTime().toLocalDate());
             erpCommonSaveDTO.setFmesbillid(wmsStorageReceiptVO.getId());
             erpCommonSaveDTO.setFmesbillno(wmsStorageReceiptVO.getCode());
             //引入详细信息
             List<ErpSpinStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
-            if(CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())){
-                for(WmsStorageReceiptInfoVO tmp:wmsStorageReceiptVO.getList()){
+            if (CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())) {
+                for (WmsStorageReceiptInfoVO tmp : wmsStorageReceiptVO.getList()) {
                     ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
                     erpCommonSaveDetail.setFmesentryid(tmp.getId().toString());
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
@@ -734,7 +744,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFlot(tmp.getBatch());
                     erpCommonSaveDetail.setFstockno(sourceCode);
-                    if(Objects.isNull(tmp.getAssociatedNo())){
+                    if (Objects.isNull(tmp.getAssociatedNo())) {
                         throw new BusinessException("没有关联生产订单");
                     }
                     PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(tmp.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
@@ -748,13 +758,13 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             String listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
-            if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
+            if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
                 WmsStorageReceipt wmsStorageReceipt = new WmsStorageReceipt();
                 wmsStorageReceipt.setId(id);
                 wmsStorageReceipt.setStatus(OaConstant.NUM_2);
                 updateById(wmsStorageReceipt);
-            }else {
-                String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+            } else {
+                String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
                 log.error(error);
                 throw new BusinessException(error);
             }
@@ -767,21 +777,21 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         //先获取入库单详情
         WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
         //判断是否是已确认状态
-        if(!wmsStorageReceiptVO.getStatus().equals(OaConstant.NUM_1)){
+        if (!wmsStorageReceiptVO.getStatus().equals(OaConstant.NUM_1)) {
             throw new BusinessException("只有已确认状态才可以同步");
         }
         //仓库编码
-        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //类型为采购入库
-        if(wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
+        if (wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
             ErpStockSaveDTO erpCommonSaveDTO = new ErpStockSaveDTO();
             erpCommonSaveDTO.setFdate(wmsStorageReceiptVO.getCreateTime().toLocalDate());
             erpCommonSaveDTO.setFmesbillid(wmsStorageReceiptVO.getId());
             erpCommonSaveDTO.setFmesbillno(wmsStorageReceiptVO.getCode());
             //引入详细信息
             List<ErpStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
-            if(CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())){
-                for(WmsStorageReceiptInfoVO tmp:wmsStorageReceiptVO.getList()){
+            if (CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())) {
+                for (WmsStorageReceiptInfoVO tmp : wmsStorageReceiptVO.getList()) {
                     ErpStockSaveDetailDTO erpCommonSaveDetail = new ErpStockSaveDetailDTO();
                     erpCommonSaveDetail.setFmesentryid(tmp.getId().toString());
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
@@ -796,13 +806,13 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             String listR = remoteErpFeignApi.saveInStock(erpCommonSaveDTO);
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
-            if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
+            if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
                 WmsStorageReceipt wmsStorageReceipt = new WmsStorageReceipt();
                 wmsStorageReceipt.setId(id);
                 wmsStorageReceipt.setStatus(OaConstant.NUM_2);
                 updateById(wmsStorageReceipt);
-            }else {
-                String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+            } else {
+                String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
                 log.error(error);
                 throw new BusinessException(error);
             }
@@ -813,7 +823,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     public Boolean deleteData() {
         //备品备件库、包装材料库、辅助材料库 这三个仓库的入库单及库存删除数据
-        log.info("开始时间："+LocalDateTime.now());
+        log.info("开始时间：" + LocalDateTime.now());
         Set<String> names = new HashSet<>();
         names.add("备品备件库");
         names.add("包装材料库");
@@ -821,7 +831,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         //获取仓库id
         Map<String, SysOfficeVO> map = FeignOptional.of(() -> remoteOfficeFeign.listByName(names), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Long> ids = new HashSet<>();
-        map.values().forEach( office ->ids.add(Long.valueOf(office.getId())));
+        map.values().forEach(office -> ids.add(Long.valueOf(office.getId())));
         //删除入库单数据
         List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>().in(WmsStorageReceipt::getWarehouseId, ids));
 //        list.forEach( wmsStorageReceipt -> {
@@ -839,10 +849,39 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         List<Long> listIds = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toList());
         boolean b = removeByIds(listIds);
         boolean b1 = wmsStorageReceiptInfoService.removeByIds(infoIds);
-        log.info("软删入库单数据:"+list.size() + b);
-        log.info("软删入库单明细数据:"+infos.size() + b1);
-        log.info("结束时间："+LocalDateTime.now());
+        log.info("软删入库单数据:" + list.size() + b);
+        log.info("软删入库单明细数据:" + infos.size() + b1);
+        log.info("结束时间：" + LocalDateTime.now());
         return true;
+    }
+
+    @Override
+    public WmsStorageFlagInfoVO storageFlagInfo(WmsStorageReceiptFlagInfoDTO dto) {
+        WmsStorageFlagInfoVO flagInfoVO = new WmsStorageFlagInfoVO();
+        //1.通过判断参数中是否存在物料编码判断新老产线
+        if (Objects.isNull(dto.getMaterialCode())) {
+            System.out.println(LocalDateTime.now());
+            //1.1判断箱号在智慧平台是否存在
+            Boolean flag = FeignOptional.of(() -> remotePmsFeignApi.getCaseNo(dto.getCaseNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            if (flag) {
+                flagInfoVO.setCaseNoFlag(1);
+            }
+            System.out.println(LocalDateTime.now());
+        }
+        //2.箱号是否关联了入库单
+        WmsStorageReceiptInfo receiptInfo = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>().eq(WmsStorageReceiptInfo::getCaseNo, dto.getCaseNo()).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(receiptInfo)) {
+            flagInfoVO.setRelevancyFlag(1);
+            //2.1 箱号关联的入库单状态是否为已创建
+            WmsStorageReceipt receipt = getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getId, receiptInfo.getStorageReceiptId()));
+            if (WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getStatus())) {
+                flagInfoVO.setOrderStateCreateFlag(1);
+            } else if (WmsManagerConstant.OrderStateEnum.ONE.getCode().equals(receipt.getStatus()) || WmsManagerConstant.OrderStateEnum.THREE.getCode().equals(receipt.getStatus())) {
+                flagInfoVO.setOrderStateAffirmFlag(1);
+            }
+        }
+
+        return flagInfoVO;
     }
 
     @Override
@@ -915,8 +954,6 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         }
         return wmsDeliveryReceiptDTO1;
     }
-
-
 
 
     /**

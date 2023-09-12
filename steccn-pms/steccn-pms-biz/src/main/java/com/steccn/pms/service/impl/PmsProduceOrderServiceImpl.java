@@ -1113,6 +1113,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return map;
     }
 
+    @Override
+    public List<PmsProduceOrderVO> listOrderByProduceLineId(Integer productLineId) {
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getProductionLineId, productLineId));
+        return BeanUtil.copyToList(list,PmsProduceOrderVO.class);
+    }
+
 
 //    /**
 //     * 处理订单的当前产量

@@ -7,8 +7,10 @@ import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
+import com.steccn.wms.dto.WmsStorageReceiptFlagInfoDTO;
 import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsStorageFlagInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 
 import java.io.IOException;
@@ -129,4 +131,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     String inStorageCodeRepeat(LocalDate current);
 
     Boolean deleteData();
+
+    WmsStorageFlagInfoVO storageFlagInfo(WmsStorageReceiptFlagInfoDTO dto);
 }

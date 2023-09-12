@@ -120,4 +120,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return
      */
     List<WorkOrderMaterialVO> getMaterialByBatchNo(String batchNo);
+
+    /**
+     * 获取箱号是否存在
+     * @param caseNo
+     * @return
+     */
+    Boolean getCaseNoFlag(String caseNo);
 }

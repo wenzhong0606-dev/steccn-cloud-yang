@@ -9,6 +9,7 @@ import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.vo.PmsProduceOrderVO;
@@ -46,6 +47,8 @@ public class PmsProduceOrderFeignController {
 
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
 
+    private final PmsBarcodePrintService pmsBarcodePrintService;
+
     @PostMapping("/report")
     @ApiOperation("查询当前班次日期的所有报工记录")
     R<List<DwCurrentReportWorkDTO>> currentDateReportWork(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO){
@@ -76,6 +79,13 @@ public class PmsProduceOrderFeignController {
     @GetMapping("/line")
     public R<PmsProduceOrderVO> listByProduceLineId(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId) {
         return R.success(pmsProduceOrderService.listByProduceLineId(productLineId));
+    }
+
+
+    @ApiOperation("根据产线id查询订单")
+    @GetMapping("/line/order")
+    public R<List<PmsProduceOrderVO>> listOrderByProduceLineId(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId) {
+        return R.success(pmsProduceOrderService.listOrderByProduceLineId(productLineId));
     }
 
     @ApiOperation("根据生产订单号查询产线,车间,批次信息")
@@ -120,5 +130,11 @@ public class PmsProduceOrderFeignController {
     @PostMapping("/defect")
     R<List<PmsDefectDayOrderBasicDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto){
         return R.success(pmsWorkOrderBatchService.defectDay(dto.getField1(),dto.getField2(),dto.getField3()));
+    }
+
+    @GetMapping("/get/caseNo/flag")
+    @ApiOperation(("箱号是否存在"))
+    R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo){
+        return R.success(pmsBarcodePrintService.getCaseNoFlag(caseNo));
     }
 }

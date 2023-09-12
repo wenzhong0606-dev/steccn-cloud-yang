@@ -10,12 +10,10 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.domain.WmsStorageReceipt;
-import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
-import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
-import com.steccn.wms.dto.WmsStorageReceiptDTO;
-import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsStorageFlagInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -131,6 +129,10 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.deleteData());
     }
 
-
+    @ApiOperation("采购入库获取箱号入库单标识相关内容")
+    @PostMapping("/storage/flag/info")
+    public R<WmsStorageFlagInfoVO> storageFlagInfo(@RequestBody WmsStorageReceiptFlagInfoDTO dto){
+        return R.success(wmsStorageReceiptService.storageFlagInfo(dto));
+    }
 
 }

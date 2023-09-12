@@ -75,6 +75,12 @@
                     #{id}
                 </foreach>
             </if>
+            <if test="dto.orderCodes != null and dto.orderCodes.size >0">
+                and b.associated_no in
+                <foreach collection="dto.orderCodes" item ="id" open="(" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
             <if test="dto.batch != null and dto.batch != ''">
                 and b.batch like CONCAT('%',#{dto.batch},'%')
             </if>
