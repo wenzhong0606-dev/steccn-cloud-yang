@@ -20,7 +20,8 @@ public interface PmsSjgReportDashboardService {
      * 产线产量
      *
      * @param workShopId 车间id
-     * @param date       日期
+     * @param start      日期-开始
+     * @param end        日期-结束
      * @param unit       单位
      * @param bit        位数
      * @return
