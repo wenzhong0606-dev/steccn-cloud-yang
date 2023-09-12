@@ -2,6 +2,8 @@ package com.steccn.portal.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
@@ -13,8 +15,11 @@ import com.steccn.oa.dto.OaSsoTokenResult;
 import com.steccn.oa.dto.OaUserInfo;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysUserClientRefDTO;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysUserClientFeignApi;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.portal.constant.TokenConstant;
+import com.steccn.portal.dto.LoginMesUserInfoDTO;
 import com.steccn.portal.feign.RemotePortalMesFeignApi;
 import com.steccn.portal.vo.SteccnTokenVO;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +43,7 @@ public class LoginService {
     private final MesMenuService mesMenuService;
     private final RemotePortalMesFeignApi remotePortalMesFeignApi;
     private final RemoteSysUserClientFeignApi remoteSysUserClientFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     /**
      * 登录模块
@@ -91,8 +97,14 @@ public class LoginService {
             steccnTokenVO.setRealName(oaUserInfo.getName());
             steccnTokenVO.setOaUserId(oaUserInfo.getOaUserId());
 
-            String userCode = remotePortalMesFeignApi.getUserCode(username);
-            steccnTokenVO.setUsercode(userCode);
+            LoginMesUserInfoDTO userInfoStr = remotePortalMesFeignApi.getUserCode(username);
+            if (Objects.nonNull(userInfoStr)) {
+                steccnTokenVO.setUsercode(userInfoStr.getUserCode());
+                if (StrUtil.isNotBlank(userInfoStr.getOfficeCode())) {
+                    Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(userInfoStr.getOfficeCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    steccnTokenVO.setDepartmentId(officeMap.getOrDefault(userInfoStr.getOfficeCode(), new SysOfficeVO()).getId());
+                }
+            }
 
 //            //3.用户oa登录
 //            OaLoginParam oaLoginParam = new OaLoginParam();

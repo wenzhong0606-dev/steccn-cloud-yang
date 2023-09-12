@@ -1,5 +1,6 @@
 package com.steccn.portal.feign;
 
+import com.steccn.portal.dto.LoginMesUserInfoDTO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +34,7 @@ public interface RemotePortalMesFeignApi {
      * @return
      */
     @GetMapping(value = "/web/user/getUserCode")
-    @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    String getUserCode(@RequestParam("loginCode") String userName);
+    LoginMesUserInfoDTO getUserCode(@RequestParam("loginCode") String userName);
 
 }
