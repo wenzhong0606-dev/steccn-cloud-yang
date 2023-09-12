@@ -17,6 +17,9 @@ public class SteccnTokenVO implements Serializable {
     @ApiModelProperty("用户名")
     private String usercode;
 
+    @ApiModelProperty("部门id")
+    private Integer departmentId;
+
     @ApiModelProperty("accessToken")
     private String accessToken;
 
