@@ -205,6 +205,29 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
     @Override
+    @Transactional
+    public Boolean salesAdd(WmsStorageReceiptDTO dto) {
+        //组数据
+        //1、校验确认人
+        Assert.notNull(dto.getOperateId(),"确认人id不能为空");
+        Assert.notNull(dto.getOperateName(),"确认人名字不能为空");
+        Assert.notNull(dto.getWarehouseCode(),"仓库编码不能为空");
+        //默认是采购入库单
+        dto.setType(1600405739121573888L);
+        //获取仓库id
+        Map<String, SysOfficeVO> wareHouseInfo = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(dto.getWarehouseCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(wareHouseInfo.get(dto.getWarehouseCode()),"找不到编码对应的仓库");
+        dto.setWarehouseId(wareHouseInfo.get(dto.getWarehouseCode()).getId());
+        //获取物料信息
+        Assert.notEmpty(dto.getList(),"物料信息不能为空");
+        dto.getList().forEach(tmp->{
+
+        });
+        this.add(dto);
+        return null;
+    }
+
+    @Override
     @Transactional(readOnly = false)
     public String addReturnCode(WmsStorageReceiptDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_STORAGE_RECEIPT);

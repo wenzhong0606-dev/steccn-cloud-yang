@@ -35,6 +35,13 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      */
     Boolean add(WmsStorageReceiptDTO dto);
 
+    /**
+     * 采购系统添加采购入库单
+     * @param dto
+     * @return
+     */
+    Boolean salesAdd(WmsStorageReceiptDTO dto);
+
 
     /**
      * 新增
