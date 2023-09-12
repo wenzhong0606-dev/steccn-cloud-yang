@@ -16,6 +16,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
@@ -93,6 +94,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     private final RemotePmsFeignApi remotePmsFeignApi;
 
+    private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -198,6 +200,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //保存明细信息
                 wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
             }
+            //6.如果是采购单且来源是采购系统,则自动确认
+            if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_1)){
+                dto.setId(model.getId());
+                wmsStorageReceiptMapper.salesAutoConfirm(dto);
+            }
         } finally {
             lock.unlock();
         }
@@ -220,11 +227,21 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         dto.setWarehouseId(wareHouseInfo.get(dto.getWarehouseCode()).getId());
         //获取物料信息
         Assert.notEmpty(dto.getList(),"物料信息不能为空");
+        Set<String> unitNameList = dto.getList().stream().map(WmsStorageReceiptInfoDTO::getUnitName).collect(Collectors.toSet());
         dto.getList().forEach(tmp->{
-
+            Assert.notNull(tmp.getMaterialCode(),"物料编码不能为空");
+            EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(tmp.getMaterialCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(eqpSpareVO,"系统中不存在该物料");
+            tmp.setMaterialName(eqpSpareVO.getName());
+            tmp.setMaterialId(eqpSpareVO.getId());
+            Assert.notNull(tmp.getUnitName(),"单位名字不能为空");
+            Map<String, Long> dicMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(unitNameList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(dicMap.get(tmp.getUnitName()), "单位id不存在");
+            tmp.setUnit(dicMap.get(tmp.getUnitName()));
         });
+        dto.setIsSRMSys(OaConstant.NUM_1);
         this.add(dto);
-        return null;
+        return true;
     }
 
     @Override

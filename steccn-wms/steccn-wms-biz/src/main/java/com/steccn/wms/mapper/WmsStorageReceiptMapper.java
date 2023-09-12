@@ -3,6 +3,7 @@ package com.steccn.wms.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
@@ -25,6 +26,13 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @return
      */
     Page<WmsStorageReceiptVO> pageList(@Param("page") Page page, @Param("dto") WmsStorageReceiptPageDTO dto);
+
+    /**
+     * 销售系统传参自动确认
+     * @param dto
+     * @return
+     */
+    Boolean salesAutoConfirm(@Param("dto") WmsStorageReceiptDTO dto);
 }
 
 
