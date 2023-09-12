@@ -272,9 +272,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 infoVO.setUnitName(dictMap.get(infoVO.getUnitId()));
                 //3.3.1处理机构数据
                 List<String> organizationList = Lists.newArrayList();
-                infoVO.getOrganization().forEach(integer -> {
-                    organizationList.add(officeMap.get(integer));
-                });
+                if(CollUtil.isNotEmpty(infoVO.getOrganization())){
+                    infoVO.getOrganization().forEach(integer -> {
+                        organizationList.add(officeMap.get(integer));
+                    });
+                }
                 infoVO.setOrganizationName(organizationList);
                 if (CollUtil.isNotEmpty(demanderMap)) {
                     infoVO.setDemanderList(BeanUtil.copyToList(demanderMap.get(infoVO.getId()), MaterialRequisitionInfoDemanderVO.class));
