@@ -20,7 +20,8 @@ public interface PmsSjgReportDashboardService {
      * 产线产量
      *
      * @param workShopId 车间id
-     * @param date       日期
+     * @param start      日期-开始
+     * @param end        日期-结束
      * @param unit       单位
      * @param bit        位数
      * @return
@@ -64,11 +65,38 @@ public interface PmsSjgReportDashboardService {
     SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit);
 
     /**
-     *
+     * 产线成品率
      * @param workShopId 车间id
      * @param start 开始
      * @param end 结束
      * @return
      */
     QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 产线成品率表格
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgDashboardLineProduceVO linePassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班组成品率
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    QtLineChartBarDTO lineGroupPassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班组成品率表格
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgDashboardLineProduceVO lineGroupPassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
 }

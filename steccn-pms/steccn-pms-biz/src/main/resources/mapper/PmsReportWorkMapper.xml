@@ -100,8 +100,8 @@
         prw.produce_order_id,
         ppo.production_line_id as productLineId,
         ppo.material_id,
-        any_value(ppo.material_code),
-        any_value(ppo.material_name),
+        any_value(ppo.material_code) as material_code,
+        any_value(ppo.material_name) as material_name,
         prw.classes_id,
         sum( prw.process_quantity ) AS quantity,
         any_value(prw.unit_id)
@@ -135,8 +135,8 @@
         ppo.id as produceOrderId,
         ppo.production_line_id as productLineId,
         ppo.material_id,
-        any_value(ppo.material_code),
-        any_value(ppo.material_name),
+        any_value(ppo.material_code) as material_code,
+        any_value(ppo.material_name) as material_name,
         pcsi.classes_id,
         sum( pcsi.quantity ) AS quantity,
         any_value(pcsi.unit_id)
@@ -400,7 +400,7 @@
         rw.product_line_id,
         rw.station_id ,
         de.material_id,
-        sum(rw.process_quantity - rw.badness_quantity) as quantity
+        sum(rw.process_quantity) as quantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND rw.class_date = #{today}
@@ -415,7 +415,7 @@
         rw.product_line_id,
         rw.station_id ,
         de.material_id,
-        sum(rw.process_quantity - rw.badness_quantity) as quantity
+        sum(rw.process_quantity) as quantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND rw.class_date &gt;= #{start}
@@ -551,6 +551,31 @@
             #{lineId}
         </foreach>
         group by rw.product_line_id ,rw.classes_id ,  rw.station_id , po.material_id
+    </select>
+
+    <select id="processReportDashBoard" resultType="com.steccn.pms.vo.ProcessReportWorkPageVO">
+        SELECT
+            SUM(prw.process_quantity) AS processQuantity,
+            SUM(prw.badness_quantity) AS badnessQuantity,
+            prw.classes_id,
+            prw.product_line_id,
+            pp.name AS processName
+        FROM pms_report_work prw
+                 JOIN pms_produce_order_craft pp ON pp.id = prw.process_id
+        WHERE
+            prw.del_flag = 0 AND pp.del_flag = 0
+        AND product_line_id IN
+        <foreach collection="dto.productLineIds" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        <if test="dto.startTimeStart != null">
+            AND prw.class_date &gt;= #{dto.startTimeStart}
+        </if>
+        <if test="dto.startTimeEnd != null">
+            AND prw.class_date &lt;= #{dto.startTimeEnd}
+        </if>
+        GROUP BY prw.product_line_id,prw.classes_id,name
+        ORDER BY prw.product_line_id
     </select>
 
 </mapper>

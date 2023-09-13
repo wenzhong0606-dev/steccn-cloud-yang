@@ -25,10 +25,6 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-common-data</artifactId>
-        </dependency>
         <!-- easyExcel-->
         <dependency>
             <groupId>com.alibaba</groupId>

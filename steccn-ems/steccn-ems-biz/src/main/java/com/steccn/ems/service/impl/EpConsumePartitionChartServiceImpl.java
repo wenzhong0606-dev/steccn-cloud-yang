@@ -830,7 +830,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
             List<BigDecimal> reduceList = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).collect(Collectors.toList());
             BigDecimal reduce = BigDecimalUtil.sum(reduceList);
-            if (!BigDecimalUtil.equals(reduce, BigDecimal.ZERO)) {
+            if (Objects.nonNull(reduce) && BigDecimalUtil.gt(reduce, BigDecimal.ZERO)) {
                 EpEnergyChartPieValueVO<BigDecimal> vo = new EpEnergyChartPieValueVO<>();
                 vo.setName(partitionIdNameMap.get(partitionId));
                 vo.setValue(reduce);

@@ -32,6 +32,12 @@ public class PmsBarcodePrintRecord implements Serializable {
      */
     private Long classGroupId;
 
+
+    /**
+     * 产线
+     */
+    private Long produceLineId;
+
     /**
      * 生产订单id
      */

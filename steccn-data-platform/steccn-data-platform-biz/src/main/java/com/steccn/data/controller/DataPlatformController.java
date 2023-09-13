@@ -1,23 +1,21 @@
 package com.steccn.data.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
-import com.steccn.data.dto.DwMeterReadDTO;
-import com.steccn.data.dto.DwStationCollectDTO;
-import com.steccn.data.dto.DwStationInfoDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.dto.*;
 import com.steccn.data.service.EpMeterCollectService;
+import com.steccn.data.service.MesEqpSignalService;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.service.QtDefectCollectService;
-import com.steccn.data.vo.DwDefectCollectVO;
-import com.steccn.data.vo.DwEpMeterCollectVO;
-import com.steccn.data.vo.DwStationCollectVO;
+import com.steccn.data.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,6 +36,7 @@ public class DataPlatformController {
     private final EpMeterCollectService epMeterCollectService;
     private final PmStationCollectService pmStationCollectService;
     private final QtDefectCollectService qtDefectCollectService;
+    private final MesEqpSignalService mesEqpSignalService;
 
     @PostMapping("/meter/read")
     @ApiOperation(value = "数仓条件列表")
@@ -85,5 +84,17 @@ public class DataPlatformController {
     @ApiOperation("计算余热发电")
     R<BigDecimal> heatPower(@RequestBody LocalDate date){
         return R.success(epMeterCollectService.heatPower(date));
+    }
+
+    @PostMapping("/mes/eqp/operationState")
+    @ApiOperation("设备启停")
+    R<OperationStatusVO> eqpState(@Valid @RequestBody OperationRecordsDTO dto){
+        return R.success(mesEqpSignalService.getEqpStatus(dto));
+    }
+
+    @PostMapping("/mes/eqp/operationRecord")
+    @ApiOperation("设备启停")
+    R<Page<OperationRecordVO>> eqpRecord(@Valid @RequestBody OperationRecordsDTO dto){
+        return R.success(mesEqpSignalService.getEqpRecord(dto));
     }
 }

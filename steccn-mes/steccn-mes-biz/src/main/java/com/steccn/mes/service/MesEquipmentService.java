@@ -2,7 +2,7 @@ package com.steccn.mes.service;
 
 import com.steccn.mes.domain.MesEquipment;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.mes.vo.MesEqpVo;
+import com.steccn.mes.vo.MesEqpVO;
 
 import java.util.List;
 
@@ -13,5 +13,12 @@ import java.util.List;
 * @createDate 2023-09-01 16:29:57
 */
 public interface MesEquipmentService extends IService<MesEquipment> {
-    List<MesEqpVo> getEqpInfo();
+    List<MesEqpVO> getEqpInfo();
+
+    /**
+     * 根据设备code获取信息
+     * @param eqpCode
+     * @return
+     */
+    MesEqpVO getEqpByCode(String eqpCode);
 }

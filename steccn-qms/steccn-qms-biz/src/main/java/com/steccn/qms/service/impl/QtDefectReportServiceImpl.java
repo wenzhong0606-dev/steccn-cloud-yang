@@ -44,7 +44,7 @@ import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.dto.QtDestoryInfoFallDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
-import com.steccn.qms.util.ShardTimeUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.qms.util.UnitConvertUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;

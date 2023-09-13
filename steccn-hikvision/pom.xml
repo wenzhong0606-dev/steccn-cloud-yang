@@ -25,10 +25,7 @@
 
 
     <dependencies>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-common-data</artifactId>
-        </dependency>
+
         <!--lombok-->
         <dependency>
             <groupId>org.projectlombok</groupId>

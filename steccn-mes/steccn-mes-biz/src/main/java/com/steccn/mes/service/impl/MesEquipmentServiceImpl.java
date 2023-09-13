@@ -12,12 +12,11 @@ import com.steccn.mes.service.MesEqpServicePlanService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.mapper.MesEquipmentMapper;
 import com.steccn.mes.vo.MesEqpPartVO;
-import com.steccn.mes.vo.MesEqpVo;
+import com.steccn.mes.vo.MesEqpVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,17 +34,17 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
     private final MesEqpServicePlanService mesEqpServicePlanService;
 
     @Override
-    public List<MesEqpVo> getEqpInfo() {
+    public List<MesEqpVO> getEqpInfo() {
         //获取所有检修作业计划
         List<MesEqpServicePlan> servicePlan = mesEqpServicePlanService.list(new LambdaQueryWrapper<MesEqpServicePlan>()
                 .select(MesEqpServicePlan::getEqpId, MesEqpServicePlan::getPart, MesEqpServicePlan::getMaintainMethod));
-        List<MesEqpVo> results = Lists.newArrayList();
+        List<MesEqpVO> results = Lists.newArrayList();
         List<MesEquipment> mesEquipments = list(new LambdaQueryWrapper<MesEquipment>()
                 .select(MesEquipment::getId, MesEquipment::getEquipmentCode, MesEquipment::getEquipmentName, MesEquipment::getRemarks, MesEquipment::getModel)
                 .eq(MesEquipment::getStatus, MpConstant.NO.toString())
                 .eq(MesEquipment::getIsEqp, MpConstant.NO.toString()));
         mesEquipments.forEach(tmp ->{
-            MesEqpVo vo = new MesEqpVo();
+            MesEqpVO vo = new MesEqpVO();
             BeanUtil.copyProperties(tmp,vo);
             List<MesEqpServicePlan> collect = servicePlan.stream().filter(v -> v.getEqpId().equals(tmp.getId().toString())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(collect)){
@@ -60,6 +59,17 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
             results.add(vo);
         });
         return results;
+    }
+
+    @Override
+    public MesEqpVO getEqpByCode(String eqpCode) {
+        MesEquipment one = getOne(new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getEquipmentCode, eqpCode)
+                .eq(MesEquipment::getStatus, MpConstant.NO.toString())
+                .last("limit 1"));
+        MesEqpVO vo = new MesEqpVO();
+        BeanUtil.copyProperties(one,vo);
+        return vo;
     }
 }
 

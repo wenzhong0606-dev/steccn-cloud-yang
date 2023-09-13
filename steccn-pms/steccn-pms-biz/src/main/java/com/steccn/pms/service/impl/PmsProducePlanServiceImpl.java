@@ -138,7 +138,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                         pmsProducePlanDTO.setCustomerCode(present.get().getCustomerCode());
                     }
                     if(StrUtil.isNotBlank(present.get().getCustomerName())){
-                        pmsProducePlanDTO.setCustomerCode(present.get().getCustomerName());
+                        pmsProducePlanDTO.setCustomerName(present.get().getCustomerName());
                     }
                 } else {
                     planDetailsDTO.setPlanDate(localDate);

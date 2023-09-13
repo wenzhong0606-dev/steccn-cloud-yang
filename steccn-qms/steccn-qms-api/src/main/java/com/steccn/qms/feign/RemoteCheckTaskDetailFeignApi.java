@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.vo.OutputQualityDetailVO;
@@ -42,5 +43,9 @@ public interface RemoteCheckTaskDetailFeignApi {
     @ApiOperation("根据条件获取巡检平均厚度数据")
     @PostMapping("/feign/qms/task/detail/list/polling")
     R<List<OutputQualityDetailVO>> listPollingDate(@RequestBody OutputQualityDetailDTO outputQualityDetailDTO);
+
+    @ApiOperation("同步物料")
+    @PostMapping("/feign/qms/material/synchronize")
+    R<Boolean> synchronizeMaterial(@RequestBody EqpSpareDto dto);
 
 }

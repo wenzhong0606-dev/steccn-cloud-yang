@@ -94,4 +94,10 @@ public class WmsInventoryController {
         return R.success(wmsInventoryService.checkCaseNo(wmsCheckCaseNoDTO));
     }
 
+
+    @ApiOperation("根据仓库批量删除库存数据")
+    @PostMapping("/delete/data")
+    public R<Boolean> deleteData (){
+        return R.success(wmsInventoryService.deleteData());
+    }
 }

@@ -9,6 +9,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -77,4 +78,7 @@ public class ProcessReportWorkPageDTO extends BasePageDTO {
 
     @ApiModelProperty("班组")
     private Long teamId;
+
+    @ApiModelProperty("产线id")
+    private List<Integer> productLineIds;
 }

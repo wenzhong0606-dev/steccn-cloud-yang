@@ -761,8 +761,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     } else {
                                         dr = Duration.between(info.getDestoryStartTime(), info.getDestoryEndTime());
                                     }
-                                    luoDateRange = BigDecimalUtil.divide(new BigDecimal(dr.toMinutes()), new BigDecimal(60),4);
-
+                                    //强制变成正数
+                                    luoDateRange = BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4);
+                                    //如果选了南工位和北工位则时长乘以2
+                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
+                                        luoDateRange = BigDecimalUtil.multiply(luoDateRange,new BigDecimal(2));
+                                    }
                                     //任意落板原因r导致损耗重量 = r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
                                     //r导致的落板时长 * 拉引时速
                                     BigDecimal firstStep = BigDecimalUtil.multiply(luoDateRange, avgLaItem);
@@ -772,12 +776,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     BigDecimal thirdStep = BigDecimalUtil.multiply(secondStep, avgDanItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
 //                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
-                                    //落版原因，产品改需求不需要除法
-                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1),4);
+                                    //落版原因，产品改需求除以二
+                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(2),4);
                                     //如果选了南工位和北工位则乘以二
-                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
-                                        reasonResult = BigDecimalUtil.multiply(reasonResult,new BigDecimal(2));
-                                    }
+//                                    if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
+//                                        reasonResult = BigDecimalUtil.multiply(reasonResult,new BigDecimal(2));
+//                                    }
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
@@ -1394,10 +1398,14 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
         SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
         //stream流合并所有名字相同值的拉引量
-        Map<String, BigDecimal> laAmountMap = data.stream().collect(Collectors.groupingBy(
-                QtChartSubDetailDTO::getReason,
-                Collectors.reducing(BigDecimal.ZERO, QtChartSubDetailDTO::getPullAmount, BigDecimal::add)
-        ));
+//        Map<String, BigDecimal> laAmountMap = data.stream().collect(Collectors.groupingBy(
+//                QtChartSubDetailDTO::getReason,
+//                Collectors.reducing(BigDecimal.ZERO, QtChartSubDetailDTO::getPullAmount, BigDecimal::add)
+//        ));
+        //累加所有损耗
+        BigDecimal totalSun = data.stream()
+                .map(QtChartSubDetailDTO::getLossWeight)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (CollUtil.isNotEmpty(data)) {
             //若对比维度为空
             if (dto.getCompare() == null) {
@@ -1420,7 +1428,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     stackGraphDTOS.add(graphDTO);
                     //算折线图
                     BigDecimal sunRate = BigDecimal.ZERO;
-                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmountMap.get(reasonEntry.getValue()),6);
+//                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmountMap.get(reasonEntry.getValue()),6);
+                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), totalSun,6);
                     legend.add(sunRate.toString());
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
@@ -1482,7 +1491,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("早班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("早班")) {
                                 zaoAmount = BigDecimalUtil.add(zaoAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(zaoAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOZAO.setField2(zaoAmount);
@@ -1495,14 +1504,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("晚班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("晚班")) {
                                 wanAmount = BigDecimalUtil.add(wanAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(wanAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOWAN.setField2(wanAmount);
                         tupleDTOList.add(tupleDTOWAN);
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+//                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,totalSun,6);
                         legend.add(sunRate.toString());
                     }
 
@@ -1524,7 +1534,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("甲班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("甲班")) {
                                 jiaAmount = BigDecimalUtil.add(jiaAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(jiaAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOJIA.setField2(jiaAmount);
@@ -1536,7 +1546,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("乙班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("乙班")) {
                                 yiAmount = BigDecimalUtil.add(yiAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(yiAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOYI.setField2(yiAmount);
@@ -1549,14 +1559,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (orderCompare.get("丙班") != null) {
                             for (QtChartSubDetailDTO tmp : orderCompare.get("丙班")) {
                                 binAmount = BigDecimalUtil.add(binAmount, tmp.getLossWeight());
-                                sunAmount = BigDecimalUtil.add(binAmount, sunAmount);
+                                sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                             }
                         }
                         tupleDTOBING.setField2(binAmount);
                         tupleDTOList.add(tupleDTOBING);
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+//                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,totalSun,6);
                         legend.add(sunRate.toString());
                     }
 
@@ -1577,7 +1588,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             if (orderCompare.get(sysVo.getOfficeName()) != null) {
                                 for (QtChartSubDetailDTO tmp : orderCompare.get(sysVo.getOfficeName())) {
                                     cheAmount = BigDecimalUtil.add(cheAmount, tmp.getLossWeight());
-                                    sunAmount = BigDecimalUtil.add(cheAmount, sunAmount);
+                                    sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                                 }
                             }
                             tupleDTOShop.setField2(cheAmount);
@@ -1585,7 +1596,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+//                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,totalSun,6);
                         legend.add(sunRate.toString());
                     }
 
@@ -1606,7 +1618,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             if (orderCompare.get(sysVo.getOfficeName()) != null) {
                                 for (QtChartSubDetailDTO tmp : orderCompare.get(sysVo.getOfficeName())) {
                                     chanAmount = BigDecimalUtil.add(chanAmount, tmp.getLossWeight());
-                                    sunAmount = BigDecimalUtil.add(chanAmount, sunAmount);
+                                    sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                                 }
                             }
                             tupleDTOShop.setField2(chanAmount);
@@ -1614,7 +1626,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             graphDTO.setData(tupleDTOList);
                         }
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+//                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,totalSun,6);
                         legend.add(sunRate.toString());
                     }
                     stackGraphDTOS.add(graphDTO);

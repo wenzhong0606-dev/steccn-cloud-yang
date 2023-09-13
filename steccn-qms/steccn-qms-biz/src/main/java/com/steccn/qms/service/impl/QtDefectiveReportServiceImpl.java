@@ -48,7 +48,7 @@ import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.DownloadUtil;
-import com.steccn.qms.util.ShardTimeUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;

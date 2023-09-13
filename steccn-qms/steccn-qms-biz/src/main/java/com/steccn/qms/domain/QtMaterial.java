@@ -96,4 +96,55 @@ public class QtMaterial implements Serializable {
      * 长度
      */
     private BigDecimal lengthQuantity;
+
+    /**
+     * 长度单位
+     */
+    private Long lengthUnitId;
+
+
+    /**
+     * 高度单位
+     */
+    private Long highUnitId;
+
+    /**
+     * 高度
+     */
+    private BigDecimal highQuantity;
+
+    /**
+     * 宽度单位
+     */
+    private Long wideUnitId;
+
+    /**
+     * 宽度
+     */
+    private BigDecimal wideQuantity;
+
+    /**
+     * 单位
+     */
+    private String unit;
+
+    /**
+     * 单位
+     */
+    private Long unitId;
+
+    /**
+     * 采购类型id
+     */
+    private Long procurementTypeId;
+
+    /**
+     * 业务状态
+     */
+    private String state;
+
+    /**
+     * 批次类型
+     */
+    private String batchType;
 }

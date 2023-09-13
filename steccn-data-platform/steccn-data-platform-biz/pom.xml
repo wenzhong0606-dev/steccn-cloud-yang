@@ -75,13 +75,17 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-oauth</artifactId>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.steccn</groupId>-->
+<!--            <artifactId>steccn-qms-api</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.steccn</groupId>-->
+<!--            <artifactId>steccn-common-data</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.steccn</groupId>
-            <artifactId>steccn-qms-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
-            <artifactId>steccn-common-data</artifactId>
+            <artifactId>steccn-common-pgdata</artifactId>
         </dependency>
         <!--添加actuator依赖-->
         <dependency>
@@ -103,9 +107,13 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-log</artifactId>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.steccn</groupId>-->
+<!--            <artifactId>steccn-pms-api</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.steccn</groupId>
-            <artifactId>steccn-pms-api</artifactId>
+            <artifactId>steccn-mes-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>

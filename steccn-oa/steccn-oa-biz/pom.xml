@@ -132,6 +132,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-platform-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-data</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

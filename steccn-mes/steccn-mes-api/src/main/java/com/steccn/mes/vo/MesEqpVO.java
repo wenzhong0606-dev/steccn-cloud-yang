@@ -12,7 +12,7 @@ import java.util.List;
  * @date 2023/09/01
  */
 @Data
-public class MesEqpVo implements Serializable {
+public class MesEqpVO implements Serializable {
     /**
      * 设备编码
      */

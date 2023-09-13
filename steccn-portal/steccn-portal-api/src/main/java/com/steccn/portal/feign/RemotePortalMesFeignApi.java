@@ -1,5 +1,6 @@
 package com.steccn.portal.feign;
 
+import com.steccn.portal.dto.LoginMesUserInfoDTO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,4 +26,15 @@ public interface RemotePortalMesFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String getSid(@RequestParam("userName")String userName);
+
+
+    /**
+     * 获取mes的sid
+     * @param userName
+     * @return
+     */
+    @GetMapping(value = "/web/user/getUserCode")
+    @ResponseBody
+    LoginMesUserInfoDTO getUserCode(@RequestParam("loginCode") String userName);
+
 }

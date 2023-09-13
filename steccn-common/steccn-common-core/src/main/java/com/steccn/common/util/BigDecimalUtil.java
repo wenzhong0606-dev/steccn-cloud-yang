@@ -344,4 +344,15 @@ public class BigDecimalUtil {
         BigDecimal percent = value1.divide(value2, scale + 2, RoundingMode.HALF_UP).multiply(HUNDRED);
         return percent.setScale(scale, RoundingMode.HALF_UP);
     }
+
+    /**
+     * value1 / value2 * 100 %
+     *
+     * @param value1 值1
+     * @param value2 值2
+     * @return
+     */
+    public static BigDecimal percent(BigDecimal value1, BigDecimal value2) {
+        return percent(value1, value2, UnitLengthUtil.UNIT_PERCENT_LENGTH);
+    }
 }
