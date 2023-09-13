@@ -1,7 +1,5 @@
 package com.steccn.pms.service;
 
-import com.steccn.common.constant.ResultCode;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -19,6 +17,5 @@ public interface PmsSjgReportDashboardService {
      * @param date       日期
      * @return
      */
-
     BigDecimal slip(Integer workShopId, LocalDate date);
 }

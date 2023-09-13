@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -12,6 +13,7 @@ import com.steccn.platform.feign.RemoteStationWarehouseFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysStationWarehouseVO;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
+import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
 
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteStationWarehouseFeignApi stationWarehouseFeignApi;
+    private final RemoteWmsTransferSlipFeignApi wmsTransferSlipFeignApi;
 
     @Override
     public BigDecimal slip(Integer workShopId, LocalDate date) {
@@ -65,10 +68,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                 shelfSet.add(ele.getShelfId());
             });
         });
-
         //根据线边仓去调拨单中获取今日的原片数量之和
-
-
-        return null;
+        return FeignOptional.of(() -> wmsTransferSlipFeignApi.slipLineWarehouse(new TupleDTO<>(date, shelfSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
     }
 }

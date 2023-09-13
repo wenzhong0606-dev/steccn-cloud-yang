@@ -14,6 +14,8 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.mes.dto.ErpCommonSaveDTO;
 import com.steccn.mes.dto.ErpTransferSaveDetailDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author W10
@@ -477,6 +480,23 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             throw new BusinessException(error);
         }
         return true;
+    }
+
+    @Override
+    public BigDecimal slipLineWarehouse(LocalDate date, Set<Integer> shelfIdSet) {
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        List<WmsTransferSlip> dbList = list(new LambdaQueryWrapper<WmsTransferSlip>().eq(WmsTransferSlip::getStatus, 1).ge(WmsTransferSlip::getAffirmTime, start).lt(WmsTransferSlip::getAffirmTime, start.plusDays(1)));
+        if (CollUtil.isNotEmpty(dbList)) {
+            Set<Long> idSet = dbList.stream().map(WmsTransferSlip::getId).collect(Collectors.toSet());
+            List<WmsTransferSlipInfo> sourceList = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId, idSet)
+                    .in(WmsTransferSlipInfo::getTargetShelf, shelfIdSet)
+                    .like(WmsTransferSlipInfo::getMaterialName, "原片"));
+            if (CollUtil.isNotEmpty(sourceList)) {
+                List<BigDecimal> valueList = sourceList.stream().map(WmsTransferSlipInfo::getQuantity).collect(Collectors.toList());
+                return BigDecimalUtil.sum(valueList);
+            }
+        }
+        return null;
     }
 
     /**
