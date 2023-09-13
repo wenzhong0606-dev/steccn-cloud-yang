@@ -1,10 +1,17 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * @author yequan
@@ -18,5 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PmsSjgReportDashboardController {
 
     private final PmsSjgReportDashboardService pmsSjgReportDashboardService;
+
+    @GetMapping("/slip")
+    @ApiOperation("领用数")
+    public R<BigDecimal> slip(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsSjgReportDashboardService.slip(workShopId, date));
+    }
 
 }

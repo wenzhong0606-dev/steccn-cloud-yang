@@ -1,5 +1,10 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.constant.ResultCode;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 /**
  * @author yequan
  * @desc 深加工车间当日看板接口
@@ -7,4 +12,13 @@ package com.steccn.pms.service;
  */
 public interface PmsSjgReportDashboardService {
 
+    /**
+     * 领用数
+     *
+     * @param workShopId 车间
+     * @param date       日期
+     * @return
+     */
+
+    BigDecimal slip(Integer workShopId, LocalDate date);
 }
