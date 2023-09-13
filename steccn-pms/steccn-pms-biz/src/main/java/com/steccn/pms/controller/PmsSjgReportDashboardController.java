@@ -32,4 +32,9 @@ public class PmsSjgReportDashboardController {
         return R.success(pmsSjgReportDashboardService.slip(workShopId, date));
     }
 
+    @GetMapping("/consume")
+    @ApiOperation("耗用数")
+    public R<BigDecimal> consume(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsSjgReportDashboardService.consume(workShopId, date));
+    }
 }
