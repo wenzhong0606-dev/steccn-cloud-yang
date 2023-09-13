@@ -198,6 +198,11 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     @Override
     public DashboardProducePageVO producePage(DashboardProducePageDTO dto) {
+        //获取产线
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        SysOfficeVO wsOffice = sysOfficeMap.get(dto.getProductLineId());
+        int type = wsOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
         DashboardProducePageVO resVo = new DashboardProducePageVO();
         //获取当前产线正在执行的订单批次
         PmsProduceOrder currentOrder = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>()
@@ -244,7 +249,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 lineList.add(ele.getProductionLineId());
                 orderIdSet.add(ele.getId());
             });
-            Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
+            Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, type);
             Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
             Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             page.getRecords().forEach(ele -> {
@@ -314,8 +319,12 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Assert.notEmpty(sysOfficeMap, "车间不能为空");
         Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        //基片深加工
+        SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
+        int type = wsOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
+
         //获取班次产量
-        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, type, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
