@@ -75,6 +75,12 @@
                     #{id}
                 </foreach>
             </if>
+            <if test="dto.orderCodes != null and dto.orderCodes.size >0">
+                and b.associated_no in
+                <foreach collection="dto.orderCodes" item ="id" open="(" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
             <if test="dto.batch != null and dto.batch != ''">
                 and b.batch like CONCAT('%',#{dto.batch},'%')
             </if>
@@ -96,4 +102,10 @@
         </where>
         ORDER BY a.update_time DESC
     </select>
+
+    <update id="salesAutoConfirm">
+        UPDATE wms_storage_receipt
+        SET status = #{dto.status},affirm_name = #{dto.operateName},create_by = #{dto.operateId},create_name = #{dto.operateName},update_by = #{dto.operateId},update_name = #{dto.operateName}
+        WHERE id = #{dto.id}
+    </update>
 </mapper>

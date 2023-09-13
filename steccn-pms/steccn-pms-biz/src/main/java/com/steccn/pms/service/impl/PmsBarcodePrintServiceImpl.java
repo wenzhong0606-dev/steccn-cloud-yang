@@ -487,6 +487,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         return resMap;
     }
 
+    @Override
+    public Boolean getCaseNoFlag(String caseNo) {
+        Boolean flag = Boolean.FALSE;
+        PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo).orderByDesc(PmsBarcodePrint::getCreateTime).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)){
+            flag = Boolean.TRUE;
+        }
+        return flag;
+
+    }
+
     /**
      * 生产订单最大箱号
      *

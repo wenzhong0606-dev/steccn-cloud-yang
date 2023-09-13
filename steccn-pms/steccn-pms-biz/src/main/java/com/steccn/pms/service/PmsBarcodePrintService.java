@@ -136,4 +136,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return
      */
     Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet);
+
+    /**
+     * 获取箱号是否存在
+     * @param caseNo
+     * @return
+     */
+    Boolean getCaseNoFlag(String caseNo);
 }

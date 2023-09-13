@@ -256,4 +256,6 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return key 生产订单id  value 物料id
      */
     Map<Long,Long> maiMaterialAByOrderId(Set<Long> orderIds);
+
+    List<PmsProduceOrderVO> listOrderByProduceLineId(Integer productLineId);
 }

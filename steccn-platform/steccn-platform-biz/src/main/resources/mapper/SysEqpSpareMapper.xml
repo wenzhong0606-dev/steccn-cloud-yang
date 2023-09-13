@@ -68,6 +68,7 @@
         SELECT a.id,
                a.code,
                a.name,
+               a.specifications,
                a.thick_quantity thickQuantity
         FROM sys_eqp_spare a
         WHERE a.code = #{code}

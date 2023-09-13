@@ -154,4 +154,13 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据业务id查询状态")
     @PostMapping("/feign/pms/produce/order/defect")
     R<List<PmsDefectDayOrderBasicDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto);
+
+    @GetMapping("/feign/pms/produce/order/get/caseNo/flag")
+    @ApiOperation(("箱号是否存在"))
+    R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo);
+
+
+    @ApiOperation("根据产线id查询订单")
+    @GetMapping("/feign/pms/produce/order/line/order")
+    R<List<PmsProduceOrderVO>> listOrderByProduceLineId(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId);
 }
