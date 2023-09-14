@@ -28,10 +28,10 @@ public class KafkaConsumer {
      *
      * @param record
      */
-    @KafkaListener(topics = "${topicWs}")
+    @KafkaListener(topics = "${topicWs}", concurrency = "3")
     public void tpFirst(ConsumerRecord<Object, String> record) {
         // 消费的哪个topic、partition的消息,打印出消息内容
-        log.info(record.topic() + "-" + record.partition() + "-" + record.value());
+        log.info(Thread.currentThread().getId() + ":" + record.topic() + "-" + record.partition() + "-" + record.value());
         //对消息进行解析
         MsgPushDTO msgPushDTO = JSONObject.parseObject(record.value(), MsgPushDTO.class);
         //然后发送到websocket中
