@@ -146,7 +146,7 @@ public class WebSocketManager {
      */
     public static void sendMessageToOnlineUser(String message) {
         try {
-            for(Map.Entry<Long, CopyOnWriteArraySet<WebSocketServer>> entry:webSocketMap.entrySet()){
+            for (Map.Entry<Long, CopyOnWriteArraySet<WebSocketServer>> entry : webSocketMap.entrySet()) {
                 log.debug("【websocket消息】 单点 用户：{}  消息: {}", entry.getKey(), message);
                 CopyOnWriteArraySet<WebSocketServer> webSocketServers = entry.getValue();
                 for (WebSocketServer webSocketServer : webSocketServers) {
@@ -186,16 +186,17 @@ public class WebSocketManager {
     public static void sendMoreMessage(List<Long> userIdList, String message) {
         log.debug("【websocket消息】 组播消息:" + message);
         for (Long userId : userIdList) {
-
             CopyOnWriteArraySet<WebSocketServer> webSocketServers = webSocketMap.get(userId);
-            for (WebSocketServer webSocketServer : webSocketServers) {
-                try {
-                    Session session = webSocketServer.getSession();
-                    if (session.isOpen()) {
-                        session.getAsyncRemote().sendText(message);
+            if (CollUtil.isNotEmpty(webSocketServers)) {
+                for (WebSocketServer webSocketServer : webSocketServers) {
+                    try {
+                        Session session = webSocketServer.getSession();
+                        if (session.isOpen()) {
+                            session.getAsyncRemote().sendText(message);
+                        }
+                    } catch (Exception e) {
+                        log.error(e.getLocalizedMessage());
                     }
-                } catch (Exception e) {
-                    log.error(e.getLocalizedMessage());
                 }
             }
         }
