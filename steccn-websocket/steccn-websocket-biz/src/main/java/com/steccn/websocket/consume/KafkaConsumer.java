@@ -10,6 +10,7 @@ import com.steccn.websocket.service.WebSocketManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -29,20 +30,21 @@ public class KafkaConsumer {
      * @param record
      */
     @KafkaListener(topics = "${topicWs}", concurrency = "3")
-    public void tpFirst(ConsumerRecord<Object, String> record) {
+    public void tpFirst(ConsumerRecord<Object, String> record, Acknowledgment ack) {
         // 消费的哪个topic、partition的消息,打印出消息内容
         log.info(Thread.currentThread().getId() + ":" + record.topic() + "-" + record.partition() + "-" + record.value());
         //对消息进行解析
         MsgPushDTO msgPushDTO = JSONObject.parseObject(record.value(), MsgPushDTO.class);
         //然后发送到websocket中
         if (CollUtil.isNotEmpty(msgPushDTO.getUserIdList())) {
-            if(WebsocketConstant.WsPushLevelEnum.LEVEL_MORE.getType().equals(msgPushDTO.getPushLevel())){
+            if (WebsocketConstant.WsPushLevelEnum.LEVEL_MORE.getType().equals(msgPushDTO.getPushLevel())) {
                 Set<Long> userIdList = msgPushDTO.getUserIdList();
                 msgPushDTO.setUserIdList(null);
                 WebSocketManager.sendMoreMessage(Lists.newArrayList(userIdList), JSONUtil.toJsonStr(msgPushDTO));
-            }else if(WebsocketConstant.WsPushLevelEnum.LEVEL_ONLINE_ALL.getType().equals(msgPushDTO.getPushLevel())){
+            } else if (WebsocketConstant.WsPushLevelEnum.LEVEL_ONLINE_ALL.getType().equals(msgPushDTO.getPushLevel())) {
                 WebSocketManager.sendMessageToOnlineUser(record.value());
             }
         }
+        ack.acknowledge();
     }
 }
