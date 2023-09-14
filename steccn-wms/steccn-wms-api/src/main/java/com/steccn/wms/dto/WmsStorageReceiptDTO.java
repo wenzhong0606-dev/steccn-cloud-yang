@@ -42,10 +42,6 @@ public class WmsStorageReceiptDTO {
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;
-
-    @ApiModelProperty("仓库code,三方系统专用")
-    private String warehouseCode;
-
     @ApiModelProperty("备注")
     @Size(min = 0, max = 256, message = "备注长度不能超过 256 个字符")
     private String note;
@@ -59,12 +55,6 @@ public class WmsStorageReceiptDTO {
     @ApiModelProperty("明细集合")
     @Valid
     private List<WmsStorageReceiptInfoDTO> list;
-
-    @ApiModelProperty("操作人Id")
-    private Long operateId;
-
-    @ApiModelProperty("操作人名称")
-    private String operateName;
 
     @ApiModelProperty("是否SRM系统传参 0否 1是")
     private Integer isSRMSys;

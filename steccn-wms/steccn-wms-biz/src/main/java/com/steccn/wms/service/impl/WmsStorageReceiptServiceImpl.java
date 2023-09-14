@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -16,6 +17,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
@@ -61,6 +63,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -223,34 +226,67 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     @Override
     @Transactional
-    public Boolean salesAdd(WmsStorageReceiptDTO dto) {
+    public Boolean salesAdd(WmsStorageReceiptSalesDTO dto) {
         //组数据
-        //1、校验确认人
-        Assert.notNull(dto.getOperateId(),"确认人id不能为空");
-        Assert.notNull(dto.getOperateName(),"确认人名字不能为空");
-        Assert.notNull(dto.getWarehouseCode(),"仓库编码不能为空");
+        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+        List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
         //默认是采购入库单
-        dto.setType(1600405739121573888L);
+        receiptDTO.setType(1600405739121573888L);
         //获取仓库id
-        Map<String, SysOfficeVO> wareHouseInfo = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(dto.getWarehouseCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<String> shelfCode = dto.getMaterials().stream().map(WmsStorageSalesMaterialDTO::getShelfCode).collect(Collectors.toSet());
+        shelfCode.add(dto.getWarehouseCode());
+        Map<String, SysOfficeVO> wareHouseInfo = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(shelfCode), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(wareHouseInfo.get(dto.getWarehouseCode()),"找不到编码对应的仓库");
-        dto.setWarehouseId(wareHouseInfo.get(dto.getWarehouseCode()).getId());
+        receiptDTO.setWarehouseId(wareHouseInfo.get(dto.getWarehouseCode()).getId());
         //获取物料信息
-        Assert.notEmpty(dto.getList(),"物料信息不能为空");
-        Set<String> unitNameList = dto.getList().stream().map(WmsStorageReceiptInfoDTO::getUnitName).collect(Collectors.toSet());
-        dto.getList().forEach(tmp->{
-            Assert.notNull(tmp.getMaterialCode(),"物料编码不能为空");
+        //单位信息
+        Set<String> unitNameList = receiptDTO.getList().stream().map(WmsStorageReceiptInfoDTO::getUnitName).collect(Collectors.toSet());
+        Map<String, Long> dicMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(unitNameList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //日期当天
+        String yyyyMMdd = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        //存相同物料的caseNo
+        Map<String,Integer> caseNoMap = Maps.newHashMap();
+        dto.getMaterials().forEach(tmp->{
             EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(tmp.getMaterialCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Assert.notNull(eqpSpareVO,"系统中不存在该物料");
-            tmp.setMaterialName(eqpSpareVO.getName());
-            tmp.setMaterialId(eqpSpareVO.getId());
-            Assert.notNull(tmp.getUnitName(),"单位名字不能为空");
-            Map<String, Long> dicMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(unitNameList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Assert.notNull(dicMap.get(tmp.getUnitName()), "单位id不存在");
-            tmp.setUnit(dicMap.get(tmp.getUnitName()));
+            //箱号规则   六位日期-料号-六位流水()
+            Integer caseNo = caseNoMap.getOrDefault(tmp.getMaterialCode(), null);
+            if(caseNo == null) {
+                WmsStorageReceiptInfo caseNoObj = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                        .select(WmsStorageReceiptInfo::getCaseNo)
+                        .likeRight(WmsStorageReceiptInfo::getCaseNo, yyyyMMdd + "-" + tmp.getMaterialCode())
+                        .orderByDesc(WmsStorageReceiptInfo::getCaseNo)
+                        .last("LIMIT 1"));
+                if(Objects.nonNull(caseNoObj)){
+                    String[] split = caseNoObj.getCaseNo().split("-");
+                    caseNo = Integer.parseInt(split[2]);
+                    caseNo = caseNo + 1;
+                }else {
+                    caseNo = 0;
+                }
+            }else {
+                caseNo = caseNo + 1;
+            }
+            for(int i = 0; i < tmp.getPackagePackNum(); i++){
+                WmsStorageReceiptInfoDTO material = new WmsStorageReceiptInfoDTO();
+                material.setMaterialName(eqpSpareVO.getName());
+                material.setMaterialId(eqpSpareVO.getId());
+                material.setMaterialCode(tmp.getMaterialCode());
+                Assert.notNull(dicMap.get(tmp.getUnitName()), "单位id不存在");
+                material.setUnit(dicMap.get(tmp.getUnitName()));
+                material.setUnitName(tmp.getUnitName());
+                material.setBatch(tmp.getBatch());
+                material.setQuantity(BigDecimalUtil.divide(tmp.getNetWeight(),new BigDecimal(tmp.getPackagePackNum())));
+                String caseNoStr = yyyyMMdd + "-" + tmp.getMaterialCode() + "-" + String.format("%06d", caseNo);
+                material.setCaseNo(caseNoStr);
+                caseNoMap.put(tmp.getMaterialCode(),caseNo);
+                caseNo = caseNo + 1;
+                materialList.add(material);
+            }
         });
-        dto.setIsSRMSys(OaConstant.NUM_1);
-        this.add(dto);
+        receiptDTO.setList(materialList);
+        receiptDTO.setIsSRMSys(OaConstant.NUM_1);
+        this.add(receiptDTO);
         return true;
     }
 

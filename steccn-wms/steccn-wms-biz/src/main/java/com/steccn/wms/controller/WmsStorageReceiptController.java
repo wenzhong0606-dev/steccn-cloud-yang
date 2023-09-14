@@ -1,12 +1,17 @@
 package com.steccn.wms.controller;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.domain.WmsStorageReceipt;
@@ -23,8 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -42,6 +49,8 @@ public class WmsStorageReceiptController {
 
     private final WmsStorageReceiptService wmsStorageReceiptService;
 
+    private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+
     @ApiOperation("入库凭证分页列表")
     @PostMapping("/list")
     public R< Page<WmsStorageReceiptVO>> pageList(@RequestBody WmsStorageReceiptPageDTO dto) {
@@ -53,6 +62,14 @@ public class WmsStorageReceiptController {
     @SysLog("入库凭证新增")
     public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody WmsStorageReceiptDTO dto) {
         return R.success(wmsStorageReceiptService.add(dto));
+    }
+
+    @ApiOperation("采购系统新增")
+    @PostMapping("/sales")
+    @SysLog("入库凭证新增")
+    public R<Boolean> salesAdd(HttpServletRequest request, @RequestBody WmsStorageReceiptSalesDTO dto) {
+        validRequestHeader(request);
+        return R.success(wmsStorageReceiptService.salesAdd(dto));
     }
 
     @ApiOperation("入库凭证编辑")
@@ -133,6 +150,18 @@ public class WmsStorageReceiptController {
     @PostMapping("/storage/flag/info")
     public R<WmsStorageFlagInfoVO> storageFlagInfo(@RequestBody WmsStorageReceiptFlagInfoDTO dto){
         return R.success(wmsStorageReceiptService.storageFlagInfo(dto));
+    }
+
+    /**
+     * 校验请求头信息
+     *
+     * @param request 请求
+     */
+    private void validRequestHeader(HttpServletRequest request) {
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String clientId = request.getHeader(OaConstant.CLIENT_ID);
+        Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
+        Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
     }
 
 }
