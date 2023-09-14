@@ -25,4 +25,16 @@ public interface WebsocketConstant {
         private Integer type;
         private String name;
     }
+
+    /**
+     * 推送级别
+     */
+    @Getter
+    @AllArgsConstructor
+    enum WsPushLevelEnum {
+        LEVEL_MORE(0, "多人"),
+        LEVEL_ONLINE_ALL(1, "所有在线人员");
+        private Integer type;
+        private String name;
+    }
 }
