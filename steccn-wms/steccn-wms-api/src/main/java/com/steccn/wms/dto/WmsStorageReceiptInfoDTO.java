@@ -26,7 +26,7 @@ public class WmsStorageReceiptInfoDTO {
     private Long id;
 
     @ApiModelProperty("物料id")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料id不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料id不能为空")
     private Long materialId;
 
     @ApiModelProperty("物料编码")
@@ -34,7 +34,7 @@ public class WmsStorageReceiptInfoDTO {
     private String materialCode;
 
     @ApiModelProperty("物料名称")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料名称不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料名称不能为空")
     private String materialName;
 
     @ApiModelProperty("货架id")

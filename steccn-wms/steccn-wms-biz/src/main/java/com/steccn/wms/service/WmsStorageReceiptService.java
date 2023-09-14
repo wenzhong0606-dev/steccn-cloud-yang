@@ -130,4 +130,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Boolean deleteData();
 
     WmsStorageFlagInfoVO storageFlagInfo(WmsStorageReceiptFlagInfoDTO dto);
+
+    String produceOldLineAdd(WmsStorageReceiptDTO dto);
 }
