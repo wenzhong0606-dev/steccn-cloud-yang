@@ -1,13 +1,11 @@
 package com.steccn.websocket.controller.feign;
 
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.steccn.common.vo.R;
+import com.steccn.websocket.configuration.KafkaConf;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
-import com.steccn.websocket.service.WebSocketManager;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -23,10 +21,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class WsFeignController {
 
-    private final ObjectMapper objectMapper;
-
     private final KafkaTemplate kafkaTemplate;
-
+    private final KafkaConf kafkaConf;
 
     @GetMapping("/push/oa")
     public R<MsgPushDTO> pushOa(@RequestParam("userId") Long userId) {
@@ -35,11 +31,12 @@ public class WsFeignController {
         msgPushDTO.setUserIdList(Sets.newHashSet(userId));
         msgPushDTO.setPushLevel(WebsocketConstant.WsPushLevelEnum.LEVEL_MORE.getType());
 //        WebSocketManager.sendMessageByUser(userId, JSONUtil.toJsonStr(msgPushDTO));
-        kafkaTemplate.send("tp_first", JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
+        kafkaTemplate.send(kafkaConf.getTopicWs(), JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
             @Override
             public void onFailure(Throwable ex) {
                 log.info("发送消息失败：" + ex.getMessage());
             }
+
             @Override
             public void onSuccess(SendResult<String, Object> result) {
                 log.info("发送消息成功：" + result.getRecordMetadata().topic() + "-"
@@ -59,11 +56,12 @@ public class WsFeignController {
 //            WebSocketManager.sendMessageByUser(ele, msg);
 //        });
         msgPushDTO.setPushLevel(WebsocketConstant.WsPushLevelEnum.LEVEL_MORE.getType());
-        kafkaTemplate.send("tp_first", JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
+        kafkaTemplate.send(kafkaConf.getTopicWs(), JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
             @Override
             public void onFailure(Throwable ex) {
                 log.info("发送消息失败：" + ex.getMessage());
             }
+
             @Override
             public void onSuccess(SendResult<String, Object> result) {
                 log.info("发送消息成功：" + result.getRecordMetadata().topic() + "-"
@@ -79,11 +77,12 @@ public class WsFeignController {
 
 //        msgPushDTO.setType(msgPushDTO.getType());
         msgPushDTO.setPushLevel(WebsocketConstant.WsPushLevelEnum.LEVEL_ONLINE_ALL.getType());
-        kafkaTemplate.send("tp_first", JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
+        kafkaTemplate.send(kafkaConf.getTopicWs(), JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
             @Override
             public void onFailure(Throwable ex) {
                 log.info("发送消息失败：" + ex.getMessage());
             }
+
             @Override
             public void onSuccess(SendResult<String, Object> result) {
                 log.info("发送消息成功：" + result.getRecordMetadata().topic() + "-"

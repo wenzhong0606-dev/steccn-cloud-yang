@@ -28,7 +28,7 @@ public class KafkaConsumer {
      *
      * @param record
      */
-    @KafkaListener(topics = {"tp_first"})
+    @KafkaListener(topics = "${topicWs}")
     public void tpFirst(ConsumerRecord<Object, String> record) {
         // 消费的哪个topic、partition的消息,打印出消息内容
         log.info(record.topic() + "-" + record.partition() + "-" + record.value());
