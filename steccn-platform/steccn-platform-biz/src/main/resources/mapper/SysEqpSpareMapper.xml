@@ -71,6 +71,6 @@
                a.specifications,
                a.thick_quantity thickQuantity
         FROM sys_eqp_spare a
-        WHERE a.code = #{code}
+        WHERE a.code = #{code} AND a.status = 0
     </select>
 </mapper>

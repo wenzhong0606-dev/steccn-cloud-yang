@@ -105,7 +105,7 @@
 
     <update id="salesAutoConfirm">
         UPDATE wms_storage_receipt
-        SET status = #{dto.status},affirm_name = #{dto.operateName},create_by = #{dto.operateId},create_name = #{dto.operateName},update_by = #{dto.operateId},update_name = #{dto.operateName}
+        SET status = 1,affirm_name = #{dto.operateName},create_by = #{dto.operateId},create_name = #{dto.operateName},update_by = #{dto.operateId},update_name = #{dto.operateName},source_type = 1,affirm_time = #{dto.operateTime}
         WHERE id = #{dto.id}
     </update>
 </mapper>

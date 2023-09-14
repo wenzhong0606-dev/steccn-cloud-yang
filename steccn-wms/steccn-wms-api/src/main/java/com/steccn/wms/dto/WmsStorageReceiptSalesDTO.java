@@ -19,7 +19,7 @@ public class WmsStorageReceiptSalesDTO {
     private String warehouseCode;
 
     @NotNull(message = "操作人id不能为空")
-    private Long operateId;
+    private Integer operateId;
 
     @NotNull(message = "操作人名称不能为空")
     private String operateName;

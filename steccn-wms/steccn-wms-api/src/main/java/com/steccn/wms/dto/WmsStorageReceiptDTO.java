@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -58,4 +59,13 @@ public class WmsStorageReceiptDTO {
 
     @ApiModelProperty("是否SRM系统传参 0否 1是")
     private Integer isSRMSys;
+
+    @ApiModelProperty("操作人姓名")
+    private String operateName;
+
+    @ApiModelProperty("操作人id")
+    private Integer operateId;
+
+    @ApiModelProperty("操作时间")
+    private LocalDateTime operateTime;
 }
