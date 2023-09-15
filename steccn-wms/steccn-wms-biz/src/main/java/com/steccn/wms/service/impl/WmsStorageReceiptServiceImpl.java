@@ -3,6 +3,7 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
 import com.alibaba.fastjson.JSONObject;
@@ -22,13 +23,13 @@ import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.dto.SrmOaWorkFlowDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysErpOfficeVO;
-import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.feign.RemoteSrmFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
+import com.steccn.platform.vo.*;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
@@ -36,6 +37,7 @@ import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
+import com.steccn.qms.vo.QtCheckTaskReportVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsStorageReceipt;
@@ -47,6 +49,7 @@ import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.util.WmsCodeUtil;
+import com.steccn.wms.vo.WmsSalesDeliveryVO;
 import com.steccn.wms.vo.WmsStorageFlagInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
@@ -55,8 +58,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -99,6 +105,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final RemotePmsFeignApi remotePmsFeignApi;
 
     private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
+
+    private final RemoteSrmFeignApi remoteSrmFeignApi;
+
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -933,6 +943,69 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         }
 
         return flagInfoVO;
+    }
+
+    @Override
+    public Page<WmsSalesDeliveryVO> salesDeliveryPage(WmsDeliveryOrderDTO dto) {
+        List<WmsSalesDeliveryVO> results = Lists.newArrayList();
+        //如果缓存中没有值则重新获取token
+        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
+        if(StrUtil.isBlank(srmToken)){
+            srmToken = remoteSrmFeignApi.getOauthToken();
+        }
+        //获取数据
+        MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
+        SrmOaWorkFlowDTO param = new SrmOaWorkFlowDTO();
+        String salesOrder = remoteSrmFeignApi.querySalesOrder(headers, param);
+        List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = JSONObject.parseObject(salesOrder).getJSONArray("content").getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
+        //存相同物料的caseNo
+        Map<String,Integer> caseNoMap = Maps.newHashMap();
+        String yyyyMMdd = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        wmsSalesDeliveryVOS.forEach(tmp->{
+            WmsSalesDeliveryVO result = new WmsSalesDeliveryVO();
+            EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(tmp.getEsItemCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(eqpSpareVO,"系统中不存在该物料");
+            //物料
+            result.setMaterialCode(eqpSpareVO.getCode());
+            result.setMaterialName(eqpSpareVO.getName());
+            result.setMaterialId(eqpSpareVO.getId());
+            result.setSpecifications(eqpSpareVO.getSpecifications());
+            //箱号
+            if(eqpSpareVO.getCode().startsWith("P1.W.P")){
+                //箱号规则   六位日期-六位流水()
+                Integer caseNo = caseNoMap.getOrDefault(eqpSpareVO.getCode(), null);
+                if(caseNo == null) {
+                    WmsStorageReceiptInfo caseNoObj = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                            .select(WmsStorageReceiptInfo::getCaseNo)
+                            .eq(WmsStorageReceiptInfo::getMaterialCode,eqpSpareVO.getCode())
+                            .likeRight(WmsStorageReceiptInfo::getCaseNo, yyyyMMdd + "-")
+                            .orderByDesc(WmsStorageReceiptInfo::getCaseNo)
+                            .last("LIMIT 1"));
+                    if(Objects.nonNull(caseNoObj)){
+                        String[] split = caseNoObj.getCaseNo().split("-");
+                        caseNo = Integer.parseInt(split[1]);
+                        caseNo = caseNo + 1;
+                    }else {
+                        caseNo = 0;
+                    }
+                }else {
+                    caseNo = caseNo + 1;
+                }
+                String caseNoStr = yyyyMMdd + "-" + String.format("%06d", caseNo);
+                caseNoMap.put(eqpSpareVO.getCode(),caseNo);
+                result.setCaseNo(caseNoStr);
+            }
+            //数量
+            result.setNum(BigDecimalUtil.subtract(tmp.getShipQuantity(),tmp.getReceiveQuantity(),3));
+            //关联单据
+            result.setAssociatedNo(tmp.getAsnLineNum().toString());
+            //单位
+//            result.setUnitName();
+//            result.setUnitId();
+            results.add(result);
+        });
+        Page<WmsSalesDeliveryVO> page = LogicalPageUtil.page(results, dto.getCurrent(), dto.getSize());
+        return page;
     }
 
     @Override
