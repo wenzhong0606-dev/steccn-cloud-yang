@@ -469,13 +469,60 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     //工位为“基片下片工位（南）”
                                     //抽检时间：
                                     //早班：在区间 [班次日期D 8:00, 班次日期D 12:00) 内
-                                    //晚班：在区间 [班次日期D 20:00, 班次日期D+1 0:00) 内
+                                    BigDecimal f1 = BigDecimal.ZERO;
                                     if(entry2.getKey().equals(OaConstant.NO)){
-//                                        List<Long> fuTaskIds = productLineTask.stream().filter(v -> v.getStation() != null
-//                                                        && v.getStation().getName() != null
-//                                                        && v.getStation().getName().equals(QtManagerConstant.JIPIAN_DOWN_STATION_SOUTH))
-//                                                .map(QtCheckTask::getId)
-//                                                .collect(Collectors.toList());
+                                        List<Long> stopFuTaskIds = productLineTask.stream().filter(v -> v.getStation() != null
+                                                        && v.getStation().getName() != null
+                                                        && v.getStation().getName().equals(QtManagerConstant.JIPIAN_DOWN_STATION_SOUTH)
+                                                        && LocalDateUtil.isRange(v.getSpotTime(),
+                                                        LocalDateTime.of(v.getClassTime(),LocalTime.of(8,0,0)),
+                                                        LocalDateTime.of(v.getClassTime(),LocalTime.of(12,0,0)),true,false))
+                                                .map(QtCheckTask::getId)
+                                                .collect(Collectors.toList());
+                                        //获取所有负载
+                                        List<QtCheckTaskDetail> stopFuDetails = Lists.newArrayList();
+                                        BigDecimal stopTotal = BigDecimal.ZERO;
+                                        BigDecimal stopTotalCount = BigDecimal.ZERO;
+                                        if (stopFuTaskIds.size() > 0 && fuItemIds.size() > 0) {
+                                            stopFuDetails = allTaskDetails.stream().filter(v->stopFuTaskIds.contains(v.getTaskId())
+                                                            && fuItemIds.contains(v.getItemId()))
+                                                    .collect(Collectors.toList());
+                                            for (QtCheckTaskDetail tmp : stopFuDetails) {
+                                                if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                                    BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                                    stopTotal = BigDecimalUtil.add(stopTotal, decimalTmp);
+                                                    stopTotalCount = BigDecimalUtil.add(stopTotalCount, new BigDecimal(1));
+                                                }
+                                            }
+                                            f1 = BigDecimalUtil.divide(stopTotal,stopTotalCount,3);
+                                        }
+                                    }else {
+                                        //晚班：在区间 [班次日期D 20:00, 班次日期D+1 0:00) 内
+                                        List<Long> stopFuTaskIds = productLineTask.stream().filter(v -> v.getStation() != null
+                                                        && v.getStation().getName() != null
+                                                        && v.getStation().getName().equals(QtManagerConstant.JIPIAN_DOWN_STATION_SOUTH)
+                                                        && LocalDateUtil.isRange(v.getSpotTime(),
+                                                        LocalDateTime.of(v.getClassTime(),LocalTime.of(20,0,0)),
+                                                        LocalDateTime.of(v.getClassTime().plusDays(1),LocalTime.of(1,0,0)),true,false))
+                                                .map(QtCheckTask::getId)
+                                                .collect(Collectors.toList());
+                                        //获取所有负载
+                                        List<QtCheckTaskDetail> stopFuDetails = Lists.newArrayList();
+                                        BigDecimal stopTotal = BigDecimal.ZERO;
+                                        BigDecimal stopTotalCount = BigDecimal.ZERO;
+                                        if (stopFuTaskIds.size() > 0 && fuItemIds.size() > 0) {
+                                            stopFuDetails = allTaskDetails.stream().filter(v->stopFuTaskIds.contains(v.getTaskId())
+                                                            && fuItemIds.contains(v.getItemId()))
+                                                    .collect(Collectors.toList());
+                                            for (QtCheckTaskDetail tmp : stopFuDetails) {
+                                                if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                                    BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                                    stopTotal = BigDecimalUtil.add(stopTotal, decimalTmp);
+                                                    stopTotalCount = BigDecimalUtil.add(stopTotalCount, new BigDecimal(1));
+                                                }
+                                            }
+                                            f1 = BigDecimalUtil.divide(stopTotal,stopTotalCount,3);
+                                        }
                                     }
                                     //负载f2：查询满足下列条件的巡检任务，记为集合T2，集合T2内所有任务录入的“负载”取平均值即为f2（每个任务录入的“负载”为该任务所有样本取平均值）
                                     //状态为已检验
