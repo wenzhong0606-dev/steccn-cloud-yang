@@ -264,6 +264,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             //仓库id
             wmsStorageReceiptDTO.setList(materialList);
             wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
+            wmsStorageReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
+            wmsStorageReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
             try {
                 String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 //入库必定要成功
