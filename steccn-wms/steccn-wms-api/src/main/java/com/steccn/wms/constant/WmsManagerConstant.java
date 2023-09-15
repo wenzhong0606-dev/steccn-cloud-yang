@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 public interface WmsManagerConstant {
 
+
+    String Code_ZERO = "0";
+
     /**
      * one
      */
