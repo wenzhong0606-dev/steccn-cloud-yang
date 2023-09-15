@@ -75,4 +75,7 @@ public class WmsStorageReceiptInfoDTO {
 
     @ApiModelProperty("有效期截至")
     private LocalDate validTime;
+
+    @ApiModelProperty("金蝶收料通知单Id")
+    private String erpLineId;
 }

@@ -36,4 +36,6 @@ public class WmsStorageSalesMaterialDTO {
     @NotEmpty(message = "单位名称不能为空")
     private String unitName;
 
+    private String erpLineId;
+
 }

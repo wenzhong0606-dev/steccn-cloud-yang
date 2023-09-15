@@ -110,4 +110,14 @@ public class WmsStorageReceipt implements Serializable {
      * 来源单号
      */
     private String sourceCode;
+
+    /**
+     * 金蝶收料单编码
+     */
+    private String erpReceiptCode;
+
+    /**
+     * 金蝶收料单id
+     */
+    private String erpReceiptId;
 }

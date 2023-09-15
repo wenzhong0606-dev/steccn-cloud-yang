@@ -24,6 +24,12 @@ public class WmsStorageReceiptSalesDTO {
     @NotNull(message = "操作人名称不能为空")
     private String operateName;
 
+    @ApiModelProperty("金蝶收料通知单编码")
+    private String erpReceiptCode;
+
+    @ApiModelProperty("金蝶收料通知单Id")
+    private String erpReceiptId;
+
     @Valid
     private List<WmsStorageSalesMaterialDTO> materials;
 

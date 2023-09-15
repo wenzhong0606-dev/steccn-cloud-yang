@@ -297,6 +297,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     material.setShelfCode(wareHouseInfo.get(tmp.getShelfCode()).getOfficeCode());
                     material.setShelfName(wareHouseInfo.get(tmp.getShelfCode()).getOfficeName());
                     material.setAssociatedNo(tmp.getAssociatedNo());
+                    material.setErpLineId(tmp.getErpLineId());
                     caseNoMap.put(tmp.getMaterialCode(),caseNo);
                     caseNo = caseNo + 1;
                     materialList.add(material);
@@ -307,6 +308,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             receiptDTO.setOperateTime(LocalDateTime.now());
             receiptDTO.setList(materialList);
             receiptDTO.setIsSRMSys(OaConstant.NUM_1);
+            receiptDTO.setErpReceiptId(dto.getErpReceiptId());
+            receiptDTO.setErpReceiptCode(dto.getErpReceiptCode());
             this.add(receiptDTO);
         } finally {
             lock.unlock();
