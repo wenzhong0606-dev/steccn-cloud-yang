@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.PmsUseCountDTO;
+import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
@@ -246,6 +247,14 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return vo
      */
     List<ProcessReportWorkPageVO> processReportDashBoard(@Param("dto") ProcessReportWorkPageDTO dto);
+
+    /**
+     * 根据产线id，班次日期获取停机时间
+     * @param dto
+     * @return
+     */
+    List<ProcessReportWorkHourVO> getProcessWorkHour(@Param("dto") ProcessReportWorkHourQmsDTO dto);
+
 }
 
 

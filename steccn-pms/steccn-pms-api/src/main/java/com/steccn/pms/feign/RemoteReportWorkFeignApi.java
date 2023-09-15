@@ -5,7 +5,9 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
+import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
 import com.steccn.pms.vo.PmsReportWorkVO;
+import com.steccn.pms.vo.ProcessReportWorkHourVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -87,4 +89,13 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("原料耗用量-月|产线")
     @PostMapping("/feign/pms/report/work/original/consume/month")
     R<Map<String, BigDecimal>> useCountMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
+
+    /**
+     * 获取停工时长
+     * @param dto
+     * @return
+     */
+    @ApiOperation("获取停工时长")
+    @PostMapping("/feign/pms/report/work/original/hour")
+    R<List<ProcessReportWorkHourVO>> getWorkHour(@RequestBody ProcessReportWorkHourQmsDTO dto);
 }
