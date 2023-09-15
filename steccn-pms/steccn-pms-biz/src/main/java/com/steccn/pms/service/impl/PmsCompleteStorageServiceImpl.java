@@ -153,12 +153,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     public String generateInfo(List<CompleteStorageScanDTO> dtoList) {
         String code = generate(dtoList);
-        //调用确认入库单接口
-        PmsCompleteStorage pmsCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code), false);
-        Assert.notNull(pmsCompleteStorage, "入库单为空");
-        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
-        receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
-        FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        //调用确认入库单接口 2023-0915 去除自动确认逻辑
+//        PmsCompleteStorage pmsCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code), false);
+//        Assert.notNull(pmsCompleteStorage, "入库单为空");
+//        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+//        receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
+//        FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         return code;
     }
 
@@ -265,6 +265,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             //仓库id
             wmsStorageReceiptDTO.setList(materialList);
             wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
+            wmsStorageReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
+            wmsStorageReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
             try {
                 String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 //入库必定要成功

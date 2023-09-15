@@ -68,7 +68,12 @@ public class WmsStorageReceiptController {
     @PostMapping("/produce/old/line/add")
     @SysLog("生产老线入库新增")
     public R<String> produceOldLineAdd(@RequestBody WmsStorageReceiptDTO dto){
-        return R.success(wmsStorageReceiptService.produceOldLineAdd(dto));
+        String code = wmsStorageReceiptService.produceOldLineAdd(dto);
+        //调用确认接口
+        WmsStorageReceipt wmsStorageReceipt = wmsStorageReceiptService.getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getCode, code), false);
+        Assert.notNull(wmsStorageReceipt, "入库单为空");
+        wmsStorageReceiptService.affirm(wmsStorageReceipt.getId());
+        return R.success(code);
     }
 
     @ApiOperation("采购系统新增")
