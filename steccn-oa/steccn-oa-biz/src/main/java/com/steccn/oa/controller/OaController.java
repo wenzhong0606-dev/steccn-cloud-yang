@@ -286,4 +286,10 @@ public class OaController {
     public R<OaTodayClassVO> getTodayClassInfo(){
         return R.success(kqGroupmemberService.getTodayClassInfo());
     }
+
+    @ApiOperation("获取深加工当班信息")
+    @GetMapping("/todayClass/info/sjg")
+    public R<OaTodayClassVO> getTodayClassInfoSJG(){
+        return R.success(kqGroupmemberService.getTodayClassInfoSJG());
+    }
 }

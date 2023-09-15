@@ -101,7 +101,7 @@ public class WmsStorageReceipt implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 单据来源类型
+     * 单据来源类型 0生产 1采购系统
      */
     private Integer sourceType;
 
@@ -110,4 +110,14 @@ public class WmsStorageReceipt implements Serializable {
      * 来源单号
      */
     private String sourceCode;
+
+    /**
+     * 金蝶收料单编码
+     */
+    private String erpReceiptCode;
+
+    /**
+     * 金蝶收料单id
+     */
+    private String erpReceiptId;
 }

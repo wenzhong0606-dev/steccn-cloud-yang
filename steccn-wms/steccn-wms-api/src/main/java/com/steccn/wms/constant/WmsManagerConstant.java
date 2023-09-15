@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 public interface WmsManagerConstant {
 
+
+    String Code_ZERO = "0";
+
     /**
      * one
      */
@@ -15,10 +18,18 @@ public interface WmsManagerConstant {
 
     String CODE_TWO = "2";
 
+
+    String CODE_FOUR = "4";
+
     /**
      * 采购类型
      */
     String WAREHOUSING_TYPE = "warehousing_type";
+
+    /**
+     * 出库字典类型
+     */
+    String OUTBOUND_TYPE = "outbound_type";
 
     String JSON_SUCCESS = "success";
 

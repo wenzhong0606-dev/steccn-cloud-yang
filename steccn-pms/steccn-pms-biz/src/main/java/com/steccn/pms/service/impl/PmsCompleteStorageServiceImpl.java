@@ -21,6 +21,7 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
@@ -152,12 +153,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     public String generateInfo(List<CompleteStorageScanDTO> dtoList) {
         String code = generate(dtoList);
-        //调用确认入库单接口
-        PmsCompleteStorage pmsCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code), false);
-        Assert.notNull(pmsCompleteStorage, "入库单为空");
-        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
-        receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
-        FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        //调用确认入库单接口 2023-0915 去除自动确认逻辑
+//        PmsCompleteStorage pmsCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code), false);
+//        Assert.notNull(pmsCompleteStorage, "入库单为空");
+//        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+//        receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
+//        FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         return code;
     }
 
@@ -264,6 +265,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             //仓库id
             wmsStorageReceiptDTO.setList(materialList);
             wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
+            wmsStorageReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
+            wmsStorageReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
             try {
                 String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 //入库必定要成功
@@ -635,28 +638,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
         pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
         return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
-    }
-
-    @Override
-    public Boolean casePrint(List<String> caseNoList) {
-        LambdaUpdateWrapper<PmsCompleteStorageInfo> updateWrapper = Wrappers.lambdaUpdate();
-        updateWrapper.in(PmsCompleteStorageInfo::getCaseNo, caseNoList);
-        updateWrapper.setSql("print_flag =1 , print_count = IFNULL(print_count , 0) + 1");
-        return completeStorageInfoService.update(updateWrapper);
-    }
-
-    @Override
-    public Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet) {
-        Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(caseNoSet)){
-            List<PmsCompleteStorageInfo> dbList = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>().in(PmsCompleteStorageInfo::getCaseNo, caseNoSet));
-            if(CollUtil.isNotEmpty(dbList)){
-                for (PmsCompleteStorageInfo info : dbList) {
-                    resMap.put(info.getCaseNo(),new TupleDTO(info.getPrintFlag(),info.getPrintCount()));
-                }
-            }
-        }
-        return resMap;
     }
 
     /**
