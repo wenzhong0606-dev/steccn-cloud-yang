@@ -45,8 +45,14 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
     Map<Integer, OaGroupLeaderDTO> getLeaderByGroupId(Set<Integer> groupIds);
 
     /**
-     * oa获取当班信息
+     * oa获取基片当班信息
      * @return
      */
     OaTodayClassVO getTodayClassInfo();
+
+    /**
+     * oa获取sjg当班信息
+     * @return
+     */
+    OaTodayClassVO getTodayClassInfoSJG();
 }

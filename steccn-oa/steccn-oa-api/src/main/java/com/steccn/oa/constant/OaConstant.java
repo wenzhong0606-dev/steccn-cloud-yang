@@ -85,6 +85,16 @@ public class OaConstant {
     public static final String JOB_RONGHUA_ID_3 = "414295";
 
     /**
+     * 磨边工
+     */
+    public static final String JOB_MOBIAN_ID_1 = "84";
+    public static final String JOB_MOBIAN_ID_2 = "231";
+    public static final String JOB_MOBIAN_ID_3 = "298";
+    public static final String JOB_MOBIAN_ID_4 = "414242";
+    public static final String JOB_MOBIAN_ID_5 = "414330";
+    public static final String JOB_MOBIAN_ID_6 = "414339";
+
+    /**
      * 熔化班长
      */
     public static final String JOB_RONGHUABANZHANG_ID_1 = "206";

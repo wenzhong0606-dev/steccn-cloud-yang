@@ -241,6 +241,71 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
         return result;
     }
 
+    @Override
+    public OaTodayClassVO getTodayClassInfoSJG() {
+        OaTodayClassVO result = new OaTodayClassVO();
+        //算当前班次
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        //获取熔化工
+        rosterDto.setJobtitle(OaConstant.JOB_MOBIAN_ID_1);
+        List<OaRosterRecordVO> oaRosterRecordVOS = Lists.newArrayList();
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_MOBIAN_ID_2);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_MOBIAN_ID_3);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_MOBIAN_ID_4);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_MOBIAN_ID_5);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        rosterDto.setJobtitle(OaConstant.JOB_MOBIAN_ID_6);
+        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+        Set<Long> userId = Sets.newHashSet();
+        //过滤当前班次
+        String classStr = "";
+        if (qtTaskClassCalculate.getClassType().equals(0)) {
+            result.setClassOrder("早班");
+            classStr = "白班";
+        } else {
+            result.setClassOrder("晚班");
+            classStr = "夜班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到磨边工id
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    oaUserIdAndNames.forEach(tmp -> {
+                        userId.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
+        List<OaGroupIdAndNameVO> groupByUserId = this.findGroupByUserId(userId);
+        //拿到出现次数最多的班组
+        if(CollUtil.isNotEmpty(groupByUserId)){
+            String groupName = groupByUserId.stream()
+                    .collect(Collectors.groupingBy(OaGroupIdAndNameVO::getClassGroupName, Collectors.counting()))
+                    .entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(null);
+            result.setClassGroup(groupName);
+        }
+        //没有看到班长,先默认一个班长
+        result.setClassLeader("刘军");
+        return result;
+    }
+
 
     /**
      * 修改映射关系
