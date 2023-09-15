@@ -52,7 +52,9 @@ public interface SysMsgConstant {
         BATCH_CHECK_UPDATE(16,"配料抽检日报表更新",MsgCategoryEnum.SYS_REMIND.code,"%s更新了配料抽检日报表",1),
         UNIT_CONSUME_ALARM(17,"能源单耗超标",MsgCategoryEnum.SYS_REMIND.code,"%s日单耗%s,超过%s",0),
         SHIPPING_NOTICE(18,"发货通知单",MsgCategoryEnum.SYS_REMIND.code,"发货通知单单号为%s,%s客户%s产品%s规格%s数量，请备货，谢谢！",0),
-        DEFECT_NOTICE(19,"缺陷通知",MsgCategoryEnum.SYS_REMIND.code,"设备%S的%s部位发生%s类型的缺陷",0);
+        DEFECT_NOTICE(19,"缺陷通知",MsgCategoryEnum.SYS_REMIND.code,"设备%S的%s部位发生%s类型的缺陷",0),
+        MAINTAIN_NOTICE(20,"保养通知",MsgCategoryEnum.SYS_REMIND.code, "保养工单生成,请及时查看",0),
+        REPAIR_NOTICE(20,"维修通知",MsgCategoryEnum.SYS_REMIND.code, "维修工单生成,请及时查看",0);
 
 
         private Integer code;
