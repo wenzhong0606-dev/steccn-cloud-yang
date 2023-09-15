@@ -30,14 +30,34 @@
         BATCH_TYPE,REMARKS
     </sql>
     <select id="listByCode" resultType="com.steccn.platform.domain.SysEqpSpare">
-        select id,name,code,specifications from sys_eqp_spare
+        SELECT DISTINCT a.id,
+        a.code,
+        a.name,
+        b.id   AS unitId,
+        b.name AS unit,
+        a.specifications,
+        a.length_unit_id,
+        a.length_quantity,
+        a.high_unit_id,
+        a.high_quantity,
+        a.wide_unit_id,
+        a.wide_quantity,
+        a.thick_quantity,
+        a.thick_unit_id,
+        a.volume_quantity,
+        a.volume_unit_id,
+        a.weight_quantity,
+        a.weight_unit_id
+        FROM sys_eqp_spare a
+        JOIN sys_dict b ON a.UNIT = b.name
         <where>
             <if test="codeList !=null and codeList.size > 0">
-                and code in
+                and a.code in
                 <foreach collection="codeList" item="code" open="(" close=")" separator=",">
                     #{code}
                 </foreach>
             </if>
+            and b.type = 'measure_unit'
         </where>
     </select>
     <select id="listSpares" resultType="com.steccn.platform.vo.EqpSpareVO">

@@ -139,4 +139,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      */
     Page<WmsSalesDeliveryVO> salesDeliveryPage(WmsDeliveryOrderDTO dto);
 
+
+    String produceOldLineAdd(WmsStorageReceiptDTO dto);
 }

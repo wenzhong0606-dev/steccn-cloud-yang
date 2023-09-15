@@ -64,6 +64,13 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.add(dto));
     }
 
+    @ApiOperation("新增")
+    @PostMapping("/produce/old/line/add")
+    @SysLog("生产老线入库新增")
+    public R<String> produceOldLineAdd(@RequestBody WmsStorageReceiptDTO dto){
+        return R.success(wmsStorageReceiptService.produceOldLineAdd(dto));
+    }
+
     @ApiOperation("采购系统新增")
     @PostMapping("/sales")
     @SysLog("入库凭证新增")
