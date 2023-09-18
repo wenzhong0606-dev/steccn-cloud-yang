@@ -75,6 +75,12 @@ public class OaFeignController {
         return R.success(hrmresourceService.getLoginIdById(id));
     }
 
+    @ApiOperation("根据Id查询用户信息")
+    @GetMapping("/user/info/id")
+    public R<OaEmpVO> getUserInfoById(@RequestParam("id") Integer id){
+        return R.success(hrmresourceService.getUserInfoById(id));
+    }
+
     @ApiOperation("保存文档")
     @GetMapping("/workflow/saveDoc")
     public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url, @RequestParam("docName") String docName){

@@ -39,4 +39,9 @@ public class OaEmpVO implements Serializable {
      * 分部id
      */
     private String subcompanyid1;
+
+    /**
+     * 部门id
+     */
+    private Integer departmentid;
 }
