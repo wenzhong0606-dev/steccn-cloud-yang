@@ -96,6 +96,6 @@ public interface RemoteReportWorkFeignApi {
      * @return
      */
     @ApiOperation("获取停工时长")
-    @PostMapping("/feign/pms/report/work/original/hour")
+    @PostMapping("/feign/pms/report/work/hour")
     R<List<ProcessReportWorkHourVO>> getWorkHour(@RequestBody ProcessReportWorkHourQmsDTO dto);
 }

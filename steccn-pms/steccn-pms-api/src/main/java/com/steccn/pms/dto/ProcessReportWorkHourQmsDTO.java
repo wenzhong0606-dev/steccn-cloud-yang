@@ -5,6 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 拉引量运算相关DTO
@@ -17,7 +18,7 @@ public class ProcessReportWorkHourQmsDTO implements Serializable {
     /**
      * 产线id
      */
-    private List<Integer> productLineIds;
+    private Set<Integer> productLineIds;
 
     /**
      * 开始日期
