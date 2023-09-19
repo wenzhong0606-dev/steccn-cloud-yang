@@ -1123,10 +1123,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         wmsDeliveryReceiptInfo.setMaterialId(inventory.getMaterialId());
                         if (quantity.compareTo(inventory.getAvailableQuantity()) <= 0) {
                             wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
+                            wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
                             wmsDeliveryReceiptInfo.setQuantity(quantity);
                             quantity = BigDecimal.ZERO;
                         } else {
                             quantity = quantity.subtract(inventory.getAvailableQuantity());
+                            wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
                             wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
                             wmsDeliveryReceiptInfo.setQuantity(inventory.getAvailableQuantity());
                         }
