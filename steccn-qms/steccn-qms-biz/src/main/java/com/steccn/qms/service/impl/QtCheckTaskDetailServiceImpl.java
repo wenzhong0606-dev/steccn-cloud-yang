@@ -18,17 +18,12 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.domain.QtCheckTask;
-import com.steccn.qms.domain.QtCheckTaskDetail;
+import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.mapper.QtCheckTaskDetailMapper;
-import com.steccn.qms.service.QtCheckItemService;
-import com.steccn.qms.service.QtCheckTaskCopyService;
-import com.steccn.qms.service.QtCheckTaskDetailService;
-import com.steccn.qms.service.QtCheckTaskService;
+import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +49,9 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
 
     @Lazy
     private final QtCheckItemService qtCheckItemService;
+
+    private final QtDefectiveItemService qtDefectiveItemService;
+    private final QtItemCategoryService qtItemCategoryService;
 
     @Override
     public Map<Long, List<QtIQCAcceptabilityCopyVO>> listByTaskId(Set<Long> taskIds) {
@@ -122,6 +120,10 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
             //获取所有检验任务明细
             detailList = list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId, taskIdSet));
         }
+
+        //根据缺陷id查询类别id和类别名称
+        Set<Integer> defectIdSet = Sets.newHashSet();
+
         //遍历在线检缺陷项集合
         List<OutputQualityDetailVO> flatDefectiveList = new ArrayList<>();
         if (CollUtil.isNotEmpty(detailList)) {
@@ -134,6 +136,7 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
                     for (QtOnlineCheckDefectDTO defect : collect) {
                         if (Objects.nonNull(defect.getDefectId()) && Objects.nonNull(defect.getDefectNum()) && defect.getDefectNum() > 0) {
                             OutputQualityDetailVO vo = new OutputQualityDetailVO();
+                            defectIdSet.add(defect.getDefectId());
                             vo.setDefectId(defect.getDefectId());
                             vo.setDefectName(defect.getDefectName());
                             vo.setDefectNum(Objects.nonNull(defect.getDefectNum()) ? defect.getDefectNum() : 0);
@@ -148,6 +151,22 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
                         }
                     }
                 }
+            }
+        }
+        //根据缺陷id查询类别id和类别名称
+        if (CollUtil.isNotEmpty(flatDefectiveList) && CollUtil.isNotEmpty(defectIdSet)) {
+            Map<Integer, QtDefectiveItem> defectMap = qtDefectiveItemService.listById(defectIdSet);
+            Set<Integer> categoryIdSet = defectMap.values().stream().map(QtDefectiveItem::getCategoryId).collect(Collectors.toSet());
+            if (CollUtil.isNotEmpty(categoryIdSet)) {
+                Map<Integer, String> categoryMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+                flatDefectiveList.forEach(ele -> {
+                    QtDefectiveItem qtDefectiveItem = defectMap.get(ele.getDefectId());
+                    if (Objects.nonNull(qtDefectiveItem)) {
+                        String categoryName = categoryMap.get(qtDefectiveItem.getCategoryId());
+                        ele.setDefectCategory(qtDefectiveItem.getCategoryId());
+                        ele.setDefectCategoryName(categoryName);
+                    }
+                });
             }
         }
         return flatDefectiveList;

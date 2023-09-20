@@ -1,9 +1,13 @@
 package com.steccn.common.util;
 
 
+import cn.hutool.core.collection.CollUtil;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Integer类型工具类
@@ -28,7 +32,30 @@ public class IntegerUtil {
         if (Objects.isNull(val2)) {
             return val1;
         }
-        Integer res = val1+val2;
+        Integer res = val1 + val2;
         return res;
     }
+
+
+    /**
+     * 整数求和
+     *
+     * @param valueList
+     * @return
+     */
+    public static Integer sum(List<Integer> valueList) {
+        if (CollUtil.isEmpty(valueList)) {
+            return null;
+        }
+        List<Integer> collect = valueList.stream().filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+        if (CollUtil.isEmpty(collect)) {
+            return null;
+        }
+        int sum = 0;
+        for (Integer ele : collect) {
+            sum += ele;
+        }
+        return sum;
+    }
+
 }

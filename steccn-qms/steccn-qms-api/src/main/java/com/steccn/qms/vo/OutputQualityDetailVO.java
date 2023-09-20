@@ -45,5 +45,11 @@ public class OutputQualityDetailVO {
     @ApiModelProperty("检验结果")
     private String checkResult;
 
+    @ApiModelProperty("缺陷类别")
+    private Integer defectCategory;
+
+    @ApiModelProperty("缺陷类别名称")
+    private String defectCategoryName;
+
 
 }

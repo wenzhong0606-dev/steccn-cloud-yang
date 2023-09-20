@@ -1619,20 +1619,20 @@ public class ReportServiceImpl implements ReportService {
                         Integer temperingBadness = 0;
                         if (CollUtil.isNotEmpty(defectData)) {
                             for (OutputQualityDetailVO defectDatum : defectData) {
-                                if (PmManagerConstant.BadnessType.EDGING.getName().equals(defectDatum.getDefectName())) {
-                                    IntegerUtil.add(edgingBadness, defectDatum.getDefectNum());
+                                if (PmManagerConstant.BadnessType.EDGING.getName().equals(defectDatum.getDefectCategoryName())) {
+                                    edgingBadness = IntegerUtil.add(edgingBadness, defectDatum.getDefectNum());
                                 }
-                                if (PmManagerConstant.BadnessType.RAW_CLASS.getName().equals(defectDatum.getDefectName())) {
-                                    IntegerUtil.add(rawClassBadness, defectDatum.getDefectNum());
+                                if (PmManagerConstant.BadnessType.RAW_CLASS.getName().equals(defectDatum.getDefectCategoryName())) {
+                                    rawClassBadness = IntegerUtil.add(rawClassBadness, defectDatum.getDefectNum());
                                 }
-                                if (PmManagerConstant.BadnessType.PUNCHING.getName().equals(defectDatum.getDefectName())) {
-                                    IntegerUtil.add(punchingBadness, defectDatum.getDefectNum());
+                                if (PmManagerConstant.BadnessType.PUNCHING.getName().equals(defectDatum.getDefectCategoryName())) {
+                                    punchingBadness = IntegerUtil.add(punchingBadness, defectDatum.getDefectNum());
                                 }
-                                if (PmManagerConstant.BadnessType.SILK_SCREEN.getName().equals(defectDatum.getDefectName())) {
-                                    IntegerUtil.add(silkScreenBadness, defectDatum.getDefectNum());
+                                if (PmManagerConstant.BadnessType.SILK_SCREEN.getName().equals(defectDatum.getDefectCategoryName())) {
+                                    silkScreenBadness = IntegerUtil.add(silkScreenBadness, defectDatum.getDefectNum());
                                 }
-                                if (PmManagerConstant.BadnessType.TEMPERING.getName().equals(defectDatum.getDefectName())) {
-                                    IntegerUtil.add(temperingBadness, defectDatum.getDefectNum());
+                                if (PmManagerConstant.BadnessType.TEMPERING.getName().equals(defectDatum.getDefectCategoryName())) {
+                                    temperingBadness = IntegerUtil.add(temperingBadness, defectDatum.getDefectNum());
                                 }
                             }
                         }
@@ -1640,8 +1640,10 @@ public class ReportServiceImpl implements ReportService {
                         outputQualitySjgDataVO.setEdgingBadness(edgingBadness);
                         outputQualitySjgDataVO.setPunchingBadness(punchingBadness);
                         outputQualitySjgDataVO.setSilkScreenBadness(silkScreenBadness);
+                        outputQualitySjgDataVO.setTemperingBadness(temperingBadness);
+                        Integer totalSum = IntegerUtil.sum(Arrays.asList(rawClassBadness, edgingBadness, punchingBadness, silkScreenBadness, temperingBadness));
                         //不良合计
-                        outputQualitySjgDataVO.setBadTotal(IntegerUtil.add(IntegerUtil.add(rawClassBadness, edgingBadness), IntegerUtil.add(punchingBadness, silkScreenBadness)));
+                        outputQualitySjgDataVO.setBadTotal(totalSum);
                         //原片耗用量
                         //获取该产线下的磨边工位数据
                         if (stationIds.contains(reportWork.getStationId())) {
