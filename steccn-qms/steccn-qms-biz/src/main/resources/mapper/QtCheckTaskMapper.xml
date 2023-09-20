@@ -345,7 +345,7 @@
         class_time as class_date,
         material_id,
         class_group_id,
-        ROUND(avg(check_result ), #{bit}) as value
+        CAST(avg( check_result ) AS DECIMAL(9, #{bit})) AS value
         FROM
         qt_check_task task
         JOIN qt_check_task_detail detail ON task.id = detail.task_id

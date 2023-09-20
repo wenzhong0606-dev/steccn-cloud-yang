@@ -253,7 +253,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Assert.notNull(itemHd, "厚度检验项配置未配置");
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemHd).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
-        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList, 2);
         return resVo;
     }
 
@@ -263,7 +263,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Assert.notNull(itemMbk, "毛边宽检验项未配置");
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemMbk).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "毛边宽检验项不存在");
-        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList, 0);
         return resVo;
     }
 
@@ -1556,11 +1556,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param checkItemList 检验项集合
      * @return vo
      */
-    private QtCheckItemMultiAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList) {
+    private QtCheckItemMultiAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList , Integer bit) {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<Integer> thickItemIdList = checkItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
-        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, 2);
+        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, bit);
         SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
         //获取产线集合
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
