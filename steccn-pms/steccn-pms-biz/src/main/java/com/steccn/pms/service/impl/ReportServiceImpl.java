@@ -1894,10 +1894,10 @@ public class ReportServiceImpl implements ReportService {
         //磨边不良
         OutputQualityHeaderVO header2 = new OutputQualityHeaderVO();
         header2.setLabel("磨边不良");
-        header2.setProp("rawClassBadness");
+        header2.setProp("edgingBadness");
         List<OutputQualityHeaderVO> childHeaders2 = Lists.newArrayList();
         OutputQualityHeaderVO unitHeader2 = new OutputQualityHeaderVO();
-        unitHeader2.setProp("rawClassBadness");
+        unitHeader2.setProp("edgingBadness");
         unitHeader2.setLabel(PmManagerConstant.MEASURE_UNIT_PIECE);
         childHeaders2.add(unitHeader2);
         header2.setChildren(childHeaders2);
