@@ -84,7 +84,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
             BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
             datList.add(new TupleDTO<>("任务总数", all));
             datList.add(new TupleDTO<>("完成数", finished));
-            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.divide(finished,all,4)));
+            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);
         });
@@ -130,7 +130,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
             BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
             datList.add(new TupleDTO<>("点检项总数", all));
             datList.add(new TupleDTO<>("合格数", finished));
-            datList.add(new TupleDTO<>("合格率", BigDecimalUtil.divide(finished,all,4)));
+            datList.add(new TupleDTO<>("合格率", BigDecimalUtil.percent(finished,all,2)));
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);
         });
