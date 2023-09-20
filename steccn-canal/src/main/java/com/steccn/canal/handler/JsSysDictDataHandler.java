@@ -61,6 +61,11 @@ public class JsSysDictDataHandler implements EntryHandler<JsSysDictData> {
         sysDictDTO.setCode(after.getDictValue());
         sysDictDTO.setParentId(Long.valueOf(after.getParentCode()));
         sysDictDTO.setSort(Integer.valueOf(after.getTreeSort()));
+        //构造状态 （0正常 1删除 2停用）
+        if (!"0".equals(after.getStatus())) {
+            //无论mess是删除还是禁用，到我们自己的系统，都是禁用
+            sysDictDTO.setUseFlag(0);
+        }
         Boolean aBoolean = FeignOptional.of(() -> remoteDictFeignApi.update(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         log.info("更新 {} {}" + aBoolean, before, after);
     }
