@@ -6,6 +6,7 @@ import com.steccn.oa.domain.Hrmresource;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.vo.OaClassVO;
+import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaMesUserVO;
 import com.steccn.oa.vo.OaUserVO;
 
@@ -76,6 +77,13 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     String getLoginIdById(Integer id);
+
+    /**
+     * 根据id查询用户信息
+     * @param id
+     * @return
+     */
+    OaEmpVO getUserInfoById(Integer id);
 
     /**
      * 获取mes用户信息

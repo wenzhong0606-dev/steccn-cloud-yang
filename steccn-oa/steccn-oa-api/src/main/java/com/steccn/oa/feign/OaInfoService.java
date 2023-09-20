@@ -212,6 +212,10 @@ public interface OaInfoService {
     @GetMapping("/feign/oa/user/loginid")
     R<String> getLoginIdById(@RequestParam("id") Integer id);
 
+    @ApiOperation("根据Id查询用户信息")
+    @GetMapping("/feign/oa/user/info/id")
+    R<OaEmpVO> getUserInfoById(@RequestParam("id") Integer id);
+
     /**
      * 传入url生产文档
      * @param url 跳转url  docName 文档名字

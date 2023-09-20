@@ -5,8 +5,13 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
+import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
+import com.steccn.pms.dto.SubstrateDataDTO;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.PmsReportWorkVO;
+import com.steccn.pms.vo.ProcessReportWorkHourVO;
+import com.steccn.pms.vo.SubstrateDataListVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +38,7 @@ import java.util.Set;
 public class PmsReportWorkFeignController {
 
     private final PmsReportWorkService pmsReportWorkService;
+    private final ReportService reportService;
 
     @PostMapping("/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
@@ -88,5 +94,17 @@ public class PmsReportWorkFeignController {
     @PostMapping("/original/consume/month")
     R<Map<String, BigDecimal>> useCountMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO) {
         return R.success(pmsReportWorkService.useCountMonth(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
+
+    @ApiOperation("获取停工时长")
+    @PostMapping("/hour")
+    R<List<ProcessReportWorkHourVO>> getWorkHour(@RequestBody ProcessReportWorkHourQmsDTO dto) {
+        return R.success(pmsReportWorkService.getReportWorkHour(dto));
+    }
+
+    @ApiOperation("获取停工时长")
+    @PostMapping("/substrate")
+    R<List<SubstrateDataListVO>> getSubstrateDataList(@RequestBody SubstrateDataDTO dto) {
+        return R.success(reportService.substrateDataList(dto));
     }
 }

@@ -166,6 +166,38 @@
         ppo.material_id,
         pcsi.classes_id
     </select>
+
+    <select id="qmsSubstrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">
+        SELECT
+        1 AS type,
+        prw.produce_order_id,
+        ppo.production_line_id as productLineId,
+        ppo.material_id,
+        any_value(ppo.material_code) as material_code,
+        any_value(ppo.material_name) as material_name,
+        prw.classes_id,
+        sum( prw.process_quantity ) AS quantity,
+        any_value(prw.code) as produceOrderCode,
+        any_value(prw.unit_id)
+        FROM
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        WHERE
+        prw.del_flag = 0 AND ppo.del_flag = 0
+        <if test="productLineIdList !=null and productLineIdList.size > 0">
+            AND prw.product_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+        AND prw.start_time &gt;= #{start}
+        AND prw.end_time &lt;= #{end}
+        GROUP BY
+        prw.produce_order_id,
+        ppo.production_line_id,
+        ppo.material_id,
+        prw.classes_id
+    </select>
     <select id="dateProductNum" resultType="com.steccn.pms.domain.PmsReportWork">
         SELECT classes_id,
                sum(process_quantity) as process_quantity
@@ -576,6 +608,27 @@
         </if>
         GROUP BY prw.product_line_id,prw.classes_id,name
         ORDER BY prw.product_line_id
+    </select>
+
+    <select id="getProcessWorkHour" resultType="com.steccn.pms.vo.ProcessReportWorkHourVO">
+        SELECT
+            prw.product_line_id,
+            prw.classes_id,
+            prw.class_date,
+            prwh.start_time,
+            prwh.end_time
+        FROM pms_report_work prw
+        LEFT JOIN pms_report_work_hour prwh
+        ON prw.id = prwh.report_work_id
+        WHERE
+            prw.del_flag = 0
+            AND prw.class_date >= #{dto.startDate}
+            AND prw.class_date &lt;= #{dto.endDate}
+            AND prwh.start_time IS NOT NULL
+            AND prw.product_line_id IN
+            <foreach collection="dto.productLineIds" item="lineId" open="(" close=")" separator=",">
+                #{lineId}
+            </foreach>
     </select>
 
 </mapper>

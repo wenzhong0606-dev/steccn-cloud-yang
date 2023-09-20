@@ -7,6 +7,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.OutputQualityDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
+import com.steccn.pms.dto.SubstrateDataDTO;
 import com.steccn.pms.vo.*;
 
 import java.math.BigDecimal;
@@ -98,4 +99,12 @@ public interface ReportService {
      * @return
      */
     List<OutputQualitySjgVO> outputQualitySjg(OutputQualityDTO outputQualityDTO);
+
+
+    /**
+     * 基片日报表行数据，用于成品率报表
+     * @param dto
+     * @return
+     */
+    List<SubstrateDataListVO> substrateDataList(SubstrateDataDTO dto);
 }

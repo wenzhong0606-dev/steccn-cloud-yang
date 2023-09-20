@@ -1,5 +1,6 @@
 package com.steccn.oa.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -17,6 +18,7 @@ import com.steccn.oa.mapper.HrmjobtitlesMapper;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaMesUserVO;
 import com.steccn.oa.vo.OaUserVO;
 import com.steccn.platform.dto.MesUserDTO;
@@ -161,6 +163,17 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             return null;
         }
         return hrmresource.getLoginid();
+    }
+
+    @Override
+    public OaEmpVO getUserInfoById(Integer id) {
+        Hrmresource hrmresource = this.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getId, id), false);
+        OaEmpVO result = new OaEmpVO();
+        if(Objects.nonNull(hrmresource)){
+            BeanUtil.copyProperties(hrmresource,result);
+        }
+        return result;
     }
 
     @Override

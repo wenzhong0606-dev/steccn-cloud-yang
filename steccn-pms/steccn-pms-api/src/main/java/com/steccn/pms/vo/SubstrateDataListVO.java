@@ -41,4 +41,7 @@ public class SubstrateDataListVO implements Serializable {
     @ApiModelProperty("单位id")
     private Long unitId;
 
+    @ApiModelProperty("生产订单编码")
+    private String produceOrderCode;
+
 }

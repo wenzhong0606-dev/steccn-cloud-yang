@@ -1,5 +1,6 @@
 package com.steccn.qms.controller;
 
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
@@ -28,6 +29,12 @@ import java.util.List;
 public class QtDefectReportController {
 
     private final QtDefectReportService qtDefectReportService;
+
+    @PostMapping("/finish")
+    @ApiOperation(value = "成品率报表")
+    public R<SteccnTableDataDTO> finishedRate(@Valid @RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.finishedRate(dto));
+    }
 
     @PostMapping("/defect")
     @ApiOperation(value = "不良报表")
@@ -100,5 +107,6 @@ public class QtDefectReportController {
     public R<List<DefectCountRowVO>> defectMonth(@Valid @RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.defectMonth(dto));
     }
+
 }
 
