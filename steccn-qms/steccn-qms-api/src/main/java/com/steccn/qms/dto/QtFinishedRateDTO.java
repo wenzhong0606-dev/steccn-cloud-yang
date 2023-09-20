@@ -92,5 +92,5 @@ public class QtFinishedRateDTO implements Serializable {
     /**
      * 换算重
      */
-    private BigDecimal convertHeight;
+    private BigDecimal convertWeight;
 }

@@ -1027,13 +1027,13 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         columns.add(new SteccnTableColumn("pullAmount","拉引量(吨)",null));
         columns.add(new SteccnTableColumn("weightRate","称重成品率%",null));
         columns.add(new SteccnTableColumn("convertRate","换算成品率%",null));
-        columns.add(new SteccnTableColumn("convertHeight","换算重(吨)",null));
+        columns.add(new SteccnTableColumn("convertWeight","换算重(吨)",null));
         result.setColumns(columns);
         //组数据
         List<QtFinishedRateDTO> tableData = Lists.newArrayList();
         for (Integer line : dto.getProductLineList()) {
-            //数据累计 1、片  2、平方米 3、拉引量 4、称重
-            Map<Integer,BigDecimal> productLinecountMap = Maps.newHashMap();
+            //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
+            Map<Integer,BigDecimal> productLineCountMap = Maps.newHashMap();
             String lineName = lineIdNameMap.get(line);
             //班次日期
             for (int i = 1; i < shardTimeList.size(); i++) {
@@ -1101,12 +1101,12 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         //成品数
                         //片
                         row.setSlice(tmp.getQuantity());
-                        BigDecimalUtil.accumulate(productLinecountMap,1,row.getSlice());
+                        BigDecimalUtil.accumulate(productLineCountMap,1,row.getSlice());
                         //所在行成品数（片）* 所在行长 * 所在行宽 / 1000000
                         BigDecimal stepOne = BigDecimalUtil.multiply(row.getPerWeight(), row.getLength());
                         BigDecimal stepTwo = BigDecimalUtil.multiply(stepOne, row.getWidth());
                         row.setSquareMeter(BigDecimalUtil.divide(stepTwo,new BigDecimal(1000000),2));
-                        BigDecimalUtil.accumulate(productLinecountMap,2,row.getSquareMeter());
+                        BigDecimalUtil.accumulate(productLineCountMap,2,row.getSquareMeter());
                         //称重
                         //所在行成品数（片）* 所在行单片重 / 1000，若对应多行成品数（片），多行加总
                         BigDecimal weightStepOne = BigDecimalUtil.multiply(row.getSlice(), row.getPerWeight());
@@ -1132,20 +1132,46 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         if(Objects.nonNull(weightPercent)){
                             row.setWeightRate(weightPercent.toString()+"%");
                         }
-
+                        //换算重 所在行成品数（片） * 所在行长 * 所在行宽 * 所在行厚 * 2.5 / 1000000000，小数点后保留2位
+                        BigDecimal convertWeightStep1 = BigDecimalUtil.multiply(row.getSlice(), row.getLength());
+                        BigDecimal convertWeightStep2 = BigDecimalUtil.multiply(convertWeightStep1, row.getWidth());
+                        BigDecimal convertWeightStep3 = BigDecimalUtil.multiply(convertWeightStep2, row.getThick());
+                        BigDecimal convertWeightStep4 = BigDecimalUtil.multiply(convertWeightStep3, new BigDecimal(2.5));
+                        BigDecimal convertWeightStep5 = BigDecimalUtil.divide(convertWeightStep4, new BigDecimal(1000000000),2);
+                        row.setConvertWeight(convertWeightStep5);
+                        //换算成品率
+                        //所在行换算重（吨）/ 所在行拉引量（吨）* 100%，小数点后保留2位
+                        BigDecimal convertRateStep1 = BigDecimalUtil.percent(row.getConvertWeight(),row.getPullAmount(),2);
+                        row.setConvertRate(convertRateStep1.toString()+"%");
                         if(j==0){
-                            BigDecimalUtil.accumulate(productLinecountMap,3,row.getPullAmount());
-                            BigDecimalUtil.accumulate(productLinecountMap,4,row.getWeight());
+                            BigDecimalUtil.accumulate(productLineCountMap,3,row.getPullAmount());
+                            BigDecimalUtil.accumulate(productLineCountMap,4,row.getWeight());
+                            BigDecimalUtil.accumulate(productLineCountMap,5,row.getConvertWeight());
                         }
                     }
 
                 }else {
                     QtFinishedRateDTO row = new QtFinishedRateDTO();
                     row.setType(0);
+                    //产线
+                    row.setProductLine(lineName);
+                    //班次日期
+                    row.setDate(classDate);
+                    QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
+                    //班次
+                    row.setShift(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                    //班组
+                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getShift(), new OaGroupCountDTO());
+                    row.setGroup(oaGroupCountDTO.getGroupName());
                     tableData.add(row);
                 }
             }
-
+            //合计
+            QtFinishedRateDTO row = new QtFinishedRateDTO();
+            //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
+            row.setType(1);
+            row.setSlice(productLineCountMap.get(1));
+            row.setSquareMeter(productLineCountMap.get(2));
         }
         return result;
     }
