@@ -23,6 +23,7 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.data.dto.DwStationInfoDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwStationCollectVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.feign.OaInfoService;
@@ -33,10 +34,7 @@ import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.*;
-import com.steccn.pms.dto.EnergyCountDTO;
-import com.steccn.pms.dto.OutputQualityDTO;
-import com.steccn.pms.dto.PmsCompleteDeliveryInfoDTO;
-import com.steccn.pms.dto.PmsDayReportDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
@@ -1735,6 +1733,12 @@ public class ReportServiceImpl implements ReportService {
         outputQualitySjgVO1.setFromTableList(getFromData(pmsReportWorkVOS, lineNameMap));
         resList.add(outputQualitySjgVO1);
         return resList;
+    }
+
+    @Override
+    public List<SubstrateDataListVO> substrateDataList(SubstrateDataDTO dto) {
+        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.qmsSubstrateReport(dto.getProductLineIdList(), dto.getStart(), dto.getEnd());
+        return rowDataList;
     }
 
 

@@ -6,8 +6,10 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
+import com.steccn.pms.dto.SubstrateDataDTO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkHourVO;
+import com.steccn.pms.vo.SubstrateDataListVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -98,4 +100,8 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("获取停工时长")
     @PostMapping("/feign/pms/report/work/hour")
     R<List<ProcessReportWorkHourVO>> getWorkHour(@RequestBody ProcessReportWorkHourQmsDTO dto);
+
+    @ApiOperation("获取基片日报表数据")
+    @PostMapping("/feign/pms/report/work/substrate")
+    R<List<SubstrateDataListVO>> getSubstrateDataList(@RequestBody SubstrateDataDTO dto);
 }

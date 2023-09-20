@@ -46,6 +46,15 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<SubstrateDataListVO> substrateReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     /**
+     * 基片日报表行数据
+     *
+     * @param productLineIdList 产线集合
+     * @param start             开始
+     * @param end              结束
+     * @return list
+     */
+    List<SubstrateDataListVO> qmsSubstrateReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    /**
      * 根据指定日期和产线获取产量
      *
      * @param productLineId 产线id

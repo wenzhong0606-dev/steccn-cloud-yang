@@ -1,6 +1,8 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.qms.dto.QtFinishedRateDTO;
 import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.vo.*;
@@ -109,4 +111,11 @@ public interface QtDefectReportService {
      * @return
      */
     List<DefectCountRowVO> defectMonth(QtDefectReportDTO dto);
+
+    /**
+     * 成品率报表
+     * @param dto
+     * @return
+     */
+    SteccnTableDataDTO<QtFinishedRateDTO> finishedRate(QtDefectReportDTO dto);
 }
