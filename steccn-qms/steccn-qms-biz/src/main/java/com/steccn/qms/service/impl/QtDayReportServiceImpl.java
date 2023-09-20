@@ -474,7 +474,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             tmp.setOfficeNamePrefix(tmp.getOfficeName().substring(0, 2));
         });
         productLineList = productLineList.stream().sorted(Comparator.comparing(SysOfficeVO::getOfficeNamePrefix).thenComparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
-        List<Long> taskIdList = Lists.newArrayList();
+        Set<Long> taskIdList = Sets.newHashSet();
         if (CollUtil.isEmpty(taskList)) {
             log.info("任务为空(质量日报表-首检)");
             SteccnTableAssertUtil.notEmpty(taskList, "数据为空");
@@ -489,7 +489,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             SteccnTableAssertUtil.notEmpty(taskDetailList, "数据为空");
         }
         //查到分类数据和检验项数据
-        List<Integer> itemIdList = Lists.newArrayList();
+        Set<Integer> itemIdList = Sets.newHashSet();
         taskDetailList.forEach(tmp -> {
             itemIdList.add(tmp.getItemId());
         });
@@ -689,7 +689,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             Map<Long, List<QtCheckTaskDetail>> groupByTaskId = productLineTaskDetailList.stream().collect(Collectors.groupingBy(v -> v.getTaskId()));
             //先根据班次排序再根据完成时间排序
             productLineTaskList = productLineTaskList.stream().sorted(Comparator.comparing(QtCheckTaskListVO::getClassesId)
-                    .thenComparing(QtCheckTaskListVO::getStationId, Comparator.nullsLast(Comparator.comparing(v -> v)))
+                    .thenComparing((o1, o2) -> {
+                        if(Objects.isNull(o1.getStationId()) && Objects.isNull(o2.getStationId())){
+                            return 0;
+                        }else if(Objects.isNull(o1.getStationId()) || Objects.isNull(o2.getStationId())){
+                            return 1;
+                        }
+                        return o2.getStationId().compareTo(o1.getStationId());
+                    })
                     .thenComparing(QtCheckTaskListVO::getFinishedTime)).collect(Collectors.toList());
             //根据taskId重组map
             Map<Long, List<QtCheckTaskDetail>> groupByTaskIdOrder = new LinkedHashMap<>();
