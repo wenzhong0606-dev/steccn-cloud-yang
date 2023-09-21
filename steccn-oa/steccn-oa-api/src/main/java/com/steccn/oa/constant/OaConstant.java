@@ -119,6 +119,9 @@ public class OaConstant {
     public static final Integer NUM_3 = 3;
     public static final Integer NUM_5 = 5;
     public static final Integer NUM_6 = 6;
+
+    public static final String JP_1 = "基片一车间";
+    public static final String JP_2 = "基片二车间";
 }
 
 /**

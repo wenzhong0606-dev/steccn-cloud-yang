@@ -1230,7 +1230,7 @@ public class ReportServiceImpl implements ReportService {
                     //根据产线获取车间的名称
                     SysOfficeVO sysOfficeVO = lineGetWorkshopMap.get(reportWork.getProductLineId());
                     //获取车间下的班组长信息
-                    List<OaClassUserNameDTO> oaClassUserNameDTOS = monitorName.get(sysOfficeVO.getOfficeName());
+                    List<OaClassUserNameDTO> oaClassUserNameDTOS = monitorName.get(sysOfficeVO.getParentName());
                     if (CollUtil.isNotEmpty(oaClassUserNameDTOS)) {
                         String userName = oaClassUserNameDTOS.stream().filter(d -> classGroupName.equals(d.getClassName())).findFirst().map(OaClassUserNameDTO::getUserName).orElse(null);
                         outputQualityDataVO.setMonitor(userName);
