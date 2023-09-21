@@ -18,10 +18,10 @@ import java.util.List;
 public interface HrmdepartmentMapper extends BaseMapper<Hrmdepartment> {
     /**
      * 查询车间下各班的班组长
-     * @param productWorkshopName
+     * @param jobId
      * @return
      */
-    List<OaClassUserNameDTO> selectGroupLeader(@Param("productWorkshopName") String productWorkshopName);
+    List<OaClassUserNameDTO> selectGroupLeader(@Param("jobId") Integer jobId);
 }
 
 
