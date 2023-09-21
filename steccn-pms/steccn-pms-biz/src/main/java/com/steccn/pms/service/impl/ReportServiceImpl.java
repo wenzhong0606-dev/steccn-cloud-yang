@@ -1118,7 +1118,7 @@ public class ReportServiceImpl implements ReportService {
         //将平均厚度根据班次拆分
         Map<Integer, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
         //早班
-        Map<String, List<OutputQualityDetailVO>> dayShiftPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.FORE_SHIFT_0)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+        Map<String, List<OutputQualityDetailVO>> dayShiftPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.FORE_SHIFT_0)).orElse(Collections.emptyList()).stream().filter(ele -> Objects.nonNull(ele.getProductOrder())).collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
         //晚班
         Map<String, List<OutputQualityDetailVO>> nightShiftPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.NIGHT_SHIFT_1)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
         //获取当班拉引量数据
