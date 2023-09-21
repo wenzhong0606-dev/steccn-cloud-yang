@@ -52,6 +52,13 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.add(dto));
     }
 
+    @PostMapping("/checkOnline")
+    @ApiOperation(value = "检验在线检缺陷记录时段")
+    @SysLog("检验在线检缺陷记录时段")
+    public R<QtCheckOnlineTaskVO> checkOnline(@RequestBody QtAddCheckTaskDTO dto) {
+        return R.success(qtCheckTaskService.checkOnline(dto));
+    }
+
     @PostMapping("/list")
     @ApiOperation(value = "获取巡检任务列表")
     public R<List<QtCheckTaskListVO>> getTaskList(@RequestBody QtCheckTaskListDTO dto) {
