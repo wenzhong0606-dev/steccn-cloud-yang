@@ -1174,6 +1174,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             QtFinishedRateDTO row = new QtFinishedRateDTO();
             //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
             row.setType(1);
+            row.setProductLine(lineName);
             row.setSlice(productLineCountMap.get(1));
             BigDecimalUtil.accumulate(allCountMap,1,productLineCountMap.get(1));
             row.setSquareMeter(productLineCountMap.get(2));
