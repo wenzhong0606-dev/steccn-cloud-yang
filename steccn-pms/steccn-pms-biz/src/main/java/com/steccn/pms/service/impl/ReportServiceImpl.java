@@ -1490,15 +1490,6 @@ public class ReportServiceImpl implements ReportService {
         Assert.isTrue(Objects.nonNull(dto.getDate()), "日期不能为空");
         //获取缺陷数据
         List<OutputQualityDetailVO> qmsTaskDefectData = getQmsTaskDefectData(dto.getDate(), dto.getProductWorkshop());
-//        //缺陷数量根据班组拆分
-//        Map<String, List<OutputQualityDetailVO>> groupQualityMap = qmsTaskDefectData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
-//        //甲班缺陷数据
-//        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-//        //乙班缺陷数据
-//        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-//        //丙班缺陷数据
-//        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS)).orElse(Collections.emptyList()).stream().collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
-
         //缺陷数量根据班次拆分
         Map<Integer, List<OutputQualityDetailVO>> groupQualityMap = qmsTaskDefectData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
         //白班缺陷数据
@@ -1560,6 +1551,11 @@ public class ReportServiceImpl implements ReportService {
         outputQualitySjgVO.setType(1);
         //构建数据模型
         List<OutputQualitySjgDataVO> dataList = Lists.newArrayList();
+
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO meterSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(meterSysDict, "平方米单位不存在");
+
         //处理主数据
         if (CollUtil.isNotEmpty(materialList)) {
             for (EqpSpareVO eqpSpareVO : materialList) {
@@ -1591,16 +1587,6 @@ public class ReportServiceImpl implements ReportService {
                         outputQualitySjgDataVO.setSpecifications(eqpSpareVO.getSpecifications());
                         //缺陷数据
                         List<OutputQualityDetailVO> defectData = new ArrayList<>();
-//                        if (PmManagerConstant.METHYL_CLASS_NAME.equals(classGroupName)) {
-//                            defectData = methylQualityMap.get(reportWork.getProduceOrder());
-//                        }
-//                        if (PmManagerConstant.ETHYL_CLASS_NAME.equals(classGroupName)) {
-//                            defectData = ethylQualityMap.get(reportWork.getProduceOrder());
-//                        }
-//                        if (PmManagerConstant.PROPYLENE_CLASS_NAME.equals(classGroupName)) {
-//                            defectData = propyleneQualityMap.get(reportWork.getProduceOrder());
-//                        }
-
                         if (PmManagerConstant.FORE_SHIFT.equals(className)){
                             defectData = dayShiftQuantityMap.get(reportWork.getProduceOrder());
                         }
@@ -1653,10 +1639,10 @@ public class ReportServiceImpl implements ReportService {
                             if (CollUtil.isNotEmpty(pmsCompleteDeliveryInfoDTOS) && Objects.nonNull(materialId)) {
                                 List<BigDecimal> collect = pmsCompleteDeliveryInfoDTOS.stream().filter(p -> materialId.equals(p.getMaterialId())).map(PmsCompleteDeliveryInfoDTO::getQuantity).collect(Collectors.toList());
                                 BigDecimal sum = BigDecimalUtil.sum(collect);
-                                //单位转换
-                                BigDecimal slice = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), sum, 0);
-                                BigDecimal square = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), sum, 2);
-                                outputQualitySjgDataVO.setCurrentClassSlice(slice);
+                                sum = BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
+                                //根据物料获取转换公式
+                                BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(materialId), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                                outputQualitySjgDataVO.setCurrentClassSlice(sum);
                                 outputQualitySjgDataVO.setCurrentClassSquare(square);
                             }
                         }
@@ -1667,11 +1653,11 @@ public class ReportServiceImpl implements ReportService {
                         BigDecimal completeStorageNum = BigDecimal.ZERO;
                         if (CollUtil.isNotEmpty(longBigDecimalMap)) {
                             completeStorageNum = longBigDecimalMap.getOrDefault(reportWork.getClassesId(),completeStorageNum);
+                            completeStorageNum = BigDecimalUtil.setScale(completeStorageNum, UnitLengthUtil.UNIT_PIECE_LENGTH);
                             //单位转换
-                            BigDecimal slice = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), completeStorageNum, 0);
-                            BigDecimal square = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), completeStorageNum, 2);
-                            outputQualitySjgDataVO.setInStorageSlice(slice);
-                            outputQualitySjgDataVO.setCurrentClassSquare(square);
+                            BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(eqpSpareVO.getId()), pieceSysDict.getId(), meterSysDict.getId(), completeStorageNum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                            outputQualitySjgDataVO.setInStorageSlice(completeStorageNum);
+                            outputQualitySjgDataVO.setInStorageSquare(square);
                         }
                         //加工产量（该产线下的钢化工位的报工数据）
                         BigDecimal processQuantity = BigDecimal.ZERO;
@@ -1679,15 +1665,13 @@ public class ReportServiceImpl implements ReportService {
                             //加工产量：根据该产线钢化工位，该产品当班报工记录，合格数量累加，根据片数计算平方米
                             processQuantity = BigDecimalUtil.subtract(reportWork.getProcessQuantity(), reportWork.getBadnessQuantity());
                             //单位转换
-                            BigDecimal slice = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), processQuantity, 0);
-                            BigDecimal square = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), processQuantity, 2);
-                            outputQualitySjgDataVO.setProcessQuantitySlice(slice);
+                            processQuantity = BigDecimalUtil.setScale(processQuantity, UnitLengthUtil.UNIT_PIECE_LENGTH);
+                            BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(eqpSpareVO.getId()), pieceSysDict.getId(), meterSysDict.getId(), processQuantity, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                            outputQualitySjgDataVO.setProcessQuantitySlice(processQuantity);
                             outputQualitySjgDataVO.setProcessQuantitySquare(square);
                         }
                         //成品率
-                        BigDecimal divide = BigDecimalUtil.divide(completeStorageNum, processQuantity, 4);
-                        BigDecimal multiply = BigDecimalUtil.multiply(divide, new BigDecimal(100));
-                        outputQualitySjgDataVO.setFinishedProduct(multiply.compareTo(BigDecimal.ZERO) == 0 ? null : multiply);
+                        outputQualitySjgDataVO.setFinishedProduct(BigDecimalUtil.percent(completeStorageNum, processQuantity));
                         dataList.add(outputQualitySjgDataVO);
                     }
                 }
@@ -1704,17 +1688,14 @@ public class ReportServiceImpl implements ReportService {
                 dataList.add(totalSjg(foreShiftData));
                 OutputQualitySjgDataVO outputQualitySjgDataVO = monthToTotal(PmManagerConstant.FORE_SHIFT, dto.getDate(), reportWorkDataList, completeStorageList, stationIds, reportWorkMaterialMap, materialIdMap, unitList, unitConvertMap);
                 outputQualitySjgDataVO.setClasses(PmManagerConstant.FORE_SHIFT);
-//                outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
                 dataList.add(outputQualitySjgDataVO);
             }
             if (CollUtil.isNotEmpty(nightShiftData)) {
                 dataList.add(totalSjg(nightShiftData));
                 OutputQualitySjgDataVO outputQualitySjgDataVO = monthToTotal(PmManagerConstant.NIGHT_SHIFT, dto.getDate(), reportWorkDataList, completeStorageList, stationIds, reportWorkMaterialMap, materialIdMap, unitList, unitConvertMap);
                 outputQualitySjgDataVO.setClasses(PmManagerConstant.NIGHT_SHIFT);
-//                outputQualitySjgDataVO.setClassGroup(foreShiftData.get(0).getClassGroup());
                 dataList.add(outputQualitySjgDataVO);
             }
-
             //排序
             dataList = dataList.stream()
                     .sorted(Comparator.comparing(OutputQualitySjgDataVO::getClasses, Comparator.nullsFirst(String::compareTo))
@@ -1723,14 +1704,12 @@ public class ReportServiceImpl implements ReportService {
                             .thenComparing(OutputQualitySjgDataVO::getSort,Comparator.nullsFirst(Integer::compareTo)))
                     .collect(Collectors.toList());
         }
-
         outputQualitySjgVO.setTableList(dataList);
         outputQualitySjgVO.setColumns(getSjgTableHeader());
         resList.add(outputQualitySjgVO);
         //构建从表格模型
         OutputQualitySjgVO outputQualitySjgVO1 = new OutputQualitySjgVO();
         outputQualitySjgVO.setType(2);
-
         outputQualitySjgVO1.setColumns(getFromTableHeader());
         outputQualitySjgVO1.setFromTableList(getFromData(pmsReportWorkVOS, lineNameMap));
         resList.add(outputQualitySjgVO1);
