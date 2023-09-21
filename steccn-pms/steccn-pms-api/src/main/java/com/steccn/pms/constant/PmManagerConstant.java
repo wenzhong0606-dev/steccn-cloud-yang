@@ -40,16 +40,31 @@ public interface PmManagerConstant {
      * 开口泡
      */
     String QMS_TASK_ITEM_SHUT_UP = "开口泡";
+    String QMS_TASK_ITEM_SHUT_UP_FIELD = "shutUp";
 
     /**
-     * 闭口泡
+     * 气线泡
      */
-    String QMS_TASK_ITEM_START_TO_TALK = "闭口泡";
+    String QMS_TASK_ITEM_START_TO_TALK = "气线泡";
+    String QMS_TASK_ITEM_START_TO_TALK_FIELD = "startToTalk";
 
     /**
-     * 闭口泡
+     * 夹杂结石
      */
-    String QMS_TASK_ITEM_STONE = "结石掉落物";
+    String QMS_TASK_ITEM_STONE = "夹杂结石";
+    String QMS_TASK_ITEM_STONE_FIELD = "stone";
+
+    /**
+     * 冷裂线/发热变形
+     */
+    String QMS_TASK_ITEM_VARIANT = "冷裂线/发热变形";
+    String QMS_TASK_ITEM_VARIANT_FIELD = "variant";
+
+    /**
+     * 辊伤(原片)
+     */
+    String QMS_TASK_ITEM_FLAW = "总疵点";
+    String QMS_TASK_ITEM_FLAW_FIELD = "flaw";
 
     /**
      * 白班0
@@ -102,11 +117,6 @@ public interface PmManagerConstant {
      */
     String PROPYLENE_CLASS = "车间倒班-丙班";
 
-
-    /**
-     * 闭口泡
-     */
-    String QMS_TASK_ITEM_VARIANT = "辊印变形";
 
 
     /**
