@@ -54,6 +54,12 @@ public class HrmdepartmentServiceImpl extends ServiceImpl<HrmdepartmentMapper, H
         Map<String, List<OaClassUserNameDTO>> result = Maps.newHashMap();
         if(CollUtil.isNotEmpty(productWorkShop)){
             for(String tmp:productWorkShop){
+                if(tmp.equals("深加工二车间（东线）")){
+                    tmp = "深加工二车间";
+                }
+                if(tmp.equals("深加工三车间（西线）")){
+                    tmp = "深加工三车间";
+                }
                 List<OaClassUserNameDTO> oaClassUserNameDTOS = hrmdepartmentMapper.selectGroupLeader(tmp);
                 result.put(tmp,oaClassUserNameDTOS);
             }

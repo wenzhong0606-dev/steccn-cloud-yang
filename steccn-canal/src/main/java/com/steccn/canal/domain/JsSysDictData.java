@@ -25,4 +25,10 @@ public class JsSysDictData implements Serializable {
 
     @Column(name = "tree_sort")
     private String treeSort;
+
+    /**
+     * 状态（0正常 1删除 2停用）
+     */
+    @Column(name = "status")
+    private String status;
 }

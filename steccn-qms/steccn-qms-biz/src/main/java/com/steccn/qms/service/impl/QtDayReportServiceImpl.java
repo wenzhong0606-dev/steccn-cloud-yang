@@ -488,6 +488,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             log.info("任务详情为空(质量日报表-首检)");
             SteccnTableAssertUtil.notEmpty(taskDetailList, "数据为空");
         }
+        //获取上偏差下偏差
+        Set<Integer> itemSet = taskDetailList.stream().map(QtCheckTaskDetail::getItemId).collect(Collectors.toSet());
+        Set<Integer> groupSet = taskDetailList.stream().map(QtCheckTaskDetail::getGroupId).collect(Collectors.toSet());
+        List<QtCheckPlanGroupItem> qtCheckPlanGroupItems = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(itemSet)&&CollUtil.isNotEmpty(groupSet)){
+            qtCheckPlanGroupItems = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                    .select(QtCheckPlanGroupItem::getGroupId,QtCheckPlanGroupItem::getCheckItemId,QtCheckPlanGroupItem::getStandardValue,QtCheckPlanGroupItem::getLowerValue,QtCheckPlanGroupItem::getUpperValue)
+                    .in(QtCheckPlanGroupItem::getGroupId, groupSet)
+                    .in(QtCheckPlanGroupItem::getCheckItemId, itemSet));
+        }
+        //拿到所有的
         //查到分类数据和检验项数据
         Set<Integer> itemIdList = Sets.newHashSet();
         taskDetailList.forEach(tmp -> {
@@ -777,9 +788,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                         //判断数值
                                         BigDecimal checkResultNum = new BigDecimal(checkResult);
                                         //查上下偏差
-                                        QtCheckPlanGroupItem planGroupItem = qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
-                                                .eq(QtCheckPlanGroupItem::getGroupId, copyTmp.getGroupId())
-                                                .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
+                                        QtCheckPlanGroupItem planGroupItem = qtCheckPlanGroupItems.stream()
+                                                .filter(v->v.getGroupId().equals(copyTmp.getGroupId())&&v.getCheckItemId().equals(copyTmp.getItemId())).findFirst().orElse(new QtCheckPlanGroupItem());
+//                                                qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+//                                                .eq(QtCheckPlanGroupItem::getGroupId, copyTmp.getGroupId())
+//                                                .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
                                         //定义一个flag,超过上下偏差则为false
                                         Boolean flag = true;
                                         BigDecimal stdValue = planGroupItem.getStandardValue();
