@@ -28,6 +28,9 @@ public class SafetyTokenVO implements Serializable {
     private LocalDateTime createdDt;
     private String updateBy;
     private String updateByName;
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedDt;
     private String transactionId;
     private String pin;
