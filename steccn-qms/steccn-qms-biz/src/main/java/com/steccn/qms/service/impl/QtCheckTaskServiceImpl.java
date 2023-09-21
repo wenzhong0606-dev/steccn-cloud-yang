@@ -166,6 +166,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())){
             Assert.notNull(dto.getArrivalTime(),"来料检任务到货日期不能为空");
         }
+        //在线检校验缺陷开始时间参数
+        if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+            QtCheckOnlineTaskVO qtCheckOnlineTaskVO = checkOnline(dto);
+            if(!qtCheckOnlineTaskVO.getIsChecked()){
+                throw new BusinessException(qtCheckOnlineTaskVO.getMsg());
+            }
+        }
         //1）仅当生产车间为深加工车间且检验类型为在线检时，默认值为已选中生产产线的“钢化工位”，只读
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                 &&dto.getProductWorkshop()!=null
@@ -378,6 +385,63 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtRecheckTaskService.save(recheckModel);
         }
         return qtCheckTask.getId();
+    }
+
+    @Override
+    public QtCheckOnlineTaskVO checkOnline(QtAddCheckTaskDTO dto) {
+        Assert.notNull(dto.getProductWorkshop().getId(),"车间不能为空");
+        Assert.notNull(dto.getProductLine().getId(),"产线不能为空");
+        Assert.notNull(dto.getDefectStartTime(),"缺陷开始时间不能为空");
+        Assert.notNull(dto.getDefectStartTime(),"缺陷结束时间不能为空");
+        QtCheckOnlineTaskVO result = new QtCheckOnlineTaskVO();
+        //基片二车间id为76
+        if(!dto.getProductWorkshop().getId().equals(76)){
+            result.setIsChecked(true);
+            return result;
+        }
+        result.setIsChecked(false);
+        //新建任务，缺陷记录时段选中t1~t2，点击“保存”时，若选中的产线在t1~t2已存在已检验的在线检任务，则无法提交，toast提示“t1~t2已完成在线检，请更改缺陷记录时段”（t1、t2的格式均为hh:mm）
+        QtCheckTask taskOne = getOne(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getProductLineId, dto.getProductLine().getId())
+                .eq(QtCheckTask::getDefectStartTime,dto.getDefectStartTime())
+                .eq(QtCheckTask::getDefectEndTime,dto.getDefectEndTime())
+                .last("LIMIT 1"));
+        if(Objects.nonNull(taskOne)){
+            result.setMsg(dto.getDefectStartTime().format(DateTimeFormatter.ofPattern("HH:mm"))+"~"
+                    +dto.getDefectEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                    +"存在已完成在线检,请更改缺陷记录时段");
+            return result;
+        }else {
+            //仅当“生产车间”选中“基片二车间”且任务类型为“在线检”时，进行如下校验避免“缺陷记录时段”遗漏：
+            //新建任务，缺陷记录时段选中t1~t2，t1所在的班次日期为D，以下12个时段在区间[t1所在班次的开始时间, t1]内的有n个
+            LocalDate classDate = LocalDateUtil.getClassDate(dto.getDefectStartTime(), false);
+            LocalDateTime classDateTime = classDate.atTime(LocalTime.of(8,0,0,0));
+            List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
+                    .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                    .eq(QtCheckTask::getProductLineId, dto.getProductLine().getId())
+                    .ge(QtCheckTask::getDefectStartTime,classDateTime)
+                    .le(QtCheckTask::getDefectEndTime,dto.getDefectStartTime()));
+            for(int i = 0; i <12;i++){
+                LocalDateTime timeBeforeTmp = classDateTime.plusHours(i*2);
+                LocalDateTime timeAfterTmp = timeBeforeTmp.plusHours(2L);
+                QtCheckTask qtCheckTask = taskList.stream().filter(v -> v.getDefectStartTime().equals(timeBeforeTmp)
+                        && v.getDefectEndTime().equals(timeAfterTmp)).findFirst().orElse(null);
+                if(Objects.isNull(qtCheckTask)){
+                    result.setDefectStartTime(timeBeforeTmp);
+                    result.setDefectEndTime(timeAfterTmp);
+                    result.setIsChecked(true);
+                    result.setMsg(timeBeforeTmp.format(DateTimeFormatter.ofPattern("HH:mm"))+"~"
+                            +timeAfterTmp.format(DateTimeFormatter.ofPattern("HH:mm"))
+                            +"尚未检验，是否为此时段新建任务？");
+                    return result;
+                }
+            }
+        }
+
+        return result;
     }
 
     /**

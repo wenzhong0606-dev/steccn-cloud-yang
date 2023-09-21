@@ -1,20 +1,16 @@
 package com.steccn.qms.service;
 
-import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.common.collect.Lists;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.domain.QtReport;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
-import org.apache.ibatis.annotations.Param;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -30,6 +26,14 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     Long add(QtAddCheckTaskDTO dto);
+
+    /**
+     * 校验在线检
+     * @param defectStartTime
+     * @param defectEndTime
+     * @return
+     */
+    QtCheckOnlineTaskVO checkOnline(QtAddCheckTaskDTO dto);
 
     /**
      * 巡检列表Vo
