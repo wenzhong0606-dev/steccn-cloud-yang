@@ -34,11 +34,15 @@ public class SalesLogisticsVO {
     private String customer_code;
 
     /**
-     * 客户订单号
+     * 产品名称
      */
     private String product_name;
 
+    /**
+     * 产品编码
+     */
     private String product_code;
+
     private String model_specs;
     private LocalDate send_date;
 

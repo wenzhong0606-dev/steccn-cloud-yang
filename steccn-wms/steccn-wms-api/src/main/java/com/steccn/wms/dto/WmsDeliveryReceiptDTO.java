@@ -66,4 +66,9 @@ public class WmsDeliveryReceiptDTO {
 
     private String createName;
 
+    /**
+     * 物流单号
+     */
+    private String logisticsNumber;
+
 }

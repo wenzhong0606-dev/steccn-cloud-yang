@@ -3,6 +3,8 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,27 +14,29 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SalesLogisticsDTO;
+import com.steccn.platform.dto.SalesLogisticsInfoDTO;
+import com.steccn.platform.dto.SalesLogisticsSyncDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSalesFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SalesLogisticsVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsDeliveryReceipt;
-import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
-import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
-import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
-import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
-import com.steccn.wms.dto.WmsInventoryDTO;
+import com.steccn.wms.domain.*;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.util.WmsCodeUtil;
-import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
-import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsScanInventoryVO;
+import com.steccn.wms.vo.*;
+import com.sun.javafx.css.Size;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -68,6 +72,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final WmsInventoryService wmsInventoryService;
 
     private final WmsDeliveryReceiptInfoService wmsDeliveryReceiptInfoService;
+
+    private final RemoteSalesFeignApi remoteSalesFeignApi;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -473,6 +481,174 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         wmsDeliveryReceiptInfoService.saveBatch(list);
         BeanUtils.copyProperties(wmsDeliveryReceipt,wmsDeliveryReceiptDTO);
         return wmsDeliveryReceiptDTO;
+    }
+
+    @Override
+    public WmsDeliverySellFlagVO sellFlag(String number) {
+        Assert.notNull(number,"物流单号不能为空");
+        WmsDeliverySellFlagVO wmsDeliverySellFlagVO = new WmsDeliverySellFlagVO();
+        //调用物流单明细查询接口
+        SalesLogisticsDTO dto = new SalesLogisticsDTO();
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE);
+        List<String> codes = Lists.newArrayList();
+        codes.add(number);
+        dto.setCode(codes);
+        String data = remoteSalesFeignApi.queryLogistics(dto);
+        JSONObject jsonObject = JSONObject.parseObject(data);
+        String msg = jsonObject.getJSONObject("result").getJSONObject("mdMappings").getString("msg");
+        if(!StrUtil.isNotBlank(msg)){
+            List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
+            if (CollUtil.isNotEmpty(logisticsVOS)){
+                wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
+                SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
+                String state = salesLogisticsVO.getState();
+                if (WmsManagerConstant.LogisticsBillState.DRAFT.getName().equals(state) ||
+                        WmsManagerConstant.LogisticsBillState.RESERVED.getName().equals(state) ||
+                        WmsManagerConstant.LogisticsBillState.SYN_SENT.getName().equals(state)||
+                        WmsManagerConstant.LogisticsBillState.ALREADY_ENTERED.getName().equals(state)){
+                    wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                    //获取物流单关联的出库单
+                    List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, number));
+                    if (CollUtil.isNotEmpty(list)){
+                        List<Long> receiptIds = list.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toList());
+                        List<WmsDeliveryReceiptInfo> infolist = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId, receiptIds));
+                        BigDecimal sum = infolist.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+                        BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
+                        if (sum.subtract(saleQty).compareTo(BigDecimal.ZERO)>0){
+                            wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
+                        }
+                    }
+                }
+            }
+        }
+        return wmsDeliverySellFlagVO;
+    }
+
+    @Override
+    public String sell(WmsDeliveryReceiptDTO dto) {
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_DELIVERY_RECEIPT);
+        lock.lock();
+        String code = null;
+        try {
+            //1.校验数据是否存在
+            Assert.isTrue(Objects.nonNull(dto), "出库凭证信息为空");
+            //2.定义数据模型
+            WmsDeliveryReceipt model = new WmsDeliveryReceipt();
+            BeanUtil.copyProperties(dto, model);
+            //3.给当前出库单生成编码
+            code = WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode());
+            model.setCode(code);
+            model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
+            //获取出库销售发货类型
+            SysDictVO dictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_TWO, WmsManagerConstant.OUTBOUND_TYPE),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            model.setType(dictVO.getId());
+            //保存关联的物流单
+            model.setSalesOrder(dto.getLogisticsNumber());
+            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())){
+                model.setCreateBy(dto.getCreateBy());
+                model.setCreateName(dto.getCreateName());
+            }
+            //4.保存出库单信息
+            save(model);
+            //5.保存出库单明细信息
+            if (CollUtil.isNotEmpty(dto.getList())) {
+                List<WmsInventoryDTO> infoList = Lists.newArrayList();
+                List<WmsDeliveryReceiptInfo> receiptInfoList = Lists.newArrayList();
+                dto.getList().forEach(info -> {
+                    WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                    BeanUtil.copyProperties(info, wmsInventoryDTO);
+                    wmsInventoryDTO.setId(info.getInventoryId());
+                    infoList.add(wmsInventoryDTO);
+                    WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
+                    BeanUtil.copyProperties(info, wmsDeliveryReceiptInfo);
+                    wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
+                    wmsDeliveryReceiptInfo.setAssociatedNo(dto.getLogisticsNumber());
+                    receiptInfoList.add(wmsDeliveryReceiptInfo);
+                });
+                //调整锁定库存信息
+                wmsInventoryService.updateLockQuantity(infoList, WmsManagerConstant.InventoryEnum.ZERO.getCode());
+                //保存明细信息
+                wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
+            }
+            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
+                affirm(model.getId(),dto.getCreateName());
+            }
+        } finally {
+            lock.unlock();
+        }
+        return code;
+    }
+
+
+    /**
+     *同步销售出库数据到销售系统
+     * @param wmsDeliveryReceipt
+     */
+    @Override
+    public void logistics(WmsDeliveryReceipt wmsDeliveryReceipt) {
+        SalesLogisticsSyncDTO dto = new SalesLogisticsSyncDTO();
+        List<SalesLogisticsInfoDTO> data = Lists.newArrayList();
+        List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS = wmsDeliveryReceiptInfoService.infoList(wmsDeliveryReceipt.getId());
+        BigDecimal sum = wmsDeliveryReceiptInfoVOS.stream().map(WmsDeliveryReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+        SalesLogisticsInfoDTO salesLogisticsInfoDTO = new SalesLogisticsInfoDTO();
+        salesLogisticsInfoDTO.setLogistics_code(wmsDeliveryReceipt.getSalesOrder());
+        salesLogisticsInfoDTO.setState(WmsManagerConstant.LogisticsBillState.OUT_OF_STORAGE.getName());
+        salesLogisticsInfoDTO.setOut_qty(sum.intValue());
+        data.add(salesLogisticsInfoDTO);
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE);
+        dto.setData(data);
+        String s = remoteSalesFeignApi.syncLogistics(dto);
+    }
+
+    @Override
+    public WmsDeliveryFlagVO deliveryFlagInfo(WmsDeliveryReceiptFlagInfoDto dto) {
+        WmsDeliveryFlagVO flagInfoVO = new WmsDeliveryFlagVO();
+        //1.通过判断参数中是否存在物料编码判断新老产线
+        if (Objects.isNull(dto.getMaterialCode())) {
+            //1.1判断箱号在智慧平台实时库存是否存在
+            WmsInventory inventory = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, dto.getCaseNo()).orderByDesc(WmsInventory::getCreateTime).last(MpConstant.STR_LIMIT_1));
+            if (Objects.nonNull(inventory)){
+                flagInfoVO.setCaseNoFlag(1);
+                //箱号对应的物料与物流单中的物料相同
+                if (dto.getMaterialCode().equals(inventory.getMaterialCode())){
+                    flagInfoVO.setMaterialEqualFlag(1);
+                 //箱号对应的库存明细中的可用库存数量 是否>0
+                 if (inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO)>0){}
+                    flagInfoVO.setCaseNumberQuantityFlag(1);
+                }
+            }
+        }
+        return flagInfoVO;
+    }
+
+    @Override
+    public WmsDeliverySellInfoVO deliverySellMaterialInfo(String number) {
+        WmsDeliverySellInfoVO wmsDeliverySellInfoVO = new WmsDeliverySellInfoVO();
+        //调用物流单明细查询接口
+        SalesLogisticsDTO dto = new SalesLogisticsDTO();
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE);
+        List<String> codes = Lists.newArrayList();
+        codes.add(number);
+        dto.setCode(codes);
+        String data = remoteSalesFeignApi.queryLogistics(dto);
+        JSONObject jsonObject = JSONObject.parseObject(data);
+        String msg = jsonObject.getJSONObject("result").getJSONObject("mdMappings").getString("msg");
+        if(!StrUtil.isNotBlank(msg)) {
+            List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
+            if (CollUtil.isNotEmpty(logisticsVOS)) {
+                SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
+                String productCode = salesLogisticsVO.getProduct_code();
+                EqpSpareVO material = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(productCode), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Assert.notNull(material,"该物料在智慧平台不存在");
+                wmsDeliverySellInfoVO.setMaterialId(material.getId());
+                wmsDeliverySellInfoVO.setMaterialName(salesLogisticsVO.getProduct_name());
+                wmsDeliverySellInfoVO.setMaterialCode(salesLogisticsVO.getProduct_code());
+                wmsDeliverySellInfoVO.setCustomerName(salesLogisticsVO.getCustomer_name());
+                wmsDeliverySellInfoVO.setSaleQty(BigDecimal.valueOf(salesLogisticsVO.getSale_qty()));
+            }
+
+        }
+        return wmsDeliverySellInfoVO;
     }
 
     /**
