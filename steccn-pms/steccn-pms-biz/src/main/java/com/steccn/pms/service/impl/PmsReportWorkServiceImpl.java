@@ -1359,7 +1359,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> lineDatePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
+    public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
         LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
@@ -1401,7 +1401,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> lineDateInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
+    public Map<String, BigDecimal> dateInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
         LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));

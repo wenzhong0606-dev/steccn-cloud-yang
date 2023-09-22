@@ -104,5 +104,5 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @param end        结束日期
      * @return
      */
-    Map<String, BigDecimal> lineDate(List<Integer> lineIdList, LocalDate start, LocalDate end);
+    Map<String, BigDecimal> datePullForce(List<Integer> lineIdList, LocalDate start, LocalDate end);
 }

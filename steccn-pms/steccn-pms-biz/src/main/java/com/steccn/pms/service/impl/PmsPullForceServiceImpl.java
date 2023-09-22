@@ -321,7 +321,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     }
 
     @Override
-    public Map<String, BigDecimal> lineDate(List<Integer> lineIdList, LocalDate start, LocalDate end) {
+    public Map<String, BigDecimal> datePullForce(List<Integer> lineIdList, LocalDate start, LocalDate end) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         List<PmsPullForce> dbList = list(new LambdaQueryWrapper<PmsPullForce>()
                 .ge(PmsPullForce::getPullForceDate, start)
