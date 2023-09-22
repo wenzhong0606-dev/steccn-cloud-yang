@@ -15,6 +15,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.DashboardNumDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -108,6 +110,75 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         //自定义转换工具
         return StackGraphUtil.convertData(stackGraphDTOList);
     }
+
+    @Override
+    public QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer bit, String unit) {
+        DashboardNumDTO numDTO = new DashboardNumDTO();
+        numDTO.setType(0);
+        numDTO.setWorkShopId(workShopId);
+        numDTO.setStart(start);
+        numDTO.setEnd(end);
+        numDTO.setBit(bit);
+        numDTO.setUnit(unit);
+        return num("累计产量总数", numDTO, (x) -> reportWorkService.datePmUnit(x.getLineIdList(), x.getStart(), x.getEnd(), x.getType(), unit));
+    }
+
+    @Override
+    public QtLineChartBarDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit) {
+        DashboardNumDTO numDTO = new DashboardNumDTO();
+        numDTO.setWorkShopId(workShopId);
+        numDTO.setStart(start);
+        numDTO.setEnd(end);
+        numDTO.setBit(bit);
+        numDTO.setUnit(unit);
+        return num("累计入库总数量", numDTO, (x) -> reportWorkService.dateInStorageUnit(x.getLineIdList(), x.getStart(), x.getEnd(), unit));
+    }
+
+    @Override
+    public QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit) {
+        DashboardNumDTO numDTO = new DashboardNumDTO();
+        numDTO.setWorkShopId(workShopId);
+        numDTO.setStart(start);
+        numDTO.setEnd(end);
+        numDTO.setBit(bit);
+        numDTO.setUnit(unit);
+        return num("累计拉引量总数", numDTO, (x) -> pmsPullForceService.datePullForce(x.getLineIdList(), x.getStart(), x.getEnd()));
+    }
+
+    /**
+     * 班次产量，入库量，拉引量
+     * *
+     *
+     * @param numDTO 条件
+     * @param function 函数
+     * @return
+     */
+    private QtLineChartBarDTO num(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function) {
+        List<LocalDate> timeList = ShardTimeUtil.cutDate("D", numDTO.getStart(), numDTO.getEnd());
+        Assert.notEmpty(timeList, "暂无时间窗口");
+        List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        numDTO.setLineIdList(lineIdList);
+        Map<String, BigDecimal> pmMap = function.apply(numDTO);
+
+        //定义数据集合
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate classDate = timeList.get(i - 1);
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, timeList.get(i - 1)));
+            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+            //产量，入库，耗用
+            dataList.add(new TupleDTO<>(hint, BigDecimalUtil.setScale(pmMap.get(classDate + ""), numDTO.getBit())));
+            stackGraphDTO.setData(dataList);
+            stackGraphDTOList.add(stackGraphDTO);
+        }
+        //自定义转换工具
+        return StackGraphUtil.convertData(stackGraphDTOList);
+    }
+
+
     /**
      * 获取车间的产线集合
      *

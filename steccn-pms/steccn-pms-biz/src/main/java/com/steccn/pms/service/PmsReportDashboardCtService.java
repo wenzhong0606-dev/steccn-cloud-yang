@@ -25,7 +25,7 @@ public interface PmsReportDashboardCtService {
     QtLineChartBarDTO produceClass(Integer workShopId, LocalDate start, LocalDate end, TupleDTO<String, Integer> unit);
 
     /**
-     * 总成品率
+     * 班次日期总成品率
      *
      * @param workShopId 车间主键
      * @param start      开始日期
@@ -33,4 +33,40 @@ public interface PmsReportDashboardCtService {
      * @return
      */
     QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 班次日期产量
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @param bit        位数
+     * @param unit       单位
+     * @return
+     */
+    QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer bit , String unit);
+
+    /**
+     * 累计入库量总数
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @param bit        位数
+     * @param unit       单位
+     * @return
+     */
+    QtLineChartBarDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit);
+
+    /**
+     * 累计拉引量总数
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @param bit        位数
+     * @param unit       单位
+     * @return
+     */
+    QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit);
 }
