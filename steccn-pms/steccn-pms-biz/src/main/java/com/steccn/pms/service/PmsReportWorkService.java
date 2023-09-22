@@ -327,17 +327,20 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      */
     Map<String, BigDecimal> lineClassUseCount(Set<Integer> lineIdSet, LocalDate start, LocalDate end, String unit);
 
+
+    Map<String, BigDecimal> lineDatePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
+
     /**
-     * 获取产线班次耗用数量 单位为unit
+     * 获取班次日期入库 单位为unit
      *
-     * @param lineIdSet 产线
+     * @param lineIdList 产线
      * @param start     班次日期-开始
      * @param end       班次日期-结束
-     * @param type      类型 0基片 1深加工
      * @param unit      单位
      * @return
      */
-    Map<String, BigDecimal> lineDatePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit);
+    Map<String, BigDecimal> lineDateInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
     /**
      * 获取停工时长
      * @param dto
