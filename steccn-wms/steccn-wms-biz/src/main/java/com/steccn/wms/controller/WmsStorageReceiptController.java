@@ -18,6 +18,7 @@ import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsSalesDeliveryVO;
 import com.steccn.wms.vo.WmsStorageFlagInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -162,6 +163,12 @@ public class WmsStorageReceiptController {
     @PostMapping("/storage/flag/info")
     public R<WmsStorageFlagInfoVO> storageFlagInfo(@RequestBody WmsStorageReceiptFlagInfoDTO dto){
         return R.success(wmsStorageReceiptService.storageFlagInfo(dto));
+    }
+
+    @ApiOperation("采购入库获取箱号入库单标识相关内容")
+    @PostMapping("/sales/page")
+    public R<Page<WmsSalesDeliveryVO>> salesDeliveryPage(@RequestBody WmsDeliveryOrderDTO dto){
+        return R.success(wmsStorageReceiptService.salesDeliveryPage(dto));
     }
 
     /**
