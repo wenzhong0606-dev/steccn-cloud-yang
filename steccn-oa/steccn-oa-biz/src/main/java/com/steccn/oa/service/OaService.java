@@ -618,10 +618,27 @@ public class OaService {
         if(dateDTO.getField1()==null||dateDTO.getField2()==null){
             throw new BusinessException("开始时间,结束时间不能为空");
         }
+        List<OaRosterRecordVO> rosterRecord = Lists.newArrayList();
         dto.setStartdate(dateDTO.getField1().toString());
         dto.setEnddate(dateDTO.getField2().toString());
-        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN);
-        List<OaRosterRecordVO> rosterRecord = getRosterRecord(dto);
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN1);
+        List<OaRosterRecordVO> rosterRecord1 = getRosterRecord(dto);
+        rosterRecord.addAll(rosterRecord1);
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN2);
+        List<OaRosterRecordVO> rosterRecord2 = getRosterRecord(dto);
+        rosterRecord.addAll(rosterRecord2);
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN3);
+        List<OaRosterRecordVO> rosterRecord3 = getRosterRecord(dto);
+        rosterRecord.addAll(rosterRecord3);
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN4);
+        List<OaRosterRecordVO> rosterRecord4 = getRosterRecord(dto);
+        rosterRecord.addAll(rosterRecord4);
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN5);
+        List<OaRosterRecordVO> rosterRecord5 = getRosterRecord(dto);
+        rosterRecord.addAll(rosterRecord5);
+        dto.setJobtitle(OaConstant.JOB_TITLE_ZHIJIAN6);
+        List<OaRosterRecordVO> rosterRecord6 = getRosterRecord(dto);
+        rosterRecord.addAll(rosterRecord6);
         if(CollUtil.isNotEmpty(rosterRecord)){
             //拿到所有workCode对应的userCode
             List<String> workCodes = rosterRecord.stream()

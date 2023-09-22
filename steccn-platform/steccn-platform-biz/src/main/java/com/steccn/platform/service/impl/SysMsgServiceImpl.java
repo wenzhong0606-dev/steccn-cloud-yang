@@ -154,20 +154,21 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
             if(sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NO.toString())
                     || sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NUM_2.toString())){
                 //电器故障或者全部
-                //发给电工段长
-                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_GAOYADIANLI, PmManagerConstant.DIRECTOR_ID_PEIDIANFU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
-                    oaUserIdAndNames.forEach(tmp -> {
-                        longIds.add(tmp.getId().longValue());
-                    });
-                }
+                //发给电工段长 吴仕航
+//                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_GAOYADIANLI, PmManagerConstant.DIRECTOR_ID_PEIDIANFU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+//                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
+//                    oaUserIdAndNames.forEach(tmp -> {
+//                        longIds.add(tmp.getId().longValue());
+//                    });
+//                }
+                longIds.add(881L);
                 //发给副段长
-                List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_DIANGONG, PmManagerConstant.DIRECTOR_ID_DIANQI), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
-                    oaUserIdAndNames1.forEach(tmp -> {
-                        longIds.add(tmp.getId().longValue());
-                    });
-                }
+//                List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_DIANGONG, PmManagerConstant.DIRECTOR_ID_DIANQI), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+//                if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
+//                    oaUserIdAndNames1.forEach(tmp -> {
+//                        longIds.add(tmp.getId().longValue());
+//                    });
+//                }
                 //发送当班电工
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG2));
@@ -177,19 +178,21 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                     || sysMsgMesDTO.getAddition().getCode().equals(OaConstant.NUM_2.toString())){
                 //机械故障或者全部
                 //发给机修工段段长或者副段长
-                List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_JIXIUGONGDUAN, PmManagerConstant.DIRECTOR_ID_JIXIU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
-                    oaUserIdAndNames1.forEach(tmp -> {
-                        longIds.add(tmp.getId().longValue());
-                    });
-                }
+//                List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_JIXIUGONGDUAN, PmManagerConstant.DIRECTOR_ID_JIXIU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+//                if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
+//                    oaUserIdAndNames1.forEach(tmp -> {
+//                        longIds.add(tmp.getId().longValue());
+//                    });
+//                }
                 //发给副段长
-                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_JIXIUGONGDUAN, PmManagerConstant.DIRECTOR_ID_JIXIU_FU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
-                    oaUserIdAndNames.forEach(tmp -> {
-                        longIds.add(tmp.getId().longValue());
-                    });
-                }
+//                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_JIXIUGONGDUAN, PmManagerConstant.DIRECTOR_ID_JIXIU_FU), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+//                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
+//                    oaUserIdAndNames.forEach(tmp -> {
+//                        longIds.add(tmp.getId().longValue());
+//                    });
+//                }
+                //发给机修工段 王蒙蒙
+                longIds.add(913L);
                 //发送当班机修工
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
@@ -203,7 +206,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
             return false;
         }
 
-        this.sendMsg(sysMsgMesDTO);
+//        this.sendMsg(sysMsgMesDTO);
         return true;
     }
 

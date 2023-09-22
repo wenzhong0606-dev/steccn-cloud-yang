@@ -1,8 +1,10 @@
 package com.steccn.mes.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -71,23 +73,55 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                 ));
         //组成图表数据
         List<JsSysOffice> jsSysOffices = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
-                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName,JsSysOffice::getParentCodes)
                 .in(JsSysOffice::getOfficeCode, officeCodes).eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0));
-        Collections.sort(jsSysOffices, Comparator.comparing(JsSysOffice::getOfficeName));
+//        Collections.sort(jsSysOffices, Comparator.comparing(JsSysOffice::getOfficeName));
+        //车间粒度
+        List<JsSysOffice> officeList = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                .eq(JsSysOffice::getOfficeType,QtManagerConstant.NUM_8)
+                .eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0)
+                .orderByAsc(JsSysOffice::getTreeSort));
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        jsSysOffices.forEach(ele->{
+        officeList.forEach(ele->{
             String officeName = ele.getOfficeName();
-            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            stackGraphDTO.setXAxis(officeName);
-            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-            BigDecimal all = new BigDecimal(allTaskMap.get(ele.getOfficeCode()));
-            BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
-            datList.add(new TupleDTO<>("任务总数", all));
-            datList.add(new TupleDTO<>("完成数", finished));
-            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
-            stackGraphDTO.setData(datList);
-            dataList.add(stackGraphDTO);
+            //聚合粒度下所有的数据
+            List<JsSysOffice> officeTmp = jsSysOffices.stream().filter(v -> v.getParentCodes().contains(ele.getOfficeCode())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(officeTmp)){
+                //加总产线下所有 1任务总数 2完成数
+                Map<Integer,BigDecimal> countMap = Maps.newHashMap();
+                officeTmp.forEach(tmp->{
+                    //任务总数
+                    BigDecimalUtil.accumulate(countMap,1,new BigDecimal(allTaskMap.get(tmp.getOfficeCode())));
+                    //完成数
+                    BigDecimalUtil.accumulate(countMap,2,new BigDecimal(finishedTaskMap.getOrDefault(tmp.getOfficeCode(),0L)));
+                });
+                //组数据
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                stackGraphDTO.setXAxis(officeName);
+                List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+                BigDecimal all = countMap.get(1);
+                BigDecimal finished = countMap.get(2);
+                datList.add(new TupleDTO<>("任务总数", all));
+                datList.add(new TupleDTO<>("完成数", finished));
+                datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
+                stackGraphDTO.setData(datList);
+                dataList.add(stackGraphDTO);
+            }
         });
+//        jsSysOffices.forEach(ele->{
+//            String officeName = ele.getOfficeName();
+//            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+//            stackGraphDTO.setXAxis(officeName);
+//            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+//            BigDecimal all = new BigDecimal(allTaskMap.get(ele.getOfficeCode()));
+//            BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
+//            datList.add(new TupleDTO<>("任务总数", all));
+//            datList.add(new TupleDTO<>("完成数", finished));
+//            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
+//            stackGraphDTO.setData(datList);
+//            dataList.add(stackGraphDTO);
+//        });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
 
@@ -117,23 +151,54 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                 ));
         //组成图表数据
         List<JsSysOffice> jsSysOffices = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
-                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName,JsSysOffice::getParentCodes)
                 .in(JsSysOffice::getOfficeCode, officeCodes).eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0));
-        Collections.sort(jsSysOffices, Comparator.comparing(JsSysOffice::getOfficeName));
+//        Collections.sort(jsSysOffices, Comparator.comparing(JsSysOffice::getOfficeName));
+        //车间粒度
+        List<JsSysOffice> officeList = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                .eq(JsSysOffice::getOfficeType,QtManagerConstant.NUM_8)
+                .eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0)
+                .orderByAsc(JsSysOffice::getTreeSort));
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        jsSysOffices.forEach(ele->{
+        officeList.forEach(ele->{
             String officeName = ele.getOfficeName();
-            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            stackGraphDTO.setXAxis(officeName);
-            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-            BigDecimal all = new BigDecimal(allTaskMap.get(ele.getOfficeCode()));
-            BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
-            datList.add(new TupleDTO<>("点检项总数", all));
-            datList.add(new TupleDTO<>("合格数", finished));
-            datList.add(new TupleDTO<>("合格率", BigDecimalUtil.percent(finished,all,2)));
-            stackGraphDTO.setData(datList);
-            dataList.add(stackGraphDTO);
+            List<JsSysOffice> officeTmp = jsSysOffices.stream().filter(v -> v.getParentCodes().contains(ele.getOfficeCode())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(officeTmp)){
+                //加总产线下所有 1任务总数 2完成数
+                Map<Integer,BigDecimal> countMap = Maps.newHashMap();
+                officeTmp.forEach(tmp->{
+                    //任务总数
+                    BigDecimalUtil.accumulate(countMap,1,new BigDecimal(allTaskMap.get(tmp.getOfficeCode())));
+                    //完成数
+                    BigDecimalUtil.accumulate(countMap,2,new BigDecimal(finishedTaskMap.getOrDefault(tmp.getOfficeCode(),0L)));
+                });
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                stackGraphDTO.setXAxis(officeName);
+                List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+                BigDecimal all = countMap.get(1);
+                BigDecimal finished = countMap.get(2);
+                datList.add(new TupleDTO<>("点检项总数", all));
+                datList.add(new TupleDTO<>("合格数", finished));
+                datList.add(new TupleDTO<>("合格率", BigDecimalUtil.percent(finished,all,2)));
+                stackGraphDTO.setData(datList);
+                dataList.add(stackGraphDTO);
+            }
         });
+
+//        jsSysOffices.forEach(ele->{
+//            String officeName = ele.getOfficeName();
+//            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+//            stackGraphDTO.setXAxis(officeName);
+//            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+//            BigDecimal all = new BigDecimal(allTaskMap.get(ele.getOfficeCode()));
+//            BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
+//            datList.add(new TupleDTO<>("点检项总数", all));
+//            datList.add(new TupleDTO<>("合格数", finished));
+//            datList.add(new TupleDTO<>("合格率", BigDecimalUtil.percent(finished,all,2)));
+//            stackGraphDTO.setData(datList);
+//            dataList.add(stackGraphDTO);
+//        });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
 }
