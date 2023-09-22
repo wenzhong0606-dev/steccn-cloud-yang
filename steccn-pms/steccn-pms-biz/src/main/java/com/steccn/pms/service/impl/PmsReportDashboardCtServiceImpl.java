@@ -90,7 +90,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
 
         Map<String, BigDecimal> pmMap = reportWorkService.lineDatePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
         Map<String, BigDecimal> inStorageMap = reportWorkService.lineDateInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
-
+        Map<String, BigDecimal>  forceMap = pmsPullForceService.lineDate(lineIdList, start, end);
 
         //获取基片的每日产量
         return null;
