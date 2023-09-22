@@ -92,10 +92,22 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Map<String, BigDecimal> inStorageMap = reportWorkService.lineDateInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
         Map<String, BigDecimal>  forceMap = pmsPullForceService.lineDate(lineIdList, start, end);
 
-        //获取基片的每日产量
-        return null;
+        //定义数据集合
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate classDate = LocalDateUtil.getClassDate(timeList.get(i - 1), Boolean.FALSE);
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, timeList.get(i - 1)));
+            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+            //产量，入库，耗用
+            dataList.add(new TupleDTO<>("完工总成品率(%)", BigDecimalUtil.percent(pmMap.get(classDate + ""), forceMap.get(classDate + ""))));
+            dataList.add(new TupleDTO<>("入库总成品率(%)", BigDecimalUtil.percent(inStorageMap.get(classDate + ""), forceMap.get(classDate + ""))));
+            stackGraphDTO.setData(dataList);
+            stackGraphDTOList.add(stackGraphDTO);
+        }
+        //自定义转换工具
+        return StackGraphUtil.convertData(stackGraphDTOList);
     }
-
     /**
      * 获取车间的产线集合
      *
