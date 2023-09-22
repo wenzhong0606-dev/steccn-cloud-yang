@@ -75,7 +75,12 @@ public class OaConstant {
 
 
     public static final String GROUP_LEADER = "班长";
-    public static final String JOB_TITLE_ZHIJIAN = "183";
+    public static final String JOB_TITLE_ZHIJIAN1 = "30";
+    public static final String JOB_TITLE_ZHIJIAN2 = "33";
+    public static final String JOB_TITLE_ZHIJIAN3 = "181";
+    public static final String JOB_TITLE_ZHIJIAN4 = "414234";
+    public static final String JOB_TITLE_ZHIJIAN5 = "414272";
+    public static final String JOB_TITLE_ZHIJIAN6 = "414275";
 
     /**
      * 熔化工
