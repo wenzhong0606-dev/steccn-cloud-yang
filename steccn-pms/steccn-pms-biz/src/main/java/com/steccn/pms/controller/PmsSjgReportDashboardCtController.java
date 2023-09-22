@@ -44,7 +44,7 @@ public class PmsSjgReportDashboardCtController {
     }
 
     @GetMapping("/line/produce/classgroup")
-    @ApiOperation("产线产量表格")
+    @ApiOperation("产线班组产量")
     public R<QtLineChartBarDTO> lineProduceClassGroup(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = PmsUnitUtil.unit(unitType);
         return R.success(pmsSjgReportDashboardService.lineProduceClassGroup(workShopId, start, end, unit.getField1(), unit.getField2()));
@@ -52,7 +52,7 @@ public class PmsSjgReportDashboardCtController {
 
 
     @GetMapping("/line/produce/classgroup/detail")
-    @ApiOperation("产线产量表格")
+    @ApiOperation("产线班组产量表格")
     public R<SjgDashboardLineProduceVO> lineProduceClassGroupDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = PmsUnitUtil.unit(unitType);
         return R.success(pmsSjgReportDashboardService.lineProduceClassGroupDetail(workShopId, start, end, unit.getField1(), unit.getField2()));

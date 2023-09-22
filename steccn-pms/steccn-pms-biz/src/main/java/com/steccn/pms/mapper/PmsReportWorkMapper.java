@@ -246,6 +246,19 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return vo
      */
     List<ProcessReportWorkPageVO> processReportDashBoard(@Param("dto") ProcessReportWorkPageDTO dto);
+
+
+    /**
+     * 获取日期产量
+     * *
+     * @param lineIdList 产线id
+     * @param start 开始时间
+     * @param end   结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> getDatePmUnit(@Param("lineList") List<Integer> lineIdList,
+                                       @Param("start") LocalDateTime start,
+                                       @Param("end") LocalDateTime end);
 }
 
 

@@ -23,4 +23,14 @@ public interface PmsReportDashboardCtService {
      * @return
      */
     QtLineChartBarDTO produceClass(Integer workShopId, LocalDate start, LocalDate end, TupleDTO<String, Integer> unit);
+
+    /**
+     * 总成品率
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end);
 }
