@@ -1,11 +1,16 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Set;
 
 /**
 * @author W10
@@ -62,4 +67,13 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     Boolean linkErp(Long id);
+
+    /**
+     * 根据线边仓获取领用量
+     *
+     * @param date       日期
+     * @param shelfIdSet 货架集合
+     * @return
+     */
+    BigDecimal slipLineWarehouse(LocalDate date, Set<Integer> shelfIdSet);
 }

@@ -14,6 +14,8 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -43,6 +45,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
 
     private final PmsReportWorkService reportWorkService;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmsPullForceService pmsPullForceService;
 
 
     @Override
@@ -73,6 +76,23 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         }
         //自定义转换工具
         return StackGraphUtil.convertData(stackGraphDTOList);
+    }
+
+    @Override
+    public QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end) {
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew("D", startLdt, endLdt);
+        Assert.notEmpty(timeList, "暂无时间窗口");
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+
+        Map<String, BigDecimal> pmMap = reportWorkService.lineDatePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+
+
+        //获取基片的每日产量
+        return null;
     }
 
     /**

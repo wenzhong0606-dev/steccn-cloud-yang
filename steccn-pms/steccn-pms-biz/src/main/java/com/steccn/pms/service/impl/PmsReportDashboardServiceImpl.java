@@ -13,10 +13,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.EpChartGraphUtil;
-import com.steccn.common.util.MapUtil;
-import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.util.*;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -113,7 +110,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
     /**
@@ -158,7 +155,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     public BigDecimal produceNumRate(Integer workShopId, LocalDate date) {
         BigDecimal num = produceNumToday(workShopId, date).get(0);
         BigDecimal pullForce = pullForceToday(workShopId, date);
-        return BigDecimalUtil.percent(num, pullForce, 2);
+        return BigDecimalUtil.percent(num, pullForce);
     }
 
     @Override
@@ -189,7 +186,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             sum2 = BigDecimalUtil.add(sum2, convert1);
             sum3 = BigDecimalUtil.add(sum3, convert2);
         }
-        return Arrays.asList(BigDecimalUtil.setScale(sum2, 1), BigDecimalUtil.setScale(sum1, 0), BigDecimalUtil.setScale(sum3, 0));
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
     @Override
@@ -201,6 +198,11 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     @Override
     public DashboardProducePageVO producePage(DashboardProducePageDTO dto) {
+        //获取产线
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        SysOfficeVO wsOffice = sysOfficeMap.get(dto.getProductLineId());
+        int type = wsOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
         DashboardProducePageVO resVo = new DashboardProducePageVO();
         //获取当前产线正在执行的订单批次
         PmsProduceOrder currentOrder = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>()
@@ -247,7 +249,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 lineList.add(ele.getProductionLineId());
                 orderIdSet.add(ele.getId());
             });
-            Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, 0);
+            Map<Long, BigDecimal> pmByOrderMap = pmsReportWorkService.getPmByOrder(lineList, orderIdSet, type);
             Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getInStorageByOrder(orderIdSet);
             Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             page.getRecords().forEach(ele -> {
@@ -317,8 +319,12 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Assert.notEmpty(sysOfficeMap, "车间不能为空");
         Map<Integer, SysOfficeVO> wsLineMap = getWsLineMap(sysOfficeMap.get(workShopId));
         Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        //基片深加工
+        SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
+        int type = wsOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
+
         //获取班次产量
-        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, type, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
         List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
         Map<String, BigDecimal> pfMap = Maps.newHashMap();
@@ -400,9 +406,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             BigDecimal pfMorning = pfMap.get(ele + "_" + morningDict.getId());
             BigDecimal pfNight = pfMap.get(ele + "_" + nightDict.getId());
             BigDecimal pfSum = BigDecimalUtil.add(pfMorning, pfNight);
-            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(sum, pfSum, 2));
-            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(morning, pfMorning, 2));
-            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(night, pfNight, 2));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(sum, pfSum));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(morning, pfMorning));
+            MapUtil.compute(valueMap, ele, BigDecimalUtil.percent(night, pfNight));
         });
         sortLineList.forEach(ele -> {
             String officeName = wsLineMap.get(ele.getId()).getOfficeName();
