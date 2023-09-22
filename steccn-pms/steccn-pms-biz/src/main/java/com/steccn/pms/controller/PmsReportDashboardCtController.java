@@ -35,4 +35,10 @@ public class PmsReportDashboardCtController {
         return R.success(pmsReportDashboardCtService.produceClass(workShopId, start, end, unit));
     }
 
+    @GetMapping("/yield/rate/date")
+    @ApiOperation("总成品率")
+    public R<QtLineChartBarDTO> yieldRateDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end));
+    }
+
 }

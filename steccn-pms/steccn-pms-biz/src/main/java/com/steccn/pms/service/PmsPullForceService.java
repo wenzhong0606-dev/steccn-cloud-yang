@@ -95,4 +95,14 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     List<PmsPullForceDataVO> getDataFromPeriods(PmsPullForceQueryDTO dto);
+
+    /**
+     * 查询班次日期的拉引量
+     *
+     * @param lineIdList 产线
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    Map<String, BigDecimal> datePullForce(List<Integer> lineIdList, LocalDate start, LocalDate end);
 }

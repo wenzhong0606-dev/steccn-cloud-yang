@@ -14,6 +14,8 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -43,6 +45,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
 
     private final PmsReportWorkService reportWorkService;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmsPullForceService pmsPullForceService;
 
 
     @Override
@@ -75,6 +78,36 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         return StackGraphUtil.convertData(stackGraphDTOList);
     }
 
+    @Override
+    public QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end) {
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew("D", startLdt, endLdt);
+        Assert.notEmpty(timeList, "暂无时间窗口");
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notNull(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+
+        Map<String, BigDecimal> pmMap = reportWorkService.datePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> inStorageMap = reportWorkService.dateInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal>  forceMap = pmsPullForceService.datePullForce(lineIdList, start, end);
+
+        //定义数据集合
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate classDate = LocalDateUtil.getClassDate(timeList.get(i - 1), Boolean.FALSE);
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, timeList.get(i - 1)));
+            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+            //产量，入库，耗用
+            dataList.add(new TupleDTO<>("完工总成品率(%)", BigDecimalUtil.percent(pmMap.get(classDate + ""), forceMap.get(classDate + ""))));
+            dataList.add(new TupleDTO<>("入库总成品率(%)", BigDecimalUtil.percent(inStorageMap.get(classDate + ""), forceMap.get(classDate + ""))));
+            stackGraphDTO.setData(dataList);
+            stackGraphDTOList.add(stackGraphDTO);
+        }
+        //自定义转换工具
+        return StackGraphUtil.convertData(stackGraphDTOList);
+    }
     /**
      * 获取车间的产线集合
      *
