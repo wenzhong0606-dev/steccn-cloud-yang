@@ -76,7 +76,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             });
         });
         //根据线边仓去调拨单中获取今日的原片数量之和
-        BigDecimal sum = FeignOptional.of(() -> wmsTransferSlipFeignApi.slipLineWarehouse(new TupleDTO<>(date, shelfSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        BigDecimal sum = FeignOptional.of(() -> wmsTransferSlipFeignApi.slipLineWarehouse(new TupleDTO<>(date, shelfSet)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         return BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
     }
 

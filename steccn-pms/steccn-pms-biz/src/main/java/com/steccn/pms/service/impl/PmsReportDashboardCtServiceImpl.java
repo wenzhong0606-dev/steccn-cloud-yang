@@ -89,6 +89,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
 
         Map<String, BigDecimal> pmMap = reportWorkService.lineDatePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> inStorageMap = reportWorkService.lineDateInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
 
 
         //获取基片的每日产量
