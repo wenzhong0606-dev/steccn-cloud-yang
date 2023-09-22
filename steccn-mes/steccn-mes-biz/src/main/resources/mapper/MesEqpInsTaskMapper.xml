@@ -49,10 +49,10 @@
             a.status = #{dto.status}
         </if>
         <if test="dto.startTime != null">
-            AND a.create_date &gt;= #{dto.startTime}
+            AND a.plan_time &gt;= #{dto.startTime}
         </if>
         <if test="dto.endTime != null">
-            AND a.create_date &lt;= #{dto.endTime}
+            AND a.plan_time &lt;= #{dto.endTime}
         </if>
         GROUP BY b.office_auth
     </select>
@@ -69,10 +69,10 @@
             AND a.is_finished = #{dto.status}
         </if>
         <if test="dto.startTime != null">
-            AND a.create_date &gt;= #{dto.startTime}
+            AND b.plan_time &gt;= #{dto.startTime}
         </if>
         <if test="dto.endTime != null">
-            AND a.create_date &lt;= #{dto.endTime}
+            AND b.plan_time &lt;= #{dto.endTime}
         </if>
         GROUP BY c.office_auth
     </select>

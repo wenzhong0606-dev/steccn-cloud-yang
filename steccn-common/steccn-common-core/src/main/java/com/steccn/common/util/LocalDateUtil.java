@@ -7,6 +7,7 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -490,6 +491,37 @@ public class LocalDateUtil {
             return ClassUtil.MORNING;
         }
         return ClassUtil.NIGHT;
+    }
+
+    /**
+     * 算两段时间相差的小时数
+     * @param start1
+     * @param end1
+     * @param start2
+     * @param end2
+     * @return
+     */
+    public static BigDecimal calculateIntersectionHours(
+            LocalDateTime start1, LocalDateTime end1,
+            LocalDateTime start2, LocalDateTime end2) {
+        // 计算交集的开始时间和结束时间
+        LocalDateTime intersectionStart = start1.isBefore(start2) ? start2 : start1;
+        LocalDateTime intersectionEnd = end1.isBefore(end2) ? end1 : end2;
+
+        // 计算交集的持续时间
+        Duration intersectionDuration = Duration.between(intersectionStart, intersectionEnd);
+
+        // 如果持续时间为负数，表示没有交集，返回0
+        if (intersectionDuration.isNegative()) {
+            return BigDecimal.ZERO.setScale(2);
+        }
+
+        // 计算交集的小时数，并保留2位小数
+        BigDecimal intersectionHours = BigDecimal.valueOf(intersectionDuration.toMillis())
+                .divide(BigDecimal.valueOf(3600000), 2, BigDecimal.ROUND_HALF_UP);
+
+        // 计算交集的小时数
+        return intersectionHours;
     }
 
 }

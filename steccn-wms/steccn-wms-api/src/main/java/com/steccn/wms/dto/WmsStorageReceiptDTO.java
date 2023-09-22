@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -42,7 +43,6 @@ public class WmsStorageReceiptDTO {
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;
-
     @ApiModelProperty("备注")
     @Size(min = 0, max = 256, message = "备注长度不能超过 256 个字符")
     private String note;
@@ -56,4 +56,29 @@ public class WmsStorageReceiptDTO {
     @ApiModelProperty("明细集合")
     @Valid
     private List<WmsStorageReceiptInfoDTO> list;
+
+    @ApiModelProperty("创建人")
+    private Long createBy;
+
+    @ApiModelProperty("创建人名称")
+    private String createName;
+
+    @ApiModelProperty("是否SRM系统传参 0否 1是")
+    private Integer isSRMSys;
+
+    @ApiModelProperty("操作人姓名")
+    private String operateName;
+
+
+    @ApiModelProperty("操作人id")
+    private Integer operateId;
+
+    @ApiModelProperty("操作时间")
+    private LocalDateTime operateTime;
+
+    @ApiModelProperty("金蝶收料通知单编码")
+    private String erpReceiptCode;
+
+    @ApiModelProperty("金蝶收料通知单Id")
+    private String erpReceiptId;
 }

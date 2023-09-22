@@ -132,4 +132,9 @@ public class WmsStorageReceiptInfo implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 金蝶通知单行号
+     */
+    private String erpLineId;
 }

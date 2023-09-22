@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmdepartment;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.service.HrmdepartmentService;
@@ -54,7 +55,26 @@ public class HrmdepartmentServiceImpl extends ServiceImpl<HrmdepartmentMapper, H
         Map<String, List<OaClassUserNameDTO>> result = Maps.newHashMap();
         if(CollUtil.isNotEmpty(productWorkShop)){
             for(String tmp:productWorkShop){
-                List<OaClassUserNameDTO> oaClassUserNameDTOS = hrmdepartmentMapper.selectGroupLeader(tmp);
+//                if(tmp.equals("深加工二车间（东线）")){
+//                    tmp = "深加工二车间";
+//                }
+//                if(tmp.equals("深加工三车间（西线）")){
+//                    tmp = "深加工三车间";
+//                }
+                Integer jobId = 0;
+                if(tmp.equals(OaConstant.JP_1)){
+                    //一车间默认
+                    jobId = Integer.parseInt(OaConstant.JOB_CHENGXINGBANZHANG_ID_1);
+                }else if (tmp.equals(OaConstant.JP_2)) {
+                    jobId = Integer.parseInt(OaConstant.JOB_CHENGXINGBANZHANG_ID_2);
+                }
+                List<OaClassUserNameDTO> oaClassUserNameDTOS = hrmdepartmentMapper.selectGroupLeader(jobId);
+//                if(tmp.equals("深加工二车间")){
+//                    tmp = "深加工二车间（东线）";
+//                }
+//                if(tmp.equals("深加工三车间")){
+//                    tmp = "深加工三车间（西线）";
+//                }
                 result.put(tmp,oaClassUserNameDTOS);
             }
         }

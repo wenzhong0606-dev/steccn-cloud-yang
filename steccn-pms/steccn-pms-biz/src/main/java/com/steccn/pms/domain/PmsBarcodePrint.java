@@ -98,6 +98,18 @@ public class PmsBarcodePrint implements Serializable {
      */
     private Integer shelfId;
 
+
+    /**
+     * 是否已打印
+     */
+    private Integer printFlag;
+
+    /**
+     * 打印次数
+     */
+    private Integer printCount;
+
+
     /**
      * 创建人id
      */

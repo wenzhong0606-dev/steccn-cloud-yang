@@ -64,6 +64,11 @@ public interface LockConstant {
     String TABLE_WMS_STORAGE_RECEIPT = "TABLE_WMS_STORAGE_RECEIPT";
 
     /**
+     * 仓储入库单采购
+     */
+    String TABLE_WMS_STORAGE_RECEIPT_SALES = "TABLE_WMS_STORAGE_RECEIPT_SALES";
+
+    /**
      * 仓储物流单
      */
     String TABLE_WMS_LOGISTICS_ORDER = "TABLE_WMS_LOGISTICS_ORDER";

@@ -57,20 +57,20 @@
             LEFT JOIN hrmjobtitles job
             ON hrm.JOBTITLE = job.id
             WHERE hrm.STATUS != 5
-            AND job.JOBTITLENAME LIKE CONCAT('%','班长','%')
-            AND hrm.DEPARTMENTID IN (
-                <!--查寻甲乙丙班-->
-                SELECT id
-                    FROM hrmdepartment
-                    WHERE SUPDEPID = (
-                        SELECT id
-                        FROM hrmdepartment
-                        WHERE DEPARTMENTNAME = #{productWorkshopName}
-                        <!--深加工制造部 id为106，基片制造部id为36-->
-                        AND (SUPDEPID = 106 OR SUPDEPID = 36)
-                        AND ISNULL(CANCELED)
-                        LIMIT 1
-                    )
-            )
+            AND job.id = #{jobId}
+<!--            AND hrm.DEPARTMENTID IN (-->
+<!--                &lt;!&ndash;查寻甲乙丙班&ndash;&gt;-->
+<!--                SELECT id-->
+<!--                    FROM hrmdepartment-->
+<!--                    WHERE SUPDEPID = (-->
+<!--                        SELECT id-->
+<!--                        FROM hrmdepartment-->
+<!--                        WHERE DEPARTMENTNAME = #{productWorkshopName}-->
+<!--                        &lt;!&ndash;深加工制造部 id为106，基片制造部id为36&ndash;&gt;-->
+<!--                        AND (SUPDEPID = 106 OR SUPDEPID = 36)-->
+<!--                        AND ISNULL(CANCELED)-->
+<!--                        LIMIT 1-->
+<!--                    )-->
+<!--            )-->
     </select>
 </mapper>

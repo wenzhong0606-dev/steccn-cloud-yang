@@ -40,10 +40,7 @@ import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
-import com.steccn.pms.vo.PmsReportWorkHourVO;
-import com.steccn.pms.vo.PmsReportWorkVO;
-import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
+import com.steccn.pms.vo.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
@@ -1349,6 +1346,16 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<ProcessReportWorkHourVO> getReportWorkHour(ProcessReportWorkHourQmsDTO dto) {
+        List<ProcessReportWorkHourVO> result = Lists.newArrayList();
+        List<ProcessReportWorkHourVO> processWorkHour = this.baseMapper.getProcessWorkHour(dto);
+        if(CollUtil.isNotEmpty(processWorkHour)){
+            result = processWorkHour;
+        }
+        return result;
     }
 
     @Override

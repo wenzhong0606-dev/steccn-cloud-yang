@@ -41,4 +41,14 @@ public interface RemoteSrmFeignApi {
     @ResponseBody
     String sendOaWorkFlowMsg(@RequestHeader MultiValueMap<String,String> headers, @RequestBody SrmOaWorkFlowDTO dto);
 
+    /**
+     * 获取销售系统收货单
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.asn-export.pull")
+    @ResponseBody
+    String querySalesOrder(@RequestHeader MultiValueMap<String,String> headers, @RequestBody SrmOaWorkFlowDTO dto);
+
 }

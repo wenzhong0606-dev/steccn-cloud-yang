@@ -75,7 +75,12 @@ public class OaConstant {
 
 
     public static final String GROUP_LEADER = "班长";
-    public static final String JOB_TITLE_ZHIJIAN = "183";
+    public static final String JOB_TITLE_ZHIJIAN1 = "30";
+    public static final String JOB_TITLE_ZHIJIAN2 = "33";
+    public static final String JOB_TITLE_ZHIJIAN3 = "181";
+    public static final String JOB_TITLE_ZHIJIAN4 = "414234";
+    public static final String JOB_TITLE_ZHIJIAN5 = "414272";
+    public static final String JOB_TITLE_ZHIJIAN6 = "414275";
 
     /**
      * 熔化工
@@ -83,6 +88,16 @@ public class OaConstant {
     public static final String JOB_RONGHUA_ID_1 = "44";
     public static final String JOB_RONGHUA_ID_2 = "207";
     public static final String JOB_RONGHUA_ID_3 = "414295";
+
+    /**
+     * 磨边工
+     */
+    public static final String JOB_MOBIAN_ID_1 = "84";
+    public static final String JOB_MOBIAN_ID_2 = "231";
+    public static final String JOB_MOBIAN_ID_3 = "298";
+    public static final String JOB_MOBIAN_ID_4 = "414242";
+    public static final String JOB_MOBIAN_ID_5 = "414330";
+    public static final String JOB_MOBIAN_ID_6 = "414339";
 
     /**
      * 熔化班长
@@ -109,6 +124,9 @@ public class OaConstant {
     public static final Integer NUM_3 = 3;
     public static final Integer NUM_5 = 5;
     public static final Integer NUM_6 = 6;
+
+    public static final String JP_1 = "基片一车间";
+    public static final String JP_2 = "基片二车间";
 }
 
 /**

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Maps;
@@ -13,10 +14,13 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.SteccnTableColumn;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
@@ -25,23 +29,24 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
+import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.dto.SubstrateDataDTO;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
+import com.steccn.pms.vo.PmsPullForceDataVO;
+import com.steccn.pms.vo.SubstrateDataListVO;
+import com.steccn.qms.domain.*;
+import com.steccn.qms.dto.*;
+import com.steccn.qms.mapper.QtCheckTaskDetailMapper;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.DefectDayRowVO;
 import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.DefectDayConstant;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.domain.QtDefectiveItem;
-import com.steccn.qms.domain.QtItemCategory;
-import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.dto.QtCheckItemMaterialAvgDTO;
-import com.steccn.qms.dto.QtDefectReportDTO;
-import com.steccn.qms.dto.QtDestoryInfoFallDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.common.util.ShardTimeUtil;
@@ -80,6 +85,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
     private final QtCheckItemService qtCheckItemService;
     private final QtCheckTaskMapper qtCheckTaskMapper;
+    private final QtCheckTaskDetailMapper qtCheckTaskDetailMapper;
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
@@ -88,6 +94,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
+    private final RemotePullForceFeignApi remotePullForceFeignApi;
 
     @Override
     public QtDefectReportVO defectList(QtDefectReportDTO dto) {
@@ -245,7 +253,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Assert.notNull(itemHd, "厚度检验项配置未配置");
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemHd).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
-        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList, 2);
         return resVo;
     }
 
@@ -255,7 +263,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Assert.notNull(itemMbk, "毛边宽检验项未配置");
         List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemMbk).select(QtCheckItem::getId));
         SteccnTableAssertUtil.notEmpty(thickItemList, "毛边宽检验项不存在");
-        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList);
+        QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList, 0);
         return resVo;
     }
 
@@ -941,6 +949,263 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         return rowList;
     }
 
+    @Override
+    public SteccnTableDataDTO<QtFinishedRateDTO> finishedRate(QtDefectReportDTO dto) {
+        SteccnTableDataDTO<QtFinishedRateDTO> result = new SteccnTableDataDTO();
+        //转日期
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        //获取数据,由于只能查一天的数据所以使用map
+        Map<LocalDate,List<SubstrateDataListVO>> dataMap = Maps.newHashMap();
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.DAY.getType(), start, end);
+        for (int i = 1; i < localDateTimes.size(); i++) {
+            LocalDateTime startTmp = LocalDateUtil.getMorning(localDateTimes.get(i - 1));
+            LocalDateTime endTmp = startTmp.plusDays(1);
+            SubstrateDataDTO substrateDataDTO = new SubstrateDataDTO();
+            substrateDataDTO.setProductLineIdList(dto.getProductLineList());
+            substrateDataDTO.setStart(startTmp);
+            substrateDataDTO.setEnd(endTmp);
+            List<SubstrateDataListVO> dataList = FeignOptional.of(() -> remoteReportWorkFeignApi.getSubstrateDataList(substrateDataDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(dataList)){
+                dataMap.put(startTmp.toLocalDate(),dataList);
+            }
+        }
+        SteccnTableAssertUtil.notEmpty(dataMap, "成品率报表暂无数据");
+        //准备基础数据
+        //拿到样品重量
+        Set<String> produceOrderCode = dataMap.values().stream()
+                .flatMap(List::stream).map(SubstrateDataListVO::getProduceOrderCode).collect(Collectors.toSet());
+        List<QtCheckTask> taskList = qtCheckTaskMapper.selectList(new LambdaQueryWrapper<QtCheckTask>()
+                .select(QtCheckTask::getId,QtCheckTask::getProductOrder,QtCheckTask::getSpotTime,QtCheckTask::getProductLineId)
+                .eq(QtCheckTask::getStatus, OaConstant.NUM_2)
+                .in(QtCheckTask::getProductOrder, produceOrderCode)
+                .between(QtCheckTask::getSpotTime, start, end));
+        List<QtCheckItem> qtCheckItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                .select(QtCheckItem::getId)
+                .eq(QtCheckItem::getName, "样品重量"));
+        List<QtCheckTaskDetail> taskDetails = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(taskList)){
+            taskDetails = qtCheckTaskDetailMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                    .in(QtCheckTaskDetail::getTaskId,taskList.stream()
+                            .map(QtCheckTask::getId).collect(Collectors.toList()))
+                    .in(QtCheckTaskDetail::getItemId,qtCheckItems.stream()
+                            .map(QtCheckItem::getId)));
+        }
+        //拿到所有拉引量
+        PmsPullForceQueryDTO pullForceDTO = new PmsPullForceQueryDTO();
+        pullForceDTO.setStartDate(dto.getStartDate());
+        pullForceDTO.setEndDate(dto.getEndDate());
+        pullForceDTO.setProductLineIds(Sets.newHashSet(dto.getProductLineList()));
+        List<PmsPullForceDataVO> pmsPullForceDataVOS = FeignOptional.of(() -> remotePullForceFeignApi.getDataFromPeriods(pullForceDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        //拿到所有产线
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), start, end);
+        //获取班组的集合
+        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //获取所有物料
+        Set<Long> materialSpecSet = dataMap.values().stream()
+                .flatMap(List::stream).map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(com.google.common.collect.Lists.newArrayList(materialSpecSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("productLine","产线",null));
+        columns.add(new SteccnTableColumn("date","日期",null));
+        columns.add(new SteccnTableColumn("shift","班次",null));
+        columns.add(new SteccnTableColumn("group","班组",null));
+        columns.add(new SteccnTableColumn("specification","规格",
+                com.google.common.collect.Lists.newArrayList(
+                        new SteccnTableColumn("length","长度",null),
+                        new SteccnTableColumn("width","宽度",null),
+                        new SteccnTableColumn("thick","厚度",null))));
+        columns.add(new SteccnTableColumn("perWeight","单片重",null));
+        columns.add(new SteccnTableColumn("finishedNum","成品数",
+                com.google.common.collect.Lists.newArrayList(
+                        new SteccnTableColumn("slice","片",null),
+                        new SteccnTableColumn("squareMeter","㎡",null),
+                        new SteccnTableColumn("weight","称重(吨)",null))));
+        columns.add(new SteccnTableColumn("pullAmount","拉引量(吨)",null));
+        columns.add(new SteccnTableColumn("weightRate","称重成品率%",null));
+        columns.add(new SteccnTableColumn("convertRate","换算成品率%",null));
+        columns.add(new SteccnTableColumn("convertWeight","换算重(吨)",null));
+        result.setColumns(columns);
+        //组数据
+        List<QtFinishedRateDTO> tableData = Lists.newArrayList();
+        //数据总计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
+        Map<Integer,BigDecimal> allCountMap = Maps.newHashMap();
+        for (Integer line : dto.getProductLineList()) {
+            //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
+            Map<Integer,BigDecimal> productLineCountMap = Maps.newHashMap();
+            String lineName = lineIdNameMap.get(line);
+            //班次日期
+            for (int i = 1; i < shardTimeList.size(); i++) {
+                LocalDateTime begin = shardTimeList.get(i - 1);
+                LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+                Integer classId = LocalDateUtil.getClassId(begin, false);
+                Long classIdLong = 1587279237069422592L;
+                if(classId.equals(OaConstant.NUM_1)){
+                    classIdLong = 1587279280585326592L;
+                }
+                //获取当天数据
+                List<SubstrateDataListVO> dataListDay = dataMap.get(classDate);
+                if(CollUtil.isNotEmpty(dataListDay)){
+                    Long finalClassIdLong = classIdLong;
+                    List<SubstrateDataListVO> dataListTmp = dataListDay.stream().filter(v -> v.getProductLineId().equals(line)
+                            && v.getClassesId().equals(finalClassIdLong)).collect(Collectors.toList());
+                    dataListDay = dataListTmp;
+                }
+                if(CollUtil.isNotEmpty(dataListDay)){
+                    //累加需要合并的格子 1、称重
+                    Map<Integer,BigDecimal> dayCountMap = Maps.newHashMap();
+                    for(int j = 0; j < dataListDay.size(); j++){
+                        SubstrateDataListVO tmp = dataListDay.get(j);
+                        QtFinishedRateDTO row = new QtFinishedRateDTO();
+                        row.setType(0);
+                        //产线
+                        row.setProductLine(lineName);
+                        //班次日期
+                        row.setDate(classDate);
+                        QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
+                        //班次
+                        row.setShift(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                        //班组
+                        OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getShift(), new OaGroupCountDTO());
+                        row.setGroup(oaGroupCountDTO.getGroupName());
+                        //长宽厚
+                        EqpSpareVO spare = specMap.getOrDefault(tmp.getMaterialId(), new EqpSpareVO());
+                        row.setLength(spare.getLengthQuantity());
+                        row.setWidth(spare.getWideQuantity());
+                        row.setThick(spare.getThickQuantity());
+                        //单片重
+                        //1）查询满足下列条件的巡检任务，记为集合T：
+                        // 状态为已检验
+                        //          产线为所在行产线
+                        //          生产订单为所在行生产订单
+                        //          抽检时间在所在行班次日期&班次内
+                        // 2）集合T内所有任务中“样品重量”取平均值
+                        if(CollUtil.isNotEmpty(taskDetails)){
+                            List<QtCheckTask> taskListTmp = taskList.stream().filter(v -> v.getProductLineId().equals(line)
+                                            && v.getProductOrder().equals(tmp.getProduceOrderCode())
+                                            && LocalDateUtil.isRange(v.getSpotTime(), begin, begin.plusDays(1), true, false))
+                                    .collect(Collectors.toList());
+                            if(CollUtil.isNotEmpty(taskListTmp)){
+                                List<QtCheckTaskDetail> taskDetailTmp = taskDetails.stream().filter(v ->
+                                        taskListTmp.stream().map(QtCheckTask::getId).collect(Collectors.toList()).contains(v.getTaskId())
+                                                && StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
+                                if(CollUtil.isNotEmpty(taskListTmp)){
+                                    List<BigDecimal> counts = taskDetailTmp.stream()
+                                            .map(checkResult -> new BigDecimal(checkResult.getCheckResult())).collect(Collectors.toList());
+                                    BigDecimal sum = BigDecimalUtil.sum(counts);
+                                    row.setPerWeight(BigDecimalUtil.divide(sum,new BigDecimal(counts.size()),1));
+                                }
+                            }
+                        }
+                        //成品数
+                        //片
+                        row.setSlice(tmp.getQuantity());
+                        BigDecimalUtil.accumulate(productLineCountMap,1,row.getSlice());
+                        //所在行成品数（片）* 所在行长 * 所在行宽 / 1000000
+                        BigDecimal stepOne = BigDecimalUtil.multiply(row.getPerWeight(), row.getLength());
+                        BigDecimal stepTwo = BigDecimalUtil.multiply(stepOne, row.getWidth());
+                        row.setSquareMeter(BigDecimalUtil.divide(stepTwo,new BigDecimal(1000000),2));
+                        BigDecimalUtil.accumulate(productLineCountMap,2,row.getSquareMeter());
+                        //称重
+                        //所在行成品数（片）* 所在行单片重 / 1000，若对应多行成品数（片），多行加总
+                        BigDecimal weightStepOne = BigDecimalUtil.multiply(row.getSlice(), row.getPerWeight());
+                        BigDecimal weightStepTwo = BigDecimalUtil.divide(weightStepOne, new BigDecimal(1000),2);
+                        BigDecimalUtil.accumulate(dayCountMap,1,weightStepTwo);
+                        //拉引量
+                        Long finalClassIdLong = classIdLong;
+                        PmsPullForceDataVO pmsPullForceDataVO = pmsPullForceDataVOS.stream().filter(v -> v.getProductLineId().equals(line)
+                                && v.getClassesId().equals(finalClassIdLong)
+                                && v.getPullForceDate().equals(classDate)).findFirst().orElse(new PmsPullForceDataVO());
+                        row.setPullAmount(pmsPullForceDataVO.getQuantity());
+                        tableData.add(row);
+                    }
+                    //存在合并行情况,需要退回
+                    for(int j = 0; j <dataListDay.size(); j++){
+                        QtFinishedRateDTO row = tableData.get(tableData.size()-1-j);
+                        //称重
+                        //所在行成品数（片）* 所在行单片重 / 1000，若对应多行成品数（片），多行加总
+                        row.setWeight(dayCountMap.get(1));
+                        //称重成品率
+                        //所在行称重（吨）/ 所在行拉引量（吨）* 100%，小数点后保留2位
+                        BigDecimal weightPercent = BigDecimalUtil.percent(row.getWeight(), row.getPullAmount(), 2);
+                        if(Objects.nonNull(weightPercent)){
+                            row.setWeightRate(weightPercent.toString()+"%");
+                        }
+                        //换算重 所在行成品数（片） * 所在行长 * 所在行宽 * 所在行厚 * 2.5 / 1000000000，小数点后保留2位
+                        BigDecimal convertWeightStep1 = BigDecimalUtil.multiply(row.getSlice(), row.getLength());
+                        BigDecimal convertWeightStep2 = BigDecimalUtil.multiply(convertWeightStep1, row.getWidth());
+                        BigDecimal convertWeightStep3 = BigDecimalUtil.multiply(convertWeightStep2, row.getThick());
+                        BigDecimal convertWeightStep4 = BigDecimalUtil.multiply(convertWeightStep3, new BigDecimal(2.5));
+                        BigDecimal convertWeightStep5 = BigDecimalUtil.divide(convertWeightStep4, new BigDecimal(1000000000),2);
+                        row.setConvertWeight(convertWeightStep5);
+                        //换算成品率
+                        //所在行换算重（吨）/ 所在行拉引量（吨）* 100%，小数点后保留2位
+                        BigDecimal convertRateStep1 = BigDecimalUtil.percent(row.getConvertWeight(),row.getPullAmount(),2);
+                        if(Objects.nonNull(convertRateStep1)){
+                            row.setConvertRate(convertRateStep1.toString()+"%");
+                        }
+                        if(j==0){
+                            BigDecimalUtil.accumulate(productLineCountMap,3,row.getPullAmount());
+                            BigDecimalUtil.accumulate(productLineCountMap,4,row.getWeight());
+                            BigDecimalUtil.accumulate(productLineCountMap,5,row.getConvertWeight());
+                        }
+                    }
+
+                }else {
+                    QtFinishedRateDTO row = new QtFinishedRateDTO();
+                    row.setType(0);
+                    //产线
+                    row.setProductLine(lineName);
+                    //班次日期
+                    row.setDate(classDate);
+                    QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classId);
+                    //班次
+                    row.setShift(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                    //班组
+                    OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getShift(), new OaGroupCountDTO());
+                    row.setGroup(oaGroupCountDTO.getGroupName());
+                    tableData.add(row);
+                }
+            }
+            //合计
+            QtFinishedRateDTO row = new QtFinishedRateDTO();
+            //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
+            row.setType(1);
+            row.setSlice(productLineCountMap.get(1));
+            BigDecimalUtil.accumulate(allCountMap,1,productLineCountMap.get(1));
+            row.setSquareMeter(productLineCountMap.get(2));
+            BigDecimalUtil.accumulate(allCountMap,2,productLineCountMap.get(2));
+            row.setPullAmount(productLineCountMap.get(3));
+            BigDecimalUtil.accumulate(allCountMap,3,productLineCountMap.get(3));
+            row.setWeight(productLineCountMap.get(4));
+            BigDecimalUtil.accumulate(allCountMap,4,productLineCountMap.get(4));
+            row.setConvertWeight(productLineCountMap.get(5));
+            BigDecimalUtil.accumulate(allCountMap,5,productLineCountMap.get(5));
+            BigDecimal convertRate = BigDecimalUtil.percent(row.getConvertWeight(),row.getPullAmount(),2);
+            if(Objects.nonNull(convertRate)){
+                row.setConvertRate(convertRate.toString()+"%");
+            }
+            tableData.add(row);
+        }
+        //总计
+        QtFinishedRateDTO row = new QtFinishedRateDTO();
+        //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
+        row.setType(2);
+        row.setSlice(allCountMap.get(1));
+        row.setSquareMeter(allCountMap.get(2));
+        row.setPullAmount(allCountMap.get(3));
+        row.setWeight(allCountMap.get(4));
+        row.setConvertWeight(allCountMap.get(5));
+        BigDecimal convertRate = BigDecimalUtil.percent(row.getConvertWeight(),row.getPullAmount(),2);
+        row.setConvertRate(convertRate.toString()+"%");
+        tableData.add(row);
+        result.setTableList(tableData);
+        return result;
+    }
+
     /**
      * 不良周|月报表 合计 | 总计
      *
@@ -1291,11 +1556,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param checkItemList 检验项集合
      * @return vo
      */
-    private QtCheckItemMultiAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList) {
+    private QtCheckItemMultiAvgVO getQtCheckItemAvgVO(QtDefectReportDTO dto, List<QtCheckItem> checkItemList , Integer bit) {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<Integer> thickItemIdList = checkItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
-        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, 2);
+        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, bit);
         SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
         //获取产线集合
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

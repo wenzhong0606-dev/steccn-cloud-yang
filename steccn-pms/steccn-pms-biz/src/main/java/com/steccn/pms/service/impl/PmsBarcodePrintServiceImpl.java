@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -277,7 +278,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
             Map<Long, PmsProduceOrder> map = pmsProduceOrderService.orderList(Lists.newArrayList(orderSet));
 
-            Map<String, TupleDTO<Integer, Integer>> caseCntMap = pmsCompleteStorageService.casePrintAndCnt(caseNoSet);
+            Map<String, TupleDTO<Integer,Integer>> caseCntMap = casePrintAndCnt(caseNoSet);
 
             voList.forEach(barcodePrintRecordVO -> {
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(barcodePrintRecordVO.getProduceOrderId());
@@ -289,7 +290,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 if (Objects.nonNull(pmsProduceOrder)) {
                     barcodePrintRecordVO.setMinPackageQuantity(pmsProduceOrder.getMinPackageQuantity());
                 }
-                TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(), new TupleDTO<>());
+                TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(),new TupleDTO<>());
                 barcodePrintRecordVO.setPrintFlag(tupleDTO.getField1());
                 barcodePrintRecordVO.setPrintCount(tupleDTO.getField2());
             });
@@ -462,6 +463,39 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             });
         }
         return list;
+    }
+
+    @Override
+    public Boolean casePrint(List<String> caseNoList) {
+        LambdaUpdateWrapper<PmsBarcodePrint> updateWrapper = Wrappers.lambdaUpdate();
+        updateWrapper.in(PmsBarcodePrint::getCaseNo, caseNoList);
+        updateWrapper.setSql("print_flag =1 , print_count = IFNULL(print_count , 0) + 1");
+        return update(updateWrapper);
+    }
+
+    @Override
+    public Map<String, TupleDTO<Integer, Integer>> casePrintAndCnt(Set<String> caseNoSet) {
+        Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(caseNoSet)) {
+            List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getCaseNo, caseNoSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                for (PmsBarcodePrint info : dbList) {
+                    resMap.put(info.getCaseNo(), new TupleDTO(info.getPrintFlag(), info.getPrintCount()));
+                }
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Boolean getCaseNoFlag(String caseNo) {
+        Boolean flag = Boolean.FALSE;
+        PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo).orderByDesc(PmsBarcodePrint::getCreateTime).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)){
+            flag = Boolean.TRUE;
+        }
+        return flag;
+
     }
 
     /**

@@ -6,10 +6,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.vo.PmsReportWorkVO;
-import com.steccn.pms.vo.ProcessReportWorkInfoVO;
-import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
+import com.steccn.pms.vo.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -341,4 +338,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> lineDatePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit);
+    /**
+     * 获取停工时长
+     * @param dto
+     * @return
+     */
+    List<ProcessReportWorkHourVO> getReportWorkHour(ProcessReportWorkHourQmsDTO dto);
+
 }

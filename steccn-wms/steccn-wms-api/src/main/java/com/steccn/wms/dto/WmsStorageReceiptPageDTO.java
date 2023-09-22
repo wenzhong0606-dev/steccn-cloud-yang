@@ -28,6 +28,10 @@ public class WmsStorageReceiptPageDTO extends BasePageDTO {
     @ApiModelProperty("仓库")
     private List<Long> warehouseIds;
 
+
+    @ApiModelProperty("产线id")
+    private Integer produceLineId;
+
     @ApiModelProperty("状态")
     private Integer status;
 
@@ -78,4 +82,6 @@ public class WmsStorageReceiptPageDTO extends BasePageDTO {
 
     @ApiModelProperty("确认结束时间")
     private LocalDateTime affirmEndTime;
+
+    private List<String> orderCodes;
 }

@@ -5,14 +5,15 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
-import com.steccn.wms.dto.WmsStorageReceiptDTO;
-import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsSalesDeliveryVO;
+import com.steccn.wms.vo.WmsStorageFlagInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
 * @author W10
@@ -34,6 +35,13 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Boolean add(WmsStorageReceiptDTO dto);
+
+    /**
+     * 采购系统添加采购入库单
+     * @param dto
+     * @return
+     */
+    Boolean salesAdd(WmsStorageReceiptSalesDTO dto);
 
 
     /**
@@ -122,4 +130,15 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     String inStorageCodeRepeat(LocalDate current);
 
     Boolean deleteData();
+
+    WmsStorageFlagInfoVO storageFlagInfo(WmsStorageReceiptFlagInfoDTO dto);
+
+    /**
+     * 获取分页信息
+     * @return
+     */
+    Page<WmsSalesDeliveryVO> salesDeliveryPage(WmsDeliveryOrderDTO dto);
+
+
+    String produceOldLineAdd(WmsStorageReceiptDTO dto);
 }
