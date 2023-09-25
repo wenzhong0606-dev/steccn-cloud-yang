@@ -23,6 +23,8 @@ import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.dto.SrmDeliveryBodyDTO;
+import com.steccn.platform.dto.SrmDeliveryDTO;
 import com.steccn.platform.dto.SrmOaWorkFlowDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -951,11 +953,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         //如果缓存中没有值则重新获取token
         String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
         if(StrUtil.isBlank(srmToken)){
-            srmToken = remoteSrmFeignApi.getOauthToken();
+            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
         }
         //获取数据
         MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
+        headers.add("Authorization",srmToken);
+        SrmDeliveryDTO deliveryDTO = new SrmDeliveryDTO();
+        deliveryDTO.setDateFrom(LocalDateTime.of(2000,1,1,0,0).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        deliveryDTO.setDateTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        deliveryDTO.setDocCodes(com.google.common.collect.Lists.newArrayList(dto.getDeliveryOrderCode()));
+        deliveryDTO.setPage(OaConstant.NUM_1);
+        deliveryDTO.setSize(10000);
+        deliveryDTO.setExternalSystemCode("MES");
         SrmOaWorkFlowDTO param = new SrmOaWorkFlowDTO();
+        param.setPayload(new cn.hutool.json.JSONObject(new SrmDeliveryBodyDTO(deliveryDTO)).toString());
         String salesOrder = remoteSrmFeignApi.querySalesOrder(headers, param);
         List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = JSONObject.parseObject(salesOrder).getJSONArray("content").getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
         //存相同物料的caseNo

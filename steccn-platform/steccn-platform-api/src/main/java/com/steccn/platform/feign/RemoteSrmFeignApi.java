@@ -1,6 +1,7 @@
 package com.steccn.platform.feign;
 
 import com.steccn.platform.dto.SrmOaWorkFlowDTO;
+import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +49,7 @@ public interface RemoteSrmFeignApi {
      * @return
      */
     @PostMapping(value = "/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.asn-export.pull")
+    @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String querySalesOrder(@RequestHeader MultiValueMap<String,String> headers, @RequestBody SrmOaWorkFlowDTO dto);
 
