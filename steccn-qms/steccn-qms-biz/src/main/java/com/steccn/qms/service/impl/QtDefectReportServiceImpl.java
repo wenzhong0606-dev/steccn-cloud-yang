@@ -387,7 +387,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         resVo.setDataList(rowList);
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
-        List<String> checkItemCodeList = Arrays.asList("JYX000154", "JYX000155", "JYX000037", "JYX000036");
+        List<String> checkItemCodeList = Arrays.asList("JYX000106", "JYX000155", "JYX000037", "JYX000036");
         List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.transmittance(dto.getProductLineList(), start, end, checkItemCodeList);
         SteccnTableAssertUtil.notEmpty(dbList, "透光率数据集合为空");
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
