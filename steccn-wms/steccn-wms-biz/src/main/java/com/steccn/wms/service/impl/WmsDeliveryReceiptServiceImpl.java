@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
@@ -495,8 +496,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         dto.setCode(codes);
         String data = remoteSalesFeignApi.queryLogistics(dto);
         JSONObject jsonObject = JSONObject.parseObject(data);
-        String msg = jsonObject.getJSONObject("result").getJSONObject("mdMappings").getString("msg");
-        if(!StrUtil.isNotBlank(msg)){
+        try {
             List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
             if (CollUtil.isNotEmpty(logisticsVOS)){
                 wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
@@ -520,6 +520,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     }
                 }
             }
+        } catch (Exception e) {
+            throw new BusinessException("物流单不存在");
         }
         return wmsDeliverySellFlagVO;
     }
@@ -604,7 +606,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     public WmsDeliveryFlagVO deliveryFlagInfo(WmsDeliveryReceiptFlagInfoDto dto) {
         WmsDeliveryFlagVO flagInfoVO = new WmsDeliveryFlagVO();
         //1.通过判断参数中是否存在物料编码判断新老产线
-        if (Objects.isNull(dto.getMaterialCode())) {
+        if (Objects.nonNull(dto.getMaterialCode())) {
             //1.1判断箱号在智慧平台实时库存是否存在
             WmsInventory inventory = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, dto.getCaseNo()).orderByDesc(WmsInventory::getCreateTime).last(MpConstant.STR_LIMIT_1));
             if (Objects.nonNull(inventory)){
@@ -632,8 +634,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         dto.setCode(codes);
         String data = remoteSalesFeignApi.queryLogistics(dto);
         JSONObject jsonObject = JSONObject.parseObject(data);
-        String msg = jsonObject.getJSONObject("result").getJSONObject("mdMappings").getString("msg");
-        if(!StrUtil.isNotBlank(msg)) {
+        try {
             List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
             if (CollUtil.isNotEmpty(logisticsVOS)) {
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
@@ -646,7 +647,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellInfoVO.setCustomerName(salesLogisticsVO.getCustomer_name());
                 wmsDeliverySellInfoVO.setSaleQty(BigDecimal.valueOf(salesLogisticsVO.getSale_qty()));
             }
-
+        } catch (Exception e) {
+            throw new BusinessException("物流单号不存在");
         }
         return wmsDeliverySellInfoVO;
     }
