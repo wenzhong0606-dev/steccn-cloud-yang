@@ -206,7 +206,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
             return false;
         }
 
-//        this.sendMsg(sysMsgMesDTO);
+        this.sendMsg(sysMsgMesDTO);
         return true;
     }
 

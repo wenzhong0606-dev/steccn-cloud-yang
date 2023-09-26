@@ -40,7 +40,7 @@ public class WmsSalesDeliveryVO implements Serializable {
     /**
      * 数量
      */
-    private BigDecimal num;
+    private BigDecimal quantity;
     /**
      * 单位id
      */

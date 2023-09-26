@@ -89,7 +89,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     @Override
     public SysDictVO getByCode(String code, String type) {
-        SysDict sysDict = baseMapper.selectOne(new LambdaQueryWrapper<SysDict>().eq(SysDict::getCode, code).eq(SysDict::getType, type));
+        SysDict sysDict = this.getOne(new LambdaQueryWrapper<SysDict>().eq(SysDict::getCode, code).eq(SysDict::getType, type),false);
         if (Objects.isNull(sysDict)) {
             return null;
         }

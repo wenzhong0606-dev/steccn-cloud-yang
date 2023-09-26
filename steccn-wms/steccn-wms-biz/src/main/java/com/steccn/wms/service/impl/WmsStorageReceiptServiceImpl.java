@@ -4,8 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -40,6 +43,7 @@ import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.qms.vo.QtCheckTaskReportVO;
+import com.steccn.wms.config.SrmConfig;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsStorageReceipt;
@@ -60,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +90,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptMapper, WmsStorageReceipt> implements WmsStorageReceiptService {
+    private final SrmConfig srmConfig;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
@@ -956,19 +962,35 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
         }
         //获取数据
-        MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
-        headers.add("Authorization",srmToken);
+        Map<String,String> headers = Maps.newHashMap();
+        headers.put("Authorization",srmToken);
         SrmDeliveryDTO deliveryDTO = new SrmDeliveryDTO();
         deliveryDTO.setDateFrom(LocalDateTime.of(2000,1,1,0,0).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         deliveryDTO.setDateTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         deliveryDTO.setDocCodes(com.google.common.collect.Lists.newArrayList(dto.getDeliveryOrderCode()));
-        deliveryDTO.setPage(OaConstant.NUM_1);
+        deliveryDTO.setPage(OaConstant.NO);
         deliveryDTO.setSize(10000);
         deliveryDTO.setExternalSystemCode("MES");
         SrmOaWorkFlowDTO param = new SrmOaWorkFlowDTO();
         param.setPayload(new cn.hutool.json.JSONObject(new SrmDeliveryBodyDTO(deliveryDTO)).toString());
-        String salesOrder = remoteSrmFeignApi.querySalesOrder(headers, param);
-        List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = JSONObject.parseObject(salesOrder).getJSONArray("content").getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
+//        String salesOrder = "";
+//        String salesOrder = remoteSrmFeignApi.querySalesOrder(headers, param);
+        String salesOrder = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.asn-export.pull").addHeaders(headers).body(new cn.hutool.json.JSONObject(param).toString()).execute().body();
+        JSONObject jsonObject = JSONObject.parseObject(salesOrder).getJSONObject("payload");
+        JSONArray jsonArray = jsonObject.getJSONArray("content");
+        if(jsonArray.size() == 0){
+            throw new BusinessException("收料单不存在");
+        }
+        String orderStatus = jsonArray.getJSONObject(0).getString("asnStatus");
+        //校验单据状态
+        if(!orderStatus.equals(WmsManagerConstant.SalesOrderStateEnum.SHIPPED.getCode())){
+            if(orderStatus.equals(WmsManagerConstant.SalesOrderStateEnum.CLOSED.getCode())){
+                throw new BusinessException("收料单已关闭");
+            }else {
+                throw new BusinessException("收料单不存在");
+            }
+        }
+        List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = jsonArray.getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
         //存相同物料的caseNo
         Map<String,Integer> caseNoMap = Maps.newHashMap();
         String yyyyMMdd = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -981,6 +1003,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             result.setMaterialName(eqpSpareVO.getName());
             result.setMaterialId(eqpSpareVO.getId());
             result.setSpecifications(eqpSpareVO.getSpecifications());
+            result.setDeliveryOrderCode(dto.getDeliveryOrderCode());
             //箱号
             if(eqpSpareVO.getCode().startsWith("P1.W.P")){
                 //箱号规则   六位日期-六位流水()
@@ -1007,12 +1030,18 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 result.setCaseNo(caseNoStr);
             }
             //数量
-            result.setNum(BigDecimalUtil.subtract(tmp.getShipQuantity(),tmp.getReceiveQuantity(),3));
+            result.setQuantity(BigDecimalUtil.subtract(tmp.getShipQuantity(),tmp.getReceiveQuantity(),3));
             //关联单据
             result.setAssociatedNo(tmp.getAsnLineNum().toString());
             //单位
-//            result.setUnitName();
-//            result.setUnitId();
+            if(StrUtil.isNotBlank(tmp.getEsUomCode())){
+                SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(tmp.getEsUomCode(), "measure_unit"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                result.setUnitName(sysDictVO.getName());
+                result.setUnitId(sysDictVO.getId());
+            }else {
+                result.setUnitName(eqpSpareVO.getUnit());
+                result.setUnitId(eqpSpareVO.getUnitId());
+            }
             results.add(result);
         });
         Page<WmsSalesDeliveryVO> page = LogicalPageUtil.page(results, dto.getCurrent(), dto.getSize());
