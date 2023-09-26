@@ -45,6 +45,7 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.dto.OaRosterRecordDTO;import com.steccn.oa.dto.OaUserIdAndName;
@@ -169,7 +170,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //在线检校验缺陷开始时间参数
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
             QtCheckOnlineTaskVO qtCheckOnlineTaskVO = checkOnline(dto);
-            if(!qtCheckOnlineTaskVO.getIsChecked()){
+            //只有重复才会报错
+            if(qtCheckOnlineTaskVO.getIsChecked().equals(OaConstant.NUM_1)){
                 throw new BusinessException(qtCheckOnlineTaskVO.getMsg());
             }
         }
@@ -396,10 +398,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckOnlineTaskVO result = new QtCheckOnlineTaskVO();
         //基片二车间id为76
         if(!dto.getProductWorkshop().getId().equals(76)){
-            result.setIsChecked(true);
+            result.setIsChecked(OaConstant.NO);
             return result;
         }
-        result.setIsChecked(false);
         //新建任务，缺陷记录时段选中t1~t2，点击“保存”时，若选中的产线在t1~t2已存在已检验的在线检任务，则无法提交，toast提示“t1~t2已完成在线检，请更改缺陷记录时段”（t1、t2的格式均为hh:mm）
         QtCheckTask taskOne = getOne(new LambdaQueryWrapper<QtCheckTask>()
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
@@ -412,6 +413,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             result.setMsg(dto.getDefectStartTime().format(DateTimeFormatter.ofPattern("HH:mm"))+"~"
                     +dto.getDefectEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))
                     +"存在已完成在线检,请更改缺陷记录时段");
+            result.setIsChecked(OaConstant.NUM_1);
             return result;
         }else {
             //仅当“生产车间”选中“基片二车间”且任务类型为“在线检”时，进行如下校验避免“缺陷记录时段”遗漏：
@@ -432,7 +434,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 if(Objects.isNull(qtCheckTask)){
                     result.setDefectStartTime(timeBeforeTmp);
                     result.setDefectEndTime(timeAfterTmp);
-                    result.setIsChecked(true);
+                    result.setIsChecked(OaConstant.NUM_2);
                     result.setMsg(timeBeforeTmp.format(DateTimeFormatter.ofPattern("HH:mm"))+"~"
                             +timeAfterTmp.format(DateTimeFormatter.ofPattern("HH:mm"))
                             +"尚未检验，是否为此时段新建任务？");
