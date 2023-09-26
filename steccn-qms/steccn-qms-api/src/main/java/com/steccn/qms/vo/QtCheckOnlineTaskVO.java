@@ -16,7 +16,7 @@ public class QtCheckOnlineTaskVO implements Serializable {
     /**
      * 是否过验证
      */
-    private Boolean isChecked;
+    private Integer isChecked;
     /**
      * 缺陷记录开始时间
      */
