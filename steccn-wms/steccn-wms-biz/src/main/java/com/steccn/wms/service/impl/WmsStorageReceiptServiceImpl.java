@@ -168,8 +168,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     @Transactional(readOnly = false)
     public Boolean add(WmsStorageReceiptDTO dto) {
+        addReturnId(dto);
+        return true;
+    }
+
+    /**
+     * 返回id的新增方法
+     * @param dto
+     * @return
+     */
+    @Transactional(readOnly = false)
+    public Long addReturnId(WmsStorageReceiptDTO dto){
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_STORAGE_RECEIPT);
         lock.lock();
+        Long id = null;
         try {
             //1.校验数据是否存在
             Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
@@ -241,10 +253,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_2)){
                 affirm(model.getId());
             }
+            id = model.getId();
         } finally {
             lock.unlock();
         }
-        return true;
+        return id;
     }
 
     @Override
@@ -1157,9 +1170,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         paramHeader.setExternalSystemCode(srmConfig.getExternalSystemCode());
         param.setHeader(paramHeader);
         //组请求体
-
+        Long id = addReturnId(dto);
+        SalesTransactionBodyDTO paramBody = new SalesTransactionBodyDTO();
+        WmsStorageReceipt byId = getById(id);
+        paramBody.setEsTrxNum(byId.getCode());
+        paramBody.setTrxYear(Long.parseLong(String.valueOf(LocalDate.now().getYear())));
+        paramBody.setEsOuCode("SRM01");
+        paramBody.setSourceCode("MES");
+        paramBody.setTrxDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(new cn.hutool.json.JSONObject(param).toString()).execute().body();
-        add(dto);
         return true;
     }
 
