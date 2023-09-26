@@ -22,4 +22,8 @@ public class SalesLogisticsInfoDTO {
      * 出库数量
      */
     private Integer out_qty;
+    /**
+     * 客户编码
+     */
+    private String customer_code;
 }
