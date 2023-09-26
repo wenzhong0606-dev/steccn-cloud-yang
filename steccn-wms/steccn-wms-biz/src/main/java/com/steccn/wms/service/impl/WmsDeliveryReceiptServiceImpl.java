@@ -515,7 +515,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         BigDecimal sum = infolist.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
                         BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
                         if (sum.subtract(saleQty).compareTo(BigDecimal.ZERO)>0){
-                            wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
+                            wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
                         }
                     }
                 }
@@ -606,20 +606,19 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     public WmsDeliveryFlagVO deliveryFlagInfo(WmsDeliveryReceiptFlagInfoDto dto) {
         WmsDeliveryFlagVO flagInfoVO = new WmsDeliveryFlagVO();
         //1.通过判断参数中是否存在物料编码判断新老产线
-        if (Objects.nonNull(dto.getMaterialCode())) {
             //1.1判断箱号在智慧平台实时库存是否存在
             WmsInventory inventory = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, dto.getCaseNo()).orderByDesc(WmsInventory::getCreateTime).last(MpConstant.STR_LIMIT_1));
             if (Objects.nonNull(inventory)){
                 flagInfoVO.setCaseNoFlag(1);
                 //箱号对应的物料与物流单中的物料相同
-                if (dto.getMaterialCode().equals(inventory.getMaterialCode())){
+                if (dto.getMaterialCode().equals(inventory.getMaterialCode())) {
                     flagInfoVO.setMaterialEqualFlag(1);
-                 //箱号对应的库存明细中的可用库存数量 是否>0
-                 if (inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO)>0){}
+                    //箱号对应的库存明细中的可用库存数量 是否>0
+                    if (inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0) {
                     flagInfoVO.setCaseNumberQuantityFlag(1);
                 }
+                }
             }
-        }
         return flagInfoVO;
     }
 
