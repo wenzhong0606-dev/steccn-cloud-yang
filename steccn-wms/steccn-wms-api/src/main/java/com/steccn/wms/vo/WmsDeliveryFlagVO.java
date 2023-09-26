@@ -15,6 +15,6 @@ public class WmsDeliveryFlagVO {
     private Integer materialEqualFlag = 0;
 
     @ApiModelProperty("箱号对应的库存明细中可用数量>0")
-    private Integer caseNumberQuantityFlag;
+    private Integer caseNumberQuantityFlag = 0;
 
 }

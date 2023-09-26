@@ -107,7 +107,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 infoList.forEach(info -> {
                     WmsInventory inventory = collect.get(info.getId()).get(0);
                     inventory.setLockQuantity(inventory.getLockQuantity().add(info.getQuantity()));
-                    inventory.setAvailableQuantity(inventory.getLockQuantity().subtract(info.getQuantity()));
+                    inventory.setAvailableQuantity(inventory.getAvailableQuantity().subtract(info.getQuantity()));
                     inventoryList.add(inventory);
                 });
                 updateBatchById(inventoryList);
