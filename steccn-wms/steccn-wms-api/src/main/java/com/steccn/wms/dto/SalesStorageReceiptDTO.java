@@ -12,5 +12,13 @@ import java.io.Serializable;
  */
 @Data
 public class SalesStorageReceiptDTO extends WmsStorageReceiptDTO implements Serializable {
+    /**
+     * 供应商编码
+     */
     private String esSupplierCode;
+    /**
+     * 收货单编码
+     */
+    private String deliveryOrderCode;
+
 }

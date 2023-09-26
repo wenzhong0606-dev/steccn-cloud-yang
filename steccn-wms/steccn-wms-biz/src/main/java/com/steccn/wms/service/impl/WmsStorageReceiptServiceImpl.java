@@ -76,6 +76,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -231,10 +232,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //保存明细信息
                 wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
             }
-            //6.如果是采购单且来源是采购系统,则自动确认
+            //6.如果是采购单且来源是采购地磅系统,则自动确认
             if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_1)){
                 dto.setId(model.getId());
                 wmsStorageReceiptMapper.salesAutoConfirm(dto);
+            }
+            //6.如果是采购单且来源是采购系统,则自动确认
+            if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_2)){
+                affirm(model.getId());
             }
         } finally {
             lock.unlock();
@@ -1127,8 +1132,35 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
     @Override
+    @Transactional
     public Boolean salesReceiptAdd(SalesStorageReceiptDTO dto) {
-        return null;
+        dto.setIsSRMSys(OaConstant.NUM_2);
+        dto.setSourceType(OaConstant.NUM_2);
+        //调用事务同步接口
+        //如果缓存中没有值则重新获取token
+        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
+        if(StrUtil.isBlank(srmToken)){
+            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
+        }
+        //获取数据
+        Map<String,String> headers = Maps.newHashMap();
+        headers.put("Authorization",srmToken);
+        SalesTransactionDTO param = new SalesTransactionDTO();
+        //组头部
+        SalesTransactionHeaderDTO paramHeader = new SalesTransactionHeaderDTO();
+        paramHeader.setApplicationCode(srmConfig.getApplicationCode());
+        paramHeader.setApplicationGroupCode(srmConfig.getApplicationGroupCode());
+        paramHeader.setBatchNum(String.valueOf(LocalDateTime.now().toInstant(ZoneOffset.UTC).getEpochSecond()));
+        paramHeader.setInterfaceCode(srmConfig.getInterfaceCode());
+        paramHeader.setUserName("");
+        paramHeader.setBatchCount(OaConstant.NUM_1.toString());
+        paramHeader.setExternalSystemCode(srmConfig.getExternalSystemCode());
+        param.setHeader(paramHeader);
+        //组请求体
+
+        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(new cn.hutool.json.JSONObject(param).toString()).execute().body();
+        add(dto);
+        return true;
     }
 
     @Override
