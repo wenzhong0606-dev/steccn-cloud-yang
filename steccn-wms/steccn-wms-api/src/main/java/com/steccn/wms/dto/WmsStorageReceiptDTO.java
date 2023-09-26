@@ -81,4 +81,7 @@ public class WmsStorageReceiptDTO {
 
     @ApiModelProperty("金蝶收料通知单Id")
     private String erpReceiptId;
+
+    @ApiModelProperty("入库时间")
+    private LocalDateTime comeTime;
 }

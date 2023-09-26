@@ -37,7 +37,7 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Boolean add(WmsStorageReceiptDTO dto);
 
     /**
-     * 采购系统添加采购入库单
+     * 采购系统添加采购入库单(地磅入库)
      * @param dto
      * @return
      */
@@ -139,6 +139,12 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      */
     Page<WmsSalesDeliveryVO> salesDeliveryPage(WmsDeliveryOrderDTO dto);
 
-
     String produceOldLineAdd(WmsStorageReceiptDTO dto);
+
+    /**
+     * 采购入库
+     * @param dto
+     * @return
+     */
+    Boolean salesReceiptAdd(SalesStorageReceiptDTO dto);
 }

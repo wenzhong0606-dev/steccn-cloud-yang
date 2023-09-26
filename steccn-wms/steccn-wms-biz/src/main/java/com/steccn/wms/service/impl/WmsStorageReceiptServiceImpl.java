@@ -4,8 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -40,6 +43,7 @@ import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.qms.vo.QtCheckTaskReportVO;
+import com.steccn.wms.config.SrmConfig;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsStorageReceipt;
@@ -60,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +76,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,6 +91,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptMapper, WmsStorageReceipt> implements WmsStorageReceiptService {
+    private final SrmConfig srmConfig;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
@@ -161,8 +168,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     @Transactional(readOnly = false)
     public Boolean add(WmsStorageReceiptDTO dto) {
+        addReturnId(dto);
+        return true;
+    }
+
+    /**
+     * 返回id的新增方法
+     * @param dto
+     * @return
+     */
+    @Transactional(readOnly = false)
+    public Long addReturnId(WmsStorageReceiptDTO dto){
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_STORAGE_RECEIPT);
         lock.lock();
+        Long id = null;
         try {
             //1.校验数据是否存在
             Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
@@ -187,6 +206,9 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 Long caseNo = getCaseNo();
                 List<WmsStorageReceiptInfoDTO> list = dto.getList();
                 List<String> caseNos = Lists.newArrayList();
+                //采购入库存相同物料的caseNo
+                Map<String,Integer> caseNoMap = Maps.newHashMap();
+                String yyyyMMdd = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
                 for (WmsStorageReceiptInfoDTO info : list) {
                     //如果是生产完工入库关联单据必填且查询生产订单，生产订单必须要有批次信息，批次为生产订单带出
                     if (receiptType == 1) {
@@ -202,7 +224,36 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                             throw new BusinessException("与该订单下的批次信息不符合");
                         }
                     }
-                    if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+                    //如果是采购入库则生成箱号
+                    if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_2)){
+                        EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(info.getMaterialCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                        //箱号
+                        if(eqpSpareVO.getCode().startsWith("P1.W.P")){
+                            //箱号规则   六位日期-六位流水()
+                            Integer caseNo1 = caseNoMap.getOrDefault(eqpSpareVO.getCode(), null);
+                            if(caseNo1 == null) {
+                                WmsStorageReceiptInfo caseNoObj = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                                        .select(WmsStorageReceiptInfo::getCaseNo)
+                                        .eq(WmsStorageReceiptInfo::getMaterialCode,eqpSpareVO.getCode())
+                                        .likeRight(WmsStorageReceiptInfo::getCaseNo, yyyyMMdd + "-")
+                                        .orderByDesc(WmsStorageReceiptInfo::getCaseNo)
+                                        .last("LIMIT 1"));
+                                if(Objects.nonNull(caseNoObj)){
+                                    String[] split = caseNoObj.getCaseNo().split("-");
+                                    caseNo1 = Integer.parseInt(split[1]);
+                                    caseNo1 = caseNo1 + 1;
+                                }else {
+                                    caseNo1 = 0;
+                                }
+                            }else {
+                                caseNo1 = caseNo1 + 1;
+                            }
+                            String caseNoStr = yyyyMMdd + "-" + String.format("%06d", caseNo1);
+                            caseNoMap.put(eqpSpareVO.getCode(),caseNo1);
+                            info.setCaseNo(caseNoStr);
+                        }
+
+                    } else if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //  namespace: yq2
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
@@ -225,15 +276,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //保存明细信息
                 wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
             }
-            //6.如果是采购单且来源是采购系统,则自动确认
+            //6.如果是采购单且来源是采购地磅系统,则自动确认
             if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_1)){
                 dto.setId(model.getId());
                 wmsStorageReceiptMapper.salesAutoConfirm(dto);
             }
+            //6.如果是采购单且来源是采购系统,则自动确认
+            if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_2)){
+                affirm(model.getId());
+            }
+            id = model.getId();
         } finally {
             lock.unlock();
         }
-        return true;
+        return id;
     }
 
     @Override
@@ -312,6 +368,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             receiptDTO.setIsSRMSys(OaConstant.NUM_1);
             receiptDTO.setErpReceiptId(dto.getErpReceiptId());
             receiptDTO.setErpReceiptCode(dto.getErpReceiptCode());
+            receiptDTO.setSourceType(OaConstant.NUM_1);
             this.add(receiptDTO);
         } finally {
             lock.unlock();
@@ -956,19 +1013,37 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
         }
         //获取数据
-        MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
-        headers.add("Authorization",srmToken);
+        Map<String,String> headers = Maps.newHashMap();
+        headers.put("Authorization",srmToken);
         SrmDeliveryDTO deliveryDTO = new SrmDeliveryDTO();
         deliveryDTO.setDateFrom(LocalDateTime.of(2000,1,1,0,0).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         deliveryDTO.setDateTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         deliveryDTO.setDocCodes(com.google.common.collect.Lists.newArrayList(dto.getDeliveryOrderCode()));
-        deliveryDTO.setPage(OaConstant.NUM_1);
+        deliveryDTO.setPage(OaConstant.NO);
         deliveryDTO.setSize(10000);
         deliveryDTO.setExternalSystemCode("MES");
         SrmOaWorkFlowDTO param = new SrmOaWorkFlowDTO();
         param.setPayload(new cn.hutool.json.JSONObject(new SrmDeliveryBodyDTO(deliveryDTO)).toString());
-        String salesOrder = remoteSrmFeignApi.querySalesOrder(headers, param);
-        List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = JSONObject.parseObject(salesOrder).getJSONArray("content").getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
+//        String salesOrder = "";
+//        String salesOrder = remoteSrmFeignApi.querySalesOrder(headers, param);
+        String salesOrder = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.asn-export.pull").addHeaders(headers).body(new cn.hutool.json.JSONObject(param).toString()).execute().body();
+        JSONObject jsonObject = JSONObject.parseObject(salesOrder).getJSONObject("payload");
+        JSONArray jsonArray = jsonObject.getJSONArray("content");
+        if(jsonArray.size() == 0){
+            throw new BusinessException("收料单不存在");
+        }
+        String orderStatus = jsonArray.getJSONObject(0).getString("asnStatus");
+        //校验单据状态
+        if(!orderStatus.equals(WmsManagerConstant.SalesOrderStateEnum.SHIPPED.getCode())){
+            if(orderStatus.equals(WmsManagerConstant.SalesOrderStateEnum.CLOSED.getCode())){
+                throw new BusinessException("收料单已关闭");
+            }else {
+                throw new BusinessException("收料单不存在");
+            }
+        }
+        List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = jsonArray.getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
+        //获取供应商
+        String esSupplierCode = jsonArray.getJSONObject(0).getString("esSupplierCode");
         //存相同物料的caseNo
         Map<String,Integer> caseNoMap = Maps.newHashMap();
         String yyyyMMdd = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -981,6 +1056,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             result.setMaterialName(eqpSpareVO.getName());
             result.setMaterialId(eqpSpareVO.getId());
             result.setSpecifications(eqpSpareVO.getSpecifications());
+            result.setDeliveryOrderCode(dto.getDeliveryOrderCode());
+            result.setEsSupplierCode(esSupplierCode);
             //箱号
             if(eqpSpareVO.getCode().startsWith("P1.W.P")){
                 //箱号规则   六位日期-六位流水()
@@ -1007,12 +1084,18 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 result.setCaseNo(caseNoStr);
             }
             //数量
-            result.setNum(BigDecimalUtil.subtract(tmp.getShipQuantity(),tmp.getReceiveQuantity(),3));
+            result.setQuantity(BigDecimalUtil.subtract(tmp.getShipQuantity(),tmp.getReceiveQuantity(),3));
             //关联单据
             result.setAssociatedNo(tmp.getAsnLineNum().toString());
             //单位
-//            result.setUnitName();
-//            result.setUnitId();
+            if(StrUtil.isNotBlank(tmp.getEsUomCode())){
+                SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(tmp.getEsUomCode(), "measure_unit"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                result.setUnitName(sysDictVO.getName());
+                result.setUnitId(sysDictVO.getId());
+            }else {
+                result.setUnitName(eqpSpareVO.getUnit());
+                result.setUnitId(eqpSpareVO.getUnitId());
+            }
             results.add(result);
         });
         Page<WmsSalesDeliveryVO> page = LogicalPageUtil.page(results, dto.getCurrent(), dto.getSize());
@@ -1091,6 +1174,65 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             lock.unlock();
         }
         return code;
+    }
+
+    @Override
+    @Transactional
+    public Boolean salesReceiptAdd(SalesStorageReceiptDTO dto) {
+        dto.setIsSRMSys(OaConstant.NUM_2);
+        dto.setSourceType(OaConstant.NUM_2);
+        dto.setType(1600405739121573888L);
+        //调用事务同步接口
+        //如果缓存中没有值则重新获取token
+        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
+        if(StrUtil.isBlank(srmToken)){
+            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
+        }
+        //获取数据
+        Map<String,String> headers = Maps.newHashMap();
+        headers.put("Authorization",srmToken);
+        SalesTransactionDTO param = new SalesTransactionDTO();
+        //组头部
+        SalesTransactionHeaderDTO paramHeader = new SalesTransactionHeaderDTO();
+        paramHeader.setApplicationCode(srmConfig.getApplicationCode());
+        paramHeader.setApplicationGroupCode(srmConfig.getApplicationGroupCode());
+        paramHeader.setBatchNum(String.valueOf(LocalDateTime.now().toInstant(ZoneOffset.UTC).getEpochSecond()));
+        paramHeader.setInterfaceCode(srmConfig.getInterfaceCode());
+        paramHeader.setUserName("");
+        paramHeader.setBatchCount(OaConstant.NUM_1.toString());
+        paramHeader.setExternalSystemCode(srmConfig.getExternalSystemCode());
+        param.setHeader(paramHeader);
+        //组请求体
+        Long id = addReturnId(dto);
+        SalesTransactionBodyDTO paramBody = new SalesTransactionBodyDTO();
+        WmsStorageReceipt byId = getById(id);
+        paramBody.setEsTrxNum(byId.getCode());
+        paramBody.setTrxYear(Long.parseLong(String.valueOf(LocalDate.now().getYear())));
+        paramBody.setEsOuCode("CO00000001");
+        paramBody.setSourceCode("MES");
+        String localDateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        paramBody.setTrxDate(localDateStr);
+        //请求体详情
+        List<SalesTransactionBodyDetailDTO> bodyDetail = Lists.newArrayList();
+        dto.getList().forEach(tmp->{
+            SalesTransactionBodyDetailDTO bodyDetailTmp = new SalesTransactionBodyDetailDTO();
+            if(StrUtil.isBlank(tmp.getAssociatedNo())){
+                throw new BusinessException("关联单据不能为空");
+            }
+            bodyDetailTmp.setEsTrxLineNum(tmp.getAssociatedNo());
+            bodyDetailTmp.setTrxDate(localDateStr);
+            bodyDetailTmp.setEsTrxTypeCode("SRM01");
+            bodyDetailTmp.setQuantity(tmp.getQuantity());
+            bodyDetailTmp.setStockType("OWN_STOCK");
+            bodyDetailTmp.setEsOuCode("CO00000001");
+            bodyDetailTmp.setEsSupplierNum(dto.getEsSupplierCode());
+            bodyDetailTmp.setCurrencyCode("CNY");
+            bodyDetail.add(bodyDetailTmp);
+        });
+        paramBody.setRcvTrxLineList(bodyDetail);
+        param.setBody(com.google.common.collect.Lists.newArrayList(paramBody));
+        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(new cn.hutool.json.JSONObject(param).toString()).execute().body();
+        return true;
     }
 
     @Override
