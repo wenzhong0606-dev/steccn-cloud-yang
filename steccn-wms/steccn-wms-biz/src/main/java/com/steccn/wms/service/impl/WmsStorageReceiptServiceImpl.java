@@ -318,6 +318,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             receiptDTO.setIsSRMSys(OaConstant.NUM_1);
             receiptDTO.setErpReceiptId(dto.getErpReceiptId());
             receiptDTO.setErpReceiptCode(dto.getErpReceiptCode());
+            receiptDTO.setSourceType(OaConstant.NUM_1);
             this.add(receiptDTO);
         } finally {
             lock.unlock();
@@ -991,6 +992,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             }
         }
         List<WmsSalesDeliveryTransferVO> wmsSalesDeliveryVOS = jsonArray.getJSONObject(0).getJSONArray("asnLineExpList").toJavaList(WmsSalesDeliveryTransferVO.class);
+        //获取供应商
+        String esSupplierCode = jsonArray.getJSONObject(0).getString("esSupplierCode");
         //存相同物料的caseNo
         Map<String,Integer> caseNoMap = Maps.newHashMap();
         String yyyyMMdd = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -1004,6 +1007,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             result.setMaterialId(eqpSpareVO.getId());
             result.setSpecifications(eqpSpareVO.getSpecifications());
             result.setDeliveryOrderCode(dto.getDeliveryOrderCode());
+            result.setEsSupplierCode(esSupplierCode);
             //箱号
             if(eqpSpareVO.getCode().startsWith("P1.W.P")){
                 //箱号规则   六位日期-六位流水()
@@ -1120,6 +1124,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             lock.unlock();
         }
         return code;
+    }
+
+    @Override
+    public Boolean salesReceiptAdd(SalesStorageReceiptDTO dto) {
+        return null;
     }
 
     @Override

@@ -53,4 +53,8 @@ public class WmsSalesDeliveryVO implements Serializable {
      * 关联单据
      */
     private String associatedNo;
+    /**
+     * 供应商编码
+     */
+    private String esSupplierCode;
 }
