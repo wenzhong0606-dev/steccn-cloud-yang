@@ -191,8 +191,10 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
 //                        longIds.add(tmp.getId().longValue());
 //                    });
 //                }
-                //发给机修工段 王蒙蒙
+                //发给机修工段副段长 王蒙蒙
                 longIds.add(913L);
+                //发给机修工段段长 胡建斌
+                longIds.add(926L);
                 //发送当班机修工
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
