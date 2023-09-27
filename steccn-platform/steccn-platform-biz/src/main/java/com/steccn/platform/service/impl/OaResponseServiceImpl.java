@@ -126,6 +126,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
                     MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
                     headers.add("Authorization","Bearer "+srmOauthToken);
                     SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
+                    Thread.sleep(1000);
                     //加入操作人信息
                     OaUserIdAndName oaUserIdAndName = FeignOptional.of(() -> oaInfoService.getOperator(new TupleDTO<>(Integer.parseInt(dto.getData().getRequestId()), Integer.parseInt(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                     dto.getData().setOperatorId(oaUserIdAndName.getId());
@@ -149,6 +150,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
             if(crmWorkFlowId.contains(dto.getData().getWorkflowId())){
                 try {
                     SrmOaWorkFlowDTO oaMsg = new SrmOaWorkFlowDTO();
+                    Thread.sleep(1000);
                     //加入操作人信息
                     OaUserIdAndName oaUserIdAndName = FeignOptional.of(() -> oaInfoService.getOperator(new TupleDTO<>(Integer.parseInt(dto.getData().getRequestId()), Integer.parseInt(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                     dto.getData().setOperatorId(oaUserIdAndName.getId());
