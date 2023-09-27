@@ -6,6 +6,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * SRM系统API
  *
@@ -51,6 +53,6 @@ public interface RemoteSrmFeignApi {
     @PostMapping(value = "/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.asn-export.pull")
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    String querySalesOrder(@RequestHeader MultiValueMap<String,String> headers, @RequestBody SrmOaWorkFlowDTO dto);
+    String querySalesOrder(@RequestHeader Map<String,String> headers, @RequestBody SrmOaWorkFlowDTO dto);
 
 }

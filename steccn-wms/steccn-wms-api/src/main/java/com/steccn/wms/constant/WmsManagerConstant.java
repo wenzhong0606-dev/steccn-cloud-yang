@@ -174,5 +174,20 @@ public interface WmsManagerConstant {
         private final String name;
     }
 
+    /**
+     * 销售送货单
+     */
+    @Getter
+    @AllArgsConstructor
+    enum SalesOrderStateEnum {
+        SHIPPED("SHIPPED","已发货"),
+        CANCELLED("CANCELLED", "已取消"),
+        CLOSED("CLOSED", "已关闭"),
+        DEPRECATED("DEPRECATED","已作废");
+
+        private final String code;
+
+        private final String name;
+    }
 
 }
