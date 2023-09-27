@@ -6,23 +6,24 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.ShardTimeUtil;
-import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.util.*;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DashboardNumDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.asm.Advice;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -48,6 +50,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final PmsReportWorkService reportWorkService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmsPullForceService pmsPullForceService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
 
     @Override
@@ -143,6 +146,64 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         numDTO.setBit(bit);
         numDTO.setUnit(unit);
         return num("累计拉引量总数", numDTO, (x) -> pmsPullForceService.datePullForce(x.getLineIdList(), x.getStart(), x.getEnd()));
+    }
+
+    @Override
+    public QtLineChartBarDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
+        Assert.notNull(granularity, "日期粒度不存在");
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(granularity.getType(), startLdt, endLdt);
+        Assert.notEmpty(timeList, "日期选择有误");
+        //根据车间获取产线
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //定义数据集合
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        List<String> xAxisList1 = Lists.newArrayList();
+        List<String> xAxisList2 = Lists.newArrayList();
+        List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Optional<SysDictVO> first = sysDictVOList.stream().filter(ele -> "0".equals(ele.getCode())).findFirst();
+        //根据日期区间获取班次+日期+产线的产量
+        Map<String, BigDecimal> numMap = reportWorkService.dateClassLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> pfMap = pmsPullForceService.dateClassLinePmUnit(lineIdList, start, end);
+
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDateTime time = timeList.get(i - 1);
+            LocalDate classDate = LocalDateUtil.getClassDate(time, Boolean.FALSE);
+            Integer classId = LocalDateUtil.getClassId(time, Boolean.FALSE);
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            String convert = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, time);
+            if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
+                QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classId);
+                xAxisList2.add(classesEnum.getName());
+                if (classId == 0) {
+                    xAxisList1.add(convert);
+                }
+            } else {
+                xAxisList1.add(convert);
+            }
+            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+            //产量，入库，耗用
+            wsLineList.forEach(line -> {
+                BigDecimal lineBd1, lineBd2;
+                if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
+
+                } else {
+
+                }
+                dataList.add(new TupleDTO<>(line.getOfficeName() + "完工成品率", BigDecimal.ZERO));
+            });
+            stackGraphDTO.setData(dataList);
+            stackGraphDTOList.add(stackGraphDTO);
+        }
+        //自定义转换工具
+        QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
+        qtLineChartBarDTO.setXData(null);
+        qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
+        return qtLineChartBarDTO;
     }
 
     /**

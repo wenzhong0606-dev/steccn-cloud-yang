@@ -676,5 +676,23 @@
         enter_time,
         material_id
     </select>
+    <select id="dateClassLinePmUnit" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.product_line_id as productLineId,
+        rw.class_date,
+        rw.classes_id as classId,
+        rw.station_id ,
+        po.material_id,
+        sum(rw.process_quantity) as quantity
+        from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
+        where rw.del_flag = 0
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.product_line_id, rw.class_date ,rw.classes_id , rw.station_id , po.material_id
+    </select>
 
 </mapper>
