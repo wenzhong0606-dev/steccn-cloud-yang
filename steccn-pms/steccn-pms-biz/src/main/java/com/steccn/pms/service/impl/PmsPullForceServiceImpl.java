@@ -344,7 +344,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                 .in(CollUtil.isNotEmpty(lineIdList), PmsPullForce::getProductLineId, lineIdList));
         if (CollUtil.isNotEmpty(dbList)) {
             dbList.forEach(ele -> {
-                MapUtil.add(resMap, ele.getPullForceDate() + "_" + ele.getPullForceDate() + "_" + ele.getClassesId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getPullForceDate() + "_" + ele.getClassesId(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
             });
         }
         return resMap;

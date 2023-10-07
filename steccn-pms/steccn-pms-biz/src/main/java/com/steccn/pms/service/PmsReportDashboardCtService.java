@@ -80,4 +80,15 @@ public interface PmsReportDashboardCtService {
      * @return
      */
     QtLineChartBarDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType);
+
+    /**
+     * 各产线成品率-入库
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @param dateType       日期，班次
+     * @return
+     */
+    QtLineChartBarDTO yieldRateDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType);
 }

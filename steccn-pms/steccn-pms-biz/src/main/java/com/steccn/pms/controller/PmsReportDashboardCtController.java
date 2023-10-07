@@ -74,9 +74,14 @@ public class PmsReportDashboardCtController {
     }
 
     @GetMapping("/yield/rate/date/in/storage")
-    @ApiOperation("入库成品率")
+    @ApiOperation("各产线成品率-入库")
     public R<QtLineChartBarDTO> yieldRateDateInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("type") Integer type) {
-        return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end));
+        Integer dateType;
+        if (type == 0) {
+            dateType = 1;
+        } else {
+            dateType = 7;
+        }
+        return R.success(pmsReportDashboardCtService.yieldRateDateInStorage(workShopId, start, end, dateType));
     }
-
 }
