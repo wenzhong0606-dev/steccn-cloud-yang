@@ -1,10 +1,13 @@
 package com.steccn.qms.util;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Assert;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.extern.slf4j.Slf4j;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * @author yequan
@@ -43,6 +46,11 @@ public class XAxisUtil {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy");
         }
         return xAxis;
+    }
+
+    public static String convert(QtManagerConstant.QtGranularityEnum granularityEnum, LocalDate ld) {
+        Assert.isTrue(!QtManagerConstant.QtGranularityEnum.HOUR.getCode().equals(granularityEnum.getCode()), "日期粒度不可以为小时");
+        return convert(granularityEnum, LocalDateTime.of(ld, LocalTime.MIN));
     }
 
     /**

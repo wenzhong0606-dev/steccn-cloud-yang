@@ -219,6 +219,93 @@ public class ShardTimeUtil {
         return listDate;
     }
 
+    /**
+     * 切割日期段
+     *
+     * @param dateType 交易類型 Y/Q/M/W/D/H -->每年/每季度/每月/每周/每天/每小時
+     * @param start    yyyy-MM-dd
+     * @param end      yyyy-MM-dd
+     * @return
+     */
+    public static List<LocalDate> cutDate(String dateType, LocalDate start, LocalDate end) {
+        List<LocalDate> listDate = new ArrayList<>();
+        while (end.isAfter(start)) {
+
+            switch (dateType) {
+                case "Y":
+                    listDate.add(LocalDate.of(start.getYear(), 1, 1));
+                    start = start.plusYears(1);
+                    start = LocalDate.of(start.getYear(), 1, 1);
+                    //永远加最后一个元素
+                    if (!end.isAfter(start)) {
+                        listDate.add(LocalDate.of(end.getYear() + 1, 1, 1));
+                    }
+                    break;
+                case "Q":
+                    int currentMonth = start.getMonthValue();
+                    if (currentMonth >= 1 && currentMonth <= 3) {
+                        start = LocalDate.of(start.getYear(), 1, 1);
+                        listDate.add(start);
+                        start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDate.of(end.getYear(), 4, 1));
+                        }
+                    } else if (currentMonth >= 4 && currentMonth <= 6) {
+                        start = LocalDate.of(start.getYear(), 4, 1);
+                        listDate.add(start);
+                        start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDate.of(end.getYear(), 7, 1));
+                        }
+                    } else if (currentMonth >= 7 && currentMonth <= 9) {
+                        start = LocalDate.of(start.getYear(), 7, 1);
+                        listDate.add(start);
+                        start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDate.of(end.getYear(), 10, 1));
+                        }
+                    } else if (currentMonth >= 10 && currentMonth <= 12) {
+                        start = LocalDate.of(start.getYear(), 10, 1);
+                        listDate.add(start);
+                        start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDate.of(end.getYear() + 1, 1, 1));
+                        }
+                    }
+                    break;
+                case "M":
+                    start = LocalDate.of(start.getYear(), start.getMonth(), 1);
+                    listDate.add(start);
+                    start = start.plusMonths(1);
+                    //
+                    if (!end.isAfter(start)) {
+                        listDate.add(LocalDate.of(end.getYear(), end.getMonth().getValue() + 1, 1));
+                    }
+                    break;
+                case "W":
+                    listDate.add(LocalDateUtil.getFirstDayOfWeekStr(start).toLocalDate());
+                    start = start.plusWeeks(1);
+                    start = start.with(DayOfWeek.MONDAY);
+                    if (!end.isAfter(start)) {
+                        listDate.add(LocalDateUtil.getLastDayOfWeekStr(end).toLocalDate());
+                    }
+                    break;
+                case "D":
+                    listDate.add(start);
+                    start = start.plusDays(1);
+                    if (!end.isAfter(start)) {
+                        listDate.add(end);
+                    }
+                    break;
+            }
+        }
+        return listDate;
+    }
+
 
     /**
      * 根据开始时间和结束时间分片
