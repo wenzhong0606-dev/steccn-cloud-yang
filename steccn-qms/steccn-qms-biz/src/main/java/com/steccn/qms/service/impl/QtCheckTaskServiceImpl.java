@@ -256,7 +256,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
                 if(Objects.isNull(sysOfficeVO)){
-                    throw new BusinessException("该产线下没有成型工位");
+                    throw new BusinessException("该产线下没有下片工位");
                 }
                 dto.setStationId(sysOfficeVO.getId().longValue());
                 dto.setStationName(sysOfficeVO.getOfficeName());
