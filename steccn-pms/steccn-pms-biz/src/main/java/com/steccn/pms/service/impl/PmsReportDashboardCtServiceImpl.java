@@ -194,20 +194,27 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
 
     @Override
     public QtLineChartBarDTO lineDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
-        return quantityLine(workShopId, start, end, dateType, "总产量");
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
+        Assert.notNull(granularity, "日期粒度不存在");
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew("D", startLdt, endLdt);
+        Assert.notEmpty(timeList, "日期选择有误");
+        //根据车间获取产线
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //根据日期区间获取班次+日期+产线的产量
+        Map<String, BigDecimal> numMap = reportWorkService.dateClassLinePmUnit(lineIdList, start, end,0, PmManagerConstant.MEASURE_UNIT_TON);
+        if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
+            return dateClassQuantity(wsLineList, timeList, numMap, "总产量");
+        } else {
+            return dateQuantity(wsLineList, timeList, numMap, "总产量");
+        }
     }
 
-    /**
-     * 数量折线图
-     *
-     * @param workShopId 车间id
-     * @param start      开始时间
-     * @param end        结束时间
-     * @param dateType   类型
-     * @param hintCh     提示语
-     * @return
-     */
-    private QtLineChartBarDTO quantityLine(Integer workShopId, LocalDate start, LocalDate end, Integer dateType, String hintCh) {
+    @Override
+    public QtLineChartBarDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
@@ -221,9 +228,30 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         //根据日期区间获取班次+日期+产线的产量
         Map<String, BigDecimal> numMap = reportWorkService.dateClassLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
         if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
-            return dateClassQuantity(wsLineList, timeList, numMap, hintCh);
+            return dateClassQuantity(wsLineList, timeList, numMap, "入库总数");
         } else {
-            return dateQuantity(wsLineList, timeList, numMap, hintCh);
+            return dateQuantity(wsLineList, timeList, numMap, "入库总数");
+        }
+    }
+
+    @Override
+    public QtLineChartBarDTO lineDatePf(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
+        Assert.notNull(granularity, "日期粒度不存在");
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew("D", startLdt, endLdt);
+        Assert.notEmpty(timeList, "日期选择有误");
+        //根据车间获取产线
+        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //根据日期区间获取班次+日期+产线的产量
+        Map<String, BigDecimal> numMap = pmsPullForceService.dateClassLinePmUnit(lineIdList, start, end);
+        if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
+            return dateClassQuantity(wsLineList, timeList, numMap, "入库总数");
+        } else {
+            return dateQuantity(wsLineList, timeList, numMap, "入库总数");
         }
     }
 

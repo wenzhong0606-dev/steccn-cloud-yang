@@ -97,4 +97,28 @@ public class PmsReportDashboardCtController {
         return R.success(pmsReportDashboardCtService.lineDatePm(workShopId, start, end, dateType));
     }
 
+    @GetMapping("/line/date/in/storage")
+    @ApiOperation("各产线入库总数")
+    public R<QtLineChartBarDTO> lineDateInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("type") Integer type) {
+        Integer dateType;
+        if (type == 0) {
+            dateType = 1;
+        } else {
+            dateType = 7;
+        }
+        return R.success(pmsReportDashboardCtService.lineDateInStorage(workShopId, start, end, dateType));
+    }
+
+    @GetMapping("/line/date/pf")
+    @ApiOperation("各产线拉引量总数")
+    public R<QtLineChartBarDTO> lineDatePf(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("type") Integer type) {
+        Integer dateType;
+        if (type == 0) {
+            dateType = 1;
+        } else {
+            dateType = 7;
+        }
+        return R.success(pmsReportDashboardCtService.lineDatePf(workShopId, start, end, dateType));
+    }
+
 }
