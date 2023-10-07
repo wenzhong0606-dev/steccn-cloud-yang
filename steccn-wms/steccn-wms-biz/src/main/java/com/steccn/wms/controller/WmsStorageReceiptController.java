@@ -30,6 +30,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -165,10 +166,16 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.storageFlagInfo(dto));
     }
 
-    @ApiOperation("采购入库获取箱号入库单标识相关内容")
+    @ApiOperation("采购入库单明细")
     @PostMapping("/sales/page")
     public R<Page<WmsSalesDeliveryVO>> salesDeliveryPage(@RequestBody WmsDeliveryOrderDTO dto){
         return R.success(wmsStorageReceiptService.salesDeliveryPage(dto));
+    }
+
+    @ApiOperation("采购入库凭证")
+    @PostMapping("/sales/add")
+    public R<Boolean> salesReceiptAdd(@RequestBody @Validated(InsertGroup.class) SalesStorageReceiptDTO dto){
+        return R.success(wmsStorageReceiptService.salesReceiptAdd(dto));
     }
 
     /**

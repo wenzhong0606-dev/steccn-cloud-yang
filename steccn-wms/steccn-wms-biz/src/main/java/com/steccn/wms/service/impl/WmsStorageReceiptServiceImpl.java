@@ -1231,7 +1231,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         });
         paramBody.setRcvTrxLineList(bodyDetail);
         param.setBody(com.google.common.collect.Lists.newArrayList(paramBody));
-        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(new cn.hutool.json.JSONObject(param).toString()).execute().body();
+        String paramStr = new cn.hutool.json.JSONObject(param).toString();
+        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(paramStr).execute().body();
+        if(JSONObject.parseObject(result).getJSONObject("payload").getString("responseStatus").equals("ERROR")){
+            throw new BusinessException(JSONObject.parseObject(result).getJSONObject("payload").getString("responseMessage"));
+        }
         return true;
     }
 
