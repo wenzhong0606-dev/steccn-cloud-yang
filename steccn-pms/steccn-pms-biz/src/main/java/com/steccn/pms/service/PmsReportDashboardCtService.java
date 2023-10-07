@@ -71,12 +71,12 @@ public interface PmsReportDashboardCtService {
     QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit);
 
     /**
-     * 完工成品率
+     * 各产线成品率-完工
      *
      * @param workShopId 车间主键
      * @param start      开始日期
      * @param end        结束日期
-     * @param dateType       日期，班次
+     * @param dateType   日期，班次
      * @return
      */
     QtLineChartBarDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType);
@@ -87,8 +87,19 @@ public interface PmsReportDashboardCtService {
      * @param workShopId 车间主键
      * @param start      开始日期
      * @param end        结束日期
-     * @param dateType       日期，班次
+     * @param dateType   日期，班次
      * @return
      */
     QtLineChartBarDTO yieldRateDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType);
+
+    /**
+     * 各产线总产量
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @param dateType   日期，班次
+     * @return
+     */
+    QtLineChartBarDTO lineDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType);
 }
