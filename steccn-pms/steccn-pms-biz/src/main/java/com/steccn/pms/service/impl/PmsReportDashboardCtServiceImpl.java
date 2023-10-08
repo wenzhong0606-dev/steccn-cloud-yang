@@ -6,10 +6,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.ShardTimeUtil;
-import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.util.*;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -217,9 +214,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         //根据日期区间获取班次+日期+产线的产量
         Map<String, BigDecimal> numMap = pmsPullForceService.dateClassLinePmUnit(lineIdList, start, end);
         if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
-            return dateClassQuantity(wsLineList, timeList, numMap, "入库总数");
+            return dateClassQuantity(wsLineList, timeList, numMap, "拉引量总数");
         } else {
-            return dateQuantity(wsLineList, timeList, numMap, "入库总数");
+            return dateQuantity(wsLineList, timeList, numMap, "拉引量总数");
         }
     }
 
@@ -248,6 +245,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                 for (SysDictVO ele : sysDictVOList) {
                     lineBd = BigDecimalUtil.add(numMap.get(line.getId() + "_" + classDate + "_" + ele.getId()), lineBd);
                 }
+                lineBd = BigDecimalUtil.setScale(lineBd, UnitLengthUtil.UNIT_TON_LENGTH);
                 dataList.add(new TupleDTO<>(line.getOfficeName() + hintCh, lineBd));
             });
             stackGraphDTO.setData(dataList);
@@ -284,6 +282,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                 StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
                 wsLineList.forEach(line -> {
                     BigDecimal lineBd = numMap.get(line.getId() + "_" + classDate + "_" + ele.getId());
+                    lineBd = BigDecimalUtil.setScale(lineBd, UnitLengthUtil.UNIT_TON_LENGTH);
                     dataList.add(new TupleDTO<>(line.getOfficeName() + hintCh, lineBd));
                 });
                 stackGraphDTO.setData(dataList);
