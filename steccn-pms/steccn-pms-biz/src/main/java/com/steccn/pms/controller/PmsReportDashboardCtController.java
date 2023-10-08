@@ -34,7 +34,7 @@ public class PmsReportDashboardCtController {
     @ApiOperation("累计产量总数")
     public R<QtLineChartBarDTO> produceClass(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = PmsUnitUtil.unit(unitType);
-        return R.success(pmsReportDashboardCtService.produceClass(workShopId, start, end, unit));
+        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end, unit.getField2(), unit.getField1()));
     }
 
     @GetMapping("/yield/rate/date")
