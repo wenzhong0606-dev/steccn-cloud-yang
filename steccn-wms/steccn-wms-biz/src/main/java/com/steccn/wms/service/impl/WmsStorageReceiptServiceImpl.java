@@ -1232,9 +1232,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         paramBody.setRcvTrxLineList(bodyDetail);
         param.setBody(com.google.common.collect.Lists.newArrayList(paramBody));
         String paramStr = new cn.hutool.json.JSONObject(param).toString();
-        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(paramStr).execute().body();
-        if(JSONObject.parseObject(result).getJSONObject("payload").getString("responseStatus").equals("ERROR")){
-            throw new BusinessException(JSONObject.parseObject(result).getJSONObject("payload").getString("responseMessage"));
+        SrmOaWorkFlowDTO payload = new SrmOaWorkFlowDTO();
+        payload.setPayload(paramStr);
+        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v1/rest/invoke?namespace=SRM&serverCode=DELIVERY_NOTE_INTERFACE&interfaceCode=srm-interface.rcv-trx-header.receiveRestRcvTrxHeaderData").addHeaders(headers).body(new cn.hutool.json.JSONObject(payload).toString()).execute().body();
+        JSONObject payloadObj = JSONObject.parseObject(result).getJSONObject("payload");
+        if(payloadObj.getString("responseStatus").equals("ERROR")){
+            throw new BusinessException(payloadObj.getString("responseMessage"));
+        }
+        if(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseStatus").equals("ERROR")){
+            throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
         }
         return true;
     }
