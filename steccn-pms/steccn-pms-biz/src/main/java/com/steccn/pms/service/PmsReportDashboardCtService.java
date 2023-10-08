@@ -13,16 +13,6 @@ import java.time.LocalDate;
  */
 public interface PmsReportDashboardCtService {
 
-    /**
-     * 累计产量总数
-     *
-     * @param workShopId 车间主键
-     * @param start      开始日期
-     * @param end        结束日期
-     * @param unit       单位对象
-     * @return
-     */
-    QtLineChartBarDTO produceClass(Integer workShopId, LocalDate start, LocalDate end, TupleDTO<String, Integer> unit);
 
     /**
      * 班次日期总成品率
