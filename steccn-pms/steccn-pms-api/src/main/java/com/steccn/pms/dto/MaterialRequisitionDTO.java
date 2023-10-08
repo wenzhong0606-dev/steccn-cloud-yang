@@ -31,7 +31,7 @@ public class MaterialRequisitionDTO {
     private Long typeId;
 
     @ApiModelProperty("部门id")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "编辑数据时部门不能为空")
+//    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "编辑数据时部门不能为空")
     private Integer departmentId;
 
     @ApiModelProperty("仓库id")
