@@ -102,7 +102,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             page.getRecords().forEach(materialRequisitionVO -> {
                 dictIdSet.add(materialRequisitionVO.getStatus());
                 dictIdSet.add(materialRequisitionVO.getTypeId());
-                officeIdSet.add(materialRequisitionVO.getDepartmentId());
+//                officeIdSet.add(materialRequisitionVO.getDepartmentId());
                 officeIdSet.add(materialRequisitionVO.getWarehouseId());
                 ids.add(materialRequisitionVO.getId());
             });
@@ -112,7 +112,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             page.getRecords().forEach(materialRequisitionVO -> {
                 materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
                 materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
-                materialRequisitionVO.setDepartmentName(officeMap.get(materialRequisitionVO.getDepartmentId()));
+                materialRequisitionVO.setDepartmentName(FeignOptional.of(() -> oaInfoService.getDepartmentInfoById(materialRequisitionVO.getDepartmentId()), FeignConstant.STECCN_OA_SERVICE_NAME).get().getDepartmentName());
                 materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
             });
             //3.4获取总数量
