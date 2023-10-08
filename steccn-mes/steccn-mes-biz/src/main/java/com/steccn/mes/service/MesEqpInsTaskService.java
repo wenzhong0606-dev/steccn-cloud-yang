@@ -18,7 +18,7 @@ public interface MesEqpInsTaskService extends IService<MesEqpInsTask> {
      * @param endTime
      * @return
      */
-    QtLineChartBarDTO taskComplete(LocalDateTime startTime,LocalDateTime endTime);
+    QtLineChartBarDTO taskComplete(LocalDateTime startTime,LocalDateTime endTime,Integer type);
 
     /**
      * 点检项完成
