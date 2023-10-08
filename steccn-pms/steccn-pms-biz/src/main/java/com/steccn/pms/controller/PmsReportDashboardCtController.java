@@ -34,31 +34,31 @@ public class PmsReportDashboardCtController {
     @ApiOperation("累计产量总数")
     public R<QtLineChartBarDTO> produceClass(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
         TupleDTO<String, Integer> unit = PmsUnitUtil.unit(unitType);
-        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end, unit.getField2(), unit.getField1()));
+        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end.plusDays(1), unit.getField2(), unit.getField1()));
     }
 
     @GetMapping("/yield/rate/date")
     @ApiOperation("总成品率")
     public R<QtLineChartBarDTO> yieldRateDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end));
+        return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end.plusDays(1)));
     }
 
     @GetMapping("/pm/date")
     @ApiOperation("累计产量总数")
     public R<QtLineChartBarDTO> pmDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end, UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end.plusDays(1), UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/in/storage/date")
     @ApiOperation("累计入库量总数")
     public R<QtLineChartBarDTO> inStorageDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.inStorageDate(workShopId, start, end, UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+        return R.success(pmsReportDashboardCtService.inStorageDate(workShopId, start, end.plusDays(1), UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/pull/force/date")
     @ApiOperation("累计拉引量总数")
     public R<QtLineChartBarDTO> pullForceDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.pullForceDate(workShopId, start, end, UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+        return R.success(pmsReportDashboardCtService.pullForceDate(workShopId, start, end.plusDays(1), UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/yield/rate/date/pm")
@@ -70,7 +70,7 @@ public class PmsReportDashboardCtController {
         } else {
             dateType = 7;
         }
-        return R.success(pmsReportDashboardCtService.yieldRateDatePm(workShopId, start, end, dateType));
+        return R.success(pmsReportDashboardCtService.yieldRateDatePm(workShopId, start, end.plusDays(1), dateType));
     }
 
     @GetMapping("/yield/rate/date/in/storage")
@@ -82,7 +82,7 @@ public class PmsReportDashboardCtController {
         } else {
             dateType = 7;
         }
-        return R.success(pmsReportDashboardCtService.yieldRateDateInStorage(workShopId, start, end, dateType));
+        return R.success(pmsReportDashboardCtService.yieldRateDateInStorage(workShopId, start, end.plusDays(1), dateType));
     }
 
     @GetMapping("/line/date/pm")
@@ -94,7 +94,7 @@ public class PmsReportDashboardCtController {
         } else {
             dateType = 7;
         }
-        return R.success(pmsReportDashboardCtService.lineDatePm(workShopId, start, end, dateType));
+        return R.success(pmsReportDashboardCtService.lineDatePm(workShopId, start, end.plusDays(1), dateType));
     }
 
     @GetMapping("/line/date/in/storage")
@@ -106,7 +106,7 @@ public class PmsReportDashboardCtController {
         } else {
             dateType = 7;
         }
-        return R.success(pmsReportDashboardCtService.lineDateInStorage(workShopId, start, end, dateType));
+        return R.success(pmsReportDashboardCtService.lineDateInStorage(workShopId, start, end.plusDays(1), dateType));
     }
 
     @GetMapping("/line/date/pf")
@@ -118,7 +118,7 @@ public class PmsReportDashboardCtController {
         } else {
             dateType = 7;
         }
-        return R.success(pmsReportDashboardCtService.lineDatePf(workShopId, start, end, dateType));
+        return R.success(pmsReportDashboardCtService.lineDatePf(workShopId, start, end.plusDays(1), dateType));
     }
 
 }
