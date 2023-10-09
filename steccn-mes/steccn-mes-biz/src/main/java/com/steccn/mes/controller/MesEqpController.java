@@ -50,8 +50,8 @@ public class MesEqpController {
 
     @GetMapping("/dashboard/item")
     @ApiOperation(value = "点检项图表")
-    public R<QtLineChartBarDTO> itemCompleteChart(@RequestParam("startTime")LocalDateTime startTime,@RequestParam("endTime") LocalDateTime endTime) {
-        return R.success(mesEqpInsTaskService.itemComplete(startTime,endTime));
+    public R<QtLineChartBarDTO> itemCompleteChart(@RequestParam("startTime")LocalDateTime startTime,@RequestParam("endTime") LocalDateTime endTime, @RequestParam("type")Integer type) {
+        return R.success(mesEqpInsTaskService.itemComplete(startTime,endTime,type));
     }
 
     /**
