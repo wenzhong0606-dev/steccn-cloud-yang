@@ -206,4 +206,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean deleteData();
+
+    /**
+     * 物料汇总
+     * @param dto
+     * @return
+     */
+    Page<WmsInventoryVO> materialList(WmsInventoryPageDTO dto);
 }

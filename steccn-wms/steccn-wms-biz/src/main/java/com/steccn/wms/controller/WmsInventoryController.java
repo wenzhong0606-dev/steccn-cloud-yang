@@ -100,4 +100,11 @@ public class WmsInventoryController {
     public R<Boolean> deleteData (){
         return R.success(wmsInventoryService.deleteData());
     }
+
+
+    @ApiOperation("物料汇总列表")
+    @PostMapping("/material/list")
+    public R<Page<WmsInventoryVO>> materialList(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.materialList(dto));
+    }
 }

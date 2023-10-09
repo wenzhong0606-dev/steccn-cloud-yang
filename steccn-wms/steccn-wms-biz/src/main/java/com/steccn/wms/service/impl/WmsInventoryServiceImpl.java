@@ -2,24 +2,22 @@ package com.steccn.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.CaseSiteDTO;
-import com.steccn.pms.dto.MessMaterialConsumeDTO;
-import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
@@ -30,11 +28,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -58,21 +56,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
-        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
-                .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
-                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
-                .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
-                .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
-                .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
-                .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
-                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
-                .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO))
-                .orderByDesc(WmsInventory::getUpdateTime);
+        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId()).eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId()).like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode()).like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName()).like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo()).like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName()).like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch()).and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or().notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or().notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or().notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or().notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO)).orderByDesc(WmsInventory::getUpdateTime);
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
@@ -540,7 +524,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public Boolean deleteData() {
-        log.info("开始时间："+ LocalDateTime.now());
+        log.info("开始时间：" + LocalDateTime.now());
         Set<String> names = new HashSet<>();
         names.add("备品备件库");
         names.add("包装材料库");
@@ -548,17 +532,65 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         //获取仓库id
         Map<String, SysOfficeVO> map = FeignOptional.of(() -> remoteOfficeFeign.listByName(names), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Long> ids = new HashSet<>();
-        map.values().forEach( office ->ids.add(Long.valueOf(office.getId())));
+        map.values().forEach(office -> ids.add(Long.valueOf(office.getId())));
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getWarehouseId, ids));
-        list.forEach( wmsInventory -> {
+        list.forEach(wmsInventory -> {
             wmsInventory.setDelFlag(1);
             wmsInventory.setCreateBy(System.currentTimeMillis());
         });
         List<Long> collect = list.stream().map(WmsInventory::getId).collect(Collectors.toList());
         boolean b = removeByIds(collect);
-        log.info("删除库存信息："+list.size() + b);
-        log.info("结束时间："+ LocalDateTime.now());
+        log.info("删除库存信息：" + list.size() + b);
+        log.info("结束时间：" + LocalDateTime.now());
         return true;
+    }
+
+    @Override
+    public Page<WmsInventoryVO> materialList(WmsInventoryPageDTO dto) {
+        //获取查询的物料列表
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getMaterialName, dto.getMaterialName()));
+        List<WmsInventoryVO> inventoryList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            //按物料编码分组，总数、可用数、锁定数、在途数、冻结数分别求和
+            Map<String, List<WmsInventory>> inventoryMap = list.stream().collect(Collectors.groupingBy(WmsInventory::getMaterialCode));
+            inventoryMap.forEach((code, materialList) -> {
+                WmsInventoryVO wmsInventoryVO = new WmsInventoryVO();
+                AtomicReference<BigDecimal> totalQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> availableQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> stockQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> freezeQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> lockQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                materialList.forEach(inventory -> {
+                    BeanUtil.copyProperties(inventory,wmsInventoryVO);
+                    totalQuantity.set(BigDecimalUtil.add(totalQuantity.get(), inventory.getTotalQuantity()));
+                    availableQuantity.set(BigDecimalUtil.add(availableQuantity.get(),inventory.getAvailableQuantity()));
+                    stockQuantity.set(BigDecimalUtil.add(stockQuantity.get(),inventory.getStockQuantity()));
+                    freezeQuantity.set(BigDecimalUtil.add(freezeQuantity.get(),inventory.getFreezeQuantity()));
+                    lockQuantity.set(BigDecimalUtil.add(lockQuantity.get(),inventory.getLockQuantity()));
+                });
+                wmsInventoryVO.setTotalQuantity(totalQuantity.get());
+                wmsInventoryVO.setAvailableQuantity(availableQuantity.get());
+                wmsInventoryVO.setStockQuantity(stockQuantity.get());
+                wmsInventoryVO.setFreezeQuantity(stockQuantity.get());
+                wmsInventoryVO.setLockQuantity(stockQuantity.get());
+                inventoryList.add(wmsInventoryVO);
+            });
+            //获取单位物料名称
+            Set<Long> dict = Sets.newHashSet();
+            List<Long> materialIds = Lists.newArrayList();
+            inventoryList.forEach(wmsInventoryVO -> {
+                dict.add(wmsInventoryVO.getUnit());
+                materialIds.add(wmsInventoryVO.getMaterialId());
+            });
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dict), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            inventoryList.forEach(wmsInventoryVO -> {
+                wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
+                wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
+            });
+        }
+        //逻辑分页
+        return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
     }
 
 
