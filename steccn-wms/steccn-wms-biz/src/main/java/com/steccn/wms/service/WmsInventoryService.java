@@ -221,4 +221,12 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto);
+
+
+    /**
+     * 货架汇总
+     * @param dto
+     * @return
+     */
+    Page<WmsInventoryVO> shelfList(WmsInventoryPageDTO dto);
 }
