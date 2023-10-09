@@ -593,6 +593,56 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
     }
 
+    @Override
+    public Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto) {
+        //获取查询的物料列表
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
+                .eq(WmsInventory::getMaterialName, dto.getMaterialName())
+                .eq(WmsInventory::getWarehouseId,dto.getWarehouseId()));
+        List<WmsInventoryVO> inventoryList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            //按物料编码、仓库分组，总数、可用数、锁定数、在途数、冻结数分别求和
+            Map<String, List<WmsInventory>> inventoryMap = list.stream().collect(Collectors.groupingBy(WmsInventory::getMaterialCode));
+            inventoryMap.forEach((code, materialList) -> {
+                WmsInventoryVO wmsInventoryVO = new WmsInventoryVO();
+                AtomicReference<BigDecimal> totalQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> availableQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> stockQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> freezeQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                AtomicReference<BigDecimal> lockQuantity = new AtomicReference<>(BigDecimal.ZERO);
+                materialList.forEach(inventory -> {
+                    BeanUtil.copyProperties(inventory,wmsInventoryVO);
+                    totalQuantity.set(BigDecimalUtil.add(totalQuantity.get(), inventory.getTotalQuantity()));
+                    availableQuantity.set(BigDecimalUtil.add(availableQuantity.get(),inventory.getAvailableQuantity()));
+                    stockQuantity.set(BigDecimalUtil.add(stockQuantity.get(),inventory.getStockQuantity()));
+                    freezeQuantity.set(BigDecimalUtil.add(freezeQuantity.get(),inventory.getFreezeQuantity()));
+                    lockQuantity.set(BigDecimalUtil.add(lockQuantity.get(),inventory.getLockQuantity()));
+                });
+                wmsInventoryVO.setTotalQuantity(totalQuantity.get());
+                wmsInventoryVO.setAvailableQuantity(availableQuantity.get());
+                wmsInventoryVO.setStockQuantity(stockQuantity.get());
+                wmsInventoryVO.setFreezeQuantity(stockQuantity.get());
+                wmsInventoryVO.setLockQuantity(stockQuantity.get());
+                inventoryList.add(wmsInventoryVO);
+            });
+            //获取单位物料名称
+            Set<Long> dict = Sets.newHashSet();
+            List<Long> materialIds = Lists.newArrayList();
+            inventoryList.forEach(wmsInventoryVO -> {
+                dict.add(wmsInventoryVO.getUnit());
+                materialIds.add(wmsInventoryVO.getMaterialId());
+            });
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dict), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            inventoryList.forEach(wmsInventoryVO -> {
+                wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
+                wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
+            });
+        }
+        //逻辑分页
+        return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
+    }
+
 
     private Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo) {
         Map<String, WmsInventory> map = Maps.newHashMap();

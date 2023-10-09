@@ -107,4 +107,10 @@ public class WmsInventoryController {
     public R<Page<WmsInventoryVO>> materialList(@RequestBody WmsInventoryPageDTO dto) {
         return R.success(wmsInventoryService.materialList(dto));
     }
+
+    @ApiOperation("仓库汇总列表")
+    @PostMapping("/warehouse/list")
+    public R<Page<WmsInventoryVO>> warehouseList(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.warehouseList(dto));
+    }
 }
