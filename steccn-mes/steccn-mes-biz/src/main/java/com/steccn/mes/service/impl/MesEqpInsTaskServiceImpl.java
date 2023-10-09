@@ -151,7 +151,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
     }
 
     @Override
-    public QtLineChartBarDTO itemComplete(LocalDateTime startTime, LocalDateTime endTime) {
+    public QtLineChartBarDTO itemComplete(LocalDateTime startTime, LocalDateTime endTime,Integer type) {
         //获取数据
         MesInsTaskParamDTO dto = new MesInsTaskParamDTO();
         dto.setStartTime(startTime);
@@ -179,16 +179,38 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                 .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName,JsSysOffice::getParentCodes)
                 .in(JsSysOffice::getOfficeCode, officeCodes).eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0));
 //        Collections.sort(jsSysOffices, Comparator.comparing(JsSysOffice::getOfficeName));
+
         //车间粒度
-        List<JsSysOffice> officeList = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
-                .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
-                .eq(JsSysOffice::getOfficeType,QtManagerConstant.NUM_8)
-                .eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0)
-                .orderByAsc(JsSysOffice::getTreeSort));
+        List<JsSysOffice> officeList = Lists.newArrayList();
+        if(type.equals(OaConstant.NO)){
+            officeList = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                    .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                    .eq(JsSysOffice::getOfficeType,QtManagerConstant.NUM_8)
+                    .eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0)
+                    .orderByAsc(JsSysOffice::getTreeSort));
+        }else {
+            //根据车间id获取车间
+            Map<Integer, SysOfficeVO> integerSysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(type)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysOfficeVO sysOfficeVO = integerSysOfficeVOMap.get(type);
+            officeList = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                    .select(JsSysOffice::getOfficeCode,JsSysOffice::getOfficeName)
+                    .like(JsSysOffice::getParentCodes,sysOfficeVO.getOfficeCode())
+                    .eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0)
+                    .orderByAsc(JsSysOffice::getTreeSort));
+            Assert.notEmpty(officeList,"该车间下没有机构");
+            officeList = officeList.stream().filter(v->officeCodes.contains(v.getOfficeCode())).collect(Collectors.toList());
+        }
+
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         officeList.forEach(ele->{
             String officeName = ele.getOfficeName();
-            List<JsSysOffice> officeTmp = jsSysOffices.stream().filter(v -> v.getParentCodes().contains(ele.getOfficeCode())).collect(Collectors.toList());
+            //聚合粒度下所有的数据
+            List<JsSysOffice> officeTmp = Lists.newArrayList();
+            if(type.equals(OaConstant.NO)){
+                officeTmp = jsSysOffices.stream().filter(v -> v.getParentCodes().contains(ele.getOfficeCode())).collect(Collectors.toList());
+            }else {
+                officeTmp = jsSysOffices.stream().filter(v -> v.getOfficeCode().equals(ele.getOfficeCode())).collect(Collectors.toList());
+            }
             if(CollUtil.isNotEmpty(officeTmp)){
                 //加总产线下所有 1任务总数 2完成数
                 Map<Integer,BigDecimal> countMap = Maps.newHashMap();
