@@ -1359,11 +1359,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         pmsDTO.setCompare(dto.getCompare());
         pmsDTO.setFilters(dto.getFilters());
-        R<List<ProducePassRateVO>> rResult = new R<>();
         //调用数据生成全量数据表
-        rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
-        if (CollUtil.isNotEmpty(rResult.getData())) {
-            List<ProducePassRateVO> rList = rResult.getData();
+        List<ProducePassRateVO> rResult = FeignOptional.of(() -> remotePassRateFeignApi.producePassRateGroup(pmsDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(rResult)) {
+            List<ProducePassRateVO> rList = rResult;
             List<ProducePassRateVO> finalRList = rList;
             TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(finalRList.get(0).getDate(), finalRList.get(finalRList.size()-1).getDate());
             Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -1444,30 +1443,28 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 LocalDate tmpDate = dto.getDateStart().plusDays(i);
                 xAis.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 List<ProducePassRateVO> groupByDateVO = groupByDate.get(tmpDate);
-                Map<String, BigDecimal> dataMap = MapUtil.newHashMap();
-
+                Map<String, BigDecimal> dataMap1 = MapUtil.newHashMap();
+                Map<String, BigDecimal> dataMap2 = MapUtil.newHashMap();
                 //不对比的dateMap
-                Map<LocalDate, BigDecimal> noCompareData = MapUtil.newHashMap();
+                Map<LocalDate, BigDecimal> noCompareData1 = MapUtil.newHashMap();
+                Map<LocalDate, BigDecimal> noCompareData2 = MapUtil.newHashMap();
                 //若VO不为空
                 if (CollUtil.isNotEmpty(groupByDateVO)) {
-                    BigDecimal markLineData = BigDecimal.ZERO;
-                    if (groupByDateVO.get(0).getDayPassRate() != null) {
-                        markLineData = groupByDateVO.get(0).getDayPassRate();
-                    }
-                    markLineDataList.add(markLineData);
+                    List<BigDecimal> markLineData1 = groupByDateVO.stream().map(ProducePassRateVO::getYield).collect(Collectors.toList());
+                    List<BigDecimal> markLineData2 = groupByDateVO.stream().map(ProducePassRateVO::getLaAmount).collect(Collectors.toList());
+                    markLineDataList.add(BigDecimalUtil.divide(BigDecimalUtil.sum(markLineData1), BigDecimalUtil.sum(markLineData2), BigDecimalUtil.SCALE_4));
                     //对比维度为班次
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())) {
                         groupByDateVO.stream().filter(v->v.getPassRate() == null).forEach(v -> {v.setPassRate(BigDecimal.ZERO);});
-                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
-                    }
-                    //对比维度为班组
-                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())) {
+                        dataMap1 = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getYield)));
+                        dataMap2 = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getLaAmount)));
+                    }else if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.CLASSGROUP.getCode())) {
+                        //对比维度为班组
                         groupByDateVO.stream().filter(v->v.getPassRate() == null).forEach(v -> {v.setPassRate(BigDecimal.ZERO);});
-                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassGroupName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
-                    }
-
-                    //对比维度为产线
-                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())) {
+                        dataMap1 = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassGroupName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getYield)));
+                        dataMap2 = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassGroupName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getLaAmount)));
+                    }else if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())) {
+                        //对比维度为产线
                         Map<String, List<ProducePassRateVO>> groupByProductLine = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getProductLineName));
                         if (groupByProductLine.size() > 0) {
                             for (Map.Entry<String, List<ProducePassRateVO>> lineEntry : groupByProductLine.entrySet()) {
@@ -1483,12 +1480,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         yield = BigDecimalUtil.add(yield, tmp.getYield());
                                     }
                                 }
-                                dataMap.put(lineEntry.getKey(), BigDecimalUtil.divide(yield, laAmount,4));
+                                dataMap1.put(lineEntry.getKey(), yield);
+                                dataMap2.put(lineEntry.getKey(), laAmount);
                             }
                         }
-                    }
-                    //对比维度为车间
-                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())) {
+                    }else if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())) {
+                        //对比维度为车间
                         Map<String, List<ProducePassRateVO>> groupByWorkshopName = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getWorkshopName));
                         if (groupByWorkshopName.size() > 0) {
                             for (Map.Entry<String, List<ProducePassRateVO>> lineEntry : groupByWorkshopName.entrySet()) {
@@ -1504,14 +1501,14 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         yield = BigDecimalUtil.add(yield, tmp.getYield());
                                     }
                                 }
-                                dataMap.put(lineEntry.getKey(), BigDecimalUtil.divide(yield, laAmount,4));
+                                dataMap1.put(lineEntry.getKey(), yield);
+                                dataMap2.put(lineEntry.getKey(), laAmount);
                             }
                         }
-                    }
-
-                    //不对比则直接对日期求和
-                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())) {
-                        noCompareData = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                    }else if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())) {
+                        //不对比则直接对日期求和
+                        noCompareData1 = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getYield)));
+                        noCompareData2 = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getLaAmount)));
                     }
 
                 } else {
@@ -1520,11 +1517,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //不对比的情况
                 if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())) {
                     for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
-                        if (noCompareData.get(tmpDate) == null) {
-                            entry.getValue().getData().add(new BigDecimal(0));
-                        } else {
-                            entry.getValue().getData().add(noCompareData.get(tmpDate).setScale(4, BigDecimal.ROUND_HALF_DOWN));
-                        }
+                        BigDecimal noCompareData = BigDecimalUtil.divide(noCompareData1.get(tmpDate), noCompareData2.get(tmpDate),BigDecimalUtil.SCALE_4);
+                        entry.getValue().getData().add(Objects.nonNull(noCompareData) ? noCompareData : BigDecimal.ZERO);
                     }
                 } else {
                     //对key值进行排序
@@ -1541,10 +1535,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         });
                     }
                     for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
-                        if (dataMap.get(entry.getKey()) == null) {
+                        if (dataMap1.get(entry.getKey()) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
                         } else {
-                            entry.getValue().getData().add(dataMap.get(entry.getKey()).setScale(4, BigDecimal.ROUND_HALF_DOWN));
+                            entry.getValue().getData().add(BigDecimalUtil.divide(dataMap1.get(entry.getKey()), dataMap2.get(entry.getKey()), BigDecimalUtil.SCALE_4));
                         }
                     }
                 }
