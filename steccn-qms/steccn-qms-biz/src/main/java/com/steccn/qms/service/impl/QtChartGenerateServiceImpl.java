@@ -1221,7 +1221,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         QtDefectChartVO<String, BigDecimal, BigDecimal> vo = new QtDefectChartVO();
         //获取生产系统数据
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
-        R<List<ProducePassRateVO>> rResult;
+//        R<List<ProducePassRateVO>> rResult;
         LocalDate pmsEndDate;
         //最晚数据完整日期
         LocalDate fullDate = calculateOrder(LocalDateTime.now()).toLocalDate();
@@ -1246,7 +1246,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         pmsStartDate = pmsEndDate.minusDays(6);
         pmsDTO.setBeginDate(pmsStartDate);
         pmsDTO.setEndDate(pmsEndDate.plusDays(1));
-        rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+        List<ProducePassRateVO> rResult = FeignOptional.of(() -> remotePassRateFeignApi.producePassRateGroup(pmsDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//        rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         vo.setKey(1);
         vo.setTitle("基片成品率");
         vo.setTooltip(String.valueOf(pmsEndDate.getMonthValue()) + "-" + String.valueOf(pmsEndDate.getDayOfMonth()) + "所有基片车间的总成品率");
@@ -1259,8 +1260,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         int workShopCount = subWorkShops.getData().size();
         List<String> xData = new ArrayList<>();
         List<BigDecimal> yData = new ArrayList<>();
-        if (CollUtil.isNotEmpty(rResult.getData())) {
-            List<ProducePassRateVO> rList = rResult.getData();
+        if (CollUtil.isNotEmpty(rResult)) {
+            List<ProducePassRateVO> rList = rResult;
             //根据日期分组
             Map<LocalDate, List<ProducePassRateVO>> resultMap = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
             //根据时间范围算值
@@ -1281,15 +1282,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
             //算日环比
             BigDecimal dayRate = BigDecimalUtil.subtract(resultMap.get(fullDate).get(0).getDayPassRate(), resultMap.get(fullDate.minusDays(1)).get(0).getDayPassRate(), 4);
-            if (dayRate.compareTo(BigDecimal.ZERO) < 0) {
+            if (Objects.nonNull(dayRate) && dayRate.compareTo(BigDecimal.ZERO) < 0) {
                 vo.setDayFlag(0);
-            } else if (dayRate.compareTo(BigDecimal.ZERO) > 0) {
+            } else if (Objects.nonNull(dayRate) && dayRate.compareTo(BigDecimal.ZERO) > 0) {
                 vo.setDayFlag(1);
             } else {
                 vo.setDayFlag(2);
             }
             //如果为0，则显示为-
-            if (dayRate.compareTo(BigDecimal.ZERO) == 0) {
+            if (Objects.isNull(dayRate) || dayRate.compareTo(BigDecimal.ZERO) == 0) {
                 vo.setDayValue(BigDecimal.ZERO);
             } else {
                 vo.setDayValue(dayRate.abs().multiply(BigDecimalUtil.HUNDRED));

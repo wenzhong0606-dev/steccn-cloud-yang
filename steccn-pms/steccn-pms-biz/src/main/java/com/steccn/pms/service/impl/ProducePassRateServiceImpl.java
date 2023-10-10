@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -27,6 +28,7 @@ import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.ProducePassRateService;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.PassRateDateVo;
 import com.steccn.pms.vo.PmsReportWorkGroupVO;
 import com.steccn.pms.vo.ProducePassRateVO;
@@ -231,7 +233,10 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
         Set<Long> materialIdSet = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, List<SysSpareUnitConversionVO>> unitMap = remoteSpareUnitConvertFeignApi.convert(materialIdSet).getData();
-        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT).getData();
+        SysDictVO sysDictVO1 = remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT).getData();
+        SysDictVO sysDictVO2 = remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT).getData();
+        Assert.notNull(sysDictVO1, "换算单位[片]不存在");
+        Assert.notNull(sysDictVO2, "换算单位[吨]不存在");
         //获取分组日期
         for (PmsReportWorkGroupVO pmsReportWorkGroupVO : reportWorkGroupVOList) {
             LocalDateTime dateTime = pmsReportWorkGroupVO.getDate();
@@ -247,20 +252,9 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             if (Objects.nonNull(sysOfficeMap)) {
                 pmsReportWorkGroupVO.setWorkshopId(sysOfficeMap.get(pmsReportWorkGroupVO.getProductLineId()).getParentId());
             }
-            List<SysSpareUnitConversionVO> unitConversionVOList = unitMap.get(pmsReportWorkGroupVO.getMaterialId());
-            if (CollectionUtils.isNotEmpty(unitConversionVOList)) {
-                Optional<SysSpareUnitConversionVO> optional = unitConversionVOList.stream().filter(sysSpareUnitConversionVO -> sysSpareUnitConversionVO.getConversionUnitId().equals(sysDictVO.getId())).findAny();
-                if (optional.isPresent()) {
-                    BigDecimal quantity = optional.get().getQuantity();
-                    BigDecimal conversionQuantity = optional.get().getConversionQuantity();
-                    BigDecimal work = pmsReportWorkGroupVO.getQuantity();
-                    pmsReportWorkGroupVO.setQuantity(BigDecimalUtil.divide(work, quantity).multiply(conversionQuantity));
-                } else {
-                    pmsReportWorkGroupVO.setQuantity(BigDecimal.ZERO);
-                }
-            } else {
-                pmsReportWorkGroupVO.setQuantity(BigDecimal.ZERO);
-            }
+            //单位转换
+            BigDecimal convertBd = UnitConvertUtil.convertMaterial(unitMap.get(pmsReportWorkGroupVO.getMaterialId()), sysDictVO1.getId(), sysDictVO2.getId(), pmsReportWorkGroupVO.getQuantity(), 2);
+            pmsReportWorkGroupVO.setQuantity(Objects.isNull(convertBd) ? BigDecimal.ZERO : convertBd);
         }
         Map<String, List<PmsReportWorkGroupVO>> groupBy = reportWorkGroupVOList
                 .stream()
