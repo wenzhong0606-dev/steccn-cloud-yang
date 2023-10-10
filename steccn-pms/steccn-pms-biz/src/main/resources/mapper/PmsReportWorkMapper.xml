@@ -246,14 +246,15 @@
     <select id="selectAllGroupByDate" resultType="com.steccn.pms.vo.PmsReportWorkGroupVO">
         SELECT
         o.material_id materialId,
-        c.create_time date,
+        c.class_date groupDate,
         c.classes_id classesId,
         c.product_line_id productLineId,
         c.process_quantity quantity
         FROM
         pms_report_work c inner join pms_produce_order o on c.produce_order_id = o.id
         WHERE
-        c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime}
+        c.del_flag = 0 AND o.del_flag = 0 and
+        c.class_date &gt;= #{startTime} and c.class_date &lt;= #{endTime}
         <if test="productLineIdList != null and productLineIdList.size  != ''">
             AND c.product_line_id in
             <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">

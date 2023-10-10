@@ -1221,7 +1221,6 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         QtDefectChartVO<String, BigDecimal, BigDecimal> vo = new QtDefectChartVO();
         //获取生产系统数据
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
-//        R<List<ProducePassRateVO>> rResult;
         LocalDate pmsEndDate;
         //最晚数据完整日期
         LocalDate fullDate = calculateOrder(LocalDateTime.now()).toLocalDate();
@@ -1247,7 +1246,6 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         pmsDTO.setBeginDate(pmsStartDate);
         pmsDTO.setEndDate(pmsEndDate.plusDays(1));
         List<ProducePassRateVO> rResult = FeignOptional.of(() -> remotePassRateFeignApi.producePassRateGroup(pmsDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-//        rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         vo.setKey(1);
         vo.setTitle("基片成品率");
         vo.setTooltip(String.valueOf(pmsEndDate.getMonthValue()) + "-" + String.valueOf(pmsEndDate.getDayOfMonth()) + "所有基片车间的总成品率");
@@ -1260,65 +1258,55 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         int workShopCount = subWorkShops.getData().size();
         List<String> xData = new ArrayList<>();
         List<BigDecimal> yData = new ArrayList<>();
-        if (CollUtil.isNotEmpty(rResult)) {
-            List<ProducePassRateVO> rList = rResult;
-            //根据日期分组
-            Map<LocalDate, List<ProducePassRateVO>> resultMap = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
-            //根据时间范围算值
-            Long dateRange = pmsEndDate.toEpochDay() - pmsStartDate.toEpochDay();
-            for (int i = 0; i < dateRange + 1; i++) {
-                LocalDate tmpDate = pmsStartDate.plusDays(i);
-                xData.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                if (resultMap.get(tmpDate) == null) {
-                    yData.add(BigDecimal.ZERO);
-                } else {
-                    if (resultMap.get(tmpDate).get(0).getDayPassRate() != null) {
-                        yData.add(resultMap.get(tmpDate).get(0).getDayPassRate());
-                    } else {
-                        yData.add(BigDecimal.ZERO);
-                    }
-                }
-
-            }
-            //算日环比
-            BigDecimal dayRate = BigDecimalUtil.subtract(resultMap.get(fullDate).get(0).getDayPassRate(), resultMap.get(fullDate.minusDays(1)).get(0).getDayPassRate(), 4);
-            if (Objects.nonNull(dayRate) && dayRate.compareTo(BigDecimal.ZERO) < 0) {
-                vo.setDayFlag(0);
-            } else if (Objects.nonNull(dayRate) && dayRate.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setDayFlag(1);
-            } else {
-                vo.setDayFlag(2);
-            }
-            //如果为0，则显示为-
-            if (Objects.isNull(dayRate) || dayRate.compareTo(BigDecimal.ZERO) == 0) {
-                vo.setDayValue(BigDecimal.ZERO);
-            } else {
-                vo.setDayValue(dayRate.abs().multiply(BigDecimalUtil.HUNDRED));
-            }
-            //算周同比
-            pmsDTO.setBeginDate(fullDate.minusDays(6));
-            pmsDTO.setEndDate(fullDate.minusDays(6).plusDays(1));
-            R<List<ProducePassRateVO>> rResult2 = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
-            BigDecimal weekRate = new BigDecimal(0);
-            if (CollUtil.isNotEmpty(rResult2.getData())) {
-                if (rResult2.getData().get(0).getDayPassRate() != null) {
-                    weekRate = BigDecimalUtil.subtract(resultMap.get(fullDate).get(0).getDayPassRate(), rResult2.getData().get(0).getDayPassRate());
-                }
-            }
-            if (weekRate.compareTo(BigDecimal.ZERO) == 0) {
-                vo.setWeekValue(BigDecimal.ZERO);
-            } else {
-                vo.setWeekValue(weekRate.multiply(BigDecimalUtil.HUNDRED));
-            }
-            if (weekRate.compareTo(BigDecimal.ZERO) < 0) {
-                vo.setWeekFlag(0);
-            } else if (weekRate.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setWeekFlag(1);
-            } else {
-                vo.setWeekFlag(2);
-            }
+        SteccnTableAssertUtil.notEmpty(rResult, "数据为空，暂无报表");
+        List<ProducePassRateVO> rList = rResult;
+        //根据日期分组
+        Map<LocalDate, List<ProducePassRateVO>> resultMap = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
+        //根据时间范围算值
+        BigDecimal currentDayRate = compareRate(resultMap.get(fullDate), BigDecimal.ZERO);
+        BigDecimal preDayRate = compareRate(resultMap.get(fullDate.minusDays(1)), BigDecimal.ZERO);
+        Long dateRange = pmsEndDate.toEpochDay() - pmsStartDate.toEpochDay();
+        for (int i = 0; i < dateRange + 1; i++) {
+            LocalDate tmpDate = pmsStartDate.plusDays(i);
+            xData.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            yData.add(compareRate(resultMap.get(tmpDate), BigDecimal.ZERO));
+        }
+        //算日环比
+        BigDecimal dayRate = BigDecimalUtil.subtract(currentDayRate, preDayRate, 4);
+        if (Objects.nonNull(dayRate) && dayRate.compareTo(BigDecimal.ZERO) < 0) {
+            vo.setDayFlag(0);
+        } else if (Objects.nonNull(dayRate) && dayRate.compareTo(BigDecimal.ZERO) > 0) {
+            vo.setDayFlag(1);
         } else {
-            SteccnTableAssertUtil.notEmpty(new ArrayList<>(), "数据为空，暂无报表");
+            vo.setDayFlag(2);
+        }
+        //如果为0，则显示为-
+        if (Objects.isNull(dayRate) || dayRate.compareTo(BigDecimal.ZERO) == 0) {
+            vo.setDayValue(BigDecimal.ZERO);
+        } else {
+            vo.setDayValue(dayRate.abs().multiply(BigDecimalUtil.HUNDRED));
+        }
+        //算周同比
+        pmsDTO.setBeginDate(fullDate.minusDays(6));
+        pmsDTO.setEndDate(fullDate.minusDays(6).plusDays(1));
+        R<List<ProducePassRateVO>> rResult2 = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+        BigDecimal weekRate = new BigDecimal(0);
+        if (CollUtil.isNotEmpty(rResult2.getData())) {
+            if (rResult2.getData().get(0).getDayPassRate() != null) {
+                weekRate = BigDecimalUtil.subtract(resultMap.get(fullDate).get(0).getDayPassRate(), rResult2.getData().get(0).getDayPassRate());
+            }
+        }
+        if (weekRate.compareTo(BigDecimal.ZERO) == 0) {
+            vo.setWeekValue(BigDecimal.ZERO);
+        } else {
+            vo.setWeekValue(weekRate.multiply(BigDecimalUtil.HUNDRED));
+        }
+        if (weekRate.compareTo(BigDecimal.ZERO) < 0) {
+            vo.setWeekFlag(0);
+        } else if (weekRate.compareTo(BigDecimal.ZERO) > 0) {
+            vo.setWeekFlag(1);
+        } else {
+            vo.setWeekFlag(2);
         }
         vo.setXData(xData);
         vo.setYData(yData);
@@ -1338,6 +1326,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             vo.setTargetValue(null);
         }
         return vo;
+    }
+
+    private BigDecimal compareRate(List<ProducePassRateVO> dataList , BigDecimal defaultValue) {
+        BigDecimal divide = null;
+        if (CollUtil.isNotEmpty(dataList)) {
+            List<BigDecimal> yieldList = dataList.stream().map(ProducePassRateVO::getYield).collect(Collectors.toList());
+            List<BigDecimal> forceList = dataList.stream().map(ProducePassRateVO::getLaAmount).collect(Collectors.toList());
+            divide = BigDecimalUtil.divide(BigDecimalUtil.sum(yieldList), BigDecimalUtil.sum(forceList), BigDecimalUtil.SCALE_4);
+        }
+        return Objects.isNull(divide) ? defaultValue : divide;
     }
 
     /**

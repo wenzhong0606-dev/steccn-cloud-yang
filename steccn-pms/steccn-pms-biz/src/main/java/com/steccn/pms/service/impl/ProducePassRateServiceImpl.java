@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.JointUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -33,6 +34,7 @@ import com.steccn.pms.vo.PassRateDateVo;
 import com.steccn.pms.vo.PmsReportWorkGroupVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.hssf.record.DVALRecord;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -64,10 +66,33 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
 
         //分组获取产量数据
         List<PmsReportWorkGroupVO> pmsReportWorkGroupVOList = getPmsReportWorkGroupVOList(localDateList, dto);
-
-
         QueryWrapper<PmsPullForce> queryWrapper = getQueryWrapper(dto);
         List<PmsPullForce> pmsPullForceList = pmsPullForceService.list(queryWrapper);
+        //存放拉引量的配置
+        Map<String, BigDecimal> pfMap = Maps.newHashMap();
+        Map<String, BigDecimal> rwMap = Maps.newHashMap();
+        //获取产线和车间
+        Set<Integer> lineSet = Sets.newHashSet();
+        Map<Integer, Integer> line2WorkshopMap = Maps.newHashMap();
+        Set<Long> classIdSet = Sets.newHashSet();
+        //将数据集的产线和车间都获取到
+        if(CollUtil.isNotEmpty(pmsReportWorkGroupVOList)){
+            for (PmsReportWorkGroupVO ele : pmsReportWorkGroupVOList) {
+                lineSet.add(ele.getProductLineId());
+                line2WorkshopMap.put(ele.getProductLineId(),ele.getWorkshopId());
+                classIdSet.add(ele.getClassesId());
+                rwMap.put(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, ele.getGroupDate(), ele.getWorkshopId(), ele.getProductLineId(), ele.getClassesId()), ele.getQuantity());
+            }
+        }
+        if (CollUtil.isNotEmpty(pmsPullForceList)) {
+            for (PmsPullForce ele : pmsPullForceList) {
+                lineSet.add(ele.getProductLineId());
+                line2WorkshopMap.put(ele.getProductLineId(), ele.getWorkshopId());
+                pfMap.put(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, ele.getPullForceDate(), ele.getWorkshopId(), ele.getProductLineId(), ele.getClassesId()), ele.getQuantity());
+                classIdSet.add(ele.getClassesId());
+            }
+        }
+
         //过滤数据
         if(CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare()!=null){
             //对比的是班次
@@ -77,6 +102,8 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 List<Long> classIds = Lists.newArrayList(classMap.values());
                 pmsReportWorkGroupVOList = pmsReportWorkGroupVOList.stream().filter(v -> classIds.contains(v.getClassesId())).collect(Collectors.toList());
                 pmsPullForceList = pmsPullForceList.stream().filter(v -> classIds.contains(v.getClassesId())).collect(Collectors.toList());
+                //需要考虑过滤classId
+                classIdSet = Sets.newHashSet(classIds);
             }
             //对比的是车间
             if(dto.getCompare().equals(PmManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
@@ -105,18 +132,11 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         }
         localDateList.remove(localDateList.size() - 1);
         List<ProducePassRateVO> producePassRateVOList = new ArrayList<>();
+        //班次日期，车间，产线，班次区分结果集
         for (LocalDate localDate : localDateList) {
             //过滤出指定日期的产量
             List<PmsReportWorkGroupVO> reportWorkList = pmsReportWorkGroupVOList.stream()
                     .filter(workGroupVO -> workGroupVO.getGroupDate().equals(localDate)).collect(Collectors.toList());
-
-
-            if (CollectionUtils.isEmpty(reportWorkList)) {
-                ProducePassRateVO producePassRateVO = new ProducePassRateVO();
-                producePassRateVO.setDate(localDate);
-                producePassRateVOList.add(producePassRateVO);
-                continue;
-            }
             //获取每天的合格率
             BigDecimal dayPassRate = null;
             if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
@@ -139,35 +159,56 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 }
                 dayPassRate = BigDecimalUtil.divide(dayWorkSum, pullForceSum, 4);
             }
+            //逻辑bug，如果当天没有报工，就不会产生拉引量
 
-            //获取每个班次的合格率
-            for (PmsReportWorkGroupVO reportWorkGroupVO : reportWorkList) {
-                ProducePassRateVO producePassRateVO = new ProducePassRateVO();
-                producePassRateVO.setDate(localDate);
-                producePassRateVO.setClassesId(reportWorkGroupVO.getClassesId());
-                producePassRateVO.setProductLineId(reportWorkGroupVO.getProductLineId());
-                producePassRateVO.setWorkshopId(reportWorkGroupVO.getWorkshopId());
-                producePassRateVO.setDayPassRate(dayPassRate);
-                producePassRateVO.setYield(reportWorkGroupVO.getQuantity());
 
-                if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
-                    Optional<PmsPullForce> optional = pmsPullForceList.stream()
-                            .filter(pmsPullForce -> pmsPullForce.getPullForceDate().equals(reportWorkGroupVO.getGroupDate())
-                                    && pmsPullForce.getClassesId().equals(reportWorkGroupVO.getClassesId())
-                                    && Objects.nonNull(reportWorkGroupVO.getWorkshopId())
-                                    && pmsPullForce.getWorkshopId().equals(reportWorkGroupVO.getWorkshopId())
-                                    && pmsPullForce.getProductLineId().equals(reportWorkGroupVO.getProductLineId())).findAny();
-                    if (optional.isPresent()) {
-                        producePassRateVO.setLaAmount(optional.get().getQuantity());
-                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(), optional.get().getQuantity(), 4));
-                    } else {
-                        producePassRateVO.setPassRate(null);
-                    }
-                } else {
-                    producePassRateVO.setPassRate(null);
+            //产线和班次的循环遍历
+            for (Integer line : lineSet) {
+                Integer workshopId = line2WorkshopMap.get(line);
+                for (Long classId : classIdSet) {
+                    ProducePassRateVO modelVo = new ProducePassRateVO();
+                    modelVo.setDate(localDate);
+                    modelVo.setClassesId(classId);
+                    modelVo.setProductLineId(line);
+                    modelVo.setWorkshopId(workshopId);
+                    modelVo.setDayPassRate(dayPassRate);
+                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, localDate, workshopId, line, classId);
+                    modelVo.setLaAmount(pfMap.get(joint));
+                    modelVo.setYield(rwMap.get(joint));
+                    modelVo.setPassRate(BigDecimalUtil.divide(modelVo.getYield(), modelVo.getLaAmount(), BigDecimalUtil.SCALE_4));
+                    producePassRateVOList.add(modelVo);
                 }
-                producePassRateVOList.add(producePassRateVO);
             }
+
+
+//            //获取每个班次的合格率
+//            for (PmsReportWorkGroupVO reportWorkGroupVO : reportWorkList) {
+//                ProducePassRateVO producePassRateVO = new ProducePassRateVO();
+//                producePassRateVO.setDate(localDate);
+//                producePassRateVO.setClassesId(reportWorkGroupVO.getClassesId());
+//                producePassRateVO.setProductLineId(reportWorkGroupVO.getProductLineId());
+//                producePassRateVO.setWorkshopId(reportWorkGroupVO.getWorkshopId());
+//                producePassRateVO.setDayPassRate(dayPassRate);
+//                producePassRateVO.setYield(reportWorkGroupVO.getQuantity());
+//
+//                if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
+//                    Optional<PmsPullForce> optional = pmsPullForceList.stream()
+//                            .filter(pmsPullForce -> pmsPullForce.getPullForceDate().equals(reportWorkGroupVO.getGroupDate())
+//                                    && pmsPullForce.getClassesId().equals(reportWorkGroupVO.getClassesId())
+//                                    && Objects.nonNull(reportWorkGroupVO.getWorkshopId())
+//                                    && pmsPullForce.getWorkshopId().equals(reportWorkGroupVO.getWorkshopId())
+//                                    && pmsPullForce.getProductLineId().equals(reportWorkGroupVO.getProductLineId())).findAny();
+//                    if (optional.isPresent()) {
+//                        producePassRateVO.setLaAmount(optional.get().getQuantity());
+//                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(), optional.get().getQuantity(), 4));
+//                    } else {
+//                        producePassRateVO.setPassRate(null);
+//                    }
+//                } else {
+//                    producePassRateVO.setPassRate(null);
+//                }
+//                producePassRateVOList.add(producePassRateVO);
+//            }
 
         }
         Set<Integer> sysOfficeIdSet = producePassRateVOList.stream().map(ProducePassRateVO::getWorkshopId).collect(Collectors.toSet());
@@ -239,15 +280,16 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         Assert.notNull(sysDictVO2, "换算单位[吨]不存在");
         //获取分组日期
         for (PmsReportWorkGroupVO pmsReportWorkGroupVO : reportWorkGroupVOList) {
-            LocalDateTime dateTime = pmsReportWorkGroupVO.getDate();
-            for (Map.Entry<LocalDate, PassRateDateVo> entry : dateMap.entrySet()) {
-                LocalDateTime startTime = entry.getValue().getStartDateTime();
-                LocalDateTime endTime = entry.getValue().getEndDateTime();
-                boolean bool = dateTime.isAfter(startTime) || dateTime.isEqual(startTime);
-                if (bool && dateTime.isBefore(endTime)) {
-                    pmsReportWorkGroupVO.setGroupDate(entry.getKey());
-                }
-            }
+//            LocalDateTime dateTime = pmsReportWorkGroupVO.getDate();
+//            for (Map.Entry<LocalDate, PassRateDateVo> entry : dateMap.entrySet()) {
+////                LocalDateTime startTime = entry.getValue().getStartDateTime();
+////                LocalDateTime endTime = entry.getValue().getEndDateTime();
+////                boolean bool = dateTime.isAfter(startTime) || dateTime.isEqual(startTime);
+////                if (bool && dateTime.isBefore(endTime)) {
+////                    pmsReportWorkGroupVO.setGroupDate(entry.getKey());
+////                }
+//                pmsReportWorkGroupVO.setGroupDate(entry.getKey());
+//            }
             //根据产线id获取车间id
             if (Objects.nonNull(sysOfficeMap)) {
                 pmsReportWorkGroupVO.setWorkshopId(sysOfficeMap.get(pmsReportWorkGroupVO.getProductLineId()).getParentId());
