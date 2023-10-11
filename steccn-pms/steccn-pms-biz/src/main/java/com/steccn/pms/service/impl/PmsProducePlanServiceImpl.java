@@ -301,7 +301,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         }
         if (CollectionUtils.isNotEmpty(addProducePlanList)) {
             //当为客户导入数据时,需要校验重复值
-            if(addProducePlanList.get(0).getId().equals(OaConstant.YES)){
+            if(addProducePlanList.get(0).getType().equals(OaConstant.YES)){
                 List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
                 List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
                         .in(PmsProducePlan::getPlanDate, localDateList)
