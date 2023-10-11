@@ -1,10 +1,7 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.CaseSiteDTO;
-import com.steccn.pms.dto.MessMaterialConsumeDTO;
-import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -78,9 +75,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * 确认入库（减少在途库存,增加可用库存以及总库存）
      *
      * @param inventoryDTOList
+     * @param typeId
+     * @param code
      * @return
      */
-    Boolean affirm(List<WmsInventoryDTO> inventoryDTOList);
+    Boolean affirm(List<WmsInventoryDTO> inventoryDTOList, Long typeId, String code);
 
     /**
      * 添加锁定库存，减少可用库存

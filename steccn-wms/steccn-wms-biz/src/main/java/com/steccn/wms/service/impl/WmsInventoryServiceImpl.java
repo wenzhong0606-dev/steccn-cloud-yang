@@ -21,7 +21,9 @@ import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
+import com.steccn.wms.domain.WmsInventoryRecord;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+
+    private final WmsInventoryRecordService wmsInventoryRecordService;
 
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
@@ -214,7 +218,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
-    public Boolean affirm(List<WmsInventoryDTO> inventoryDTOList) {
+    public Boolean affirm(List<WmsInventoryDTO> inventoryDTOList, Long typeId, String code) {
         if (CollUtil.isNotEmpty(inventoryDTOList)) {
             List<String> caseNoList = Lists.newArrayList();
             inventoryDTOList.forEach(wmsInventoryDTO -> {
@@ -223,14 +227,39 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(caseNoList);
             WmsInventory wmsInventory = new WmsInventory();
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            List<WmsInventoryRecordDTO> wmsInventoryRecords  = Lists.newArrayList();
             inventoryDTOList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
                 orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
                 orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
                 orDefault.setTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
                 addWmsInventory.add(orDefault);
+                //库存流水记录
+                WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
+                wmsInventoryRecord.setMaterialId(info.getMaterialId());
+                wmsInventoryRecord.setType(typeId);
+                wmsInventoryRecord.setCode(code);
+                wmsInventoryRecord.setMaterialName(info.getMaterialName());
+                wmsInventoryRecord.setShelfId(orDefault.getShelfId());
+                wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
+                //变动数量
+                wmsInventoryRecord.setVariableQuantity(info.getQuantity());
+                //变动前
+                wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
+                wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
+                wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
+                wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
+                //变动后
+                wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
+                wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
+                wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
+                wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                wmsInventoryRecords.add(wmsInventoryRecord);
             });
             updateBatchById(addWmsInventory);
+            //生成库存流水记录
+            List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
+            wmsInventoryRecordService.saveBatch(recordList);
         }
         return true;
     }

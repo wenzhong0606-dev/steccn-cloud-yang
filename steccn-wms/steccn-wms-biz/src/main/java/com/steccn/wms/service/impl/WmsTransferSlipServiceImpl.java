@@ -22,6 +22,7 @@ import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
@@ -357,7 +358,11 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 targetList.add(target);
             });
             wmsInventoryService.affirmLockQuantity(sourceList);
-            wmsInventoryService.affirm(targetList);
+            //获取库存变动类型
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(order.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
+            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            wmsInventoryService.affirm(targetList, dictVO.getId(), order.getCode());
         }
         return updateById(order);
     }

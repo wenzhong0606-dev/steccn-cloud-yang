@@ -581,7 +581,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 BeanUtil.copyProperties(info, wmsInventoryDTO);
                 inventoryDTOList.add(wmsInventoryDTO);
             });
-            Boolean aBoolean = wmsInventoryService.affirm(inventoryDTOList);
+            //获取库存变动类型
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(receipt.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
+            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Boolean aBoolean = wmsInventoryService.affirm(inventoryDTOList,dictVO.getId(),receipt.getCode());
         }
         //4.修改确认单状态
         receipt.setAffirmName(SecurityUtils.getUser().getName());
@@ -1159,7 +1163,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 infoList.forEach( info->{
                     EqpSpareVO eqpSpareVO = materialMap.get(info.getMaterialCode());
                     Assert.isTrue(Objects.nonNull(eqpSpareVO),info.getMaterialCode()+"在物料清单中不存在，请检查");
-                    info.setMaterialId(eqpSpareVO.getId().toString());
+                    info.setMaterialId(eqpSpareVO.getId());
                     info.setMaterialName(eqpSpareVO.getName());
                     info.setUnit(eqpSpareVO.getUnitId());
                 });
