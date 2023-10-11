@@ -33,6 +33,8 @@ public class PmsProducePlanVO {
 
     private String customerName;
 
+    private Integer type;
+
     /**
      * 创建时间
      */

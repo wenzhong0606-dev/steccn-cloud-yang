@@ -9,6 +9,7 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -16,6 +17,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -24,12 +26,15 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
+import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsMrpInfo;
 import com.steccn.pms.domain.PmsProducePlan;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.listener.ExcelListener;
+import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.mapper.PmsProducePlanMapper;
+import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsMrpInfoService;
 import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.util.PmsCodeUtil;
@@ -56,6 +61,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -87,6 +93,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
     private final RemoteOfficeFeign remoteOfficeFeign;
 
+    private final PmsReportWorkMapper pmsReportWorkMapper;
+
 
     @Override
     public List<PmsProducePlanDTO> list(String monthDate) {
@@ -107,55 +115,135 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         Map<String, List<PmsProducePlanVO>> groupBy = producePlanVOList
                 .stream()
-                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId()));
+                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId() + "," + pmsProducePlanVO.getCustomerId()+"," + pmsProducePlanVO.getCustomerCode() + "," + pmsProducePlanVO.getCustomerName()));
 
         List<PmsProducePlanDTO> pmsProducePlanDTOList = new ArrayList<>();
+        LocalDate firstMonthDate = LocalDate.parse(monthDate + "-01", ISO_DATE);
         //获取指定月份所有天数
-        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate + "-01", ISO_DATE));
-
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(firstMonthDate);
+        //查找入库信息
+        List<PmsStorageCountDTO> storageCount = pmsReportWorkMapper.getStorageCount(LocalDateTime.of(firstMonthDate, LocalTime.MIN), LocalDateTime.of(firstMonthDate.withDayOfMonth(firstMonthDate.lengthOfMonth()), LocalTime.MAX));
         for (Map.Entry<String, List<PmsProducePlanVO>> entry : groupBy.entrySet()) {
-            PmsProducePlanDTO pmsProducePlanDTO = new PmsProducePlanDTO();
-            String[] materials = entry.getKey().split(",");
-
-            List<BigDecimal> totalList = entry.getValue().stream().map(PmsProducePlanVO::getQuantity).collect(Collectors.toList());
-            BigDecimal total = BigDecimalUtil.sum(totalList);
-
-            pmsProducePlanDTO.setMaterialName(materials[0]);
-            pmsProducePlanDTO.setMaterialCode(materials[1]);
-            pmsProducePlanDTO.setMaterialId(Long.parseLong(materials[2]));
-            pmsProducePlanDTO.setTotal(total);
-
-            List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
-
-            for (LocalDate localDate : localDateList) {
-                PmsProducePlanDetailsDTO planDetailsDTO = new PmsProducePlanDetailsDTO();
-
-                Optional<PmsProducePlanVO> present = entry.getValue().stream().filter(producePlanVO -> producePlanVO.getPlanDate().equals(localDate)).findAny();
-
-                if (present.isPresent()) {
-                    BeanUtils.copyProperties(present.get(), planDetailsDTO);
-                    if(StrUtil.isNotBlank(present.get().getCustomerCode())){
-                        pmsProducePlanDTO.setCustomerCode(present.get().getCustomerCode());
-                    }
-                    if(StrUtil.isNotBlank(present.get().getCustomerName())){
-                        pmsProducePlanDTO.setCustomerName(present.get().getCustomerName());
-                    }
-                } else {
-                    planDetailsDTO.setPlanDate(localDate);
+            //每天最大的数字
+            Map<LocalDate,BigDecimal> maxDayCount = Maps.newHashMap();
+            //每种物料默认出现三次
+            for(int i = 0;i < 3; i++){
+                PmsProducePlanDTO pmsProducePlanDTO = new PmsProducePlanDTO();
+                String[] materials = entry.getKey().split(",");
+                pmsProducePlanDTO.setMaterialName(materials[0]);
+                pmsProducePlanDTO.setMaterialCode(materials[1]);
+                pmsProducePlanDTO.setMaterialId(Long.parseLong(materials[2]));
+                if(!materials[4].equals("null")){
+                    pmsProducePlanDTO.setCustomerCode(materials[4]);
                 }
-                producePlanDetailsDTOList.add(planDetailsDTO);
+                if(!materials[5].equals("null")){
+                    pmsProducePlanDTO.setCustomerName(materials[5]);
+                }
+                pmsProducePlanDTO.setType(i);
+                List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
+                //用作入库数量加总计数
+                Map<Integer,BigDecimal> countStorage = Maps.newHashMap();
+                //0表示采购导入 1表示客户导入 2表示入库数量
+                if(i!=2){
+                    for (LocalDate localDate : localDateList) {
+                        PmsProducePlanDetailsDTO planDetailsDTO = new PmsProducePlanDetailsDTO();
+
+                        int finalI = i;
+                        Optional<PmsProducePlanVO> present = entry.getValue().stream().filter(producePlanVO -> producePlanVO.getPlanDate().equals(localDate)&&producePlanVO.getType().equals(finalI)).findAny();
+                        if (present.isPresent()) {
+                            BeanUtils.copyProperties(present.get(), planDetailsDTO);
+                        } else {
+                            planDetailsDTO.setQuantity(BigDecimal.ZERO);
+                        }
+                        // 使用 compute 方法来处理值,取每天的最大值
+                        maxDayCount.compute(localDate, (key, oldValue) -> {
+                            if (oldValue == null || planDetailsDTO.getQuantity().compareTo(oldValue) > 0) {
+                                return planDetailsDTO.getQuantity();
+                            } else {
+                                return oldValue;
+                            }
+                        });
+                        planDetailsDTO.setPlanDate(localDate);
+                        planDetailsDTO.setType(i);
+                        producePlanDetailsDTOList.add(planDetailsDTO);
+                    }
+                }else {
+                    //查找入库数量
+                    for (LocalDate localDate : localDateList) {
+                        PmsProducePlanDetailsDTO planDetailsDTO = new PmsProducePlanDetailsDTO();
+                        List<PmsStorageCountDTO> storageCountTmp = Lists.newArrayList();
+                        if(materials[3].equals("null")){
+                            storageCountTmp = storageCount.stream().filter(v -> v.getMaterialId().equals(pmsProducePlanDTO.getMaterialId())
+                                    && v.getCustomerId() == null
+                                    && v.getEnterTime() != null
+                                    && LocalDateUtil.isRange(v.getEnterTime(), localDate.atTime(LocalTime.MIN), localDate.atTime(LocalTime.MAX), true, false)).collect(Collectors.toList());
+                        }else {
+                            storageCountTmp = storageCount.stream().filter(v -> v.getMaterialId().equals(pmsProducePlanDTO.getMaterialId())
+                                    && v.getCustomerId().equals(Integer.parseInt(materials[3]))
+                                    && v.getEnterTime() != null
+                                    && LocalDateUtil.isRange(v.getEnterTime(), localDate.atTime(LocalTime.MIN), localDate.atTime(LocalTime.MAX), true, false)).collect(Collectors.toList());
+                        }
+                        if(!materials[4].equals("null")){
+                            pmsProducePlanDTO.setCustomerCode(materials[4]);
+                        }
+                        if(!materials[5].equals("null")){
+                            pmsProducePlanDTO.setCustomerName(materials[5]);
+                        }
+                        if (CollUtil.isNotEmpty(storageCountTmp)) {
+                            List<BigDecimal> bigDecimals = storageCountTmp.stream().map(PmsStorageCountDTO::getQuantity).collect(Collectors.toList());
+                            BigDecimal quantity = BigDecimalUtil.sum(bigDecimals);
+                            if(quantity==null){
+                                quantity = BigDecimal.ZERO;
+                            }
+                            BigDecimalUtil.accumulate(countStorage,0,quantity);
+                            planDetailsDTO.setQuantity(quantity);
+                        } else {
+                            planDetailsDTO.setQuantity(BigDecimal.ZERO);
+                        }
+                        // 使用 compute 方法来处理值,取每天的最大值
+                        maxDayCount.compute(localDate, (key, oldValue) -> {
+                            if (oldValue == null || planDetailsDTO.getQuantity().compareTo(oldValue) > 0) {
+                                return planDetailsDTO.getQuantity();
+                            } else {
+                                return oldValue;
+                            }
+                        });
+                        planDetailsDTO.setPlanDate(localDate);
+                        planDetailsDTO.setType(i);
+                        producePlanDetailsDTOList.add(planDetailsDTO);
+                    }
+
+                }
+                if(i!=2){
+                    List<BigDecimal> totalList = entry.getValue().stream().map(PmsProducePlanVO::getQuantity).collect(Collectors.toList());
+                    BigDecimal total = BigDecimalUtil.sum(totalList);
+                    //做特殊处理,总和为空,则为0
+                    if(Objects.isNull(total)){
+                        total = BigDecimal.ZERO;
+                    }
+                    pmsProducePlanDTO.setTotal(total);
+                }else {
+                    //入库数量特殊加总
+                    pmsProducePlanDTO.setTotal(countStorage.get(0));
+                }
+                LocalDateTime updateTime = entry.getValue().stream().max(Comparator.comparing(PmsProducePlanVO::getUpdateTime)).get().getUpdateTime();
+                pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
+                pmsProducePlanDTO.setUpdateTime(updateTime);
+                pmsProducePlanDTOList.add(pmsProducePlanDTO);
             }
-            LocalDateTime updateTime = entry.getValue().stream().max(Comparator.comparing(PmsProducePlanVO::getUpdateTime)).get().getUpdateTime();
-            pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
-            pmsProducePlanDTO.setUpdateTime(updateTime);
-            pmsProducePlanDTOList.add(pmsProducePlanDTO);
+            //回退三次算每天的百分比
+            for(int i = 0; i < 3; i++){
+                pmsProducePlanDTOList.get(pmsProducePlanDTOList.size()-1-i).getProducePlanDetailsDTOList().forEach(tmp->{
+                    tmp.setPercentage(BigDecimalUtil.percent(tmp.getQuantity(),maxDayCount.get(tmp.getPlanDate()),2));
+                });
+            }
         }
         //添加序号
         for (int i = 0; i < pmsProducePlanDTOList.size(); i++) {
             pmsProducePlanDTOList.get(i).setId(i);
         }
         //排序
-        return pmsProducePlanDTOList.stream().sorted(Comparator.comparing(PmsProducePlanDTO::getUpdateTime).reversed()).collect(Collectors.toList());
+        return pmsProducePlanDTOList;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -195,20 +283,39 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             //如果有id就修改，没有就新增
             if (Objects.isNull(planDetailsDTO.getId())) {
                 pmsProducePlan.setStatus(0);
+                //只能新增用户数据
+                if(Objects.isNull(dto.getType())){
+                    pmsProducePlan.setType(OaConstant.YES);
+                }else {
+                    pmsProducePlan.setType(dto.getType());
+                }
                 addProducePlanList.add(pmsProducePlan);
             } else {
                 pmsProducePlan.setId(planDetailsDTO.getId());
+                //校验值,只有用户数据才可修改
+                if(pmsProducePlan.getType().equals(OaConstant.YES)){
+                    throw new BusinessException("只能导入数据才可修改");
+                }
                 updateProducePlanList.add(pmsProducePlan);
             }
         }
         if (CollectionUtils.isNotEmpty(addProducePlanList)) {
-//            List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
-//            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
-//                    .in(PmsProducePlan::getPlanDate, localDateList));
-            //需求修改,物料可重复
-//            if (CollectionUtils.isNotEmpty(list)) {
-//                throw new BusinessException("该物料已存在生产计划，新增失败");
-//            }
+            //当为客户导入数据时,需要校验重复值
+            if(addProducePlanList.get(0).getId().equals(OaConstant.YES)){
+                List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
+                List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
+                        .in(PmsProducePlan::getPlanDate, localDateList)
+                        .eq(PmsProducePlan::getType,OaConstant.YES));
+                if(CollUtil.isNotEmpty(list)){
+                    addProducePlanList.forEach(tmp->{
+                        //若有相同的物料和客户则无法新增
+                        PmsProducePlan pmsProducePlan = list.stream().filter(v -> v.getMaterialId().equals(tmp.getMaterialId()) && v.getCustomerId().equals(tmp.getCustomerId())).findFirst().orElse(null);
+                        if(Objects.nonNull(pmsProducePlan)){
+                            throw new BusinessException("该物料已存在生产计划，新增失败");
+                        }
+                    });
+                }
+            }
             if (!saveBatch(addProducePlanList)) {
                 throw new BusinessException("生产月计划新增失败");
             }
@@ -239,9 +346,11 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                         .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
                         .eq(PmsProducePlan::getMaterialId,spareVO.get(tmp.getMaterialCode()).getId())
                         .eq(PmsProducePlan::getOrderCode,tmp.getOrderCode())
+                        .eq(PmsProducePlan::getType,OaConstant.NO)
                         .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
             }
             for(PmsProducePlanDTO tmp:dto){
+                tmp.setType(OaConstant.NO);
                 this.addOrEditBatch(tmp);
             }
         }
@@ -267,13 +376,19 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanNewExcelDTO.class, new ExcelListener(dtoList, planMsgVOList)).sheet().doRead();
 
-
+        //物料编码
         List<String> codeList = dtoList.stream().map(PmsProducePlanNewExcelDTO::getMaterialCode).collect(Collectors.toList());
+        //客户编码
+        Set<String> customerCode = dtoList.stream().map(PmsProducePlanNewExcelDTO::getCustomerMaterialCode).collect(Collectors.toSet());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
+        if(CollUtil.isEmpty(customerCode)){
+            throw new BusinessException("客户编码不能为空");
+        }
+        Map<String, SysOfficeVO> customerCodeMap = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(customerCode),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取已存在的物料信息
         List<ProducePlanVO> producePlanVOList = getUpdateMap(dtoList, codeList);
         //校验导入内容
-        planMsgVOList.addAll(checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, producePlanVOList));
+        planMsgVOList.addAll(checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, producePlanVOList,customerCodeMap));
 
         //如果错误信息不为空组装数据返回
         ProducePlanImportVO planImportVO = new ProducePlanImportVO();
@@ -296,6 +411,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 PmsProducePlan pmsProducePlan = new PmsProducePlan();
                 //根据物料编码获取物料id
                 pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
+                //客户数据
+                pmsProducePlan.setCustomerId(customerCodeMap.get(excelDTO.getCustomerMaterialCode()).getId());
+                pmsProducePlan.setCustomerCode(customerCodeMap.get(excelDTO.getCustomerMaterialCode()).getOfficeCode());
+                pmsProducePlan.setCustomerName(customerCodeMap.get(excelDTO.getCustomerMaterialCode()).getOfficeName());
                 //获取当日的数量
                 String day = localDate.toString().substring(8, 10);
                 if (PmsCodeUtil.checkZero(day)) {
@@ -303,12 +422,13 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 }
                 pmsProducePlan.setQuantity(getQuantity(excelDTO, day));
                 pmsProducePlan.setPlanDate(localDate);
+                pmsProducePlan.setType(OaConstant.YES);
                 pmsProducePlan.setStatus(0);
                 //如果等于0表示不覆盖
                 if (!Objects.isNull(pmsProducePlan.getQuantity())) {
-                    if (updateFlag.equals(0)) {
-                        addList.add(pmsProducePlan);
-                    } else {
+//                    if (updateFlag.equals(0)) {
+//                        addList.add(pmsProducePlan);
+//                    } else {
                         //判断是否有存在的物料信息
                         Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> localDate.equals(producePlanVO.getPlanDate())
                                 && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
@@ -318,7 +438,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                         } else {
                             addList.add(pmsProducePlan);
                         }
-                    }
+//                    }
                 }
             }
         }
@@ -824,7 +944,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 //        return pmsMrpInfoService.mrpAdd(dto);
 //    }
 
-    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanNewExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map, List<ProducePlanVO> producePlanVOList) {
+    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanNewExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map, List<ProducePlanVO> producePlanVOList,Map<String,SysOfficeVO> customerCodeMap) {
 
         List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
 
@@ -853,6 +973,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
             if (Objects.isNull(map.get(excelDTO.getMaterialCode()))) {
                 errorMsgList.add("物料信息不存在");
+            }
+
+            if (Objects.isNull(customerCodeMap.get(excelDTO.getCustomerMaterialCode()))) {
+                errorMsgList.add("客户信息不存在");
             }
 
 

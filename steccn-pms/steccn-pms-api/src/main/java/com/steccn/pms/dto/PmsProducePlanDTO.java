@@ -29,6 +29,10 @@ public class PmsProducePlanDTO implements Serializable {
     private String customerName;
     private String position;
     /**
+     * 类型 0表示采购导入 1表示客户导入
+     */
+    private Integer type;
+    /**
      * 单据编码 三方对接
      */
     private String orderCode;

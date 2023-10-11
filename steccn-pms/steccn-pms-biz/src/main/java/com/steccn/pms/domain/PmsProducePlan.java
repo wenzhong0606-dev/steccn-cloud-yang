@@ -69,6 +69,11 @@ public class PmsProducePlan implements Serializable {
     private Integer status;
 
     /**
+     * 来源(0:销售系统 1客户导入)
+     */
+    private Integer type;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
