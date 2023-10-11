@@ -44,4 +44,14 @@ public class SalesTransactionBodyDetailDTO implements Serializable {
      * 外部系统供应商代码
      */
     private String esSupplierNum;
+
+    /**
+     * 外部系统采购订单头编号
+     */
+    private String esFromPoNum;
+
+    /**
+     * 外部系统采购订单头行号
+     */
+    private String esFromPoLineNum;
 }

@@ -1058,6 +1058,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             result.setSpecifications(eqpSpareVO.getSpecifications());
             result.setDeliveryOrderCode(dto.getDeliveryOrderCode());
             result.setEsSupplierCode(esSupplierCode);
+            result.setEsFromPoNum(tmp.getEsPoNum());
+            result.setEsFromPoLineNum(tmp.getEsPoLineNum());
             //箱号
             if(eqpSpareVO.getCode().startsWith("P1.W.P")){
                 //箱号规则   六位日期-六位流水()
@@ -1221,12 +1223,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             }
             bodyDetailTmp.setEsTrxLineNum(tmp.getAssociatedNo());
             bodyDetailTmp.setTrxDate(localDateStr);
-            bodyDetailTmp.setEsTrxTypeCode("SRM01");
+            bodyDetailTmp.setEsTrxTypeCode("ERP01");
             bodyDetailTmp.setQuantity(tmp.getQuantity());
             bodyDetailTmp.setStockType("OWN_STOCK");
             bodyDetailTmp.setEsOuCode("CO00000001");
             bodyDetailTmp.setEsSupplierNum(dto.getEsSupplierCode());
             bodyDetailTmp.setCurrencyCode("CNY");
+            Assert.notBlank(tmp.getEsFromPoNum(),"外部系统订单头不能为空");
+            bodyDetailTmp.setEsFromPoNum(tmp.getEsFromPoNum());
+            Assert.notBlank(tmp.getEsFromPoLineNum(),"外部系统订单行号不能为空");
+            bodyDetailTmp.setEsFromPoLineNum(tmp.getEsFromPoLineNum());
             bodyDetail.add(bodyDetailTmp);
         });
         paramBody.setRcvTrxLineList(bodyDetail);

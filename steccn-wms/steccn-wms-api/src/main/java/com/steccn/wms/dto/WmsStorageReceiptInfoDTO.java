@@ -78,4 +78,10 @@ public class WmsStorageReceiptInfoDTO {
 
     @ApiModelProperty("金蝶收料通知单Id")
     private String erpLineId;
+
+    @ApiModelProperty("外部系统订单头编号")
+    private String esFromPoNum;
+
+    @ApiModelProperty("外部系统订单行编号")
+    private String esFromPoLineNum;
 }
