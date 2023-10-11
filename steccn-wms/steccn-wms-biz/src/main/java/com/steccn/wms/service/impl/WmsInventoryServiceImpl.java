@@ -230,10 +230,6 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             List<WmsInventoryRecordDTO> wmsInventoryRecords  = Lists.newArrayList();
             inventoryDTOList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
-                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
-                orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
-                orDefault.setTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
-                addWmsInventory.add(orDefault);
                 //库存流水记录
                 WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
                 wmsInventoryRecord.setMaterialId(info.getMaterialId());
@@ -255,6 +251,12 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
                 wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
                 wmsInventoryRecords.add(wmsInventoryRecord);
+
+                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
+                orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
+                orDefault.setTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
+                addWmsInventory.add(orDefault);
+
             });
             updateBatchById(addWmsInventory);
             //生成库存流水记录

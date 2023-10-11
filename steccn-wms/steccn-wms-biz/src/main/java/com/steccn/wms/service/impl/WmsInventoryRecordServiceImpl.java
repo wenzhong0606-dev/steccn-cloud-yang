@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.vo.WmsInventoryRecordVO;
@@ -39,6 +41,8 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
     implements WmsInventoryRecordService{
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<WmsInventoryRecordVO> pageList(WmsInventoryRecordPageDTO dto) {
@@ -55,12 +59,22 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
         List<WmsInventoryRecordVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryRecordVO.class);
         if (CollUtil.isNotEmpty(res)) {
             List<Long> materialIds = Lists.newArrayList();
+            Set<Long> dictIds = Sets.newHashSet();
+            Set<Integer> officeIds = Sets.newHashSet();
             res.forEach(wmsInventoryVO -> {
                 materialIds.add(wmsInventoryVO.getMaterialId());
+                dictIds.add(wmsInventoryVO.getType());
+                officeIds.add(Math.toIntExact(wmsInventoryVO.getShelfId()));
+                officeIds.add(Math.toIntExact(wmsInventoryVO.getWarehouseId()));
             });
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             res.forEach(wmsInventoryVO -> {
                 wmsInventoryVO.setSpecification(materialMap.get(wmsInventoryVO.getMaterialId()).getSpecifications());
+                wmsInventoryVO.setTypeName(dictMap.get(wmsInventoryVO.getType()));
+                wmsInventoryVO.setShelfName(officeMap.get(Math.toIntExact(wmsInventoryVO.getShelfId())));
+                wmsInventoryVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsInventoryVO.getWarehouseId())));
             });
         }
         page.setRecords(res);
