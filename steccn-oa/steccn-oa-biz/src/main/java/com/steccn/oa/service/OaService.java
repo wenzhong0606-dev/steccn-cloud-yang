@@ -2,6 +2,7 @@ package com.steccn.oa.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -538,6 +539,31 @@ public class OaService {
 //        }
         return vo;
     }
+
+    /**
+     * 提交流程
+     * @param requestId
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public OaWorkflowStatusVO doForceDrawBack(OaWorkFlowSubmitParamDTO dto){
+        Assert.notNull(dto.getRequestId(),"requestId不能为空");
+        Assert.notNull(dto.getRequestId(),"用户Id不能为空");
+        OaWorkflowSubmitDTO oaWorkflowSubmitDTO = new OaWorkflowSubmitDTO();
+        oaWorkflowSubmitDTO.setRequestId(dto.getRequestId());
+        oaWorkflowSubmitDTO.setOtherParams(JSONObject.toJSONString(new OaWorkflowOtherParamsDTO("1")));
+        String backResult = OutSystemOptional.of(() -> oaApi.doForceDrawBack(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowSubmitDTO) , FeignConstant.OA_SERVICE_NAME).get();
+        String deleteResult = OutSystemOptional.of(() -> oaApi.deleteRequest(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowSubmitDTO) , FeignConstant.OA_SERVICE_NAME).get();
+        OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
+        JSONObject jsonObject = JSONObject.parseObject(deleteResult);
+        vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        if(!vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            throw new BusinessException(vo.getCode());
+        }
+        return new OaWorkflowStatusVO();
+    }
+
+
 
     /**
      * 获取流程状态的数量

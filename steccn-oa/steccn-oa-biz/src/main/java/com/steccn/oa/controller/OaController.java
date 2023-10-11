@@ -187,6 +187,12 @@ public class OaController {
         return R.success(oaService.submitWorkFlow(dto));
     }
 
+    @ApiOperation("强制收回")
+    @PostMapping("/workflow/deleteFlow")
+    public R<OaWorkflowStatusVO> doForceDrawBack(@RequestBody OaWorkFlowSubmitParamDTO dto) {
+        return R.success(oaService.doForceDrawBack(dto));
+    }
+
     @ApiOperation("根据工号工号查询id")
     @GetMapping("/user/id/{workCode}")
     public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode) {
