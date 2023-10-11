@@ -243,7 +243,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlanDTOList.get(i).setId(i);
         }
         //排序
-        return pmsProducePlanDTOList.stream().sorted(Comparator.comparing(PmsProducePlanDTO::getUpdateTime).reversed()).collect(Collectors.toList());
+        return pmsProducePlanDTOList;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -284,7 +284,11 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             if (Objects.isNull(planDetailsDTO.getId())) {
                 pmsProducePlan.setStatus(0);
                 //只能新增用户数据
-                pmsProducePlan.setType(OaConstant.YES);
+                if(Objects.isNull(dto.getType())){
+                    pmsProducePlan.setType(OaConstant.YES);
+                }else {
+                    pmsProducePlan.setType(dto.getType());
+                }
                 addProducePlanList.add(pmsProducePlan);
             } else {
                 pmsProducePlan.setId(planDetailsDTO.getId());
@@ -346,6 +350,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                         .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
             }
             for(PmsProducePlanDTO tmp:dto){
+                tmp.setType(OaConstant.NO);
                 this.addOrEditBatch(tmp);
             }
         }
