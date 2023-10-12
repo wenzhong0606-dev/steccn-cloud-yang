@@ -229,10 +229,14 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     pmsProducePlanDTO.setTotal(total);
                 }else {
                     //入库数量特殊加总
-                    if(countStorage.get(0).compareTo(maxTotalCount)==1){
+                    BigDecimal countTmp = BigDecimal.ZERO;
+                    if(countStorage.get(0)!=null){
+                        countTmp = countStorage.get(0);
+                    }
+                    if(countTmp.compareTo(maxTotalCount)==1){
                         maxTotalCount = countStorage.get(0);
                     }
-                    pmsProducePlanDTO.setTotal(countStorage.get(0));
+                    pmsProducePlanDTO.setTotal(countTmp);
                 }
                 LocalDateTime updateTime = entry.getValue().stream().max(Comparator.comparing(PmsProducePlanVO::getUpdateTime)).get().getUpdateTime();
                 pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
