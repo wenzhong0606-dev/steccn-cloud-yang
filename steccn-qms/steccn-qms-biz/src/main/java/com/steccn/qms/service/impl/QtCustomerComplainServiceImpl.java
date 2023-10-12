@@ -57,6 +57,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -533,7 +534,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                     if(Objects.isNull(o2.getComplainCustomerName())){
                         return -1;
                     }
-                    return o1.getComplainCustomerName().compareTo(o2.getComplainCustomerName());
+                    if(!o1.getComplainCustomerName().equals(o2.getComplainCustomerName())){
+                       return o1.getComplainCustomerName().compareTo(o2.getComplainCustomerName());
+                    }
                 }
                 if(Objects.nonNull(o1.getReplyClientDate()) || Objects.nonNull(o1.getReplyClientDate())){
                     if(Objects.isNull(o1.getReplyClientDate())){
@@ -542,7 +545,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                     if(Objects.isNull(o2.getReplyClientDate())){
                         return -1;
                     }
-                    return o1.getReplyClientDate().compareTo(o2.getReplyClientDate());
+                    if(!o1.getReplyClientDate().equals(o2.getReplyClientDate())){
+                        return o1.getReplyClientDate().compareTo(o2.getReplyClientDate());
+                    }
                 }
                 if(!o1.getCode().equals(o2.getCode())){
                    return o1.getCode().compareTo(o2.getCode());
