@@ -309,7 +309,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             } else {
                 pmsProducePlan.setId(planDetailsDTO.getId());
                 //校验值,只有用户数据才可修改
-                if(planDetailsDTO.getType().equals(OaConstant.YES)){
+                if(!planDetailsDTO.getType().equals(OaConstant.YES)){
                     throw new BusinessException("只能导入数据才可修改");
                 }
                 updateProducePlanList.add(pmsProducePlan);
