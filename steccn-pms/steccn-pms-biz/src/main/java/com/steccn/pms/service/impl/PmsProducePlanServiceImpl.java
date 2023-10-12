@@ -217,7 +217,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
                 }
                 if(i!=2){
-                    List<BigDecimal> totalList = entry.getValue().stream().map(PmsProducePlanVO::getQuantity).collect(Collectors.toList());
+                    int finalI1 = i;
+                    List<BigDecimal> totalList = entry.getValue().stream().filter(v->v.getType().equals(Integer.valueOf(finalI1))).map(PmsProducePlanVO::getQuantity).collect(Collectors.toList());
                     BigDecimal total = BigDecimalUtil.sum(totalList);
                     //做特殊处理,总和为空,则为0
                     if(Objects.isNull(total)){
