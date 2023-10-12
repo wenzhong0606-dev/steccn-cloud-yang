@@ -35,4 +35,43 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <select id="report" resultType="com.steccn.qms.dto.QtCustomerComplaintReportResDTO">
+        SELECT
+            cc.id,
+            cc.CODE,
+            cc.reply_client_date,
+            de.material_id,
+            cc.complain_customer,
+            cc.complain_customer_name,
+            cc.complain_type,
+            de.complain_quantity,
+            mo.module_number,
+            mo.complaint_reason,
+            de.remarks
+        FROM
+            qt_customer_complain cc
+                LEFT JOIN qt_customer_complain_detail de ON cc.id = de.customer_complain_id
+                LEFT JOIN qt_customer_complain_module mo ON cc.id = mo.customer_complain_id
+        where cc.del_flag = 0 and de.del_flag = 0 and mo.del_flag = 0
+        and cc.reply_client_date &gt;= #{start}
+        and cc.reply_client_date &lt;= #{end}
+        <if test="customerIdList != null and customerIdList.size > 0">
+            and cc.complain_customer in in
+            <foreach collection="customerIdList" item="id"  open="(" close=")"  separator=",">
+                #{id}
+            </foreach>)
+        </if>
+        <if test="materialIdList != null and materialIdList.size > 0">
+            and de.material_id in in
+            <foreach collection="materialIdList" item="id"  open="(" close=")"  separator=",">
+                #{id}
+            </foreach>)
+        </if>
+        <if test="complainTypeList !=null and complainTypeList.size > 0">
+            and cc.complain_type in in
+            <foreach collection="materialIdList" item="id"  open="(" close=")"  separator=",">
+                #{id}
+            </foreach>)
+        </if>
+    </select>
 </mapper>

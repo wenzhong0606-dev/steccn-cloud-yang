@@ -1,4 +1,4 @@
-package com.steccn.qms.vo;
+package com.steccn.qms.dto;
 
 import lombok.Data;
 import java.io.Serializable;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
  * @date 2023/10/12
  */
 @Data
-public class QtCustomerComplaintReportVO implements Serializable {
+public class QtCustomerComplaintReportResDTO implements Serializable {
 
     /**
      * 客诉code
@@ -22,6 +22,11 @@ public class QtCustomerComplaintReportVO implements Serializable {
      * 客诉主键
      */
     private Long id;
+
+    /**
+     * 投诉客户
+     */
+    private String complainCustomer;
 
     /**
      * 投诉客户

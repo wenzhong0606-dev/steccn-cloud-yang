@@ -5,12 +5,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.interfaces.Join;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -30,10 +30,8 @@ import com.steccn.platform.dto.OaProcessDataDTO;
 import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.platform.dto.ProcessBusiLinkDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteMsgFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
+import com.steccn.platform.feign.*;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
@@ -43,6 +41,8 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
+import com.steccn.qms.dto.QtCustomerComplaintReportDTO;
+import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
@@ -75,18 +75,13 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     private final RedissonClient redissonClient;
     private final QtComplainDefectImproveManService qtComplainDefectImproveManService;
-
     private final QtCustomerComplainDetailService qtCustomerComplainDetailService;
-
     private final RemoteMsgFeignApi remoteMsgFeignApi;
-
     private final OaInfoService oaInfoService;
-
     private final RemoteOfficeFeign remoteOfficeFeign;
-
     private final QtComplainTypeService qtComplainTypeService;
-
     private final QtCustomerComplainMapper qtCustomerComplainMapper;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Autowired
     @Lazy
@@ -496,6 +491,74 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         return Boolean.FALSE;
     }
 
+    @Override
+    public List<QtCustomerComplaintReportResDTO> report(QtCustomerComplaintReportDTO dto) {
+        List<QtCustomerComplaintReportResDTO> resList = baseMapper.report(dto.getStart(), dto.getEnd(), dto.getCustomerIdList(), dto.getMaterialIdList(), dto.getComplainTypeList());
+        if (CollUtil.isNotEmpty(resList)) {
+            //获取物料规格, 投诉类型
+            //计算组件数量
+            Set<Long> materialIdSet = Sets.newHashSet();
+            Map<String, Integer> countMap = Maps.newHashMap();
+            Set<Integer> complainTypeSet = Sets.newHashSet();
+            resList.forEach(ele -> {
+                materialIdSet.add(ele.getMaterialId());
+                //计算组件数量
+                countMap.put(ele.getCode(), countMap.getOrDefault(ele.getCode(), 0) + 1);
+                //投诉类型
+                complainTypeSet.add(ele.getComplainType());
+            });
+            Map<Integer, String> complainTypeMap = qtComplainTypeService.listByIdCh(complainTypeSet);
+            Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            resList.forEach(ele -> {
+                EqpSpareVO eqpSpareVO = spareVOMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
+                ele.setSpecifications(eqpSpareVO.getSpecifications());
+                ele.setMaterialName(eqpSpareVO.getName());
+                ele.setModuleNum(countMap.get(ele.getCode()));
+                ele.setComplainTypeName(complainTypeMap.get(ele.getComplainType()));
+            });
+        }
+        //1级排序：按客户名称升序排列
+        //2级排序：按回复客户日期降序排列
+        //3级排序：按客诉单号降序排列
+        //4级排序：按组件序列号升序排列
+
+        resList.sort(new Comparator<QtCustomerComplaintReportResDTO>() {
+            @Override
+            public int compare(QtCustomerComplaintReportResDTO o1, QtCustomerComplaintReportResDTO o2) {
+                //如果客户名称有一个不为空
+                if(Objects.nonNull(o1.getComplainCustomerName()) || Objects.nonNull(o2.getComplainCustomerName())){
+                    if(Objects.isNull(o1.getComplainCustomerName())){
+                        return 1;
+                    }
+                    if(Objects.isNull(o2.getComplainCustomerName())){
+                        return -1;
+                    }
+                    return o1.getComplainCustomerName().compareTo(o2.getComplainCustomerName());
+                }
+                if(Objects.nonNull(o1.getReplyClientDate()) || Objects.nonNull(o1.getReplyClientDate())){
+                    if(Objects.isNull(o1.getReplyClientDate())){
+                        return 1;
+                    }
+                    if(Objects.isNull(o2.getReplyClientDate())){
+                        return -1;
+                    }
+                    return o1.getReplyClientDate().compareTo(o2.getReplyClientDate());
+                }
+                if(!o1.getCode().equals(o2.getCode())){
+                   return o1.getCode().compareTo(o2.getCode());
+                }
+                if(Objects.isNull(o2.getModuleNumber())){
+                    return -1;
+                }
+                if(Objects.isNull(o1.getModuleNumber())){
+                    return 1;
+                }
+                return o1.getModuleNumber().compareTo(o2.getModuleNumber());
+            }
+        });
+
+        return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
 
     /**
      * 发送消息

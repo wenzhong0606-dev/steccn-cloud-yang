@@ -1,13 +1,16 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
+import com.steccn.qms.dto.QtCustomerComplaintReportDTO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
+import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -75,4 +78,11 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     Boolean modelNoFlag(String modelNo);
+
+    /**
+     * 客诉报表
+     * @param dto 请求类
+     * @return
+     */
+    List<QtCustomerComplaintReportResDTO> report(QtCustomerComplaintReportDTO dto);
 }
