@@ -15,6 +15,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaConstant;
@@ -126,6 +127,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         for (Map.Entry<String, List<PmsProducePlanVO>> entry : groupBy.entrySet()) {
             //每天最大的数字
             Map<LocalDate,BigDecimal> maxDayCount = Maps.newHashMap();
+            BigDecimal maxTotalCount = BigDecimal.ZERO;
             //每种物料默认出现三次
             for(int i = 0;i < 3; i++){
                 PmsProducePlanDTO pmsProducePlanDTO = new PmsProducePlanDTO();
@@ -221,9 +223,15 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     if(Objects.isNull(total)){
                         total = BigDecimal.ZERO;
                     }
+                    if(total.compareTo(maxTotalCount)==1){
+                        maxTotalCount = total;
+                    }
                     pmsProducePlanDTO.setTotal(total);
                 }else {
                     //入库数量特殊加总
+                    if(countStorage.get(0).compareTo(maxTotalCount)==1){
+                        maxTotalCount = countStorage.get(0);
+                    }
                     pmsProducePlanDTO.setTotal(countStorage.get(0));
                 }
                 LocalDateTime updateTime = entry.getValue().stream().max(Comparator.comparing(PmsProducePlanVO::getUpdateTime)).get().getUpdateTime();
@@ -233,9 +241,12 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
             //回退三次算每天的百分比
             for(int i = 0; i < 3; i++){
-                pmsProducePlanDTOList.get(pmsProducePlanDTOList.size()-1-i).getProducePlanDetailsDTOList().forEach(tmp->{
+                PmsProducePlanDTO pmsProducePlanTmp = pmsProducePlanDTOList.get(pmsProducePlanDTOList.size() - 1 - i);
+                pmsProducePlanTmp.getProducePlanDetailsDTOList().forEach(tmp->{
                     tmp.setPercentage(BigDecimalUtil.percent(tmp.getQuantity(),maxDayCount.get(tmp.getPlanDate()),2));
                 });
+                //总百分比
+                pmsProducePlanTmp.setTotalPercent(BigDecimalUtil.percent(pmsProducePlanTmp.getTotal(),maxTotalCount));
             }
         }
         //添加序号
@@ -340,15 +351,11 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     .map(PmsProducePlanDTO::getMaterialCode)
                     .collect(Collectors.toList());
             Map<String, EqpSpareVO> spareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(materialCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            for(PmsProducePlanDTO tmp:dto){
-                LocalDate planDate = tmp.getProducePlanDetailsDTOList().get(0).getPlanDate();
-                remove(new LambdaQueryWrapper<PmsProducePlan>()
-                        .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
-                        .eq(PmsProducePlan::getMaterialId,spareVO.get(tmp.getMaterialCode()).getId())
-                        .eq(PmsProducePlan::getOrderCode,tmp.getOrderCode())
-                        .eq(PmsProducePlan::getType,OaConstant.NO)
-                        .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
-            }
+            LocalDate planDate = dto.get(0).getProducePlanDetailsDTOList().get(0).getPlanDate();
+            //先删除所有数据
+            remove(new LambdaQueryWrapper<PmsProducePlan>()
+                    .eq(PmsProducePlan::getType,OaConstant.NO)
+                    .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
             for(PmsProducePlanDTO tmp:dto){
                 tmp.setType(OaConstant.NO);
                 this.addOrEditBatch(tmp);
@@ -401,7 +408,6 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         planImportVO.setImportFlag(true);
         List<PmsProducePlan> addList = new ArrayList<>();
         List<PmsProducePlan> updateList = new ArrayList<>();
-
         //处理数据
         for (PmsProducePlanNewExcelDTO excelDTO : dtoList) {
             //获取当月天数
@@ -448,6 +454,22 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     Collectors.collectingAndThen(
                             Collectors.toCollection(
                                     () -> new TreeSet<PmsProducePlan>(Comparator.comparing(p -> p.getPlanDate() + "," + p.getMaterialId()))), ArrayList::new));
+            Set<Long> materialId = addList.stream().map(PmsProducePlan::getMaterialId).collect(Collectors.toSet());
+            TupleDTO<LocalDateTime, LocalDateTime> dateRange = LocalDateUtil.calculateTimeRange(addList.stream().map(v -> v.getPlanDate().atStartOfDay()).collect(Collectors.toSet()));
+            //新增之前删除所有相关天数据
+            List<PmsProducePlan> producePlans = list(new LambdaQueryWrapper<PmsProducePlan>()
+                    .eq(PmsProducePlan::getType, OaConstant.YES)
+                    .in(PmsProducePlan::getMaterialId, materialId)
+                    .between(PmsProducePlan::getPlanDate, dateRange.getField1(), dateRange.getField2()));
+
+            addList.forEach(tmp -> {
+                PmsProducePlan pmsProducePlan = producePlans.stream().filter(v -> v.getMaterialId().equals(tmp.getMaterialId())
+                        && v.getPlanDate().equals(tmp.getPlanDate())
+                        && tmp.getCustomerId().equals(v.getCustomerId())).findFirst().orElse(null);
+                if(Objects.nonNull(pmsProducePlan)){
+                    removeById(pmsProducePlan.getId());
+                }
+            });
             if (!saveBatch(addList)) {
                 throw new BusinessException("生产月计划导入新增失败");
             }

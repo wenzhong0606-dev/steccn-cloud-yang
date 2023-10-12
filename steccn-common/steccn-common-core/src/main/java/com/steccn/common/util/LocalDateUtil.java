@@ -1,8 +1,10 @@
 package com.steccn.common.util;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.LocalDateEnum;
+import com.steccn.common.dto.TupleDTO;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
@@ -11,10 +13,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -522,6 +521,32 @@ public class LocalDateUtil {
 
         // 计算交集的小时数
         return intersectionHours;
+    }
+
+    /**
+     * 获取最大时间和最小时间
+     * @param times
+     * @return
+     */
+    public static TupleDTO<LocalDateTime,LocalDateTime> calculateTimeRange(Set<LocalDateTime> times){
+        TupleDTO result = new TupleDTO<LocalDateTime,LocalDateTime>();
+        if(CollUtil.isEmpty(times)){
+            return null;
+        }
+        // 初始化最小和最大日期
+        LocalDateTime minTime = null;
+        LocalDateTime maxTime = null;
+        for (LocalDateTime time : times) {
+            if (minTime == null || time.isBefore(minTime)) {
+                minTime = time;
+            }
+            if (maxTime == null || time.isAfter(maxTime)) {
+                maxTime = time;
+            }
+        }
+        result.setField1(minTime);
+        result.setField2(maxTime);
+        return result;
     }
 
 }

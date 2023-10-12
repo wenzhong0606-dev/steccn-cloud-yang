@@ -24,6 +24,7 @@ public class PmsProducePlanDTO implements Serializable {
     private Long materialId;
     private String materialName;
     private BigDecimal total;
+    private BigDecimal totalPercent;
     private Integer customerId;
     private String customerCode;
     private String customerName;
