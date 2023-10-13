@@ -218,7 +218,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
-    public Boolean affirm(List<WmsInventoryDTO> inventoryDTOList, Long typeId, String code) {
+    public Boolean affirm(List<WmsInventoryDTO> inventoryDTOList) {
         if (CollUtil.isNotEmpty(inventoryDTOList)) {
             List<String> caseNoList = Lists.newArrayList();
             inventoryDTOList.forEach(wmsInventoryDTO -> {
@@ -227,30 +227,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(caseNoList);
             WmsInventory wmsInventory = new WmsInventory();
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
             inventoryDTOList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
-                //库存流水记录
-                WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
-                wmsInventoryRecord.setMaterialId(info.getMaterialId());
-                wmsInventoryRecord.setType(typeId);
-                wmsInventoryRecord.setCode(code);
-                wmsInventoryRecord.setMaterialName(info.getMaterialName());
-                wmsInventoryRecord.setShelfId(orDefault.getShelfId());
-                wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
-                //变动数量
-                wmsInventoryRecord.setVariableQuantity(info.getQuantity());
-                //变动前
-                wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
-                wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
-                wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
-                wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
-                //变动后
-                wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
-                wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
-                wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
-                wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
-                wmsInventoryRecords.add(wmsInventoryRecord);
 
                 orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
                 orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
@@ -259,9 +237,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
             });
             updateBatchById(addWmsInventory);
-            //生成库存流水记录
-            List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
-            wmsInventoryRecordService.saveBatch(recordList);
+
         }
         return true;
     }
@@ -655,7 +631,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
 
-    private Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo) {
+    @Override
+    public Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo) {
         Map<String, WmsInventory> map = Maps.newHashMap();
         if (CollUtil.isNotEmpty(caseNo)) {
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNo));

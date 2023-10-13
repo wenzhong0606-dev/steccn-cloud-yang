@@ -75,11 +75,9 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * 确认入库（减少在途库存,增加可用库存以及总库存）
      *
      * @param inventoryDTOList
-     * @param typeId
-     * @param code
      * @return
      */
-    Boolean affirm(List<WmsInventoryDTO> inventoryDTOList, Long typeId, String code);
+    Boolean affirm(List<WmsInventoryDTO> inventoryDTOList);
 
     /**
      * 添加锁定库存，减少可用库存
@@ -228,4 +226,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Page<WmsInventoryVO> shelfList(WmsInventoryPageDTO dto);
+
+    /**
+     * 根据箱号获取库存信息
+     * @param caseNo
+     * @return
+     */
+    Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo);
 }

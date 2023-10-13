@@ -358,11 +358,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 targetList.add(target);
             });
             wmsInventoryService.affirmLockQuantity(sourceList);
-            //获取库存变动类型
-            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(order.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
-            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            wmsInventoryService.affirm(targetList, dictVO.getId(), order.getCode());
+            //在库存确认变更前 生成库存流水记录 同一物料调拨生成两条记录
+            wmsInventoryService.affirm(targetList);
         }
         return updateById(order);
     }
