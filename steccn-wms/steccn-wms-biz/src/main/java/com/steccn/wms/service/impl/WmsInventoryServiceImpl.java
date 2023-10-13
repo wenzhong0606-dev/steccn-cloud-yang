@@ -227,7 +227,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(caseNoList);
             WmsInventory wmsInventory = new WmsInventory();
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            List<WmsInventoryRecordDTO> wmsInventoryRecords  = Lists.newArrayList();
+            List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
             inventoryDTOList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
                 //库存流水记录
@@ -579,18 +579,19 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> materialList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
-        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getMaterialName, dto.getMaterialName()));
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
-        return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
+        Page<WmsInventoryVO> page  = LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
+        return page;
     }
 
     @Override
     public Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
-                .eq(WmsInventory::getMaterialName, dto.getMaterialName())
-                .eq(WmsInventory::getWarehouseId,dto.getWarehouseId()));
+                .eq(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventory::getWarehouseId, dto.getWarehouseId()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
         return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
@@ -600,17 +601,16 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Page<WmsInventoryVO> shelfList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
-                .eq(WmsInventory::getMaterialName, dto.getMaterialName())
-                .eq(WmsInventory::getWarehouseId,dto.getWarehouseId())
-                .eq(WmsInventory::getShelfName,dto.getShelfName())
-        );
+                .eq(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventory::getWarehouseId, dto.getWarehouseId())
+                .eq(Objects.nonNull(dto.getShelfName()),WmsInventory::getShelfName, dto.getShelfName()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
         return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
     }
 
 
-    private List<WmsInventoryVO> summarizationList( List<WmsInventory> list){
+    private List<WmsInventoryVO> summarizationList(List<WmsInventory> list) {
         List<WmsInventoryVO> inventoryList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(list)) {
             //按物料编码、仓库分组，总数、可用数、锁定数、在途数、冻结数分别求和
@@ -623,12 +623,12 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 AtomicReference<BigDecimal> freezeQuantity = new AtomicReference<>(BigDecimal.ZERO);
                 AtomicReference<BigDecimal> lockQuantity = new AtomicReference<>(BigDecimal.ZERO);
                 materialList.forEach(inventory -> {
-                    BeanUtil.copyProperties(inventory,wmsInventoryVO);
+                    BeanUtil.copyProperties(inventory, wmsInventoryVO);
                     totalQuantity.set(BigDecimalUtil.add(totalQuantity.get(), inventory.getTotalQuantity()));
-                    availableQuantity.set(BigDecimalUtil.add(availableQuantity.get(),inventory.getAvailableQuantity()));
-                    stockQuantity.set(BigDecimalUtil.add(stockQuantity.get(),inventory.getStockQuantity()));
-                    freezeQuantity.set(BigDecimalUtil.add(freezeQuantity.get(),inventory.getFreezeQuantity()));
-                    lockQuantity.set(BigDecimalUtil.add(lockQuantity.get(),inventory.getLockQuantity()));
+                    availableQuantity.set(BigDecimalUtil.add(availableQuantity.get(), inventory.getAvailableQuantity()));
+                    stockQuantity.set(BigDecimalUtil.add(stockQuantity.get(), inventory.getStockQuantity()));
+                    freezeQuantity.set(BigDecimalUtil.add(freezeQuantity.get(), inventory.getFreezeQuantity()));
+                    lockQuantity.set(BigDecimalUtil.add(lockQuantity.get(), inventory.getLockQuantity()));
                 });
                 wmsInventoryVO.setTotalQuantity(totalQuantity.get());
                 wmsInventoryVO.setAvailableQuantity(availableQuantity.get());
