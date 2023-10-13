@@ -579,7 +579,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> materialList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
-        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName()));
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
         Page<WmsInventoryVO> page  = LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
@@ -590,7 +590,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
-                .eq(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventory::getWarehouseId, dto.getWarehouseId()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
@@ -601,7 +601,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Page<WmsInventoryVO> shelfList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
-                .eq(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventory::getWarehouseId, dto.getWarehouseId())
                 .eq(Objects.nonNull(dto.getShelfName()),WmsInventory::getShelfName, dto.getShelfName()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
