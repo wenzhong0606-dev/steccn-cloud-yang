@@ -174,7 +174,7 @@ public class WmsStorageReceiptController {
 
     @ApiOperation("采购入库凭证")
     @PostMapping("/sales/add")
-    public R<Boolean> salesReceiptAdd(@RequestBody @Validated(InsertGroup.class) SalesStorageReceiptDTO dto){
+    public R<String> salesReceiptAdd(@RequestBody @Validated(InsertGroup.class) SalesStorageReceiptDTO dto){
         return R.success(wmsStorageReceiptService.salesReceiptAdd(dto));
     }
 

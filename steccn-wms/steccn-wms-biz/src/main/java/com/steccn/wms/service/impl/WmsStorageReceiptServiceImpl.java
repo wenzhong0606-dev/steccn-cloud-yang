@@ -1180,7 +1180,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     @Override
     @Transactional
-    public Boolean salesReceiptAdd(SalesStorageReceiptDTO dto) {
+    public String salesReceiptAdd(SalesStorageReceiptDTO dto) {
         dto.setIsSRMSys(OaConstant.NUM_2);
         dto.setSourceType(OaConstant.NUM_2);
         dto.setType(1600405739121573888L);
@@ -1248,7 +1248,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         if(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseStatus").equals("ERROR")){
             throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
         }
-        return true;
+        return byId.getCode();
     }
 
     @Override
