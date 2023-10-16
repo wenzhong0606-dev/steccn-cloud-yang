@@ -116,7 +116,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         Map<String, List<PmsProducePlanVO>> groupBy = producePlanVOList
                 .stream()
-                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId() + "," + pmsProducePlanVO.getCustomerId()+"," + pmsProducePlanVO.getCustomerCode() + "," + pmsProducePlanVO.getCustomerName()));
+                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId() + "," + pmsProducePlanVO.getCustomerId()+"," + pmsProducePlanVO.getCustomerCode() + "," + pmsProducePlanVO.getCustomerName()+ "," + pmsProducePlanVO.getPosition()));
 
         List<PmsProducePlanDTO> pmsProducePlanDTOList = new ArrayList<>();
         LocalDate firstMonthDate = LocalDate.parse(monthDate + "-01", ISO_DATE);
@@ -140,6 +140,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 }
                 if(!materials[5].equals("null")){
                     pmsProducePlanDTO.setCustomerName(materials[5]);
+                }
+                if(!materials[6].equals("null")){
+                    pmsProducePlanDTO.setPosition(materials[6]);
                 }
                 pmsProducePlanDTO.setType(i);
                 List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
