@@ -1128,25 +1128,76 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //从数据字典中获取返修的标识
         SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //时间区间考虑
-        List<RepaireBatchListVO> resList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
-        Assert.notEmpty(resList, "暂无生产批次");
+        List<RepaireBatchListVO> sourceList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
+        Assert.notEmpty(sourceList, "暂无生产批次");
         //根据物料获取规格和产线名称
         Set<Integer> lineIdSet = Sets.newHashSet();
         Set<Long> materialIdSet = Sets.newHashSet();
-        resList.forEach(ele -> {
+        sourceList.forEach(ele -> {
             materialIdSet.add(ele.getMaterialId());
             lineIdSet.add(ele.getProductLine());
         });
         Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Integer, String> lineMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        resList.forEach(ele -> {
-            ele.setProductLineName(lineMap.get(ele.getProductLine()));
+        Map<Integer, SysOfficeVO> lineMap = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<String> specSet = Sets.newHashSet();
+        sourceList.forEach(ele -> {
+            ele.setProductLineName(lineMap.getOrDefault(ele.getProductLine(), new SysOfficeVO()).getOfficeName());
             ele.setSpecifications(spareVOMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
+            specSet.add(ele.getSpecifications());
         });
-        //遍历所有数据，以规格分组 + 日期 +产线 + 班次 + 生产订单号分组
+        //遍历所有数据，以规格分组 + 日期[选中日期] +产线 + 班次 + 生产订单号分组
+        List<String> specList = new ArrayList<>(specSet);
+        Collections.sort(specList);
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
+        //获取产线集合
+        List<SysOfficeVO> lineList = lineMap.values().stream().sorted(Comparator.comparingInt(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+
+        //获取班次
+        PmManagerConstant.classesType[] classIdList = PmManagerConstant.classesType.values();
+        //定义返回数据
+        List<RepaireBatchListVO> resList = Lists.newArrayList();
+
+        for (String spec : specList) {
+            for (LocalDate classDate : timeList) {
+                for (SysOfficeVO line : lineList) {
+                    for (PmManagerConstant.classesType classIdType : classIdList) {
+                        //根据规格，班次日期过滤出数据
+                        LocalDateTime[] split = split(classIdType.getCode(), classDate);
+
+                        List<RepaireBatchListVO> dataList = sourceList.stream()
+                                .filter(v -> v.getSpecifications().equals(spec) &&
+                                v.getProductLineName().equals(line.getOfficeName()) &&
+                                (LocalDateUtil.isRange(split[0], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true) ||
+                                        LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
+                        for (RepaireBatchListVO data : dataList) {
+                            RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
+                            resVo.setClassDate(classDate);
+                            resVo.setClassId(classIdType.getCode());
+                            resVo.setClassName(classIdType.getName());
+                            resList.add(resVo);
+                        }
+                    }
+
+                }
+            }
+        }
 
         return resList;
     }
+
+    /**
+     * 根据班次切分班次日期
+     * @param type 班次 0 ， 1 早班 晚班
+     * @param date 班次日期
+     * @return
+     */
+    private LocalDateTime[] split(Integer type, LocalDate date) {
+        //type只能是0或1
+        LocalDateTime night = LocalDateUtil.getNight(date);
+        LocalDateTime x = night.plusHours(type == 0 ? -12 : 12);
+        return type == 1 ? new LocalDateTime[]{night, x} : new LocalDateTime[]{x, night};
+    }
+
 
 
 //    /**

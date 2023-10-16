@@ -5,6 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -34,12 +35,12 @@ public class RepaireBatchListVO implements Serializable {
     /**
      * 开始时间
      */
-    private LocalDate startTime;
+    private LocalDateTime startTime;
 
     /**
      * 结束时间
      */
-    private LocalDate endTime;
+    private LocalDateTime endTime;
 
     /**
      * 规格
@@ -58,7 +59,7 @@ public class RepaireBatchListVO implements Serializable {
 
     private String productLineName;
 
-    private Long classId;
+    private Integer classId;
 
     private String className;
 

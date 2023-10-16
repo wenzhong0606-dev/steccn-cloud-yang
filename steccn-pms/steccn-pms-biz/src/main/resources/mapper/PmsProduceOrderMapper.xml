@@ -273,10 +273,10 @@
         AND po.type_id = #{typeId}
         AND ba.id NOT IN ( SELECT id FROM pms_work_order_batch t WHERE (t.start_time &gt;= #{end} OR t.end_time &lt;= #{start}))
         <if test="lineList != null and lineList.size > 0">
-            AND po.production_line_id in in
+            AND po.production_line_id in
             <foreach collection="lineList" item="id"  open="(" close=")"  separator=",">
                 #{id}
-            </foreach>)
+            </foreach>
         </if>
     </select>
 </mapper>
