@@ -367,6 +367,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 remove(new LambdaQueryWrapper<PmsProducePlan>()
                         .eq(PmsProducePlan::getType,OaConstant.NO)
                         .eq(PmsProducePlan::getMaterialId,materialId)
+                        .eq(PmsProducePlan::getPosition,tmp.getPosition())
                         .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
                         .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
                 tmp.setType(OaConstant.NO);
