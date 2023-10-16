@@ -181,6 +181,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                                     && LocalDateUtil.isRange(v.getEnterTime(), localDate.atTime(LocalTime.MIN), localDate.atTime(LocalTime.MAX), true, false)).collect(Collectors.toList());
                         }else {
                             storageCountTmp = storageCount.stream().filter(v -> v.getMaterialId().equals(pmsProducePlanDTO.getMaterialId())
+                                    && v.getCustomerId() != null
                                     && v.getCustomerId().equals(Integer.parseInt(materials[3]))
                                     && v.getEnterTime() != null
                                     && LocalDateUtil.isRange(v.getEnterTime(), localDate.atTime(LocalTime.MIN), localDate.atTime(LocalTime.MAX), true, false)).collect(Collectors.toList());
