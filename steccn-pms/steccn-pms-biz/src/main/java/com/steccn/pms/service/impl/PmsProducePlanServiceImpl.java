@@ -359,10 +359,16 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             Map<String, EqpSpareVO> spareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(materialCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             LocalDate planDate = dto.get(0).getProducePlanDetailsDTOList().get(0).getPlanDate();
             //先删除所有数据
-            remove(new LambdaQueryWrapper<PmsProducePlan>()
-                    .eq(PmsProducePlan::getType,OaConstant.NO)
-                    .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
             for(PmsProducePlanDTO tmp:dto){
+                Long materialId = spareVO.getOrDefault(tmp.getMaterialCode(),new EqpSpareVO()).getId();
+                if(Objects.isNull(materialId)){
+                    throw new BusinessException("物料"+tmp.getMaterialCode()+"+不存在");
+                }
+                remove(new LambdaQueryWrapper<PmsProducePlan>()
+                        .eq(PmsProducePlan::getType,OaConstant.NO)
+                        .eq(PmsProducePlan::getMaterialId,materialId)
+                        .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
+                        .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
                 tmp.setType(OaConstant.NO);
                 this.addOrEditBatch(tmp);
             }
