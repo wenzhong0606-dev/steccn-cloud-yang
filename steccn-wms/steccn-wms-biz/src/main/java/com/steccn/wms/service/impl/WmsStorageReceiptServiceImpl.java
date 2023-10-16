@@ -865,7 +865,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+//                    erpCommonSaveDetail.setFlot(tmp.getBatch());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     if (Objects.isNull(tmp.getAssociatedNo())) {
                         throw new BusinessException("没有关联生产订单");
