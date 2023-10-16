@@ -867,7 +867,6 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         if (aBoolean) {
             //在pms中创建对应的出库单
             wmsDeliveryReceiptDTO.setChargeAgainstCode(wmsStorageReceiptVO.getCode());
-
         }
         return true;
     }
@@ -1345,6 +1344,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //生成出库单并自动确认
                 wmsDeliveryReceiptDTO1 = wmsDeliveryReceiptService.chargeAgainst(wmsDeliveryReceiptDTO, userName);
                 //扣除库存
+                //生成
                 wmsInventoryService.deduct(wmsInventoryList);
                 //修改入库单状态为已冲销
                 WmsStorageReceipt receipt = getById(id);
