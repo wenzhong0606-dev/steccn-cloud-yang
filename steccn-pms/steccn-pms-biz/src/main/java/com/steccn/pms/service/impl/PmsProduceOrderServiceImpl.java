@@ -1119,6 +1119,35 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return BeanUtil.copyToList(list,PmsProduceOrderVO.class);
     }
 
+    @Override
+    public List<RepaireBatchListVO> repaireBatchList(RepaireBatchListDTO dto) {
+        //根据时间区间和产线筛选出生产批次信息
+        //根据生产批次获取缺陷数据和领用数据
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
+        //从数据字典中获取返修的标识
+        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //时间区间考虑
+        List<RepaireBatchListVO> resList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
+        Assert.notEmpty(resList, "暂无生产批次");
+        //根据物料获取规格和产线名称
+        Set<Integer> lineIdSet = Sets.newHashSet();
+        Set<Long> materialIdSet = Sets.newHashSet();
+        resList.forEach(ele -> {
+            materialIdSet.add(ele.getMaterialId());
+            lineIdSet.add(ele.getProductLine());
+        });
+        Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> lineMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        resList.forEach(ele -> {
+            ele.setProductLineName(lineMap.get(ele.getProductLine()));
+            ele.setSpecifications(spareVOMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
+        });
+        //遍历所有数据，以规格分组 + 日期 +产线 + 班次 + 生产订单号分组
+
+        return resList;
+    }
+
 
 //    /**
 //     * 处理订单的当前产量

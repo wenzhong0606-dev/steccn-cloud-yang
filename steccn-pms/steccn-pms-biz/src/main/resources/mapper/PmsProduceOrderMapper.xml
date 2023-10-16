@@ -254,4 +254,29 @@
             </if>
         </where>
     </select>
+    <select id="repaireBatchList" resultType="com.steccn.pms.vo.RepaireBatchListVO">
+        SELECT
+        ba.CODE as batchNo,
+        ba.start_time,
+        ba.end_time,
+        po.material_id,
+        po.material_name,
+        po.production_line_id as productLine,
+        po.`code` AS produce_order_no,
+        po.id AS produce_order_id
+        FROM
+        `pms_work_order_batch` ba
+        JOIN pms_produce_order po ON ba.produce_order_id = po.id
+        WHERE
+        ba.del_flag = 0
+        AND po.del_flag = 0
+        AND po.type_id = #{typeId}
+        AND ba.id NOT IN ( SELECT id FROM pms_work_order_batch t WHERE (t.start_time &gt;= #{end} OR t.end_time &lt;= #{start}))
+        <if test="lineList != null and lineList.size > 0">
+            AND po.production_line_id in in
+            <foreach collection="lineList" item="id"  open="(" close=")"  separator=",">
+                #{id}
+            </foreach>)
+        </if>
+    </select>
 </mapper>

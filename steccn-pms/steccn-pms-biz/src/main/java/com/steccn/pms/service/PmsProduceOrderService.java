@@ -258,4 +258,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Map<Long,Long> maiMaterialAByOrderId(Set<Long> orderIds);
 
     List<PmsProduceOrderVO> listOrderByProduceLineId(Integer productLineId);
+
+    /**
+     * 返洗不良日报表
+     * @param dto 请求类
+     * @return
+     */
+    List<RepaireBatchListVO> repaireBatchList(RepaireBatchListDTO dto);
 }

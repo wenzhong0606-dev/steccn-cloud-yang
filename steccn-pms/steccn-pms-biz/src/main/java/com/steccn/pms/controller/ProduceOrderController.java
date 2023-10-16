@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
@@ -63,7 +64,7 @@ public class ProduceOrderController {
     @ApiOperation("生产订单编辑")
     @PutMapping
     @SysLog("生产订单编辑")
-    public R<Boolean> edit(@Validated(UpdateGroup.class)@RequestBody PmsProduceOrderDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
@@ -98,7 +99,7 @@ public class ProduceOrderController {
     @PutMapping("place/an/order")
     @SysLog("订单下达")
     public R<Boolean> placeAnOrder(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.placeAnOrder(dto.getId()));
     }
 
@@ -106,7 +107,7 @@ public class ProduceOrderController {
     @PutMapping("cancel/the/order")
     @SysLog("取消下达")
     public R<Boolean> cancelTheOrder(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.cancelTheOrder(dto.getId()));
     }
 
@@ -120,7 +121,7 @@ public class ProduceOrderController {
     @PutMapping("/close")
     @SysLog("订单关闭")
     public R<Boolean> close(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.close(dto.getId()));
     }
 
@@ -128,7 +129,7 @@ public class ProduceOrderController {
     @PutMapping("/affirm")
     @SysLog("订单确认")
     public R<Boolean> affirm(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.affirm(dto.getId()));
     }
 
@@ -136,7 +137,7 @@ public class ProduceOrderController {
     @PutMapping("/execute")
     @SysLog("订单执行")
     public R<Boolean> execute(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.execute(dto.getId()));
     }
 
@@ -144,7 +145,7 @@ public class ProduceOrderController {
     @PutMapping("/stop")
     @SysLog("订单暂停")
     public R<Boolean> stop(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.stop(dto.getId()));
     }
 
@@ -158,33 +159,33 @@ public class ProduceOrderController {
     @PutMapping("/complete")
     @SysLog("订单完成")
     public R<Boolean> complete(@RequestBody PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"订单id不能为空");
+        Assert.notNull(dto.getId(), "订单id不能为空");
         return R.success(pmsProduceOrderService.complete(dto.getId()));
     }
 
     @PostMapping("/line/ids")
     @ApiOperation("根据产线查询当前正在执行订单信息")
-    public R<Map<Integer, PmsProduceOrderDTO>> listByLineIds(@RequestBody Set<Integer> ids){
+    public R<Map<Integer, PmsProduceOrderDTO>> listByLineIds(@RequestBody Set<Integer> ids) {
         return R.success(pmsProduceOrderService.listByLineIds(ids));
     }
 
     @PostMapping("/track/report/list")
     @ApiOperation("订单跟踪计划列表")
-    public R<Page<ProduceOrderTrackReportVO>> trackReportList(@RequestBody ProduceOrderTrackReportDTO dto){
+    public R<Page<ProduceOrderTrackReportVO>> trackReportList(@RequestBody ProduceOrderTrackReportDTO dto) {
         return R.success(pmsProduceOrderService.trackReportList(dto));
     }
 
 
     @PostMapping("/material/ids")
     @ApiOperation("根据物料查询订单信息")
-    public R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds){
+    public R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds) {
         return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
     }
 
 
     @ApiOperation("获取正在执行中的生产订单信息")
     @GetMapping("/execute/info")
-    public R<List<ProduceOrderDataInfoVO>> getExecuteOrderInfo(){
+    public R<List<ProduceOrderDataInfoVO>> getExecuteOrderInfo() {
         return R.success(pmsProduceOrderService.getExecuteOrderInfo());
     }
 
@@ -196,8 +197,14 @@ public class ProduceOrderController {
 
     @ApiOperation("全景追溯")
     @PostMapping("/panoramic/tracing")
-    public R<Page<PanoramicTracingVO>>  tracing(@RequestBody PanoramicTracingDTO panoramicTracingDTO){
+    public R<Page<PanoramicTracingVO>> tracing(@RequestBody PanoramicTracingDTO panoramicTracingDTO) {
         return R.success(pmsProduceOrderService.tracing(panoramicTracingDTO));
+    }
+
+    @ApiOperation("返洗批次")
+    @PostMapping("/repaire/batch")
+    public R<List<RepaireBatchListVO>> repaireBatchList(@RequestBody RepaireBatchListDTO dto) {
+        return R.success(pmsProduceOrderService.repaireBatchList(dto));
     }
 
 }
