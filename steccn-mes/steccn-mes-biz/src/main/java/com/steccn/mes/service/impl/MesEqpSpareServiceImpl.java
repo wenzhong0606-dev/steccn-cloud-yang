@@ -84,7 +84,7 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     model.setName(tmp.getFname());
                     model.setSpecifications(tmp.getFspecification());
                     model.setBatchType("0");
-                    model.setState("0");
+                    model.setState("1");
                     model.setStatus("0");
                     model.setCreateBy("erp");
                     model.setCreateDate(LocalDateTime.now());
