@@ -205,14 +205,12 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         Map<Integer, List<PmsPullForce>> objMap = Maps.newLinkedHashMap();
         sortLineList.forEach(ele -> objMap.put(ele.getId(), lineMap.getOrDefault(ele.getId(), Lists.newArrayList())));
 
-        for (Map.Entry<Integer, List<PmsPullForce>> lineEntry : objMap.entrySet()) {
-            List<PmsPullForce> value = lineEntry.getValue();
+        for (SysOfficeVO line : sortLineList) {
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            String officeName = wsLineMap.get(lineEntry.getKey()).getOfficeName();
-            stackGraphDTO.setXAxis(officeName);
+            stackGraphDTO.setXAxis(line.getOfficeName());
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-            BigDecimal morning = pfMap.get(lineEntry.getKey() + "_" + morningDict.getId());
-            BigDecimal night = pfMap.get(lineEntry.getKey() + "_" + nightDict.getId());
+            BigDecimal morning = pfMap.get(line.getId() + "_" + morningDict.getId());
+            BigDecimal night = pfMap.get(line.getId() + "_" + nightDict.getId());
             datList.add(new TupleDTO<>("产线总耗用量", BigDecimalUtil.add(morning, night)));
             datList.add(new TupleDTO<>("白班耗用量", morning));
             datList.add(new TupleDTO<>("夜班耗用量", night));
