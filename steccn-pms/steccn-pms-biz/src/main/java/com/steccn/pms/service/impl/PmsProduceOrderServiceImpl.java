@@ -19,6 +19,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
@@ -27,6 +28,7 @@ import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -41,6 +43,7 @@ import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
@@ -89,6 +92,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final OaInfoService oaInfoService;
+    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
     @Autowired
     @Lazy
@@ -1138,10 +1142,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //根据物料获取规格和产线名称
         Set<Integer> lineIdSet = Sets.newHashSet();
         Set<Long> materialIdSet = Sets.newHashSet();
+        Set<String> batchSet = Sets.newHashSet();
         sourceList.forEach(ele -> {
             materialIdSet.add(ele.getMaterialId());
             lineIdSet.add(ele.getProductLine());
+            batchSet.add(ele.getBatchNo());
         });
+
         Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, SysOfficeVO> lineMap = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<String> specSet = Sets.newHashSet();
@@ -1149,6 +1156,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             ele.setProductLineName(lineMap.getOrDefault(ele.getProductLine(), new SysOfficeVO()).getOfficeName());
             ele.setSpecifications(spareVOMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
             specSet.add(ele.getSpecifications());
+
         });
         //遍历所有数据，以规格分组 + 日期[选中日期] +产线 + 班次 + 生产订单号分组
         List<String> specList = new ArrayList<>(specSet);
@@ -1163,9 +1171,25 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<RepaireBatchListVO> resList = Lists.newArrayList();
 
         //获取班组
-        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(dto.getStart(),dto.getEnd().plusDays(1));
+        TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(dto.getStart(), dto.getEnd().plusDays(1));
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
+        //根据生产批次获取报工记录
+        Map<String, List<PmsReportWork>> batchLinkReportWorkMap = pmsReportWorkService.batchLinkReportWorkMap(batchSet);
+        //获取报工消耗信息
+        Set<Long> reportIdSet = batchLinkReportWorkMap.values().stream().flatMap(Collection::stream).map(PmsReportWork::getId).collect(Collectors.toSet());
+        Map<Long, List<PmsCompleteDeliveryInfoDTO>> consumeMap = pmsCompleteDeliveryService.reportWorkMaterial(reportIdSet);
+
+        //获取磨边工位
+        Set<Integer> edgStation = getEdgStation(lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList()));
+
+        //获取物料转换单位数据字典数据及单位转换逻辑
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO meterSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        org.springframework.util.Assert.notNull(meterSysDict, "片单位不存在");
+        org.springframework.util.Assert.notNull(meterSysDict, "平方米单位不存在");
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
 
         for (String spec : specList) {
             for (LocalDate classDate : timeList) {
@@ -1176,9 +1200,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                         OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + classIdType.getName(), defaultOaGroupCountDTO);
                         List<RepaireBatchListVO> dataList = sourceList.stream()
                                 .filter(v -> v.getSpecifications().equals(spec) &&
-                                v.getProductLineName().equals(line.getOfficeName()) &&
-                                (LocalDateUtil.isRange(split[0], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true) ||
-                                        LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
+                                        v.getProductLineName().equals(line.getOfficeName()) &&
+                                        (LocalDateUtil.isRange(split[0], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true) ||
+                                                LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
                         for (RepaireBatchListVO data : dataList) {
                             RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
                             resVo.setClassDate(classDate);
@@ -1186,6 +1210,28 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             resVo.setClassName(classIdType.getName());
                             resVo.setClassGroupId(oaGroupCountDTO.getGroupId());
                             resVo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            //根据批次获取报工数据
+                            List<PmsReportWork> reportWorkList = batchLinkReportWorkMap.getOrDefault(data.getBatchNo(), Lists.newArrayList());
+                            //报工记录的生产批次为所在行生产批次
+                            //报工记录的产线为所在行产线
+                            //报工记录的加工时间在所在行班次日期&班次之内
+                            //报工记录的工序为“磨边工序”
+                            Set<Long> reportIds = reportWorkList.stream().filter(ele -> ele.getProductLineId().equals(line.getId()) &&
+                                    ele.getClassesId().equals(resVo.getClassId()) &&
+                                    LocalDateUtil.isRange(ele.getStartTime(), split[0], split[1], true, true) &&
+                                    edgStation.contains(ele.getStationId())).map(PmsReportWork::getId).collect(Collectors.toSet());
+                            List<PmsCompleteDeliveryInfoDTO> consumeList = Lists.newArrayList();
+                            for (Long reportId : reportIds) {
+                                consumeList.addAll(consumeMap.getOrDefault(reportId, Lists.newArrayList()));
+                            }
+                            //根据物料耗用
+                            List<BigDecimal> collect = consumeList.stream().filter(ele -> resVo.getMaterialId().equals(ele.getMaterialId())).map(PmsCompleteDeliveryInfoDTO::getQuantity).collect(Collectors.toList());
+                            BigDecimal sum = BigDecimalUtil.sum(collect);
+                            sum = BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
+                            //片转平方
+                            BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(data.getMaterialId()), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                            resVo.setUseCountPiece(sum);
+                            resVo.setUseCountSquare(square);
                             resList.add(resVo);
                         }
                     }
@@ -1195,6 +1241,25 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
         return resList;
     }
+
+    /**
+     * 获取这些产线磨边工位
+     *
+     * @param lineList 产线集合
+     * @return
+     */
+    private Set<Integer> getEdgStation(List<Integer> lineList) {
+        //获取磨边工位
+        SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+        parentDTO.setParentIds(Sets.newHashSet(lineList));
+        parentDTO.setOfficeType(PmManagerConstant.NUM_13);
+        //获取产线下的工位
+        List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //包含磨边工位的
+        return officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+    }
+
+
 
     /**
      * 根据班次切分班次日期

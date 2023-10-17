@@ -57,6 +57,9 @@ public class RepaireBatchListVO implements Serializable {
      */
     private Integer productLine;
 
+    /**
+     * 产线名称
+     */
     private String productLineName;
 
     private Integer classId;

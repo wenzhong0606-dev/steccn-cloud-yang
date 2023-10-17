@@ -1426,6 +1426,17 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return resMap;
     }
 
+    @Override
+    public Map<String, List<PmsReportWork>> batchLinkReportWorkMap(Set<String> batchSet) {
+        Map<String, List<PmsReportWork>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(batchSet)) {
+            List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getBatchNo, batchSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> MapUtil.compute(resMap, ele.getBatchNo(), ele));
+            }
+        }
+        return resMap;
+    }
 
     @Override
     public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
