@@ -1,9 +1,11 @@
 package com.steccn.pms.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.ReceiptStatusDTO;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import io.swagger.annotations.Api;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 类说明
@@ -38,6 +41,15 @@ public class PmsCompleteStorageFeignController {
     @SysLog("complete")
     public R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto) {
         return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode(),dto.getConfirmName());
+    }
+
+    @ApiOperation("完工入库单据状态变更")
+    @PostMapping("/change/state")
+    R<Boolean> changeReceiptState(@RequestBody ReceiptStatusDTO dto) {
+        if (CollUtil.isEmpty(dto.getInStorageVoucherList()) || Objects.isNull(dto.getState())) {
+            return R.failure("参数异常");
+        }
+        return R.success(pmsCompleteStorageService.changeReceiptState(dto));
     }
 
     @GetMapping("/code")

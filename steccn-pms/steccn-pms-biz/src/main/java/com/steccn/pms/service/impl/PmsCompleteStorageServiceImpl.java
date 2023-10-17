@@ -640,6 +640,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean changeReceiptState(ReceiptStatusDTO dto) {
+        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
+        pmsCompleteStorage.setState(dto.getState());
+        return update(new LambdaQueryWrapper<PmsCompleteStorage>()
+                .in(PmsCompleteStorage::getInStorageVoucher, dto.getInStorageVoucherList()));
+    }
+
     /**
      * 最大完工code
      *
