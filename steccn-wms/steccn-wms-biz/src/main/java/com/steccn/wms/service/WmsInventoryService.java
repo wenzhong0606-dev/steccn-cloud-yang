@@ -233,4 +233,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo);
+
+    /**
+     * 根据库存id获取库存信息
+     * @param inventoryIds
+     * @return
+     */
+    Map<Long, WmsInventory> inventoryIdMap(Set<Long> inventoryIds);
 }

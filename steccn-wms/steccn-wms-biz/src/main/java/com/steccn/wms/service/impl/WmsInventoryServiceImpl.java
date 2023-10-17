@@ -30,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.events.Event;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -639,6 +640,16 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             list.forEach(wmsInventory -> {
                 map.put(wmsInventory.getCaseNo(), wmsInventory);
             });
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, WmsInventory> inventoryIdMap(Set<Long> inventoryIds) {
+        Map<Long,WmsInventory> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(inventoryIds)){
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, inventoryIds));
+            list.forEach(wmsInventory -> map.put(wmsInventory.getId(),wmsInventory));
         }
         return map;
     }
