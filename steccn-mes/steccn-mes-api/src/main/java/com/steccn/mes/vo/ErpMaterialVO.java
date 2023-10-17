@@ -3,6 +3,7 @@ package com.steccn.mes.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * erp物料VO
@@ -49,5 +50,29 @@ public class ErpMaterialVO implements Serializable {
      * 基本单位名称
      */
     private String fbaseunitname;
+    /**
+     * 长
+     */
+    private BigDecimal flength;
+    /**
+     * 宽
+     */
+    private BigDecimal fwidth;
+    /**
+     * 厚
+     */
+    private BigDecimal fland;
+    /**
+     * 尺寸单位编码
+     */
+    private String fvolumeno;
+    /**
+     * 尺寸单位明细
+     */
+    private String fvolumename;
+    /**
+     * 尺寸单位换算率
+     */
+    private BigDecimal fvolumerate;
 
 }

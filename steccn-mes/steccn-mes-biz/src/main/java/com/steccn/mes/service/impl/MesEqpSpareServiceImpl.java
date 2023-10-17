@@ -113,6 +113,36 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
     }
 
     @Override
+    public Boolean synchronousSpareLength(ErpCustomerDTO dto) {
+        List<ErpMaterialVO> erpMaterial = remoteErpFeignApi.getErpMaterial(dto).getData();
+        if(CollUtil.isNotEmpty(erpMaterial)){
+            List<MesEqpSpare> lists = list(new LambdaQueryWrapper<MesEqpSpare>()
+                    .select(MesEqpSpare::getCode,MesEqpSpare::getName,MesEqpSpare::getId)
+                    .eq(MesEqpSpare::getStatus, "0"));
+            erpMaterial.forEach(tmp->{
+                //先查看是否有该物料
+                MesEqpSpare one = lists.stream().filter(v->v.getCode().equals(tmp.getFnumber())).findFirst().orElse(null);
+                if(Objects.nonNull(one)){
+                    MesEqpSpare model = new MesEqpSpare();
+                    model.setId(one.getId());
+                    model.setUpdateDate(LocalDateTime.now());
+                    JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                            .eq(JsSysDictData::getDictLabel, tmp.getFvolumename())
+                            .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    model.setLengthQuantity(tmp.getFlength());
+                    model.setLengthUnitId(Long.parseLong(measureUnit.getDictCode()));
+                    model.setWideQuantity(tmp.getFwidth());
+                    model.setWideUnitId(Long.parseLong(measureUnit.getDictCode()));
+                    model.setThickQuantity(tmp.getFland());
+                    model.setThickUnitId(Long.parseLong(measureUnit.getDictCode()));
+                    updateById(model);
+                }
+            });
+        }
+        return true;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean synchronousSpareUnit(ErpCustomerDTO dto) {
         List<ErpMaterialUnitVO> erpMaterial = remoteErpFeignApi.getErpMaterialUnit(dto).getData();
