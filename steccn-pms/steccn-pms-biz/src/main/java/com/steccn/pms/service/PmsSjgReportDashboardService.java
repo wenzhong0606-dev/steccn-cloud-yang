@@ -73,13 +73,6 @@ public interface PmsSjgReportDashboardService {
     BigDecimal inStorageRate(Integer workShopId, LocalDate date);
 
     /**
-     * 产线加工信息
-     * @param dto 请求参数
-     * @return
-     */
-    DashboardProducePageVO producePage(DashboardProducePageDTO dto);
-
-    /**
      * 产线耗用数
      * @param workShopId 车间
      * @param date 日期

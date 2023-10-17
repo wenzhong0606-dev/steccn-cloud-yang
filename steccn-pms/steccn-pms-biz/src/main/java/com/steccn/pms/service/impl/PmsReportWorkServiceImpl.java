@@ -1156,7 +1156,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                         if (stationIds.contains(ele.getStationId())) {
                             BigDecimal quantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity());
                             if (!sysDict1.equals(sysDict2)) {
-                                quantity = UnitConvertUtil.convertMaterial(convertRelationList, sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), 2);
+                                quantity = UnitConvertUtil.convertMaterial(convertRelationList, sysDict1.getId(), sysDict2.getId(), quantity, 2);
                             }
                             MapUtil.add(resMap, ele.getProductLineId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                         }
@@ -1282,7 +1282,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     if (stationIds.contains(ele.getStationId())) {
                         BigDecimal quantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity());
                         if (!sysDict1.equals(sysDict2)) {
-                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
                         }
                         MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                     }
@@ -1380,7 +1380,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 dbList.forEach(ele -> {
                     BigDecimal quantity = ele.getQuantity();
                     if (!sysDict1.equals(sysDict2)) {
-                        quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                        quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
                     }
                     MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                 });
@@ -1390,7 +1390,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     if (stationIds.contains(ele.getStationId())) {
                         BigDecimal quantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity());
                         if (!sysDict1.equals(sysDict2)) {
-                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
                         }
                         MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                     }
@@ -1459,7 +1459,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     if (stationIds.contains(ele.getStationId())) {
                         BigDecimal quantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity());
                         if (!sysDict1.equals(sysDict2)) {
-                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
                         }
                         MapUtil.add(resMap, ele.getClassDate() +"" , quantity, (x, y) -> BigDecimalUtil.add(x, y));
                     }
