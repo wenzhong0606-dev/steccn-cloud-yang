@@ -473,6 +473,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
@@ -494,6 +495,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.id in
         <foreach collection="orderIdSet" item="orderId" open="(" close=")" separator=",">
             #{orderId}
@@ -545,6 +547,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
             #{lineId}
@@ -670,6 +673,7 @@
         WHERE
         pcsi.del_flag = 0
         AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
@@ -724,6 +728,7 @@
         WHERE
         pcsi.del_flag = 0
         AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
@@ -751,6 +756,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND pcs.enter_time &gt;= #{start}
         AND pcs.enter_time &lt;= #{end}
         GROUP BY
