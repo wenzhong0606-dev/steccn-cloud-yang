@@ -19,11 +19,14 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.oa.dto.OaGroupCountDTO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -85,6 +88,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+    private final OaInfoService oaInfoService;
+
     @Autowired
     @Lazy
     private PmsReportWorkService pmsReportWorkService;
@@ -1126,7 +1131,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
         //从数据字典中获取返修的标识
-        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //时间区间考虑
         List<RepaireBatchListVO> sourceList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
         Assert.notEmpty(sourceList, "暂无生产批次");
@@ -1157,13 +1162,18 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //定义返回数据
         List<RepaireBatchListVO> resList = Lists.newArrayList();
 
+        //获取班组
+        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(dto.getStart(),dto.getEnd().plusDays(1));
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
+
         for (String spec : specList) {
             for (LocalDate classDate : timeList) {
                 for (SysOfficeVO line : lineList) {
                     for (PmManagerConstant.classesType classIdType : classIdList) {
                         //根据规格，班次日期过滤出数据
                         LocalDateTime[] split = split(classIdType.getCode(), classDate);
-
+                        OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + classIdType.getName(), defaultOaGroupCountDTO);
                         List<RepaireBatchListVO> dataList = sourceList.stream()
                                 .filter(v -> v.getSpecifications().equals(spec) &&
                                 v.getProductLineName().equals(line.getOfficeName()) &&
@@ -1174,10 +1184,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             resVo.setClassDate(classDate);
                             resVo.setClassId(classIdType.getCode());
                             resVo.setClassName(classIdType.getName());
+                            resVo.setClassGroupId(oaGroupCountDTO.getGroupId());
+                            resVo.setClassGroupName(oaGroupCountDTO.getGroupName());
                             resList.add(resVo);
                         }
                     }
-
                 }
             }
         }
