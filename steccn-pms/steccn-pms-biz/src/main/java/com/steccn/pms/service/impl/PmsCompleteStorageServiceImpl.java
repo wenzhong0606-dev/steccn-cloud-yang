@@ -602,6 +602,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean chargeAgainst(Long id) {
         //获取生产入库单信息
         PmsCompleteStorage pmsCompleteStorage = getById(id);
