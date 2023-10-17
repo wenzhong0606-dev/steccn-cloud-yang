@@ -44,7 +44,10 @@ public class PmsUseCountDTO implements Serializable {
     @ApiModelProperty("物料主键")
     private Long materialId;
 
-    @ApiModelProperty("数量")
+    @ApiModelProperty("数量-加工数")
     private BigDecimal quantity;
+
+    @ApiModelProperty("数量-不良数")
+    private BigDecimal badQuantity;
 
 }
