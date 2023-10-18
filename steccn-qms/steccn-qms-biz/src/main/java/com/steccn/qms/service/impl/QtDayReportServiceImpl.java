@@ -1597,7 +1597,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 List<FurtherValueStrVO> defectModule = Lists.newArrayList();
                 for(int i = 0; i < defectAmountAll.size(); i++){
                     BigDecimal decimal = defectAmountAll.get(i);
-                    defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),BigDecimalUtil.percent(decimal,laAmountAll.get(i),2).toString()+"%")));
+                    BigDecimal percent = BigDecimalUtil.percent(decimal, laAmountAll.get(i), 2);
+                    if(Objects.isNull(percent)){
+                        percent = BigDecimal.ZERO;
+                    }
+                    defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
                 }
                 defectLine.setModule(defectModule);
                 tableData.add(defectLine);
