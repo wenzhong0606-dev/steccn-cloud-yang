@@ -16,6 +16,7 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
@@ -652,6 +653,78 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             list.forEach(wmsInventory -> map.put(wmsInventory.getId(),wmsInventory));
         }
         return map;
+    }
+
+    @Override
+    public Boolean addInfo(List<WmsInventoryDTO> infoList, String code, Integer warehouseId) {
+        if (CollUtil.isNotEmpty(infoList)) {
+            //获取库存变化类型
+            SysDictVO incomingType = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.variableTypeEnum.TYPE_1.getType(), WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<String> list = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
+            infoList.forEach(info -> {
+                //根据箱号获取当前的物料是否存在库存信息
+                list.add(info.getCaseNo());
+                officeIds.add(info.getWarehouseId());
+                officeIds.add(info.getShelfId());
+            });
+            Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<WmsInventoryRecord> wmsInventoryRecordList = Lists.newArrayList();
+            infoList.forEach(info -> {
+                //库存变动记录
+                WmsInventoryRecord wmsInventoryRecord = new WmsInventoryRecord();
+                wmsInventoryRecord.setMaterialId(info.getMaterialId());
+                wmsInventoryRecord.setMaterialName(info.getMaterialName());
+                wmsInventoryRecord.setType(incomingType.getId());
+                wmsInventoryRecord.setCode(code);
+                wmsInventoryRecord.setWarehouseId(warehouseId);
+                wmsInventoryRecord.setShelfId(info.getShelfId());
+                //变动数量
+                wmsInventoryRecord.setVariableQuantity(info.getQuantity());
+                WmsInventory orDefault = inventoryByCaseNo.get(info.getCaseNo());
+                SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
+                SysOfficeVO warehouseVO = officeMap.get(info.getWarehouseId());
+                info.setWarehouseName(warehouseVO.getOfficeName());
+                info.setShelfCode(shelfVO.getOfficeCode());
+                info.setShelfName(shelfVO.getOfficeName());
+                if (Objects.isNull(orDefault)) {
+                    //变动前
+                    wmsInventoryRecord.setFrontAvailableQuantity(BigDecimal.ZERO);
+                    wmsInventoryRecord.setFrontStockQuantity(BigDecimal.ZERO);
+                    wmsInventoryRecord.setFrontLockQuantity(BigDecimal.ZERO);
+                    wmsInventoryRecord.setFrontTotalQuantity(BigDecimal.ZERO);
+                    //变动后
+                    wmsInventoryRecord.setBackAvailableQuantity(BigDecimal.ZERO);
+                    wmsInventoryRecord.setBackStockQuantity(info.getQuantity());
+                    wmsInventoryRecord.setBackTotalQuantity(BigDecimal.ZERO);
+                    wmsInventoryRecord.setBackLockQuantity(BigDecimal.ZERO);
+                    WmsInventory inventory = new WmsInventory();
+                    BeanUtil.copyProperties(info, inventory);
+                    inventory.setStockQuantity(info.getQuantity());
+                    addWmsInventory.add(inventory);
+                } else {
+                    //变动前
+                    wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
+                    wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
+                    wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
+                    wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
+                    //变动后
+                    wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity());
+                    wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
+                    wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity());
+                    wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                    orDefault.setStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
+                    addWmsInventory.add(orDefault);
+                }
+                wmsInventoryRecordList.add(wmsInventoryRecord);
+            });
+            //保存库存变化记录
+            wmsInventoryRecordService.saveBatch(wmsInventoryRecordList);
+            saveOrUpdateBatch(addWmsInventory);
+        }
+        return true;
     }
 
     private Map<Long, WmsInventory> getInventoryId(List<Long> ids) {

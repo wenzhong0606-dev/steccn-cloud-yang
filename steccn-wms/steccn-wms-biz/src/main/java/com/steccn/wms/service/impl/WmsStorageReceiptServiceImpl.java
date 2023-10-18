@@ -418,8 +418,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 }
                 long count = infoList.stream().distinct().count();
                 Assert.isFalse(count < infoList.size(), "箱号重复，请修改");
-                //增加库存信息
-                wmsInventoryService.addInfo(infoList);
+                //生成库存变化
+                wmsInventoryService.addInfo(infoList,model.getCode(),dto.getWarehouseId());
+//                //增加库存信息
+//                wmsInventoryService.addInfo(infoList);
                 //保存明细信息
                 wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
             }

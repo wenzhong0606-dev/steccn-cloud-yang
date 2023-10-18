@@ -240,4 +240,13 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Map<Long, WmsInventory> inventoryIdMap(Set<Long> inventoryIds);
+
+    /**\
+     * 添加库存  有则增加无则新增 并生成记录
+     * @param infoList
+     * @param code
+     * @param warehouseId
+     * @return
+     */
+    Boolean addInfo(List<WmsInventoryDTO> infoList, String code, Integer warehouseId);
 }
