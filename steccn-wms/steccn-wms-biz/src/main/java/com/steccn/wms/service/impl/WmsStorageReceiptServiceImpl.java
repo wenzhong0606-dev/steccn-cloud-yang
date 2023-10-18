@@ -920,7 +920,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFlot(OaConstant.NO.toString());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     erpCommonSaveDetails.add(erpCommonSaveDetail);
                 }
