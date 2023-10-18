@@ -24,6 +24,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -46,6 +47,11 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.qms.feign.RemoteItemFeignApi;
+import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.QtDefectiveItemVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
@@ -93,6 +99,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final OaInfoService oaInfoService;
     private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
+    private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    private final RemoteItemFeignApi remoteItemFeignApi;
 
     @Autowired
     @Lazy
@@ -1176,7 +1184,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Map<String, List<PmsReportWork>> batchLinkReportWorkMap = pmsReportWorkService.batchLinkReportWorkMap(batchSet);
 
         //获取磨边工位
-        Set<Integer> edgStation = getEdgStation(lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList()));
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        Set<Integer> edgStation = getEdgStation(lineIdList);
 
         SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1191,6 +1200,17 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Assert.notNull(meterSysDict, "平方米单位不存在");
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+        QtChartParamDTO qtChartParamDTO = new QtChartParamDTO();
+        //获取在线检缺陷
+        qtChartParamDTO.setDateStart(dto.getStart());
+        qtChartParamDTO.setDateEnd(dto.getEnd().plusDays(1));
+        qtChartParamDTO.setProductLineIdList(lineIdList);
+        qtChartParamDTO.setProductBatchList(Lists.newArrayList(batchLinkReportWorkMap.keySet()));
+        List<QtCheckTaskDetailReportVO> checkTaskList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.defectFlat(qtChartParamDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+
+        //获取原片不良list
+        List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        Assert.notEmpty(defectItemList, "缺陷类别不存在");
 
         for (String spec : specList) {
             for (LocalDate classDate : timeList) {
@@ -1231,6 +1251,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(data.getMaterialId()), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
                             resVo.setUseCountPiece(sum);
                             resVo.setUseCountSquare(square);
+
+                            //原片不良的
+
+
                             resList.add(resVo);
                         }
                     }

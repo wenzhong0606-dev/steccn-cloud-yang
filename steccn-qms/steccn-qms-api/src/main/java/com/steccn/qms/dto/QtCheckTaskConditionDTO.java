@@ -53,5 +53,6 @@ public class QtCheckTaskConditionDTO implements Serializable {
     @ApiModelProperty("检验项id")
     private Integer defectId;
 
-
+    @ApiModelProperty("生产批次")
+    private List<String> productBatchList;
 }

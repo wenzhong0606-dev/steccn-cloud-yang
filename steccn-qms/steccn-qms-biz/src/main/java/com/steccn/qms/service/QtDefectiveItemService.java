@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -118,4 +119,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map
      */
     Map<String, QtDefectiveItem> collectDefect(Set<String> defectTypeSet);
+
+    /**
+     * 根据类别获取缺陷项集合
+     * @param categoryName 类别名称
+     * @return
+     */
+    List<QtDefectiveItemVO> getDefectItemByCategory(String categoryName);
 }

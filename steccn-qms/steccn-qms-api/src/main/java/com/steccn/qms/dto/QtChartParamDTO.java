@@ -88,4 +88,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("加入数采")
     private Integer joinAcquisition;
+
+    @ApiModelProperty("生产批次")
+    private List<String> productBatchList;
 }

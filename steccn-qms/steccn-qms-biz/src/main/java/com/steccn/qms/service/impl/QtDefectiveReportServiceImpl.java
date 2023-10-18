@@ -267,6 +267,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .defectType(dto.getDefectType())
                 .defectId(dto.getDefectId())
                 .productLineIdList(dto.getProductLineIdList())
+                .productBatchList(dto.getProductBatchList())
                 .build();
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.conditionTaskList(condition);
         Map<Long, QtCheckTask> taskMap = Maps.newHashMap();

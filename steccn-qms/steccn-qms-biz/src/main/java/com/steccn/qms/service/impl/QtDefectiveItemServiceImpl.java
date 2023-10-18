@@ -422,6 +422,28 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resMap;
     }
 
+    @Override
+    public List<QtDefectiveItemVO> getDefectItemByCategory(String categoryName) {
+        List<QtDefectiveItemVO> resList = Lists.newArrayList();
+        QtItemCategory one = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>()
+                .eq(QtItemCategory::getShowFlag, MpConstant.YES)
+                .eq(QtItemCategory::getType, MpConstant.YES)
+                .eq(QtItemCategory::getName, categoryName), false);
+        if (Objects.nonNull(one)) {
+            List<QtDefectiveItem> dbList = list(new LambdaQueryWrapper<QtDefectiveItem>()
+                    .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
+                    .eq(QtDefectiveItem::getCategoryId, one.getId()));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    QtDefectiveItemVO res = new QtDefectiveItemVO();
+                    BeanUtils.copyProperties(ele, res);
+                    resList.add(res);
+                });
+            }
+        }
+        return resList;
+    }
+
     /**
      * 同类别下名称是否重复
      *

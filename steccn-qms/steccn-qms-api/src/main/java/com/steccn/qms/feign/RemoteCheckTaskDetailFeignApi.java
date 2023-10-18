@@ -6,9 +6,11 @@ import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
+import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.vo.OutputQualityDetailVO;
 import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
+import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +28,10 @@ import java.util.List;
  */
 @FeignClient(contextId = "RemoteCheckTaskDetailFeignApi", value = FeignConstant.STECCN_QMS_SERVICE_NAME)
 public interface RemoteCheckTaskDetailFeignApi {
+
+    @ApiOperation("获取在线检缺陷")
+    @PostMapping("/feign/qms/task/detail/defect/flat")
+    R<List<QtCheckTaskDetailReportVO>> defectFlat(@RequestBody QtChartParamDTO dto);
 
     @ApiOperation("根据班次日期查询单片掰边重量、单片重量、拉引速度")
     @PostMapping("/feign/qms/task/detail/getByClassTime")
