@@ -1592,7 +1592,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
                 defectLine.setDefectName(tmp);
                 defectLine.setProductLineName(tmp);
-                laAmountAllLine.setType(QtManagerConstant.NUM_3);
+                defectLine.setType(QtManagerConstant.NUM_3);
                 List<BigDecimal> defectAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals(tmp)).collect(Collectors.toList()));
                 List<FurtherValueStrVO> defectModule = Lists.newArrayList();
                 for(int i = 0; i < defectAmountAll.size(); i++){
