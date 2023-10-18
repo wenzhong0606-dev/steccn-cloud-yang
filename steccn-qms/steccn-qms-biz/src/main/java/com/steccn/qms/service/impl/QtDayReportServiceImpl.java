@@ -1567,9 +1567,47 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 //        type2.addAll(tableData.stream().filter(v->v.getType().equals(QtManagerConstant.NUM_2)).collect(Collectors.toList()));
         //只有大于车间的大小才有总计
         if (type2.size() > productLineList.size()) {
+            //算损耗总计
             QtDayReportLossDataVO lossAllLine = countAmount(type2, dto.getType());
+            lossAllLine.setDefectName("损耗总计");
+            lossAllLine.setProductLineName("损耗总计");
             lossAllLine.setType(QtManagerConstant.NUM_3);
+            //算拉引量总计
+            List<BigDecimal> laAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals("拉引量")).collect(Collectors.toList()));
+            QtDayReportLossDataVO laAmountAllLine = new QtDayReportLossDataVO();
+            laAmountAllLine.setDefectName("拉引量总计");
+            laAmountAllLine.setProductLineName("拉引量总计");
+            laAmountAllLine.setType(QtManagerConstant.NUM_3);
+            List<FurtherValueStrVO> laAmountModule = Lists.newArrayList();
+            laAmountAll.forEach(tmp->{
+                laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(tmp.toString(),"")));
+            });
+            laAmountAllLine.setModule(laAmountModule);
+            tableData.add(laAmountAllLine);
+            //算其他损耗
+            List<String> defectList = tableData.stream()
+                    .filter(v -> v.getDefectName() != null && !v.getDefectName().equals("拉引量") && !v.getDefectName().equals("拉引量总计"))
+                    .map(QtDayReportLossDataVO::getDefectName).distinct().collect(Collectors.toList());
+            defectList.forEach(tmp -> {
+                QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
+                defectLine.setDefectName(tmp);
+                defectLine.setProductLineName(tmp);
+                defectLine.setType(QtManagerConstant.NUM_3);
+                List<BigDecimal> defectAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals(tmp)).collect(Collectors.toList()));
+                List<FurtherValueStrVO> defectModule = Lists.newArrayList();
+                for(int i = 0; i < defectAmountAll.size(); i++){
+                    BigDecimal decimal = defectAmountAll.get(i);
+                    BigDecimal percent = BigDecimalUtil.percent(decimal, laAmountAll.get(i), 2);
+                    if(Objects.isNull(percent)){
+                        percent = BigDecimal.ZERO;
+                    }
+                    defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
+                }
+                defectLine.setModule(defectModule);
+                tableData.add(defectLine);
+            });
             tableData.add(lossAllLine);
+
         }
         chart.setTableData(tableData);
         return chart;
