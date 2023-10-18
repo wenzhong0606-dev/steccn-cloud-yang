@@ -1165,8 +1165,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //获取产线集合
         List<SysOfficeVO> lineList = lineMap.values().stream().sorted(Comparator.comparingInt(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
 
-        //获取班次
-        PmManagerConstant.classesType[] classIdList = PmManagerConstant.classesType.values();
         //定义返回数据
         List<RepaireBatchListVO> resList = Lists.newArrayList();
 
@@ -1176,27 +1174,31 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
         //根据生产批次获取报工记录
         Map<String, List<PmsReportWork>> batchLinkReportWorkMap = pmsReportWorkService.batchLinkReportWorkMap(batchSet);
-        //获取报工消耗信息
-        Set<Long> reportIdSet = batchLinkReportWorkMap.values().stream().flatMap(Collection::stream).map(PmsReportWork::getId).collect(Collectors.toSet());
-        Map<Long, List<PmsCompleteDeliveryInfoDTO>> consumeMap = pmsCompleteDeliveryService.reportWorkMaterial(reportIdSet);
 
         //获取磨边工位
         Set<Integer> edgStation = getEdgStation(lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList()));
 
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<SysDictVO> classList = Lists.newArrayList(morningDict,nightDict);
+
         //获取物料转换单位数据字典数据及单位转换逻辑
         SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO meterSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        org.springframework.util.Assert.notNull(meterSysDict, "片单位不存在");
-        org.springframework.util.Assert.notNull(meterSysDict, "平方米单位不存在");
+        Assert.notNull(meterSysDict, "片单位不存在");
+        Assert.notNull(meterSysDict, "平方米单位不存在");
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
 
         for (String spec : specList) {
             for (LocalDate classDate : timeList) {
                 for (SysOfficeVO line : lineList) {
-                    for (PmManagerConstant.classesType classIdType : classIdList) {
+                    for (SysDictVO classIdType : classList) {
+                        int classId = Integer.parseInt(classIdType.getCode());
                         //根据规格，班次日期过滤出数据
-                        LocalDateTime[] split = split(classIdType.getCode(), classDate);
+                        LocalDateTime[] split = split(classId, classDate);
                         OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + classIdType.getName(), defaultOaGroupCountDTO);
                         List<RepaireBatchListVO> dataList = sourceList.stream()
                                 .filter(v -> v.getSpecifications().equals(spec) &&
@@ -1206,7 +1208,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                         for (RepaireBatchListVO data : dataList) {
                             RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
                             resVo.setClassDate(classDate);
-                            resVo.setClassId(classIdType.getCode());
+                            resVo.setClassId(classId);
                             resVo.setClassName(classIdType.getName());
                             resVo.setClassGroupId(oaGroupCountDTO.getGroupId());
                             resVo.setClassGroupName(oaGroupCountDTO.getGroupName());
@@ -1216,16 +1218,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             //报工记录的产线为所在行产线
                             //报工记录的加工时间在所在行班次日期&班次之内
                             //报工记录的工序为“磨边工序”
-                            Set<Long> reportIds = reportWorkList.stream().filter(ele -> ele.getProductLineId().equals(line.getId()) &&
-                                    ele.getClassesId().equals(resVo.getClassId()) &&
+                            List<PmsReportWork> consumeList = reportWorkList.stream().filter(ele -> ele.getProductLineId().equals(line.getId()) &&
+                                    ele.getClassesId().equals(classIdType.getId()) &&
                                     LocalDateUtil.isRange(ele.getStartTime(), split[0], split[1], true, true) &&
-                                    edgStation.contains(ele.getStationId())).map(PmsReportWork::getId).collect(Collectors.toSet());
-                            List<PmsCompleteDeliveryInfoDTO> consumeList = Lists.newArrayList();
-                            for (Long reportId : reportIds) {
-                                consumeList.addAll(consumeMap.getOrDefault(reportId, Lists.newArrayList()));
-                            }
+                                    edgStation.contains(ele.getStationId())
+                            ).collect(Collectors.toList());
                             //根据物料耗用
-                            List<BigDecimal> collect = consumeList.stream().filter(ele -> resVo.getMaterialId().equals(ele.getMaterialId())).map(PmsCompleteDeliveryInfoDTO::getQuantity).collect(Collectors.toList());
+                            List<BigDecimal> collect = consumeList.stream().map(PmsReportWork::getProcessQuantity).collect(Collectors.toList());
                             BigDecimal sum = BigDecimalUtil.sum(collect);
                             sum = BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
                             //片转平方
