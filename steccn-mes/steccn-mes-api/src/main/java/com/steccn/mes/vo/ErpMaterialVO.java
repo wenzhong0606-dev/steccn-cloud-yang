@@ -74,5 +74,13 @@ public class ErpMaterialVO implements Serializable {
      * 尺寸单位换算率
      */
     private BigDecimal fvolumerate;
+    /**
+     * 生产单位编码
+     */
+    private String fprounitno;
+    /**
+     * 生产单位名称
+     */
+    private String fprounitname;
 
 }

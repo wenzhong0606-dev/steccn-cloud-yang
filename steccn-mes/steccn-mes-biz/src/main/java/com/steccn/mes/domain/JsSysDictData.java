@@ -19,7 +19,7 @@ public class JsSysDictData implements Serializable {
     /**
      * 字典编码
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private String dictCode;
 
     /**
