@@ -29,15 +29,14 @@ public class UnitConvertUtil {
      * @return
      */
     public static BigDecimal convert(Map<Long, List<SysSpareUnitConversionVO>> convertMap, Long materialId, Long sourceUnitId, Long targetUnitId, BigDecimal quantity) {
-        if (CollUtil.isNotEmpty(convertMap) && Objects.nonNull(materialId) && Objects.nonNull(sourceUnitId) && Objects.nonNull(targetUnitId) && Objects.nonNull(quantity) && BigDecimalUtil.equals(quantity, BigDecimal.ZERO)) {
+        if (CollUtil.isNotEmpty(convertMap) && Objects.nonNull(materialId) && Objects.nonNull(sourceUnitId) && Objects.nonNull(targetUnitId) && Objects.nonNull(quantity) && !BigDecimalUtil.equals(quantity, BigDecimal.ZERO)) {
             List<SysSpareUnitConversionVO> convertList = convertMap.getOrDefault(materialId, Lists.newArrayList());
-            Optional<SysSpareUnitConversionVO> sourceOp = convertList.stream().filter(ele -> sourceUnitId.equals(ele.getUnitId())).findFirst();
-            Optional<SysSpareUnitConversionVO> targetOp = convertList.stream().filter(ele -> targetUnitId.equals(ele.getUnitId())).findFirst();
-            if (sourceOp.isPresent() && targetOp.isPresent()) {
+            Optional<SysSpareUnitConversionVO> sourceOp = convertList.stream().filter(ele -> sourceUnitId.equals(ele.getUnitId()) && targetUnitId.equals(ele.getConversionUnitId())).findFirst();
+            if (sourceOp.isPresent()) {
                 SysSpareUnitConversionVO source = sourceOp.get();
-                SysSpareUnitConversionVO target = targetOp.get();
-                BigDecimal res = BigDecimalUtil.divide(source.getConversionQuantity(), target.getConversionQuantity(), BigDecimalUtil.SCALE_4);
-                return res.multiply(quantity);
+                BigDecimal multiply = BigDecimalUtil.multiply(quantity, source.getConversionQuantity());
+                BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), BigDecimalUtil.DEFAULT_SCALE);
+                return res;
             }
         }
         return null;

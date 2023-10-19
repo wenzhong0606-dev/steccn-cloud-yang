@@ -507,15 +507,20 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         WmsManagerConstant.LogisticsBillState.SYN_SENT.getName().equals(state)||
                         WmsManagerConstant.LogisticsBillState.ALREADY_ENTERED.getName().equals(state)){
                     wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
-                    //获取物流单关联的出库单
-                    List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, number));
-                    if (CollUtil.isNotEmpty(list)){
-                        List<Long> receiptIds = list.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toList());
-                        List<WmsDeliveryReceiptInfo> infolist = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId, receiptIds));
-                        BigDecimal sum = infolist.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
-                        BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
-                        if (sum.subtract(saleQty).compareTo(BigDecimal.ZERO)>0){
-                            wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
+                    BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
+                    //如果销售数量为0
+                    if (saleQty.compareTo(BigDecimal.ZERO)==0){
+                        wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
+                    }else {
+                        //获取物流单关联的出库单
+                        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, number));
+                        if (CollUtil.isNotEmpty(list)) {
+                            List<Long> receiptIds = list.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toList());
+                            List<WmsDeliveryReceiptInfo> infolist = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId, receiptIds));
+                            BigDecimal sum = infolist.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+                            if (sum.subtract(saleQty).compareTo(BigDecimal.ZERO) > 0) {
+                                wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
+                            }
                         }
                     }
                 }
