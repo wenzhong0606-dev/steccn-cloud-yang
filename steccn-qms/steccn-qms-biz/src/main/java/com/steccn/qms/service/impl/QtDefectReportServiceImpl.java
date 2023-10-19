@@ -698,7 +698,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
                     //入库量
                     BigDecimal inStorage = inStorageMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderId());
-                    BigDecimal inStorageConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), dict1.getId() , dict2.getId(), useCount);
+                    BigDecimal inStorageConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), dict1.getId() , dict2.getId(), inStorage);
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(inStorage, 2), BigDecimalUtil.format(inStorageConvert, 2))));
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.RKS_0, inStorage);
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.RKS_1, inStorageConvert);
