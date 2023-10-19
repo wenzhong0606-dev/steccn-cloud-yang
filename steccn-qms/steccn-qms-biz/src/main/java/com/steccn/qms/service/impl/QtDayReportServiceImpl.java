@@ -1475,18 +1475,21 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
                                 if (CollUtil.isEmpty(dayData)) {
                                     lineDataTmp.add(null);
-                                } else {
-                                    lineDataTmp.add(dayData.get(0).getClassGroupName());
                                 }
+//                                else {
+//                                    lineDataTmp.add(dayData.get(0).getClassGroupName());
+//                                }
                             }
                             //早班对象和晚班对象
                             if (CollUtil.isNotEmpty(dayData)) {
+                                //是班次则加入班组
                                 QtChartSubDetailDTO amountDay = dayData.stream().filter(v -> v.getWorkOrder().equals(className) && v.getReason().equals(tmp)).findFirst().orElse(null);
                                 //找到当天的拉引量,同一天取相同的拉引量
                                 QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v -> v.getWorkOrder().equals(className) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);
                                 BigDecimal lossAmount = BigDecimal.ZERO;
                                 BigDecimal pullAmount = BigDecimal.ZERO;
                                 if (Objects.nonNull(amountDay)) {
+                                    lineDataTmp.add(amountDay.getClassGroupName());
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
                                     //找到当天的拉引量,同一天取相同的拉引量
                                     if(Objects.nonNull(pullAmountDay)&&pullAmountDay.getPullAmount()!=null){
@@ -1580,7 +1583,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             laAmountAllLine.setType(QtManagerConstant.NUM_3);
             List<FurtherValueStrVO> laAmountModule = Lists.newArrayList();
             laAmountAll.forEach(tmp->{
-                laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(tmp.toString(),"")));
+                //如果是班次报表则需要空一行
+                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("",tmp.toString(),"")));
+                }else {
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(tmp.toString(),"")));
+                }
             });
             laAmountAllLine.setModule(laAmountModule);
             tableData.add(laAmountAllLine);
@@ -1590,8 +1598,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     .map(QtDayReportLossDataVO::getDefectName).distinct().collect(Collectors.toList());
             defectList.forEach(tmp -> {
                 QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
-                defectLine.setDefectName(tmp);
-                defectLine.setProductLineName(tmp);
+                defectLine.setDefectName(tmp+"总计");
+                defectLine.setProductLineName(tmp+"总计");
                 defectLine.setType(QtManagerConstant.NUM_3);
                 List<BigDecimal> defectAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals(tmp)).collect(Collectors.toList()));
                 List<FurtherValueStrVO> defectModule = Lists.newArrayList();
@@ -1601,7 +1609,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     if(Objects.isNull(percent)){
                         percent = BigDecimal.ZERO;
                     }
-                    defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
+                    //如果是班次报表则需要空一行
+                    if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList("",decimal.toString(),percent.toString()+"%")));
+                    }else {
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
+                    }
                 }
                 defectLine.setModule(defectModule);
                 tableData.add(defectLine);

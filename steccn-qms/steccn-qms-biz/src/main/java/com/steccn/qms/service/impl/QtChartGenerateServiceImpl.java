@@ -2061,17 +2061,19 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             BigDecimal laAmount = BigDecimal.ZERO;
             //损耗总重量
             BigDecimal sunAmount = BigDecimal.ZERO;
-            //算所有的拉引量
+            //算所有的拉引量 对所有损耗数据原因进行加总分析
+            Map<String, BigDecimal> reasonData = Maps.newHashMap();
             for (QtChartSubDetailDTO tmp : data) {
                 laAmount = BigDecimalUtil.add(laAmount, tmp.getPullAmount());
                 sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
+                BigDecimalUtil.accumulate(reasonData,tmp.getReason(),tmp.getLossWeight());
             }
             //若拉引量为0，饼状图显示为暂无数据图片
             if (laAmount.compareTo(BigDecimal.ZERO) == 0) {
                 SteccnTableAssertUtil.notEmpty(new ArrayList<>(), "数据为空，暂无报表");
             }
             //对所有损耗数据原因进行加总分析
-            Map<String, BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+//            Map<String, BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
 
             //损耗原因按损耗重量降序排序，成品排在所有损耗原因之后，显示格式：#损耗原因#: #损耗重量#吨(#损耗率#)、成品: #成品重量#吨(#成品率#)
             Map<String, BigDecimal> orderByReason = MapUtil.sortByValue(reasonData, false);
