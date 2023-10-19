@@ -656,7 +656,7 @@
               AND task.`status` = 2
               AND task.product_order is not null
               AND task.defect_start_time &gt;= #{start}
-              AND task.defect_end_time &lt; #{end}
+              AND task.defect_end_time &lt;= #{end}
               AND task.product_line ->> '$.id' IN
               <foreach collection="lineIdList" item="item" open="(" close=")" separator=",">
                 #{item}
