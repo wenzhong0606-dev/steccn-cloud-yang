@@ -2,10 +2,8 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,7 +22,6 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
-import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -54,12 +51,10 @@ import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1251,10 +1246,21 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(data.getMaterialId()), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
                             resVo.setUseCountPiece(sum);
                             resVo.setUseCountSquare(square);
-
                             //原片不良的
-
-
+                            //查询满足下列条件的在线检任务，记为集合T：
+                            //状态为已检验
+                            //产线为所在行产线
+                            //生产批次为所在行生产批次
+                            //缺陷记录时段在所在行班次日期&班次内
+                            for (QtDefectiveItemVO defectItem : defectItemList) {
+                                List<QtCheckTaskDetailReportVO> valueList = checkTaskList.stream().filter(ele ->
+                                        ele.getDefectId().equals(defectItem.getId()) &&
+                                        ele.getProductLineId().equals(line.getId()) &&
+                                        ele.getProductBatch().equals(resVo.getBatchNo()) &&
+                                        ele.getClassId().equals(resVo.getClassId()) &&
+                                        LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
+                                ).collect(Collectors.toList());
+                            }
                             resList.add(resVo);
                         }
                     }

@@ -360,6 +360,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             vo.setId(ele.getId());
                             vo.setTaskId(ele.getTaskId());
                             vo.setTaskCode(qtCheckTask.getCode());
+                            vo.setProductBatch(qtCheckTask.getProductBatch());
                             vo.setProductWorkshopId(Objects.nonNull(qtCheckTask.getProductWorkshop()) ? qtCheckTask.getProductWorkshop().getId() : null);
                             vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
                             //客户属性

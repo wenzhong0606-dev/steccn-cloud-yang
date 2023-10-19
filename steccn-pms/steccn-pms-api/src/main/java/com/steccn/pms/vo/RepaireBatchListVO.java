@@ -1,11 +1,11 @@
 package com.steccn.pms.vo;
 
 import lombok.Data;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -62,20 +62,59 @@ public class RepaireBatchListVO implements Serializable {
      */
     private String productLineName;
 
+    /**
+     * 班次主键
+     */
     private Integer classId;
 
+    /**
+     * 班次名称
+     */
     private String className;
 
+    /**
+     * 班组主键
+     */
     private Integer classGroupId;
 
+    /**
+     * 班组名称
+     */
     private String classGroupName;
 
+    /**
+     * 物料主键
+     */
     private Long materialId;
 
+    /**
+     * 物料名称
+     */
     private String materialName;
 
+    /**
+     * 耗用数-片
+     */
     private BigDecimal useCountPiece;
 
+    /**
+     * 耗用数-平方米
+     */
     private BigDecimal useCountSquare;
+
+    /**
+     * 缺陷不良- 数值列
+     */
+    private List<BigDecimal> valueList;
+
+    /**
+     * 不良总数-合计
+     */
+    private BigDecimal defectSum;
+
+    /**
+     * 不良率
+     */
+    private BigDecimal defectRate;
 
 }
