@@ -1489,7 +1489,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 BigDecimal lossAmount = BigDecimal.ZERO;
                                 BigDecimal pullAmount = BigDecimal.ZERO;
                                 if (Objects.nonNull(amountDay)) {
-                                    lineDataTmp.add(amountDay.getClassGroupName());
+                                    if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
+                                        lineDataTmp.add(amountDay.getClassGroupName());
+                                    }
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
                                     //找到当天的拉引量,同一天取相同的拉引量
                                     if(Objects.nonNull(pullAmountDay)&&pullAmountDay.getPullAmount()!=null){
