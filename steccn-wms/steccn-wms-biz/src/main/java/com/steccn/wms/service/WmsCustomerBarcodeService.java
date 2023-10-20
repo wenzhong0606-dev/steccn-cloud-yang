@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author 34872
@@ -29,4 +31,11 @@ public interface WmsCustomerBarcodeService extends IService<WmsCustomerBarcode> 
     String getCustomerBarcodeByCaseNO(String caseNo);
 
     Boolean batchUpdate(List<WmsCustomerBarcodeDTO> list);
+
+    /**
+     * 根据箱号获取客户条码
+     * @param caseNos
+     * @return
+     */
+    Map<String,String> customerBarcodeMap(Set<String> caseNos);
 }
