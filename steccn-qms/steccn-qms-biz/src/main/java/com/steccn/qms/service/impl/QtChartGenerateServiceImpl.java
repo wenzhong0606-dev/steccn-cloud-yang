@@ -2080,19 +2080,23 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //成品重量 = 拉引量 - 损耗总重量，单位为吨
             BigDecimal chengWeight = BigDecimalUtil.subtract(laAmount, sunAmount);
             //成品率 = 成品重量 / 拉引量 * 100%，小数点后最多2位
-            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight, laAmount,4);
+//            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight, laAmount,4);
             QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
             onePie.setName("成品");
-            onePie.setValue(chengRate.abs());
+            onePie.setValue(chengWeight.abs());
 
             //遍历损耗原因分组
             for (Map.Entry<String, BigDecimal> reasonEntry : orderByReason.entrySet()) {
                 QtChartPieValueVO<BigDecimal> tmp = new QtChartPieValueVO();
-                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
+//                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
+                BigDecimal value = BigDecimal.ZERO;
+                if(Objects.nonNull(reasonEntry.getValue())){
+                    value = reasonEntry.getValue();
+                }
                 //为0则不放入
                 if (value.compareTo(BigDecimal.ZERO) != 0) {
                     tmp.setName(reasonEntry.getKey());
-                    tmp.setValue(value);
+                    tmp.setValue(reasonEntry.getValue());
                     pieList.add(tmp);
                 }
             }
