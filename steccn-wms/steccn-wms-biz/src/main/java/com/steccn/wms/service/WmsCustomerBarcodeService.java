@@ -5,6 +5,8 @@ import com.steccn.wms.domain.WmsCustomerBarcode;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 
+import java.util.List;
+
 /**
 * @author 34872
 * @description 针对表【wms_customer_barcode(客户条码绑定)】的数据库操作Service
@@ -18,4 +20,13 @@ public interface WmsCustomerBarcodeService extends IService<WmsCustomerBarcode> 
      * @return
      */
     Boolean add(WmsCustomerBarcodeDTO dto);
+
+    /**
+     * 根据箱号获取客户条码
+     * @param caseNo
+     * @return
+     */
+    String getCustomerBarcodeByCaseNO(String caseNo);
+
+    Boolean batchUpdate(List<WmsCustomerBarcodeDTO> list);
 }

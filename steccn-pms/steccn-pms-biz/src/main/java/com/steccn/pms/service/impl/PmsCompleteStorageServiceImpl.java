@@ -45,6 +45,7 @@ import com.steccn.pms.vo.PmsCompleteStorageVO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
+import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.feign.RemoteWmsShelfStrategyFeignApi;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
@@ -100,6 +101,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Autowired
     private PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
+    @Autowired
+    private RemoteWmsCustomerBarcodeFeignApi remoteWmsCustomerBarcodeFeignApi;
+
     @Override
     public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
         //1.判断装箱单（PP-XXXXX）已扫描，入库单为SI-XXXXX
@@ -147,6 +151,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         EqpSpareVO materialVo = materialMap.getOrDefault(pmsProduceOrder.getMaterialId(), new EqpSpareVO());
         resDTO.setMaterialCode(materialVo.getCode());
         resDTO.setMaterialName(materialVo.getName());
+        //获取箱号绑定的客户条码号
+        String customerBarCode = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.getCustomerBarcodeByCaseNO(resDTO.getCaseNo()), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        resDTO.setCustomerBarcode(customerBarCode);
         return resDTO;
     }
 

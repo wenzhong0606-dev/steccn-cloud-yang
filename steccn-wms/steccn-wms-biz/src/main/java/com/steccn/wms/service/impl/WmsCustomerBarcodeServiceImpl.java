@@ -1,17 +1,24 @@
 package com.steccn.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsCustomerBarcode;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.mapper.WmsCustomerBarcodeMapper;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
 * @author 34872
@@ -32,6 +39,43 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
         }else {
            return save(BeanUtil.copyProperties(dto,WmsCustomerBarcode.class));
         }
+    }
+
+    @Override
+    public String getCustomerBarcodeByCaseNO(String caseNo) {
+        WmsCustomerBarcode customerBarcode = getOne(new LambdaQueryWrapper<WmsCustomerBarcode>().eq(WmsCustomerBarcode::getCaseNo, caseNo));
+        if (Objects.nonNull(customerBarcode)){
+            return customerBarcode.getCustomerBarcode();
+        }else {
+            return null;
+        }
+    }
+
+    @Override
+    public Boolean batchUpdate(List<WmsCustomerBarcodeDTO> list) {
+        if (CollUtil.isNotEmpty(list)){
+            List<WmsCustomerBarcode> wmsCustomerBarcodes = Lists.newArrayList();
+            Set<String> collect = list.stream().map(WmsCustomerBarcodeDTO::getCaseNo).collect(Collectors.toSet());
+            Map<String, List<WmsCustomerBarcode>> caseMap = list(new LambdaQueryWrapper<WmsCustomerBarcode>()
+                    .in(WmsCustomerBarcode::getCaseNo, collect))
+                    .stream()
+                    .collect(Collectors.groupingBy(WmsCustomerBarcode::getCaseNo));
+            list.forEach( wmsCustomerBarcodeDTO -> {
+                List<WmsCustomerBarcode> barcodes = caseMap.get(wmsCustomerBarcodeDTO.getCaseNo());
+                if (CollUtil.isNotEmpty(barcodes)){
+                    WmsCustomerBarcode wmsCustomerBarcode = barcodes.get(WmsManagerConstant.InventoryEnum.ZERO.getCode());
+                    wmsCustomerBarcode.setCustomerBarcode(wmsCustomerBarcodeDTO.getCustomerBarcode());
+                    wmsCustomerBarcodes.add(wmsCustomerBarcode);
+                }else {
+                    WmsCustomerBarcode wmsCustomerBarcode = new WmsCustomerBarcode();
+                    BeanUtil.copyProperties(wmsCustomerBarcodeDTO,wmsCustomerBarcode);
+                    wmsCustomerBarcodes.add(wmsCustomerBarcode);
+
+                }
+            });
+            saveOrUpdateBatch(wmsCustomerBarcodes);
+        }
+        return Boolean.TRUE;
     }
 }
 

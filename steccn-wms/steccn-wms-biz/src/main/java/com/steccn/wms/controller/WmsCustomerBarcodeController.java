@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
 /**
  * 客户条码绑定
  *
@@ -36,5 +39,11 @@ public class WmsCustomerBarcodeController {
     @SysLog("客户条码绑定")
     public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody WmsCustomerBarcodeDTO dto) {
         return R.success(wmsCustomerBarcodeService.add(dto));
+    }
+
+    @ApiOperation("批量更新客户条码")
+    @PostMapping("/batch/update")
+    public R<Boolean> batchUpdate(@RequestBody List<WmsCustomerBarcodeDTO> list){
+        return R.success(wmsCustomerBarcodeService.batchUpdate(list));
     }
 }
