@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesDefectMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesDefect">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="eqpId" column="eqp_id" jdbcType="VARCHAR"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="type" column="type" jdbcType="VARCHAR"/>
+            <result property="serviceId" column="service_id" jdbcType="BIGINT"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="eqpName" column="eqp_name" jdbcType="VARCHAR"/>
+            <result property="unQualifiedId" column="un_qualified_id" jdbcType="BIGINT"/>
+            <result property="level" column="level" jdbcType="INTEGER"/>
+            <result property="faultType" column="fault_type" jdbcType="INTEGER"/>
+            <result property="findTime" column="find_time" jdbcType="TIMESTAMP"/>
+            <result property="workOrderId" column="work_order_id" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,eqp_id,code,
+        type,service_id,status,
+        create_by,create_date,update_by,
+        update_date,remarks,title,
+        eqp_name,un_qualified_id,level,
+        fault_type,find_time,work_order_id
+    </sql>
+
+    <select id="findDefectCount" resultType="com.steccn.mes.dto.MesDefectCountDTO">
+        SELECT count(*) AS num,eqp_id As eqpId
+        FROM mes_defect
+        WHERE
+        <if test="dto.statusNe!=null">
+            status != #{dto.statusNe}
+        </if>
+        <if test="dto.status!=null">
+            status = #{dto.status}
+        </if>
+        <if test="dto.startTime != null">
+            AND find_time &gt;= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null">
+            AND find_time &lt;= #{dto.endTime}
+        </if>
+        <if test="levels != null and levels.size() > 0">
+            AND level IN
+            <foreach item="level" collection="levels" open="(" separator="," close=")">
+                #{level}
+            </foreach>
+        </if>
+        GROUP BY eqp_id
+    </select>
+</mapper>
