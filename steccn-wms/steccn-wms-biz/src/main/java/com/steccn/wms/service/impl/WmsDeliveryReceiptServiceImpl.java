@@ -633,6 +633,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     flagInfoVO.setCaseNumberQuantityFlag(1);
                 }
                 }
+                //获取箱号是否绑定客户条码
+                String customerBarcodeByCaseNO = wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(inventory.getCaseNo());
+                if (Objects.nonNull(customerBarcodeByCaseNO)){
+                    flagInfoVO.setCaseNoBindingCustomerBarcodeFlag(1);
+                }
             }
         return flagInfoVO;
     }

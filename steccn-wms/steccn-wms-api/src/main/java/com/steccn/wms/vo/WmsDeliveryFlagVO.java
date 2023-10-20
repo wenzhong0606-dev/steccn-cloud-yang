@@ -17,4 +17,7 @@ public class WmsDeliveryFlagVO {
     @ApiModelProperty("箱号对应的库存明细中可用数量>0")
     private Integer caseNumberQuantityFlag = 0;
 
+    @ApiModelProperty("箱号是否绑定客户条码")
+    private Integer caseNoBindingCustomerBarcodeFlag = 0;
+
 }
