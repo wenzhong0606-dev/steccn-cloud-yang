@@ -82,6 +82,14 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      * @param dto
      * @return
      */
+    List<PanoramicTracingVO>  tracingCustomerBarcode(@Param("dto") PanoramicTracingDTO dto);
+
+
+    /**
+     * 全景追诉
+     * @param dto
+     * @return
+     */
     List<PanoramicTracingVO>  tracing(@Param("dto") PanoramicTracingDTO dto);
 }
 

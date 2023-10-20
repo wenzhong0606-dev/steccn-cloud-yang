@@ -37,4 +37,10 @@ public class WmsCustomerBarcodeFeignController {
         return R.success(wmsCustomerBarcodeService.batchUpdate(list));
     }
 
+    @GetMapping("/list/barcode")
+    @ApiOperation("根据客户条码查询箱号")
+    public R<List<String>> listByCustomerBarcode(@ApiParam("客户条码") @RequestParam("customerBarcode") String customerBarcode){
+        return R.success(wmsCustomerBarcodeService.listByCustomerBarcode(customerBarcode));
+    }
+
 }

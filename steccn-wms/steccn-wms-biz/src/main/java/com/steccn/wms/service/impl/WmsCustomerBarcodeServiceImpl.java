@@ -89,6 +89,17 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
         }
         return resMap;
     }
+
+    @Override
+    public List<String> listByCustomerBarcode(String customerBarcode) {
+        List<WmsCustomerBarcode> list = list(new LambdaQueryWrapper<WmsCustomerBarcode>()
+                .like(WmsCustomerBarcode::getCustomerBarcode, customerBarcode));
+        List<String> resList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)){
+            resList = list.stream().map(WmsCustomerBarcode::getCaseNo).collect(Collectors.toList());
+        }
+        return resList;
+    }
 }
 
 

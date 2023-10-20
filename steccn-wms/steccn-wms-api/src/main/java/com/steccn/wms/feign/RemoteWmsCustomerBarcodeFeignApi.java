@@ -37,4 +37,8 @@ public interface RemoteWmsCustomerBarcodeFeignApi {
     @ApiOperation("批量更新客户条码")
     @PostMapping("/feign/wms/customer/barcode/batch/update")
      R<Boolean> batchUpdate(@RequestBody List<WmsCustomerBarcodeDTO> list);
+
+    @GetMapping("/feign/wms/customer/barcode/list/barcode")
+    @ApiOperation("根据客户条码查询箱号")
+    R<List<String>> listByCustomerBarcode(@ApiParam("箱号") @RequestParam("customerBarcode") String customerBarcode);
 }

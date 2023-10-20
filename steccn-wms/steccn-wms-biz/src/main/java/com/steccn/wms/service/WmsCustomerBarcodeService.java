@@ -38,4 +38,11 @@ public interface WmsCustomerBarcodeService extends IService<WmsCustomerBarcode> 
      * @return
      */
     Map<String,String> customerBarcodeMap(Set<String> caseNos);
+
+    /**
+     * 根据客户条码模糊查询箱号
+     * @param customerBarcode
+     * @return
+     */
+    List<String> listByCustomerBarcode(String customerBarcode);
 }
