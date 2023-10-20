@@ -646,7 +646,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Assert.isTrue(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可暂停");
         //3.修改状态
         order.setState(PmManagerConstant.OrderStateEnum.THREE.getCode());
-        return updateById(order);
+        updateById(order);
+        return affirm(orderId);
     }
 
     @Override
@@ -657,7 +658,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()) || PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()) || order.getState().equals(PmManagerConstant.OrderStateEnum.FOUR.getCode()), "当前状态不可完成");
         //3.状态完成
         order.setState(PmManagerConstant.OrderStateEnum.FIVE.getCode());
-        return updateById(order);
+        updateById(order);
+        return affirm(orderId);
     }
 
     @Override
