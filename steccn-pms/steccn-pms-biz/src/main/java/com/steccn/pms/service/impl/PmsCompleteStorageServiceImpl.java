@@ -602,6 +602,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean chargeAgainst(Long id) {
         //获取生产入库单信息
         PmsCompleteStorage pmsCompleteStorage = getById(id);
@@ -638,6 +639,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
         pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
         return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean changeReceiptState(ReceiptStatusDTO dto) {
+        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
+        pmsCompleteStorage.setState(dto.getState());
+        return update(new LambdaQueryWrapper<PmsCompleteStorage>()
+                .in(PmsCompleteStorage::getInStorageVoucher, dto.getInStorageVoucherList()));
     }
 
     /**

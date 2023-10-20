@@ -281,6 +281,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //工位为“基片下片工位（南）”
                         //抽检时间属于班次日期D班次b
                         List<QtCheckTask> productLineTask = entry3.getValue();
+                        //总停机时长
+                        BigDecimal allStopTime = BigDecimal.ZERO;
                         if(CollUtil.isNotEmpty(productLineTask)){
                             //产线下所有任务id
                             List<Long> taskIds = productLineTask.stream().map(QtCheckTask::getId).collect(Collectors.toList());
@@ -301,6 +303,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             //情况一
                             laChangeFlag = true;
+
                             if(laChangeFlag){
                                 //【情况1】班次b的12个小时拉引速度没有变化：拉引量 = 负载平均值f * 12
                                 //负载平均值f：查询满足下列条件的巡检任务，记为集合T，集合T内所有任务录入的“负载”取平均值即为f
@@ -398,6 +401,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 }
                                             }
                                         }
+                                        allStopTime = BigDecimalUtil.add(allStopTime,t1);
                                         //停机时长t2：
                                         BigDecimal t2 = BigDecimal.ZERO;
                                         if(entry2.getKey().equals(OaConstant.NO)){
@@ -430,6 +434,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 }
                                             }
                                         }
+                                        allStopTime = BigDecimalUtil.add(allStopTime,t2);
                                         //停机时长t3：
                                         BigDecimal t3 = BigDecimal.ZERO;
                                         if(entry2.getKey().equals(OaConstant.NO)){
@@ -462,6 +467,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 }
                                             }
                                         }
+                                        allStopTime = BigDecimalUtil.add(allStopTime,t3);
                                         //负载f1：查询满足下列条件的巡检任务，记为集合T1，集合T1内所有任务录入的“负载”取平均值即为f1（每个任务录入的“负载”为该任务所有样本取平均值）
                                         //状态为已检验
                                         //        产线为A
@@ -811,11 +817,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength,4);
                             }
                             //掰边损耗重量
-                            //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * 12 / 1000000
+                            //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * (12-停机时长) / 1000000
                             //平均单片掰边重量 * （拉引时速 / 玻璃片长度)
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
                             if (flag) {
-                                BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, new BigDecimal(12));
+                                BigDecimal minusTime = BigDecimalUtil.subtract(new BigDecimal(12),allStopTime,4);
+                                BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, minusTime);
                                 //产品改需求，不变
                                 BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlass12, new BigDecimal(1));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
@@ -2054,36 +2061,42 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             BigDecimal laAmount = BigDecimal.ZERO;
             //损耗总重量
             BigDecimal sunAmount = BigDecimal.ZERO;
-            //算所有的拉引量
+            //算所有的拉引量 对所有损耗数据原因进行加总分析
+            Map<String, BigDecimal> reasonData = Maps.newHashMap();
             for (QtChartSubDetailDTO tmp : data) {
                 laAmount = BigDecimalUtil.add(laAmount, tmp.getPullAmount());
                 sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
+                BigDecimalUtil.accumulate(reasonData,tmp.getReason(),tmp.getLossWeight());
             }
             //若拉引量为0，饼状图显示为暂无数据图片
             if (laAmount.compareTo(BigDecimal.ZERO) == 0) {
                 SteccnTableAssertUtil.notEmpty(new ArrayList<>(), "数据为空，暂无报表");
             }
             //对所有损耗数据原因进行加总分析
-            Map<String, BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+//            Map<String, BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
 
             //损耗原因按损耗重量降序排序，成品排在所有损耗原因之后，显示格式：#损耗原因#: #损耗重量#吨(#损耗率#)、成品: #成品重量#吨(#成品率#)
             Map<String, BigDecimal> orderByReason = MapUtil.sortByValue(reasonData, false);
             //成品重量 = 拉引量 - 损耗总重量，单位为吨
             BigDecimal chengWeight = BigDecimalUtil.subtract(laAmount, sunAmount);
             //成品率 = 成品重量 / 拉引量 * 100%，小数点后最多2位
-            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight, laAmount,4);
+//            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight, laAmount,4);
             QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
             onePie.setName("成品");
-            onePie.setValue(chengRate.abs());
+            onePie.setValue(chengWeight.abs());
 
             //遍历损耗原因分组
             for (Map.Entry<String, BigDecimal> reasonEntry : orderByReason.entrySet()) {
                 QtChartPieValueVO<BigDecimal> tmp = new QtChartPieValueVO();
-                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
+//                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
+                BigDecimal value = BigDecimal.ZERO;
+                if(Objects.nonNull(reasonEntry.getValue())){
+                    value = reasonEntry.getValue();
+                }
                 //为0则不放入
                 if (value.compareTo(BigDecimal.ZERO) != 0) {
                     tmp.setName(reasonEntry.getKey());
-                    tmp.setValue(value);
+                    tmp.setValue(reasonEntry.getValue());
                     pieList.add(tmp);
                 }
             }
@@ -2225,6 +2238,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                             .count() == 1;
                                 }
                             }
+                            //停机总时长
+                            BigDecimal allStopTime = BigDecimal.ZERO;
                             //情况一
                             laChangeFlag = true;
                             if(laChangeFlag){
@@ -2324,6 +2339,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 }
                                             }
                                         }
+                                        allStopTime = BigDecimalUtil.add(allStopTime,t1);
                                         //停机时长t2：
                                         BigDecimal t2 = BigDecimal.ZERO;
                                         if(entry2.getKey().equals(OaConstant.NO)){
@@ -2356,6 +2372,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 }
                                             }
                                         }
+                                        allStopTime = BigDecimalUtil.add(allStopTime,t2);
                                         //停机时长t3：
                                         BigDecimal t3 = BigDecimal.ZERO;
                                         if(entry2.getKey().equals(OaConstant.NO)){
@@ -2388,6 +2405,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 }
                                             }
                                         }
+                                        allStopTime = BigDecimalUtil.add(allStopTime,t3);
                                         //负载f1：查询满足下列条件的巡检任务，记为集合T1，集合T1内所有任务录入的“负载”取平均值即为f1（每个任务录入的“负载”为该任务所有样本取平均值）
                                         //状态为已检验
                                         //        产线为A

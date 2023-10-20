@@ -254,7 +254,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         }
 
                     } else if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
-                        //  namespace: yq2
+                        //  namespace: yq22
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
                     }
@@ -920,7 +920,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFlot(OaConstant.NO.toString());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     erpCommonSaveDetails.add(erpCommonSaveDetail);
                 }

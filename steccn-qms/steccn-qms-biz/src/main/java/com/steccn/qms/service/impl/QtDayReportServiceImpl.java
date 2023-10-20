@@ -1475,18 +1475,23 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
                                 if (CollUtil.isEmpty(dayData)) {
                                     lineDataTmp.add(null);
-                                } else {
-                                    lineDataTmp.add(dayData.get(0).getClassGroupName());
                                 }
+//                                else {
+//                                    lineDataTmp.add(dayData.get(0).getClassGroupName());
+//                                }
                             }
                             //早班对象和晚班对象
                             if (CollUtil.isNotEmpty(dayData)) {
+                                //是班次则加入班组
                                 QtChartSubDetailDTO amountDay = dayData.stream().filter(v -> v.getWorkOrder().equals(className) && v.getReason().equals(tmp)).findFirst().orElse(null);
                                 //找到当天的拉引量,同一天取相同的拉引量
                                 QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v -> v.getWorkOrder().equals(className) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);
                                 BigDecimal lossAmount = BigDecimal.ZERO;
                                 BigDecimal pullAmount = BigDecimal.ZERO;
                                 if (Objects.nonNull(amountDay)) {
+                                    if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
+                                        lineDataTmp.add(amountDay.getClassGroupName());
+                                    }
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
                                     //找到当天的拉引量,同一天取相同的拉引量
                                     if(Objects.nonNull(pullAmountDay)&&pullAmountDay.getPullAmount()!=null){
@@ -1567,9 +1572,57 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 //        type2.addAll(tableData.stream().filter(v->v.getType().equals(QtManagerConstant.NUM_2)).collect(Collectors.toList()));
         //只有大于车间的大小才有总计
         if (type2.size() > productLineList.size()) {
+            //算损耗总计
             QtDayReportLossDataVO lossAllLine = countAmount(type2, dto.getType());
+            lossAllLine.setDefectName("损耗总计");
+            lossAllLine.setProductLineName("损耗总计");
             lossAllLine.setType(QtManagerConstant.NUM_3);
+            //算拉引量总计
+            List<BigDecimal> laAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals("拉引量")).collect(Collectors.toList()));
+            QtDayReportLossDataVO laAmountAllLine = new QtDayReportLossDataVO();
+            laAmountAllLine.setDefectName("拉引量总计");
+            laAmountAllLine.setProductLineName("拉引量总计");
+            laAmountAllLine.setType(QtManagerConstant.NUM_3);
+            List<FurtherValueStrVO> laAmountModule = Lists.newArrayList();
+            laAmountAll.forEach(tmp->{
+                //如果是班次报表则需要空一行
+                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("",tmp.toString(),"")));
+                }else {
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(tmp.toString(),"")));
+                }
+            });
+            laAmountAllLine.setModule(laAmountModule);
+            tableData.add(laAmountAllLine);
+            //算其他损耗
+            List<String> defectList = tableData.stream()
+                    .filter(v -> v.getDefectName() != null && !v.getDefectName().equals("拉引量") && !v.getDefectName().equals("拉引量总计"))
+                    .map(QtDayReportLossDataVO::getDefectName).distinct().collect(Collectors.toList());
+            defectList.forEach(tmp -> {
+                QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
+                defectLine.setDefectName(tmp+"总计");
+                defectLine.setProductLineName(tmp+"总计");
+                defectLine.setType(QtManagerConstant.NUM_3);
+                List<BigDecimal> defectAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals(tmp)).collect(Collectors.toList()));
+                List<FurtherValueStrVO> defectModule = Lists.newArrayList();
+                for(int i = 0; i < defectAmountAll.size(); i++){
+                    BigDecimal decimal = defectAmountAll.get(i);
+                    BigDecimal percent = BigDecimalUtil.percent(decimal, laAmountAll.get(i), 2);
+                    if(Objects.isNull(percent)){
+                        percent = BigDecimal.ZERO;
+                    }
+                    //如果是班次报表则需要空一行
+                    if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList("",decimal.toString(),percent.toString()+"%")));
+                    }else {
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
+                    }
+                }
+                defectLine.setModule(defectModule);
+                tableData.add(defectLine);
+            });
             tableData.add(lossAllLine);
+
         }
         chart.setTableData(tableData);
         return chart;

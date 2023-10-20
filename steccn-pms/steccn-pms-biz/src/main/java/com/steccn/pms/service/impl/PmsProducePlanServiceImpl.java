@@ -116,7 +116,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         Map<String, List<PmsProducePlanVO>> groupBy = producePlanVOList
                 .stream()
-                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId() + "," + pmsProducePlanVO.getCustomerId()+"," + pmsProducePlanVO.getCustomerCode() + "," + pmsProducePlanVO.getCustomerName()));
+                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId() + "," + pmsProducePlanVO.getCustomerId()+"," + pmsProducePlanVO.getCustomerCode() + "," + pmsProducePlanVO.getCustomerName()+ "," + pmsProducePlanVO.getPosition()));
 
         List<PmsProducePlanDTO> pmsProducePlanDTOList = new ArrayList<>();
         LocalDate firstMonthDate = LocalDate.parse(monthDate + "-01", ISO_DATE);
@@ -140,6 +140,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 }
                 if(!materials[5].equals("null")){
                     pmsProducePlanDTO.setCustomerName(materials[5]);
+                }
+                if(!materials[6].equals("null")){
+                    pmsProducePlanDTO.setPosition(materials[6]);
                 }
                 pmsProducePlanDTO.setType(i);
                 List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
@@ -181,6 +184,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                                     && LocalDateUtil.isRange(v.getEnterTime(), localDate.atTime(LocalTime.MIN), localDate.atTime(LocalTime.MAX), true, false)).collect(Collectors.toList());
                         }else {
                             storageCountTmp = storageCount.stream().filter(v -> v.getMaterialId().equals(pmsProducePlanDTO.getMaterialId())
+                                    && v.getCustomerId() != null
                                     && v.getCustomerId().equals(Integer.parseInt(materials[3]))
                                     && v.getEnterTime() != null
                                     && LocalDateUtil.isRange(v.getEnterTime(), localDate.atTime(LocalTime.MIN), localDate.atTime(LocalTime.MAX), true, false)).collect(Collectors.toList());
@@ -358,10 +362,17 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             Map<String, EqpSpareVO> spareVO = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(materialCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             LocalDate planDate = dto.get(0).getProducePlanDetailsDTOList().get(0).getPlanDate();
             //先删除所有数据
-            remove(new LambdaQueryWrapper<PmsProducePlan>()
-                    .eq(PmsProducePlan::getType,OaConstant.NO)
-                    .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
             for(PmsProducePlanDTO tmp:dto){
+                Long materialId = spareVO.getOrDefault(tmp.getMaterialCode(),new EqpSpareVO()).getId();
+                if(Objects.isNull(materialId)){
+                    throw new BusinessException("物料"+tmp.getMaterialCode()+"+不存在");
+                }
+                remove(new LambdaQueryWrapper<PmsProducePlan>()
+                        .eq(PmsProducePlan::getType,OaConstant.NO)
+                        .eq(PmsProducePlan::getMaterialId,materialId)
+                        .eq(PmsProducePlan::getPosition,tmp.getPosition())
+                        .eq(PmsProducePlan::getCustomerCode,tmp.getCustomerCode())
+                        .between(PmsProducePlan::getPlanDate,planDate.withDayOfMonth(1),planDate.withDayOfMonth(planDate.lengthOfMonth())));
                 tmp.setType(OaConstant.NO);
                 this.addOrEditBatch(tmp);
             }
