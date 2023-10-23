@@ -68,6 +68,15 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      */
     Map<Long, Map<Long, BigDecimal>> materialMap(Set<Long> materialSet , LocalDate date);
 
+    /**
+     * 查询物料的入库
+     *
+     * @param materialSet 物料集合
+     * @param date 指定日期
+     * @return map key为物料id value 【key为班次id，value为数量】
+     */
+    Map<Long, Map<Long, BigDecimal>> materialMap(List<Integer> lineIdList, Set<Long> materialSet, LocalDate date);
+
 
     /**
      * 入库

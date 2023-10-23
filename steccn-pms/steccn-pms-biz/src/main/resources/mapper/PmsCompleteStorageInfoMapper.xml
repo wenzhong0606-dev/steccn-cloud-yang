@@ -136,4 +136,29 @@
         pbp.production_line,
         EXTRACT(YEAR_MONTH from (si.create_time))
     </select>
+    <select id="materialLineList" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
+        SELECT
+        pbp.material_id,
+        pbp.classes_id,
+        s.enter_time  as  create_time,
+        sum( si.quantity) as processQuantity
+        FROM
+        `pms_complete_storage_info` si
+        JOIN pms_complete_storage s on s.id = si.complete_storage_id
+        JOIN pms_barcode_print pbp ON pbp.case_no = si.case_no
+        WHERE
+        s.product_line_id in
+        <foreach collection="lineIdList" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND
+        pbp.material_id in
+        <foreach collection="materialSet" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND s.enter_time &gt;= #{start}
+        AND s.enter_time &lt;= #{end}
+        GROUP BY
+        pbp.material_id,pbp.classes_id,s.enter_time
+    </select>
 </mapper>

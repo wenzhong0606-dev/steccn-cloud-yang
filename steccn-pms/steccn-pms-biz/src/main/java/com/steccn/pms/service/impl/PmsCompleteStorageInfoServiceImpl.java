@@ -12,6 +12,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -110,6 +111,28 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 resList.forEach(ele -> {
                     if (resMap.containsKey(ele.getMaterialId())) {
                         resMap.get(ele.getMaterialId()).put(ele.getClassesId(), ele.getProcessQuantity());
+                    } else {
+                        Map<Long, BigDecimal> classMap = Maps.newHashMap();
+                        classMap.put(ele.getClassesId(), ele.getProcessQuantity());
+                        resMap.put(ele.getMaterialId(), classMap);
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
+
+    public Map<Long, Map<Long, BigDecimal>> materialMap(List<Integer> lineIdList , Set<Long> materialSet, LocalDate date) {
+        Map<Long, Map<Long, BigDecimal>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {
+            LocalDateTime start = LocalDateUtil.getMorning(date);
+            LocalDateTime end = start.plusDays(1);
+            List<FurtherProduceReportDataVO> resList = this.baseMapper.materialLineList(lineIdList, materialSet, start, end);
+            if (CollUtil.isNotEmpty(resList)) {
+                resList.forEach(ele -> {
+                    if (resMap.containsKey(ele.getMaterialId())) {
+                        Map<Long, BigDecimal> map = resMap.get(ele.getMaterialId());
+                        map.put(ele.getClassesId(), BigDecimalUtil.add(map.get(ele.getClassesId()),ele.getProcessQuantity()));
                     } else {
                         Map<Long, BigDecimal> classMap = Maps.newHashMap();
                         classMap.put(ele.getClassesId(), ele.getProcessQuantity());

@@ -622,7 +622,7 @@ public class ReportServiceImpl implements ReportService {
 
         //遍历所有的物料查询完工数量
         Set<Long> materialSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, Map<Long, BigDecimal>> materialCompleteMap = pmsCompleteStorageInfoService.materialMap(materialSet, dto.getDate());
+        Map<Long, Map<Long, BigDecimal>> materialCompleteMap = pmsCompleteStorageInfoService.materialMap(dto.getProductLineIdList(), materialSet, dto.getDate());
 
         //构建表头
         FurtherReportHeaderVO header = new FurtherReportHeaderVO();
