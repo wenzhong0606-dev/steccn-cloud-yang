@@ -142,5 +142,9 @@ public class WmsInventoryVO {
     private EqpSpareVO eqpSpareVO;
 
 
+    @ApiModelProperty("客户条码")
+    private String customerBarcode;
+
+
 
 }

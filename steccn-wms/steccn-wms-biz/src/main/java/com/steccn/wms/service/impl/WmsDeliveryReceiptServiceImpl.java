@@ -32,6 +32,7 @@ import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
+import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsInventoryService;
@@ -77,6 +78,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final RemoteSalesFeignApi remoteSalesFeignApi;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+
+    private final WmsCustomerBarcodeService wmsCustomerBarcodeService;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -561,6 +564,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             if (CollUtil.isNotEmpty(dto.getList())) {
                 List<WmsInventoryDTO> infoList = Lists.newArrayList();
                 List<WmsDeliveryReceiptInfo> receiptInfoList = Lists.newArrayList();
+                List<WmsCustomerBarcodeDTO> wmsCustomerBarcodes = Lists.newArrayList();
                 dto.getList().forEach(info -> {
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
                     BeanUtil.copyProperties(info, wmsInventoryDTO);
@@ -571,7 +575,13 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
                     wmsDeliveryReceiptInfo.setAssociatedNo(dto.getLogisticsNumber());
                     receiptInfoList.add(wmsDeliveryReceiptInfo);
+                    WmsCustomerBarcodeDTO wmsCustomerBarcodeDTO = new WmsCustomerBarcodeDTO();
+                    wmsCustomerBarcodeDTO.setCustomerBarcode(info.getCustomerBarcode());
+                    wmsCustomerBarcodeDTO.setCaseNo(info.getCaseNo());
+                    wmsCustomerBarcodes.add(wmsCustomerBarcodeDTO);
                 });
+                //更新客户条码
+                wmsCustomerBarcodeService.batchUpdate(wmsCustomerBarcodes);
                 //调整锁定库存信息
                 wmsInventoryService.updateLockQuantity(infoList, WmsManagerConstant.InventoryEnum.ZERO.getCode());
                 //保存明细信息
@@ -622,6 +632,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     if (inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0) {
                     flagInfoVO.setCaseNumberQuantityFlag(1);
                 }
+                }
+                //获取箱号是否绑定客户条码
+                String customerBarcodeByCaseNO = wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(inventory.getCaseNo());
+                if (Objects.nonNull(customerBarcodeByCaseNO)){
+                    flagInfoVO.setCaseNoBindingCustomerBarcodeFlag(1);
                 }
             }
         return flagInfoVO;
