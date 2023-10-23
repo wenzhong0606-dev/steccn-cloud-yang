@@ -11,16 +11,21 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
+import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
+import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +51,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsBarcodePrintService barcodePrintService;
+
 
     @Override
     public Boolean existCaseNo(Long typeId, Set<String> caseNoSet) {
@@ -162,6 +168,18 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             }
         }
         return resMap;
+    }
+
+    @Override
+    public PmsProducerOrderInfoDTO getNumberByCaseNo(String caseNo) {
+        PmsProducerOrderInfoDTO dto = new PmsProducerOrderInfoDTO();
+        PmsCompleteStorageInfo info = getOne(new LambdaQueryWrapper<PmsCompleteStorageInfo>().eq(PmsCompleteStorageInfo::getCaseNo, caseNo).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(info)) {
+            dto.setProduceOrderId(info.getProduceOrderId());
+            dto.setBatchNo(info.getBatchNo());
+            dto.setMaterialName(info.getMaterialName());
+        }
+        return dto;
     }
 
     @Override

@@ -21,6 +21,12 @@ public class QtCustomerComplainDetail implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
+
+    /**
+     * 客户条码
+     */
+    private String customerBarcode;
+
     /**
      * 客户定制箱号
      */
