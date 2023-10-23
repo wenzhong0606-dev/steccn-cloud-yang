@@ -76,4 +76,7 @@ public class WmsDeliveryReceiptInfoDTO {
     @ApiModelProperty("可用数量")
     private BigDecimal availableQuantity;
 
+    @ApiModelProperty("客户条码")
+    private  String customerBarcode;
+
 }

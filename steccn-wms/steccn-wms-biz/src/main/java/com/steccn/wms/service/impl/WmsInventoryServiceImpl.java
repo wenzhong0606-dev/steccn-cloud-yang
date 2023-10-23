@@ -24,6 +24,7 @@ import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
+    private final WmsCustomerBarcodeService customerBarcodeService;
+
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
@@ -78,15 +81,20 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
         Set<Long> dict = Sets.newHashSet();
         List<Long> materialIds = Lists.newArrayList();
+        Set<String> caseNos =Sets.newHashSet();
         res.forEach(wmsInventoryVO -> {
             dict.add(wmsInventoryVO.getUnit());
             materialIds.add(wmsInventoryVO.getMaterialId());
+            caseNos.add(wmsInventoryVO.getCaseNo());
         });
+        //获取箱号绑定的客户条码
+        Map<String, String> customerBarcodeMap = customerBarcodeService.customerBarcodeMap(caseNos);
         Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dict), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         res.forEach(wmsInventoryVO -> {
             wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
             wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
+            wmsInventoryVO.setCustomerBarcode(customerBarcodeMap.get(wmsInventoryVO.getCaseNo()));
         });
         page.setRecords(res);
         return page;

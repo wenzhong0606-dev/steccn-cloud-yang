@@ -4,6 +4,8 @@ package com.steccn.pms.dto;
 import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class PanoramicTracingDTO  extends BasePageDTO {
 
@@ -29,5 +31,13 @@ public class PanoramicTracingDTO  extends BasePageDTO {
      * 物料名称
      */
     private String materialName;
+
+    /**
+     * 客户条码
+     */
+    private String customerBarcode;
+
+    private List<String> caseNos;
+
 
 }

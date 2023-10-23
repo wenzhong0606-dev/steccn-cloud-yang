@@ -6,6 +6,8 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
+import com.steccn.mes.dto.MesDefectChartDTO;
+import com.steccn.mes.service.MesDefectService;
 import com.steccn.mes.service.MesEqpInsTaskService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,6 +37,7 @@ public class MesEqpController {
     private final MesEquipmentService mesEquipmentService;
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
     private final MesEqpInsTaskService mesEqpInsTaskService;
+    private final MesDefectService mesDefectService;
 
     @GetMapping("/thirdParty")
     @ApiOperation(value = "获取设备信息")
@@ -52,6 +56,12 @@ public class MesEqpController {
     @ApiOperation(value = "点检项图表")
     public R<QtLineChartBarDTO> itemCompleteChart(@RequestParam("startTime")LocalDateTime startTime,@RequestParam("endTime") LocalDateTime endTime, @RequestParam("type")Integer type) {
         return R.success(mesEqpInsTaskService.itemComplete(startTime,endTime,type));
+    }
+
+    @PostMapping("/dashboard/defect")
+    @ApiOperation(value = "缺陷图表")
+    public R<QtLineChartBarDTO> defectChart(@RequestBody @Valid MesDefectChartDTO dto) {
+        return R.success(mesDefectService.defectChart(dto));
     }
 
     /**
