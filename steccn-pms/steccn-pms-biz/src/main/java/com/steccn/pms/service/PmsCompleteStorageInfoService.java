@@ -73,9 +73,9 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      *
      * @param materialSet 物料集合
      * @param date 指定日期
-     * @return map key为物料id value 【key为班次id，value为数量】
+     * @return map key为物料id value 【key为班次id，value为数量】 key=> 产线id_物料id_班次id 入库数
      */
-    Map<Long, Map<Long, BigDecimal>> materialMap(List<Integer> lineIdList, Set<Long> materialSet, LocalDate date);
+    Map<String , BigDecimal> materialMap(List<Integer> lineIdList, Set<Long> materialSet, LocalDate date);
 
 
     /**

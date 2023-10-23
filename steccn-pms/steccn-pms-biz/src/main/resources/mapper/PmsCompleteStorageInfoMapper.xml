@@ -138,9 +138,9 @@
     </select>
     <select id="materialLineList" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
         SELECT
+        s.product_line_id  as  productLineId,
         pbp.material_id,
         pbp.classes_id,
-        s.enter_time  as  create_time,
         sum( si.quantity) as processQuantity
         FROM
         `pms_complete_storage_info` si
@@ -159,6 +159,6 @@
         AND s.enter_time &gt;= #{start}
         AND s.enter_time &lt;= #{end}
         GROUP BY
-        pbp.material_id,pbp.classes_id,s.enter_time
+        s.product_line_id,pbp.material_id,pbp.classes_id
     </select>
 </mapper>
