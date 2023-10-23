@@ -51,6 +51,7 @@ public class MesDefectServiceImpl extends ServiceImpl<MesDefectMapper, MesDefect
         param.setStartTime(dto.getStartTime());
         param.setEndTime(dto.getEndTime());
         param.setStatusNe(OaConstant.NUM_1);
+        param.setLevels(dto.getLevels());
         //所有缺陷数据
         List<MesDefectCountDTO> allDefect = mesDefectMapper.findDefectCount(param);
         Assert.notEmpty(allDefect,"数据为空");
@@ -71,7 +72,7 @@ public class MesDefectServiceImpl extends ServiceImpl<MesDefectMapper, MesDefect
                 String eqpCode = codeArr[i];
                 MesEquipment plant = plants.stream().filter(v -> v.getId().toString().equals(eqpCode)).findFirst().orElse(null);
                 if(Objects.nonNull(plant)){
-                    eqpPlantMap.put(eqpCode,plant.getEquipmentName());
+                    eqpPlantMap.put(tmp.getId().toString(),plant.getEquipmentName());
                     break;
                 }
             }
@@ -101,10 +102,10 @@ public class MesDefectServiceImpl extends ServiceImpl<MesDefectMapper, MesDefect
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             stackGraphDTO.setXAxis(entry.getKey());
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-            BigDecimal all = allCountMap.get(key);
-            BigDecimal finished = finishedCountMap.get(key);
-            datList.add(new TupleDTO<>("缺陷总数", all));
-            datList.add(new TupleDTO<>("缺陷完成数", finished));
+            BigDecimal all = allCountMap.getOrDefault(key,BigDecimal.ZERO);
+            BigDecimal finished = finishedCountMap.getOrDefault(key, BigDecimal.ZERO);
+            datList.add(new TupleDTO<>("缺陷总数", all.setScale(0)));
+            datList.add(new TupleDTO<>("缺陷完成数", finished.setScale(0)));
             datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);

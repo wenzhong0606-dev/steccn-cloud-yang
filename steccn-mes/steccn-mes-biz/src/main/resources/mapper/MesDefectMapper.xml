@@ -50,9 +50,9 @@
         <if test="dto.endTime != null">
             AND find_time &lt;= #{dto.endTime}
         </if>
-        <if test="levels != null and levels.size() > 0">
+        <if test="dto.levels != null and dto.levels.size() > 0">
             AND level IN
-            <foreach item="level" collection="levels" open="(" separator="," close=")">
+            <foreach item="level" collection="dto.levels" open="(" separator="," close=")">
                 #{level}
             </foreach>
         </if>
