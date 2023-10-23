@@ -1252,15 +1252,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             //产线为所在行产线
                             //生产批次为所在行生产批次
                             //缺陷记录时段在所在行班次日期&班次内
+                            List<Integer> valueDataList = Lists.newArrayList();
                             for (QtDefectiveItemVO defectItem : defectItemList) {
-                                List<QtCheckTaskDetailReportVO> valueList = checkTaskList.stream().filter(ele ->
-                                        ele.getDefectId().equals(defectItem.getId()) &&
+                                List<Integer> valueList = checkTaskList.stream().filter(ele ->
+                                        ele.getDefectCode().equals(defectItem.getCode()) &&
                                         ele.getProductLineId().equals(line.getId()) &&
                                         ele.getProductBatch().equals(resVo.getBatchNo()) &&
                                         ele.getClassId().equals(resVo.getClassId()) &&
                                         LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
-                                ).collect(Collectors.toList());
+                                ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
+                                Integer sumDefect = IntegerUtil.sum(valueList);
+                                valueDataList.add(sumDefect);
                             }
+                            resVo.setValueList(valueDataList);
                             resList.add(resVo);
                         }
                     }

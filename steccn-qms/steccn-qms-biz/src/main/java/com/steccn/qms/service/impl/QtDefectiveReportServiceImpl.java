@@ -431,6 +431,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             Assert.notNull(tupleDTO.getField2(), "缺陷快照field2转换异常");
             v.setDefectId(tupleDTO.getField1());
             v.setDefectCategory(tupleDTO.getField2());
+            v.setDefectCode(code);
         });
         return flatDefectiveList;
     }

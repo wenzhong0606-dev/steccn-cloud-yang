@@ -29,6 +29,9 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("任务code")
     private String taskCode;
 
+    @ApiModelProperty("缺陷编码")
+    private String defectCode;
+
     @ApiModelProperty("缺陷项id")
     private Integer defectId;
 
