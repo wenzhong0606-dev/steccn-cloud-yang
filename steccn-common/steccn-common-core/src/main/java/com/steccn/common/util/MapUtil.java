@@ -90,7 +90,8 @@ public class MapUtil {
      */
     public static <K, V> void add(Map<K, V> map, K key, V value, BiFunction<V, V, V> function) {
         map.compute(key, (k, v) -> {
-            return function.apply(v, value);
+            v = function.apply(v, value);
+            return v;
         });
     }
 

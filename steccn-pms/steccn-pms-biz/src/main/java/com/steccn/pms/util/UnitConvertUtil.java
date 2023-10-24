@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -38,6 +39,16 @@ public class UnitConvertUtil {
                 BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), BigDecimalUtil.DEFAULT_SCALE);
                 return res;
             }
+            //如果只存在一个转换，则视为默认转换
+            else{
+                List<SysSpareUnitConversionVO> guessList = convertList.stream().filter(ele -> targetUnitId.equals(ele.getConversionUnitId())).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(guessList) && guessList.size() == 1) {
+                    SysSpareUnitConversionVO source = guessList.get(0);
+                    BigDecimal multiply = BigDecimalUtil.multiply(quantity, source.getConversionQuantity());
+                    BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), BigDecimalUtil.DEFAULT_SCALE);
+                    return res;
+                }
+            }
         }
         return null;
     }
@@ -61,8 +72,17 @@ public class UnitConvertUtil {
                 BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), scale);
                 return res;
             }
+            //如果只存在一个转换，就默认为标准转换
+            else {
+                List<SysSpareUnitConversionVO> guessList = convertList.stream().filter(ele -> targetUnitId.equals(ele.getConversionUnitId())).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(guessList) && guessList.size() == 1) {
+                    SysSpareUnitConversionVO source = guessList.get(0);
+                    BigDecimal multiply = BigDecimalUtil.multiply(source.getConversionQuantity(), quantity);
+                    BigDecimal res = BigDecimalUtil.divide(multiply, source.getQuantity(), scale);
+                    return res;
+                }
+            }
         }
         return null;
     }
-
 }
