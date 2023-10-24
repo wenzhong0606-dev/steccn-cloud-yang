@@ -1050,7 +1050,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //获取产线下的工位
         List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //包含磨边工位的
-        return officeList.stream().filter(office -> office.getOfficeName().contains("磨边")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
     }
 
     @Override
