@@ -89,10 +89,12 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     @Override
     public Map<String, String> customerBarcodeMap(Set<String> caseNos) {
         Map<String, String> resMap = Maps.newHashMap();
-        List<WmsCustomerBarcode> list = list(new LambdaQueryWrapper<WmsCustomerBarcode>()
-                .in(WmsCustomerBarcode::getCaseNo, caseNos));
-        if (CollUtil.isNotEmpty(list)){
-            list.forEach( wmsCustomerBarcode -> resMap.put(wmsCustomerBarcode.getCaseNo(), wmsCustomerBarcode.getCustomerBarcode()));
+        if (CollUtil.isNotEmpty(caseNos)) {
+            List<WmsCustomerBarcode> list = list(new LambdaQueryWrapper<WmsCustomerBarcode>()
+                    .in(WmsCustomerBarcode::getCaseNo, caseNos));
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(wmsCustomerBarcode -> resMap.put(wmsCustomerBarcode.getCaseNo(), wmsCustomerBarcode.getCustomerBarcode()));
+            }
         }
         return resMap;
     }
