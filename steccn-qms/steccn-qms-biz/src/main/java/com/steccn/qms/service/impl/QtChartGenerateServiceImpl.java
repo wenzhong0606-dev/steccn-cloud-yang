@@ -107,19 +107,25 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     public List<QtChartSubDetailDTO> generateSubstrateLossData(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> resultList = new ArrayList<>();
         //转时间戳
-        LocalDateTime startTime = dto.getDateStart().atTime(0, 0, 1);
-        LocalDateTime endTime = dto.getDateEnd().atTime(23, 59, 59);
+//        LocalDateTime startTime = dto.getDateStart().atTime(0, 0, 1);
+//        LocalDateTime endTime = dto.getDateEnd().atTime(23, 59, 59);
+        LocalDateTime startTime = LocalDateUtil.getMorning(dto.getDateStart());
+        LocalDateTime endTime = LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1));
         //在线检时间戳
-        LocalDateTime onlineStartTime = dto.getDateStart().atTime(8, 0, 0);
-        LocalDateTime onlineEndTime = dto.getDateEnd().atTime(7, 59, 59);
-        onlineEndTime = onlineEndTime.plusDays(1);
+//        LocalDateTime onlineStartTime = dto.getDateStart().atTime(8, 0, 0);
+//        LocalDateTime onlineEndTime = dto.getDateEnd().atTime(7, 59, 59);
+//        onlineEndTime = onlineEndTime.plusDays(1);
+        LocalDateTime onlineStartTime = LocalDateUtil.getMorning(dto.getDateStart());
+        LocalDateTime onlineEndTime = LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1));
         //准备数据
         //1、先根据已知条件查询任务表
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //班次时间范围
-                .between(QtCheckTask::getClassTime, startTime.toLocalDate(), endTime.toLocalDate())
+                //.between(QtCheckTask::getClassTime, startTime.toLocalDate(), endTime.toLocalDate())
+                .ge(QtCheckTask::getSpotTime, startTime)
+                .lt(QtCheckTask::getSpotTime, endTime)
                 //班次
                 .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, dto.getWorkingOrder())
                 //只要巡检
