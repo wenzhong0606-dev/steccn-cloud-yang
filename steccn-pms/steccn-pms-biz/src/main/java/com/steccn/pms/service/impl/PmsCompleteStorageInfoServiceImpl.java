@@ -178,6 +178,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             dto.setProduceOrderId(info.getProduceOrderId());
             dto.setBatchNo(info.getBatchNo());
             dto.setMaterialName(info.getMaterialName());
+            dto.setMaterialCode(info.getMaterialCode());
         }
         return dto;
     }

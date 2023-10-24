@@ -44,6 +44,11 @@ public class QtCustomerComplainDetailDTO implements Serializable {
     private String batchNo;
 
     /**
+     * 生产订单号
+     */
+    private String produceOrderCode;
+
+    /**
      * 物料主键
      */
 //    @NotNull(message = "物料主键不能为空")

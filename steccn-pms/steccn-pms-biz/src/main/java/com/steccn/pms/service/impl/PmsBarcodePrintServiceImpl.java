@@ -433,6 +433,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         if (CollUtil.isNotEmpty(printList)) {
             List<Long> materialIds = printList.stream().map(PmsBarcodePrint::getMaterialId).collect(Collectors.toList());
             Map<Long, EqpSpareVO> map = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取生产订单号
+            List<Long> producerOrderIds = Lists.newArrayList();
             printList.forEach(pmsBarcodePrint -> {
                 WorkOrderMaterialVO workOrderMaterialVO = new WorkOrderMaterialVO();
                 workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
@@ -440,8 +442,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 workOrderMaterialVO.setMaterialName(map.get(pmsBarcodePrint.getMaterialId()).getName());
                 workOrderMaterialVO.setBatchNo(pmsBarcodePrint.getBatchNo());
                 workOrderMaterialVO.setCaseNo(pmsBarcodePrint.getCaseNo());
+                workOrderMaterialVO.setProducerOrderId(pmsBarcodePrint.getProduceOrderId());
+                producerOrderIds.add(pmsBarcodePrint.getProduceOrderId());
                 list.add(workOrderMaterialVO);
             });
+            if (CollUtil.isNotEmpty(producerOrderIds)){
+                Map<Long, PmsProduceOrder> orderMap = pmsProduceOrderService.orderList(producerOrderIds);
+                list.forEach( workOrderMaterialVO -> {
+                    PmsProduceOrder pmsProduceOrder = orderMap.get(workOrderMaterialVO.getProducerOrderId());
+                    workOrderMaterialVO.setProduceOrderCode(pmsProduceOrder.getCode());
+                });
+            }
         }
         return list;
     }
@@ -453,14 +464,25 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         if (CollUtil.isNotEmpty(printList)) {
             List<Long> materialIds = printList.stream().map(PmsBarcodePrint::getMaterialId).collect(Collectors.toList());
             Map<Long, EqpSpareVO> map = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取生产订单号
+            List<Long> producerOrderIds = Lists.newArrayList();
             printList.forEach(pmsBarcodePrint -> {
                 WorkOrderMaterialVO workOrderMaterialVO = new WorkOrderMaterialVO();
                 workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
                 workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
                 workOrderMaterialVO.setMaterialName(map.get(pmsBarcodePrint.getMaterialId()).getName());
                 workOrderMaterialVO.setBatchNo(pmsBarcodePrint.getBatchNo());
+                workOrderMaterialVO.setProducerOrderId(pmsBarcodePrint.getProduceOrderId());
+                producerOrderIds.add(pmsBarcodePrint.getProduceOrderId());
                 list.add(workOrderMaterialVO);
             });
+            if (CollUtil.isNotEmpty(producerOrderIds)){
+                Map<Long, PmsProduceOrder> orderMap = pmsProduceOrderService.orderList(producerOrderIds);
+                list.forEach( workOrderMaterialVO -> {
+                    PmsProduceOrder pmsProduceOrder = orderMap.get(workOrderMaterialVO.getProducerOrderId());
+                    workOrderMaterialVO.setProduceOrderCode(pmsProduceOrder.getCode());
+                });
+            }
         }
         return list;
     }
