@@ -22,6 +22,11 @@ public class QtCustomerComplainDetailDTO implements Serializable {
      */
     private Long id;
 
+    /**
+     * 客户条码
+     */
+    private String customerBarcode;
+
 
     /**
      * 客户定制箱号

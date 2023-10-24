@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.wms.domain.WmsCustomerBarcode;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
+import com.steccn.wms.vo.WmsCustomerBarcodeVO;
 
 import java.util.List;
 import java.util.Map;
@@ -45,4 +46,6 @@ public interface WmsCustomerBarcodeService extends IService<WmsCustomerBarcode> 
      * @return
      */
     List<String> listByCustomerBarcode(String customerBarcode);
+
+    WmsCustomerBarcodeVO CustomerBarcodeByCaseNO(String customerBarcode);
 }

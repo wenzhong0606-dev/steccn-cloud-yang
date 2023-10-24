@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
+import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.mapper.PmsWorkOrderBatchMapper;

@@ -6,6 +6,7 @@ import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
+import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
@@ -124,4 +125,12 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return map key为产线id + "_" + month  value 【key为班次id，value为数量】
      */
     Map<String, BigDecimal> inStorageMonth(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
+
+
+    /**
+     * 根据箱号获取生产批次号 生产订单号以及物料名称
+     * @param caseNo
+     * @return
+     */
+    PmsProducerOrderInfoDTO getNumberByCaseNo(String caseNo);
 }

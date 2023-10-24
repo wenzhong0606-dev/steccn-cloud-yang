@@ -48,6 +48,7 @@ import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
+import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -118,6 +119,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             save(qtCustomerComplain);
             // 2.明细信息
             List<QtCustomerComplainDetail> detailList = Lists.newArrayList();
+            //客户条码
             dto.getDetails().forEach(detail -> {
                 QtCustomerComplainDetail customerComplainDetail = new QtCustomerComplainDetail();
                 BeanUtil.copyProperties(detail, customerComplainDetail);
