@@ -3492,6 +3492,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return Objects.nonNull(resList) ? resList : Lists.newArrayList();
     }
 
+    @Override
+    public QtCheckTaskListVO checkPatrol(QtCheckTaskListDTO dto) {
+        Assert.notNull(dto.getProductLineId(),"产线不能为空");
+        QtCheckTask one = getOne(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                .eq(dto.getStationId() != null, QtCheckTask::getStationId, dto.getStationId())
+                .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
+                .orderByDesc(QtCheckTask::getFinishedTime).last("LIMIT 1"));
+        QtCheckTaskListVO result = new QtCheckTaskListVO();
+        BeanUtil.copyProperties(one,result);
+        return result;
+    }
+
 
     /**
      * 合格率分组

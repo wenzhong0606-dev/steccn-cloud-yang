@@ -284,6 +284,8 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     List<QtOtherCheckDTO> otherList(Integer checkType, Set<Integer> itemIdSet, LocalDateTime start, LocalDateTime end);
 
+    QtCheckTaskListVO checkPatrol(QtCheckTaskListDTO dto);
+
 }
 
 
