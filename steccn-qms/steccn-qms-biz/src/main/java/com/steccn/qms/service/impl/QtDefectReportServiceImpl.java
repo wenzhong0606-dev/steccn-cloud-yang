@@ -19,6 +19,7 @@ import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.IntegerUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
@@ -166,7 +167,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 for (QtDefectiveItem defectItem : defectEntityList) {
                     List<Integer> valueTmpList = Lists.newArrayList();
                     if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
-                        valueTmpList = sourceMap.getOrDefault(key(line, classDate, classId, defectItem.getCode()), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.isNull(ele)).collect(Collectors.toList());
+                        valueTmpList = sourceMap.getOrDefault(key(line, classDate, classId, defectItem.getCode()), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
                     } else {
                         //根据班次日期遍历
                         LocalDateTime timeTmp = begin;
@@ -177,7 +178,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                             timeTmp = timeTmp.plusDays(1L);
                         }
                     }
-                    Integer sum = CollUtil.isEmpty(valueTmpList) ? null : valueTmpList.stream().mapToInt(Integer::intValue).sum();
+                    Integer sum = IntegerUtil.sum(valueTmpList);
                     valueList.add(Objects.isNull(sum) ? null : String.valueOf(sum));
                     lineValueMap.put(defectItem.getCode(), lineValueMap.getOrDefault(defectItem.getCode(), 0) + (Objects.isNull(sum) ? 0 : sum));
                     allValueMap.put(defectItem.getCode(), allValueMap.getOrDefault(defectItem.getCode(), 0) + (Objects.isNull(sum) ? 0 : sum));

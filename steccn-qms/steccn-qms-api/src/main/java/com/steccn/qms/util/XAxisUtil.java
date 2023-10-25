@@ -32,6 +32,8 @@ public class XAxisUtil {
         String xAxis;
         if (QtManagerConstant.QtGranularityEnum.HOUR.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "MM-dd HH:mm") + "~" + LocalDateTimeUtil.format(ldt.plusHours(1), "MM-dd HH:mm");
+        }else if(QtManagerConstant.QtGranularityEnum.CLASS.getCode().equals(granularityEnum.getCode())){
+            xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.DAY.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.getCode().equals(granularityEnum.getCode())) {
