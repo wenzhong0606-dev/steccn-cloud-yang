@@ -1720,9 +1720,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             if (valueSize1 != valueSize2) {
                 tableData.forEach(tableTmp -> {
                     int moduleSize = tableTmp.getModule().size();
+                    String classNameTmp = "";
                     //不包括最有一个
                     for (int i = 0; i < moduleSize - 1; i++) {
-                        tableTmp.getModule().get(i).getValue().add(0, classNameList.remove(0));
+                        if(classNameList.size()!=0){
+                            classNameTmp = classNameList.remove(0);
+                        }
+                        tableTmp.getModule().get(i).getValue().add(0, classNameTmp);
                     }
 //                    tableTmp.getModule().forEach(moduleTmp->{
 //                        if(moduleTmp.getValue().size()==valueSize1){
