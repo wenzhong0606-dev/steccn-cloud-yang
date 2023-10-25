@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -99,6 +100,13 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
     Map<Integer, QtDefectiveItem> listById(Set<Integer> defectIdSet);
 
     /**
+     * 根据缺陷项，获取id对象
+     * @param defectCodeSet 缺陷项id集合
+     * @return map
+     */
+    Map<String, QtDefectiveItem> listByCodeSort(Set<String> defectCodeSet);
+
+    /**
      * 根据缺陷项id，查询该缺陷项id的 第一个快照id和类别id
      * @param defectiveCodeSet 缺陷code集合
      * @return map
@@ -118,4 +126,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map
      */
     Map<String, QtDefectiveItem> collectDefect(Set<String> defectTypeSet);
+
+    /**
+     * 根据类别获取缺陷项集合
+     * @param categoryName 类别名称
+     * @return
+     */
+    List<QtDefectiveItemVO> getDefectItemByCategory(String categoryName);
 }

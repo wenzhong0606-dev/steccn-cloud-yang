@@ -326,6 +326,23 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
+    public Map<String, QtDefectiveItem> listByCodeSort(Set<String> defectCodeSet) {
+        Map<String, QtDefectiveItem> resMap = Maps.newLinkedHashMap();
+        if (CollUtil.isNotEmpty(defectCodeSet)) {
+            List<QtDefectiveItem> qtDefectiveItems = list(new LambdaQueryWrapper<QtDefectiveItem>()
+                    .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
+                    .in(QtDefectiveItem::getCode, defectCodeSet)
+                    .orderByAsc(QtDefectiveItem::getCreateTime));
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                qtDefectiveItems.forEach(ele -> {
+                    resMap.put(ele.getDefectCode(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, TupleDTO<Integer, Integer>> firstSnapshotData(Set<String> defectiveCodeSet) {
         Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(defectiveCodeSet)) {
@@ -420,6 +437,28 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<QtDefectiveItemVO> getDefectItemByCategory(String categoryName) {
+        List<QtDefectiveItemVO> resList = Lists.newArrayList();
+        QtItemCategory one = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>()
+                .eq(QtItemCategory::getShowFlag, MpConstant.YES)
+                .eq(QtItemCategory::getType, MpConstant.YES)
+                .eq(QtItemCategory::getName, categoryName), false);
+        if (Objects.nonNull(one)) {
+            List<QtDefectiveItem> dbList = list(new LambdaQueryWrapper<QtDefectiveItem>()
+                    .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
+                    .eq(QtDefectiveItem::getCategoryId, one.getId()));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    QtDefectiveItemVO res = new QtDefectiveItemVO();
+                    BeanUtils.copyProperties(ele, res);
+                    resList.add(res);
+                });
+            }
+        }
+        return resList;
     }
 
     /**

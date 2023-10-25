@@ -2510,6 +2510,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //检验类型
                 .eq(Objects.nonNull(dto.getTaskType()), QtCheckTask::getTaskType, dto.getTaskType())
+                //生产批次
+                .in(CollUtil.isNotEmpty(dto.getProductBatchList()), QtCheckTask::getProductBatch, dto.getProductBatchList())
                 //车间
                 .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线

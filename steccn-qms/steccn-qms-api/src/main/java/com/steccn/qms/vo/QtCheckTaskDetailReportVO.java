@@ -1,11 +1,8 @@
 package com.steccn.qms.vo;
 
-import com.baomidou.mybatisplus.annotation.FieldStrategy;
-import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +28,9 @@ public class QtCheckTaskDetailReportVO implements Serializable {
 
     @ApiModelProperty("任务code")
     private String taskCode;
+
+    @ApiModelProperty("缺陷编码")
+    private String defectCode;
 
     @ApiModelProperty("缺陷项id")
     private Integer defectId;
@@ -92,5 +92,6 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("班组名称")
     private String classGroupName;
 
-
+    @ApiModelProperty("生产批次")
+    private String productBatch;
 }

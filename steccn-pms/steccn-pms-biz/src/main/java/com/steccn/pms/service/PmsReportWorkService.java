@@ -378,4 +378,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> dateClassLineInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
+    /**
+     * 获取生产批次关联的报工信息
+     * @param batchSet 生产批次no集合
+     * @return
+     */
+    Map<String, List<PmsReportWork>> batchLinkReportWorkMap(Set<String> batchSet);
 }

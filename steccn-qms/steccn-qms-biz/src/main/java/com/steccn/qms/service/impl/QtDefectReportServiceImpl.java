@@ -19,6 +19,7 @@ import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.IntegerUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
@@ -113,12 +114,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         request.setJoinAcquisition(0);
         List<QtCheckTaskDetailReportVO> sourceDataList = qtDefectiveReportService.defectiveDataFlat(request);
         //根据缺陷数据查询动态表头
-        Set<Integer> defectIdSet = sourceDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
+        Set<String> defectCodeSet = sourceDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCode).collect(Collectors.toSet());
         //根据快照id查询缺陷的集合-需要按照id排序
-        Map<Integer, QtDefectiveItem> defectIdEntityMap = qtDefectiveItemService.listById(defectIdSet);
-        List<QtDefectiveItem> defectEntityList = defectIdEntityMap.values().stream().sorted(Comparator.comparing(QtDefectiveItem::getCode)).collect(Collectors.toList());
+        Map<String, QtDefectiveItem> defectIdEntityMap = qtDefectiveItemService.listByCodeSort(defectCodeSet);
+        List<QtDefectiveItem> defectEntityList = defectIdEntityMap.values().stream().collect(Collectors.toList());
         List<String> defectNameList = defectEntityList.stream().map(QtDefectiveItem::getName).collect(Collectors.toList());
-        List<Integer> defectIdList = defectEntityList.stream().map(QtDefectiveItem::getId).collect(Collectors.toList());
         resVo.setValueHeadList(defectNameList);
         //获取班次日期
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
@@ -138,13 +138,13 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
             classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         }
-        Map<String, List<QtCheckTaskDetailReportVO>> sourceMap = sourceDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + v.getClassesDate() + "_" + v.getClassId() + "_" + v.getDefectId()));
-        Map<Integer, Integer> allValueMap = Maps.newHashMap();
+        Map<String, List<QtCheckTaskDetailReportVO>> sourceMap = sourceDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + v.getClassesDate() + "_" + v.getClassId() + "_" + v.getDefectCode()));
+        Map<String, Integer> allValueMap = Maps.newHashMap();
 
         for (Integer line : dto.getProductLineList()) {
             String lineName = lineIdNameMap.get(line);
             //合计（单产线）
-            Map<Integer, Integer> lineValueMap = Maps.newHashMap();
+            Map<String, Integer> lineValueMap = Maps.newHashMap();
             for (int i = 1; i < shardTimeList.size(); i++) {
                 LocalDateTime begin = shardTimeList.get(i - 1);
                 //根据缺陷记录时段来过滤数据集
@@ -164,30 +164,30 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 }
                 List<String> valueList = Lists.newArrayList();
                 row.setValueList(valueList);
-                for (Integer defectId : defectIdList) {
+                for (QtDefectiveItem defectItem : defectEntityList) {
                     List<Integer> valueTmpList = Lists.newArrayList();
                     if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
-                        valueTmpList = sourceMap.getOrDefault(key(line, classDate, classId, defectId), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.isNull(ele)).collect(Collectors.toList());
+                        valueTmpList = sourceMap.getOrDefault(key(line, classDate, classId, defectItem.getCode()), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
                     } else {
                         //根据班次日期遍历
                         LocalDateTime timeTmp = begin;
                         while (LocalDateUtil.lt(timeTmp, shardTimeList.get(i))) {
                             LocalDate cld = LocalDateUtil.getClassDate(timeTmp, false);
-                            valueTmpList.addAll(sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectId), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList()));
-                            valueTmpList.addAll(sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectId), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList()));
+                            valueTmpList.addAll(sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.DAY.getCode(), defectItem.getCode()), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList()));
+                            valueTmpList.addAll(sourceMap.getOrDefault(key(line, cld, QtManagerConstant.QtClassesEnum.NIGHT.getCode(), defectItem.getCode()), Lists.newArrayList()).stream().map(QtCheckTaskDetailReportVO::getDefectNum).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList()));
                             timeTmp = timeTmp.plusDays(1L);
                         }
                     }
-                    Integer sum = CollUtil.isEmpty(valueTmpList) ? null : valueTmpList.stream().mapToInt(Integer::intValue).sum();
+                    Integer sum = IntegerUtil.sum(valueTmpList);
                     valueList.add(Objects.isNull(sum) ? null : String.valueOf(sum));
-                    lineValueMap.put(defectId, lineValueMap.getOrDefault(defectId, 0) + (Objects.isNull(sum) ? 0 : sum));
-                    allValueMap.put(defectId, allValueMap.getOrDefault(defectId, 0) + (Objects.isNull(sum) ? 0 : sum));
+                    lineValueMap.put(defectItem.getCode(), lineValueMap.getOrDefault(defectItem.getCode(), 0) + (Objects.isNull(sum) ? 0 : sum));
+                    allValueMap.put(defectItem.getCode(), allValueMap.getOrDefault(defectItem.getCode(), 0) + (Objects.isNull(sum) ? 0 : sum));
                 }
                 dataList.add(row);
             }
-            dataList.add(count(1, lineName, "合计（单产线）", lineValueMap, defectIdList));
+            dataList.add(count(1, lineName, "合计（单产线）", lineValueMap, defectEntityList));
         }
-        dataList.add(count(2, "总计", "总计", allValueMap, defectIdList));
+        dataList.add(count(2, "总计", "总计", allValueMap, defectEntityList));
         return resVo;
     }
 
@@ -1727,7 +1727,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param defectIdList 缺陷排序
      * @return 行合计
      */
-    private QtDefectReportDataVO count(Integer type, String lineName, String otherName, Map<Integer, Integer> valueMap, List<Integer> defectIdList) {
+    private QtDefectReportDataVO count(Integer type, String lineName, String otherName, Map<String, Integer> valueMap, List<QtDefectiveItem> defectIdList) {
         QtDefectReportDataVO countRow = new QtDefectReportDataVO();
         countRow.setType(type);
         countRow.setProductLineName(lineName);
@@ -1735,9 +1735,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         countRow.setClassName(otherName);
         countRow.setClassDateStr(otherName);
         List<String> valueList = Lists.newArrayList();
-        for (Integer defectId : defectIdList) {
+        for (QtDefectiveItem defectItem : defectIdList) {
             //为空，则给0
-            int num = valueMap.getOrDefault(defectId, 0);
+            int num = valueMap.getOrDefault(defectItem.getCode(), 0);
             valueList.add(String.valueOf(num));
         }
         countRow.setValueList(valueList);
@@ -1751,10 +1751,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * @param line      产线
      * @param classDate 班次日期
      * @param classId   班次
-     * @param defectId  缺陷id
+     * @param defectCode  缺陷code
      * @return
      */
-    private String key(Integer line, LocalDate classDate, Integer classId, Integer defectId) {
+    private String key(Integer line, LocalDate classDate, Integer classId, String defectCode) {
         StringBuilder sb = new StringBuilder();
         sb.append(line);
         sb.append("_");
@@ -1762,7 +1762,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         sb.append("_");
         sb.append(classId);
         sb.append("_");
-        sb.append(defectId);
+        sb.append(defectCode);
         return sb.toString();
     }
 
