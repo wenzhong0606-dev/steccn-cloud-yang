@@ -1,8 +1,10 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
+import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.vo.WorkOrderBatchVO;
 
@@ -76,4 +78,6 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
      * @return list
      */
     List<PmsDefectDayOrderBasicDTO> defectDay(List<Integer> lineList, LocalDateTime start, LocalDateTime end);
+
+
 }

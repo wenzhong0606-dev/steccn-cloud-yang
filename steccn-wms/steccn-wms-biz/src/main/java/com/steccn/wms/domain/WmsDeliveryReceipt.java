@@ -55,6 +55,11 @@ public class WmsDeliveryReceipt implements Serializable {
     private String note;
 
     /**
+     * 关联sales 物流单号
+     */
+    private String salesOrder;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

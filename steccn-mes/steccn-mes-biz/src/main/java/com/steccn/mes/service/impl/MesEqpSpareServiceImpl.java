@@ -3,6 +3,7 @@ package com.steccn.mes.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -84,7 +86,7 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     model.setName(tmp.getFname());
                     model.setSpecifications(tmp.getFspecification());
                     model.setBatchType("0");
-                    model.setState("0");
+                    model.setState("1");
                     model.setStatus("0");
                     model.setCreateBy("erp");
                     model.setCreateDate(LocalDateTime.now());
@@ -106,6 +108,69 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     model.setUnit(measureUnit.getDictLabel());
                     model.setUnitId(Long.parseLong(measureUnit.getDictCode()));
                     save(model);
+                }
+            });
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean synchronousSpareLength(ErpCustomerDTO dto) {
+        List<ErpMaterialVO> erpMaterial = remoteErpFeignApi.getErpMaterial(dto).getData();
+        if(CollUtil.isNotEmpty(erpMaterial)){
+            List<MesEqpSpare> lists = list(new LambdaQueryWrapper<MesEqpSpare>()
+                    .select(MesEqpSpare::getCode,MesEqpSpare::getName,MesEqpSpare::getId,MesEqpSpare::getUnit)
+                    .eq(MesEqpSpare::getStatus, "0"));
+            erpMaterial.forEach(tmp->{
+                //先查看是否有该物料
+                MesEqpSpare one = lists.stream().filter(v->v.getCode().equals(tmp.getFnumber())).findFirst().orElse(null);
+                if(Objects.nonNull(one)){
+                    MesEqpSpare model = new MesEqpSpare();
+                    model.setId(one.getId());
+                    model.setUpdateDate(LocalDateTime.now());
+//                    JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+//                            .eq(JsSysDictData::getDictLabel, tmp.getFvolumename())
+//                            .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+//                    model.setLengthQuantity(tmp.getFlength());
+//                    model.setLengthUnitId(Long.parseLong(measureUnit.getDictCode()));
+//                    model.setWideQuantity(tmp.getFwidth());
+//                    model.setWideUnitId(Long.parseLong(measureUnit.getDictCode()));
+//                    model.setThickQuantity(tmp.getFland());
+//                    model.setThickUnitId(Long.parseLong(measureUnit.getDictCode()));
+                    //修改单位 如果生产单位和基本单位不同 则把基本单位改成生产单位
+                    if(StrUtil.isNotBlank(tmp.getFprounitname())&&!one.getUnit().equals(tmp.getFprounitname())){
+                        JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                                .eq(JsSysDictData::getDictLabel, tmp.getFprounitname())
+                                .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                        if(Objects.isNull(measureUnit)){
+                            JsSysDictData dicModel = new JsSysDictData();
+                            dicModel.setParentCode("0");
+                            dicModel.setParentCodes("0");
+                            dicModel.setTreeSort(1565);
+                            dicModel.setTreeSorts("0000001565,");
+                            dicModel.setTreeLeaf("1");
+                            dicModel.setTreeLevel(0);
+                            dicModel.setDictLabel(tmp.getFprounitname());
+                            dicModel.setDictValue(tmp.getFprounitname());
+                            dicModel.setDictType("measure_unit");
+                            dicModel.setIsSys("1");
+                            dicModel.setTreeNames(tmp.getFprounitname());
+                            dicModel.setStatus("0");
+                            dicModel.setCreateBy("system");
+                            dicModel.setUpdateBy("system");
+                            dicModel.setCreateDate(new Date());
+                            dicModel.setUpdateDate(new Date());
+                            jsSysDictDataService.save(dicModel);
+                            model.setUnit(dicModel.getDictLabel());
+                            model.setUnitId(Long.parseLong(dicModel.getDictCode()));
+                            updateById(model);
+                        }else {
+                            model.setUnit(measureUnit.getDictLabel());
+                            model.setUnitId(Long.parseLong(measureUnit.getDictCode()));
+                            updateById(model);
+                        }
+                    }
+//                    updateById(model);
                 }
             });
         }

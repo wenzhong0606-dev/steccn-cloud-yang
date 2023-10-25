@@ -1,15 +1,17 @@
 package com.steccn.pms.controller.feign;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.domain.PmsCompleteStorage;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
-import com.steccn.pms.dto.DwCurrentReportWorkDTO;
-import com.steccn.pms.dto.DwProduceOrderDTO;
-import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
-import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsBarcodePrintService;
+import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.vo.PmsProduceOrderVO;
@@ -48,6 +50,8 @@ public class PmsProduceOrderFeignController {
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
 
     private final PmsBarcodePrintService pmsBarcodePrintService;
+
+    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
 
     @PostMapping("/report")
     @ApiOperation("查询当前班次日期的所有报工记录")
@@ -134,7 +138,23 @@ public class PmsProduceOrderFeignController {
 
     @GetMapping("/get/caseNo/flag")
     @ApiOperation(("箱号是否存在"))
-    R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo){
+    public R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo){
         return R.success(pmsBarcodePrintService.getCaseNoFlag(caseNo));
+    }
+
+
+    @ApiOperation("根据箱号获取生产订单号批次号以及物料名称")
+    @GetMapping("/number/caseNo")
+    public R<PmsProducerOrderInfoDTO> getNumberByCaseNo(@RequestParam("caseNo") String caseNo){
+        PmsProducerOrderInfoDTO pmsProducerOrderInfoDTO = pmsCompleteStorageInfoService.getNumberByCaseNo(caseNo);
+        if (Objects.nonNull(pmsProducerOrderInfoDTO.getProduceOrderId())){
+            //根据订单id 获取生产订单的编码
+            PmsProduceOrder one = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, pmsProducerOrderInfoDTO.getProduceOrderId()));
+            if (Objects.nonNull(one)) {
+                pmsProducerOrderInfoDTO.setProduceOrderCode(one.getCode());
+            }
+        }
+
+        return R.success(pmsProducerOrderInfoDTO);
     }
 }

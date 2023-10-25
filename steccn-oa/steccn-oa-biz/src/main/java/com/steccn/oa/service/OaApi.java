@@ -231,6 +231,28 @@ public interface OaApi {
     String submitProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowSubmitDTO dto);
 
     /**
+     * 调用oa强制收回接口
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/doForceDrawBack",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String doForceDrawBack(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowSubmitDTO dto);
+
+    /**
+     * 调用oa删除流程接口
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/deleteRequest",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String deleteRequest(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowSubmitDTO dto);
+
+    /**
      * 调用oa获取人员列表
      * @param headers
      * @param dto

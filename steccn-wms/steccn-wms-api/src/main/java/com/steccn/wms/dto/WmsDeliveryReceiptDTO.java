@@ -36,7 +36,7 @@ public class WmsDeliveryReceiptDTO {
     private String status;
 
     @ApiModelProperty("类型")
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "类型id不能为空")
+//    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "类型id不能为空")
     private Long type;
 
     @ApiModelProperty("仓库Id")
@@ -65,5 +65,10 @@ public class WmsDeliveryReceiptDTO {
     private Long createBy;
 
     private String createName;
+
+    /**
+     * 物流单号
+     */
+    private String logisticsNumber;
 
 }

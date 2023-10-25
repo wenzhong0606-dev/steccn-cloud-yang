@@ -18,7 +18,6 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
@@ -45,6 +44,7 @@ import com.steccn.qms.dto.QtCustomerComplaintReportDTO;
 import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
+import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -61,7 +61,10 @@ import java.text.Collator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -114,6 +117,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             save(qtCustomerComplain);
             // 2.明细信息
             List<QtCustomerComplainDetail> detailList = Lists.newArrayList();
+            //客户条码
             dto.getDetails().forEach(detail -> {
                 QtCustomerComplainDetail customerComplainDetail = new QtCustomerComplainDetail();
                 BeanUtil.copyProperties(detail, customerComplainDetail);

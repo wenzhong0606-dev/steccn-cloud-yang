@@ -36,4 +36,14 @@ public class WorkOrderMaterialVO {
      * 箱号
      */
     private String caseNo;
+
+    /**
+     * 订单id
+     */
+    private Long producerOrderId;
+
+    /**
+     * 订单编码
+     */
+    private String produceOrderCode;
 }

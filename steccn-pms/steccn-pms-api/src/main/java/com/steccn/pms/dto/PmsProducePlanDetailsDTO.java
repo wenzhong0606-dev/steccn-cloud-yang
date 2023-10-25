@@ -30,4 +30,6 @@ public class PmsProducePlanDetailsDTO implements Serializable {
     private Integer customerId;
     private String customerCode;
     private String customerName;
+    private Integer type;
+    private BigDecimal percentage;
 }

@@ -9,6 +9,8 @@ import lombok.Getter;
 public interface WmsManagerConstant {
 
 
+    String SERVER_CODE ="query_logistics";
+
     String Code_ZERO = "0";
 
     /**
@@ -44,6 +46,22 @@ public interface WmsManagerConstant {
      * 入库单类型2
      */
     String RECEIPT_TYPE_2 = "采购入库";
+
+    /**
+     * 销售模块物流单状态
+     */
+    @Getter
+    @AllArgsConstructor
+    enum LogisticsBillState {
+        DRAFT( "草稿"),
+        RESERVED( "已预约"),
+        SYN_SENT("已同步"),
+        ALREADY_ENTERED("已入场"),
+        OUT_OF_STORAGE("已出库");
+
+        private String name;
+
+    }
 
 
     /**

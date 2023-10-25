@@ -117,4 +117,10 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      */
     Boolean wmsChargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO);
 
+    /**
+     * 完工入库单据状态变更
+     * @param dto
+     * @return
+     */
+    Boolean changeReceiptState(ReceiptStatusDTO dto);
 }

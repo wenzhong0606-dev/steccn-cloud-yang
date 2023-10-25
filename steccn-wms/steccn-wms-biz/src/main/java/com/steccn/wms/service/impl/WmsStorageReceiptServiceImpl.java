@@ -254,7 +254,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         }
 
                     } else if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
-                        //  namespace: yq2
+                        //  namespace: yq22
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
                     }
@@ -920,7 +920,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFlot(OaConstant.NO.toString());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     erpCommonSaveDetails.add(erpCommonSaveDetail);
                 }
@@ -1058,6 +1058,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             result.setSpecifications(eqpSpareVO.getSpecifications());
             result.setDeliveryOrderCode(dto.getDeliveryOrderCode());
             result.setEsSupplierCode(esSupplierCode);
+            result.setEsFromPoNum(tmp.getEsPoNum());
+            result.setEsFromPoLineNum(tmp.getEsPoLineNum());
             //箱号
             if(eqpSpareVO.getCode().startsWith("P1.W.P")){
                 //箱号规则   六位日期-六位流水()
@@ -1178,7 +1180,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     @Override
     @Transactional
-    public Boolean salesReceiptAdd(SalesStorageReceiptDTO dto) {
+    public String salesReceiptAdd(SalesStorageReceiptDTO dto) {
         dto.setIsSRMSys(OaConstant.NUM_2);
         dto.setSourceType(OaConstant.NUM_2);
         dto.setType(1600405739121573888L);
@@ -1221,12 +1223,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             }
             bodyDetailTmp.setEsTrxLineNum(tmp.getAssociatedNo());
             bodyDetailTmp.setTrxDate(localDateStr);
-            bodyDetailTmp.setEsTrxTypeCode("SRM01");
+            bodyDetailTmp.setEsTrxTypeCode("ERP01");
             bodyDetailTmp.setQuantity(tmp.getQuantity());
             bodyDetailTmp.setStockType("OWN_STOCK");
             bodyDetailTmp.setEsOuCode("CO00000001");
             bodyDetailTmp.setEsSupplierNum(dto.getEsSupplierCode());
             bodyDetailTmp.setCurrencyCode("CNY");
+            Assert.notBlank(tmp.getEsFromPoNum(),"外部系统订单头不能为空");
+            bodyDetailTmp.setEsFromPoNum(tmp.getEsFromPoNum());
+            Assert.notBlank(tmp.getEsFromPoLineNum(),"外部系统订单行号不能为空");
+            bodyDetailTmp.setEsFromPoLineNum(tmp.getEsFromPoLineNum());
             bodyDetail.add(bodyDetailTmp);
         });
         paramBody.setRcvTrxLineList(bodyDetail);
@@ -1242,7 +1248,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         if(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseStatus").equals("ERROR")){
             throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
         }
-        return true;
+        return byId.getCode();
     }
 
     @Override

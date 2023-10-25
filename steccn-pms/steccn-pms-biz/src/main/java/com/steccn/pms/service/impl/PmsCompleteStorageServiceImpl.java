@@ -42,9 +42,11 @@ import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStorageMaterialVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
+import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.feign.RemoteWmsShelfStrategyFeignApi;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
@@ -100,6 +102,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Autowired
     private PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
+    @Autowired
+    private RemoteWmsCustomerBarcodeFeignApi remoteWmsCustomerBarcodeFeignApi;
+
     @Override
     public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
         //1.判断装箱单（PP-XXXXX）已扫描，入库单为SI-XXXXX
@@ -147,6 +152,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         EqpSpareVO materialVo = materialMap.getOrDefault(pmsProduceOrder.getMaterialId(), new EqpSpareVO());
         resDTO.setMaterialCode(materialVo.getCode());
         resDTO.setMaterialName(materialVo.getName());
+        //获取箱号绑定的客户条码号
+        String customerBarCode = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.getCustomerBarcodeByCaseNO(resDTO.getCaseNo()), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        resDTO.setCustomerBarcode(customerBarCode);
         return resDTO;
     }
 
@@ -212,6 +220,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
             List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
 
+           List<WmsCustomerBarcodeDTO> wmsCustomerBarcodeDTOList = Lists.newArrayList();
+
             Set<Integer> storageSet = Sets.newHashSet();
             for (CompleteStorageScanDTO caseInfo : dtoList) {
                 storageSet.add(caseInfo.getWarehouseId());
@@ -248,6 +258,11 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 wmsStorageReceiptDTO.setWarehouseId(caseInfo.getWarehouseId());
                 wmsStorageReceiptDTO.setWarehouseName(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
                 materialList.add(wmsStorageReceiptInfoDTO);
+                //客户条码
+                WmsCustomerBarcodeDTO wmsCustomerBarcodeDTO = new WmsCustomerBarcodeDTO();
+                wmsCustomerBarcodeDTO.setCustomerBarcode(caseInfo.getCustomerBarcode());
+                wmsCustomerBarcodeDTO.setCaseNo(caseInfo.getCaseNo());
+                wmsCustomerBarcodeDTOList.add(wmsCustomerBarcodeDTO);
             }
             completeStorageInfoService.saveBatch(modelInfoList);
             //生成code 规则：SI-20220905-0001
@@ -259,8 +274,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             //连线入库 入库时间
             pmsCompleteStorage.setEnterTime(enterTime);
 
-            //生成入库单
 
+
+            //生成入库单
             wmsStorageReceiptDTO.setType(sysDictVO.getId());
             //仓库id
             wmsStorageReceiptDTO.setList(materialList);
@@ -268,6 +284,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             wmsStorageReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
             wmsStorageReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
             try {
+
+                //批量更新客户条码
+                Boolean aBoolean = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.batchUpdate(wmsCustomerBarcodeDTOList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                if (!aBoolean){
+                    log.info("更新客户条码—>失败");
+                }
                 String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 //入库必定要成功
                 if (StringUtils.isEmpty(code)) {
@@ -602,6 +624,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean chargeAgainst(Long id) {
         //获取生产入库单信息
         PmsCompleteStorage pmsCompleteStorage = getById(id);
@@ -638,6 +661,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
         pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
         return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean changeReceiptState(ReceiptStatusDTO dto) {
+        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
+        pmsCompleteStorage.setState(dto.getState());
+        return update(new LambdaQueryWrapper<PmsCompleteStorage>()
+                .in(PmsCompleteStorage::getInStorageVoucher, dto.getInStorageVoucherList()));
     }
 
     /**

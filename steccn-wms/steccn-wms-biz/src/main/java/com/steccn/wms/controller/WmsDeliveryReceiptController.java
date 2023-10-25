@@ -1,16 +1,20 @@
 package com.steccn.wms.controller;
 
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.wms.domain.WmsDeliveryReceipt;
+import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptFlagInfoDto;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.dto.WmsStorageReceiptFlagInfoDTO;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
-import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsScanInventoryVO;
+import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -88,6 +92,37 @@ public class WmsDeliveryReceiptController {
     @PostMapping("/api/scanDeliveryReceipt")
     public R<String> scanDeliveryReceipt(@RequestBody Map<String, Object> paramMap){
         return  wmsDeliveryReceiptService.scanDeliveryReceipt(paramMap);
+    }
+
+    @ApiOperation("获取销售发货状态标识")
+    @GetMapping("/sell/flag")
+    public R<WmsDeliverySellFlagVO> sellFlag(@ApiParam("物流单号") @RequestParam("number") String number){
+        return R.success(wmsDeliveryReceiptService.sellFlag(number));
+    }
+
+
+    @ApiOperation("销售出库获取箱号出库单标识相关内容")
+    @PostMapping("/delivery/flag/info")
+    public R<WmsDeliveryFlagVO> deliveryFlagInfo(@RequestBody WmsDeliveryReceiptFlagInfoDto dto){
+        return R.success(wmsDeliveryReceiptService.deliveryFlagInfo(dto));
+    }
+
+    @ApiOperation("销售出库通过物流单号获取物料明细")
+    @GetMapping("/delivery/sell/material/info")
+    public R<WmsDeliverySellInfoVO> deliverySellMaterialInfo(@ApiParam("物流单号") @RequestParam("number")String number){
+        return R.success(wmsDeliveryReceiptService.deliverySellMaterialInfo(number));
+    }
+
+    @ApiOperation("销售发货")
+    @PostMapping("/sell")
+    public R<String> sell(@RequestBody WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO){
+        String code = wmsDeliveryReceiptService.sell(wmsDeliveryReceiptDTO);
+        WmsDeliveryReceipt wmsDeliveryReceipt = wmsDeliveryReceiptService.getOne(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getCode, code), false);
+        Assert.notNull(wmsDeliveryReceipt, "出库单为空");
+        wmsDeliveryReceiptService.affirm(wmsDeliveryReceipt.getId());
+        //同步数据到销售系统
+        wmsDeliveryReceiptService.logistics(wmsDeliveryReceipt);
+        return R.success(code);
     }
 
 }

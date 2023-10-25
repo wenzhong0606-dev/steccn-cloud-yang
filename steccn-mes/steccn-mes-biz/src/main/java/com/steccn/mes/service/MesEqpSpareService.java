@@ -33,6 +33,13 @@ public interface MesEqpSpareService extends IService<MesEqpSpare> {
     Boolean synchronousSpareUnit(ErpCustomerDTO dto);
 
     /**
+     * 同步物料长宽厚
+     * @param dto
+     * @return
+     */
+    Boolean synchronousSpareLength(ErpCustomerDTO dto);
+
+    /**
      * 同步物料数据至qms
      * @return
      */

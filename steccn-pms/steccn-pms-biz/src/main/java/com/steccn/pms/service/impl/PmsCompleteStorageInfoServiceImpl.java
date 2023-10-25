@@ -11,16 +11,23 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.JointUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
+import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
+import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +53,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsBarcodePrintService barcodePrintService;
+
 
     @Override
     public Boolean existCaseNo(Long typeId, Set<String> caseNoSet) {
@@ -121,6 +129,21 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         return resMap;
     }
 
+    public Map<String , BigDecimal> materialMap(List<Integer> lineIdList , Set<Long> materialSet, LocalDate date) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {
+            LocalDateTime start = LocalDateUtil.getMorning(date);
+            LocalDateTime end = start.plusDays(1);
+            List<FurtherProduceReportDataVO> resList = this.baseMapper.materialLineList(lineIdList, materialSet, start, end);
+            if (CollUtil.isNotEmpty(resList)) {
+                resList.forEach(ele -> {
+                    resMap.put(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, ele.getProductLineId(), ele.getMaterialId(), ele.getClassesId()), ele.getProcessQuantity());
+                });
+            }
+        }
+        return resMap;
+    }
+
     @Override
     public Map<String, BigDecimal> inStorage(List<Integer> lineList, LocalDateTime start, LocalDateTime end) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
@@ -162,6 +185,19 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             }
         }
         return resMap;
+    }
+
+    @Override
+    public PmsProducerOrderInfoDTO getNumberByCaseNo(String caseNo) {
+        PmsProducerOrderInfoDTO dto = new PmsProducerOrderInfoDTO();
+        PmsCompleteStorageInfo info = getOne(new LambdaQueryWrapper<PmsCompleteStorageInfo>().eq(PmsCompleteStorageInfo::getCaseNo, caseNo).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(info)) {
+            dto.setProduceOrderId(info.getProduceOrderId());
+            dto.setBatchNo(info.getBatchNo());
+            dto.setMaterialName(info.getMaterialName());
+            dto.setMaterialCode(info.getMaterialCode());
+        }
+        return dto;
     }
 
     @Override

@@ -640,6 +640,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         SysDictVO dict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("片", SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO dict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("㎡", SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(dict1,"换算单位[片]不存在");
+        Assert.notNull(dict2,"换算单位[㎡]不存在");
+
 
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -665,7 +668,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
                 Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
                 //获取满足条件的批次
-                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), ele.getEndTime(), Boolean.TRUE, Boolean.FALSE)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
+                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), ele.getEndTime(), Boolean.TRUE, Boolean.FALSE) && ele.getProductLineId().equals(line)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
                 List<String> orderNoList = new ArrayList<>(orderNoSet);
                 Collections.sort(orderNoList);
                 String classDateStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, startTmp);
@@ -686,7 +689,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getHighQuantity(), 2))));
                     //使用量
                     BigDecimal useCount = useCountMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderCode());
-                    BigDecimal useCountConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), Objects.nonNull(dict1) ? dict1.getId() : null, Objects.nonNull(dict2) ? dict2.getId() : null, useCount);
+                    BigDecimal useCountConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(),  dict1.getId(), dict2.getId(), useCount);
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(useCount, 0), BigDecimalUtil.format(useCountConvert, 2))));
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_0, useCount);
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.SYL_1, useCountConvert);
@@ -695,7 +698,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
                     //入库量
                     BigDecimal inStorage = inStorageMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderId());
-                    BigDecimal inStorageConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), Objects.nonNull(dict1) ? dict1.getId() : null, Objects.nonNull(dict2) ? dict2.getId() : null, useCount);
+                    BigDecimal inStorageConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(), dict1.getId() , dict2.getId(), inStorage);
                     module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(inStorage, 2), BigDecimalUtil.format(inStorageConvert, 2))));
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.RKS_0, inStorage);
                     BigDecimalUtil.accumulate(countMap, DefectDayConstant.RKS_1, inStorageConvert);
@@ -1174,6 +1177,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             QtFinishedRateDTO row = new QtFinishedRateDTO();
             //数据累计 1、片  2、平方米 3、拉引量 4、称重 5、换算重
             row.setType(1);
+            row.setProductLine(lineName);
             row.setSlice(productLineCountMap.get(1));
             BigDecimalUtil.accumulate(allCountMap,1,productLineCountMap.get(1));
             row.setSquareMeter(productLineCountMap.get(2));

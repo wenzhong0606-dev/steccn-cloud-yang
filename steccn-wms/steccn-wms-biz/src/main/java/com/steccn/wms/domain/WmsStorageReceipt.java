@@ -125,4 +125,9 @@ public class WmsStorageReceipt implements Serializable {
      * 入库时间
      */
     private LocalDateTime comeTime;
+
+    /**
+     * 供应商编码
+     */
+    private String esSupplierCode;
 }

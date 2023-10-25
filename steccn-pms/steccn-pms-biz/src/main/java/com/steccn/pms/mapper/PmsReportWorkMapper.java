@@ -3,10 +3,7 @@ package com.steccn.pms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
-import com.steccn.pms.dto.DwCurrentReportWorkDTO;
-import com.steccn.pms.dto.PmsUseCountDTO;
-import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
-import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -314,6 +311,16 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<PmsUseCountDTO> dateClassLineInStorageUnit(@Param("lineList") List<Integer> lineIdList,
                                                     @Param("start") LocalDateTime start,
                                                     @Param("end") LocalDateTime end);
+
+
+    /**
+     * 获取入库数合计
+     * @param start
+     * @param end
+     * @return
+     */
+    List<PmsStorageCountDTO> getStorageCount(@Param("start") LocalDateTime start,
+                                             @Param("end") LocalDateTime end);
 }
 
 

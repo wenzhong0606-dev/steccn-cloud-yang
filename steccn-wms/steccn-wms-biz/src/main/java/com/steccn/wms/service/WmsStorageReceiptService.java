@@ -146,5 +146,5 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @param dto
      * @return
      */
-    Boolean salesReceiptAdd(SalesStorageReceiptDTO dto);
+    String salesReceiptAdd(SalesStorageReceiptDTO dto);
 }

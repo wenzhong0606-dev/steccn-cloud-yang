@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.ReceiptStatusDTO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +34,9 @@ public interface RemoteCompleteStorageFeignApi {
     @PostMapping("/feign/pms/complete/storage/complete")
     R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto);
 
+    @ApiOperation("完工入库单据状态变更")
+    @PostMapping("/feign/pms/complete/storage/change/state")
+    R<Boolean> changeReceiptState(@RequestBody ReceiptStatusDTO dto);
 
     @GetMapping("/feign/pms/complete/storage/code")
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")

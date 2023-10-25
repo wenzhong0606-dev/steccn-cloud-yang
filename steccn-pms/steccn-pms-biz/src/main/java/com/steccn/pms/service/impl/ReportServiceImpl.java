@@ -13,10 +13,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.IntegerUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.UnitLengthUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.dto.OaClassUserNameDTO;
@@ -622,7 +619,7 @@ public class ReportServiceImpl implements ReportService {
 
         //遍历所有的物料查询完工数量
         Set<Long> materialSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, Map<Long, BigDecimal>> materialCompleteMap = pmsCompleteStorageInfoService.materialMap(materialSet, dto.getDate());
+        Map<String, BigDecimal> materialCompleteMap = pmsCompleteStorageInfoService.materialMap(dto.getProductLineIdList(), materialSet, dto.getDate());
 
         //构建表头
         FurtherReportHeaderVO header = new FurtherReportHeaderVO();
@@ -748,8 +745,7 @@ public class ReportServiceImpl implements ReportService {
                         pmColumnCount(workshopCountMap, -2L, Lists.newArrayList(firstProcessQuantity, f1Convert, lastPassQuantity, f2Convert, passRate));
                         moduleList.add(new FurtherValueStrVO(rowCountList));
                         //入库
-                        Map<Long, BigDecimal> orDefaultMap = materialCompleteMap.getOrDefault(materialId, Maps.newHashMap());
-                        BigDecimal completeNum = orDefaultMap.get(classEntry.getKey());
+                        BigDecimal completeNum = materialCompleteMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, productLine.getId(), materialId, classEntry.getKey()));
                         BigDecimal completeConvert = unitConvert(unitList, unitConvertMap, materialId, completeNum, 2);
                         //成品率 = 入库平方米数 / 上片加工平方米数
                         BigDecimal firstProcessNum = unitConvert(unitList, unitConvertMap, materialId, firstProcessQuantity, 2);

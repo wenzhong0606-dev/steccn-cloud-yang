@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 点检任务参数DTO
@@ -17,4 +18,5 @@ public class MesInsTaskParamDTO implements Serializable {
     private Integer status;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private List<Integer> levels;
 }

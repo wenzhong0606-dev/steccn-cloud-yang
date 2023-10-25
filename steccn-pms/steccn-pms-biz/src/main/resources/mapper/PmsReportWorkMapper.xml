@@ -433,7 +433,8 @@
         rw.product_line_id,
         rw.station_id ,
         de.material_id,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND rw.class_date = #{today}
@@ -448,7 +449,8 @@
         rw.product_line_id,
         rw.station_id ,
         de.material_id,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND rw.class_date &gt;= #{start}
@@ -471,6 +473,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
@@ -492,6 +495,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.id in
         <foreach collection="orderIdSet" item="orderId" open="(" close=")" separator=",">
             #{orderId}
@@ -503,7 +507,8 @@
         select
         de.id as produceOrderId,
         rw.station_id ,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND de.id in
@@ -518,7 +523,8 @@
         rw.classes_id as classId,
         rw.station_id ,
         de.material_id,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
         from pms_report_work rw join pms_produce_order de on de.id = rw.produce_order_id
         where rw.del_flag = 0 AND de.del_flag = 0
         AND de.production_line_id in
@@ -541,6 +547,7 @@
         JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
         WHERE
         pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
             #{lineId}
@@ -615,7 +622,8 @@
         rw.class_date,
         rw.station_id ,
         po.material_id,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
         from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
         where rw.del_flag = 0
         AND rw.start_time &gt;= #{start}
@@ -665,6 +673,7 @@
         WHERE
         pcsi.del_flag = 0
         AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
@@ -684,7 +693,8 @@
         rw.classes_id as classId,
         rw.station_id ,
         po.material_id,
-        sum(rw.process_quantity) as quantity
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
         from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
         where rw.del_flag = 0
         AND rw.start_time &gt;= #{start}
@@ -718,6 +728,7 @@
         WHERE
         pcsi.del_flag = 0
         AND ppo.del_flag = 0
+        AND pcs.state != 2
         AND ppo.production_line_id in
         <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
             #{productLineId}
@@ -730,6 +741,26 @@
         classes_id,
         production_line_id,
         material_id
+    </select>
+
+    <select id="getStorageCount" resultType="com.steccn.pms.dto.PmsStorageCountDTO">
+        SELECT
+        ppo.id as produceOrderId,
+        sum( pcsi.quantity ) AS quantity,
+        pcs.enter_time AS enterTime,
+        any_value(ppo.material_id) AS materialId,
+        any_value(ppo.customer_id) AS customerId
+        FROM
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0 AND ppo.del_flag = 0
+        AND pcs.state != 2
+        AND pcs.enter_time &gt;= #{start}
+        AND pcs.enter_time &lt;= #{end}
+        GROUP BY
+        ppo.id,pcs.enter_time
     </select>
 
 </mapper>

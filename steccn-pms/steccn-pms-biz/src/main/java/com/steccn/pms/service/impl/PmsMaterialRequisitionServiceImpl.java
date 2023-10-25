@@ -102,7 +102,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             page.getRecords().forEach(materialRequisitionVO -> {
                 dictIdSet.add(materialRequisitionVO.getStatus());
                 dictIdSet.add(materialRequisitionVO.getTypeId());
-                officeIdSet.add(materialRequisitionVO.getDepartmentId());
+//                officeIdSet.add(materialRequisitionVO.getDepartmentId());
                 officeIdSet.add(materialRequisitionVO.getWarehouseId());
                 ids.add(materialRequisitionVO.getId());
             });
@@ -112,7 +112,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             page.getRecords().forEach(materialRequisitionVO -> {
                 materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
                 materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
-                materialRequisitionVO.setDepartmentName(officeMap.get(materialRequisitionVO.getDepartmentId()));
+                materialRequisitionVO.setDepartmentName(FeignOptional.of(() -> oaInfoService.getDepartmentInfoById(materialRequisitionVO.getDepartmentId()), FeignConstant.STECCN_OA_SERVICE_NAME).get().getDepartmentName());
                 materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
             });
             //3.4获取总数量
@@ -320,12 +320,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //申请人
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQR, SecurityUtils.getUser().getUserId().toString()));
                 //获取申请人岗位
-                OaEmpStatusDTO emp = new OaEmpStatusDTO();
-                emp.setLoginid(pmsMaterialRequisition.getCreateName());
-                List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByCondition(emp), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                if (CollUtil.isNotEmpty(oaEmpVOS)) {
-                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRGW, oaEmpVOS.get(0).getJobtitle()));
-                }
+//                OaEmpStatusDTO emp = new OaEmpStatusDTO();
+//                emp.setLoginid(pmsMaterialRequisition.getCreateName());
+//                List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByCondition(emp), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                OaEmpVO oaEmpVO = FeignOptional.of(() -> oaInfoService.getUserInfoById(pmsMaterialRequisition.getCreateBy().intValue()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRGW, oaEmpVO.getJobtitle()));
                 //申请日期
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRQ, pmsMaterialRequisition.getCreateTime().toLocalDate().toString()));
                 //申请编号
@@ -345,7 +344,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //查到oa中部门
                 OaOrgDetailDTO oaOrg = new OaOrgDetailDTO();
-                oaOrg.setDepartmentname(officeMap.get(pmsMaterialRequisition.getDepartmentId()));
+                String departmentName = officeMap.get(pmsMaterialRequisition.getDepartmentId());
+                if(departmentName.length() > 4){
+                    departmentName = departmentName.substring(0,4);
+                }
+                oaOrg.setDepartmentname(departmentName);
                 OaOrgDetailParamDTO oaOrgParam = new OaOrgDetailParamDTO();
                 oaOrgParam.setParams(oaOrg);
                 List<OaOrgDetailVO> oaOrgDetailVOS = FeignOptional.of(() -> oaInfoService.getOrgDetailByConditionV2(oaOrgParam), FeignConstant.STECCN_OA_SERVICE_NAME).get();
