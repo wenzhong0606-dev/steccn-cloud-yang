@@ -163,4 +163,11 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据产线id查询订单")
     @GetMapping("/feign/pms/produce/order/line/order")
     R<List<PmsProduceOrderVO>> listOrderByProduceLineId(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId);
+
+
+    @ApiOperation("根据箱号获取生产订单号批次号以及物料名称")
+    @GetMapping("/feign/pms/produce/order/number/caseNo")
+    R<PmsProducerOrderInfoDTO> getNumberByCaseNo(@RequestParam("caseNo") String caseNo);
+
+
 }

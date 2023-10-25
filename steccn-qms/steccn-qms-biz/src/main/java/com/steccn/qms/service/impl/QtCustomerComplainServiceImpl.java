@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.interfaces.Join;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,7 +17,6 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
@@ -43,8 +41,8 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
-import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
+import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -60,7 +58,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -118,6 +119,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             save(qtCustomerComplain);
             // 2.明细信息
             List<QtCustomerComplainDetail> detailList = Lists.newArrayList();
+            //客户条码
             dto.getDetails().forEach(detail -> {
                 QtCustomerComplainDetail customerComplainDetail = new QtCustomerComplainDetail();
                 BeanUtil.copyProperties(detail, customerComplainDetail);
