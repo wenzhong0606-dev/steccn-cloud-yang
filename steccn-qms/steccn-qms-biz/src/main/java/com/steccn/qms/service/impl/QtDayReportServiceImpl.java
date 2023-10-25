@@ -105,9 +105,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(productLineId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-        //做缺陷类别+缺陷分组
-        Map<Integer, Set<Integer>> categoryDefectMap = Maps.newHashMap();
-        manDataList.forEach(ele -> MapUtil.computeSet(categoryDefectMap, ele.getDefectCategory(), ele.getDefectId()));
+        //做缺陷类别+缺陷分组--根据创建时间排序，依赖于defectCode
+        Map<Integer, List<QtDefectiveItem>> categoryDefectMap = Maps.newHashMap();
+        //根据缺陷code获取缺陷
+        Set<String> defectCodeSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCode).collect(Collectors.toSet());
+        //根据缺陷code获取缺陷信息
+        Map<String, QtDefectiveItem> defectCodeMap = qtDefectiveItemService.listByCodeSort(defectCodeSet);
+        for (QtDefectiveItem ele : defectCodeMap.values()) {
+            MapUtil.compute(categoryDefectMap, ele.getCategoryId(), ele);
+        }
         //构建module
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
         TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(date, date);
@@ -116,7 +122,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
 
         //总计
-        Map<Integer, BigDecimal> allMap = Maps.newHashMap();
+        Map<String, BigDecimal> allMap = Maps.newHashMap();
         //基于产线去分组
         Map<Integer, List<QtCheckTaskDetailReportVO>> lineEntrySet = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
         for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> lineEntry : lineEntrySet.entrySet()) {
@@ -124,14 +130,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             String productLineName = sysOfficeVO.getOfficeName();
             Integer treeSort = sysOfficeVO.getTreeSort();
             //根据来源分组
-            Map<Integer, BigDecimal> countMap = Maps.newHashMap();
+            Map<String, BigDecimal> countMap = Maps.newHashMap();
             Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
             for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
                 //根据班次分组
-                Map<Integer, BigDecimal> classCountMap = Maps.newHashMap();
+                Map<String, BigDecimal> classCountMap = Maps.newHashMap();
                 Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
                 for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
-                    Map<Integer, BigDecimal> manCountMap = Maps.newHashMap();
+                    Map<String, BigDecimal> manCountMap = Maps.newHashMap();
                     //根据缺陷记录时段分组
                     Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime() + "~" + v.getDefectEndTime()));
                     for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
@@ -167,17 +173,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             vo.setModule(module);
                             BigDecimal rowTotal = null;
                             //遍历类别
-                            for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
+                            for (Map.Entry<Integer, List<QtDefectiveItem>> categoryDefectEntry : categoryDefectMap.entrySet()) {
                                 FurtherValueStrVO strVO = new FurtherValueStrVO();
                                 List<String> value = Lists.newArrayList();
-                                for (Integer defectId : categoryDefectEntry.getValue()) {
+                                for (QtDefectiveItem defectItem : categoryDefectEntry.getValue()) {
                                     //获取该缺陷下的所有数据
-                                    List<QtCheckTaskDetailReportVO> defectDataList = taskEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
+                                    List<QtCheckTaskDetailReportVO> defectDataList = taskEntry.getValue().stream().filter(v -> v.getDefectCode().equals(defectItem.getCode())).collect(Collectors.toList());
                                     int sum = defectDataList.stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                                    BigDecimalUtil.accumulate(manCountMap, defectId, BigDecimal.valueOf(sum));
-                                    BigDecimalUtil.accumulate(countMap, defectId, BigDecimal.valueOf(sum));
-                                    BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));
-                                    BigDecimalUtil.accumulate(allMap, defectId, BigDecimal.valueOf(sum));
+                                    BigDecimalUtil.accumulate(manCountMap, defectItem.getCode(), BigDecimal.valueOf(sum));
+                                    BigDecimalUtil.accumulate(countMap, defectItem.getCode(), BigDecimal.valueOf(sum));
+                                    BigDecimalUtil.accumulate(classCountMap, defectItem.getCode(), BigDecimal.valueOf(sum));
+                                    BigDecimalUtil.accumulate(allMap, defectItem.getCode(), BigDecimal.valueOf(sum));
                                     value.add(String.valueOf(sum));
                                     rowTotal = BigDecimalUtil.add(rowTotal, BigDecimal.valueOf(sum));
                                 }
@@ -342,7 +348,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param productLineName
      * @return
      */
-    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap, String productLineName, Integer treeSort) {
+    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, List<QtDefectiveItem>> categoryDefectMap, Integer classId, Map<String, BigDecimal> classCountMap, String productLineName, Integer treeSort) {
         //插入一条合计
         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
         vo.setProductLineName(productLineName);
@@ -352,12 +358,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         vo.setModule(module);
         vo.setClassId(classId);
         BigDecimal rowTotal = null;
-        for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
+        for (Map.Entry<Integer, List<QtDefectiveItem>> categoryDefectEntry : categoryDefectMap.entrySet()) {
             FurtherValueStrVO strVO = new FurtherValueStrVO();
             List<String> value = Lists.newArrayList();
-            for (Integer defectId : categoryDefectEntry.getValue()) {
-                value.add(BigDecimalUtil.format(classCountMap.get(defectId), 0));
-                rowTotal = BigDecimalUtil.add(rowTotal, classCountMap.get(defectId));
+            for (QtDefectiveItem defectItem : categoryDefectEntry.getValue()) {
+                value.add(BigDecimalUtil.format(classCountMap.get(defectItem.getCode()), 0));
+                rowTotal = BigDecimalUtil.add(rowTotal, classCountMap.get(defectItem.getCode()));
             }
             strVO.setValue(value);
             module.add(strVO);
@@ -391,21 +397,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param categoryDefectMap 缺陷map
      * @return
      */
-    private List<BaseReportHeaderVO> moduleHead(Map<Integer, Set<Integer>> categoryDefectMap) {
+    private List<BaseReportHeaderVO> moduleHead(Map<Integer, List<QtDefectiveItem>> categoryDefectMap) {
         //查询缺陷和缺陷类别名称
-        Set<Integer> defectIdSet = Sets.newHashSet();
-        categoryDefectMap.values().forEach(ele -> defectIdSet.addAll(ele));
-        Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryDefectMap.keySet());
-
         //构造module
         List<BaseReportHeaderVO> resModule = Lists.newArrayList();
-        for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
+        for (Map.Entry<Integer, List<QtDefectiveItem>> categoryDefectEntry : categoryDefectMap.entrySet()) {
             List<String> value = Lists.newArrayList();
             BaseReportHeaderVO vo = new BaseReportHeaderVO();
             vo.setLabel(categoryIdNameMap.get(categoryDefectEntry.getKey()));
-            for (Integer defectId : categoryDefectEntry.getValue()) {
-                value.add(defectIdNameMap.get(defectId));
+            for (QtDefectiveItem defectItem : categoryDefectEntry.getValue()) {
+                value.add(defectItem.getName());
             }
             vo.setValue(value);
             resModule.add(vo);

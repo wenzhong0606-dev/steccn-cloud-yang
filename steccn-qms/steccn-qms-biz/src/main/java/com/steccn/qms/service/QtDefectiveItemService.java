@@ -100,6 +100,13 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
     Map<Integer, QtDefectiveItem> listById(Set<Integer> defectIdSet);
 
     /**
+     * 根据缺陷项，获取id对象
+     * @param defectCodeSet 缺陷项id集合
+     * @return map
+     */
+    Map<String, QtDefectiveItem> listByCodeSort(Set<String> defectCodeSet);
+
+    /**
      * 根据缺陷项id，查询该缺陷项id的 第一个快照id和类别id
      * @param defectiveCodeSet 缺陷code集合
      * @return map
