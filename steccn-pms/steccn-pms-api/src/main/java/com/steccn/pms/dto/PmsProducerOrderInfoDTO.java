@@ -33,4 +33,10 @@ public class PmsProducerOrderInfoDTO {
      */
     @ApiModelProperty("物料名称")
     private String  materialName;
+
+    /**
+     * 物料编码
+     */
+    @ApiModelProperty("物料编码")
+    private String materialCode;
 }

@@ -43,6 +43,11 @@ public class QtCustomerComplainDetail implements Serializable {
     private String batchNo;
 
     /**
+     * 生产订单号
+     */
+    private String produceOrderCode;
+
+    /**
      * 物料主键
      */
     private Long materialId;

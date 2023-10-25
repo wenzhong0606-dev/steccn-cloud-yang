@@ -26,6 +26,9 @@ public class WmsCustomerBarcodeVO {
     //物料名称
     private String  materialName;
 
+    //物料编码
+    private String materialCode;
+
 
 
 
