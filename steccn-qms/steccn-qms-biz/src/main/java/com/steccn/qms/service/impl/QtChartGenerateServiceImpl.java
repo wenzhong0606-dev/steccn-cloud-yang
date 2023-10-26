@@ -795,7 +795,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //平均单片掰边重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片掰边重量”（需提前配置好“单片掰边重量”检验项）取平均值，单位为kg
                             BigDecimal avgBaiItem = new BigDecimal(0);
                             if (totalBaiItem.intValue() != 0) {
-                                avgBaiItem = BigDecimalUtil.divide(totalBaiItem, totalBaiItemCount,4);
+                                avgBaiItem = BigDecimalUtil.divide(totalBaiItem, totalBaiItemCount,BigDecimalUtil.SCALE_8);
                             }
                             //平均单片重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片重量”（需提前配置好“单片重量”检验项）取平均值，单位为kg
                             BigDecimal avgDanItem = new BigDecimal(0);
@@ -822,12 +822,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //拉引时速/玻璃片长度
                             BigDecimal divideLaGlass = new BigDecimal(0);
                             if (glassLength.compareTo(BigDecimal.ZERO) > 0) {
-                                divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength,4);
+                                divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength,BigDecimalUtil.SCALE_8);
                             }
                             //掰边损耗重量
                             //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * (12-停机时长) / 1000000
                             //平均单片掰边重量 * （拉引时速 / 玻璃片长度)
-                            BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
+                            BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass,BigDecimalUtil.SCALE_8);
                             if (flag) {
                                 BigDecimal minusTime = BigDecimalUtil.subtract(new BigDecimal(12),allStopTime,4);
                                 BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, minusTime);
