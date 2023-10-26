@@ -449,7 +449,8 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         if (Objects.nonNull(one)) {
             List<QtDefectiveItem> dbList = list(new LambdaQueryWrapper<QtDefectiveItem>()
                     .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
-                    .eq(QtDefectiveItem::getCategoryId, one.getId()));
+                    .eq(QtDefectiveItem::getCategoryId, one.getId())
+                    .orderByAsc(QtDefectiveItem::getCreateTime));
             if (CollUtil.isNotEmpty(dbList)) {
                 dbList.forEach(ele -> {
                     QtDefectiveItemVO res = new QtDefectiveItemVO();
