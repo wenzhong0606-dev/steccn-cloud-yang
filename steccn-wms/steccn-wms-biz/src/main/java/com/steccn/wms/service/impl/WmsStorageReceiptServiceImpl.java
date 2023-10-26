@@ -254,7 +254,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         }
 
                     } else if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
-                        //  namespace: yq22
+                        //  namespace: yq2
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
                     }

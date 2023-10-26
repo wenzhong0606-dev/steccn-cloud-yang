@@ -44,12 +44,12 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.feign.RemoteItemFeignApi;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
+import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -1147,7 +1147,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public List<RepaireBatchListVO> repaireBatchList(RepaireBatchListDTO dto) {
+    public RepaireBatchVO repaireBatchList(RepaireBatchListDTO dto) {
+        RepaireBatchVO resVO = new RepaireBatchVO();
         //根据时间区间和产线筛选出生产批次信息
         //根据生产批次获取缺陷数据和领用数据
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
@@ -1185,6 +1186,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
         //定义返回数据
         List<RepaireBatchListVO> resList = Lists.newArrayList();
+        resVO.setDataList(resList);
 
         //获取班组
         TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(dto.getStart(), dto.getEnd().plusDays(1));
@@ -1219,8 +1221,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<QtCheckTaskDetailReportVO> checkTaskList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.defectFlat(qtChartParamDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
 
         //获取原片不良list
-        List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        String defectCategoryName = "原片不良";
+        List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory(defectCategoryName), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
         Assert.notEmpty(defectItemList, "缺陷类别不存在");
+
+        //构建返回表头
+        List<String> defectNameHeaderList = defectItemList.stream().map(QtDefectiveItemVO::getName).collect(Collectors.toList());
+        BaseReportHeaderVO defectHeader = new BaseReportHeaderVO(defectCategoryName, defectNameHeaderList);
+        resVO.setHeaderList(Lists.newArrayList(defectHeader));
 
         for (String spec : specList) {
             for (LocalDate classDate : timeList) {
@@ -1267,7 +1275,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             //产线为所在行产线
                             //生产批次为所在行生产批次
                             //缺陷记录时段在所在行班次日期&班次内
-                            List<Integer> valueDataList = Lists.newArrayList();
+                            List<String> valueDataList = Lists.newArrayList();
                             for (QtDefectiveItemVO defectItem : defectItemList) {
                                 List<Integer> valueList = checkTaskList.stream().filter(ele ->
                                         ele.getDefectCode().equals(defectItem.getCode()) &&
@@ -1277,17 +1285,16 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                         LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
                                 ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
                                 Integer sumDefect = IntegerUtil.sum(valueList);
-                                valueDataList.add(sumDefect);
+                                valueDataList.add(String.valueOf(sumDefect));
                             }
-                            resVo.setValueList(valueDataList);
+                            resVo.setModule(Lists.newArrayList(new FurtherValueStrVO(valueDataList)));
                             resList.add(resVo);
                         }
                     }
                 }
             }
         }
-
-        return resList;
+        return resVO;
     }
 
     /**

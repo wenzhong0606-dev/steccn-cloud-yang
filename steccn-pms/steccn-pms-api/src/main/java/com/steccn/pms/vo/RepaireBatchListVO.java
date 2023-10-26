@@ -105,7 +105,7 @@ public class RepaireBatchListVO implements Serializable {
     /**
      * 缺陷不良- 数值列
      */
-    private List<Integer> valueList;
+    private List<FurtherValueStrVO> module;
 
     /**
      * 不良总数-合计
