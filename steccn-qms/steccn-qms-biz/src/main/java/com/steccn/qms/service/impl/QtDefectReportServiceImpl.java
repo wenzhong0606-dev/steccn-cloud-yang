@@ -384,7 +384,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
         List<QtCheckItemTransmitDataVO> rowList = Lists.newArrayList();
-        setTransmitHeader(resVo);
+        setTransmitHeader(resVo, granularityEntity.getCode());
         resVo.setDataList(rowList);
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
@@ -1552,12 +1552,14 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      *
      * @param resVo 返回对象
      */
-    private void setTransmitHeader(QtCheckItemTransmitVO resVo) {
+    private void setTransmitHeader(QtCheckItemTransmitVO resVo,Integer type) {
         List<QtSpcHeadTitleVO> headerLeft = Lists.newArrayList();
         headerLeft.add(new QtSpcHeadTitleVO("产线", "productLineName"));
         headerLeft.add(new QtSpcHeadTitleVO("日期", "classDateStr"));
-        headerLeft.add(new QtSpcHeadTitleVO("班次", "className"));
-        headerLeft.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        if(type == 0){
+            headerLeft.add(new QtSpcHeadTitleVO("班次", "className"));
+            headerLeft.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        }
         headerLeft.add(new QtSpcHeadTitleVO("花纹深度", "figureDepth"));
         headerLeft.add(new QtSpcHeadTitleVO("厚度", "thickness"));
         List<BaseReportHeaderVO> headerRight = Lists.newArrayList();
