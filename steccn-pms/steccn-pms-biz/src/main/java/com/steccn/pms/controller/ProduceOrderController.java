@@ -203,7 +203,7 @@ public class ProduceOrderController {
 
     @ApiOperation("返洗批次")
     @PostMapping("/repaire/batch")
-    public R<List<RepaireBatchListVO>> repaireBatchList(@RequestBody RepaireBatchListDTO dto) {
+    public R<RepaireBatchVO> repaireBatchList(@RequestBody RepaireBatchListDTO dto) {
         return R.success(pmsProduceOrderService.repaireBatchList(dto));
     }
 

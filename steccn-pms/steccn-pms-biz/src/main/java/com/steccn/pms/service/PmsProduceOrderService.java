@@ -264,5 +264,5 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @param dto 请求类
      * @return
      */
-    List<RepaireBatchListVO> repaireBatchList(RepaireBatchListDTO dto);
+    RepaireBatchVO repaireBatchList(RepaireBatchListDTO dto);
 }
