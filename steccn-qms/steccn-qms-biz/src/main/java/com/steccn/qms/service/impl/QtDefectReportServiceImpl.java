@@ -1085,7 +1085,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         //          产线为所在行产线
                         //          生产订单为所在行生产订单
                         //          抽检时间在所在行班次日期&班次内
-                        // 2）集合T内所有任务中“样品重量”取平均值
+                        // 2）集合T内所有任务中“样品重量”取平均值/2
                         if(CollUtil.isNotEmpty(taskDetails)){
                             List<QtCheckTask> taskListTmp = taskList.stream().filter(v -> v.getProductLineId().equals(line)
                                             && v.getProductOrder().equals(tmp.getProduceOrderCode())
@@ -1099,7 +1099,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                                     List<BigDecimal> counts = taskDetailTmp.stream()
                                             .map(checkResult -> new BigDecimal(checkResult.getCheckResult())).collect(Collectors.toList());
                                     BigDecimal sum = BigDecimalUtil.sum(counts);
-                                    row.setPerWeight(BigDecimalUtil.divide(sum,new BigDecimal(counts.size()),1));
+                                    row.setPerWeight(BigDecimalUtil.divide(BigDecimalUtil.divide(sum,new BigDecimal(counts.size()),2),new BigDecimal(2),2));
                                 }
                             }
                         }

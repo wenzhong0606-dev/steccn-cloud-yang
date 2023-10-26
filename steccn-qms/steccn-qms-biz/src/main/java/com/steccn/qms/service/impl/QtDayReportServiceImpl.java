@@ -1494,7 +1494,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 BigDecimal pullAmount = BigDecimal.ZERO;
                                 if (Objects.nonNull(amountDay)) {
                                     if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
-                                        lineDataTmp.add(amountDay.getClassGroupName());
+                                        //特殊处理,与拉引量一致
+                                        if(Objects.nonNull(pullAmountDay)&&Objects.nonNull(pullAmountDay.getClassGroupName())){
+                                            lineDataTmp.add(pullAmountDay.getClassGroupName());
+                                        }else{
+                                            lineDataTmp.add(amountDay.getClassGroupName());
+                                        }
                                     }
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
                                     //找到当天的拉引量,同一天取相同的拉引量
@@ -1588,14 +1593,21 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             laAmountAllLine.setProductLineName("拉引量总计");
             laAmountAllLine.setType(QtManagerConstant.NUM_3);
             List<FurtherValueStrVO> laAmountModule = Lists.newArrayList();
-            laAmountAll.forEach(tmp->{
-                //如果是班次报表则需要空一行
-                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
-                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("",tmp.toString(),"")));
+            for(int i = 0; i < laAmountAll.size(); i++){
+                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=laAmountAll.size()-1){
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("",laAmountAll.get(i).toString(),"")));
                 }else {
-                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(tmp.toString(),"")));
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(laAmountAll.get(i).toString(),"")));
                 }
-            });
+            }
+//            laAmountAll.forEach(tmp->{
+//                //如果是班次报表则需要空一行
+//                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+//                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("",tmp.toString(),"")));
+//                }else {
+//                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(tmp.toString(),"")));
+//                }
+//            });
             laAmountAllLine.setModule(laAmountModule);
             tableData.add(laAmountAllLine);
             //算其他损耗
@@ -1722,9 +1734,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             }
             //复原tableData
             if (valueSize1 != valueSize2) {
-                tableData.forEach(tableTmp -> {
+                String classNameTmp = "";
+                for(QtDayReportLossDataVO tableTmp:tableData){
                     int moduleSize = tableTmp.getModule().size();
-                    String classNameTmp = "";
                     //不包括最有一个
                     for (int i = 0; i < moduleSize - 1; i++) {
                         if(classNameList.size()!=0){
@@ -1732,13 +1744,16 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         }
                         tableTmp.getModule().get(i).getValue().add(0, classNameTmp);
                     }
+                }
+//                tableData.forEach(tableTmp -> {
+
 //                    tableTmp.getModule().forEach(moduleTmp->{
 //                        if(moduleTmp.getValue().size()==valueSize1){
 //
 //                            classNameList.add(moduleTmp.getValue().remove(0));
 //                        }
 //                    });
-                });
+//                });
             }
         }
         return bigDecimalList;
