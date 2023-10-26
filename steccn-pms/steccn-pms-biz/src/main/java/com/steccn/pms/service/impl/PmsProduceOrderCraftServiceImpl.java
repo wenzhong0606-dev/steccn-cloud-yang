@@ -176,13 +176,13 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
                                     crafts.add(craft.getId());
                                     dictIds.add(craft.getTypeId());
                                     dictIds.add(craft.getUnitId());
-                                    craftSet.add(craft.getId());
+//                                    craftSet.add(craft.getId());
                                 }
 
                         )
                 );
                 //获取工位数据
-                Map<Long, List<PmsWorkOrderCraftStationVO>> stations = pmsWorkOrderCraftStationService.stations(craftSet);
+                Map<Long, List<PmsWorkOrderCraftStationVO>> stations = pmsWorkOrderCraftStationService.stations(crafts);
                 //获取字典数据
                 Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 List<PmsWorkOrderCraftStationVO> defaultStation = Lists.newArrayList();
