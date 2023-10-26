@@ -18,9 +18,7 @@ import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.IntegerUtil;
-import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.*;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -50,7 +48,6 @@ import com.steccn.qms.constant.DefectDayConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
-import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.qms.util.UnitConvertUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -381,6 +378,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
     @Override
     public QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto) {
+        //获取粒度
+        QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEntity, "粒度不存在");
+
         QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
         List<QtCheckItemTransmitDataVO> rowList = Lists.newArrayList();
         setTransmitHeader(resVo);
@@ -391,7 +392,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         List<QtCheckItemMaterialAvgDTO> dbList = qtCheckTaskMapper.transmittance(dto.getProductLineList(), start, end, checkItemCodeList);
         SteccnTableAssertUtil.notEmpty(dbList, "透光率数据集合为空");
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), start, end);
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
         //获取班组的集合
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
         Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -409,10 +410,20 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
                 OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + row.getClassName(), new OaGroupCountDTO());
                 row.setClassGroupName(oaGroupCountDTO.getGroupName());
-                List<QtCheckItemMaterialAvgDTO> filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassId().equals(classId)).collect(Collectors.toList());
+                //如果是班次粒度
+                List<QtCheckItemMaterialAvgDTO> filterList;
+                if (QtManagerConstant.LossReportType.CLASS.equals(granularityEntity)) {
+                    filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate()) && ele.getClassId().equals(classId)).collect(Collectors.toList());
+                } else {
+                    filterList = dbList.stream().filter(ele -> line.equals(ele.getProductLineId()) && classDate.isEqual(ele.getClassDate())).collect(Collectors.toList());
+                }
                 Map<String, BigDecimal> dataMap = Maps.newHashMap();
                 if (CollUtil.isNotEmpty(filterList)) {
-                    filterList.forEach(ele -> dataMap.put(ele.getCode(), ele.getValue()));
+                    Map<String, List<QtCheckItemMaterialAvgDTO>> codeDataMap = filterList.stream().collect(Collectors.groupingBy(QtCheckItemMaterialAvgDTO::getCode));
+                    codeDataMap.forEach((k, v) -> {
+                        List<BigDecimal> vValueList = v.stream().map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
+                        dataMap.put(k, BigDecimalUtil.divide(BigDecimalUtil.sum(vValueList), BigDecimal.valueOf(vValueList.size())));
+                    });
                 }
                 row.setFigureDepth(BigDecimalUtil.format(dataMap.get(checkItemCodeList.get(0))));
                 BigDecimal thick = dataMap.get(checkItemCodeList.get(1));
