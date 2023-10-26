@@ -1329,15 +1329,19 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         headList.add(new BaseReportHeaderVO("不良数", Arrays.asList("片", "㎡")));
         headList.add(new BaseReportHeaderVO("漏检", Arrays.asList("片", "㎡", "漏检率%")));
         List<String> categoryNameList = Arrays.asList("原片不良", "磨边不良", "钻孔不良", "丝印不良", "镀膜不良", "钢化不良");
-        List<QtItemCategory> categoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>().in(QtItemCategory::getName, categoryNameList).eq(QtItemCategory::getShowFlag, MpConstant.YES));
+        List<QtItemCategory> categoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>()
+                .in(QtItemCategory::getName, categoryNameList)
+                .eq(QtItemCategory::getShowFlag, MpConstant.YES)
+                .orderByAsc(QtItemCategory::getCreateTime));
         Assert.notEmpty(categoryList, "缺陷类别不可为空");
         Set<Integer> categoryIdSet = categoryList.stream().map(QtItemCategory::getId).collect(Collectors.toSet());
         //根据类别查询缺陷项
         List<QtDefectiveItem> defectItemList = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>()
                 .in(QtDefectiveItem::getCategoryId, categoryIdSet)
-                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES));
+                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
+                .orderByAsc(QtDefectiveItem::getCreateTime));
         Assert.notEmpty(defectItemList, "缺陷项不可为空");
-        Map<String, QtItemCategory> categoryMap = Maps.newHashMap();
+        Map<String, QtItemCategory> categoryMap = Maps.newLinkedHashMap();
         categoryList.forEach(ele -> categoryMap.put(ele.getName(), ele));
         for (String cn : categoryNameList) {
             QtItemCategory category = categoryMap.get(cn);
@@ -1346,7 +1350,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 if (CollUtil.isNotEmpty(defectList)) {
                     List<String> nameList = defectList.stream().map(QtDefectiveItem::getName).collect(Collectors.toList());
                     List<String> codeList = defectList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toList());
-                    codeList.add("小计");
+                    nameList.add("小计");
                     codeMap.put(cn, codeList);
                     headList.add(new BaseReportHeaderVO(cn, nameList));
                 }
