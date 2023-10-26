@@ -18,9 +18,7 @@ import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.IntegerUtil;
-import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.*;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -50,7 +48,6 @@ import com.steccn.qms.constant.DefectDayConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
-import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.qms.util.UnitConvertUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -422,7 +419,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 }
                 Map<String, BigDecimal> dataMap = Maps.newHashMap();
                 if (CollUtil.isNotEmpty(filterList)) {
-                    filterList.forEach(ele -> dataMap.put(ele.getCode(), ele.getValue()));
+                    Map<String, List<QtCheckItemMaterialAvgDTO>> codeDataMap = filterList.stream().collect(Collectors.groupingBy(QtCheckItemMaterialAvgDTO::getCode));
+                    codeDataMap.forEach((k, v) -> {
+                        List<BigDecimal> vValueList = v.stream().map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList());
+                        dataMap.put(k, BigDecimalUtil.divide(BigDecimalUtil.sum(vValueList), BigDecimal.valueOf(vValueList.size())));
+                    });
                 }
                 row.setFigureDepth(BigDecimalUtil.format(dataMap.get(checkItemCodeList.get(0))));
                 BigDecimal thick = dataMap.get(checkItemCodeList.get(1));
