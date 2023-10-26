@@ -534,11 +534,11 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         QtItemCategory category = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getName, "镀膜不良"));
         Assert.notNull(category, "镀膜不良类别不存在");
         List<QtDefectiveItem> itemList = qtDefectiveItemService.list(new QueryWrapper<QtDefectiveItem>()
-                .select("code, any_value(name) as name")
+                .select("code, name")
                 .lambda()
                 .eq(QtDefectiveItem::getCategoryId, category.getId())
                 .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
-                .groupBy(QtDefectiveItem::getCode));
+                .orderByAsc(QtDefectiveItem::getCreateTime));
         Assert.notEmpty(itemList, "镀膜不良类别下暂无缺陷项");
         CoatingFilmVO resVo = new CoatingFilmVO();
         List<String> headerList = Lists.newArrayList();
