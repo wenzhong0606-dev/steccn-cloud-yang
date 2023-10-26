@@ -1231,7 +1231,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         });
         //拿到所有的缺陷项code
         LambdaQueryWrapper defectCondition = new LambdaQueryWrapper<QtDefectiveItem>()
-                .select(QtDefectiveItem::getName, QtDefectiveItem::getCode)
+                .select(QtDefectiveItem::getName, QtDefectiveItem::getCode,QtDefectiveItem::getCreateTime)
                 .in(QtDefectiveItem::getName, defectAndLuo)
                 .eq(QtDefectiveItem::getShowFlag, QtManagerConstant.NUM_1)
                 .orderByAsc(QtDefectiveItem::getCode);
@@ -1315,9 +1315,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 List<QtChartSubDetailDTO> dataTmp = allData.stream().filter(v -> v.getProductLineName().equals(productLine.getOfficeName()) && v.getWorkOrder().equals(className)).collect(Collectors.toList());
                 List<String> reasonTmp = dataTmp.stream().map(QtChartSubDetailDTO::getReason).collect(Collectors.toList());
                 //缺陷项排序数据
-                List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v -> reasonTmp.contains(v.getName())).sorted(Comparator.comparing(QtDefectiveItem::getCreateTime)).collect(Collectors.toList());
                 //落板排序数据
-                List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).sorted(Comparator.comparing(SysDictVO::getSort)).collect(Collectors.toList());
                 //合并原因
                 List<String> reasonStr = Lists.newArrayList();
                 if (CollUtil.isNotEmpty(defectiveItemsTmp)) {
@@ -1327,7 +1327,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 }
                 if (CollUtil.isNotEmpty(destroyReasonTmp)) {
                     destroyReasonTmp.forEach(v -> {
-                        reasonStr.add(v.getName());
+                        if(!reasonStr.contains(v.getName())){
+                            reasonStr.add(v.getName());
+                        }
                     });
                 }
                 //一天的损耗统计
@@ -1614,7 +1616,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         percent = BigDecimal.ZERO;
                     }
                     //如果是班次报表则需要空一行
-                    if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                    if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=defectAmountAll.size()-1){
                         defectModule.add(new FurtherValueStrVO(Lists.newArrayList("",decimal.toString(),percent.toString()+"%")));
                     }else {
                         defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
