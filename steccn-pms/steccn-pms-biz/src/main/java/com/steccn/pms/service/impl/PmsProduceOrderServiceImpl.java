@@ -2,10 +2,8 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -19,11 +17,16 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.oa.dto.OaGroupCountDTO;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -38,17 +41,21 @@ import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
+import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.qms.feign.RemoteItemFeignApi;
+import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.QtDefectiveItemVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +93,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+    private final OaInfoService oaInfoService;
+    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
+    private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    private final RemoteItemFeignApi remoteItemFeignApi;
+
     @Autowired
     @Lazy
     private PmsReportWorkService pmsReportWorkService;
@@ -1133,6 +1145,183 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getProductionLineId, productLineId));
         return BeanUtil.copyToList(list,PmsProduceOrderVO.class);
     }
+
+    @Override
+    public List<RepaireBatchListVO> repaireBatchList(RepaireBatchListDTO dto) {
+        //根据时间区间和产线筛选出生产批次信息
+        //根据生产批次获取缺陷数据和领用数据
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
+        //从数据字典中获取返修的标识
+        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //时间区间考虑
+        List<RepaireBatchListVO> sourceList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
+        Assert.notEmpty(sourceList, "暂无生产批次");
+        //根据物料获取规格和产线名称
+        Set<Integer> lineIdSet = Sets.newHashSet();
+        Set<Long> materialIdSet = Sets.newHashSet();
+        Set<String> batchSet = Sets.newHashSet();
+        sourceList.forEach(ele -> {
+            materialIdSet.add(ele.getMaterialId());
+            lineIdSet.add(ele.getProductLine());
+            batchSet.add(ele.getBatchNo());
+        });
+
+        Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> lineMap = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<String> specSet = Sets.newHashSet();
+        sourceList.forEach(ele -> {
+            ele.setProductLineName(lineMap.getOrDefault(ele.getProductLine(), new SysOfficeVO()).getOfficeName());
+            ele.setSpecifications(spareVOMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getSpecifications());
+            specSet.add(ele.getSpecifications());
+
+        });
+        //遍历所有数据，以规格分组 + 日期[选中日期] +产线 + 班次 + 生产订单号分组
+        List<String> specList = new ArrayList<>(specSet);
+        Collections.sort(specList);
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
+        //获取产线集合
+        List<SysOfficeVO> lineList = lineMap.values().stream().sorted(Comparator.comparingInt(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+
+        //定义返回数据
+        List<RepaireBatchListVO> resList = Lists.newArrayList();
+
+        //获取班组
+        TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(dto.getStart(), dto.getEnd().plusDays(1));
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
+        //根据生产批次获取报工记录
+        Map<String, List<PmsReportWork>> batchLinkReportWorkMap = pmsReportWorkService.batchLinkReportWorkMap(batchSet);
+
+        //获取磨边工位
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        Set<Integer> edgStation = getEdgStation(lineIdList);
+
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<SysDictVO> classList = Lists.newArrayList(morningDict,nightDict);
+
+        //获取物料转换单位数据字典数据及单位转换逻辑
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO meterSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(meterSysDict, "片单位不存在");
+        Assert.notNull(meterSysDict, "平方米单位不存在");
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        QtChartParamDTO qtChartParamDTO = new QtChartParamDTO();
+        //获取在线检缺陷
+        qtChartParamDTO.setDateStart(dto.getStart());
+        qtChartParamDTO.setDateEnd(dto.getEnd().plusDays(1));
+        qtChartParamDTO.setProductLineIdList(lineIdList);
+        qtChartParamDTO.setProductBatchList(Lists.newArrayList(batchLinkReportWorkMap.keySet()));
+        List<QtCheckTaskDetailReportVO> checkTaskList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.defectFlat(qtChartParamDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+
+        //获取原片不良list
+        List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        Assert.notEmpty(defectItemList, "缺陷类别不存在");
+
+        for (String spec : specList) {
+            for (LocalDate classDate : timeList) {
+                for (SysOfficeVO line : lineList) {
+                    for (SysDictVO classIdType : classList) {
+                        int classId = Integer.parseInt(classIdType.getCode());
+                        //根据规格，班次日期过滤出数据
+                        LocalDateTime[] split = split(classId, classDate);
+                        OaGroupCountDTO oaGroupCountDTO = classGroupMap.getOrDefault(classDate + ":" + classIdType.getName(), defaultOaGroupCountDTO);
+                        List<RepaireBatchListVO> dataList = sourceList.stream()
+                                .filter(v -> v.getSpecifications().equals(spec) &&
+                                        v.getProductLineName().equals(line.getOfficeName()) &&
+                                        (LocalDateUtil.isRange(split[0], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true) ||
+                                                LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
+                        for (RepaireBatchListVO data : dataList) {
+                            RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
+                            resVo.setClassDate(classDate);
+                            resVo.setClassId(classId);
+                            resVo.setClassName(classIdType.getName());
+                            resVo.setClassGroupId(oaGroupCountDTO.getGroupId());
+                            resVo.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            //根据批次获取报工数据
+                            List<PmsReportWork> reportWorkList = batchLinkReportWorkMap.getOrDefault(data.getBatchNo(), Lists.newArrayList());
+                            //报工记录的生产批次为所在行生产批次
+                            //报工记录的产线为所在行产线
+                            //报工记录的加工时间在所在行班次日期&班次之内
+                            //报工记录的工序为“磨边工序”
+                            List<PmsReportWork> consumeList = reportWorkList.stream().filter(ele -> ele.getProductLineId().equals(line.getId()) &&
+                                    ele.getClassesId().equals(classIdType.getId()) &&
+                                    LocalDateUtil.isRange(ele.getStartTime(), split[0], split[1], true, true) &&
+                                    edgStation.contains(ele.getStationId())
+                            ).collect(Collectors.toList());
+                            //根据物料耗用
+                            List<BigDecimal> collect = consumeList.stream().map(PmsReportWork::getProcessQuantity).collect(Collectors.toList());
+                            BigDecimal sum = BigDecimalUtil.sum(collect);
+                            sum = BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
+                            //片转平方
+                            BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(data.getMaterialId()), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                            resVo.setUseCountPiece(sum);
+                            resVo.setUseCountSquare(square);
+                            //原片不良的
+                            //查询满足下列条件的在线检任务，记为集合T：
+                            //状态为已检验
+                            //产线为所在行产线
+                            //生产批次为所在行生产批次
+                            //缺陷记录时段在所在行班次日期&班次内
+                            List<Integer> valueDataList = Lists.newArrayList();
+                            for (QtDefectiveItemVO defectItem : defectItemList) {
+                                List<Integer> valueList = checkTaskList.stream().filter(ele ->
+                                        ele.getDefectCode().equals(defectItem.getCode()) &&
+                                        ele.getProductLineId().equals(line.getId()) &&
+                                        ele.getProductBatch().equals(resVo.getBatchNo()) &&
+                                        ele.getClassId().equals(resVo.getClassId()) &&
+                                        LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
+                                ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
+                                Integer sumDefect = IntegerUtil.sum(valueList);
+                                valueDataList.add(sumDefect);
+                            }
+                            resVo.setValueList(valueDataList);
+                            resList.add(resVo);
+                        }
+                    }
+                }
+            }
+        }
+
+        return resList;
+    }
+
+    /**
+     * 获取这些产线磨边工位
+     *
+     * @param lineList 产线集合
+     * @return
+     */
+    private Set<Integer> getEdgStation(List<Integer> lineList) {
+        //获取磨边工位
+        SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+        parentDTO.setParentIds(Sets.newHashSet(lineList));
+        parentDTO.setOfficeType(PmManagerConstant.NUM_13);
+        //获取产线下的工位
+        List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //包含磨边工位的
+        return officeList.stream().filter(office -> office.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+    }
+
+
+
+    /**
+     * 根据班次切分班次日期
+     * @param type 班次 0 ， 1 早班 晚班
+     * @param date 班次日期
+     * @return
+     */
+    private LocalDateTime[] split(Integer type, LocalDate date) {
+        //type只能是0或1
+        LocalDateTime night = LocalDateUtil.getNight(date);
+        LocalDateTime x = night.plusHours(type == 0 ? -12 : 12);
+        return type == 1 ? new LocalDateTime[]{night, x} : new LocalDateTime[]{x, night};
+    }
+
 
 
 //    /**

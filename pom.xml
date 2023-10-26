@@ -30,6 +30,7 @@
         <module>steccn-handle-data</module>
         <module>steccn-hikvision</module>
         <module>steccn-mes</module>
+        <module>steccn-dp</module>
     </modules>
 
     <properties>

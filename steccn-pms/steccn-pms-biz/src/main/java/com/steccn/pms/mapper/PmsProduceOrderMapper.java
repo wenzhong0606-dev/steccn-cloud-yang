@@ -91,6 +91,19 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      * @return
      */
     List<PanoramicTracingVO>  tracing(@Param("dto") PanoramicTracingDTO dto);
+
+    /**
+     * 获取返洗不良的生产批次
+     *
+     * @param productLineList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return
+     */
+    List<RepaireBatchListVO> repaireBatchList(@Param("lineList") List<Integer> productLineList,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end,
+                                              @Param("typeId") Long typeId);
 }
 
 

@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
@@ -48,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1110,13 +1112,20 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 BigDecimal luoDateRange = BigDecimal.ZERO;
                                 Duration dr = Duration.between(LocalDateTime.now().plusHours(3), LocalDateTime.now());
                                 for (QtCheckTaskDestoryInfo info : qtCheckTaskDestoryInfos) {
+                                    //因为页面只显示到分钟，所以避免出现分钟时间不足的情况
+                                    Long timeFlag = 0L;
                                     if (info.getDestoryEndTime() == null && info.getDestoryStartTime() == null) {
                                         log.info("落版时长为空,默认三个小时");
                                     } else {
                                         dr = Duration.between(info.getDestoryStartTime(), info.getDestoryEndTime());
+                                        if(info.getDestoryEndTime().getSecond() < info.getDestoryStartTime().getSecond()){
+                                            timeFlag = 1L;
+                                        }
                                     }
+                                    long abs = Math.abs(dr.toMinutes());
+                                    abs = abs + timeFlag;
                                     //强制变成正数
-                                    luoDateRange = BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4);
+                                    luoDateRange = BigDecimalUtil.divide(new BigDecimal(abs), new BigDecimal(60),4);
                                     //如果选了南工位和北工位则时长乘以2
                                     if(info.getDestoryWorkStation().equals(QtManagerConstant.NUM_3)){
                                         luoDateRange = BigDecimalUtil.multiply(luoDateRange,new BigDecimal(2));
@@ -1186,21 +1195,50 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                         //落板
                         for (Map.Entry<String, BigDecimal> luoEntry : luoLossWeightMap.entrySet()) {
-                            QtChartSubDetailDTO luoResult = new QtChartSubDetailDTO();
-                            luoResult.setPullAmount(laQuantity);
-                            luoResult.setLossWeight(luoEntry.getValue());
-                            luoResult.setReason(luoEntry.getKey());
-                            luoResult.setWorkOrderTime(entry.getKey());
+                            String workOrderTmp = "";
                             if (entry2.getKey().equals(0)) {
-                                luoResult.setWorkOrder(QtManagerConstant.QtClassesEnum.DAY.getName());
+                                workOrderTmp = QtManagerConstant.QtClassesEnum.DAY.getName();
                             } else {
-                                luoResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
+                                workOrderTmp = QtManagerConstant.QtClassesEnum.NIGHT.getName();
                             }
-                            luoResult.setProductLineName(productLineName);
-                            luoResult.setProductLineId(productLineId);
-                            luoResult.setProductWorkShopName(productWorkShopName);
-                            luoResult.setProductWorkShopId(productWorkShopId);
-                            resultList.add(luoResult);
+                            //若落版原因名字(气线泡，开口泡，夹杂结石，辊伤/印)和缺陷重复则累加
+                            List<String> luoNameCheck = Lists.newArrayList("气线泡","开口泡","夹杂结石","辊伤/印");
+                            if(CollUtil.isNotEmpty(resultList)&&luoNameCheck.contains(luoEntry.getKey())){
+                                Integer finalProductWorkShopId = productWorkShopId;
+                                String finalWorkOrderTmp = workOrderTmp;
+                                QtChartSubDetailDTO qtChartSubDetailDTO = resultList.stream().filter(v -> v.getReason().equals(luoEntry.getKey())
+                                        && v.getProductLineId().equals(productLineId)
+                                        && v.getProductWorkShopId().equals(finalProductWorkShopId)
+                                        && v.getWorkOrderTime().equals(entry.getKey())
+                                        && v.getWorkOrder().equals(finalWorkOrderTmp)).findFirst().orElse(null);
+                                if(Objects.nonNull(qtChartSubDetailDTO)){
+                                    qtChartSubDetailDTO.setLossWeight(BigDecimalUtil.add(qtChartSubDetailDTO.getLossWeight(),luoEntry.getValue()));
+                                }else {
+                                    QtChartSubDetailDTO luoResult = new QtChartSubDetailDTO();
+                                    luoResult.setPullAmount(laQuantity);
+                                    luoResult.setLossWeight(luoEntry.getValue());
+                                    luoResult.setReason(luoEntry.getKey());
+                                    luoResult.setWorkOrderTime(entry.getKey());
+                                    luoResult.setWorkOrder(workOrderTmp);
+                                    luoResult.setProductLineName(productLineName);
+                                    luoResult.setProductLineId(productLineId);
+                                    luoResult.setProductWorkShopName(productWorkShopName);
+                                    luoResult.setProductWorkShopId(productWorkShopId);
+                                    resultList.add(luoResult);
+                                }
+                            }else {
+                                QtChartSubDetailDTO luoResult = new QtChartSubDetailDTO();
+                                luoResult.setPullAmount(laQuantity);
+                                luoResult.setLossWeight(luoEntry.getValue());
+                                luoResult.setReason(luoEntry.getKey());
+                                luoResult.setWorkOrderTime(entry.getKey());
+                                luoResult.setWorkOrder(workOrderTmp);
+                                luoResult.setProductLineName(productLineName);
+                                luoResult.setProductLineId(productLineId);
+                                luoResult.setProductWorkShopName(productWorkShopName);
+                                luoResult.setProductWorkShopId(productWorkShopId);
+                                resultList.add(luoResult);
+                            }
                         }
                     }
                 }

@@ -7,8 +7,10 @@ import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
+import com.steccn.qms.dto.QtCustomerComplaintReportDTO;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.vo.QtCustomerComplainVO;
+import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -16,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -76,5 +81,10 @@ public class QtCustomerComplaintController {
         return R.success(qtCustomerComplainService.modelNoFlag(modelNo));
     }
 
+    @ApiOperation("客诉报表")
+    @PostMapping("/report")
+    public R<List<QtCustomerComplaintReportResDTO>> report(@Valid @RequestBody QtCustomerComplaintReportDTO dto) {
+        return R.success(qtCustomerComplainService.report(dto));
+    }
 
 }

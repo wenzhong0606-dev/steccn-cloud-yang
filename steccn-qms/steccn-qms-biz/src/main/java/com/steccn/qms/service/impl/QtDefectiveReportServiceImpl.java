@@ -267,6 +267,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .defectType(dto.getDefectType())
                 .defectId(dto.getDefectId())
                 .productLineIdList(dto.getProductLineIdList())
+                .productBatchList(dto.getProductBatchList())
                 .build();
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.conditionTaskList(condition);
         Map<Long, QtCheckTask> taskMap = Maps.newHashMap();
@@ -359,6 +360,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             vo.setId(ele.getId());
                             vo.setTaskId(ele.getTaskId());
                             vo.setTaskCode(qtCheckTask.getCode());
+                            vo.setProductBatch(qtCheckTask.getProductBatch());
                             vo.setProductWorkshopId(Objects.nonNull(qtCheckTask.getProductWorkshop()) ? qtCheckTask.getProductWorkshop().getId() : null);
                             vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
                             //客户属性
@@ -429,6 +431,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             Assert.notNull(tupleDTO.getField2(), "缺陷快照field2转换异常");
             v.setDefectId(tupleDTO.getField1());
             v.setDefectCategory(tupleDTO.getField2());
+            v.setDefectCode(code);
         });
         return flatDefectiveList;
     }

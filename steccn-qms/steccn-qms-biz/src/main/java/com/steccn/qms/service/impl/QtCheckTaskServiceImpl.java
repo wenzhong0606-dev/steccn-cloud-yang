@@ -2510,6 +2510,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //检验类型
                 .eq(Objects.nonNull(dto.getTaskType()), QtCheckTask::getTaskType, dto.getTaskType())
+                //生产批次
+                .in(CollUtil.isNotEmpty(dto.getProductBatchList()), QtCheckTask::getProductBatch, dto.getProductBatchList())
                 //车间
                 .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线
@@ -3488,6 +3490,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             resList = baseMapper.otherList(checkType, itemIdSet, start, end);
         }
         return Objects.nonNull(resList) ? resList : Lists.newArrayList();
+    }
+
+    @Override
+    public QtCheckTaskListVO checkPatrol(QtCheckTaskListDTO dto) {
+        Assert.notNull(dto.getProductLineId(),"产线不能为空");
+        QtCheckTask one = getOne(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                .eq(dto.getStationId() != null, QtCheckTask::getStationId, dto.getStationId())
+                .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
+                .orderByDesc(QtCheckTask::getFinishedTime).last("LIMIT 1"));
+        QtCheckTaskListVO result = new QtCheckTaskListVO();
+        BeanUtil.copyProperties(one,result);
+        return result;
     }
 
 

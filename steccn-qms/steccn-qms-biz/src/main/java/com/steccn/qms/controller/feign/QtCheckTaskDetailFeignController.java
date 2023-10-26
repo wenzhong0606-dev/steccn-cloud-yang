@@ -7,12 +7,15 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
+import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.dto.QtPullAmountDTO;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.service.QtCheckTaskDetailService;
+import com.steccn.qms.service.QtDefectiveReportService;
 import com.steccn.qms.vo.OutputQualityDetailVO;
 import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
+import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +39,14 @@ public class QtCheckTaskDetailFeignController {
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
 
     private final QtChartGenerateService qtChartGenerateService;
+
+    private final QtDefectiveReportService qtDefectiveReportService;
+
+    @ApiOperation("获取在线检缺陷")
+    @PostMapping("/defect/flat")
+    public R<List<QtCheckTaskDetailReportVO>> defectFlat(@RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.defectiveDataFlat(dto));
+    }
 
     @ApiOperation("根据班次日期查询单片掰边重量、单片重量、拉引速度")
     @PostMapping("/getByClassTime")
