@@ -1230,7 +1230,16 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         BaseReportHeaderVO defectHeader = new BaseReportHeaderVO(defectCategoryName, defectNameHeaderList);
         resVO.setHeaderList(Lists.newArrayList(defectHeader));
 
+        //总计
+        BigDecimal sumUsePiece = BigDecimal.ZERO;
+        BigDecimal sumUseSquare = BigDecimal.ZERO;
+        Map<String, Integer> defectSumMap = Maps.newHashMap();
+
         for (String spec : specList) {
+            //规格合计
+            BigDecimal specSumUsePiece = BigDecimal.ZERO;
+            BigDecimal specSumUseSquare = BigDecimal.ZERO;
+            Map<String, Integer> specDefectSumMap = Maps.newHashMap();
             for (LocalDate classDate : timeList) {
                 for (SysOfficeVO line : lineList) {
                     for (SysDictVO classIdType : classList) {
@@ -1245,6 +1254,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                                 LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
                         for (RepaireBatchListVO data : dataList) {
                             RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
+                            resVo.setType(0);
                             resVo.setClassDate(classDate);
                             resVo.setClassId(classId);
                             resVo.setClassName(classIdType.getName());
@@ -1267,6 +1277,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             sum = BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
                             //片转平方
                             BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(data.getMaterialId()), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                            sumUsePiece = BigDecimalUtil.add(sumUsePiece, sum);
+                            specSumUsePiece = BigDecimalUtil.add(specSumUsePiece, sum);
+                            sumUseSquare = BigDecimalUtil.add(sumUsePiece, square);
+                            specSumUseSquare = BigDecimalUtil.add(specSumUseSquare, square);
                             resVo.setUseCountPiece(sum);
                             resVo.setUseCountSquare(square);
                             //原片不良的
@@ -1276,6 +1290,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             //生产批次为所在行生产批次
                             //缺陷记录时段在所在行班次日期&班次内
                             List<String> valueDataList = Lists.newArrayList();
+                            Integer defectSumRow = null;
                             for (QtDefectiveItemVO defectItem : defectItemList) {
                                 List<Integer> valueList = checkTaskList.stream().filter(ele ->
                                         ele.getDefectCode().equals(defectItem.getCode()) &&
@@ -1285,16 +1300,58 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                         LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
                                 ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
                                 Integer sumDefect = IntegerUtil.sum(valueList);
+                                MapUtil.add(specDefectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
+                                MapUtil.add(defectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
                                 valueDataList.add(String.valueOf(sumDefect));
+                                defectSumRow = IntegerUtil.add(defectSumRow, sumDefect);
                             }
                             resVo.setModule(Lists.newArrayList(new FurtherValueStrVO(valueDataList)));
+                            resVo.setDefectSum(Objects.nonNull(defectSumRow) ? BigDecimal.valueOf(defectSumRow) : null);
+                            resVo.setDefectRate(BigDecimalUtil.percent(resVo.getDefectSum(), resVo.getUseCountPiece()));
                             resList.add(resVo);
                         }
                     }
                 }
             }
+            //插入合计行
+            resList.add(rowCount(1, specSumUsePiece, specSumUseSquare, defectItemList, specDefectSumMap));
         }
+        //插入总计行
+        RepaireBatchListVO totalRow = new RepaireBatchListVO();
+        resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
         return resVO;
+    }
+
+    /**
+     * 获取总计行或者单规格行
+     * @param type
+     * @param usePiece
+     * @param useSquare
+     * @param defectItemList
+     * @param defectSumMap
+     * @return
+     */
+    private RepaireBatchListVO rowCount(Integer type, BigDecimal usePiece, BigDecimal useSquare, List<QtDefectiveItemVO> defectItemList, Map<String, Integer> defectSumMap) {
+        RepaireBatchListVO row = new RepaireBatchListVO();
+        row.setType(type);
+        if (type == 1) {
+            row.setSpecifications("合计（单规格）");
+        } else {
+            row.setSpecifications("总计");
+        }
+        row.setUseCountPiece(usePiece);
+        row.setUseCountSquare(useSquare);
+        List<String> valueDataList = Lists.newArrayList();
+        Integer countSum = null;
+        for (QtDefectiveItemVO defectItem : defectItemList) {
+            Integer count = defectSumMap.get(defectItem.getCode());
+            countSum = IntegerUtil.add(count, countSum);
+            valueDataList.add(Objects.nonNull(count) ? String.valueOf(count) : null);
+        }
+        row.setDefectSum(Objects.nonNull(countSum) ? BigDecimal.valueOf(countSum) : null);
+        row.setDefectRate(BigDecimalUtil.percent(row.getDefectSum(), usePiece));
+        row.setModule(Lists.newArrayList(new FurtherValueStrVO(valueDataList)));
+        return row;
     }
 
     /**

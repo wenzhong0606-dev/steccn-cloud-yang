@@ -18,6 +18,11 @@ public class RepaireBatchListVO implements Serializable {
     private final static long serialVersionUID = 1L;
 
     /**
+     * 0 数据行 1 合计行 2 总计行
+     */
+   private Integer type;
+
+    /**
      * 批次code
      */
     private String batchNo;
