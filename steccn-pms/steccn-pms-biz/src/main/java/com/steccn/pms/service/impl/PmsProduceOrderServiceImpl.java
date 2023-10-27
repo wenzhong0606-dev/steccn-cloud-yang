@@ -1153,7 +1153,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
         //从数据字典中获取返修的标识
-        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //时间区间考虑
         List<RepaireBatchListVO> sourceList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
         Assert.notEmpty(sourceList, "暂无生产批次");
