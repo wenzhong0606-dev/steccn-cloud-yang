@@ -29,6 +29,9 @@ public class BigDecimalUtil {
     public static Integer DEFAULT_SCALE = 3;
     public static Integer SCALE_2 = 2;
     public static Integer SCALE_4 = 4;
+    public static Integer SCALE_6 = 6;
+    public static Integer SCALE_8 = 8;
+
 
     public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     public static final BigDecimal THOUSAND = BigDecimal.valueOf(1000);
@@ -284,11 +287,24 @@ public class BigDecimalUtil {
      */
     public static BigDecimal multiply(BigDecimal val1, BigDecimal val2) {
         //乘法 有一个为null，则为null
+        return multiply(val1, val2, DEFAULT_SCALE);
+    }
+
+    /**
+     * val1 x val2
+     *
+     * @param val1  value1
+     * @param val2  value2
+     * @param scale 精度
+     * @return
+     */
+    public static BigDecimal multiply(BigDecimal val1, BigDecimal val2, Integer scale) {
+        //乘法 有一个为null，则为null
         if (Objects.isNull(val1) || Objects.isNull(val2)) {
             return null;
         }
         BigDecimal res = val1.multiply(val2);
-        res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
+        res = res.setScale(scale, RoundingMode.HALF_UP);
         return res;
     }
 

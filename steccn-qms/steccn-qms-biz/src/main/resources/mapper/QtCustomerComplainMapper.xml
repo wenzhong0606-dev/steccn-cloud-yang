@@ -56,22 +56,22 @@
         and cc.reply_client_date &gt;= #{start}
         and cc.reply_client_date &lt;= #{end}
         <if test="customerIdList != null and customerIdList.size > 0">
-            and cc.complain_customer in in
+            and cc.complain_customer in
             <foreach collection="customerIdList" item="id"  open="(" close=")"  separator=",">
                 #{id}
-            </foreach>)
+            </foreach>
         </if>
         <if test="materialIdList != null and materialIdList.size > 0">
-            and de.material_id in in
+            and de.material_id in
             <foreach collection="materialIdList" item="id"  open="(" close=")"  separator=",">
                 #{id}
-            </foreach>)
+            </foreach>
         </if>
         <if test="complainTypeList !=null and complainTypeList.size > 0">
-            and cc.complain_type in in
-            <foreach collection="materialIdList" item="id"  open="(" close=")"  separator=",">
+            and cc.complain_type in
+            <foreach collection="complainTypeList" item="id"  open="(" close=")"  separator=",">
                 #{id}
-            </foreach>)
+            </foreach>
         </if>
     </select>
 </mapper>
