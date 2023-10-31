@@ -34,6 +34,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +73,7 @@ public class OaService {
     private final DocdetaillogService docdetaillogService;
     private final KqGroupmemberMapper kqGroupmemberMapper;
     private final HrmdepartmentService hrmdepartmentService;
+    private final StringRedisTemplate stringRedisTemplate;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -542,7 +545,7 @@ public class OaService {
 
     /**
      * 提交流程
-     * @param requestId
+     * @param dto
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
@@ -696,15 +699,26 @@ public class OaService {
             //查询数据库找到人最多的班组
             for(Map.Entry<String,List<Integer>> entry:dateUserIdMap.entrySet()){
                 if(CollUtil.isNotEmpty(entry.getValue())){
-                    MPJQueryWrapper mpjQueryWrapper = new MPJQueryWrapper<OaGroupCountDTO>()
-                            .select("groupid AS groupId,groupname As groupName,Count(typevalue) AS count")
-                            .leftJoin("kq_group t1 on t1.id = t.groupid")
-                            .isNull("t.isDelete")
-                            .in("typevalue",entry.getValue())
-                            .groupBy("groupid")
-                            .orderByDesc("count")
-                            .last("LIMIT 1");
-                    OaGroupCountDTO groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjQueryWrapper);
+                    OaGroupCountDTO groupCountDTO = null;
+                    //缓存数据,避免多次请求接口缓慢
+                    String cachedData = stringRedisTemplate.opsForValue().get("mostClassGroup::"+entry.getKey());
+                    if(StrUtil.isBlank(cachedData)){
+                        MPJQueryWrapper mpjQueryWrapper = new MPJQueryWrapper<OaGroupCountDTO>()
+                                .select("groupid AS groupId,groupname As groupName,Count(typevalue) AS count")
+                                .leftJoin("kq_group t1 on t1.id = t.groupid")
+                                .isNull("t.isDelete")
+                                .in("typevalue",entry.getValue())
+                                .groupBy("groupid")
+                                .orderByDesc("count")
+                                .last("LIMIT 1");
+                        groupCountDTO = kqGroupmemberMapper.selectJoinOne(OaGroupCountDTO.class, mpjQueryWrapper);
+                        if(Objects.nonNull(groupCountDTO)){
+                            stringRedisTemplate.opsForValue().set("mostClassGroup::"+entry.getKey(),JSONObject.toJSONString(groupCountDTO));
+                            stringRedisTemplate.expire("mostClassGroup::"+entry.getKey(),1,TimeUnit.DAYS);
+                        }
+                    }else {
+                        groupCountDTO = JSONObject.parseObject(cachedData,OaGroupCountDTO.class);
+                    }
                     if(Objects.nonNull(groupCountDTO)){
                         groupCountDTO = classGroupNameMap(groupCountDTO);
                         resultMap.put(entry.getKey(),groupCountDTO);
