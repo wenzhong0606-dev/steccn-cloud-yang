@@ -78,7 +78,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final OaInfoService oaInfoService;
 
     @Override
-    public QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId) {
+    public QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId, String source) {
         QtDayReportOnlineVO resVo = new QtDayReportOnlineVO();
         List<QtDayReportOnlineDataVO> tableData = Lists.newArrayList();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("HH:mm");
@@ -92,7 +92,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
 
         //是否加入数采数据
-        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(source), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
         if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
             dto.setJoinAcquisition(1);
@@ -194,7 +194,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         }
                     }
                     //早班或晚班人工检验的各个缺陷项的数量加总 ，仅当该行数据全为0时隐藏该行，否则显示该行
-                    if (dataSourceEntry.getKey() == 0) {
+                    if (dataSourceEntry.getKey() == 0 && QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT.equals(source)) {
                         QtDayReportOnlineDataVO vo = insertCount(4, categoryDefectMap, classEntry.getKey(), manCountMap, productLineName, treeSort);
                         vo.setDataSource(0);
                         tableData.add(vo);
@@ -253,7 +253,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         QtDayReportTableHeadersVO header = new QtDayReportTableHeadersVO();
         resVo.setHeaders(header);
         header.setModule(resModule);
-        header.setCommon(generateCommonHead());
+        header.setCommon(generateCommonHead(source));
         //落板原因
         resVo.setFallList(fallList(date, manData, sysOfficeVOMap));
         return resVo;
@@ -376,14 +376,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * 生成静态表头
      *
      * @return list
+     * @param source
      */
-    private List<QtSpcHeadTitleVO> generateCommonHead() {
+    private List<QtSpcHeadTitleVO> generateCommonHead(String source) {
         List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
         commonHeadList.add(new QtSpcHeadTitleVO("产线", "productLineName"));
         commonHeadList.add(new QtSpcHeadTitleVO("班次", "className"));
         commonHeadList.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
         commonHeadList.add(new QtSpcHeadTitleVO("客户", "customerName"));
-        commonHeadList.add(new QtSpcHeadTitleVO("来源", "dataSourceStr"));
+        if (QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT.equals(source)) {
+            commonHeadList.add(new QtSpcHeadTitleVO("来源", "dataSourceStr"));
+        }
         commonHeadList.add(new QtSpcHeadTitleVO("物料名称", "materialName"));
         commonHeadList.add(new QtSpcHeadTitleVO("缺陷记录时段", "defectTimeStr"));
         commonHeadList.add(new QtSpcHeadTitleVO("备注", "note"));
