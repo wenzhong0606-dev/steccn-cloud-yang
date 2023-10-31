@@ -1302,7 +1302,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 Integer sumDefect = IntegerUtil.sum(valueList);
                                 MapUtil.add(specDefectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
                                 MapUtil.add(defectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
-                                valueDataList.add(String.valueOf(sumDefect));
+                                valueDataList.add(Objects.nonNull(sumDefect) ? String.valueOf(sumDefect) : null);
                                 defectSumRow = IntegerUtil.add(defectSumRow, sumDefect);
                             }
                             resVo.setModule(Lists.newArrayList(new FurtherValueStrVO(valueDataList)));
