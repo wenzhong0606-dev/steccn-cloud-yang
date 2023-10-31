@@ -323,11 +323,13 @@
         prw.process_quantity as processQuantity,
         prw.id,
         ppo.material_id,
-        prw.classes_id
+        prw.classes_id,
+        prw.class_date
         FROM
         pms_report_work prw
         JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
         WHERE
+        prw.del_flag = 0 and ppo.del_flag = 0 AND
         prw.start_time &gt;= #{start}
         AND prw.start_time &lt; #{end}
         <if test="lineIds != null and lineIds.size  != ''">

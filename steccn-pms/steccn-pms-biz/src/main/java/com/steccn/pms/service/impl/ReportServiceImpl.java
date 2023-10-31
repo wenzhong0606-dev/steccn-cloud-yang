@@ -37,6 +37,7 @@ import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.vo.OutputQualityDetailVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -1115,8 +1116,9 @@ public class ReportServiceImpl implements ReportService {
 
         //获取厚度和生产规格数据
         List<Long> materialIds = pmsReportWorkVOS.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toList());
+        List<Long> materialIds2 = reportWorkDataList.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toList());
+        materialIds.addAll(materialIds2);
         //单位转换
-        List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(Sets.newHashSet(materialIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取班次 班组的id
         Map<Long, String> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(classIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1144,7 +1146,7 @@ public class ReportServiceImpl implements ReportService {
         List<OutputQualityDataVO> outputQualityDataVOS = Lists.newArrayList();
         if (CollUtil.isNotEmpty(materialList)) {
             for (EqpSpareVO eqpSpareVO : materialList) {
-                List<PmsReportWorkVO> reportWorks = reportWorkMap.get(eqpSpareVO.getId());
+                List<PmsReportWorkVO> reportWorks = reportWorkMap.getOrDefault(eqpSpareVO.getId(),Lists.newArrayList());
                 for (PmsReportWorkVO reportWork : reportWorks) {
                     OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
                     String classGroupName = classMap.get(reportWork.getClassGroupId());
@@ -1320,18 +1322,18 @@ public class ReportServiceImpl implements ReportService {
             if (CollUtil.isNotEmpty(reportWorkDataList)) {
                 BigDecimal quantity = BigDecimal.ZERO;
                 BigDecimal nightQuantity = BigDecimal.ZERO;
-                LocalDateTime start = dto.getDate().plusDays(1).atStartOfDay();
+                LocalDateTime start = LocalDateUtil.getMorning(dto.getDate());
                 Long classId = classNameMap.get(PmManagerConstant.NIGHT_SHIFT);
                 for (PmsReportWorkVO pmsReportWorkVO : reportWorkDataList) {
                     //单位转换
                     //根据报工数量计算产量 吨
-                    BigDecimal value = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
-                    quantity = BigDecimalUtil.add(quantity,value);
-                    if (LocalDateUtil.isRange(start, pmsReportWorkVO.getStartTime(), pmsReportWorkVO.getEndTime(), false, false) && classId.equals(pmsReportWorkVO.getClassesId())) {
+                    BigDecimal value = UnitConvertUtil.convertMaterial(unitConvertMap.get(pmsReportWorkVO.getMaterialId()), sysDict1.getId(), sysDict2.getId(), pmsReportWorkVO.getProcessQuantity(), 3);
+                    quantity = BigDecimalUtil.add(quantity, value, 1);
+                    if (pmsReportWorkVO.getClassDate().isEqual(start.toLocalDate()) && classId.equals(pmsReportWorkVO.getClassesId())) {
                         //截至日期的夜班产量
                         //根据报工数量计算产量 吨
-                        BigDecimal nightQuantityTmp = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
-                        nightQuantity = BigDecimalUtil.add(nightQuantity,nightQuantityTmp);
+                        BigDecimal nightQuantityTmp = UnitConvertUtil.convertMaterial(unitConvertMap.get(pmsReportWorkVO.getMaterialId()), sysDict1.getId(), sysDict2.getId(), pmsReportWorkVO.getProcessQuantity(), 3);
+                        nightQuantity = BigDecimalUtil.add(nightQuantity, nightQuantityTmp,1);
                     }
                 }
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
