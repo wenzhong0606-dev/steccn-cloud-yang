@@ -173,11 +173,12 @@
         prw.produce_order_id,
         ppo.production_line_id as productLineId,
         ppo.material_id,
+        ppo.code as produceOrderCode,
         any_value(ppo.material_code) as material_code,
         any_value(ppo.material_name) as material_name,
         prw.classes_id,
         sum( prw.process_quantity ) AS quantity,
-        any_value(prw.code) as produceOrderCode,
+--         any_value(prw.code) as produceOrderCode,
         any_value(prw.unit_id)
         FROM
         pms_report_work prw

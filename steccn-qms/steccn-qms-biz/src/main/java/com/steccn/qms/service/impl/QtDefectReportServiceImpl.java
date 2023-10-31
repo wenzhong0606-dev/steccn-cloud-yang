@@ -990,7 +990,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Set<String> produceOrderCode = dataMap.values().stream()
                 .flatMap(List::stream).map(SubstrateDataListVO::getProduceOrderCode).collect(Collectors.toSet());
         List<QtCheckTask> taskList = qtCheckTaskMapper.selectList(new LambdaQueryWrapper<QtCheckTask>()
-                .select(QtCheckTask::getId,QtCheckTask::getProductOrder,QtCheckTask::getSpotTime,QtCheckTask::getProductLineId)
+                .select(QtCheckTask::getId,QtCheckTask::getProductOrder,QtCheckTask::getSpotTime,QtCheckTask::getProductLine)
                 .eq(QtCheckTask::getStatus, OaConstant.NUM_2)
                 .in(QtCheckTask::getProductOrder, produceOrderCode)
                 .between(QtCheckTask::getSpotTime, start, end));
@@ -1001,9 +1001,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         if(CollUtil.isNotEmpty(taskList)){
             taskDetails = qtCheckTaskDetailMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDetail>()
                     .in(QtCheckTaskDetail::getTaskId,taskList.stream()
-                            .map(QtCheckTask::getId).collect(Collectors.toList()))
+                            .map(QtCheckTask::getId).collect(Collectors.toSet()))
                     .in(QtCheckTaskDetail::getItemId,qtCheckItems.stream()
-                            .map(QtCheckItem::getId)));
+                            .map(QtCheckItem::getId).collect(Collectors.toSet())));
         }
         //拿到所有拉引量
         PmsPullForceQueryDTO pullForceDTO = new PmsPullForceQueryDTO();
@@ -1098,9 +1098,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         //          抽检时间在所在行班次日期&班次内
                         // 2）集合T内所有任务中“样品重量”取平均值/2
                         if(CollUtil.isNotEmpty(taskDetails)){
-                            List<QtCheckTask> taskListTmp = taskList.stream().filter(v -> v.getProductLineId().equals(line)
-                                            && v.getProductOrder().equals(tmp.getProduceOrderCode())
-                                            && LocalDateUtil.isRange(v.getSpotTime(), begin, begin.plusDays(1), true, false))
+                            List<QtCheckTask> taskListTmp = taskList.stream().filter(v -> Objects.nonNull(v.getProductLine()) && Objects.nonNull(v.getProductLine().getId()) && v.getProductLine().getId().equals(line)
+                                            && StrUtil.isNotBlank(v.getProductOrder()) && v.getProductOrder().equals(tmp.getProduceOrderCode())
+                                            && Objects.nonNull(v.getSpotTime()) && LocalDateUtil.isRange(v.getSpotTime(), begin, begin.plusDays(1), true, false))
                                     .collect(Collectors.toList());
                             if(CollUtil.isNotEmpty(taskListTmp)){
                                 List<QtCheckTaskDetail> taskDetailTmp = taskDetails.stream().filter(v ->
