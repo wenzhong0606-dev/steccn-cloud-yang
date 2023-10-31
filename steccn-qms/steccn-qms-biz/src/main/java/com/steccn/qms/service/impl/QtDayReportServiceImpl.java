@@ -253,7 +253,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         QtDayReportTableHeadersVO header = new QtDayReportTableHeadersVO();
         resVo.setHeaders(header);
         header.setModule(resModule);
-        header.setCommon(generateCommonHead());
+        header.setCommon(generateCommonHead(source));
         //落板原因
         resVo.setFallList(fallList(date, manData, sysOfficeVOMap));
         return resVo;
@@ -376,14 +376,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * 生成静态表头
      *
      * @return list
+     * @param source
      */
-    private List<QtSpcHeadTitleVO> generateCommonHead() {
+    private List<QtSpcHeadTitleVO> generateCommonHead(String source) {
         List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
         commonHeadList.add(new QtSpcHeadTitleVO("产线", "productLineName"));
         commonHeadList.add(new QtSpcHeadTitleVO("班次", "className"));
         commonHeadList.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
         commonHeadList.add(new QtSpcHeadTitleVO("客户", "customerName"));
-        commonHeadList.add(new QtSpcHeadTitleVO("来源", "dataSourceStr"));
+        if (QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT.equals(source)) {
+            commonHeadList.add(new QtSpcHeadTitleVO("来源", "dataSourceStr"));
+        }
         commonHeadList.add(new QtSpcHeadTitleVO("物料名称", "materialName"));
         commonHeadList.add(new QtSpcHeadTitleVO("缺陷记录时段", "defectTimeStr"));
         commonHeadList.add(new QtSpcHeadTitleVO("备注", "note"));
