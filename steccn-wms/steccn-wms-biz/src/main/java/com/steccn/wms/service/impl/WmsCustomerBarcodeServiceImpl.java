@@ -140,14 +140,14 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
         List<WmsDeliveryCustomerBarCodeVO> results = com.google.common.collect.Lists.newArrayList();
         //获取出库单
         List<WmsDeliveryReceipt> wmsDeliveryReceipts = wmsDeliveryReceiptMapper.selectList(new LambdaQueryWrapper<WmsDeliveryReceipt>()
-                .select(WmsDeliveryReceipt::getId,WmsDeliveryReceipt::getCode)
+                .select(WmsDeliveryReceipt::getId,WmsDeliveryReceipt::getCode,WmsDeliveryReceipt::getSalesOrder)
                 .in(WmsDeliveryReceipt::getSalesOrder, logisticsCodes));
         //获取出库单详情
         List<WmsDeliveryReceiptInfo> wmsDeliveryReceiptInfos = Lists.newArrayList();
         if(CollUtil.isNotEmpty(wmsDeliveryReceipts)){
             List<Long> receiptId = wmsDeliveryReceipts.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toList());
             wmsDeliveryReceiptInfos = wmsDeliveryReceiptInfoMapper.selectList(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>()
-                    .select(WmsDeliveryReceiptInfo::getInventoryId)
+                    .select(WmsDeliveryReceiptInfo::getInventoryId,WmsDeliveryReceiptInfo::getDeliveryReceiptId)
                     .in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,receiptId));
         }
         //获取库存详情
@@ -156,6 +156,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
             List<Long> inventoryId = wmsDeliveryReceiptInfos.stream().map(WmsDeliveryReceiptInfo::getInventoryId).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(inventoryId)){
                 wmsInventories = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>()
+                        .select(WmsInventory::getId,WmsInventory::getCaseNo)
                         .in(WmsInventory::getId,inventoryId));
             }
         }
@@ -165,7 +166,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
             List<String> caseNos = wmsInventories.stream().map(WmsInventory::getCaseNo).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(caseNos)){
                 wmsCustomerBarcodes = list(new LambdaQueryWrapper<WmsCustomerBarcode>()
-                        .select(WmsCustomerBarcode::getCustomerBarcode)
+                        .select(WmsCustomerBarcode::getCustomerBarcode,WmsCustomerBarcode::getCaseNo)
                         .in(WmsCustomerBarcode::getCaseNo,caseNos));
             }
         }

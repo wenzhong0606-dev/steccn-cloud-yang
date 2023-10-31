@@ -64,8 +64,8 @@ public class WmsCustomerBarcodeController {
         return R.success(wmsCustomerBarcodeService.CustomerBarcodeByCaseNO(customerBarcode));
     }
 
-    @GetMapping("/thirdParty/logistics")
-    @ApiOperation("根据机构类型获取树状数据")
+    @PostMapping("/thirdParty/logistics")
+    @ApiOperation("三方根据物流单号获取客户条码")
     public R<List<WmsDeliveryCustomerBarCodeVO>> getDeliveryCustomerBarCode(HttpServletRequest request, @RequestBody Set<String> logisticsCodes) {
         validRequestHeader(request);
         return R.success(wmsCustomerBarcodeService.getDeliveryCustomerBarCode(logisticsCodes));
