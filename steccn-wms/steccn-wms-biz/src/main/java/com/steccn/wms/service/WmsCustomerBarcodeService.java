@@ -5,6 +5,7 @@ import com.steccn.wms.domain.WmsCustomerBarcode;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 import com.steccn.wms.vo.WmsCustomerBarcodeVO;
+import com.steccn.wms.vo.WmsDeliveryCustomerBarCodeVO;
 
 import java.util.List;
 import java.util.Map;
@@ -48,4 +49,11 @@ public interface WmsCustomerBarcodeService extends IService<WmsCustomerBarcode> 
     List<String> listByCustomerBarcode(String customerBarcode);
 
     WmsCustomerBarcodeVO CustomerBarcodeByCaseNO(String customerBarcode);
+
+    /**
+     * 获取出库单对应的客户条码
+     * @param logisticsCodes
+     * @return
+     */
+    List<WmsDeliveryCustomerBarCodeVO> getDeliveryCustomerBarCode(Set<String> logisticsCodes);
 }

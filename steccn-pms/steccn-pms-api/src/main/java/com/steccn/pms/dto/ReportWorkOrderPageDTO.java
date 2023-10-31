@@ -26,4 +26,16 @@ public class ReportWorkOrderPageDTO extends BasePageDTO {
 
     @ApiModelProperty("状态")
     private Integer state;
+
+    @ApiModelProperty("计划开始时间-开始")
+    private LocalDate psDtStart;
+
+    @ApiModelProperty("计划开始时间-结束")
+    private LocalDate psDtEnd;
+
+    @ApiModelProperty("计划结束时间-开始")
+    private LocalDate peDtStart;
+
+    @ApiModelProperty("计划结束时间-结束")
+    private LocalDate peDtEnd;
 }

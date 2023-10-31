@@ -2,6 +2,7 @@ package com.steccn.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -12,10 +13,17 @@ import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsCustomerBarcode;
+import com.steccn.wms.domain.WmsDeliveryReceipt;
+import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
+import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
+import com.steccn.wms.mapper.WmsDeliveryReceiptInfoMapper;
+import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
+import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.mapper.WmsCustomerBarcodeMapper;
 import com.steccn.wms.vo.WmsCustomerBarcodeVO;
+import com.steccn.wms.vo.WmsDeliveryCustomerBarCodeVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
@@ -37,6 +45,9 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     implements WmsCustomerBarcodeService {
 
     private final RemotePmsFeignApi remotePmsFeignApi;
+    private final WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
+    private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
+    private final WmsInventoryMapper wmsInventoryMapper;
 
     @Override
     public Boolean add(WmsCustomerBarcodeDTO dto) {
@@ -121,6 +132,77 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
             wmsCustomerBarcodeVO.setCaseNo(barcode.getCaseNo());
         }
         return wmsCustomerBarcodeVO;
+    }
+
+    @Override
+    public List<WmsDeliveryCustomerBarCodeVO>  getDeliveryCustomerBarCode(Set<String> logisticsCodes) {
+        Assert.notEmpty(logisticsCodes,"数据不能为空");
+        List<WmsDeliveryCustomerBarCodeVO> results = com.google.common.collect.Lists.newArrayList();
+        //获取出库单
+        List<WmsDeliveryReceipt> wmsDeliveryReceipts = wmsDeliveryReceiptMapper.selectList(new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                .select(WmsDeliveryReceipt::getId,WmsDeliveryReceipt::getCode,WmsDeliveryReceipt::getSalesOrder)
+                .in(WmsDeliveryReceipt::getSalesOrder, logisticsCodes));
+        //获取出库单详情
+        List<WmsDeliveryReceiptInfo> wmsDeliveryReceiptInfos = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(wmsDeliveryReceipts)){
+            List<Long> receiptId = wmsDeliveryReceipts.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toList());
+            wmsDeliveryReceiptInfos = wmsDeliveryReceiptInfoMapper.selectList(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>()
+                    .select(WmsDeliveryReceiptInfo::getInventoryId,WmsDeliveryReceiptInfo::getDeliveryReceiptId)
+                    .in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,receiptId));
+        }
+        //获取库存详情
+        List<WmsInventory> wmsInventories = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(wmsDeliveryReceiptInfos)){
+            List<Long> inventoryId = wmsDeliveryReceiptInfos.stream().map(WmsDeliveryReceiptInfo::getInventoryId).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(inventoryId)){
+                wmsInventories = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>()
+                        .select(WmsInventory::getId,WmsInventory::getCaseNo)
+                        .in(WmsInventory::getId,inventoryId));
+            }
+        }
+        //获取客户条码
+        List<WmsCustomerBarcode> wmsCustomerBarcodes = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(wmsInventories)){
+            List<String> caseNos = wmsInventories.stream().map(WmsInventory::getCaseNo).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(caseNos)){
+                wmsCustomerBarcodes = list(new LambdaQueryWrapper<WmsCustomerBarcode>()
+                        .select(WmsCustomerBarcode::getCustomerBarcode,WmsCustomerBarcode::getCaseNo)
+                        .in(WmsCustomerBarcode::getCaseNo,caseNos));
+            }
+        }
+        //开始组数据
+        for(String tmp:logisticsCodes){
+            WmsDeliveryCustomerBarCodeVO result = new WmsDeliveryCustomerBarCodeVO();
+            //出库单
+            WmsDeliveryReceipt wmsDeliveryReceiptTmp = wmsDeliveryReceipts.stream().filter(v -> v.getSalesOrder().equals(tmp)).findFirst().orElse(null);
+            result.setLogisticsCode(tmp);
+            if(Objects.nonNull(wmsDeliveryReceiptTmp)){
+                result.setDeliveryCode(wmsDeliveryReceiptTmp.getCode());
+                //出库单详情
+                if(CollUtil.isNotEmpty(wmsDeliveryReceiptInfos)){
+                    List<WmsDeliveryReceiptInfo> wmsDeliveryReceiptInfoTmp = wmsDeliveryReceiptInfos.stream().filter(v -> v.getDeliveryReceiptId().equals(wmsDeliveryReceiptTmp.getId())).collect(Collectors.toList());
+                    //获取库存详情
+                    if(CollUtil.isNotEmpty(wmsDeliveryReceiptInfoTmp)&&CollUtil.isNotEmpty(wmsInventories)){
+                        List<Long> inventoryIds = wmsDeliveryReceiptInfoTmp.stream().map(WmsDeliveryReceiptInfo::getInventoryId).collect(Collectors.toList());
+                        if(CollUtil.isNotEmpty(inventoryIds)){
+                            List<WmsInventory> inventoriesTmp = wmsInventories.stream().filter(v -> inventoryIds.contains(v.getId())).collect(Collectors.toList());
+                            //获取客户条码
+                            List<String> caseNoTmp = inventoriesTmp.stream().map(WmsInventory::getCaseNo).collect(Collectors.toList());
+                            if(CollUtil.isNotEmpty(caseNoTmp)){
+                                List<WmsCustomerBarcode> wmsCustomerBarcodesTmp = wmsCustomerBarcodes.stream().filter(v -> caseNoTmp.contains(v.getCaseNo())).collect(Collectors.toList());
+                                if(CollUtil.isNotEmpty(wmsCustomerBarcodesTmp)){
+                                    List<String> barCodeStr = wmsCustomerBarcodesTmp.stream().map(WmsCustomerBarcode::getCustomerBarcode).distinct().collect(Collectors.toList());
+                                    result.setCustomerBarCode(barCodeStr);
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            results.add(result);
+        }
+        return results;
     }
 }
 

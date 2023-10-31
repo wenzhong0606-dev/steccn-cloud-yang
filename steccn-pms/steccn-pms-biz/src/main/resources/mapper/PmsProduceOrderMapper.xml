@@ -163,6 +163,18 @@
             <if test="dto.createDtEnd !=null and dto.createDtEnd !=null">
                 and ob.start_time &lt;= #{dto.createDtEnd}
             </if>
+            <if test="dto.psDtStart !=null and dto.psDtStart !=null">
+                and po.plan_start_time &gt;= #{dto.psDtStart}
+            </if>
+            <if test="dto.psDtEnd !=null and dto.psDtEnd !=null">
+                and po.plan_start_time &lt;= #{dto.psDtEnd}
+            </if>
+            <if test="dto.peDtStart !=null and dto.peDtStart !=null">
+                and po.plan_end_time &gt;= #{dto.peDtStart}
+            </if>
+            <if test="dto.peDtEnd !=null and dto.peDtEnd !=null">
+                and po.plan_end_time &lt;= #{dto.peDtEnd}
+            </if>
             and cs.execute_station_id = #{dto.stationId}
         </where>
         GROUP BY po.id
