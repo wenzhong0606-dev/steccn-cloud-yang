@@ -69,7 +69,7 @@ public class OutputQualityDataVO {
     private BigDecimal totalPull;
 
     @ApiModelProperty("累计产量")
-    private BigDecimal totalOutput;
+    private String totalOutput;
 
     @ApiModelProperty("累计成品率")
     private BigDecimal totalFinishedProduct;
