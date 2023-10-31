@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +25,9 @@ public class PmsReportWorkVO {
 
     @ApiModelProperty("报工编号")
     private String code;
+
+    @ApiModelProperty("报工时间-班次日期")
+    private LocalDate classDate;
 
     @ApiModelProperty("报工时间")
     private LocalDateTime createTime;

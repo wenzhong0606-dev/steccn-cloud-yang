@@ -37,6 +37,7 @@ import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.vo.OutputQualityDetailVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -1115,8 +1116,9 @@ public class ReportServiceImpl implements ReportService {
 
         //获取厚度和生产规格数据
         List<Long> materialIds = pmsReportWorkVOS.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toList());
+        List<Long> materialIds2 = reportWorkDataList.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toList());
+        materialIds.addAll(materialIds2);
         //单位转换
-        List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(Sets.newHashSet(materialIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取班次 班组的id
         Map<Long, String> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(classIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1144,7 +1146,7 @@ public class ReportServiceImpl implements ReportService {
         List<OutputQualityDataVO> outputQualityDataVOS = Lists.newArrayList();
         if (CollUtil.isNotEmpty(materialList)) {
             for (EqpSpareVO eqpSpareVO : materialList) {
-                List<PmsReportWorkVO> reportWorks = reportWorkMap.get(eqpSpareVO.getId());
+                List<PmsReportWorkVO> reportWorks = reportWorkMap.getOrDefault(eqpSpareVO.getId(),Lists.newArrayList());
                 for (PmsReportWorkVO reportWork : reportWorks) {
                     OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
                     String classGroupName = classMap.get(reportWork.getClassGroupId());
@@ -1319,31 +1321,50 @@ public class ReportServiceImpl implements ReportService {
             //累计产量
             if (CollUtil.isNotEmpty(reportWorkDataList)) {
                 BigDecimal quantity = BigDecimal.ZERO;
+                BigDecimal quantitySq = null;
                 BigDecimal nightQuantity = BigDecimal.ZERO;
-                LocalDateTime start = dto.getDate().plusDays(1).atStartOfDay();
+                BigDecimal nightQuantitySq = null;
+                LocalDateTime start = LocalDateUtil.getMorning(dto.getDate());
                 Long classId = classNameMap.get(PmManagerConstant.NIGHT_SHIFT);
                 for (PmsReportWorkVO pmsReportWorkVO : reportWorkDataList) {
                     //单位转换
                     //根据报工数量计算产量 吨
-                    BigDecimal value = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
-                    quantity = BigDecimalUtil.add(quantity,value);
-                    if (LocalDateUtil.isRange(start, pmsReportWorkVO.getStartTime(), pmsReportWorkVO.getEndTime(), false, false) && classId.equals(pmsReportWorkVO.getClassesId())) {
+                    BigDecimal value1 = UnitConvertUtil.convertMaterial(unitConvertMap.get(pmsReportWorkVO.getMaterialId()), sysDict1.getId(), sysDict2.getId(), pmsReportWorkVO.getProcessQuantity(),3);
+                    BigDecimal value2 = UnitConvertUtil.convertMaterial(unitConvertMap.get(pmsReportWorkVO.getMaterialId()), sysDict1.getId(), sysDict3.getId(), pmsReportWorkVO.getProcessQuantity(), 3);
+                    quantity = BigDecimalUtil.add(quantity, value1);
+                    quantitySq = BigDecimalUtil.add(quantitySq, value2);
+                    if (pmsReportWorkVO.getClassDate().isEqual(start.toLocalDate()) && classId.equals(pmsReportWorkVO.getClassesId())) {
                         //截至日期的夜班产量
                         //根据报工数量计算产量 吨
-                        BigDecimal nightQuantityTmp = unitConvert(unitList, unitConvertMap, pmsReportWorkVO.getMaterialId(), pmsReportWorkVO.getProcessQuantity(), 1);
-                        nightQuantity = BigDecimalUtil.add(nightQuantity,nightQuantityTmp);
+                        BigDecimal nightQuantityTmp1 = UnitConvertUtil.convertMaterial(unitConvertMap.get(pmsReportWorkVO.getMaterialId()), sysDict1.getId(), sysDict2.getId(), pmsReportWorkVO.getProcessQuantity(), 3);
+                        BigDecimal nightQuantityTmp2 = UnitConvertUtil.convertMaterial(unitConvertMap.get(pmsReportWorkVO.getMaterialId()), sysDict1.getId(), sysDict3.getId(), pmsReportWorkVO.getProcessQuantity(), 3);
+                        nightQuantity = BigDecimalUtil.add(nightQuantity, nightQuantityTmp1);
+                        nightQuantitySq = BigDecimalUtil.add(nightQuantitySq, nightQuantityTmp2);
                     }
                 }
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
-                    outputQualityDataVO.setTotalOutput(BigDecimalUtil.setScale(quantity, UnitLengthUtil.UNIT_TON_LENGTH));
+                    quantity = Objects.isNull(quantity) ? BigDecimal.ZERO : quantity;
+                    quantitySq = Objects.isNull(quantitySq) ? BigDecimal.ZERO : quantitySq;
+                    String quantity1 = BigDecimalUtil.format(quantity, UnitLengthUtil.UNIT_TON_LENGTH);
+                    String quantity2 = BigDecimalUtil.format(quantitySq, UnitLengthUtil.UNIT_TON_LENGTH);
+                    outputQualityDataVO.setTotalOutput(quantity1 + "/" + quantity2);
                     if (PmManagerConstant.FORE_SHIFT.equals(outputQualityDataVO.getClasses())) {
-                        outputQualityDataVO.setTotalOutput(BigDecimalUtil.subtract(quantity, nightQuantity, UnitLengthUtil.UNIT_TON_LENGTH));
+                        BigDecimal lastBd = BigDecimalUtil.subtract(quantity, nightQuantity, UnitLengthUtil.UNIT_TON_LENGTH);
+                        BigDecimal lastBdSq = BigDecimalUtil.subtract(quantitySq, nightQuantitySq, UnitLengthUtil.UNIT_TON_LENGTH);
+                        lastBd = Objects.isNull(lastBd) ? BigDecimal.ZERO : lastBd;
+                        lastBdSq = Objects.isNull(lastBdSq) ? BigDecimal.ZERO : lastBdSq;
+                        String lastBd1 = BigDecimalUtil.format(lastBd, UnitLengthUtil.UNIT_TON_LENGTH);
+                        String lastBdSq2 = BigDecimalUtil.format(lastBdSq, UnitLengthUtil.UNIT_TON_LENGTH);
+                        outputQualityDataVO.setTotalOutput(lastBd1 + "/" + lastBdSq2);
                     }
                 }
             }
             //累计成品率
             for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
-                BigDecimal percent = BigDecimalUtil.percent(outputQualityDataVO.getTotalOutput(), outputQualityDataVO.getTotalPull());
+                String totalOutput = outputQualityDataVO.getTotalOutput();
+                String[] split = totalOutput.split("/");
+                BigDecimal totalOp = new BigDecimal(split[0]);
+                BigDecimal percent = BigDecimalUtil.percent(totalOp, outputQualityDataVO.getTotalPull());
                 outputQualityDataVO.setTotalFinishedProduct(percent);
             }
             //排序
@@ -2271,12 +2292,12 @@ public class ReportServiceImpl implements ReportService {
         columns.add(finishedProductHeader);
         //累计拉引量
         OutputQualityHeaderVO totalPullHeader = new OutputQualityHeaderVO();
-        totalPullHeader.setLabel("累计拉引量");
+        totalPullHeader.setLabel("累计拉引量(吨)");
         totalPullHeader.setProp("totalPull");
         columns.add(totalPullHeader);
         //累计产量
         OutputQualityHeaderVO totalOutputHeader = new OutputQualityHeaderVO();
-        totalOutputHeader.setLabel("累计产量");
+        totalOutputHeader.setLabel("累计产量(吨/㎡)");
         totalOutputHeader.setProp("totalOutput");
         columns.add(totalOutputHeader);
         //累计成品率
