@@ -2,7 +2,6 @@ package com.steccn.qms.controller;
 
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
-import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.vo.*;

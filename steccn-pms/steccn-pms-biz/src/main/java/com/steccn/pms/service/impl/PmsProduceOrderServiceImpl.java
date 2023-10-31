@@ -44,12 +44,12 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.feign.RemoteItemFeignApi;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
+import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -1147,13 +1147,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public List<RepaireBatchListVO> repaireBatchList(RepaireBatchListDTO dto) {
+    public RepaireBatchVO repaireBatchList(RepaireBatchListDTO dto) {
+        RepaireBatchVO resVO = new RepaireBatchVO();
         //根据时间区间和产线筛选出生产批次信息
         //根据生产批次获取缺陷数据和领用数据
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
         //从数据字典中获取返修的标识
-        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO typeSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "order_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //时间区间考虑
         List<RepaireBatchListVO> sourceList = baseMapper.repaireBatchList(dto.getProductLineList(), start, end, typeSysDict.getId());
         Assert.notEmpty(sourceList, "暂无生产批次");
@@ -1185,6 +1186,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
         //定义返回数据
         List<RepaireBatchListVO> resList = Lists.newArrayList();
+        resVO.setDataList(resList);
 
         //获取班组
         TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(dto.getStart(), dto.getEnd().plusDays(1));
@@ -1219,10 +1221,25 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<QtCheckTaskDetailReportVO> checkTaskList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.defectFlat(qtChartParamDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
 
         //获取原片不良list
-        List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        String defectCategoryName = "原片不良";
+        List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory(defectCategoryName), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
         Assert.notEmpty(defectItemList, "缺陷类别不存在");
 
+        //构建返回表头
+        List<String> defectNameHeaderList = defectItemList.stream().map(QtDefectiveItemVO::getName).collect(Collectors.toList());
+        BaseReportHeaderVO defectHeader = new BaseReportHeaderVO(defectCategoryName, defectNameHeaderList);
+        resVO.setHeaderList(Lists.newArrayList(defectHeader));
+
+        //总计
+        BigDecimal sumUsePiece = BigDecimal.ZERO;
+        BigDecimal sumUseSquare = BigDecimal.ZERO;
+        Map<String, Integer> defectSumMap = Maps.newHashMap();
+
         for (String spec : specList) {
+            //规格合计
+            BigDecimal specSumUsePiece = BigDecimal.ZERO;
+            BigDecimal specSumUseSquare = BigDecimal.ZERO;
+            Map<String, Integer> specDefectSumMap = Maps.newHashMap();
             for (LocalDate classDate : timeList) {
                 for (SysOfficeVO line : lineList) {
                     for (SysDictVO classIdType : classList) {
@@ -1237,6 +1254,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                                 LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
                         for (RepaireBatchListVO data : dataList) {
                             RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
+                            resVo.setType(0);
                             resVo.setClassDate(classDate);
                             resVo.setClassId(classId);
                             resVo.setClassName(classIdType.getName());
@@ -1259,6 +1277,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             sum = BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_PIECE_LENGTH);
                             //片转平方
                             BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(data.getMaterialId()), pieceSysDict.getId(), meterSysDict.getId(), sum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                            sumUsePiece = BigDecimalUtil.add(sumUsePiece, sum);
+                            specSumUsePiece = BigDecimalUtil.add(specSumUsePiece, sum);
+                            sumUseSquare = BigDecimalUtil.add(sumUsePiece, square);
+                            specSumUseSquare = BigDecimalUtil.add(specSumUseSquare, square);
                             resVo.setUseCountPiece(sum);
                             resVo.setUseCountSquare(square);
                             //原片不良的
@@ -1267,7 +1289,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             //产线为所在行产线
                             //生产批次为所在行生产批次
                             //缺陷记录时段在所在行班次日期&班次内
-                            List<Integer> valueDataList = Lists.newArrayList();
+                            List<String> valueDataList = Lists.newArrayList();
+                            Integer defectSumRow = null;
                             for (QtDefectiveItemVO defectItem : defectItemList) {
                                 List<Integer> valueList = checkTaskList.stream().filter(ele ->
                                         ele.getDefectCode().equals(defectItem.getCode()) &&
@@ -1277,17 +1300,58 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                         LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
                                 ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
                                 Integer sumDefect = IntegerUtil.sum(valueList);
-                                valueDataList.add(sumDefect);
+                                MapUtil.add(specDefectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
+                                MapUtil.add(defectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
+                                valueDataList.add(Objects.nonNull(sumDefect) ? String.valueOf(sumDefect) : null);
+                                defectSumRow = IntegerUtil.add(defectSumRow, sumDefect);
                             }
-                            resVo.setValueList(valueDataList);
+                            resVo.setModule(Lists.newArrayList(new FurtherValueStrVO(valueDataList)));
+                            resVo.setDefectSum(Objects.nonNull(defectSumRow) ? BigDecimal.valueOf(defectSumRow) : null);
+                            resVo.setDefectRate(BigDecimalUtil.percent(resVo.getDefectSum(), resVo.getUseCountPiece()));
                             resList.add(resVo);
                         }
                     }
                 }
             }
+            //插入合计行
+            resList.add(rowCount(1, specSumUsePiece, specSumUseSquare, defectItemList, specDefectSumMap));
         }
+        //插入总计行
+        RepaireBatchListVO totalRow = new RepaireBatchListVO();
+        resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
+        return resVO;
+    }
 
-        return resList;
+    /**
+     * 获取总计行或者单规格行
+     * @param type
+     * @param usePiece
+     * @param useSquare
+     * @param defectItemList
+     * @param defectSumMap
+     * @return
+     */
+    private RepaireBatchListVO rowCount(Integer type, BigDecimal usePiece, BigDecimal useSquare, List<QtDefectiveItemVO> defectItemList, Map<String, Integer> defectSumMap) {
+        RepaireBatchListVO row = new RepaireBatchListVO();
+        row.setType(type);
+        if (type == 1) {
+            row.setSpecifications("合计（单规格）");
+        } else {
+            row.setSpecifications("总计");
+        }
+        row.setUseCountPiece(usePiece);
+        row.setUseCountSquare(useSquare);
+        List<String> valueDataList = Lists.newArrayList();
+        Integer countSum = null;
+        for (QtDefectiveItemVO defectItem : defectItemList) {
+            Integer count = defectSumMap.get(defectItem.getCode());
+            countSum = IntegerUtil.add(count, countSum);
+            valueDataList.add(Objects.nonNull(count) ? String.valueOf(count) : null);
+        }
+        row.setDefectSum(Objects.nonNull(countSum) ? BigDecimal.valueOf(countSum) : null);
+        row.setDefectRate(BigDecimalUtil.percent(row.getDefectSum(), usePiece));
+        row.setModule(Lists.newArrayList(new FurtherValueStrVO(valueDataList)));
+        return row;
     }
 
     /**
