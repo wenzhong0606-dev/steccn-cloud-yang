@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtDayReportOnlineDTO;
 import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.dto.QtReportFirstPatrolDTO;
@@ -28,10 +29,16 @@ public class QtDayReportController {
 
     private final QtDayReportService qtDayReportService;
 
+    @PostMapping("/online/man")
+    @ApiOperation("质量日报表-在线检人工")
+    public R<QtDayReportOnlineVO> onlineMan(@RequestBody @Validated QtDayReportOnlineDTO dto) {
+        return R.success(qtDayReportService.online(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT));
+    }
+
     @PostMapping("/online")
     @ApiOperation("质量日报表-在线检")
     public R<QtDayReportOnlineVO> online(@RequestBody @Validated QtDayReportOnlineDTO dto) {
-        return R.success(qtDayReportService.online(dto.getDate(), dto.getProductLineIdList()));
+        return R.success(qtDayReportService.online(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT));
     }
 
     @PostMapping("/first")

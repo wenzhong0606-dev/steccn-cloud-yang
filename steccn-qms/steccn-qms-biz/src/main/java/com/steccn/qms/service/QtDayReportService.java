@@ -20,7 +20,7 @@ public interface QtDayReportService {
      * @param productLineId 产线id
      * @return vo
      */
-    QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId);
+    QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId,String source);
 
 
     /**
