@@ -384,7 +384,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
         List<QtCheckItemTransmitDataVO> rowList = Lists.newArrayList();
-        setTransmitHeader(resVo);
+        setTransmitHeader(resVo,granularityEntity);
         resVo.setDataList(rowList);
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
@@ -395,7 +395,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
         //获取班组的集合
         TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, OaGroupCountDTO> classGroupMap = Maps.newHashMap();
+        if (QtManagerConstant.LossReportType.CLASS.equals(granularityEntity)) {
+            classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        }
         for (Integer line : dto.getProductLineList()) {
             String lineName = lineIdNameMap.get(line);
             //班次日期
@@ -1551,13 +1554,16 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
      * 设置透光率表头
      *
      * @param resVo 返回对象
+     * @param granularityEntity
      */
-    private void setTransmitHeader(QtCheckItemTransmitVO resVo) {
+    private void setTransmitHeader(QtCheckItemTransmitVO resVo, QtManagerConstant.LossReportType granularityEntity) {
         List<QtSpcHeadTitleVO> headerLeft = Lists.newArrayList();
         headerLeft.add(new QtSpcHeadTitleVO("产线", "productLineName"));
         headerLeft.add(new QtSpcHeadTitleVO("日期", "classDateStr"));
-        headerLeft.add(new QtSpcHeadTitleVO("班次", "className"));
-        headerLeft.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        if(QtManagerConstant.LossReportType.CLASS.equals(granularityEntity)){
+            headerLeft.add(new QtSpcHeadTitleVO("班次", "className"));
+            headerLeft.add(new QtSpcHeadTitleVO("班组", "classGroupName"));
+        }
         headerLeft.add(new QtSpcHeadTitleVO("花纹深度", "figureDepth"));
         headerLeft.add(new QtSpcHeadTitleVO("厚度", "thickness"));
         List<BaseReportHeaderVO> headerRight = Lists.newArrayList();

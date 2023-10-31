@@ -2273,12 +2273,12 @@ public class ReportServiceImpl implements ReportService {
         columns.add(finishedProductHeader);
         //累计拉引量
         OutputQualityHeaderVO totalPullHeader = new OutputQualityHeaderVO();
-        totalPullHeader.setLabel("累计拉引量");
+        totalPullHeader.setLabel("累计拉引量(吨)");
         totalPullHeader.setProp("totalPull");
         columns.add(totalPullHeader);
         //累计产量
         OutputQualityHeaderVO totalOutputHeader = new OutputQualityHeaderVO();
-        totalOutputHeader.setLabel("累计产量");
+        totalOutputHeader.setLabel("累计产量(吨/㎡)");
         totalOutputHeader.setProp("totalOutput");
         columns.add(totalOutputHeader);
         //累计成品率
