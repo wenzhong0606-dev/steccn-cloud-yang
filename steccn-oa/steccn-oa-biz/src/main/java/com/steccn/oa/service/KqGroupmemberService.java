@@ -6,7 +6,9 @@ import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import com.steccn.oa.vo.OaTodayClassVO;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,9 +48,11 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
 
     /**
      * oa获取基片当班信息
+     * @param workshopName 车间id
+     * @param date 日期
      * @return
      */
-    OaTodayClassVO getTodayClassInfo();
+    List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate date);
 
     /**
      * oa获取sjg当班信息

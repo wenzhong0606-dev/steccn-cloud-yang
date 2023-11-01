@@ -365,6 +365,11 @@ public interface PmManagerConstant {
     Integer DIRECTOR_ID_LINE2 = 414284;
 
     /**
+     * 配料班长
+     */
+    Integer CLASS_LEADER_PEILIAO = 414286;
+
+    /**
      * 配电工段副段长
      */
     Integer DIRECTOR_ID_PEIDIANFU = 160;
