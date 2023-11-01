@@ -56,6 +56,9 @@ public class WmsDeliveryReceiptDTO {
     @ApiModelProperty("冲销入库单code")
     private String chargeAgainstCode;
 
+    @ApiModelProperty("出库单关联主键")
+    private Long linkedId;
+
 
     /**
      * 是否自动确认 0：否 1：是

@@ -60,6 +60,11 @@ public class WmsDeliveryReceipt implements Serializable {
     private String salesOrder;
 
     /**
+     * 关联的主键-报工id
+     */
+    private String linkedId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

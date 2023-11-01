@@ -342,6 +342,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDeliveryService.save(completeDelivery);
             completeDeliveryInfoService.saveBatch(modelList);
             //物料消耗 ，扣除库存
+            wmsDeliveryReceiptDTO.setLinkedId(pmsReportWork.getId());
             wmsDeliveryReceiptDTO.setType(sysDictVO.getId());
             wmsDeliveryReceiptDTO.setList(materialList);
             wmsDeliveryReceiptDTO.setAffirmFlag(PmManagerConstant.NUM_1);
