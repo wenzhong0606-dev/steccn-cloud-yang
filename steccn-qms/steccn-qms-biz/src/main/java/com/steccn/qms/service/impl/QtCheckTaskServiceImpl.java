@@ -3717,6 +3717,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 longIds.add(tmp.getId().longValue());
             });
         }
+        //一定发给配料班长
+        List<OaUserIdAndName> oaUserIdAndNames2 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_YUANLIAO_2_PEILIAO_ID, PmManagerConstant.CLASS_LEADER_PEILIAO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(oaUserIdAndNames2)){
+            oaUserIdAndNames2.forEach(tmp -> {
+                longIds.add(tmp.getId().longValue());
+            });
+        }
         if (CollUtil.isNotEmpty(longIds)) {
             SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
             sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getCode());
