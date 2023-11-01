@@ -1087,7 +1087,7 @@ public class ReportServiceImpl implements ReportService {
         Optional<List<OutputQualityDetailVO>> optionalPlyData = Optional.ofNullable(FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.listPollingDate(outputQualityDetailDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get());
         List<OutputQualityDetailVO> plyData = optionalPlyData.get();
         //将平均厚度根据班次拆分
-        Map<Integer, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
+        Map<Integer, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().filter(ele -> Objects.nonNull(ele.getProductOrder())).collect(Collectors.groupingBy(OutputQualityDetailVO::getClassId));
         //早班
         Map<String, List<OutputQualityDetailVO>> dayShiftPlyDataMap = Optional.ofNullable(plyDataMap.get(PmManagerConstant.FORE_SHIFT_0)).orElse(Collections.emptyList()).stream().filter(ele -> Objects.nonNull(ele.getProductOrder())).collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
         //晚班
