@@ -1215,9 +1215,12 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         row.setSlice(allCountMap.get(1));
         row.setSquareMeter(allCountMap.get(2));
         row.setPullAmount(allCountMap.get(3));
-        row.setWeight(allCountMap.get(4));
+        row.setWeight(allCountMap.getOrDefault(4,BigDecimal.ZERO));
         row.setConvertWeight(allCountMap.get(5));
         BigDecimal convertRate = BigDecimalUtil.percent(row.getConvertWeight(),row.getPullAmount(),2);
+        if(Objects.isNull(convertRate)){
+            convertRate = BigDecimal.ZERO;
+        }
         row.setConvertRate(convertRate.toString()+"%");
         tableData.add(row);
         result.setTableList(tableData);
