@@ -10,6 +10,7 @@ import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -80,7 +81,7 @@ public interface QtChartGenerateService {
      * 计算拉引量
      * @return
      */
-    Boolean calculatePullAmountTask();
+    Boolean calculatePullAmountTask(LocalDateTime now, LocalDate date);
 
     /**
      * 计算ems拉引量

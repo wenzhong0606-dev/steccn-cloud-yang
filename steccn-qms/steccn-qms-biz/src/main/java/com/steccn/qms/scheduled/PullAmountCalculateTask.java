@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class PullAmountCalculateTask {
     @XxlJob("calculatePullAmountHandler")
     public void calculatePullAmount() {
         XxlJobHelper.log("计算拉引量-任务开始");
-        qtChartGenerateService.calculatePullAmountTask();
+        qtChartGenerateService.calculatePullAmountTask(LocalDateTime.now(), LocalDate.now());
         XxlJobHelper.log("计算拉引量-任务开始");
     }
 }

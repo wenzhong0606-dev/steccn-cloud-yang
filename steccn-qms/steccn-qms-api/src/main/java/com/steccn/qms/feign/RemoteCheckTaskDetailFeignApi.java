@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -53,5 +54,9 @@ public interface RemoteCheckTaskDetailFeignApi {
     @ApiOperation("同步物料")
     @PostMapping("/feign/qms/material/synchronize")
     R<Boolean> synchronizeMaterial(@RequestBody EqpSpareDto dto);
+
+    @ApiOperation("重新跑一次计算拉引量")
+    @PostMapping("/feign/qms/task/detail/calculatePullAmountTask")
+    R<Boolean> calculatePullAmountTask(@RequestBody TupleDTO<LocalDateTime, LocalDate> dto);
 
 }

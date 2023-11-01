@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
@@ -77,5 +78,10 @@ public class QtCheckTaskDetailFeignController {
         return R.success(qtCheckTaskDetailService.listPollingDate(outputQualityDetailDTO));
     }
 
+    @ApiOperation("重新跑一次计算拉引量")
+    @PostMapping("/calculatePullAmountTask")
+    R<Boolean> calculatePullAmountTask(@RequestBody TupleDTO<LocalDateTime,LocalDate> dto){
+        return R.success(qtChartGenerateService.calculatePullAmountTask(dto.getField1(),dto.getField2()));
+    }
 
 }
