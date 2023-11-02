@@ -29,6 +29,9 @@ public class PmsDefectDayOrderBasicDTO implements Serializable {
     @ApiModelProperty("生产订单no")
     private String produceOrderCode;
 
+    @ApiModelProperty("生产订单状态")
+    private Integer state;
+
     @ApiModelProperty("客户名称")
     private Integer customerId;
 

@@ -61,6 +61,13 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.pageList(dto));
     }
 
+    @ApiOperation("生产订单甘特图")
+    @PostMapping("/ganttChart")
+    public R<PmsProduceOrderGanttChartVO> ganttChart(@Valid @RequestBody PmsProduceOrderGanttChartDTO dto) {
+        return R.success(pmsProduceOrderService.produceOrderGanttChart(dto));
+    }
+
+
     @ApiOperation("生产订单详情")
     @GetMapping("/info/{id}")
     public R<PmsProduceOrderVO> pageList(@PathVariable("id") Long id) {
