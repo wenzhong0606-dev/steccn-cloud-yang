@@ -38,6 +38,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Page<PmsProduceOrderVO> pageList(PmsProduceOrderPageDTO dto);
 
     /**
+     * 获取生产订单详情
+     * @param id
+     * @return
+     */
+    PmsProduceOrderVO info(Long id);
+
+    /**
      * 编辑
      *
      * @param dto

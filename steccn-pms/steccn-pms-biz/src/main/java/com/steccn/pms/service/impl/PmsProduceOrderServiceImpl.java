@@ -256,6 +256,39 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return page;
     }
 
+    @Override
+    public PmsProduceOrderVO info(Long id) {
+        PmsProduceOrderVO result = new PmsProduceOrderVO();
+        PmsProduceOrder pmsProduceOrder = getById(id);
+        BeanUtil.copyProperties(pmsProduceOrder,result);
+        //1.查询字典数据
+        HashSet<Long> dictId = Sets.newHashSet();
+        dictId.add(result.getMinPackageUnitId());
+        dictId.add(result.getUnitId());
+        dictId.add(result.getTypeId());
+        if(CollUtil.isNotEmpty(dictId)){
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            result.setMinPackageUnit(dictMap.get(result.getMinPackageUnitId()));
+            result.setType(dictMap.get(result.getTypeId()));
+            result.setUnit(dictMap.get(result.getUnitId()));
+        }
+        //2.查询机构数据
+        HashSet<Integer> officeId = Sets.newHashSet();
+        officeId.add(result.getCustomerId());
+        officeId.add(result.getProductionLineId());
+        if(CollUtil.isNotEmpty(officeId)){
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(pmsProduceOrder.getProductionLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            result.setCustomerName(officeMap.get(result.getCustomerId()));
+            result.setProductionLineName(officeMap.get(result.getProductionLineId()));
+        }
+        //3.工艺信息
+        if(Objects.nonNull(result.getCraftId())){
+            Map<Long, String> versionMap = pmCraftRouteService.versionById(Sets.newHashSet(result.getCraftId()));
+            result.setCraftVersion(versionMap.get(result.getCraftId()));
+        }
+        return result;
+    }
+
     /**
      * 编辑物料清单
      *
