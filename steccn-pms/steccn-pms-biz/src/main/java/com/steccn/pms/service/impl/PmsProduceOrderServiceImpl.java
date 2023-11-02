@@ -1355,6 +1355,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return resVO;
     }
 
+    @Override
+    public OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto) {
+
+        return null;
+    }
+
     /**
      * 获取总计行或者单规格行
      * @param type
