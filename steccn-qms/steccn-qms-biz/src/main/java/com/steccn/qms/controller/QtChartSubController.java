@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 /**
  * 基片成品率图表相关controller
  *
@@ -77,7 +80,7 @@ public class QtChartSubController {
      */
     @GetMapping("/sub/test")
     public void testTask(){
-        qtChartGenerateService.calculatePullAmountTask();
+        qtChartGenerateService.calculatePullAmountTask(LocalDateTime.now(), LocalDate.now());
     }
 
 }

@@ -2695,9 +2695,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     }
 
     @Override
-    public Boolean calculatePullAmountTask() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDate date = LocalDate.now();
+    public Boolean calculatePullAmountTask(LocalDateTime now,LocalDate date) {
+//        LocalDateTime now = LocalDateTime.now();
+//        LocalDate date = LocalDate.now();
         List<QtPullAmountDTO> qtPullAmountDTOS = Lists.newArrayList();
         //如果是早8点则查班次日期为昨天的拉引量
         if(QtManagerConstant.NUM_8 == now.getHour()){

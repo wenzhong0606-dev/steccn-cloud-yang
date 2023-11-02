@@ -61,6 +61,12 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.pageList(dto));
     }
 
+    @ApiOperation("生产订单详情")
+    @GetMapping("/info/{id}")
+    public R<PmsProduceOrderVO> pageList(@PathVariable("id") Long id) {
+        return R.success(pmsProduceOrderService.info(id));
+    }
+
     @ApiOperation("生产订单编辑")
     @PutMapping
     @SysLog("生产订单编辑")

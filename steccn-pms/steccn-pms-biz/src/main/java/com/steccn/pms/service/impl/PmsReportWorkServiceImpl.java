@@ -22,12 +22,15 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaClassVO;
@@ -41,6 +44,7 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +63,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -116,6 +124,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private OaInfoService oaInfoService;
     @Autowired
     private RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    @Autowired
+    private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
 
     @Override
@@ -232,6 +244,15 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 pmsReportWorkConsumeService.saveConsume(pmsReportWork.getId(), dto.getConsumeDTOList());
                 //插入库存
                 insertDelivery(dto, pmsReportWork);
+                if(CollUtil.isNotEmpty(dto.getHourDTOList())){
+                    poolExecutor.execute(()->{
+                        dto.getHourDTOList().forEach(tmp->{
+                            if(Objects.nonNull(tmp.getStartTime())){
+                                calculatePullamountTask(tmp.getStartTime());
+                            }
+                        });
+                    });
+                }
                 return Boolean.TRUE;
             });
         } finally {
@@ -631,11 +652,31 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         model.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(), Boolean.FALSE));
         updateById(model);
         //更新报工工时信息
+        List<PmsReportWorkHour> reportWorkHourList = reportWorkHourService.list(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, dto.getId()));
         reportWorkHourService.updateHour(dto.getId(), dto.getHourDTOList());
         //更新报工能耗信息
         pmsReportWorkConsumeService.updateConsume(dto.getId(), dto.getConsumeDTOList());
         //更新物料消耗信息
         updateMaterialConsume(dto, dto.getMaterialConsumeList());
+        //如果有停机信息则重新计算拉引量
+        if(CollUtil.isNotEmpty(dto.getHourDTOList())){
+            poolExecutor.execute(()->{
+                dto.getHourDTOList().forEach(tmp->{
+                    if(Objects.nonNull(tmp.getStartTime())){
+                        calculatePullamountTask(tmp.getStartTime());
+                    }
+                });
+            });
+        }
+        if(CollUtil.isNotEmpty(reportWorkHourList)&&CollUtil.isEmpty(dto.getHourDTOList())){
+            poolExecutor.execute(()->{
+                reportWorkHourList.forEach(tmp->{
+                    if(Objects.nonNull(tmp.getStartTime())){
+                        calculatePullamountTask(tmp.getStartTime());
+                    }
+                });
+            });
+        }
         return Boolean.TRUE;
     }
 
@@ -647,6 +688,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //删除报工信息
         removeById(id);
         //删除工时信息
+        List<PmsReportWorkHour> reportWorkHourList = reportWorkHourService.list(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, id));
         reportWorkHourService.remove(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, id));
         //删除能耗信息
         pmsReportWorkConsumeService.remove(new LambdaQueryWrapper<PmsReportWorkConsume>().eq(PmsReportWorkConsume::getReportWorkId, id));
@@ -658,6 +700,14 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             ProcessReportWorkSubmitDTO dto = new ProcessReportWorkSubmitDTO();
             BeanUtils.copyProperties(pmsReportWork, dto);
             pmsCompleteStorageService.generateByDelivery(dto, infoList);
+        }
+        //删除时重新计算拉引量
+        if(CollUtil.isNotEmpty(reportWorkHourList)){
+            poolExecutor.execute(()->{
+                reportWorkHourList.forEach(tmp->{
+                    calculatePullamountTask(tmp.getStartTime());
+                });
+            });
         }
         return Boolean.TRUE;
     }
@@ -1677,5 +1727,22 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return PmsCodeUtil.getNextCode(prefix, PmsCodeUtil.NUM_BIT_4, currentMax);
+    }
+
+    private void calculatePullamountTask(LocalDateTime startTime){
+        TupleDTO<LocalDateTime,LocalDate> taskDTO = new TupleDTO<>();
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(startTime);
+        LocalDate date = qtTaskClassCalculate.getClassDate().toLocalDate();
+        LocalDateTime now = LocalDateTime.now();
+        //如果是早班,那么传这一天晚班 否则,第二天早班
+        if(qtTaskClassCalculate.getClassType().equals(OaConstant.NO)){
+            now = date.atTime(20,0,0);
+        }else {
+            date = date.plusDays(1);
+            now = date.atTime(8,0,0);
+        }
+        taskDTO.setField1(now);
+        taskDTO.setField2(date);
+        FeignOptional.of(()->remoteCheckTaskDetailFeignApi.calculatePullAmountTask(taskDTO),FeignConstant.STECCN_QMS_SERVICE_NAME);
     }
 }

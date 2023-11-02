@@ -81,7 +81,7 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_SORT_FIELD_CLASS_ID = "classId";
 
-    String QT_CHART_EXCEL_MODEL_URL = "http://61.177.139.244/images/";
+    String QT_CHART_EXCEL_MODEL_URL = "http://192.168.16.252/images/";
 
     String QT_CHART_EXCEL_MODEL_NAME_JPCP = "JPCP.xlsx";
 
