@@ -521,6 +521,10 @@ public interface PmManagerConstant {
      */
     String JXIU_GONG2 = "119";
     /**
+     * 甘特图id前缀
+     */
+    String GANTT_PREFIX = "gstcid-";
+    /**
      * 入库出库凭证状态
      */
     @Getter

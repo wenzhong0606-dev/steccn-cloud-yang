@@ -40,7 +40,8 @@
         batch.end_time ,
         o.material_id,
         o.material_name,
-        o.customer_id as customerId
+        o.customer_id as customerId,
+        o.state as state
         FROM
         pms_work_order_batch batch
         JOIN pms_produce_order o ON batch.produce_order_id = o.id

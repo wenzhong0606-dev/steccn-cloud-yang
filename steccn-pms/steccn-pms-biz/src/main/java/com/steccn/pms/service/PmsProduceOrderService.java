@@ -61,6 +61,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto);
 
     /**
+     * 生产订单甘特图
+     * @param dto
+     * @return
+     */
+    PmsProduceOrderGanttChartVO produceOrderGanttChart(PmsProduceOrderGanttChartDTO dto);
+
+    /**
      * 报工订单批次详细信息
      *
      * @param productLineId 产线id
