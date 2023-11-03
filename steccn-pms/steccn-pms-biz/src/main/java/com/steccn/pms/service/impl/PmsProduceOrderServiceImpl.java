@@ -22,6 +22,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -50,6 +51,7 @@ import com.steccn.qms.feign.RemoteItemFeignApi;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
+import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -94,9 +96,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final OaInfoService oaInfoService;
-    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
     private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
     private final RemoteItemFeignApi remoteItemFeignApi;
+    private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
 
     @Autowired
     @Lazy
@@ -1370,6 +1372,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             log.info("{}", batchList);
+            //查询所有报工的物料消耗关联的供应商
+            Set<Long> rwIdSet = batchList.stream().map(OutSourcingListDTO::getReportWorkId).collect(Collectors.toSet());
+            Map<Long, String> rwLinkSupplierMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.rwLinkSupplier(rwIdSet), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+           log.info("rwLinkSupplierMap -> {}",rwLinkSupplierMap);
         }
         return null;
     }

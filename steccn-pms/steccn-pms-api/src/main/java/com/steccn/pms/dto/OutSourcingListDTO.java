@@ -67,4 +67,9 @@ public class OutSourcingListDTO implements Serializable {
      */
     private BigDecimal quantity;
 
+    /**
+     * 供应商编码
+     */
+    private String supplierCode;
+
 }

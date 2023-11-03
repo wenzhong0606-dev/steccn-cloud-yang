@@ -10,6 +10,9 @@ import com.steccn.wms.vo.WmsStorageReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+import java.util.Set;
+
 /**
 * @author W10
 * @description 针对表【wms_storage_receipt】的数据库操作Mapper
@@ -33,6 +36,13 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @return
      */
     Boolean salesAutoConfirm(@Param("dto") WmsStorageReceiptDTO dto);
+
+    /**
+     * 根据箱号 查询供应商
+     * @param caseNoSet 箱号
+     * @return
+     */
+    List<WmsStorageReceipt> caseNoLinkSupplier(@Param("caseNoSet") Set<String> caseNoSet);
 }
 
 

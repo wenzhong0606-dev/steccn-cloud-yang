@@ -7,6 +7,10 @@ import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.security.core.parameters.P;
+
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author W10
@@ -24,6 +28,13 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     Page<WmsDeliveryReceiptVO> pageList(@Param("page") Page page,@Param("dto") WmsDeliveryReceiptPageDTO dto);
+
+    /**
+     * 报工关联箱号
+     * @param rwIdSet 报工id主键
+     * @return
+     */
+    List<WmsDeliveryReceipt> rwLinkCaseNo(@Param("rwIdSet") Set<Long> rwIdSet);
 }
 
 

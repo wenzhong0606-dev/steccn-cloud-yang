@@ -62,7 +62,7 @@ public class WmsDeliveryReceipt implements Serializable {
     /**
      * 关联的主键-报工id
      */
-    private String linkedId;
+    private Long linkedId;
 
     /**
      * 创建人id
