@@ -71,6 +71,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -462,6 +463,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         PmsProduceOrderGanttChartVO result = new PmsProduceOrderGanttChartVO();
         //行
         List<PmsProduceOrderGanttRowsVO> rows = Lists.newArrayList();
+        //过滤掉车间
+        sysOfficeVOS = sysOfficeVOS.stream().filter(v -> !v.getOfficeName().contains("车间")).collect(Collectors.toList());
         sysOfficeVOS.forEach(tmp->{
             rows.add(new PmsProduceOrderGanttRowsVO(PmManagerConstant.GANTT_PREFIX+tmp.getId(), tmp.getOfficeName()));
         });
@@ -469,20 +472,22 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //信息
         LocalDateTime now = LocalDateTime.now();
         List<PmsProduceOrderGanttInfoVO> infos = Lists.newArrayList();
-        pmsDefectDayOrderBasicDTOS.forEach(tmp->{
-            PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
-            info.setId(tmp.getProduceOrderId());
-            info.setLabel(tmp.getProduceOrderCode());
-            info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductLineId());
-            info.setStatus(tmp.getState());
-            //若结束时间为空则取当前时间
-            if(Objects.isNull(tmp.getEndTime())){
-                tmp.setEndTime(now);
-            }
-            PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            info.setTime(timeStamp);
-            infos.add(info);
-        });
+        if(CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)){
+            pmsDefectDayOrderBasicDTOS.forEach(tmp->{
+                PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
+                info.setId(tmp.getProduceOrderId());
+                info.setLabel(tmp.getProduceOrderCode());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductLineId());
+                info.setStatus(tmp.getState());
+                //若结束时间为空则取当前时间
+                if(Objects.isNull(tmp.getEndTime())){
+                    tmp.setEndTime(now);
+                }
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                info.setTime(timeStamp);
+                infos.add(info);
+            });
+        }
         result.setInfos(infos);
         return result;
     }
