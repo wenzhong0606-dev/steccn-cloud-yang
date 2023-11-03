@@ -185,6 +185,11 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
             String finalClassStr = classStr;
             List<OaRosterRecordVO> oaRosterRecordVosTmp = Lists.newArrayList();
             oaRosterRecordVosTmp = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+            //避免班组重复
+            if(i==1&&CollUtil.isNotEmpty(results)){
+                oaRosterRecordVosTmp = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)
+                        &&!v.getDepartmentname().contains(results.get(0).getClassGroup())).collect(Collectors.toList());
+            }
             if (CollUtil.isNotEmpty(oaRosterRecordVosTmp)) {
 //                List<String> workCodes = Lists.newArrayList();
 //                oaRosterRecordVosTmp.forEach(tmp -> {
