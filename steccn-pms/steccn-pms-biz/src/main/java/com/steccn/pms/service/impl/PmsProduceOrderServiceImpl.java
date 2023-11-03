@@ -472,7 +472,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         LocalDateTime now = LocalDateTime.now();
         List<PmsProduceOrderGanttInfoVO> infos = Lists.newArrayList();
         if(CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)){
-            pmsDefectDayOrderBasicDTOS.forEach(tmp->{
+            for(PmsDefectDayOrderBasicDTO tmp:pmsDefectDayOrderBasicDTOS){
+                if(tmp.getProductLineId().equals(170)
+                        ||tmp.getProductLineId().equals(171)
+                        ||tmp.getProductLineId().equals(172)
+                        ||tmp.getProductLineId().equals(173)){
+                    continue;
+                }
                 PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
                 info.setId(tmp.getProduceOrderId());
                 info.setLabel(tmp.getProduceOrderCode());
@@ -485,7 +491,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
                 info.setTime(timeStamp);
                 infos.add(info);
-            });
+            }
         }
         result.setInfos(infos);
         return result;
