@@ -321,6 +321,17 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      */
     List<PmsStorageCountDTO> getStorageCount(@Param("start") LocalDateTime start,
                                              @Param("end") LocalDateTime end);
+
+    /**
+     * 外购不良日报表
+     * @param productLineList 产线集合
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    List<OutSourcingListDTO> outsourcingClass(@Param("lineList") List<Integer> productLineList,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end);
 }
 
 

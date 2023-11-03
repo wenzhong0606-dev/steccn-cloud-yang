@@ -1357,7 +1357,20 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto) {
-
+        /**
+         * 报工记录的产线属于已选中的产线
+         * 报工记录的加工时段在区间[起始日期8:00, 终止日期+1 8:00]内
+         * 报工记录的物料消耗列表中包含编码“P1.W.P”开头的物料（即外购原片）
+         */
+        LocalDateTime begin = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime over = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
+        List<OutSourcingListDTO> batchList = pmsReportWorkMapper.outsourcingClass(dto.getProductLineList(), begin, over);
+        if (CollUtil.isNotEmpty(batchList)) {
+            Set<Long> materialIdSet = batchList.stream().map(OutSourcingListDTO::getMaterialId).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            log.info("{}", batchList);
+        }
         return null;
     }
 
