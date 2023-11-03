@@ -458,7 +458,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<Integer> officeIds = sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         //查询对应的批次信息
         List<PmsDefectDayOrderBasicDTO> pmsDefectDayOrderBasicDTOS = pmsWorkOrderBatchMapper.defectDay(officeIds, dto.getStartTime().atTime(LocalTime.MIN), dto.getEndTime().atTime(LocalTime.MAX));
-        Assert.notEmpty(pmsDefectDayOrderBasicDTOS, "数据为空");
         //开始组数据
         PmsProduceOrderGanttChartVO result = new PmsProduceOrderGanttChartVO();
         //行
