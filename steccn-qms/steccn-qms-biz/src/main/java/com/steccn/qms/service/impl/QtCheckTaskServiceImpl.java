@@ -446,6 +446,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return result;
     }
 
+    @Override
+    public Long checkFinishedOnline(QtAddCheckTaskDTO dto) {
+        Assert.notNull(dto.getProductLine().getId(),"产线不能为空");
+        Assert.notNull(dto.getDefectStartTime(),"缺陷开始时间不能为空");
+        Assert.notNull(dto.getDefectStartTime(),"缺陷结束时间不能为空");
+        QtCheckTask taskOne = getOne(new LambdaQueryWrapper<QtCheckTask>()
+                .select(QtCheckTask::getId)
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getProductLineId, dto.getProductLine().getId())
+                .between(QtCheckTask::getFinishedTime,dto.getDefectStartTime(),dto.getDefectEndTime())
+                .last("LIMIT 1"));
+        if(Objects.isNull(taskOne)){
+            return 0L;
+        }
+        return taskOne.getId();
+    }
+
     /**
      * 任务列表
      *

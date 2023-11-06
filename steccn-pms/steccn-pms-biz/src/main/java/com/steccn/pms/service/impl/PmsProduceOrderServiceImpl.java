@@ -25,8 +25,10 @@ import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
@@ -40,6 +42,7 @@ import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
+import com.steccn.pms.mapper.PmsWorkOrderBatchMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
@@ -66,9 +69,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -99,6 +104,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
     private final RemoteItemFeignApi remoteItemFeignApi;
     private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
+    private final PmsWorkOrderBatchMapper pmsWorkOrderBatchMapper;
 
     @Autowired
     @Lazy
@@ -419,6 +425,78 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             pmsWorkOrderBatchVO.setProduceOrderCode(pmsProduceOrder.getCode());
         });
         return page.setRecords(res);
+    }
+
+    @Override
+    public PmsProduceOrderGanttChartVO produceOrderGanttChart(PmsProduceOrderGanttChartDTO dto) {
+        List<SysOfficeVO> sysOfficeVOS = Lists.newArrayList();
+        if(dto.getType().equals(OaConstant.NO)){
+            //基片
+            SysOfficeDTO officeDTO = new SysOfficeDTO();
+            officeDTO.setOfficeType("9");
+            officeDTO.setOfficeName(PmManagerConstant.UROPATAGIA);
+            List<SysOfficeVO> sysOfficeVOTmp1 = FeignOptional.of(() -> remoteOfficeFeign.getByTypeAndLine(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            sysOfficeVOS.addAll(sysOfficeVOTmp1.stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList()));
+            //深加工
+            officeDTO.setOfficeName(PmManagerConstant.DEEP_PROCESSING);
+            List<SysOfficeVO> sysOfficeVOTmp2 = FeignOptional.of(() -> remoteOfficeFeign.getByTypeAndLine(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            sysOfficeVOS.addAll(sysOfficeVOTmp2.stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList()));
+        }else if(dto.getType().equals(OaConstant.YES)){
+            //深加工
+            SysOfficeDTO officeDTO = new SysOfficeDTO();
+            officeDTO.setOfficeType("9");
+            officeDTO.setOfficeName(PmManagerConstant.DEEP_PROCESSING);
+            List<SysOfficeVO> sysOfficeVOTmp = FeignOptional.of(() -> remoteOfficeFeign.getByTypeAndLine(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            sysOfficeVOS.addAll(sysOfficeVOTmp.stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList()));
+        }else if(dto.getType().equals(OaConstant.NUM_2)){
+            //基片
+            SysOfficeDTO officeDTO = new SysOfficeDTO();
+            officeDTO.setOfficeType("9");
+            officeDTO.setOfficeName(PmManagerConstant.UROPATAGIA);
+            List<SysOfficeVO> sysOfficeVOTmp = FeignOptional.of(() -> remoteOfficeFeign.getByTypeAndLine(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            sysOfficeVOS.addAll(sysOfficeVOTmp.stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList()));
+        }
+        //拿到所有的产线id
+        List<Integer> officeIds = sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //查询对应的批次信息
+        List<PmsDefectDayOrderBasicDTO> pmsDefectDayOrderBasicDTOS = pmsWorkOrderBatchMapper.defectDay(officeIds, dto.getStartTime().atTime(LocalTime.MIN), dto.getEndTime().atTime(LocalTime.MAX));
+        //开始组数据
+        PmsProduceOrderGanttChartVO result = new PmsProduceOrderGanttChartVO();
+        //行
+        List<PmsProduceOrderGanttRowsVO> rows = Lists.newArrayList();
+        //过滤掉车间
+        sysOfficeVOS = sysOfficeVOS.stream().filter(v -> !v.getOfficeName().contains("车间")).collect(Collectors.toList());
+        sysOfficeVOS.forEach(tmp->{
+            rows.add(new PmsProduceOrderGanttRowsVO(PmManagerConstant.GANTT_PREFIX+tmp.getId(), tmp.getOfficeName()));
+        });
+        result.setRows(rows);
+        //信息
+        LocalDateTime now = LocalDateTime.now();
+        List<PmsProduceOrderGanttInfoVO> infos = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)){
+            for(PmsDefectDayOrderBasicDTO tmp:pmsDefectDayOrderBasicDTOS){
+                if(tmp.getProductLineId().equals(170)
+                        ||tmp.getProductLineId().equals(171)
+                        ||tmp.getProductLineId().equals(172)
+                        ||tmp.getProductLineId().equals(173)){
+                    continue;
+                }
+                PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
+                info.setId(tmp.getProduceOrderId());
+                info.setLabel(tmp.getProduceOrderCode());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductLineId());
+                info.setStatus(tmp.getState());
+                //若结束时间为空则取当前时间
+                if(Objects.isNull(tmp.getEndTime())){
+                    tmp.setEndTime(now);
+                }
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                info.setTime(timeStamp);
+                infos.add(info);
+            }
+        }
+        result.setInfos(infos);
+        return result;
     }
 
     @Override
