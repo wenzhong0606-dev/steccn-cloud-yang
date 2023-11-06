@@ -264,35 +264,56 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public PmsProduceOrderVO info(Long id) {
-        PmsProduceOrderVO result = new PmsProduceOrderVO();
+        //1、获取一条详情
+        PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
         PmsProduceOrder pmsProduceOrder = getById(id);
-        BeanUtil.copyProperties(pmsProduceOrder,result);
-        //1.查询字典数据
-        HashSet<Long> dictId = Sets.newHashSet();
-        dictId.add(result.getMinPackageUnitId());
-        dictId.add(result.getUnitId());
-        dictId.add(result.getTypeId());
-        if(CollUtil.isNotEmpty(dictId)){
-            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            result.setMinPackageUnit(dictMap.get(result.getMinPackageUnitId()));
-            result.setType(dictMap.get(result.getTypeId()));
-            result.setUnit(dictMap.get(result.getUnitId()));
+        BeanUtil.copyProperties(pmsProduceOrder,pmsProduceOrderVO);
+        //3.处理数据
+        Set<Long> dictIds = Sets.newHashSet(Sets.newHashSet(pmsProduceOrderVO.getTypeId(),pmsProduceOrderVO.getUnitId()));
+        Set<Integer> officeIds = Sets.newHashSet(pmsProduceOrderVO.getProductionLineId(),pmsProduceOrderVO.getCustomerId());
+        Set<Long> craftIds = Sets.newHashSet(pmsProduceOrderVO.getCraftId());
+        Set<Long> orderSet = Sets.newHashSet(pmsProduceOrderVO.getId());
+        Set<Long> craftSet = Sets.newHashSet(pmsProduceOrderVO.getId());
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(craftSet);
+        //获取物料信息
+        Map<Long, List<PmsWorkOrderBomVO>> materials = pmsWorkOrderBomService.materials(craftSet);
+        List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
+        List<PmsWorkOrderBomVO> bomVOList = Lists.newArrayList();
+        //4、 补充处理完工信息
+        Map<Long, PmsCompleteStorageNumDTO> map = pmsBarcodePrintService.orderSum(orderSet);
+        List<PmsProduceOrderCraftVO> orderCraftVOList = craftMap.getOrDefault(pmsProduceOrderVO.getId(), craftVOList);
+        List<PmsWorkOrderBomVO> orderBomVOList = materials.getOrDefault(pmsProduceOrderVO.getId(), bomVOList);
+        PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
+        pmsProduceOrderVO.setProcessList(orderCraftVOList);
+        pmsProduceOrderVO.setMaterialList(orderBomVOList);
+        if (Objects.nonNull(storageNumDTO)) {
+            pmsProduceOrderVO.setCompleteQuantity(storageNumDTO.getQuantity());
+            pmsProduceOrderVO.setCompleteUnitId(storageNumDTO.getUnitId());
+            dictIds.add(storageNumDTO.getUnitId());
         }
-        //2.查询机构数据
-        HashSet<Integer> officeId = Sets.newHashSet();
-        officeId.add(result.getCustomerId());
-        officeId.add(result.getProductionLineId());
-        if(CollUtil.isNotEmpty(officeId)){
-            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(pmsProduceOrder.getProductionLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            result.setCustomerName(officeMap.get(result.getCustomerId()));
-            result.setProductionLineName(officeMap.get(result.getProductionLineId()));
-        }
-        //3.工艺信息
-        if(Objects.nonNull(result.getCraftId())){
-            Map<Long, String> versionMap = pmCraftRouteService.versionById(Sets.newHashSet(result.getCraftId()));
-            result.setCraftVersion(versionMap.get(result.getCraftId()));
-        }
-        return result;
+        //4.1查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //4.2查询机构数据
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //4.3查询工艺信息
+        Map<Long, String> versionMap = pmCraftRouteService.versionById(craftIds);
+        //5.处理列表单位以及产线数据
+        //5.1 处理类型数据
+        pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
+        //5.2 处理产线数据
+        pmsProduceOrderVO.setProductionLineName(officeMap.get(pmsProduceOrderVO.getProductionLineId()));
+        //5.3 处理单位数据
+        pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
+        pmsProduceOrderVO.setMinPackageUnit(dictMap.get(pmsProduceOrderVO.getMinPackageUnitId()));
+        pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+        //5.4 处理工艺版本数据
+        pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
+        //5.4 处理完工数据
+        pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+        //客户名称
+        pmsProduceOrderVO.setCustomerName(officeMap.get(pmsProduceOrderVO.getCustomerId()));
+
+        return pmsProduceOrderVO;
     }
 
     /**
@@ -457,7 +478,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //拿到所有的产线id
         List<Integer> officeIds = sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         //查询对应的批次信息
-        List<PmsDefectDayOrderBasicDTO> pmsDefectDayOrderBasicDTOS = pmsWorkOrderBatchMapper.defectDay(officeIds, dto.getStartTime().atTime(LocalTime.MIN), dto.getEndTime().atTime(LocalTime.MAX));
+        List<PmsDefectDayOrderBasicDTO> pmsDefectDayOrderBasicDTOS = pmsWorkOrderBatchMapper.produceOrderGanttChart(officeIds, dto.getStartTime().atTime(LocalTime.MIN), dto.getEndTime().atTime(LocalTime.MAX));
         //开始组数据
         PmsProduceOrderGanttChartVO result = new PmsProduceOrderGanttChartVO();
         //行

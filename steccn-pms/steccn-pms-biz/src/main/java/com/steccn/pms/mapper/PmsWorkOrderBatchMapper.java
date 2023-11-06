@@ -29,6 +29,18 @@ public interface PmsWorkOrderBatchMapper extends BaseMapper<PmsWorkOrderBatch> {
     List<PmsDefectDayOrderBasicDTO> defectDay(@Param("lineList") List<Integer> lineList,
                                               @Param("begin") LocalDateTime begin,
                                               @Param("over") LocalDateTime over);
+
+    /**
+     * 生产报表甘特图
+     *
+     * @param lineList 产线id集合
+     * @param begin    开始时间
+     * @param over     结束时间
+     * @return
+     */
+    List<PmsDefectDayOrderBasicDTO> produceOrderGanttChart(@Param("lineList") List<Integer> lineList,
+                                              @Param("begin") LocalDateTime begin,
+                                              @Param("over") LocalDateTime over);
 }
 
 
