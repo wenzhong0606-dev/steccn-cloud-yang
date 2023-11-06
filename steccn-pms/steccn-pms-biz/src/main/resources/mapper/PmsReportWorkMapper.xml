@@ -773,7 +773,7 @@
         prw.start_time,
         prw.end_time,
         prw.class_date,
-        prw.classes_id,
+        prw.classes_id as classId,
         info.material_id,
         prw.station_id,
         prw.process_quantity quantity

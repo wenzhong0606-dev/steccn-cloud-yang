@@ -18,6 +18,11 @@ public class OutSourcingListDTO implements Serializable {
     private final static long serialVersionUID = 1L;
 
     /**
+     * 0-表示正常数据  1-表示小计（单规格） 2-表示合计（单供应商） 3-表示总计
+     */
+    private Integer type;
+
+    /**
      * 报工主键
      */
     private Long reportWorkId;
@@ -52,10 +57,17 @@ public class OutSourcingListDTO implements Serializable {
      */
     private Long classId;
 
+    private String className;
+
     /**
      * 物料主键
      */
     private Long materialId;
+
+    /**
+     * 物料名称
+     */
+    private String materialName;
 
     /**
      * 工位主键
@@ -68,8 +80,27 @@ public class OutSourcingListDTO implements Serializable {
     private BigDecimal quantity;
 
     /**
+     * 领用数-平方米
+     */
+    private BigDecimal quantitySq;
+
+    /**
      * 供应商编码
      */
     private String supplierCode;
+
+    /**
+     * 供应商名称
+     */
+    private String supplierName;
+
+    /**
+     * 规格
+     */
+    private String specifications;
+
+
+
+
 
 }

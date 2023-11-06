@@ -1,8 +1,10 @@
 package com.steccn.pms.vo;
 
+import com.steccn.pms.dto.OutSourcingListDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author yequan
@@ -13,6 +15,9 @@ import java.io.Serializable;
 public class OutsourcingDayReportVO implements Serializable {
 
     private final static long serialVersionUID = 1L;
+
+
+    private List<OutSourcingListDTO> dataList;
 
 
 }

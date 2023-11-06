@@ -1445,17 +1445,70 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         LocalDateTime begin = LocalDateUtil.getMorning(dto.getStart());
         LocalDateTime over = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
         List<OutSourcingListDTO> batchList = pmsReportWorkMapper.outsourcingClass(dto.getProductLineList(), begin, over);
+        OutsourcingDayReportVO resVo = new OutsourcingDayReportVO();
+
         if (CollUtil.isNotEmpty(batchList)) {
+            List<OutSourcingListDTO> dataList = Lists.newArrayList();
+            resVo.setDataList(dataList);
             Set<Long> materialIdSet = batchList.stream().map(OutSourcingListDTO::getMaterialId).collect(Collectors.toSet());
             Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            log.info("{}", batchList);
             //查询所有报工的物料消耗关联的供应商
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "换算单位1不存在");
+            Assert.notNull(sysDict2, "换算单位2不存在");
+
+            SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(morningDict, "早班数据字典不存在");
+            Assert.notNull(nightDict, "晚班数据字典不存在");
+
             Set<Long> rwIdSet = batchList.stream().map(OutSourcingListDTO::getReportWorkId).collect(Collectors.toSet());
             Map<Long, String> rwLinkSupplierMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.rwLinkSupplier(rwIdSet), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-           log.info("rwLinkSupplierMap -> {}",rwLinkSupplierMap);
+            batchList.forEach(ele -> {
+                ele.setSupplierCode(rwLinkSupplierMap.get(ele.getReportWorkId()));
+                EqpSpareVO eqp = materialMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
+                ele.setMaterialName(eqp.getName());
+                ele.setSpecifications(eqp.getSpecifications());
+                BigDecimal quantitySq = UnitConvertUtil.convertMaterial(convertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                ele.setQuantitySq(quantitySq);
+            });
+           //根据供应商，规格，班次日期，产线，班次，物料名称
+            Map<String, List<OutSourcingListDTO>> supplierMap = batchList.stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSupplierCode));
+            for (Map.Entry<String, List<OutSourcingListDTO>> supplierEntry : supplierMap.entrySet()) {
+                //基于规格分组
+                Map<String, List<OutSourcingListDTO>> specMap = supplierEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSpecifications));
+                for (Map.Entry<String, List<OutSourcingListDTO>> specEntry : specMap.entrySet()) {
+                     //基于班次日期分组
+                    Map<LocalDate, List<OutSourcingListDTO>> classDateMap = specEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getClassDate));
+                    for (Map.Entry<LocalDate, List<OutSourcingListDTO>> classDateEntry : classDateMap.entrySet()) {
+                        //基于产线，班次，生产批次，物料名称
+                        Map<String, List<OutSourcingListDTO>> gpMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(v -> JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, v.getProductLineId(), v.getClassId(), v.getBatchNo(), v.getMaterialName())));
+                        for (Map.Entry<String, List<OutSourcingListDTO>> gpEntry : gpMap.entrySet()) {
+                              //聚合计算
+                            OutSourcingListDTO dataRow = gpEntry.getValue().get(0);
+                            List<BigDecimal> quantityList = Lists.newArrayList();
+                            List<BigDecimal> quantitySqList = Lists.newArrayList();
+                            gpEntry.getValue().forEach(ele ->{
+                                quantityList.add(ele.getQuantity());
+                                quantitySqList.add(ele.getQuantitySq());
+                            });
+                            if (morningDict.getId().equals(dataRow.getClassId())) {
+                                dataRow.setClassName(morningDict.getName());
+                            }else{
+                                dataRow.setClassName(nightDict.getName());
+                            }
+                            dataRow.setType(0);
+                            dataRow.setQuantity(BigDecimalUtil.sum(quantityList));
+                            dataRow.setQuantitySq(BigDecimalUtil.sum(quantitySqList));
+                            dataList.add(dataRow);
+                        }
+                    }
+                }
+            }
         }
-        return null;
+        return resVo;
     }
 
     /**
