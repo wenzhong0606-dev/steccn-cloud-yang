@@ -58,4 +58,16 @@ public class IntegerUtil {
         return sum;
     }
 
+    /**
+     * 格式化元素
+     * @param ele 元素
+     * @return
+     */
+    public static String format(Integer ele){
+        if(Objects.nonNull(ele)){
+            return ele.toString();
+        }
+        return null;
+    }
+
 }

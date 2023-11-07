@@ -1498,6 +1498,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             resVo.setDataList(dataList);
             Set<Long> materialIdSet = batchList.stream().map(OutSourcingListDTO::getMaterialId).collect(Collectors.toSet());
             Set<String> batchNoSet = batchList.stream().map(OutSourcingListDTO::getBatchNo).collect(Collectors.toSet());
+            Set<String> supplierSet = batchList.stream().map(OutSourcingListDTO::getSupplierCode).collect(Collectors.toSet());
+            Map<String, SysOfficeVO> supplierCodeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(supplierSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //查询所有报工的物料消耗关联的供应商
@@ -1542,9 +1544,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
            //根据供应商，规格，班次日期，产线，班次，物料名称
             Map<String, List<OutSourcingListDTO>> supplierMap = batchList.stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSupplierCode));
             for (Map.Entry<String, List<OutSourcingListDTO>> supplierEntry : supplierMap.entrySet()) {
+                String supplierName = supplierCodeMap.getOrDefault(supplierEntry.getKey(), new SysOfficeVO()).getOfficeName();
                 //基于规格分组
                 Map<String, List<OutSourcingListDTO>> specMap = supplierEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSpecifications));
                 for (Map.Entry<String, List<OutSourcingListDTO>> specEntry : specMap.entrySet()) {
+                    //定义规格的统计map
+                    Map<String, BigDecimal> specCountBdMap = Maps.newHashMap();
+                    Map<String, Integer> specCountIntMap = Maps.newHashMap();
                      //基于班次日期分组
                     Map<LocalDate, List<OutSourcingListDTO>> classDateMap = specEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getClassDate));
                     for (Map.Entry<LocalDate, List<OutSourcingListDTO>> classDateEntry : classDateMap.entrySet()) {
@@ -1567,7 +1573,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 dataRow.setClassIdInt(1);
                             }
                             List<FurtherValueStrVO> furtherValueStrVOList = Lists.newArrayList();
-                            List<Integer> numList = Lists.newArrayList();
+                            List<String> numList = Lists.newArrayList();
                             Integer defectSum = null;
                             //根据产线，物料id，批次号，班次日期，班次，缺陷获取缺陷数
                             for (QtDefectiveItemVO ele : defectItemList) {
@@ -1577,25 +1583,64 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                         a.getClassesDate().isEqual(dataRow.getClassDate()) &&
                                         a.getClassId().equals(dataRow.getClassIdInt())).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
                                 Integer sum = IntegerUtil.sum(defectList);
-                                numList.add(sum);
+                                MapUtil.add(specCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
+                                numList.add(IntegerUtil.format(sum));
                                 defectSum = IntegerUtil.add(sum, defectSum);
                             }
 
                             dataRow.setModule(furtherValueStrVOList);
-                            dataRow.setDefectNumList(numList);
+                            FurtherValueStrVO onlyEle = new FurtherValueStrVO();
+                            onlyEle.setValue(numList);
+                            dataRow.setModule(Lists.newArrayList(onlyEle));
                             dataRow.setType(0);
                             dataRow.setQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(quantityList), UnitLengthUtil.UNIT_PIECE_LENGTH));
                             dataRow.setQuantitySq(BigDecimalUtil.sum(quantitySqList));
                             dataRow.setDefectNum(defectSum);
                             dataRow.setDefectRate(BigDecimalUtil.percent(BigDecimalUtil.valueOf(dataRow.getDefectNum()), dataRow.getQuantity()));
                             dataList.add(dataRow);
+
+                            MapUtil.add(specCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(specCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(specCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
+
                         }
                     }
+
+                    //插入小计（单规格）
+                    dataList.add(outSourcingCountRow(1, supplierName, "小计（单规格）", defectItemList, specCountBdMap, specCountIntMap));
                 }
             }
         }
         return resVo;
     }
+
+    /**
+     * 外购原片不良日报表插入小计行
+     * @param type 类型
+     * @param supplierName 供应商名称
+     * @param spec 规格
+     * @param defectItemList 缺陷项
+     * @param bdMap 统计map
+     * @param intMap 统计map
+     * @return
+     */
+    private OutSourcingListDTO outSourcingCountRow(Integer type, String supplierName, String spec, List<QtDefectiveItemVO> defectItemList, Map<String, BigDecimal> bdMap, Map<String, Integer> intMap) {
+        OutSourcingListDTO model = new OutSourcingListDTO();
+        model.setType(type);
+        model.setSupplierName(supplierName);
+        model.setSpecifications(spec);
+        model.setQuantity(bdMap.get("0"));
+        model.setQuantitySq(bdMap.get("1"));
+        List<String> numList = Lists.newArrayList();
+        defectItemList.forEach(ele -> numList.add(IntegerUtil.format(intMap.get(ele.getCode()))));
+        model.setDefectNum(intMap.get("0"));
+        FurtherValueStrVO onlyEle = new FurtherValueStrVO();
+        onlyEle.setValue(numList);
+        model.setModule(Lists.newArrayList(onlyEle));
+        model.setDefectRate(BigDecimalUtil.percent(BigDecimalUtil.valueOf(model.getDefectNum()), model.getQuantity()));
+        return model;
+    }
+
 
     /**
      * 获取总计行或者单规格行

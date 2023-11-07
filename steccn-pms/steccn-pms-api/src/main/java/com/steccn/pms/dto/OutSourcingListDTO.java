@@ -112,8 +112,6 @@ public class OutSourcingListDTO implements Serializable {
     /**
      * 缺陷数据
      */
-    private List<Integer> defectNumList;
-
     private List<FurtherValueStrVO> module;
 
     /**
