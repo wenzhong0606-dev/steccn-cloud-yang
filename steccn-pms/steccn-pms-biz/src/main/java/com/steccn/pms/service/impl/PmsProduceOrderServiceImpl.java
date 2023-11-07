@@ -508,7 +508,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 info.setStatus(tmp.getState());
                 //若结束时间为空则取当前时间
                 if(Objects.isNull(tmp.getEndTime())){
-                    tmp.setEndTime(now);
+                    if(Objects.nonNull(tmp.getPlanEndTime())){
+                        tmp.setEndTime(tmp.getPlanEndTime());
+                    }else {
+                        tmp.setEndTime(now);
+                    }
                 }
                 PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
                 info.setTime(timeStamp);
