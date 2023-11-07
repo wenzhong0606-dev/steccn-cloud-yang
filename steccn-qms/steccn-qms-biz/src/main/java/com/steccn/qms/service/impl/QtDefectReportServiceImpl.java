@@ -1206,6 +1206,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             if(Objects.nonNull(convertRate)){
                 row.setConvertRate(convertRate.toString()+"%");
             }
+            BigDecimal weightRate = BigDecimalUtil.percent(row.getWeight(),row.getPullAmount(),2);
+            if(Objects.nonNull(weightRate)){
+                row.setWeightRate(weightRate.toString()+"%");
+            }
             tableData.add(row);
         }
         //总计
@@ -1222,6 +1226,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             convertRate = BigDecimal.ZERO;
         }
         row.setConvertRate(convertRate.toString()+"%");
+        BigDecimal weightRate = BigDecimalUtil.percent(row.getWeight(),row.getPullAmount(),2);
+        if(Objects.nonNull(weightRate)){
+            row.setWeightRate(weightRate.toString()+"%");
+        }
         tableData.add(row);
         result.setTableList(tableData);
         return result;
