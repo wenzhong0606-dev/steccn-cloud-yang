@@ -55,6 +55,7 @@ import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
+import feign.Feign;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -1451,6 +1452,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             List<OutSourcingListDTO> dataList = Lists.newArrayList();
             resVo.setDataList(dataList);
             Set<Long> materialIdSet = batchList.stream().map(OutSourcingListDTO::getMaterialId).collect(Collectors.toSet());
+            Set<String> batchNoSet = batchList.stream().map(OutSourcingListDTO::getBatchNo).collect(Collectors.toSet());
             Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //查询所有报工的物料消耗关联的供应商
@@ -1458,6 +1460,18 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Assert.notNull(sysDict1, "换算单位1不存在");
             Assert.notNull(sysDict2, "换算单位2不存在");
+
+            //获取批次的缺陷信息
+            QtChartParamDTO qtChartParamDTO = new QtChartParamDTO();
+            //获取在线检缺陷
+            qtChartParamDTO.setDateStart(dto.getStart());
+            qtChartParamDTO.setDateEnd(dto.getEnd().plusDays(1));
+            qtChartParamDTO.setProductLineIdList(dto.getProductLineList());
+            qtChartParamDTO.setProductBatchList(Lists.newArrayList(batchNoSet));
+            List<QtCheckTaskDetailReportVO> checkTaskList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.defectFlat(qtChartParamDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+
+            //获取原片不良的缺陷项集合
+            List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1496,9 +1510,22 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             });
                             if (morningDict.getId().equals(dataRow.getClassId())) {
                                 dataRow.setClassName(morningDict.getName());
+                                dataRow.setClassIdInt(0);
                             }else{
                                 dataRow.setClassName(nightDict.getName());
+                                dataRow.setClassIdInt(1);
                             }
+                            List<Integer> numList = Lists.newArrayList();
+                            //根据产线，物料id，批次号，班次日期，班次，缺陷获取缺陷数
+                            defectItemList.forEach(ele ->{
+                                List<Integer> defectList = checkTaskList.stream().filter(a -> a.getProductLineId().equals(dataRow.getProductLineId()) &&
+                                        a.getProductBatch().equals(dataRow.getBatchNo()) &&
+                                        a.getDefectCode().equals(ele.getCode()) &&
+                                        a.getClassesDate().isEqual(dataRow.getClassDate()) &&
+                                        a.getClassId().equals(dataRow.getClassIdInt())).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
+                                numList.add(IntegerUtil.sum(defectList));
+                            });
+                            dataRow.setDefectNumList(numList);
                             dataRow.setType(0);
                             dataRow.setQuantity(BigDecimalUtil.sum(quantityList));
                             dataRow.setQuantitySq(BigDecimalUtil.sum(quantitySqList));

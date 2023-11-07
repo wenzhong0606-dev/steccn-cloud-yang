@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -57,6 +58,14 @@ public class OutSourcingListDTO implements Serializable {
      */
     private Long classId;
 
+    /**
+     * 班次-int
+     */
+    private Integer classIdInt;
+
+    /**
+     * 班次名称
+     */
     private String className;
 
     /**
@@ -99,6 +108,7 @@ public class OutSourcingListDTO implements Serializable {
      */
     private String specifications;
 
+    private List<Integer> defectNumList;
 
 
 
