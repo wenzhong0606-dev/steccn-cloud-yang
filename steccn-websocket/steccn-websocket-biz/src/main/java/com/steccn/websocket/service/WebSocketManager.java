@@ -87,7 +87,7 @@ public class WebSocketManager {
                             sb.append(webSocketServer.getUserId()).append(",");
                         } catch (Exception e) {
                             entry.getValue().remove(webSocketServer);
-                            log.debug("uid = {} , 心跳断开");
+                            log.info("uid = {} , 心跳断开");
                             log.error(e.getLocalizedMessage());
                         }
                     }
@@ -95,7 +95,7 @@ public class WebSocketManager {
                     webSocketMap.remove(entry.getKey());
                 }
             }
-            log.debug("客户端心跳检测结果: " + sb + "连接正在运行");
+            log.info("客户端心跳检测结果: " + sb + "连接正在运行");
         }
     }
 
