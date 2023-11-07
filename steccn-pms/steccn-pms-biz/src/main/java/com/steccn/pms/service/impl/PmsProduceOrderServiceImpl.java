@@ -490,6 +490,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         });
         result.setRows(rows);
         //信息
+        //1、执行中的批次信息
         LocalDateTime now = LocalDateTime.now();
         List<PmsProduceOrderGanttInfoVO> infos = Lists.newArrayList();
         if(CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)){
@@ -514,6 +515,30 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 infos.add(info);
             }
         }
+        //2、找到计划中的订单(已创建，已下达)
+        List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .and(lq->lq.between(PmsProduceOrder::getPlanStartTime, dto.getStartTime(), dto.getEndTime()).or().between(PmsProduceOrder::getPlanEndTime, dto.getStartTime(), dto.getEndTime()))
+                .and(lq->lq.eq(PmsProduceOrder::getState, OaConstant.NO).or().eq(PmsProduceOrder::getState, OaConstant.YES))
+                .in(PmsProduceOrder::getProductionLineId, officeIds));
+        if(CollUtil.isNotEmpty(orderList)){
+            for(PmsProduceOrder tmp:orderList){
+                if(tmp.getProductionLineId().equals(170)
+                        ||tmp.getProductionLineId().equals(171)
+                        ||tmp.getProductionLineId().equals(172)
+                        ||tmp.getProductionLineId().equals(173)){
+                    continue;
+                }
+                PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
+                info.setId(tmp.getId());
+                info.setLabel(tmp.getCode());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductionLineId());
+                info.setStatus(tmp.getState());
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getPlanStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getPlanEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                info.setTime(timeStamp);
+                infos.add(info);
+            }
+        }
+
         result.setInfos(infos);
         return result;
     }
