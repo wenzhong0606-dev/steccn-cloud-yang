@@ -1447,7 +1447,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         LocalDateTime over = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
         List<OutSourcingListDTO> batchList = pmsReportWorkMapper.outsourcingClass(dto.getProductLineList(), begin, over);
         OutsourcingDayReportVO resVo = new OutsourcingDayReportVO();
-
         if (CollUtil.isNotEmpty(batchList)) {
             List<OutSourcingListDTO> dataList = Lists.newArrayList();
             resVo.setDataList(dataList);
@@ -1472,6 +1471,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
             //获取原片不良的缺陷项集合
             List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //构建表头
+            List<BaseReportHeaderVO> headerList = Lists.newArrayList();
+            List<String> nameList = Lists.newArrayList();
+            defectItemList.forEach(ele -> nameList.add(ele.getName()));
+            headerList.add(new BaseReportHeaderVO("原片不良", nameList));
+            resVo.setHeaderList(headerList);
 
             SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1515,20 +1520,28 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 dataRow.setClassName(nightDict.getName());
                                 dataRow.setClassIdInt(1);
                             }
+                            List<FurtherValueStrVO> furtherValueStrVOList = Lists.newArrayList();
                             List<Integer> numList = Lists.newArrayList();
+                            Integer defectSum = null;
                             //根据产线，物料id，批次号，班次日期，班次，缺陷获取缺陷数
-                            defectItemList.forEach(ele ->{
+                            for (QtDefectiveItemVO ele : defectItemList) {
                                 List<Integer> defectList = checkTaskList.stream().filter(a -> a.getProductLineId().equals(dataRow.getProductLineId()) &&
                                         a.getProductBatch().equals(dataRow.getBatchNo()) &&
                                         a.getDefectCode().equals(ele.getCode()) &&
                                         a.getClassesDate().isEqual(dataRow.getClassDate()) &&
                                         a.getClassId().equals(dataRow.getClassIdInt())).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
-                                numList.add(IntegerUtil.sum(defectList));
-                            });
+                                Integer sum = IntegerUtil.sum(defectList);
+                                numList.add(sum);
+                                defectSum = IntegerUtil.add(sum, defectSum);
+                            }
+
+                            dataRow.setModule(furtherValueStrVOList);
                             dataRow.setDefectNumList(numList);
                             dataRow.setType(0);
-                            dataRow.setQuantity(BigDecimalUtil.sum(quantityList));
+                            dataRow.setQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(quantityList), UnitLengthUtil.UNIT_PIECE_LENGTH));
                             dataRow.setQuantitySq(BigDecimalUtil.sum(quantitySqList));
+                            dataRow.setDefectNum(defectSum);
+                            dataRow.setDefectRate(BigDecimalUtil.percent(BigDecimalUtil.valueOf(dataRow.getDefectNum()), dataRow.getQuantity()));
                             dataList.add(dataRow);
                         }
                     }

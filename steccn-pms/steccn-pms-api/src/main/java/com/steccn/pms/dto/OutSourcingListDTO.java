@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.steccn.pms.vo.FurtherValueStrVO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -108,9 +109,22 @@ public class OutSourcingListDTO implements Serializable {
      */
     private String specifications;
 
+    /**
+     * 缺陷数据
+     */
     private List<Integer> defectNumList;
 
+    private List<FurtherValueStrVO> module;
 
+    /**
+     * 缺陷数
+     */
+    private Integer defectNum;
+
+    /**
+     * 不良率
+     */
+    private BigDecimal defectRate;
 
 
 }

@@ -1,6 +1,7 @@
 package com.steccn.pms.vo;
 
 import com.steccn.pms.dto.OutSourcingListDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,8 +17,16 @@ public class OutsourcingDayReportVO implements Serializable {
 
     private final static long serialVersionUID = 1L;
 
+    /**
+     * 表头
+     */
+    private List<BaseReportHeaderVO> headerList;
 
+    /**
+     *  数据集合
+     */
     private List<OutSourcingListDTO> dataList;
+
 
 
 }
