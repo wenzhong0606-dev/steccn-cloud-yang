@@ -58,6 +58,7 @@ import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import feign.Feign;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -1542,8 +1543,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 ele.setQuantitySq(quantitySq);
             });
            //根据供应商，规格，班次日期，产线，班次，物料名称
+            Map<String, BigDecimal> totalCountBdMap = Maps.newHashMap();
+            Map<String, Integer> totalCountIntMap = Maps.newHashMap();
             Map<String, List<OutSourcingListDTO>> supplierMap = batchList.stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSupplierCode));
             for (Map.Entry<String, List<OutSourcingListDTO>> supplierEntry : supplierMap.entrySet()) {
+                //定义规格的统计map
+                Map<String, BigDecimal> supplierCountBdMap = Maps.newHashMap();
+                Map<String, Integer> supplierCountIntMap = Maps.newHashMap();
                 String supplierName = supplierCodeMap.getOrDefault(supplierEntry.getKey(), new SysOfficeVO()).getOfficeName();
                 //基于规格分组
                 Map<String, List<OutSourcingListDTO>> specMap = supplierEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSpecifications));
@@ -1584,6 +1590,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                         a.getClassId().equals(dataRow.getClassIdInt())).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
                                 Integer sum = IntegerUtil.sum(defectList);
                                 MapUtil.add(specCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
+                                MapUtil.add(supplierCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
+                                MapUtil.add(totalCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
                                 numList.add(IntegerUtil.format(sum));
                                 defectSum = IntegerUtil.add(sum, defectSum);
                             }
@@ -1602,14 +1610,22 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             MapUtil.add(specCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
                             MapUtil.add(specCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
                             MapUtil.add(specCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
-
+                            MapUtil.add(supplierCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(supplierCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(supplierCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
+                            MapUtil.add(totalCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(totalCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(totalCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
                         }
                     }
-
                     //插入小计（单规格）
                     dataList.add(outSourcingCountRow(1, supplierName, "小计（单规格）", defectItemList, specCountBdMap, specCountIntMap));
                 }
+                //插入合计（单供应商）
+                dataList.add(outSourcingCountRow(2, supplierName, "合计（单供应商）", defectItemList, supplierCountBdMap, supplierCountIntMap));
             }
+            //插入总计
+            dataList.add(outSourcingCountRow(3, "总计", Strings.EMPTY, defectItemList, totalCountBdMap, totalCountIntMap));
         }
         return resVo;
     }
