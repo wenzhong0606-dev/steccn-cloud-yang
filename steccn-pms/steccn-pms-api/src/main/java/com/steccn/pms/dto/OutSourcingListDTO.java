@@ -40,6 +40,11 @@ public class OutSourcingListDTO implements Serializable {
     private Integer productLineId;
 
     /**
+     * 产线名称
+     */
+    private String productLineName;
+
+    /**
      * 缺陷开始时间
      */
     private LocalDateTime startTime;

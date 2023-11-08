@@ -1530,10 +1530,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (CollUtil.isNotEmpty(batchList)) {
             List<OutSourcingListDTO> dataList = Lists.newArrayList();
             resVo.setDataList(dataList);
-            Set<Long> materialIdSet = batchList.stream().map(OutSourcingListDTO::getMaterialId).collect(Collectors.toSet());
-            Set<String> batchNoSet = batchList.stream().map(OutSourcingListDTO::getBatchNo).collect(Collectors.toSet());
-            Set<String> supplierSet = batchList.stream().map(OutSourcingListDTO::getSupplierCode).collect(Collectors.toSet());
+            Set<Long> materialIdSet = Sets.newHashSet();
+            Set<String> batchNoSet = Sets.newHashSet();
+            Set<String> supplierSet = Sets.newHashSet();
+            Set<Integer> lineIdSet = Sets.newHashSet();
+            batchList.forEach(ele -> {
+                materialIdSet.add(ele.getMaterialId());
+                batchNoSet.add(ele.getBatchNo());
+                supplierSet.add(ele.getSupplierCode());
+                lineIdSet.add(ele.getProductLineId());
+            });
+
             Map<String, SysOfficeVO> supplierCodeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(supplierSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //查询所有报工的物料消耗关联的供应商
@@ -1651,8 +1660,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             dataRow.setQuantitySq(BigDecimalUtil.sum(quantitySqList));
                             dataRow.setDefectNum(defectSum);
                             dataRow.setDefectRate(BigDecimalUtil.percent(BigDecimalUtil.valueOf(dataRow.getDefectNum()), dataRow.getQuantity()));
+                            //获取产线名称
+                            dataRow.setProductLineName(lineIdNameMap.get(dataRow.getProductLineId()));
                             dataList.add(dataRow);
-
                             MapUtil.add(specCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
                             MapUtil.add(specCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
                             MapUtil.add(specCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
