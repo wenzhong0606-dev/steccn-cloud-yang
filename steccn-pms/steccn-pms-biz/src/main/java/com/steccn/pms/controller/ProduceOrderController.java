@@ -81,6 +81,13 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
+    @ApiOperation("生产订单编辑计划时间")
+    @PutMapping("/planTime")
+    @SysLog("生产订单编辑")
+    public R<Boolean> editPlanTime(@RequestBody PmsProduceOrderDTO dto) {
+        return R.success(pmsProduceOrderService.editPlanTime(dto));
+    }
+
     @ApiOperation("获取生产订单批次分页列表")
     @PostMapping("/batch/info")
     public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto) {
@@ -218,6 +225,12 @@ public class ProduceOrderController {
     @PostMapping("/repaire/batch")
     public R<RepaireBatchVO> repaireBatchList(@RequestBody RepaireBatchListDTO dto) {
         return R.success(pmsProduceOrderService.repaireBatchList(dto));
+    }
+
+    @ApiOperation("外购原片不良日报表")
+    @PostMapping("/outsourcing")
+    public R<OutsourcingDayReportVO> outsourcing(@Valid @RequestBody DayReportCommonDTO dto) {
+        return R.success(pmsProduceOrderService.outsourcing(dto));
     }
 
 }

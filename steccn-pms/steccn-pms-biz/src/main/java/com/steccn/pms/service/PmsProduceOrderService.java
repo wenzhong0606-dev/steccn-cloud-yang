@@ -53,6 +53,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Boolean edit(PmsProduceOrderDTO dto);
 
     /**
+     * 编辑计划时间
+     * @param dto
+     * @return
+     */
+    Boolean editPlanTime(PmsProduceOrderDTO dto);
+
+    /**
      * 根据订单获取批次分页列表
      *
      * @param dto
@@ -279,4 +286,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     RepaireBatchVO repaireBatchList(RepaireBatchListDTO dto);
+
+    /**
+     * 外购原片不良日报表
+     * @param dto dto
+     * @return
+     */
+    OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto);
 }

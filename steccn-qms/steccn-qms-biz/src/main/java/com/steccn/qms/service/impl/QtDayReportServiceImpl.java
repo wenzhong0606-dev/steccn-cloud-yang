@@ -1231,7 +1231,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         allData.forEach(tmp -> {
             defectAndLuo.add(tmp.getReason());
             //转换localDate
-            tmp.setWorkOrderDate(LocalDate.parse(tmp.getWorkOrderTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
+                tmp.setWorkOrderTime(tmp.getWorkOrderDate().toString());
+            }else {
+                tmp.setWorkOrderDate(LocalDate.parse(tmp.getWorkOrderTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            }
         });
         //拿到所有的缺陷项code
         LambdaQueryWrapper defectCondition = new LambdaQueryWrapper<QtDefectiveItem>()

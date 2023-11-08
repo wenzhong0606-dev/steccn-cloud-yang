@@ -55,4 +55,29 @@
             #{lineId}
         </foreach>
     </select>
+
+    <select id="produceOrderGanttChart" resultType="com.steccn.pms.dto.PmsDefectDayOrderBasicDTO">
+        SELECT
+        o.id as produceOrderId,
+        o.`code` as produceOrderCode,
+        o.production_line_id as productLineId,
+        batch.start_time,
+        batch.end_time ,
+        o.material_id,
+        o.material_name,
+        o.customer_id as customerId,
+        o.plan_end_time as planEndTime,
+        o.state as state
+        FROM
+        pms_work_order_batch batch
+        JOIN pms_produce_order o ON batch.produce_order_id = o.id
+        WHERE
+        batch.del_flag = 0
+        AND o.del_flag = 0
+        AND (batch.start_time &gt;= #{begin} AND batch.start_time &lt;= #{over} OR batch.end_time &gt;= #{begin} AND batch.end_time &lt;= #{over})
+        AND o.production_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+    </select>
 </mapper>

@@ -14,6 +14,8 @@ import com.steccn.wms.vo.WmsStorageReceiptVO;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author W10
@@ -147,4 +149,11 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     String salesReceiptAdd(SalesStorageReceiptDTO dto);
+
+    /**
+     * 报工关联供应商
+     * @param rwIdSet 报工主键集合
+     * @return
+     */
+    Map<Long, String> rwLinkSupplier(Set<Long> rwIdSet);
 }

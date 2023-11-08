@@ -36,6 +36,7 @@ public class WebSocketManager {
             if (CollUtil.isEmpty(v)) {
                 v = new CopyOnWriteArraySet<>();
             }
+            log.info("addWsServer [用户建立连接] userid -> {}", userId);
             v.add(webSocketServer);
             return v;
         });
@@ -49,6 +50,7 @@ public class WebSocketManager {
     public static void removeWsServer(Long userId, WebSocketServer webSocketServer) {
         webSocketMap.compute(userId, (k, v) -> {
             if (CollUtil.isNotEmpty(v)) {
+                log.info("removeWsServer [用户删除连接] userid -> {}",userId);
                 v.remove(webSocketServer);
             }
             return v;
@@ -87,7 +89,7 @@ public class WebSocketManager {
                             sb.append(webSocketServer.getUserId()).append(",");
                         } catch (Exception e) {
                             entry.getValue().remove(webSocketServer);
-                            log.debug("uid = {} , 心跳断开");
+                            log.info("userid = {} , 心跳断开", webSocketServer.getUserId());
                             log.error(e.getLocalizedMessage());
                         }
                     }
@@ -95,7 +97,7 @@ public class WebSocketManager {
                     webSocketMap.remove(entry.getKey());
                 }
             }
-            log.debug("客户端心跳检测结果: " + sb + "连接正在运行");
+            log.info("客户端心跳检测结果: " + sb + "连接正在运行");
         }
     }
 
@@ -111,6 +113,7 @@ public class WebSocketManager {
                 try {
                     Session session = webSocketServer.getSession();
                     if (session.isOpen()) {
+                        log.info("【websocket消息】广播消息: user entry -> {}, message -> {}", entry, message);
                         session.getAsyncRemote().sendText(message);
                     }
                 } catch (Exception e) {
@@ -146,9 +149,9 @@ public class WebSocketManager {
      * @param message 消息内容
      */
     public static void sendMessageToOnlineUser(String message) {
+        log.info("给在线用户发送消息");
         try {
             for (Map.Entry<Long, CopyOnWriteArraySet<WebSocketServer>> entry : webSocketMap.entrySet()) {
-                log.debug("【websocket消息】 单点 用户：{}  消息: {}", entry.getKey(), message);
                 CopyOnWriteArraySet<WebSocketServer> webSocketServers = entry.getValue();
                 for (WebSocketServer webSocketServer : webSocketServers) {
                     sendOneMessage(webSocketServer, message);
@@ -167,10 +170,10 @@ public class WebSocketManager {
      * @param message         消息内容
      */
     public static void sendOneMessage(WebSocketServer webSocketServer, String message) {
-        log.debug("【websocket消息】 单点 用户：{}  消息: {}", webSocketServer.getUserId(), message);
         try {
             Session session = webSocketServer.getSession();
             if (session.isOpen()) {
+                log.info("【websocket消息】 单点 用户：{}  消息: {}", webSocketServer.getUserId(), message);
                 session.getAsyncRemote().sendText(message);
             }
         } catch (Exception e) {
@@ -185,7 +188,6 @@ public class WebSocketManager {
      * @param message    消息内容
      */
     public static void sendMoreMessage(List<Long> userIdList, String message) {
-        log.debug("【websocket消息】 组播消息:" + message);
         if (CollUtil.isNotEmpty(userIdList)) {
             for (Long userId : userIdList) {
                 CopyOnWriteArraySet<WebSocketServer> webSocketServers = webSocketMap.get(userId);
@@ -194,6 +196,7 @@ public class WebSocketManager {
                         try {
                             Session session = webSocketServer.getSession();
                             if (session.isOpen()) {
+                                log.info("【websocket消息】 组播 用户：{}  消息: {}", webSocketServer.getUserId(), message);
                                 session.getAsyncRemote().sendText(message);
                             }
                         } catch (Exception e) {

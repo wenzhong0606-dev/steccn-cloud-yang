@@ -22,6 +22,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.constant.OaConstant;
@@ -53,8 +54,11 @@ import com.steccn.qms.feign.RemoteItemFeignApi;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
+import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
+import feign.Feign;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -71,6 +75,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -98,9 +103,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final OaInfoService oaInfoService;
-    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
     private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
     private final RemoteItemFeignApi remoteItemFeignApi;
+    private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
     private final PmsWorkOrderBatchMapper pmsWorkOrderBatchMapper;
 
     @Autowired
@@ -263,35 +268,56 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public PmsProduceOrderVO info(Long id) {
-        PmsProduceOrderVO result = new PmsProduceOrderVO();
+        //1、获取一条详情
+        PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
         PmsProduceOrder pmsProduceOrder = getById(id);
-        BeanUtil.copyProperties(pmsProduceOrder,result);
-        //1.查询字典数据
-        HashSet<Long> dictId = Sets.newHashSet();
-        dictId.add(result.getMinPackageUnitId());
-        dictId.add(result.getUnitId());
-        dictId.add(result.getTypeId());
-        if(CollUtil.isNotEmpty(dictId)){
-            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            result.setMinPackageUnit(dictMap.get(result.getMinPackageUnitId()));
-            result.setType(dictMap.get(result.getTypeId()));
-            result.setUnit(dictMap.get(result.getUnitId()));
+        BeanUtil.copyProperties(pmsProduceOrder,pmsProduceOrderVO);
+        //3.处理数据
+        Set<Long> dictIds = Sets.newHashSet(Sets.newHashSet(pmsProduceOrderVO.getTypeId(),pmsProduceOrderVO.getUnitId()));
+        Set<Integer> officeIds = Sets.newHashSet(pmsProduceOrderVO.getProductionLineId(),pmsProduceOrderVO.getCustomerId());
+        Set<Long> craftIds = Sets.newHashSet(pmsProduceOrderVO.getCraftId());
+        Set<Long> orderSet = Sets.newHashSet(pmsProduceOrderVO.getId());
+        Set<Long> craftSet = Sets.newHashSet(pmsProduceOrderVO.getId());
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(craftSet);
+        //获取物料信息
+        Map<Long, List<PmsWorkOrderBomVO>> materials = pmsWorkOrderBomService.materials(craftSet);
+        List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
+        List<PmsWorkOrderBomVO> bomVOList = Lists.newArrayList();
+        //4、 补充处理完工信息
+        Map<Long, PmsCompleteStorageNumDTO> map = pmsBarcodePrintService.orderSum(orderSet);
+        List<PmsProduceOrderCraftVO> orderCraftVOList = craftMap.getOrDefault(pmsProduceOrderVO.getId(), craftVOList);
+        List<PmsWorkOrderBomVO> orderBomVOList = materials.getOrDefault(pmsProduceOrderVO.getId(), bomVOList);
+        PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
+        pmsProduceOrderVO.setProcessList(orderCraftVOList);
+        pmsProduceOrderVO.setMaterialList(orderBomVOList);
+        if (Objects.nonNull(storageNumDTO)) {
+            pmsProduceOrderVO.setCompleteQuantity(storageNumDTO.getQuantity());
+            pmsProduceOrderVO.setCompleteUnitId(storageNumDTO.getUnitId());
+            dictIds.add(storageNumDTO.getUnitId());
         }
-        //2.查询机构数据
-        HashSet<Integer> officeId = Sets.newHashSet();
-        officeId.add(result.getCustomerId());
-        officeId.add(result.getProductionLineId());
-        if(CollUtil.isNotEmpty(officeId)){
-            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(pmsProduceOrder.getProductionLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            result.setCustomerName(officeMap.get(result.getCustomerId()));
-            result.setProductionLineName(officeMap.get(result.getProductionLineId()));
-        }
-        //3.工艺信息
-        if(Objects.nonNull(result.getCraftId())){
-            Map<Long, String> versionMap = pmCraftRouteService.versionById(Sets.newHashSet(result.getCraftId()));
-            result.setCraftVersion(versionMap.get(result.getCraftId()));
-        }
-        return result;
+        //4.1查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //4.2查询机构数据
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //4.3查询工艺信息
+        Map<Long, String> versionMap = pmCraftRouteService.versionById(craftIds);
+        //5.处理列表单位以及产线数据
+        //5.1 处理类型数据
+        pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
+        //5.2 处理产线数据
+        pmsProduceOrderVO.setProductionLineName(officeMap.get(pmsProduceOrderVO.getProductionLineId()));
+        //5.3 处理单位数据
+        pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
+        pmsProduceOrderVO.setMinPackageUnit(dictMap.get(pmsProduceOrderVO.getMinPackageUnitId()));
+        pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+        //5.4 处理工艺版本数据
+        pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
+        //5.4 处理完工数据
+        pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+        //客户名称
+        pmsProduceOrderVO.setCustomerName(officeMap.get(pmsProduceOrderVO.getCustomerId()));
+
+        return pmsProduceOrderVO;
     }
 
     /**
@@ -380,6 +406,35 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return true;
     }
 
+    @Override
+    public Boolean editPlanTime(PmsProduceOrderDTO dto) {
+        Assert.notNull(dto.getId(),"id不能为空");
+        Assert.notNull(dto.getPlanStartTime(),"计划开始时间不能为空");
+        Assert.notNull(dto.getPlanEndTime(),"计划结束时间不能为空");
+        //1、先根据Id查询
+        PmsProduceOrder produceOrder = getById(dto.getId());
+        //只有已创建和已下达状态才可以修改
+        if(produceOrder.getState().equals(OaConstant.NO)){
+            PmsProduceOrder model = new PmsProduceOrder();
+            model.setId(dto.getId());
+            model.setPlanStartTime(dto.getPlanStartTime());
+            model.setPlanEndTime(dto.getPlanEndTime());
+            updateById(model);
+        }else if(produceOrder.getState().equals(OaConstant.NUM_1)){
+            //如果是已下达，则取消下达
+            cancelTheOrder(dto.getId());
+            //修改时间
+            PmsProduceOrder model = new PmsProduceOrder();
+            model.setId(dto.getId());
+            model.setPlanStartTime(dto.getPlanStartTime());
+            model.setPlanEndTime(dto.getPlanEndTime());
+            updateById(model);
+        }else {
+            throw new BusinessException("执行中、已完成的订单无法修改计划时间");
+        }
+        return true;
+    }
+
     /**
      * 获取订单批次信息
      *
@@ -456,33 +511,71 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //拿到所有的产线id
         List<Integer> officeIds = sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         //查询对应的批次信息
-        List<PmsDefectDayOrderBasicDTO> pmsDefectDayOrderBasicDTOS = pmsWorkOrderBatchMapper.defectDay(officeIds, dto.getStartTime().atTime(LocalTime.MIN), dto.getEndTime().atTime(LocalTime.MAX));
-        Assert.notEmpty(pmsDefectDayOrderBasicDTOS, "数据为空");
+        List<PmsDefectDayOrderBasicDTO> pmsDefectDayOrderBasicDTOS = pmsWorkOrderBatchMapper.produceOrderGanttChart(officeIds, dto.getStartTime().atTime(LocalTime.MIN), dto.getEndTime().atTime(LocalTime.MAX));
         //开始组数据
         PmsProduceOrderGanttChartVO result = new PmsProduceOrderGanttChartVO();
         //行
         List<PmsProduceOrderGanttRowsVO> rows = Lists.newArrayList();
+        //过滤掉车间
+        sysOfficeVOS = sysOfficeVOS.stream().filter(v -> !v.getOfficeName().contains("车间")).collect(Collectors.toList());
         sysOfficeVOS.forEach(tmp->{
             rows.add(new PmsProduceOrderGanttRowsVO(PmManagerConstant.GANTT_PREFIX+tmp.getId(), tmp.getOfficeName()));
         });
         result.setRows(rows);
         //信息
+        //1、执行中的批次信息
         LocalDateTime now = LocalDateTime.now();
         List<PmsProduceOrderGanttInfoVO> infos = Lists.newArrayList();
-        pmsDefectDayOrderBasicDTOS.forEach(tmp->{
-            PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
-            info.setId(tmp.getProduceOrderId());
-            info.setLabel(tmp.getProduceOrderCode());
-            info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductLineId());
-            info.setStatus(tmp.getState());
-            //若结束时间为空则取当前时间
-            if(Objects.isNull(tmp.getEndTime())){
-                tmp.setEndTime(now);
+        if(CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)){
+            for(PmsDefectDayOrderBasicDTO tmp:pmsDefectDayOrderBasicDTOS){
+                if(tmp.getProductLineId().equals(170)
+                        ||tmp.getProductLineId().equals(171)
+                        ||tmp.getProductLineId().equals(172)
+                        ||tmp.getProductLineId().equals(173)){
+                    continue;
+                }
+                PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
+                info.setId(tmp.getProduceOrderId());
+                info.setLabel(tmp.getProduceOrderCode());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductLineId());
+                info.setStatus(tmp.getState());
+                //若结束时间为空则取当前时间
+                if(Objects.isNull(tmp.getEndTime())){
+                    if(Objects.nonNull(tmp.getPlanEndTime())){
+                        tmp.setEndTime(tmp.getPlanEndTime());
+                    }else {
+                        tmp.setEndTime(now);
+                    }
+                }
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                info.setTime(timeStamp);
+                infos.add(info);
             }
-            PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            info.setTime(timeStamp);
-            infos.add(info);
-        });
+        }
+        //2、找到计划中的订单(已创建，已下达)
+        List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .and(lq->lq.between(PmsProduceOrder::getPlanStartTime, dto.getStartTime(), dto.getEndTime()).or().between(PmsProduceOrder::getPlanEndTime, dto.getStartTime(), dto.getEndTime()))
+                .and(lq->lq.eq(PmsProduceOrder::getState, OaConstant.NO).or().eq(PmsProduceOrder::getState, OaConstant.YES))
+                .in(PmsProduceOrder::getProductionLineId, officeIds));
+        if(CollUtil.isNotEmpty(orderList)){
+            for(PmsProduceOrder tmp:orderList){
+                if(tmp.getProductionLineId().equals(170)
+                        ||tmp.getProductionLineId().equals(171)
+                        ||tmp.getProductionLineId().equals(172)
+                        ||tmp.getProductionLineId().equals(173)){
+                    continue;
+                }
+                PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
+                info.setId(tmp.getId());
+                info.setLabel(tmp.getCode());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductionLineId());
+                info.setStatus(tmp.getState());
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getPlanStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getPlanEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                info.setTime(timeStamp);
+                infos.add(info);
+            }
+        }
+
         result.setInfos(infos);
         return result;
     }
@@ -1422,6 +1515,194 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
         return resVO;
     }
+
+    @Override
+    public OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto) {
+        /**
+         * 报工记录的产线属于已选中的产线
+         * 报工记录的加工时段在区间[起始日期8:00, 终止日期+1 8:00]内
+         * 报工记录的物料消耗列表中包含编码“P1.W.P”开头的物料（即外购原片）
+         */
+        LocalDateTime begin = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime over = LocalDateUtil.getMorning(dto.getEnd().plusDays(1));
+        List<OutSourcingListDTO> batchList = pmsReportWorkMapper.outsourcingClass(dto.getProductLineList(), begin, over);
+        OutsourcingDayReportVO resVo = new OutsourcingDayReportVO();
+        if (CollUtil.isNotEmpty(batchList)) {
+            List<OutSourcingListDTO> dataList = Lists.newArrayList();
+            resVo.setDataList(dataList);
+            Set<Long> materialIdSet = batchList.stream().map(OutSourcingListDTO::getMaterialId).collect(Collectors.toSet());
+            Set<String> batchNoSet = batchList.stream().map(OutSourcingListDTO::getBatchNo).collect(Collectors.toSet());
+            Set<String> supplierSet = batchList.stream().map(OutSourcingListDTO::getSupplierCode).collect(Collectors.toSet());
+            Map<String, SysOfficeVO> supplierCodeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(supplierSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //查询所有报工的物料消耗关联的供应商
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "换算单位1不存在");
+            Assert.notNull(sysDict2, "换算单位2不存在");
+
+            //获取批次的缺陷信息
+            QtChartParamDTO qtChartParamDTO = new QtChartParamDTO();
+            //获取在线检缺陷
+            qtChartParamDTO.setDateStart(dto.getStart());
+            qtChartParamDTO.setDateEnd(dto.getEnd().plusDays(1));
+            qtChartParamDTO.setProductLineIdList(dto.getProductLineList());
+            qtChartParamDTO.setProductBatchList(Lists.newArrayList(batchNoSet));
+            List<QtCheckTaskDetailReportVO> checkTaskList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.defectFlat(qtChartParamDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+
+            //获取原片不良的缺陷项集合
+            List<QtDefectiveItemVO> defectItemList = FeignOptional.of(() -> remoteItemFeignApi.getDefectItemByCategory("原片不良"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //构建表头
+            List<BaseReportHeaderVO> headerList = Lists.newArrayList();
+            List<String> nameList = Lists.newArrayList();
+            defectItemList.forEach(ele -> nameList.add(ele.getName()));
+            headerList.add(new BaseReportHeaderVO("原片不良", nameList));
+            resVo.setHeaderList(headerList);
+
+            SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(morningDict, "早班数据字典不存在");
+            Assert.notNull(nightDict, "晚班数据字典不存在");
+
+            //获取班组
+            TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(dto.getStart(), dto.getEnd().plusDays(1));
+            Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            Set<Long> rwIdSet = batchList.stream().map(OutSourcingListDTO::getReportWorkId).collect(Collectors.toSet());
+            Map<Long, String> rwLinkSupplierMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.rwLinkSupplier(rwIdSet), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            batchList.forEach(ele -> {
+                ele.setSupplierCode(rwLinkSupplierMap.get(ele.getReportWorkId()));
+                EqpSpareVO eqp = materialMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
+                ele.setMaterialName(eqp.getName());
+                ele.setSpecifications(eqp.getSpecifications());
+                BigDecimal quantitySq = UnitConvertUtil.convertMaterial(convertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+                ele.setQuantitySq(quantitySq);
+                if(Objects.isNull(ele.getSupplierCode())){
+                    ele.setSupplierCode(Strings.EMPTY);
+                }
+                if(Objects.isNull(ele.getSpecifications())){
+                    ele.setSpecifications(Strings.EMPTY);
+                }
+            });
+           //根据供应商，规格，班次日期，产线，班次，物料名称
+            Map<String, BigDecimal> totalCountBdMap = Maps.newHashMap();
+            Map<String, Integer> totalCountIntMap = Maps.newHashMap();
+            Map<String, List<OutSourcingListDTO>> supplierMap = batchList.stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSupplierCode));
+            for (Map.Entry<String, List<OutSourcingListDTO>> supplierEntry : supplierMap.entrySet()) {
+                //定义规格的统计map
+                Map<String, BigDecimal> supplierCountBdMap = Maps.newHashMap();
+                Map<String, Integer> supplierCountIntMap = Maps.newHashMap();
+                String supplierName = supplierCodeMap.getOrDefault(supplierEntry.getKey(), new SysOfficeVO()).getOfficeName();
+                //基于规格分组
+                Map<String, List<OutSourcingListDTO>> specMap = supplierEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getSpecifications));
+                for (Map.Entry<String, List<OutSourcingListDTO>> specEntry : specMap.entrySet()) {
+                    //定义规格的统计map
+                    Map<String, BigDecimal> specCountBdMap = Maps.newHashMap();
+                    Map<String, Integer> specCountIntMap = Maps.newHashMap();
+                     //基于班次日期分组
+                    Map<LocalDate, List<OutSourcingListDTO>> classDateMap = specEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getClassDate));
+                    for (Map.Entry<LocalDate, List<OutSourcingListDTO>> classDateEntry : classDateMap.entrySet()) {
+
+                        //基于产线，班次，生产批次，物料名称
+                        Map<String, List<OutSourcingListDTO>> gpMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(v -> JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, v.getProductLineId(), v.getClassId(), v.getBatchNo(), v.getMaterialName())));
+                        for (Map.Entry<String, List<OutSourcingListDTO>> gpEntry : gpMap.entrySet()) {
+                              //聚合计算
+                            OutSourcingListDTO dataRow = gpEntry.getValue().get(0);
+                            List<BigDecimal> quantityList = Lists.newArrayList();
+                            List<BigDecimal> quantitySqList = Lists.newArrayList();
+                            gpEntry.getValue().forEach(ele ->{
+                                quantityList.add(ele.getQuantity());
+                                quantitySqList.add(ele.getQuantitySq());
+                            });
+                            if (morningDict.getId().equals(dataRow.getClassId())) {
+                                dataRow.setClassName(morningDict.getName());
+                                dataRow.setClassIdInt(0);
+                            }else{
+                                dataRow.setClassName(nightDict.getName());
+                                dataRow.setClassIdInt(1);
+                            }
+                            List<FurtherValueStrVO> furtherValueStrVOList = Lists.newArrayList();
+                            List<String> numList = Lists.newArrayList();
+                            Integer defectSum = null;
+                            //根据产线，物料id，批次号，班次日期，班次，缺陷获取缺陷数
+                            for (QtDefectiveItemVO ele : defectItemList) {
+                                List<Integer> defectList = checkTaskList.stream().filter(a -> a.getProductLineId().equals(dataRow.getProductLineId()) &&
+                                        a.getProductBatch().equals(dataRow.getBatchNo()) &&
+                                        a.getDefectCode().equals(ele.getCode()) &&
+                                        a.getClassesDate().isEqual(dataRow.getClassDate()) &&
+                                        a.getClassId().equals(dataRow.getClassIdInt())).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
+                                Integer sum = IntegerUtil.sum(defectList);
+                                MapUtil.add(specCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
+                                MapUtil.add(supplierCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
+                                MapUtil.add(totalCountIntMap, ele.getCode(), sum, (a, b) -> IntegerUtil.add(a, b));
+                                numList.add(IntegerUtil.format(sum));
+                                defectSum = IntegerUtil.add(sum, defectSum);
+                            }
+                            OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(classDateEntry.getKey() + ":" + dataRow.getClassName());
+                            if(Objects.nonNull(oaGroupCountDTO)){
+                                dataRow.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            }
+                            dataRow.setModule(furtherValueStrVOList);
+                            FurtherValueStrVO onlyEle = new FurtherValueStrVO();
+                            onlyEle.setValue(numList);
+                            dataRow.setModule(Lists.newArrayList(onlyEle));
+                            dataRow.setType(0);
+                            dataRow.setQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(quantityList), UnitLengthUtil.UNIT_PIECE_LENGTH));
+                            dataRow.setQuantitySq(BigDecimalUtil.sum(quantitySqList));
+                            dataRow.setDefectNum(defectSum);
+                            dataRow.setDefectRate(BigDecimalUtil.percent(BigDecimalUtil.valueOf(dataRow.getDefectNum()), dataRow.getQuantity()));
+                            dataList.add(dataRow);
+
+                            MapUtil.add(specCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(specCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(specCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
+                            MapUtil.add(supplierCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(supplierCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(supplierCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
+                            MapUtil.add(totalCountBdMap, "0", dataRow.getQuantity(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(totalCountBdMap, "1", dataRow.getQuantitySq(), (a, b) -> BigDecimalUtil.add(a, b));
+                            MapUtil.add(totalCountIntMap, "0", dataRow.getDefectNum(), (a, b) -> IntegerUtil.add(a, b));
+                        }
+                    }
+                    //插入小计（单规格）
+                    dataList.add(outSourcingCountRow(1, supplierName, "小计（单规格）", defectItemList, specCountBdMap, specCountIntMap));
+                }
+                //插入合计（单供应商）
+                dataList.add(outSourcingCountRow(2, supplierName, "合计（单供应商）", defectItemList, supplierCountBdMap, supplierCountIntMap));
+            }
+            //插入总计
+            dataList.add(outSourcingCountRow(3, "总计", Strings.EMPTY, defectItemList, totalCountBdMap, totalCountIntMap));
+        }
+        return resVo;
+    }
+
+    /**
+     * 外购原片不良日报表插入小计行
+     * @param type 类型
+     * @param supplierName 供应商名称
+     * @param spec 规格
+     * @param defectItemList 缺陷项
+     * @param bdMap 统计map
+     * @param intMap 统计map
+     * @return
+     */
+    private OutSourcingListDTO outSourcingCountRow(Integer type, String supplierName, String spec, List<QtDefectiveItemVO> defectItemList, Map<String, BigDecimal> bdMap, Map<String, Integer> intMap) {
+        OutSourcingListDTO model = new OutSourcingListDTO();
+        model.setType(type);
+        model.setSupplierName(supplierName);
+        model.setSpecifications(spec);
+        model.setQuantity(bdMap.get("0"));
+        model.setQuantitySq(bdMap.get("1"));
+        List<String> numList = Lists.newArrayList();
+        defectItemList.forEach(ele -> numList.add(IntegerUtil.format(intMap.get(ele.getCode()))));
+        model.setDefectNum(intMap.get("0"));
+        FurtherValueStrVO onlyEle = new FurtherValueStrVO();
+        onlyEle.setValue(numList);
+        model.setModule(Lists.newArrayList(onlyEle));
+        model.setDefectRate(BigDecimalUtil.percent(BigDecimalUtil.valueOf(model.getDefectNum()), model.getQuantity()));
+        return model;
+    }
+
 
     /**
      * 获取总计行或者单规格行

@@ -3,6 +3,7 @@ package com.steccn.common.util;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.google.common.collect.Maps;
 import io.swagger.models.auth.In;
 
@@ -370,5 +371,29 @@ public class BigDecimalUtil {
      */
     public static BigDecimal percent(BigDecimal value1, BigDecimal value2) {
         return percent(value1, value2, UnitLengthUtil.UNIT_PERCENT_LENGTH);
+    }
+
+    /**
+     * 字符串转换成BigDecimal
+     * @param value 值
+     * @return
+     */
+    public static BigDecimal valueOf(String value) {
+        if (StrUtil.isNotBlank(value)) {
+            return new BigDecimal(value);
+        }
+        return null;
+    }
+
+    /**
+     * 整数转换成BigDecimal
+     * @param value 值
+     * @return
+     */
+    public static BigDecimal valueOf(Integer value) {
+        if (Objects.nonNull(value)) {
+            return new BigDecimal(value);
+        }
+        return null;
     }
 }
