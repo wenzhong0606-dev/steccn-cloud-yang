@@ -47,4 +47,7 @@ public class PmsDefectDayOrderBasicDTO implements Serializable {
     @ApiModelProperty("结束时间")
     private LocalDateTime endTime;
 
+    @ApiModelProperty("计划结束时间")
+    private LocalDateTime planEndTime;
+
 }

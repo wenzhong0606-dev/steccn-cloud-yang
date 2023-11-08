@@ -81,6 +81,13 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
+    @ApiOperation("生产订单编辑计划时间")
+    @PutMapping("/planTime")
+    @SysLog("生产订单编辑")
+    public R<Boolean> editPlanTime(@RequestBody PmsProduceOrderDTO dto) {
+        return R.success(pmsProduceOrderService.editPlanTime(dto));
+    }
+
     @ApiOperation("获取生产订单批次分页列表")
     @PostMapping("/batch/info")
     public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto) {
