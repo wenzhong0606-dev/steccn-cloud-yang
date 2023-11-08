@@ -222,7 +222,7 @@ public class ProduceOrderController {
 
     @ApiOperation("外购原片不良日报表")
     @PostMapping("/outsourcing")
-    public R<OutsourcingDayReportVO> outsourcing(@RequestBody DayReportCommonDTO dto) {
+    public R<OutsourcingDayReportVO> outsourcing(@Valid @RequestBody DayReportCommonDTO dto) {
         return R.success(pmsProduceOrderService.outsourcing(dto));
     }
 

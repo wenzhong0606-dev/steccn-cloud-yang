@@ -70,6 +70,11 @@ public class OutSourcingListDTO implements Serializable {
     private String className;
 
     /**
+     * 班组名称
+     */
+    private String classGroupName;
+
+    /**
      * 物料主键
      */
     private Long materialId;

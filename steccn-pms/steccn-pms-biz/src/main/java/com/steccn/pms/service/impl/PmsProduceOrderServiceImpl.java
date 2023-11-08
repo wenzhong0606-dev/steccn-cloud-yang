@@ -1532,6 +1532,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Assert.notNull(morningDict, "早班数据字典不存在");
             Assert.notNull(nightDict, "晚班数据字典不存在");
 
+            //获取班组
+            TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(dto.getStart(), dto.getEnd().plusDays(1));
+            Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             Set<Long> rwIdSet = batchList.stream().map(OutSourcingListDTO::getReportWorkId).collect(Collectors.toSet());
             Map<Long, String> rwLinkSupplierMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.rwLinkSupplier(rwIdSet), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             batchList.forEach(ele -> {
@@ -1541,6 +1544,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 ele.setSpecifications(eqp.getSpecifications());
                 BigDecimal quantitySq = UnitConvertUtil.convertMaterial(convertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
                 ele.setQuantitySq(quantitySq);
+                if(Objects.isNull(ele.getSupplierCode())){
+                    ele.setSupplierCode(Strings.EMPTY);
+                }
+                if(Objects.isNull(ele.getSpecifications())){
+                    ele.setSpecifications(Strings.EMPTY);
+                }
             });
            //根据供应商，规格，班次日期，产线，班次，物料名称
             Map<String, BigDecimal> totalCountBdMap = Maps.newHashMap();
@@ -1560,6 +1569,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                      //基于班次日期分组
                     Map<LocalDate, List<OutSourcingListDTO>> classDateMap = specEntry.getValue().stream().collect(Collectors.groupingBy(OutSourcingListDTO::getClassDate));
                     for (Map.Entry<LocalDate, List<OutSourcingListDTO>> classDateEntry : classDateMap.entrySet()) {
+
                         //基于产线，班次，生产批次，物料名称
                         Map<String, List<OutSourcingListDTO>> gpMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(v -> JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, v.getProductLineId(), v.getClassId(), v.getBatchNo(), v.getMaterialName())));
                         for (Map.Entry<String, List<OutSourcingListDTO>> gpEntry : gpMap.entrySet()) {
@@ -1595,7 +1605,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 numList.add(IntegerUtil.format(sum));
                                 defectSum = IntegerUtil.add(sum, defectSum);
                             }
-
+                            OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(classDateEntry.getKey() + ":" + dataRow.getClassName());
+                            if(Objects.nonNull(oaGroupCountDTO)){
+                                dataRow.setClassGroupName(oaGroupCountDTO.getGroupName());
+                            }
                             dataRow.setModule(furtherValueStrVOList);
                             FurtherValueStrVO onlyEle = new FurtherValueStrVO();
                             onlyEle.setValue(numList);
