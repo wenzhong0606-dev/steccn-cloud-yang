@@ -402,6 +402,35 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return true;
     }
 
+    @Override
+    public Boolean editPlanTime(PmsProduceOrderDTO dto) {
+        Assert.notNull(dto.getId(),"id不能为空");
+        Assert.notNull(dto.getPlanStartTime(),"计划开始时间不能为空");
+        Assert.notNull(dto.getPlanEndTime(),"计划结束时间不能为空");
+        //1、先根据Id查询
+        PmsProduceOrder produceOrder = getById(dto.getId());
+        //只有已创建和已下达状态才可以修改
+        if(produceOrder.getState().equals(OaConstant.NO)){
+            PmsProduceOrder model = new PmsProduceOrder();
+            model.setId(dto.getId());
+            model.setPlanStartTime(dto.getPlanStartTime());
+            model.setPlanEndTime(dto.getPlanEndTime());
+            updateById(model);
+        }else if(produceOrder.getState().equals(OaConstant.NUM_1)){
+            //如果是已下达，则取消下达
+            cancelTheOrder(dto.getId());
+            //修改时间
+            PmsProduceOrder model = new PmsProduceOrder();
+            model.setId(dto.getId());
+            model.setPlanStartTime(dto.getPlanStartTime());
+            model.setPlanEndTime(dto.getPlanEndTime());
+            updateById(model);
+        }else {
+            throw new BusinessException("执行中、已完成的订单无法修改计划时间");
+        }
+        return true;
+    }
+
     /**
      * 获取订单批次信息
      *
