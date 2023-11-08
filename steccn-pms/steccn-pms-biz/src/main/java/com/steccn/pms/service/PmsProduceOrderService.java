@@ -53,6 +53,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Boolean edit(PmsProduceOrderDTO dto);
 
     /**
+     * 编辑计划时间
+     * @param dto
+     * @return
+     */
+    Boolean editPlanTime(PmsProduceOrderDTO dto);
+
+    /**
      * 根据订单获取批次分页列表
      *
      * @param dto
