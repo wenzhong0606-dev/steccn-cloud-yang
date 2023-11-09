@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.KqFormatDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.KqFormatDetail">
+            <id property="resourceid" column="resourceid" jdbcType="INTEGER"/>
+            <id property="kqdate" column="kqdate" jdbcType="CHAR"/>
+            <id property="serialnumber" column="serialnumber" jdbcType="INTEGER"/>
+            <result property="groupid" column="groupid" jdbcType="INTEGER"/>
+            <result property="serialid" column="serialid" jdbcType="INTEGER"/>
+            <result property="workbegindate" column="workbegindate" jdbcType="CHAR"/>
+            <result property="workbegintime" column="workbegintime" jdbcType="CHAR"/>
+            <result property="workenddate" column="workenddate" jdbcType="CHAR"/>
+            <result property="workendtime" column="workendtime" jdbcType="CHAR"/>
+            <result property="workmins" column="workmins" jdbcType="INTEGER"/>
+            <result property="signindate" column="signindate" jdbcType="CHAR"/>
+            <result property="signintime" column="signintime" jdbcType="CHAR"/>
+            <result property="signinid" column="signinid" jdbcType="INTEGER"/>
+            <result property="signoutdate" column="signoutdate" jdbcType="CHAR"/>
+            <result property="signouttime" column="signouttime" jdbcType="CHAR"/>
+            <result property="signoutid" column="signoutid" jdbcType="INTEGER"/>
+            <result property="attendancemins" column="attendanceMins" jdbcType="INTEGER"/>
+            <result property="belatemins" column="belatemins" jdbcType="INTEGER"/>
+            <result property="gravebelatemins" column="graveBeLateMins" jdbcType="INTEGER"/>
+            <result property="leaveearlymins" column="leaveearlymins" jdbcType="INTEGER"/>
+            <result property="graveleaveearlymins" column="graveLeaveEarlyMins" jdbcType="INTEGER"/>
+            <result property="absenteeismmins" column="absenteeismmins" jdbcType="INTEGER"/>
+            <result property="leavemins" column="leaveMins" jdbcType="INTEGER"/>
+            <result property="evectionmins" column="evectionMins" jdbcType="INTEGER"/>
+            <result property="outmins" column="outMins" jdbcType="INTEGER"/>
+            <result property="forgotcheckmins" column="forgotcheckMins" jdbcType="INTEGER"/>
+            <result property="signmins" column="signMins" jdbcType="INTEGER"/>
+            <result property="leaveinfo" column="leaveInfo" jdbcType="VARCHAR"/>
+            <result property="forgotbeginworkcheckmins" column="forgotBeginWorkCheckMins" jdbcType="INTEGER"/>
+            <result property="otherinfo" column="otherinfo" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        resourceid,kqdate,serialnumber,
+        groupid,serialid,workbegindate,
+        workbegintime,workenddate,workendtime,
+        workmins,signindate,signintime,
+        signinid,signoutdate,signouttime,
+        signoutid,attendanceMins,belatemins,
+        graveBeLateMins,leaveearlymins,graveLeaveEarlyMins,
+        absenteeismmins,leaveMins,evectionMins,
+        outMins,forgotcheckMins,signMins,
+        leaveInfo,forgotBeginWorkCheckMins,otherinfo
+    </sql>
+</mapper>
