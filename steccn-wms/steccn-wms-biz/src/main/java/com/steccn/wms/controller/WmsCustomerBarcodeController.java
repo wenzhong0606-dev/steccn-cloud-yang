@@ -51,4 +51,10 @@ public class WmsCustomerBarcodeController {
     public R<WmsCustomerBarcodeVO> getCaseNoCustomerBarcode(@ApiParam("客户条码") @RequestParam("customerBarcode") String customerBarcode) {
         return R.success(wmsCustomerBarcodeService.CustomerBarcodeByCaseNO(customerBarcode));
     }
+
+    @ApiOperation("根据箱号获取绑定的客户条码")
+    @GetMapping()
+    public R<String> getCustomerBarcodeByCaseNO(@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
+        return R.success(wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(caseNo));
+    }
 }
