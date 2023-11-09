@@ -1096,7 +1096,6 @@ public class ReportServiceImpl implements ReportService {
         Map<Integer, List<PmsPullForce>> pullForceMap = pmsPullForceService.pullForceDayByWorkshop(dto.getDate(), dto.getProductWorkshop());
         //获取截至当前日期的当月拉引量数据
         List<PmsPullForce> pullDataList = pmsPullForceService.monthlyData(dto.getDate(), dto.getProductWorkshop());
-
         //获取车间下的产线
         Map<Integer, List<Integer>> integerListMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(dto.getProductWorkshop()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取产线合集
@@ -1249,7 +1248,6 @@ public class ReportServiceImpl implements ReportService {
                     outputQualityDataVOS.add(outputQualityDataVO);
                 }
             }
-
         }
         //主表格合计计算
         if (CollUtil.isNotEmpty(outputQualityDataVOS)) {
@@ -1507,6 +1505,8 @@ public class ReportServiceImpl implements ReportService {
         List<EqpSpareVO> materialList = new ArrayList<>(materialMap.values());
         //获取入库产量（据订单完工入库信息，获取入库时间介于当班时间的入库数量）
         Map<Long, Map<Long, BigDecimal>> completeStorageNumMap = pmsCompleteStorageInfoService.materialMap(new HashSet<>(materialIds), dto.getDate());
+
+        Map<String, BigDecimal> materialCompleteMap = pmsCompleteStorageInfoService.materialMap(lineIds, new HashSet<>(materialIds), dto.getDate());
         //获取当月截至当前日期的入库数量
         List<FurtherProduceReportDataVO> completeStorageList = pmsCompleteStorageInfoService.materialByDateList(new HashSet<>(materialIds), dto.getDate());
         //单位转换
@@ -1621,12 +1621,14 @@ public class ReportServiceImpl implements ReportService {
                         }
 
                         //入库产量
-                        Map<Long, BigDecimal> longBigDecimalMap = completeStorageNumMap.get(eqpSpareVO.getId());
+//                        Map<Long, BigDecimal> longBigDecimalMap = completeStorageNumMap.get(eqpSpareVO.getId());
+                        //入库产量
+                        BigDecimal completeNum = materialCompleteMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE,reportWork.getProductLineId(), reportWork.getMaterialId(), reportWork.getClassesId()));
+
                         //根据班次计算入库数量
                         BigDecimal completeStorageNum = BigDecimal.ZERO;
-                        if (CollUtil.isNotEmpty(longBigDecimalMap)) {
-                            completeStorageNum = longBigDecimalMap.getOrDefault(reportWork.getClassesId(),completeStorageNum);
-                            completeStorageNum = BigDecimalUtil.setScale(completeStorageNum, UnitLengthUtil.UNIT_PIECE_LENGTH);
+                        if (Objects.nonNull(completeNum)) {
+                            completeStorageNum = BigDecimalUtil.setScale(completeNum, UnitLengthUtil.UNIT_PIECE_LENGTH);
                             //单位转换
                             BigDecimal square = UnitConvertUtil.convertMaterial(unitConvertMap.get(eqpSpareVO.getId()), pieceSysDict.getId(), meterSysDict.getId(), completeStorageNum, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
                             outputQualitySjgDataVO.setInStorageSlice(completeStorageNum);
