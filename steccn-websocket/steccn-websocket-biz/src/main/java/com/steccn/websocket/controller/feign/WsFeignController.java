@@ -34,7 +34,7 @@ public class WsFeignController {
         kafkaTemplate.send(kafkaConf.getTopicWs(), JSONObject.toJSONString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
             @Override
             public void onFailure(Throwable ex) {
-                log.info("发送消息失败：" + ex.getMessage());
+                log.error("发送消息失败：" + ex.getMessage());
             }
 
             @Override
