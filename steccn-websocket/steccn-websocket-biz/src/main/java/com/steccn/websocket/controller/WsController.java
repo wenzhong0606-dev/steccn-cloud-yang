@@ -40,7 +40,7 @@ public class WsController {
         msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.CLOSE.getType());
         msgPushDTO.setContent(uuId);
         msgPushDTO.setUserIdList(Sets.newHashSet(userId));
-        String closeMsg = objectMapper.writeValueAsString(msgPushDTO);
+        msgPushDTO.setPushLevel(WebsocketConstant.WsPushLevelEnum.LEVEL_MORE.getType());
         kafkaTemplate.send(kafkaConf.getTopicWs(), objectMapper.writeValueAsString(msgPushDTO)).addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
             @Override
             public void onFailure(Throwable ex) {
