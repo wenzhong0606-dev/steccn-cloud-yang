@@ -32,5 +32,5 @@ public interface SysAppVersionService extends IService<SysAppVersion> {
      * 获取最新版本信息
      * @return
      */
-    SysAppVersionVO getLatestVersion();
+    SysAppVersionVO getLatestVersion(Integer platform);
 }

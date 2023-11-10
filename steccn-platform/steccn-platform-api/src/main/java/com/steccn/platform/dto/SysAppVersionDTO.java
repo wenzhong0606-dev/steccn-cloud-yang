@@ -7,6 +7,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -41,5 +43,13 @@ public class SysAppVersionDTO extends BasePageDTO {
     @ApiModelProperty("app文件id")
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "app文件id不能为空")
     private Long fileId;
+
+    /**
+     * 平台 0-Android 1-ios
+     */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "平台信息 0-Android 1-ios 不能为空")
+    @Max(value = 1, message = "平台只能是 0-Android 1-ios")
+    @Min(value = 0, message = "平台只能是 0-Android 1-ios")
+    private Integer platform;
 
 }
