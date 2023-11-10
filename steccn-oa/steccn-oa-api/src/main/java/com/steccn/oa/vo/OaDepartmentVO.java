@@ -50,4 +50,9 @@ public class OaDepartmentVO implements Serializable {
      * 修改时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 分部id
+     */
+    private Integer subCompanyId;
 }

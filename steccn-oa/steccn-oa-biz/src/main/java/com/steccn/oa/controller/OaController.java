@@ -43,6 +43,8 @@ public class OaController {
 
     private final KqGroupmemberService kqGroupmemberService;
 
+    private final HrmdepartmentService hrmdepartmentService;
+
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
     public R getOaMenuList(@RequestParam("userId") String userId) {
@@ -257,6 +259,12 @@ public class OaController {
     @PostMapping("/org/detail/v2")
     public R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto){
         return R.success(oaService.getOrgDetailByConditionV2(dto));
+    }
+
+    @ApiOperation("根据部门信息查询详情V3")
+    @PostMapping("/org/detail/v3")
+    public R<List<OaDepartmentVO>> getOrgDetailByConditionV3(@RequestBody OaOrgDetailParamDTO dto){
+        return R.success(hrmdepartmentService.getOrgInfo(dto));
     }
 
     @ApiOperation("获取流程当前节点的操作人")
