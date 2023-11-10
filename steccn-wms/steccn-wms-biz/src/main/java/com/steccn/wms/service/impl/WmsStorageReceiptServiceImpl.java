@@ -45,10 +45,12 @@ import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.qms.vo.QtCheckTaskReportVO;
 import com.steccn.wms.config.SrmConfig;
 import com.steccn.wms.constant.WmsManagerConstant;
+import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.mapper.WmsStorageReceiptMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsInventoryService;
@@ -108,6 +110,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
+    private final WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
 
     private final RemoteErpFeignApi remoteErpFeignApi;
 
@@ -254,7 +257,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         }
 
                     } else if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
-                        //  namespace: yq2
+                        //  namespace: yq
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
                     }
@@ -865,7 +868,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+//                    erpCommonSaveDetail.setFlot(tmp.getBatch());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     if (Objects.isNull(tmp.getAssociatedNo())) {
                         throw new BusinessException("没有关联生产订单");
@@ -1249,6 +1252,31 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
         }
         return byId.getCode();
+    }
+
+    @Override
+    public Map<Long, String> rwLinkSupplier(Set<Long> rwIdSet) {
+        Map<Long,String> resMap = Maps.newHashMap();
+        //根据报工主键查询箱号
+        if(CollUtil.isNotEmpty(rwIdSet)){
+            List<WmsDeliveryReceipt> receiptList =  wmsDeliveryReceiptMapper.rwLinkCaseNo(rwIdSet);
+            if(CollUtil.isNotEmpty(receiptList)){
+                //根据箱号，查询供应商code,应该是一个箱号 对应一个供应商
+                Set<String> caseNoSet = receiptList.stream().map(WmsDeliveryReceipt::getCode).collect(Collectors.toSet());
+                List<WmsStorageReceipt> caseNoSupplierList = wmsStorageReceiptMapper.caseNoLinkSupplier(caseNoSet);
+                if(CollUtil.isNotEmpty(caseNoSupplierList)){
+                    Map<String,String> caseNoLinkSupplierMap = Maps.newHashMap();
+                    caseNoSupplierList.forEach(ele -> caseNoLinkSupplierMap.put(ele.getCode(),ele.getEsSupplierCode()));
+                    receiptList.forEach(ele ->{
+                        String supplierCode = caseNoLinkSupplierMap.get(ele.getCode());
+                        if(StrUtil.isNotBlank(supplierCode)){
+                            resMap.put(ele.getLinkedId(),supplierCode);
+                        }
+                    });
+                }
+            }
+        }
+        return resMap;
     }
 
     @Override

@@ -286,4 +286,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     RepaireBatchVO repaireBatchList(RepaireBatchListDTO dto);
+
+    /**
+     * 外购原片不良日报表
+     * @param dto dto
+     * @return
+     */
+    OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto);
 }

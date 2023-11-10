@@ -765,5 +765,34 @@
         GROUP BY
         ppo.id,pcs.enter_time
     </select>
+    <select id="outsourcingClass" resultType="com.steccn.pms.dto.OutSourcingListDTO">
+        SELECT
+        prw.id reportWorkId,
+        prw.batch_no,
+        prw.product_line_id,
+        prw.start_time,
+        prw.end_time,
+        prw.class_date,
+        prw.classes_id as classId,
+        info.material_id,
+        prw.station_id,
+        prw.process_quantity quantity
+        FROM
+        pms_report_work prw
+        JOIN pms_complete_delivery cd ON prw.id = cd.report_work_id
+        JOIN pms_complete_delivery_info info ON info.complete_delivery_id = cd.id
+        WHERE
+        prw.del_flag = 0
+        AND cd.del_flag = 0
+        AND info.del_flag = 0
+        AND info.material_code LIKE 'P1.W.P%'
+        AND prw.product_line_id in
+        <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND prw.start_time  &gt;= #{start}
+        AND prw.end_time  &lt;= #{end}
+
+    </select>
 
 </mapper>

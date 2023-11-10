@@ -124,7 +124,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     @Override
     public WmsCustomerBarcodeVO CustomerBarcodeByCaseNO(String customerBarcode) {
         WmsCustomerBarcodeVO wmsCustomerBarcodeVO = new WmsCustomerBarcodeVO();
-        WmsCustomerBarcode barcode = getOne(new LambdaQueryWrapper<WmsCustomerBarcode>().eq(WmsCustomerBarcode::getCustomerBarcode, customerBarcode));
+        WmsCustomerBarcode barcode = getOne(new LambdaQueryWrapper<WmsCustomerBarcode>().eq(WmsCustomerBarcode::getCustomerBarcode, customerBarcode).last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(barcode)){
             //根据箱号获取生产订单号以及批次号以及物料名称
             PmsProducerOrderInfoDTO dto = FeignOptional.of(() -> remotePmsFeignApi.getNumberByCaseNo(barcode.getCaseNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();

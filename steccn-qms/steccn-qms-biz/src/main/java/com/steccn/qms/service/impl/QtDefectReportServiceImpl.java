@@ -384,7 +384,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         QtCheckItemTransmitVO resVo = new QtCheckItemTransmitVO();
         List<QtCheckItemTransmitDataVO> rowList = Lists.newArrayList();
-        setTransmitHeader(resVo,granularityEntity);
+        setTransmitHeader(resVo, granularityEntity);
         resVo.setDataList(rowList);
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));

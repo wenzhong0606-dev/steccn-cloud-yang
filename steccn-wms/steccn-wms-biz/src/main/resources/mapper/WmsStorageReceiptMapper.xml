@@ -102,6 +102,16 @@
         </where>
         ORDER BY a.update_time DESC
     </select>
+    <select id="caseNoLinkSupplier" resultType="com.steccn.wms.domain.WmsStorageReceipt">
+        select info.case_no as code,
+               re.es_supplier_code
+        from wms_storage_receipt re join wms_storage_receipt_info info on re.id = info.storage_receipt_id
+        where re.del_flag = 0 and info.del_flag = 0
+        and info.case_no in
+        <foreach collection="caseNoSet" item ="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
 
     <update id="salesAutoConfirm">
         UPDATE wms_storage_receipt

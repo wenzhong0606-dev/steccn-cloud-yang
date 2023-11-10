@@ -227,4 +227,10 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.repaireBatchList(dto));
     }
 
+    @ApiOperation("外购原片不良日报表")
+    @PostMapping("/outsourcing")
+    public R<OutsourcingDayReportVO> outsourcing(@Valid @RequestBody DayReportCommonDTO dto) {
+        return R.success(pmsProduceOrderService.outsourcing(dto));
+    }
+
 }

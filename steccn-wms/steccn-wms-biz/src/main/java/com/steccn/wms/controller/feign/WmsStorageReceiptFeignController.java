@@ -10,10 +10,10 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Set;
 
 @RestController
 @Api("入库管理feign")
@@ -29,4 +29,11 @@ public class WmsStorageReceiptFeignController {
     public R<WmsDeliveryReceiptDTO> chargeAgainstByCode(@ApiParam("入库单编码") @RequestParam("code") String code, @RequestParam("userName")String userName) {
         return R.success(wmsStorageReceiptService.chargeAgainstByCode(code,userName));
     }
+
+    @ApiOperation("根据报工集合获取供应商code")
+    @PostMapping("/rw/supplier")
+    R<Map<Long, String>> rwLinkSupplier(@RequestBody Set<Long> rwIdSet) {
+        return R.success(wmsStorageReceiptService.rwLinkSupplier(rwIdSet));
+    }
+
 }
