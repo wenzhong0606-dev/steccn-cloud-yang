@@ -22,6 +22,14 @@ public interface QtDayReportService {
      */
     QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId,String source);
 
+    /**
+     * 在线检
+     * @param date 日期
+     * @param lineIdList 产线
+     * @param confContent 配置
+     */
+    void onlineDownload(LocalDate date, List<Integer> lineIdList, String confContent);
+
 
     /**
      * 质量日报表-首检2/巡检4
@@ -51,4 +59,5 @@ public interface QtDayReportService {
      * @return
      */
     QtDayReportLossVO loss(QtLossReportDTO dto);
+
 }

@@ -1,5 +1,7 @@
 package com.steccn.qms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtDayReportOnlineDTO;
@@ -14,7 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -40,6 +45,23 @@ public class QtDayReportController {
     public R<QtDayReportOnlineVO> online(@RequestBody @Validated QtDayReportOnlineDTO dto) {
         return R.success(qtDayReportService.online(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT));
     }
+
+    @PostMapping("/online/download")
+    @ApiOperation("质量日报表-在线检")
+    public void onlineDownload(@RequestBody @Validated QtDayReportOnlineDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDayReportService.onlineDownload(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+        } catch (Exception e) {
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
 
     @PostMapping("/first")
     @ApiOperation("质量日报表-首检2/巡检4")

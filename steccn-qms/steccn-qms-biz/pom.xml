@@ -146,6 +146,12 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-xxljob</artifactId>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

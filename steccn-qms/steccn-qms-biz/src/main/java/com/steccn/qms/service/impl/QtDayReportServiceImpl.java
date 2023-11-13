@@ -261,6 +261,35 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     }
 
     /**
+     * 在线检
+     * @param date 日期
+     * @param lineIdList 产线
+     * @param source 配置
+     */
+    public void onlineDownload(LocalDate date, List<Integer> lineIdList, String source){
+        List<QtDayReportOnlineDataVO> tableData = Lists.newArrayList();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("HH:mm");
+        //查询人工数据
+        //获取所有扁平化数据
+        QtChartParamDTO dto = new QtChartParamDTO();
+        dto.setDateStart(date);
+        dto.setDateEnd(date);
+        dto.setProductLineIdList(lineIdList);
+        //获取人工采集的缺陷集合+获取机器采集的缺陷集合
+        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
+
+        //是否加入数采数据
+        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(source), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
+        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
+            dto.setJoinAcquisition(1);
+        }
+        List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);
+        List<QtCheckTaskDetailReportVO> manDataList = manData;
+        SteccnTableAssertUtil.notEmpty(manDataList, "数据为空");
+    }
+
+    /**
      * 获取落板原因
      *
      * @param manDataList 人工检测数据
