@@ -186,6 +186,15 @@ public interface OaInfoService {
     R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto);
 
     /**
+     * 根据部门信息查询部门详情V3
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情V2")
+    @PostMapping("/oa/org/detail/v3")
+    R<List<OaDepartmentVO>> getOrgDetailByConditionV3(@RequestBody OaOrgDetailParamDTO dto);
+
+    /**
      * 获取流程节点当前操作人
      * @param dto
      * @return

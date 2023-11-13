@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
@@ -22,6 +23,7 @@ import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.dto.OaRosterRecordDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.mapper.KqFormatDetailMapper;
 import com.steccn.oa.mapper.KqGroupMapper;
 import com.steccn.oa.service.KqGroupService;
 import com.steccn.oa.service.KqGroupmemberService;
@@ -36,6 +38,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +62,8 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
     private final OaInfoService oaInfoService;
 
     private final KqMesGroupLeaderService kqMesGroupLeaderService;
+
+    private final KqFormatDetailMapper kqFormatDetailMapper;
 
     @Override
     public List<OaGroupIdAndNameVO> findGroupByUserId(Set<Long> userId) {
@@ -141,137 +147,177 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
         return resultMap;
     }
 
-    @Override
-    public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate date) {
-        List<OaTodayClassVO> results = Lists.newArrayList();
-        //算当前班次
-//        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(date);
-        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
-//        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
-//        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
-        rosterDto.setStartdate(date.toString());
-        rosterDto.setEnddate(date.toString());
-        //获取熔化工
-        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_1);
-        List<OaRosterRecordVO> oaRosterRecordVOS = Lists.newArrayList();
-        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
-        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_2);
-        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
-        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_3);
-        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
-        Set<Long> userId = Sets.newHashSet();
-        //过滤车间
-        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v->v.getDepartmentname().contains(workshopName)).collect(Collectors.toList());
-        //分为早班和晚班
-        for(int i = 0; i < 2;i++){
-            //过滤当前班次
-            OaTodayClassVO result = new OaTodayClassVO();
-            String classStr = "";
-            if(i==0){
-                result.setClassOrder("早班");
-                classStr = "白班";
-            } else {
-                result.setClassOrder("晚班");
-                classStr = "夜班";
-            }
-
-//            if (qtTaskClassCalculate.getClassType().equals(0)) {
+//    @Override
+//    public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate date) {
+//        List<OaTodayClassVO> results = Lists.newArrayList();
+//        //算当前班次
+////        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(date);
+//        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+////        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+////        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+//        rosterDto.setStartdate(date.toString());
+//        rosterDto.setEnddate(date.toString());
+//        //获取熔化工
+//        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_1);
+//        List<OaRosterRecordVO> oaRosterRecordVOS = Lists.newArrayList();
+//        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+//        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_2);
+//        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+//        rosterDto.setJobtitle(OaConstant.JOB_RONGHUA_ID_3);
+//        oaRosterRecordVOS.addAll(FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get());
+//        Set<Long> userId = Sets.newHashSet();
+//        //过滤车间
+//        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v->v.getDepartmentname().contains(workshopName)).collect(Collectors.toList());
+//        //分为早班和晚班
+//        for(int i = 0; i < 2;i++){
+//            //过滤当前班次
+//            OaTodayClassVO result = new OaTodayClassVO();
+//            String classStr = "";
+//            if(i==0){
 //                result.setClassOrder("早班");
 //                classStr = "白班";
 //            } else {
 //                result.setClassOrder("晚班");
 //                classStr = "夜班";
 //            }
-            String finalClassStr = classStr;
-            List<OaRosterRecordVO> oaRosterRecordVosTmp = Lists.newArrayList();
-            oaRosterRecordVosTmp = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
-            //避免班组重复
-            if(i==1&&CollUtil.isNotEmpty(results)){
-                oaRosterRecordVosTmp = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)
-                        &&!v.getDepartmentname().contains(results.get(0).getClassGroup())).collect(Collectors.toList());
-            }
-            if (CollUtil.isNotEmpty(oaRosterRecordVosTmp)) {
-//                List<String> workCodes = Lists.newArrayList();
-//                oaRosterRecordVosTmp.forEach(tmp -> {
-//                    workCodes.add(tmp.getWorkcode());
-//                });
-//                //找到熔化工id
-//                if (CollUtil.isNotEmpty(workCodes)) {
-//                    List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-//                    if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
-//                        oaUserIdAndNames.forEach(tmp -> {
-//                            userId.add(tmp.getId().longValue());
-//                        });
-//                    }
-//                }
-                String[] split = oaRosterRecordVosTmp.get(0).getDepartmentname().split(">");
-                String classGroupName = split[split.length - 1];
-                result.setClassGroup(classGroupName);
-                KqMesGroupLeader one = kqMesGroupLeaderService.getOne(new LambdaQueryWrapper<KqMesGroupLeader>()
-                        .eq(KqMesGroupLeader::getWorkshopName, workshopName)
-                        .eq(KqMesGroupLeader::getGroupName, classGroupName), false);
-                result.setClassLeader(one.getLeaderName());
-                results.add(result);
-            }
-//            List<OaGroupIdAndNameVO> groupByUserId = this.findGroupByUserId(userId);
-//            //拿到出现次数最多的班组
-//            if(CollUtil.isNotEmpty(groupByUserId)){
-//                String groupName = groupByUserId.stream()
-//                        .collect(Collectors.groupingBy(OaGroupIdAndNameVO::getClassGroupName, Collectors.counting()))
-//                        .entrySet().stream()
-//                        .max(Map.Entry.comparingByValue())
-//                        .map(Map.Entry::getKey)
-//                        .orElse(null);
-//                result.setClassGroup(groupName);
+//
+////            if (qtTaskClassCalculate.getClassType().equals(0)) {
+////                result.setClassOrder("早班");
+////                classStr = "白班";
+////            } else {
+////                result.setClassOrder("晚班");
+////                classStr = "夜班";
+////            }
+//            String finalClassStr = classStr;
+//            List<OaRosterRecordVO> oaRosterRecordVosTmp = Lists.newArrayList();
+//            oaRosterRecordVosTmp = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+//            //避免班组重复
+//            if(i==1&&CollUtil.isNotEmpty(results)){
+//                oaRosterRecordVosTmp = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)
+//                        &&!v.getDepartmentname().contains(results.get(0).getClassGroup())).collect(Collectors.toList());
 //            }
-//            //获取班组长
-//            String leader = "";
-//            //拿到当班的熔化班长
-//            rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_1);
-//            String leader1Name = getLeaderName(rosterDto);
-//            if(StrUtil.isBlank(leader1Name)){
-//                rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_2);
-//                leader1Name = getLeaderName(rosterDto);
-//                if(StrUtil.isBlank(leader1Name)){
-//                    rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_3);
-//                    leader1Name = getLeaderName(rosterDto);
-//                }
+//            if (CollUtil.isNotEmpty(oaRosterRecordVosTmp)) {
+////                List<String> workCodes = Lists.newArrayList();
+////                oaRosterRecordVosTmp.forEach(tmp -> {
+////                    workCodes.add(tmp.getWorkcode());
+////                });
+////                //找到熔化工id
+////                if (CollUtil.isNotEmpty(workCodes)) {
+////                    List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+////                    if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+////                        oaUserIdAndNames.forEach(tmp -> {
+////                            userId.add(tmp.getId().longValue());
+////                        });
+////                    }
+////                }
+//                String[] split = oaRosterRecordVosTmp.get(0).getDepartmentname().split(">");
+//                String classGroupName = split[split.length - 1];
+//                result.setClassGroup(classGroupName);
+//                KqMesGroupLeader one = kqMesGroupLeaderService.getOne(new LambdaQueryWrapper<KqMesGroupLeader>().select()
+//                        .eq(KqMesGroupLeader::getWorkshopName, workshopName)
+//                        .eq(KqMesGroupLeader::getGroupName, classGroupName), false);
+//                result.setClassLeader(one.getLeaderName());
+//                results.add(result);
 //            }
-//            leader = leader1Name;
-//            //拿到当班的成型班长
-//            rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_1);
-//            String leader2Name = getLeaderName(rosterDto);
-//            if(StrUtil.isBlank(leader2Name)){
-//                rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_2);
-//                leader2Name = getLeaderName(rosterDto);
-//                if(StrUtil.isBlank(leader2Name)){
-//                    rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_3);
-//                    leader2Name = getLeaderName(rosterDto);
-//                }
-//            }
-//            if(StrUtil.isNotBlank(leader2Name)){
-//                if(StrUtil.isBlank(leader)){
-//                    leader = leader2Name;
-//                }else {
-//                    leader = leader + "/" +leader2Name;
-//                }
-//            }
-//            //拿到当班的成品班长
-//            rosterDto.setJobtitle(OaConstant.JOB_CHENGPINBANZHANG_ID);
-//            String leader3Name = getLeaderName(rosterDto);
-//            if(StrUtil.isNotBlank(leader3Name)){
-//                if(StrUtil.isBlank(leader)){
-//                    leader = leader3Name;
-//                }else {
-//                    leader = leader + "/" +leader3Name;
-//                }
-//            }
-//            //拿到当班的成品班长
-//            result.setClassLeader(leader);
-//            results.add(result);
+////            List<OaGroupIdAndNameVO> groupByUserId = this.findGroupByUserId(userId);
+////            //拿到出现次数最多的班组
+////            if(CollUtil.isNotEmpty(groupByUserId)){
+////                String groupName = groupByUserId.stream()
+////                        .collect(Collectors.groupingBy(OaGroupIdAndNameVO::getClassGroupName, Collectors.counting()))
+////                        .entrySet().stream()
+////                        .max(Map.Entry.comparingByValue())
+////                        .map(Map.Entry::getKey)
+////                        .orElse(null);
+////                result.setClassGroup(groupName);
+////            }
+////            //获取班组长
+////            String leader = "";
+////            //拿到当班的熔化班长
+////            rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_1);
+////            String leader1Name = getLeaderName(rosterDto);
+////            if(StrUtil.isBlank(leader1Name)){
+////                rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_2);
+////                leader1Name = getLeaderName(rosterDto);
+////                if(StrUtil.isBlank(leader1Name)){
+////                    rosterDto.setJobtitle(OaConstant.JOB_RONGHUABANZHANG_ID_3);
+////                    leader1Name = getLeaderName(rosterDto);
+////                }
+////            }
+////            leader = leader1Name;
+////            //拿到当班的成型班长
+////            rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_1);
+////            String leader2Name = getLeaderName(rosterDto);
+////            if(StrUtil.isBlank(leader2Name)){
+////                rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_2);
+////                leader2Name = getLeaderName(rosterDto);
+////                if(StrUtil.isBlank(leader2Name)){
+////                    rosterDto.setJobtitle(OaConstant.JOB_CHENGXINGBANZHANG_ID_3);
+////                    leader2Name = getLeaderName(rosterDto);
+////                }
+////            }
+////            if(StrUtil.isNotBlank(leader2Name)){
+////                if(StrUtil.isBlank(leader)){
+////                    leader = leader2Name;
+////                }else {
+////                    leader = leader + "/" +leader2Name;
+////                }
+////            }
+////            //拿到当班的成品班长
+////            rosterDto.setJobtitle(OaConstant.JOB_CHENGPINBANZHANG_ID);
+////            String leader3Name = getLeaderName(rosterDto);
+////            if(StrUtil.isNotBlank(leader3Name)){
+////                if(StrUtil.isBlank(leader)){
+////                    leader = leader3Name;
+////                }else {
+////                    leader = leader + "/" +leader3Name;
+////                }
+////            }
+////            //拿到当班的成品班长
+////            result.setClassLeader(leader);
+////            results.add(result);
+//        }
+//        return results;
+//    }
+@Override
+public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate date) {
+    List<OaTodayClassVO> results = Lists.newArrayList();
+    //分为早班和晚班
+    for(int i = 0; i < 2;i++){
+        //过滤当前班次
+        OaTodayClassVO result = new OaTodayClassVO();
+        String classStr = "";
+        if(i==0){
+            result.setClassOrder("早班");
+            classStr = "白班";
+        } else {
+            result.setClassOrder("晚班");
+            classStr = "夜班";
         }
-        return results;
+        String finalClassStr = classStr;
+        LocalTime time = LocalTime.now();
+        if(i==0){
+            time = LocalTime.of(8,0);
+        }else {
+            time = LocalTime.of(20,0);
+        }
+        //基片班组的id为53,54,55
+        KqFormatDetail kqFormatDetail = kqFormatDetailMapper.selectOne(new LambdaQueryWrapper<KqFormatDetail>()
+                .eq(KqFormatDetail::getWorkbegindate, date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .eq(KqFormatDetail::getWorkbegintime, time.toString())
+                .in(KqFormatDetail::getGroupid, Sets.newHashSet(53, 54, 55))
+                .last("LIMIT 1"));
+        KqGroup kqGroup = kqGroupService.getOne(new LambdaQueryWrapper<KqGroup>()
+                .eq(KqGroup::getId, kqFormatDetail.getGroupid()), false);
+        String[] split = kqGroup.getGroupname().split("-");
+        result.setClassGroup(split[1]);
+        KqMesGroupLeader one = kqMesGroupLeaderService.getOne(new LambdaQueryWrapper<KqMesGroupLeader>()
+                        .eq(KqMesGroupLeader::getWorkshopName, workshopName)
+                        .eq(KqMesGroupLeader::getGroupName, split[1]), false);
+        result.setClassLeader(one.getLeaderName());
+        results.add(result);
     }
+    return results;
+}
 
     @Override
     public OaTodayClassVO getTodayClassInfoSJG() {

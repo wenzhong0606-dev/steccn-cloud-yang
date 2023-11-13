@@ -60,9 +60,11 @@ public class SysAppVersionServiceImpl extends ServiceImpl<SysAppVersionMapper, S
     }
 
     @Override
-    public SysAppVersionVO getLatestVersion() {
+    public SysAppVersionVO getLatestVersion(Integer platform) {
         SysAppVersionVO sysAppVersionVO = new SysAppVersionVO();
-        SysAppVersion version = getOne(new LambdaQueryWrapper<SysAppVersion>().orderByDesc(SysAppVersion::getCreateTime).last(MpConstant.STR_LIMIT_1));
+        SysAppVersion version = getOne(new LambdaQueryWrapper<SysAppVersion>()
+                .eq(SysAppVersion::getPlatform, platform)
+                .orderByDesc(SysAppVersion::getCreateTime).last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(version)) {
             List<Long> ids = Lists.newArrayList();
             ids.add(version.getFileId());

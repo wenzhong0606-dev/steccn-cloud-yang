@@ -78,7 +78,7 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         if (Objects.isNull(nodeInfo)) {
             throw new SteccnChartException("当前节点不存在于能源树");
         }
-        Set<LocalDate> dateSet = Sets.newHashSet(date.minusDays(1), date);
+        Set<LocalDate> dateSet = Sets.newHashSet(date);
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, epEnergyType.getId(), Arrays.asList(nodeInfo.getId()));
         List<BigDecimal> collect = classDateAllData.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
         return new EpPmsConsumeVO(BigDecimalUtil.sum(collect), measureUnitMap.get(epEnergyType.getMeasureUnit()));

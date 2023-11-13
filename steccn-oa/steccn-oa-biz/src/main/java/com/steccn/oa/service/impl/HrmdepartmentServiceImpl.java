@@ -2,6 +2,7 @@ package com.steccn.oa.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -11,6 +12,8 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmdepartment;
 import com.steccn.oa.dto.OaClassUserNameDTO;
+import com.steccn.oa.dto.OaOrgDetailDTO;
+import com.steccn.oa.dto.OaOrgDetailParamDTO;
 import com.steccn.oa.service.HrmdepartmentService;
 import com.steccn.oa.mapper.HrmdepartmentMapper;
 import com.steccn.oa.vo.OaDepartmentTreeVO;
@@ -141,6 +144,33 @@ public class HrmdepartmentServiceImpl extends ServiceImpl<HrmdepartmentMapper, H
             });
         }
         return results;
+    }
+
+    @Override
+    public List<OaDepartmentVO> getOrgInfo(OaOrgDetailParamDTO dto) {
+        List<OaDepartmentVO> vos = Lists.newArrayList();
+        if(Objects.isNull(dto.getParams())){
+            return vos;
+        }
+        OaOrgDetailDTO params = dto.getParams();
+        List<Hrmdepartment> hrmdepartments = list(new LambdaQueryWrapper<Hrmdepartment>()
+                .eq(StrUtil.isNotBlank(params.getId()),Hrmdepartment::getId,dto.getParams().getId())
+                .eq(StrUtil.isNotBlank(params.getSupdepid()),Hrmdepartment::getSupdepid,dto.getParams().getSupdepid())
+                .eq(StrUtil.isNotBlank(params.getDepartmentcode()),Hrmdepartment::getDepartmentcode,dto.getParams().getDepartmentcode())
+                .like(StrUtil.isNotBlank(params.getDepartmentname()),Hrmdepartment::getDepartmentname,dto.getParams().getDepartmentname()));
+        if(CollUtil.isEmpty(hrmdepartments)){
+            return vos;
+        }
+        hrmdepartments.forEach(tmp->{
+            OaDepartmentVO vo = new OaDepartmentVO();
+            vo.setSubCompanyId(tmp.getSubcompanyid1());
+            vo.setId(tmp.getId());
+            vo.setDepartmentName(tmp.getDepartmentname());
+            vo.setSuperId(tmp.getSupdepid());
+            vo.setTLevel(tmp.getTlevel());
+            vos.add(vo);
+        });
+        return vos;
     }
 }
 

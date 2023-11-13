@@ -82,4 +82,10 @@ public class WmsCustomerBarcodeController {
         Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
         Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
     }
+
+    @ApiOperation("根据箱号获取绑定的客户条码")
+    @GetMapping()
+    public R<String> getCustomerBarcodeByCaseNO(@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
+        return R.success(wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(caseNo));
+    }
 }

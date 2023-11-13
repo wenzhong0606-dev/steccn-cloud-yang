@@ -20,6 +20,7 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
@@ -344,18 +345,14 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //查到oa中部门
                 OaOrgDetailDTO oaOrg = new OaOrgDetailDTO();
-                String departmentName = officeMap.get(pmsMaterialRequisition.getDepartmentId());
-                if(departmentName.length() > 4){
-                    departmentName = departmentName.substring(0,4);
-                }
-                oaOrg.setDepartmentname(departmentName);
+                oaOrg.setId(pmsMaterialRequisition.getDepartmentId().toString());
                 OaOrgDetailParamDTO oaOrgParam = new OaOrgDetailParamDTO();
                 oaOrgParam.setParams(oaOrg);
-                List<OaOrgDetailVO> oaOrgDetailVOS = FeignOptional.of(() -> oaInfoService.getOrgDetailByConditionV2(oaOrgParam), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                if (CollUtil.isNotEmpty(oaOrgDetailVOS)) {
+                List<OaDepartmentVO> oaDepartmentVOS = FeignOptional.of(() -> oaInfoService.getOrgDetailByConditionV3(oaOrgParam), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaDepartmentVOS)) {
                     //申请分部
-                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBM, oaOrgDetailVOS.get(0).getId().toString()));
-                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQFB, oaOrgDetailVOS.get(0).getSubcompanyid1()));
+                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBM, oaDepartmentVOS.get(0).getId().toString()));
+                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQFB, oaDepartmentVOS.get(0).getSubCompanyId().toString()));
                 }
                 //类型
                 Set<Long> dictIdSet = Sets.newHashSet();

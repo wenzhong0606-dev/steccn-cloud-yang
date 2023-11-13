@@ -4,6 +4,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmdepartment;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaClassUserNameDTO;
+import com.steccn.oa.dto.OaOrgDetailParamDTO;
 import com.steccn.oa.vo.OaDepartmentTreeVO;
 import com.steccn.oa.vo.OaDepartmentVO;
 
@@ -46,4 +47,11 @@ public interface HrmdepartmentService extends IService<Hrmdepartment> {
      * @return
      */
     List<OaDepartmentVO> getAllDepartment(TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 根据部门详情获取id
+     * @param dto
+     * @return
+     */
+    List<OaDepartmentVO> getOrgInfo(OaOrgDetailParamDTO dto);
 }

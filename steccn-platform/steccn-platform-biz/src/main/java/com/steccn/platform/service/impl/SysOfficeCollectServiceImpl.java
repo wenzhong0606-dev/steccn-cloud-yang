@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysOfficeCollect;
 import com.steccn.platform.dto.SysOfficeCollectAddDTO;
@@ -71,16 +72,17 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(SysOfficeCollectAddDTO dto) {
-        long number = count(new LambdaQueryWrapper<SysOfficeCollect>()
-                .eq(SysOfficeCollect::getOfficeId, dto.getOfficeId())
-                .eq(SysOfficeCollect::getOfficeType, dto.getOfficeType())
-                .eq(SysOfficeCollect::getType, SysOfficeConstant.ARRIVALS_OR_OUTBOUND.ARRIVALS.getCode()));
-        Assert.isTrue(number==0,"该工位已存在一个进站采集点");
-        long outboundNumber = count(new LambdaQueryWrapper<SysOfficeCollect>()
-                .eq(SysOfficeCollect::getOfficeId, dto.getOfficeId())
-                .eq(SysOfficeCollect::getOfficeType, dto.getOfficeType())
-                .eq(SysOfficeCollect::getType, SysOfficeConstant.ARRIVALS_OR_OUTBOUND.OUTBOUND.getCode()));
-        Assert.isTrue(outboundNumber==0,"该工位已存在一个出站采集点");
+        //2023/10/26 去除校验
+//        long number = count(new LambdaQueryWrapper<SysOfficeCollect>()
+//                .eq(SysOfficeCollect::getOfficeId, dto.getOfficeId())
+//                .eq(SysOfficeCollect::getOfficeType, dto.getOfficeType())
+//                .eq(SysOfficeCollect::getType, SysOfficeConstant.ARRIVALS_OR_OUTBOUND.ARRIVALS.getCode()));
+//        Assert.isTrue(number==0,"该工位已存在一个进站采集点");
+//        long outboundNumber = count(new LambdaQueryWrapper<SysOfficeCollect>()
+//                .eq(SysOfficeCollect::getOfficeId, dto.getOfficeId())
+//                .eq(SysOfficeCollect::getOfficeType, dto.getOfficeType())
+//                .eq(SysOfficeCollect::getType, SysOfficeConstant.ARRIVALS_OR_OUTBOUND.OUTBOUND.getCode()));
+//        Assert.isTrue(outboundNumber==0,"该工位已存在一个出站采集点");
         SysOfficeCollect sysOfficeCollect = new SysOfficeCollect();
         BeanUtils.copyProperties(dto,sysOfficeCollect);
         return save(sysOfficeCollect);
@@ -114,7 +116,8 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
         SysOfficeCollect one = getOne(new LambdaQueryWrapper<SysOfficeCollect>()
                 .eq(SysOfficeCollect::getOfficeId, stationId)
                 .eq(SysOfficeCollect::getOfficeType, 13)
-                .eq(SysOfficeCollect::getType, 1), false);
+                .eq(SysOfficeCollect::getType, 1)
+                .last(MpConstant.STR_LIMIT_1), false);
         if (Objects.nonNull(one)) {
             res = new SysOfficeCollectVO();
             BeanUtils.copyProperties(one, res);
