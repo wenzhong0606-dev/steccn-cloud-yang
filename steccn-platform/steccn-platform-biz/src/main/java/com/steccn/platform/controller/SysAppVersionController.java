@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
+
 /**
  * app版本控制器
  *
@@ -42,7 +44,11 @@ public class SysAppVersionController {
 
     @ApiOperation("app最新版本获取")
     @GetMapping("/latest")
-    public R<SysAppVersionVO> getLatestVersion() {
-        return R.success(sysAppVersionService.getLatestVersion());
+    public R<SysAppVersionVO> getLatestVersion(@RequestParam(value = "platform" , required = false) Integer platform) {
+        //如果platform为空，则
+        if (Objects.isNull(platform) || platform < 0 || platform > 1) {
+            platform = 0;
+        }
+        return R.success(sysAppVersionService.getLatestVersion(platform));
     }
 }

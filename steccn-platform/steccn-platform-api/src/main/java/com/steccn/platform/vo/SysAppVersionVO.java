@@ -51,4 +51,9 @@ public class SysAppVersionVO {
      */
     @ApiModelProperty("app下载url")
     private String fileUrl;
+
+    /**
+     * 平台 0-Android 1-ios
+     */
+    private Integer platform;
 }

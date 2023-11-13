@@ -35,6 +35,11 @@ public class SysAppVersion implements Serializable {
     private Long fileId;
 
     /**
+     * 平台 0-Android 1-ios
+     */
+    private Integer platform;
+
+    /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
