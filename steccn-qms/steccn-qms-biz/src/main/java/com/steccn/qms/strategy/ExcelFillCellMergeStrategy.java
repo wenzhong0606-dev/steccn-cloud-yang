@@ -1,15 +1,14 @@
 package com.steccn.qms.strategy;
 
-import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.handler.CellWriteHandler;
 import com.alibaba.excel.write.handler.context.CellWriteHandlerContext;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
-import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
+
 import java.util.List;
 
 /**
@@ -17,7 +16,7 @@ import java.util.List;
  * @desc
  * @date 2023/11/13
  */
-public class ExcelFillCellMergeStrategy implements CellWriteHandler {
+public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStrategy implements CellWriteHandler {
 
     private int[] mergeColumnIndex;
     private int mergeRowIndex;
@@ -28,15 +27,6 @@ public class ExcelFillCellMergeStrategy implements CellWriteHandler {
     public ExcelFillCellMergeStrategy(int mergeRowIndex, int[] mergeColumnIndex) {
         this.mergeRowIndex = mergeRowIndex;
         this.mergeColumnIndex = mergeColumnIndex;
-    }
-    @Override
-    public void beforeCellCreate(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row, Head head, Integer columnIndex, Integer relativeRowIndex, Boolean isHead) {
-
-    }
-
-    @Override
-    public void afterCellCreate(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
-
     }
 
     @Override
@@ -56,6 +46,8 @@ public class ExcelFillCellMergeStrategy implements CellWriteHandler {
                 }
             }
         }
+        //调整列宽
+        this.setColumnWidth(context);
     }
 
 
