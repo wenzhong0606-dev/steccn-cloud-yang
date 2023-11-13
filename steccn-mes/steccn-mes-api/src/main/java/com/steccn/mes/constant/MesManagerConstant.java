@@ -1,5 +1,11 @@
 package com.steccn.mes.constant;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.apache.commons.compress.utils.Sets;
+
+import java.util.Set;
+
 /**
  * 类说明
  *
@@ -40,4 +46,50 @@ public interface MesManagerConstant {
      * 仓库类型
      */
     String STOCK_TYPE = "12";
+
+    /**
+     * 温度点检项
+     */
+    @Getter
+    @AllArgsConstructor
+    enum TemperatureItemEnum {
+        ONE(1658273843689275392L, "板中温度"),
+        TWO(1658273797971361792L, "上辊北温度"),
+        THREE(1658273764500815872L, "上辊中温度"),
+        FOUR(1658273731030269952L, "上辊南温度"),
+        FIVE(1658273173586296832L, "下辊表面温度"),
+        SIX(1658272704994459648L,"辊前玻璃液温度"),
+        SEVEN(1658272613550243840L,"流溢口玻璃液温度");
+
+        private final Long id;
+
+        private final String itemName;
+
+        /**
+         * 所有的id
+         *
+         * @return
+         */
+        public static Set<Long> all() {
+            Set<Long> all = Sets.newHashSet();
+            for (TemperatureItemEnum value : TemperatureItemEnum.values()) {
+                all.add(value.getId());
+            }
+            return all;
+        }
+
+        /**
+         * 根据id获取名称
+         * @param id
+         * @return
+         */
+        public static String getItemNameId(Long id) {
+            for (TemperatureItemEnum value : TemperatureItemEnum.values()) {
+                if (value.getId().equals(id)) {
+                    return value.getItemName();
+                }
+            }
+            return null;
+        }
+    }
 }

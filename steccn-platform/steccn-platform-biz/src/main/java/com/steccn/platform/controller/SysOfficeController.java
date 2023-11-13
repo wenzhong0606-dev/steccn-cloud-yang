@@ -174,4 +174,10 @@ public class SysOfficeController {
     public R<List<SysOfficeVO>> listWorkshop(@RequestParam("type") Integer type) {
         return R.success(sysOfficeService.getWorkShopChildren(type));
     }
+
+    @PostMapping("/workshops/children")
+    @ApiOperation("查询一个节点指定类型的父节点-仓库")
+    public R<List<SysOfficeVO>> listByParentIds(@RequestBody Set<Long> ids) {
+        return R.success(sysOfficeService.listByParentIds(ids));
+    }
 }

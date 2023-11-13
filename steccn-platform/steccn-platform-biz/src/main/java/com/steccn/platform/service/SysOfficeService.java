@@ -248,4 +248,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> listByParentIdAndType(SysOfficeParentDTO dto);
+
+    /**
+     * 根据父节点以及子节点类型获取下级子节点数据
+     * @param ids
+     * @return
+     */
+    List<SysOfficeVO> listByParentIds(Set<Long> ids);
 }

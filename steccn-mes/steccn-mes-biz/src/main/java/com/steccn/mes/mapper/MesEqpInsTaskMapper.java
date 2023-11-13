@@ -4,6 +4,8 @@ import com.steccn.mes.domain.MesEqpInsTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.mes.dto.MesInsTaskCountDTO;
 import com.steccn.mes.dto.MesInsTaskParamDTO;
+import com.steccn.mes.dto.MesInsTaskTmpDTO;
+import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -30,6 +32,13 @@ public interface MesEqpInsTaskMapper extends BaseMapper<MesEqpInsTask> {
      * @return
      */
     List<MesInsTaskCountDTO> findInsCount(@Param("dto") MesInsTaskParamDTO dto);
+
+    /**
+     * 温度报表
+     * @param dto
+     * @return
+     */
+    List<MesInsTaskTmpDTO> findTmpValue(@Param("dto") MesInsTaskTmpParamDTO dto);
 }
 
 

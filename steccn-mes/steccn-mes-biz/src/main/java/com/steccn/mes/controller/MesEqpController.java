@@ -5,12 +5,15 @@ import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.MesDefectChartDTO;
+import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
 import com.steccn.mes.service.MesDefectService;
 import com.steccn.mes.service.MesEqpInsTaskService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
+import com.steccn.mes.vo.MesItemIdNameVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.ApiOperation;
@@ -62,6 +65,18 @@ public class MesEqpController {
     @ApiOperation(value = "缺陷图表")
     public R<QtLineChartBarDTO> defectChart(@RequestBody @Valid MesDefectChartDTO dto) {
         return R.success(mesDefectService.defectChart(dto));
+    }
+
+    @GetMapping("/dashboard/temperature/item")
+    @ApiOperation(value = "获取温度项")
+    public R<List<MesItemIdNameVO>> temperatureItem() {
+        return R.success(mesEqpInsTaskService.tmpItemIdAndName());
+    }
+
+    @PostMapping("/dashboard/temperature/report")
+    @ApiOperation(value = "获取温度项报表")
+    public R<SteccnTableDataDTO> temperatureReport(@RequestBody @Valid MesInsTaskTmpParamDTO dto) {
+        return R.success(mesEqpInsTaskService.tempReport(dto));
     }
 
     /**

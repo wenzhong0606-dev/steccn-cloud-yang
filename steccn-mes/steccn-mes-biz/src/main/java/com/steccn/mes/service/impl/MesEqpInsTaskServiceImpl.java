@@ -11,16 +11,21 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.mes.constant.MesManagerConstant;
 import com.steccn.mes.domain.JsSysOffice;
 import com.steccn.mes.domain.MesEqpInsTask;
 import com.steccn.mes.dto.MesInsTaskCountDTO;
 import com.steccn.mes.dto.MesInsTaskParamDTO;
+import com.steccn.mes.dto.MesInsTaskTmpDTO;
+import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
 import com.steccn.mes.mapper.JsSysOfficeMapper;
 import com.steccn.mes.service.MesEqpInsTaskService;
 import com.steccn.mes.mapper.MesEqpInsTaskMapper;
+import com.steccn.mes.vo.MesItemIdNameVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -247,6 +252,20 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
 //            dataList.add(stackGraphDTO);
 //        });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public List<MesItemIdNameVO> tmpItemIdAndName() {
+        List<MesItemIdNameVO> results = Lists.newArrayList();
+        for(MesManagerConstant.TemperatureItemEnum tmp:MesManagerConstant.TemperatureItemEnum.values()){
+            results.add(new MesItemIdNameVO(tmp.getId(), tmp.getItemName()));
+        }
+        return results;
+    }
+
+    @Override
+    public SteccnTableDataDTO<MesInsTaskTmpDTO> tempReport(MesInsTaskTmpParamDTO dto) {
+        return null;
     }
 }
 
