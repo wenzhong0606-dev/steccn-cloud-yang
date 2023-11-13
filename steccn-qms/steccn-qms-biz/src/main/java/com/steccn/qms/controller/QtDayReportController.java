@@ -50,7 +50,7 @@ public class QtDayReportController {
     @ApiOperation("质量日报表-在线检")
     public void onlineDownload(@RequestBody @Validated QtDayReportOnlineDTO dto, HttpServletResponse response) throws IOException {
         try {
-            qtDayReportService.onlineDownload(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT);
+            qtDayReportService.onlineDownload(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT,response);
         } catch (Exception e) {
             response.reset();
             response.setContentType("application/json");

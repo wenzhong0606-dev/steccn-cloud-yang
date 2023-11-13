@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
@@ -16,8 +17,6 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
-import com.steccn.common.vo.QtTaskClassCalculate;
-import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -36,6 +35,7 @@ import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
+import com.steccn.qms.strategy.ExcelFillCellMergeStrategy;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,10 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -134,6 +137,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             Map<String, BigDecimal> countMap = Maps.newHashMap();
             Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
             for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
+                String name = QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName();
+                OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(date + ":" + name, defaultOaGroupCountDTO);
                 //根据班次分组
                 Map<String, BigDecimal> classCountMap = Maps.newHashMap();
                 Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
@@ -149,9 +154,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             vo.setDataSource(dataSourceEntry.getKey());
                             vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
                             vo.setClassId(classEntry.getKey());
-                            String name = QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName();
                             vo.setClassName(name);
-                            OaGroupCountDTO oaGroupCountDTO = groupInfoMap.getOrDefault(date + ":" + name, defaultOaGroupCountDTO);
                             vo.setClassGroupName(oaGroupCountDTO.getGroupName());
                             vo.setClassGroupId(oaGroupCountDTO.getGroupId());
                             String[] split = defectTimeEntry.getKey().split("~");
@@ -202,6 +205,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                 }
                 QtDayReportOnlineDataVO vo = insertCount(1, categoryDefectMap, classEntry.getKey(), classCountMap, productLineName, treeSort);
+                vo.setClassName(name);
+                vo.setClassGroupName(oaGroupCountDTO.getGroupName());
                 tableData.add(vo);
             }
             QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap, productLineName, treeSort);
@@ -266,27 +271,63 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param lineIdList 产线
      * @param source 配置
      */
-    public void onlineDownload(LocalDate date, List<Integer> lineIdList, String source){
-        List<QtDayReportOnlineDataVO> tableData = Lists.newArrayList();
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("HH:mm");
-        //查询人工数据
-        //获取所有扁平化数据
-        QtChartParamDTO dto = new QtChartParamDTO();
-        dto.setDateStart(date);
-        dto.setDateEnd(date);
-        dto.setProductLineIdList(lineIdList);
-        //获取人工采集的缺陷集合+获取机器采集的缺陷集合
-        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
-
-        //是否加入数采数据
-        Map<String, List<Integer>> cfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(QtManagerConstant.CONF_QMS_COLLECT_ENABLE, Sets.newHashSet(source), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> cfContentList = cfMap.get(QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT);
-        if (CollUtil.isNotEmpty(cfContentList) && cfContentList.get(0) == 1) {
-            dto.setJoinAcquisition(1);
-        }
-        List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);
-        List<QtCheckTaskDetailReportVO> manDataList = manData;
-        SteccnTableAssertUtil.notEmpty(manDataList, "数据为空");
+    public void onlineDownload(LocalDate date, List<Integer> lineIdList, String source, HttpServletResponse response) throws IOException {
+        QtDayReportOnlineVO online = online(date, lineIdList, source);
+        List<QtDayReportOnlineDataVO> tableData = online.getTableData();
+        SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
+        //写表头
+        QtDayReportTableHeadersVO headers = online.getHeaders();
+        List<List<String>> list = new ArrayList<>();
+        //
+        List<QtSpcHeadTitleVO> common = headers.getCommon();
+        common.forEach(ele -> {
+            list.add(Lists.newArrayList(ele.getLabel()));
+        });
+        List<BaseReportHeaderVO> module = headers.getModule();
+        module.forEach(ele -> {
+            List<String> value = ele.getValue();
+            value.forEach(aa -> {
+                list.add(Lists.newArrayList(ele.getLabel(), aa));
+            });
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("质量日报表(人工)", "UTF-8");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableData.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            if (ele.getType() == 2) {
+                dataEle.add("合计(单产线)");
+            } else {
+                dataEle.add(ele.getProductLineName());
+            }
+            if (ele.getType() == 1) {
+                dataEle.add("小计(单班次)");
+            } else {
+                dataEle.add(ele.getClassName());
+            }
+            dataEle.add(ele.getClassGroupName());
+            dataEle.add(ele.getCustomerName());
+            dataEle.add(ele.getMaterialName());
+            dataEle.add(ele.getDefectTimeStr());
+            dataEle.add(ele.getNote());
+            dataEle.add(ele.getRowTotal());
+            List<FurtherValueStrVO> rowData = ele.getModule();
+            rowData.forEach(rf -> {
+                List<String> value = rf.getValue();
+                value.forEach(bb -> {
+                    dataEle.add(bb);
+                });
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0,1,2};
+        EasyExcel.write(response.getOutputStream()).head(list)
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .sheet("在线检日报表").doWrite(dataList);
     }
 
     /**

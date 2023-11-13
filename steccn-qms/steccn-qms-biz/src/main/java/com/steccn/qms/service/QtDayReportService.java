@@ -5,6 +5,9 @@ import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.dto.QtReportFirstPatrolDTO;
 import com.steccn.qms.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -28,7 +31,7 @@ public interface QtDayReportService {
      * @param lineIdList 产线
      * @param confContent 配置
      */
-    void onlineDownload(LocalDate date, List<Integer> lineIdList, String confContent);
+    void onlineDownload(LocalDate date, List<Integer> lineIdList, String confContent, HttpServletResponse response) throws IOException;
 
 
     /**
