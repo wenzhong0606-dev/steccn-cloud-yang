@@ -319,7 +319,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             rowData.forEach(rf -> {
                 List<String> value = rf.getValue();
                 value.forEach(bb -> {
-                    dataEle.add(bb);
+                    dataEle.add(Objects.nonNull(bb) ? Integer.parseInt(bb) : null);
                 });
             });
             dataList.add(dataEle);
