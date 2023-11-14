@@ -42,6 +42,9 @@ public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStra
             for (int i = 0; i < mergeColumnIndex.length; i++) {
                 if (curColIndex == mergeColumnIndex[i]) {
                     mergeWithPrevRow(writeSheetHolder, cell, curRowIndex, curColIndex);
+                    if (curColIndex > 0) {
+                        mergeWithPrevColumn(writeSheetHolder, cell, curRowIndex, curColIndex);
+                    }
                     break;
                 }
             }
@@ -49,7 +52,6 @@ public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStra
         //调整列宽
         this.setColumnWidth(context);
     }
-
 
 
     /**
@@ -62,14 +64,15 @@ public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStra
      */
     private void mergeWithPrevRow(WriteSheetHolder writeSheetHolder, Cell cell, int curRowIndex, int curColIndex) {
         //获取当前行的当前列的数据和上一行的当前列列数据，通过上一行数据是否相同进行合并
-        Object curData = cell.getCellTypeEnum() == CellType.STRING ? cell.getStringCellValue() : cell.getNumericCellValue();
+        Object curData = cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : cell.getNumericCellValue();
         Cell preCell = cell.getSheet().getRow(curRowIndex - 1).getCell(curColIndex);
-        Object preData = preCell.getCellTypeEnum() == CellType.STRING ? preCell.getStringCellValue() : preCell.getNumericCellValue();
+        Object preData = preCell.getCellType() == CellType.STRING ? preCell.getStringCellValue() : preCell.getNumericCellValue();
 
         // 比较当前行的第一列的单元格与上一行是否相同，相同合并当前单元格与上一行
         //
         if (curData.equals(preData)) {
             Sheet sheet = writeSheetHolder.getSheet();
+            //
             List<CellRangeAddress> mergeRegions = sheet.getMergedRegions();
             boolean isMerged = false;
             for (int i = 0; i < mergeRegions.size() && !isMerged; i++) {
@@ -85,6 +88,44 @@ public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStra
             // 若上一个单元格未被合并，则新增合并单元
             if (!isMerged) {
                 CellRangeAddress cellRangeAddress = new CellRangeAddress(curRowIndex - 1, curRowIndex, curColIndex, curColIndex);
+                sheet.addMergedRegion(cellRangeAddress);
+            }
+        }
+    }
+
+    /**
+     * 当前单元格不同列合并
+     *
+     * @param writeSheetHolder
+     * @param cell             当前单元格
+     * @param curRowIndex      当前行
+     * @param curColIndex      当前列
+     */
+    private void mergeWithPrevColumn(WriteSheetHolder writeSheetHolder, Cell cell, int curRowIndex, int curColIndex) {
+        //获取当前行的当前列的数据和上一行的当前列列数据，通过上一行数据是否相同进行合并
+        Object curData = cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : cell.getNumericCellValue();
+        Cell preCell = cell.getSheet().getRow(curRowIndex).getCell(curColIndex - 1);
+        Object preData = preCell.getCellType() == CellType.STRING ? preCell.getStringCellValue() : preCell.getNumericCellValue();
+
+        // 比较当前行当前列与当前行前一列是否相同，相同合并当前单元格与上一行
+        if (curData.equals(preData)) {
+            Sheet sheet = writeSheetHolder.getSheet();
+            //获取当前已经存在的合并规则
+            List<CellRangeAddress> mergeRegions = sheet.getMergedRegions();
+            boolean isMerged = false;
+            for (int i = 0; i < mergeRegions.size() && !isMerged; i++) {
+                CellRangeAddress cellRangeAddr = mergeRegions.get(i);
+                // 若上一个单元格已经被合并，则先移出原有的合并单元，再重新添加合并单元
+                if (cellRangeAddr.isInRange(curRowIndex, curColIndex - 1)) {
+                    sheet.removeMergedRegion(i);
+                    cellRangeAddr.setLastColumn(curColIndex);
+                    sheet.addMergedRegion(cellRangeAddr);
+                    isMerged = true;
+                }
+            }
+            // 若上一个单元格未被合并，则新增合并单元
+            if (!isMerged) {
+                CellRangeAddress cellRangeAddress = new CellRangeAddress(curRowIndex, curRowIndex, curColIndex - 1, curColIndex);
                 sheet.addMergedRegion(cellRangeAddress);
             }
         }

@@ -299,17 +299,23 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<List<Object>> dataList = Lists.newArrayList();
         tableData.forEach(ele -> {
             List<Object> dataEle = Lists.newArrayList();
-            if (ele.getType() == 2) {
+            if (ele.getType() == 1) {
+                dataEle.add(ele.getProductLineName());
+                dataEle.add("小计(单班次)");
+                dataEle.add("小计(单班次)");
+            } else if (ele.getType() == 2) {
                 dataEle.add("合计(单产线)");
+                dataEle.add("合计(单产线)");
+                dataEle.add("合计(单产线)");
+            }else if(ele.getType() == 3){
+                dataEle.add("总计");
+                dataEle.add("总计");
+                dataEle.add("总计");
             } else {
                 dataEle.add(ele.getProductLineName());
-            }
-            if (ele.getType() == 1) {
-                dataEle.add("小计(单班次)");
-            } else {
                 dataEle.add(ele.getClassName());
+                dataEle.add(ele.getClassGroupName());
             }
-            dataEle.add(ele.getClassGroupName());
             dataEle.add(ele.getCustomerName());
             dataEle.add(ele.getMaterialName());
             dataEle.add(ele.getDefectTimeStr());
@@ -324,7 +330,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             });
             dataList.add(dataEle);
         });
-        int[] mergeColumnIndex = {0,1,2};
+        int[] mergeColumnIndex = {0, 1, 2};
         EasyExcel.write(response.getOutputStream()).head(list)
                 .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
                 .sheet("在线检日报表").doWrite(dataList);
