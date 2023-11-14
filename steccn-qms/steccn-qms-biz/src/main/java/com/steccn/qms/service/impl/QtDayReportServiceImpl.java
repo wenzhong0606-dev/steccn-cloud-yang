@@ -2099,12 +2099,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         response.flushBuffer();
     }
 
-    private void lossDayMonthDownload(QtLossReportDTO dto, HttpServletResponse response) throws IOException {
-
-    }
-
-
-
     /**
      * 获取缺陷项数量
      *

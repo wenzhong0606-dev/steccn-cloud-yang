@@ -66,6 +66,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -196,6 +197,59 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         }
         dataList.add(count(2, "总计", "总计", allValueMap, defectEntityList));
         return resVo;
+    }
+
+    @Override
+    public void defectListDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        QtDefectReportVO defectList = defectList(dto);
+        List<QtDefectReportDataVO> tableData = defectList.getDataList();
+        SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        List<String> valueHeadList = defectList.getValueHeadList();
+        list.add(Lists.newArrayList("产线"));
+        list.add(Lists.newArrayList("日期"));
+        if(dto.getGranularity() == 0 ){
+            list.add(Lists.newArrayList("班次"));
+            list.add(Lists.newArrayList("班组"));
+        }
+        valueHeadList.forEach(ele -> list.add(Lists.newArrayList(ele)));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("不良报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableData.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            //0正常元素  1合计 2总计 3小计
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassDateStr());
+            if (dto.getGranularity() == 0) {
+                dataEle.add(ele.getClassName());
+                dataEle.add(ele.getClassGroupName());
+            }
+            ele.getValueList().forEach(val ->  dataEle.add(val));
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1};
+        int[] mergeColumnIndex2 = {0, 1, 2, 3};
+        if(dto.getGranularity() == 0){
+            mergeColumnIndex = mergeColumnIndex2;
+        }
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "不良报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet1);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     @Override

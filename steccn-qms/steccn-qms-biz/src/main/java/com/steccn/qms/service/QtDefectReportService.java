@@ -28,6 +28,14 @@ public interface QtDefectReportService {
     QtDefectReportVO defectList(QtDefectReportDTO dto);
 
     /**
+     * 缺陷列表
+     *
+     * @param dto 请求
+     * @return vo
+     */
+    void defectListDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 落板记录列表
      *
      * @param dto - 请求
@@ -127,4 +135,5 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
 }
