@@ -1,7 +1,9 @@
 package com.steccn.mes.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -9,11 +11,9 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.SteccnTableDataDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.mes.constant.MesManagerConstant;
 import com.steccn.mes.domain.JsSysOffice;
@@ -27,8 +27,11 @@ import com.steccn.mes.service.MesEqpInsTaskService;
 import com.steccn.mes.mapper.MesEqpInsTaskMapper;
 import com.steccn.mes.vo.MesItemIdNameVO;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaTodayClassVO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +40,10 @@ import org.apache.http.util.Asserts;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,6 +60,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
     private final MesEqpInsTaskMapper mesEqpInsTaskMapper;
     private final JsSysOfficeMapper jsSysOfficeMapper;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final OaInfoService oaInfoService;
 
     @Override
     public QtLineChartBarDTO taskComplete(LocalDateTime startTime, LocalDateTime endTime,Integer type) {
@@ -258,14 +265,120 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
     public List<MesItemIdNameVO> tmpItemIdAndName() {
         List<MesItemIdNameVO> results = Lists.newArrayList();
         for(MesManagerConstant.TemperatureItemEnum tmp:MesManagerConstant.TemperatureItemEnum.values()){
-            results.add(new MesItemIdNameVO(tmp.getId(), tmp.getItemName()));
+            results.add(new MesItemIdNameVO(tmp.getId(), tmp.getItemName(),tmp.getCode()));
         }
         return results;
     }
 
     @Override
-    public SteccnTableDataDTO<MesInsTaskTmpDTO> tempReport(MesInsTaskTmpParamDTO dto) {
-        return null;
+    public SteccnTableDataDTO<Map<String,String>> tempReport(MesInsTaskTmpParamDTO dto) {
+        //1、获取温度检验项信息
+        dto.setStartTime(dto.getStartDate().atTime(8,0,0));
+        dto.setEndTime(dto.getEndDate().plusDays(1).atTime(7,59,59));
+        List<MesInsTaskTmpDTO> tempValue = mesEqpInsTaskMapper.findTmpValue(dto);
+        Assert.notEmpty(tempValue,"数据为空");
+        //2、生成报表数据
+        SteccnTableDataDTO<Map<String,String>> result = new SteccnTableDataDTO();
+        Map<String, SysOfficeVO> stringSysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(dto.getProductLineCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //产线code
+        List<SysOfficeVO> officeList = stringSysOfficeVOMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        //温度项
+        List<MesItemIdNameVO> tempItems = tmpItemIdAndName();
+        Map<Long,MesItemIdNameVO> tempItemMap = Maps.newHashMap();
+        tempItems.forEach(tmp->{
+            tempItemMap.put(tmp.getItemId(),tmp);
+        });
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("date","日期",null));
+        columns.add(new SteccnTableColumn("classOrder","班次",null));
+        columns.add(new SteccnTableColumn("classGroupName","班组",null));
+        columns.add(new SteccnTableColumn("time","时间",null));
+        //动态表头
+        for(SysOfficeVO officeTmp:officeList){
+            //组产线
+            SteccnTableColumn columnTmp = new SteccnTableColumn("productLine"+officeTmp.getId(),officeTmp.getOfficeName(),null);
+            //组温度项
+            List<SteccnTableColumn> columnTmpList = Lists.newArrayList();
+            for(MesItemIdNameVO tempItem:tempItems){
+                columnTmpList.add(new SteccnTableColumn(tempItemMap.get(tempItem.getItemId()).getCode()+officeTmp.getId(),
+                        tempItemMap.get(tempItem.getItemId()).getItemName(),null));
+            }
+            columnTmp.setChildren(columnTmpList);
+            columns.add(columnTmp);
+        }
+        result.setColumns(columns);
+        //2.2组数据
+        List<Map<String,String>> tableList = Lists.newArrayList();
+        int dayCount = LocalDateTimeUtil.betweenPeriod(dto.getStartDate(), dto.getEndDate()).getDays();
+        for (int i = 0; i <= dayCount; i++) {
+            //优先获取基片班组
+            LocalDate date = dto.getStartDate().plusDays(i);
+            List<OaTodayClassVO> todayClassVOS = FeignOptional.of(() -> oaInfoService.getTodayClassInfo("基片二车间", date), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            //早班晚班 j=0是早班 j=1是晚班
+            for(int j = 0; j < 2; j++){
+                String classOrderStr;
+                if(j==0){
+                    classOrderStr = "早班";
+                }else{
+                    classOrderStr = "晚班";
+                }
+                for(SysOfficeVO officeTmp:officeList){
+                    List<MesInsTaskTmpDTO> taskTmpDTOS = Lists.newArrayList();
+                    if(j==0){
+                        taskTmpDTOS = tempValue.stream().filter(v -> v.getOfficeAuth().equals(officeTmp.getOfficeCode())
+                                && LocalDateUtil.isRange(v.getDateTime(), date.atTime(LocalTime.of(8,0,0)), date.atTime(LocalTime.of(20,0,0)), true, false)).collect(Collectors.toList());
+                    }else {
+                        taskTmpDTOS = tempValue.stream().filter(v -> v.getOfficeAuth().equals(officeTmp.getOfficeCode())
+                                && LocalDateUtil.isRange(v.getDateTime(), date.atTime(LocalTime.of(20,0,0)), date.plusDays(1).atTime(LocalTime.of(8,0,0)), true, false)).collect(Collectors.toList());
+                    }
+                    if(CollUtil.isNotEmpty(taskTmpDTOS)){
+                        //根据时间排序
+                        taskTmpDTOS.forEach(tmp->tmp.getDateTime().withSecond(0).withMinute(0));
+                        //按时间分组并排序
+                        Map<LocalDateTime, List<MesInsTaskTmpDTO>> localDateTimeListMap = taskTmpDTOS.stream().collect(Collectors.groupingBy(MesInsTaskTmpDTO::getDateTime));
+                        TreeMap<LocalDateTime, List<MesInsTaskTmpDTO>> localDateTimeListTreeMap = MapUtil.sort(localDateTimeListMap);
+                        for(Map.Entry<LocalDateTime, List<MesInsTaskTmpDTO>> entry:localDateTimeListTreeMap.entrySet()){
+                            Map<String,String> dataTmp = Maps.newHashMap();
+                            //放入班次班组
+                            dataTmp.put("date",date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                            dataTmp.put("classOrder",classOrderStr);
+                            if(CollUtil.isNotEmpty(todayClassVOS)){
+                                OaTodayClassVO oaTodayClassVO = todayClassVOS.stream().filter(v -> v.getClassOrder().equals(classOrderStr)).findFirst().orElse(new OaTodayClassVO());
+                                dataTmp.put("classGroupName",oaTodayClassVO.getClassGroup());
+                            }
+                            dataTmp.put("time",entry.getKey().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                            //温度项数据
+                            for(MesItemIdNameVO tempItem:tempItems){
+                                dataTmp.put(tempItemMap.get(tempItem.getItemId()).getCode()+officeTmp.getId(),null);
+                            }
+                            entry.getValue().forEach(tmp->{
+                                dataTmp.put(tempItemMap.get(tmp.getInsItemId()).getCode()+officeTmp.getId(),null);
+                            });
+                            tableList.add(dataTmp);
+                        }
+                    }else {
+                        Map<String,String> dataTmp = Maps.newHashMap();
+                        //放入班次班组
+                        dataTmp.put("date",date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                        dataTmp.put("classOrder",classOrderStr);
+                        if(CollUtil.isNotEmpty(todayClassVOS)){
+                            OaTodayClassVO oaTodayClassVO = todayClassVOS.stream().filter(v -> v.getClassOrder().equals(classOrderStr)).findFirst().orElse(new OaTodayClassVO());
+                            dataTmp.put("classGroupName",oaTodayClassVO.getClassGroup());
+                        }
+                        dataTmp.put("time",null);
+                        //温度项数据
+                        for(MesItemIdNameVO tempItem:tempItems){
+                            dataTmp.put(tempItemMap.get(tempItem.getItemId()).getCode()+officeTmp.getId(),null);
+                        }
+                        tableList.add(dataTmp);
+                    }
+
+                }
+            }
+        }
+        result.setTableList(tableList);
+        return result;
     }
 }
 

@@ -53,17 +53,19 @@ public interface MesManagerConstant {
     @Getter
     @AllArgsConstructor
     enum TemperatureItemEnum {
-        ONE(1658273843689275392L, "板中温度"),
-        TWO(1658273797971361792L, "上辊北温度"),
-        THREE(1658273764500815872L, "上辊中温度"),
-        FOUR(1658273731030269952L, "上辊南温度"),
-        FIVE(1658273173586296832L, "下辊表面温度"),
-        SIX(1658272704994459648L,"辊前玻璃液温度"),
-        SEVEN(1658272613550243840L,"流溢口玻璃液温度");
+        ONE(1658273843689275392L, "板中温度","bzTemp"),
+        TWO(1658273797971361792L, "上辊北温度","sgbTemp"),
+        THREE(1658273764500815872L, "上辊中温度","sgzTemp"),
+        FOUR(1658273731030269952L, "上辊南温度","sgnTemp"),
+        FIVE(1658273173586296832L, "下辊表面温度","xgnTemp"),
+        SIX(1658272704994459648L,"辊前玻璃液温度","gqblTemp"),
+        SEVEN(1658272613550243840L,"流溢口玻璃液温度","lakblTemp");
 
         private final Long id;
 
         private final String itemName;
+
+        private final String code;
 
         /**
          * 所有的id
@@ -87,6 +89,15 @@ public interface MesManagerConstant {
             for (TemperatureItemEnum value : TemperatureItemEnum.values()) {
                 if (value.getId().equals(id)) {
                     return value.getItemName();
+                }
+            }
+            return null;
+        }
+
+        public static String getItemCodeById(Long id) {
+            for (TemperatureItemEnum value : TemperatureItemEnum.values()) {
+                if (value.getId().equals(id)) {
+                    return value.getCode();
                 }
             }
             return null;

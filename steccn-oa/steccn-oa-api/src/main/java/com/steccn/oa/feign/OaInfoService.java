@@ -103,6 +103,16 @@ public interface OaInfoService {
     R<List<Integer>> getIdByWorkCode(@RequestBody List<String> userNames);
 
     /**
+     * 获取基片当班信息
+     * @param workshopName date
+     * @return
+     */
+    @ApiOperation("获取基片当班信息")
+    @GetMapping("/feign/oa/todayClass/info")
+    R<List<OaTodayClassVO>> getTodayClassInfo(@RequestParam("workshopName") String workshopName, @RequestParam("date") LocalDate date);
+
+
+    /**
      *
      *
      * @param dto 用户名列表

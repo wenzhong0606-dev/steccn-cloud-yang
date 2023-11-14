@@ -1,5 +1,6 @@
 package com.steccn.mes.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,6 @@ import lombok.NoArgsConstructor;
 public class MesItemIdNameVO {
     private Long itemId;
     private String itemName;
+    @JsonIgnore
+    private String code;
 }

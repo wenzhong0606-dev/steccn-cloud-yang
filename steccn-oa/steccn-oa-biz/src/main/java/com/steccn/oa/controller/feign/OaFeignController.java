@@ -140,4 +140,10 @@ public class OaFeignController {
     public R<OaUserIdAndName> getOperator(@RequestBody TupleDTO<Integer,Integer> dto){
         return R.success(workflowRequestlogService.getOperator(dto));
     }
+
+    @ApiOperation("获取当班信息")
+    @GetMapping("/todayClass/info")
+    public R<List<OaTodayClassVO>> getTodayClassInfo(@RequestParam("workshopName") String workshopName, @RequestParam("date") LocalDate date){
+        return R.success(kqGroupmemberService.getTodayClassInfo(workshopName,date));
+    }
 }
