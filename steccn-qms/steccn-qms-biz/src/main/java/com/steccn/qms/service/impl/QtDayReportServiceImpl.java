@@ -4,14 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.write.builder.ExcelWriterBuilder;
-import com.alibaba.excel.write.builder.ExcelWriterSheetBuilder;
 import com.alibaba.excel.write.metadata.WriteSheet;
-import com.alibaba.excel.write.metadata.style.WriteCellStyle;
-import com.alibaba.excel.write.metadata.style.WriteFont;
-import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -25,7 +19,10 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.*;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.ClassUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -52,13 +49,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.Strings;
-import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
@@ -1014,7 +1009,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param response
      */
     private void patrolCheckDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException{
-
         QtDayReportFirstVO first = first(dto);
         List<QtDayReportFirstDataVO> tableData = first.getTableData();
         SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
@@ -1088,7 +1082,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         int[] mergeColumnIndex2 = {0};
 
         ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
-        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "在线检日报表")
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "巡检")
                 .head(list1)
                 .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
@@ -1164,7 +1158,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         });
         int[] mergeColumnIndex = {0, 1, 2};
         ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
-        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "在线检日报表")
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "首检")
                 .head(list)
                 .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
@@ -1438,6 +1432,50 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         });
         resVo.setDataList(dataList);
         return resVo;
+    }
+
+    @Override
+    public void samplingDownload(LocalDate date, HttpServletResponse response) throws IOException {
+        QtDaySamplingVO sampling = sampling(date);
+        List<QtDaySamplingDataVO> sourceData = sampling.getDataList();
+        SteccnTableAssertUtil.notEmpty(sourceData, "数据为空");
+        //写表头
+        List<String> dynamicHeadList = sampling.getDynamicHeadList();
+        List<List<String>> list = new ArrayList<>();
+        Arrays.asList("班次", "取样时间", "配料付数", "检验结果", "备注").forEach(ele -> list.add(Lists.newArrayList(ele)));
+        dynamicHeadList.forEach(ele -> list.add(Lists.newArrayList(ele)));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("配料抽检日报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        sourceData.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getClassName());
+            dataEle.add(ele.getSamplingTime());
+            dataEle.add(ele.getIngredientNum());
+            dataEle.add(ele.getResult());
+            dataEle.add(ele.getNote());
+            for (String item : ele.getItemList()) {
+                dataEle.add(item);
+            }
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "配料抽检日报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet1);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**

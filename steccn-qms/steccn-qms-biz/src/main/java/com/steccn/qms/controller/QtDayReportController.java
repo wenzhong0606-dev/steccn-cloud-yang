@@ -98,6 +98,22 @@ public class QtDayReportController {
         return R.success(qtDayReportService.sampling(date));
     }
 
+    @GetMapping("/sampling/download")
+    @ApiOperation("配料抽检日报表")
+    public void samplingDownload(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            qtDayReportService.samplingDownload(date, response);
+        } catch (Exception e) {
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/loss")
     @ApiOperation("损耗日报表")
     public R<QtDayReportLossVO> loss(@RequestBody @Validated QtLossReportDTO dto) {

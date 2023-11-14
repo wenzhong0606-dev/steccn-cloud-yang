@@ -64,6 +64,13 @@ public interface QtDayReportService {
     QtDaySamplingVO sampling(LocalDate date);
 
     /**
+     * 配料抽检日报表-下载
+     * @param date 日期
+     * @return 报表
+     */
+    void samplingDownload(LocalDate date, HttpServletResponse response) throws IOException;
+
+    /**
      * 基片损耗日报表
      * @param dto
      * @return
