@@ -33,6 +33,9 @@ public class LocalDateUtil {
      * @return String 日期时间字符串，例如 2022-11-01 09:51:53
      */
     public static String format(LocalDateTime localDateTime, String pattern) {
+        if(Objects.isNull(localDateTime)){
+            return null;
+        }
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
         return dateTimeFormatter.format(localDateTime);
     }

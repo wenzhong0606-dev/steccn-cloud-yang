@@ -41,6 +41,13 @@ public interface QtDayReportService {
      */
     QtDayReportFirstVO first(QtReportFirstPatrolDTO dto);
 
+    /**
+     * 质量日报表-首检2/巡检4-下载
+     * @param dto dto
+     * @param response 响应
+     */
+    void firstDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException;
+
 
     /**
      * 质量日报表-巡检-缺陷项

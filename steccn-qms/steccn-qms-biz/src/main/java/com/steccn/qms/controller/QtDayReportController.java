@@ -46,11 +46,11 @@ public class QtDayReportController {
         return R.success(qtDayReportService.online(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_ENABLE_CONTENT));
     }
 
-    @PostMapping("/online/download")
+    @PostMapping("/online/man/download")
     @ApiOperation("质量日报表-在线检")
-    public void onlineDownload(@RequestBody @Validated QtDayReportOnlineDTO dto, HttpServletResponse response) throws IOException {
+    public void onlineManDownload(@RequestBody @Validated QtDayReportOnlineDTO dto, HttpServletResponse response) throws IOException {
         try {
-            qtDayReportService.onlineDownload(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT,response);
+            qtDayReportService.onlineDownload(dto.getDate(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT, response);
         } catch (Exception e) {
             response.reset();
             response.setContentType("application/json");
@@ -62,11 +62,27 @@ public class QtDayReportController {
         }
     }
 
-
     @PostMapping("/first")
     @ApiOperation("质量日报表-首检2/巡检4")
     public R<QtDayReportFirstVO> first(@RequestBody @Validated QtReportFirstPatrolDTO dto) {
         return R.success(qtDayReportService.first(dto));
+    }
+
+    @PostMapping("/first/download")
+    @ApiOperation("质量日报表-首检2/巡检4-下载")
+    public void firstDownload(@RequestBody @Validated QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDayReportService.firstDownload(dto,response);
+        } catch (Exception e) {
+            log.error("{}",e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
 
