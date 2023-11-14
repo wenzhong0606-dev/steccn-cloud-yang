@@ -1,7 +1,10 @@
 package com.steccn.qms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtDefectReportService;
 import com.steccn.qms.vo.*;
@@ -13,8 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -33,6 +39,23 @@ public class QtDefectReportController {
     @ApiOperation(value = "成品率报表")
     public R<SteccnTableDataDTO> finishedRate(@Valid @RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.finishedRate(dto));
+    }
+
+    @PostMapping("/finish/download")
+    @ApiOperation(value = "成品率报表-下载")
+    public void finishedRateDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDefectReportService.finishedRateDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @PostMapping("/defect")

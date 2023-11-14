@@ -7,6 +7,8 @@ import com.steccn.qms.vo.DefectDayVO;
 import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -118,4 +120,11 @@ public interface QtDefectReportService {
      * @return
      */
     SteccnTableDataDTO<QtFinishedRateDTO> finishedRate(QtDefectReportDTO dto);
+
+    /**
+     * 成品率报表
+     * @param dto
+     * @return
+     */
+    void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
 }

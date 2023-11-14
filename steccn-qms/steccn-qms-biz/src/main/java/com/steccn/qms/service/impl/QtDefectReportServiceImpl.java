@@ -5,8 +5,13 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -40,6 +45,9 @@ import com.steccn.pms.vo.SubstrateDataListVO;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtCheckTaskDetailMapper;
+import com.steccn.qms.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.DefectDayRowVO;
 import com.steccn.qms.vo.DefectDayVO;
@@ -52,12 +60,14 @@ import com.steccn.qms.util.UnitConvertUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -1233,6 +1243,73 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         tableData.add(row);
         result.setTableList(tableData);
         return result;
+    }
+
+    @Override
+    public void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        SteccnTableDataDTO<QtFinishedRateDTO> result = finishedRate(dto);
+        List<QtFinishedRateDTO> tableList = result.getTableList();
+        Assert.notEmpty(tableList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        result.getColumns().forEach(ele -> {
+            //存在多个元素的情况
+            if (CollUtil.isNotEmpty(ele.getChildren())) {
+                ele.getChildren().forEach(aa -> {
+                    list.add(Lists.newArrayList(ele.getLabel(), aa.getLabel()));
+                });
+            } else {
+                list.add(Lists.newArrayList(ele.getLabel()));
+            }
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("成品率报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = com.google.common.collect.Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            //0 普通行 1合计行 2总计行
+            if (ele.getType() == 1) {
+                dataEle.add(ele.getProductLine());
+                dataEle.add("合计(单产线)");
+            } else if (ele.getType() == 2) {
+                dataEle.add("总计");
+                dataEle.add("总计");
+            } else {
+                dataEle.add(ele.getProductLine());
+                dataEle.add(LocalDateUtil.format(ele.getDate(), "yyyy-MM-dd"));
+            }
+            dataEle.add(ele.getShift());
+            dataEle.add(ele.getGroup());
+            dataEle.add(ele.getLength());
+            dataEle.add(ele.getWidth());
+            dataEle.add(ele.getThick());
+            dataEle.add(ele.getPerWeight());
+            dataEle.add(ele.getSlice());
+            dataEle.add(ele.getSquareMeter());
+            dataEle.add(ele.getWeight());
+            dataEle.add(ele.getPullAmount());
+            dataEle.add(ele.getWeightRate());
+            dataEle.add(ele.getConvertRate());
+            dataEle.add(ele.getConvertWeight());
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1, 2};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "成品率报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet1);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**

@@ -1102,7 +1102,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         }
         excelWriter.finish();
         response.flushBuffer();
-
     }
 
     /**

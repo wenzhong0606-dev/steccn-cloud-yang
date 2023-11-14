@@ -40,6 +40,22 @@ public class LocalDateUtil {
         return dateTimeFormatter.format(localDateTime);
     }
 
+
+    /**
+     * 获取日期时间字符串
+     *
+     * @param date 需要转化的日期时间
+     * @param pattern       时间格式
+     * @return String 日期时间字符串，例如 2022-11-01
+     */
+    public static String format(LocalDate date, String pattern) {
+        if (Objects.isNull(date)) {
+            return null;
+        }
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
+        return dateTimeFormatter.format(date);
+    }
+
     /**
      * LocalDateTime转为日期
      *

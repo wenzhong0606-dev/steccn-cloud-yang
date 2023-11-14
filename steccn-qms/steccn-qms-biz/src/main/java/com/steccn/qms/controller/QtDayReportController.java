@@ -85,7 +85,6 @@ public class QtDayReportController {
         }
     }
 
-
     @PostMapping("/polling/defect/item")
     @ApiOperation("质量日报表-巡检-缺陷项")
     public R<QtDayPollingFirstVO> pollingDefectItem(@RequestBody @Validated QtReportFirstPatrolDTO dto) {
