@@ -7,6 +7,8 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
+import com.alibaba.excel.write.builder.ExcelWriterSheetBuilder;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
@@ -43,6 +45,7 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.strategy.HeadContentStyleStrategy;
 import com.steccn.qms.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -286,17 +289,21 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
         //写表头
         QtDayReportTableHeadersVO headers = online.getHeaders();
-        List<List<String>> list = new ArrayList<>();
-        //
+        //在线检
+        List<List<String>> list1 = new ArrayList<>();
+        //落板记录
+        List<List<String>> list2 = new ArrayList<>();
+        Arrays.asList("产线","班次","班组","落板记录时段","落板工位","落板原因","备注").forEach(ele -> list2.add(Lists.newArrayList(ele)));
+
         List<QtSpcHeadTitleVO> common = headers.getCommon();
         common.forEach(ele -> {
-            list.add(Lists.newArrayList(ele.getLabel()));
+            list1.add(Lists.newArrayList(ele.getLabel()));
         });
         List<BaseReportHeaderVO> module = headers.getModule();
         module.forEach(ele -> {
             List<String> value = ele.getValue();
             value.forEach(aa -> {
-                list.add(Lists.newArrayList(ele.getLabel(), aa));
+                list1.add(Lists.newArrayList(ele.getLabel(), aa));
             });
         });
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -305,7 +312,24 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         String fileName = URLEncoder.encode("质量日报表(人工)", "UTF-8");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         //数据
-        List<List<Object>> dataList = Lists.newArrayList();
+        List<List<Object>> dataList1 = Lists.newArrayList();
+        List<List<Object>> dataList2 = Lists.newArrayList();
+        //落板记录
+        online.getFallList().forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassName());
+            dataEle.add(ele.getClassGroupName());
+            String start = LocalDateTimeUtil.format(ele.getDestoryStartTime(), "MM-dd HH:mm");
+            String end = LocalDateTimeUtil.format(ele.getDestoryEndTime(), "MM-dd HH:mm");
+            dataEle.add(start + " ~ " + end);
+            dataEle.add(ele.getDestoryWorkStationStr());
+            dataEle.add(ele.getDestoryReason());
+            dataEle.add(ele.getDestoryInfoRemark());
+            dataList2.add(dataEle);
+        });
+
+        //在线检
         tableData.forEach(ele -> {
             List<Object> dataEle = Lists.newArrayList();
             if (ele.getType() == 1) {
@@ -337,42 +361,30 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     dataEle.add(Objects.nonNull(bb) ? Integer.parseInt(bb) : null);
                 });
             });
-            dataList.add(dataEle);
+            dataList1.add(dataEle);
         });
-        int[] mergeColumnIndex = {0, 1, 2};
+        int[] mergeColumnIndex1 = {0, 1, 2};
+        int[] mergeColumnIndex2 = {0};
 
-        //边框
-        WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
-        WriteCellStyle headWriteCellStyle = new WriteCellStyle();
-        // 标题字体大小
-        WriteFont contentWriteFont = new WriteFont();
-        contentWriteFont.setFontHeightInPoints((short) 14);
-        contentWriteFont.setColor(IndexedColors.WHITE.getIndex());
-        headWriteCellStyle.setWriteFont(contentWriteFont);
-        //标题黄色底纹
-        headWriteCellStyle.setFillForegroundColor(IndexedColors.GREY_40_PERCENT.getIndex());
-        contentWriteCellStyle.setBorderBottom(BorderStyle.THIN);
-        contentWriteCellStyle.setBorderLeft(BorderStyle.THIN);
-        contentWriteCellStyle.setBorderRight(BorderStyle.THIN);
-        contentWriteCellStyle.setBorderTop(BorderStyle.THIN);
-        // 水平居中
-        contentWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
-        // 垂直居中
-        contentWriteCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-        // 设置自动换行，前提内容中需要加「\n」才有效
-        contentWriteCellStyle.setWrapped(true);
-
-        //初始化样式
-        HorizontalCellStyleStrategy horizontalCellStyleStrategy =
-                new HorizontalCellStyleStrategy(headWriteCellStyle, contentWriteCellStyle);
-
-       EasyExcel.write(response.getOutputStream())
-                .head(list)
-                .registerWriteHandler(new RowHeightStyleStrategy())
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "在线检日报表")
+                .head(list1)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
-                .registerWriteHandler(horizontalCellStyleStrategy)
-                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
-                .sheet("在线检日报表").doWrite(dataList);
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex1))
+                .build();
+        WriteSheet writeSheet2 = EasyExcel.writerSheet(1, "落板记录")
+                .head(list2)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 40))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
+                .build();
+        excelWriter.write(dataList1, writeSheet1);
+        excelWriter.write(dataList2, writeSheet2);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**

@@ -10,13 +10,21 @@ import org.apache.poi.ss.usermodel.Row;
  */
 public class RowHeightStyleStrategy extends AbstractRowHeightStyleStrategy {
 
+    float headHeight;
+    float contentHeight;
+
+    public RowHeightStyleStrategy(float headHeight , float contentHeight) {
+        this.headHeight = headHeight;
+        this.contentHeight = contentHeight;
+    }
+
     protected void setHeadColumnHeight(Row row, int relativeRowIndex) {
         // 设置 头 行高
-        row.setHeightInPoints((float) 30);
+        row.setHeightInPoints((float) headHeight);
     }
 
     protected void setContentColumnHeight(Row row, int relativeRowIndex) {
         // 设置 内容 行高
-        row.setHeightInPoints((float) 25);
+        row.setHeightInPoints((float) contentHeight);
     }
 }
