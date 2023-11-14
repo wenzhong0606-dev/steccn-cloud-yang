@@ -569,6 +569,18 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         return true;
     }
 
+    @Override
+    public Map<String, WmsInventory> inventoryMapByCaseNos(Set<String> caseNos) {
+        Map<String, WmsInventory> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(caseNos)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNos));
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach( inventory-> map.put(inventory.getCaseNo(),inventory));
+            }
+        }
+        return map;
+    }
+
 
     private Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo) {
         Map<String, WmsInventory> map = Maps.newHashMap();
