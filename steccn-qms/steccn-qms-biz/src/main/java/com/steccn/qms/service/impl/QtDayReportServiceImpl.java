@@ -4,6 +4,13 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.builder.ExcelWriterBuilder;
+import com.alibaba.excel.write.metadata.style.WriteCellStyle;
+import com.alibaba.excel.write.metadata.style.WriteFont;
+import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
@@ -36,11 +43,13 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -331,7 +340,37 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             dataList.add(dataEle);
         });
         int[] mergeColumnIndex = {0, 1, 2};
-        EasyExcel.write(response.getOutputStream()).head(list)
+
+        //边框
+        WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
+        WriteCellStyle headWriteCellStyle = new WriteCellStyle();
+        // 标题字体大小
+        WriteFont contentWriteFont = new WriteFont();
+        contentWriteFont.setFontHeightInPoints((short) 14);
+        contentWriteFont.setColor(IndexedColors.WHITE.getIndex());
+        headWriteCellStyle.setWriteFont(contentWriteFont);
+        //标题黄色底纹
+        headWriteCellStyle.setFillForegroundColor(IndexedColors.GREY_40_PERCENT.getIndex());
+        contentWriteCellStyle.setBorderBottom(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderLeft(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderRight(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderTop(BorderStyle.THIN);
+        // 水平居中
+        contentWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        // 垂直居中
+        contentWriteCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // 设置自动换行，前提内容中需要加「\n」才有效
+        contentWriteCellStyle.setWrapped(true);
+
+        //初始化样式
+        HorizontalCellStyleStrategy horizontalCellStyleStrategy =
+                new HorizontalCellStyleStrategy(headWriteCellStyle, contentWriteCellStyle);
+
+       EasyExcel.write(response.getOutputStream())
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy())
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(horizontalCellStyleStrategy)
                 .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
                 .sheet("在线检日报表").doWrite(dataList);
     }

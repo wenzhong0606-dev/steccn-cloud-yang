@@ -3,7 +3,9 @@ package com.steccn.qms.strategy;
 import com.alibaba.excel.write.handler.CellWriteHandler;
 import com.alibaba.excel.write.handler.context.CellWriteHandlerContext;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
+import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -16,7 +18,7 @@ import java.util.List;
  * @desc
  * @date 2023/11/13
  */
-public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStrategy implements CellWriteHandler {
+public class ExcelFillCellMergeStrategy implements CellWriteHandler {
 
     private int[] mergeColumnIndex;
     private int mergeRowIndex;
@@ -31,6 +33,12 @@ public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStra
 
     @Override
     public void afterCellDispose(CellWriteHandlerContext context) {
+        WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
+        contentWriteCellStyle.setBorderBottom(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderLeft(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderRight(BorderStyle.THIN);
+        contentWriteCellStyle.setBorderTop(BorderStyle.THIN);
+
         WriteSheetHolder writeSheetHolder = context.getWriteSheetHolder();
         Cell cell = context.getCell();
         //当前行
@@ -49,8 +57,6 @@ public class ExcelFillCellMergeStrategy extends LongestMatchColumnWidthStyleStra
                 }
             }
         }
-        //调整列宽
-        this.setColumnWidth(context);
     }
 
 
