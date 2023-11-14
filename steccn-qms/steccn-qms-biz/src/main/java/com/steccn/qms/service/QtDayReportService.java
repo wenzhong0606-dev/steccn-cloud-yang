@@ -77,4 +77,10 @@ public interface QtDayReportService {
      */
     QtDayReportLossVO loss(QtLossReportDTO dto);
 
+    /**
+     * 基片损耗日报表
+     * @param dto
+     * @return
+     */
+    void lossDownload(QtLossReportDTO dto, HttpServletResponse response) throws IOException;
 }

@@ -119,4 +119,19 @@ public class QtDayReportController {
         return R.success(qtDayReportService.loss(dto));
     }
 
+    @PostMapping("/loss/download")
+    @ApiOperation("损耗日报表-下载")
+    public void lossDownload(@RequestBody @Validated QtLossReportDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDayReportService.lossDownload(dto, response);
+        } catch (Exception e) {
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
 }

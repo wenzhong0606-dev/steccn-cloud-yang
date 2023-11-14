@@ -1607,10 +1607,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //4、组表头
         //静态表头
         common.add(new QtSpcHeadTitleVO("产线", "productLineName"));
-        common.add(new QtSpcHeadTitleVO("缺陷", "defectName"));
         if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
             common.add(new QtSpcHeadTitleVO("班次", "className"));
         }
+        common.add(new QtSpcHeadTitleVO("缺陷", "defectName"));
         headers.setCommon(common);
         //动态表头
         List<String> head = Lists.newArrayList();
@@ -2019,6 +2019,90 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         chart.setTableData(tableData);
         return chart;
     }
+
+    @Override
+    public void lossDownload(QtLossReportDTO dto, HttpServletResponse response) throws IOException {
+        lossClassDownload(dto, response);
+    }
+
+
+    /**
+     * 下载
+     * @param dto
+     * @param response
+     * @throws IOException
+     */
+    private void lossClassDownload(QtLossReportDTO dto, HttpServletResponse response) throws IOException {
+        QtDayReportLossVO loss = loss(dto);
+        List<QtDayReportLossDataVO> tableData = loss.getTableData();
+        SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        QtDayReportTableHeadersVO headers = loss.getHeaders();
+        headers.getCommon().forEach(ele -> list.add(Lists.newArrayList(ele.getLabel())));
+        headers.getModule().forEach(ele -> ele.getValue().forEach(aa -> list.add(Lists.newArrayList(ele.getLabel(),aa))));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("损耗报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableData.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            //0正常元素  1合计 2总计 3小计
+            if(ele.getType() == 1) {
+                dataEle.add(ele.getProductLineName());
+                if (dto.getType() == 0) {
+                    dataEle.add("损耗小计(单班次)");
+                }
+                dataEle.add("损耗小计(单班次)");
+            }else if(ele.getType() ==2){
+                dataEle.add("损耗合计(单产线)");
+                if (dto.getType() == 0) {
+                    dataEle.add("损耗合计(单产线)");
+                }
+                dataEle.add("损耗合计(单产线)");
+            } else if (ele.getType() == 3) {
+                dataEle.add(ele.getProductLineName());
+                if (dto.getType() == 0) {
+                    dataEle.add(ele.getProductLineName());
+                }
+                dataEle.add(ele.getProductLineName());
+            } else {
+                dataEle.add(ele.getProductLineName());
+                if (dto.getType() == 0) {
+                    dataEle.add(ele.getClassName());
+                }
+                dataEle.add(ele.getDefectName());
+            }
+            List<FurtherValueStrVO> module = ele.getModule();
+            module.forEach(arr -> arr.getValue().forEach(val -> dataEle.add(val)));
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1};
+        int[] mergeColumnIndex2 = {0, 1, 2};
+        if(dto.getType() ==0){
+            mergeColumnIndex = mergeColumnIndex2;
+        }
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "损耗报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet1);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    private void lossDayMonthDownload(QtLossReportDTO dto, HttpServletResponse response) throws IOException {
+
+    }
+
 
 
     /**
