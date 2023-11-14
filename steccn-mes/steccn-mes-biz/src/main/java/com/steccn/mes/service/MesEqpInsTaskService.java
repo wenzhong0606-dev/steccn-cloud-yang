@@ -1,10 +1,15 @@
 package com.steccn.mes.service;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.mes.domain.MesEqpInsTask;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.mes.dto.MesInsTaskTmpDTO;
+import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
+import com.steccn.mes.vo.MesItemIdNameVO;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
 * @author Admin
@@ -27,4 +32,17 @@ public interface MesEqpInsTaskService extends IService<MesEqpInsTask> {
      * @return
      */
     QtLineChartBarDTO itemComplete(LocalDateTime startTime,LocalDateTime endTime,Integer type);
+
+    /**
+     * 获取所有温度检验项数据
+     * @return
+     */
+    List<MesItemIdNameVO> tmpItemIdAndName();
+
+    /**
+     * 温度报表
+     * @param dto
+     * @return
+     */
+    SteccnTableDataDTO<MesInsTaskTmpDTO> tempReport(MesInsTaskTmpParamDTO dto);
 }

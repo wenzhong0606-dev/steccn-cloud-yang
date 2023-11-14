@@ -76,4 +76,28 @@
         </if>
         GROUP BY c.office_auth
     </select>
+
+    <select id="findTmpValue" resultType="com.steccn.mes.dto.MesInsTaskTmpDTO">
+        SELECT a.ins_Item_Id AS insItemId,a.item_value AS itemValue,c.office_auth AS officeAuth,b.plan_time AS dateTime
+        FROM mes_eqp_ins_task_eqp_item a
+        LEFT JOIN mes_eqp_ins_task b
+        on a.ins_task_id = b.id
+        LEFT JOIN mes_eqp_ins_plan c
+        ON c.id = b.plan_id
+        WHERE a.status = '0'
+        <if test="dto.startTime != null">
+            AND b.plan_time &gt;= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null">
+            AND b.plan_time &lt;= #{dto.endTime}
+        </if>
+            AND c.office_auth in
+            <foreach collection="dto.productLineCode" item="lineCode" open="(" close=")" separator=",">
+                #{lineCode}
+            </foreach>
+            AND a.ins_Item_Id in
+            <foreach collection="dto.insItemId" item="ids" open="(" close=")" separator=",">
+                #{ids}
+            </foreach>
+    </select>
 </mapper>

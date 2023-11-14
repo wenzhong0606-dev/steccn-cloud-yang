@@ -14,6 +14,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaJobTitleVO;
@@ -634,6 +635,25 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             }
         }
         return list;
+    }
+
+    @Override
+    public List<SysOfficeVO> listByParentIds(Set<Long> ids) {
+        Assert.notEmpty(ids,"id不能为空");
+        List<SysOfficeVO> results = Lists.newArrayList();
+        List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, ids));
+        if(CollUtil.isNotEmpty(parentList)){
+            Set<String> officeCodeSets = parentList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toSet());
+            List<SysOffice> childrenList = list(new LambdaQueryWrapper<SysOffice>()
+                    .in(SysOffice::getParentCode, officeCodeSets)
+                    .eq(SysOffice::getOfficeType,9)
+                    .eq(SysOffice::getStatus, OaConstant.NO)
+                    .orderByAsc(SysOffice::getTreeSort));
+            if(CollUtil.isNotEmpty(childrenList)){
+                results = BeanUtil.copyToList(childrenList, SysOfficeVO.class);
+            }
+        }
+        return results;
     }
 
 
