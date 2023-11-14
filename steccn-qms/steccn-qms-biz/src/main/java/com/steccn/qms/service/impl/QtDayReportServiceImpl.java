@@ -376,7 +376,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .build();
         WriteSheet writeSheet2 = EasyExcel.writerSheet(1, "落板记录")
                 .head(list2)
-                .registerWriteHandler(new RowHeightStyleStrategy(30, 40))
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
                 .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .registerWriteHandler(new HeadContentStyleStrategy())
                 .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
