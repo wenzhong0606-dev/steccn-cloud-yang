@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RestController
 @Api("入库管理feign")
@@ -30,6 +32,13 @@ public class WmsCustomerBarcodeFeignController {
     public R<String> getCustomerBarcodeByCaseNO(@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
         return R.success(wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(caseNo));
     }
+
+    @ApiOperation("根据箱号批量获取绑定的客户条码")
+    @PostMapping("/caseNos")
+    public R<Map<String,String>> customerBarcodeByCaseNOs(@RequestBody Set<String> caseNos) {
+        return R.success(wmsCustomerBarcodeService.customerBarcodeMap(caseNos));
+    }
+
 
     @ApiOperation("批量更新客户条码")
     @PostMapping("/batch/update")
