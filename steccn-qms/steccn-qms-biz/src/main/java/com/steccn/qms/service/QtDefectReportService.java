@@ -75,6 +75,14 @@ public interface QtDefectReportService {
     QtCheckItemMultiAvgVO rbwAvg(QtDefectReportDTO dto);
 
     /**
+     * 毛边宽报表-下载
+     *
+     * @param dto 请求
+     * @return 报表
+     */
+    void rbwAvgDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 粗糙度报表
      *
      * @param dto 请求参数

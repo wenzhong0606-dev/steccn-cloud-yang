@@ -420,7 +420,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             });
             dataList.add(dataEle);
         });
-        int[] mergeColumnIndex = {0, 1};
+        int[] mergeColumnIndex = {0};
         ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
         WriteSheet writeSheet = EasyExcel.writerSheet(0, "厚度报表")
                 .head(list)
@@ -442,6 +442,49 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         SteccnTableAssertUtil.notEmpty(thickItemList, "毛边宽检验项不存在");
         QtCheckItemMultiAvgVO resVo = getQtCheckItemAvgVO(dto, thickItemList, 0);
         return resVo;
+    }
+
+    @Override
+    public void rbwAvgDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        QtCheckItemMultiAvgVO result = rbwAvg(dto);
+        List<QtCheckItemMultiAvgListVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("产线"));
+        list.add(Lists.newArrayList("班组"));
+        result.getDateList().forEach(ele -> {
+            list.add(Lists.newArrayList(ele));
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("板宽报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassGroupName());
+            ele.getValueList().forEach(aa -> {
+                dataEle.add(JointUtil.jointList(JointUtil.SEPARATOR_COMMA, aa));
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "板宽报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     @Override
