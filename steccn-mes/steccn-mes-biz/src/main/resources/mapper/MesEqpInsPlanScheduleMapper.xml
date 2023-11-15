@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEqpInsPlanScheduleMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEqpInsPlanSchedule">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="planId" column="plan_id" jdbcType="BIGINT"/>
+            <result property="executeTime" column="execute_time" jdbcType="VARCHAR"/>
+            <result property="executePeriod" column="execute_period" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="day" column="day" jdbcType="INTEGER"/>
+            <result property="week" column="week" jdbcType="INTEGER"/>
+            <result property="month" column="month" jdbcType="INTEGER"/>
+            <result property="planType" column="plan_type" jdbcType="CHAR"/>
+            <result property="executeDay" column="execute_day" jdbcType="INTEGER"/>
+            <result property="executeWeek" column="execute_week" jdbcType="INTEGER"/>
+            <result property="executeMonth" column="execute_month" jdbcType="INTEGER"/>
+            <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+            <result property="lastExecuteTime" column="last_execute_time" jdbcType="TIMESTAMP"/>
+            <result property="state" column="state" jdbcType="CHAR"/>
+            <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+            <result property="scheduleId" column="schedule_id" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,plan_id,execute_time,
+        execute_period,create_by,create_date,
+        update_by,update_date,remarks,
+        day,week,month,
+        plan_type,execute_day,execute_week,
+        execute_month,start_time,last_execute_time,
+        state,end_time,schedule_id
+    </sql>
+</mapper>

@@ -79,6 +79,12 @@ public class MesEqpController {
         return R.success(mesEqpInsTaskService.tempReport(dto));
     }
 
+    @PostMapping("/dashboard/temperature/lineChart")
+    @ApiOperation(value = "获取温度项图表")
+    public R<QtLineChartBarDTO> tempLineChart(@RequestBody @Valid MesInsTaskTmpParamDTO dto) {
+        return R.success(mesEqpInsTaskService.tempLineChart(dto));
+    }
+
     /**
      * 校验请求头信息
      *
