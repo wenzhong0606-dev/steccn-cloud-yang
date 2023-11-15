@@ -1080,7 +1080,6 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         response.flushBuffer();
     }
 
-
     @Override
     public DefectDayVO defectDay(QtDefectReportDTO dto) {
         LocalDateTime begin = LocalDateUtil.getMorning(dto.getStartDate());

@@ -4,6 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,9 +19,12 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
@@ -45,6 +52,9 @@ import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.service.*;
+import com.steccn.qms.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -56,7 +66,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.text.Collator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -564,6 +577,60 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         });
 
         return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
+
+    @Override
+    public void reportDownload(QtCustomerComplaintReportDTO dto, HttpServletResponse response) throws IOException {
+        List<QtCustomerComplaintReportResDTO>  rowList = report(dto);
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("投诉客户"));
+        list.add(Lists.newArrayList("客户回复日期"));
+        list.add(Lists.newArrayList("物料名称"));
+        list.add(Lists.newArrayList("规格"));
+        list.add(Lists.newArrayList("投诉类型"));
+        list.add(Lists.newArrayList("投诉数量"));
+        list.add(Lists.newArrayList("备注"));
+        list.add(Lists.newArrayList("组件数量"));
+        list.add(Lists.newArrayList("组件序列号"));
+        list.add(Lists.newArrayList("组件投诉原因"));
+        list.add(Lists.newArrayList("客诉单号"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("客诉报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getComplainCustomerName());
+            dataEle.add(LocalDateUtil.format(ele.getReplyClientDate(), "yyyy-MM-dd"));
+            dataEle.add(ele.getMaterialName());
+            dataEle.add(ele.getSpecifications());
+            dataEle.add(ele.getComplainTypeName());
+            dataEle.add(ele.getComplainQuantity());
+            dataEle.add(ele.getRemarks());
+            dataEle.add(ele.getModuleNum());
+            dataEle.add(ele.getModuleNumber());
+            dataEle.add(ele.getComplaintReason());
+            dataEle.add(ele.getCode());
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {list.size() - 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "客诉报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**

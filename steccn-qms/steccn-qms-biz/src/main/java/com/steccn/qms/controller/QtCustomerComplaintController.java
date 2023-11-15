@@ -1,13 +1,17 @@
 package com.steccn.qms.controller;
 
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
 import com.steccn.qms.dto.QtCustomerComplaintReportDTO;
+import com.steccn.qms.dto.QtDefectReportDTO;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
@@ -19,8 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -87,4 +94,20 @@ public class QtCustomerComplaintController {
         return R.success(qtCustomerComplainService.report(dto));
     }
 
+    @PostMapping("/report/download")
+    @ApiOperation(value = "客诉报表-下载")
+    public void coatingFilmDownload(@Valid @RequestBody QtCustomerComplaintReportDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtCustomerComplainService.reportDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
 }

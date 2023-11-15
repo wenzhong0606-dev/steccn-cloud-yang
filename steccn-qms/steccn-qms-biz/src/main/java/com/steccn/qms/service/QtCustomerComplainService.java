@@ -10,6 +10,8 @@ import com.steccn.qms.dto.QtCustomerComplaintReportDTO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.qms.dto.QtCustomerComplaintReportResDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -85,4 +87,11 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     List<QtCustomerComplaintReportResDTO> report(QtCustomerComplaintReportDTO dto);
+
+    /**
+     * 客诉报表 - 下载
+     * @param dto 请求类
+     * @return
+     */
+    void reportDownload(QtCustomerComplaintReportDTO dto, HttpServletResponse response) throws IOException;
 }
