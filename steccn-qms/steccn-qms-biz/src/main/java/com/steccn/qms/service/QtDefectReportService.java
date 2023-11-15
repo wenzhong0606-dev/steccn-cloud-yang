@@ -44,6 +44,13 @@ public interface QtDefectReportService {
     List<QtDefectFallingVO> falling(QtDefectReportDTO dto);
 
     /**
+     * 落板记录报表下载
+     * @param dto
+     * @param response
+     */
+    void fallingDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 厚度报表
      *
      * @param dto 请求
@@ -135,5 +142,4 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
-
 }

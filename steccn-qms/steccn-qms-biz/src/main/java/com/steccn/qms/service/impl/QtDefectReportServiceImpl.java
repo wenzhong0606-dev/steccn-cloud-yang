@@ -308,6 +308,79 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void fallingDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        List<QtDefectFallingVO> result = falling(dto);
+        SteccnTableAssertUtil.notEmpty(result, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("产线"));
+        list.add(Lists.newArrayList("日期"));
+        list.add(Lists.newArrayList("班次"));
+        list.add(Lists.newArrayList("班组"));
+        list.add(Lists.newArrayList("厚度、外观不良","南","落板"));
+        list.add(Lists.newArrayList("厚度、外观不良","南","收板"));
+        list.add(Lists.newArrayList("厚度、外观不良","南","落板时长"));
+        list.add(Lists.newArrayList("厚度、外观不良","南","落板时长(小时)"));
+        list.add(Lists.newArrayList("厚度、外观不良","南","落板原因"));
+        list.add(Lists.newArrayList("厚度、外观不良","北","落板"));
+        list.add(Lists.newArrayList("厚度、外观不良","北","收板"));
+        list.add(Lists.newArrayList("厚度、外观不良","北","落板时长"));
+        list.add(Lists.newArrayList("厚度、外观不良","北","落板时长(小时)"));
+        list.add(Lists.newArrayList("厚度、外观不良","北","落板原因"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","南","落板"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","南","收板"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","南","落板时长"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","南","落板时长(小时)"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","南","落板原因"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","北","落板"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","北","收板"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","北","落板时长"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","北","落板时长(小时)"));
+        list.add(Lists.newArrayList("改尺寸、切割不良","北","落板原因"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("落板记录报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        result.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            if (ele.getType() == 1 || ele.getType() == 2) {
+                ele.setClassDateStr(ele.getProductLineName());
+                ele.setClassName(ele.getProductLineName());
+                ele.setClassGroupName(ele.getProductLineName());
+            }
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassDateStr());
+            dataEle.add(ele.getClassName());
+            dataEle.add(ele.getClassGroupName());
+            ele.getDetailList().forEach(aa ->{
+                dataEle.add(aa.getBeginStr());
+                dataEle.add(aa.getOverStr());
+                dataEle.add(aa.getInterval());
+                dataEle.add(aa.getIntervalHour());
+                dataEle.add(aa.getReason());
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1, 2, 3};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "落板记录报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet1);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+
+    @Override
     public QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto) {
         //去配置文件中查询
         String itemHd = itemCodeFromCf("QMS_DEFECT_JYX", "ITEM_HD");
