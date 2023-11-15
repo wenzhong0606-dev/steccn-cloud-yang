@@ -46,4 +46,11 @@ public interface MesEqpInsTaskService extends IService<MesEqpInsTask> {
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> tempReport(MesInsTaskTmpParamDTO dto);
+
+    /**
+     * 温度图表
+     * @param dto
+     * @return
+     */
+    QtLineChartBarDTO tempLineChart(MesInsTaskTmpParamDTO dto);
 }
