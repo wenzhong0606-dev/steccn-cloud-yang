@@ -237,6 +237,23 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.defectDay(dto));
     }
 
+    @PostMapping("/defect/day/download")
+    @ApiOperation(value = "不良日报表-下载")
+    public void defectDayDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException{
+        try {
+            qtDefectReportService.defectDayDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/defect/week")
     @ApiOperation(value = "不良周报表")
     public R<List<DefectCountRowVO>> defectWeek(@Valid @RequestBody QtDefectReportDTO dto) {

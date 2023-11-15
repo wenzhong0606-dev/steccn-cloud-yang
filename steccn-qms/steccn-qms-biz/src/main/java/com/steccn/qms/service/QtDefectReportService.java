@@ -155,6 +155,14 @@ public interface QtDefectReportService {
     DefectDayVO defectDay(QtDefectReportDTO dto);
 
     /**
+     * 不良日报表
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    void defectDayDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 不良周报表
      *
      * @param dto 请求参数
@@ -182,4 +190,5 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
 }

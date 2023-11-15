@@ -1151,6 +1151,58 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void defectDayDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        DefectDayVO result = defectDay(dto);
+        List<DefectDayRowVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("产线"));
+        list.add(Lists.newArrayList("日期"));
+        list.add(Lists.newArrayList("班次"));
+        list.add(Lists.newArrayList("班组"));
+        list.add(Lists.newArrayList("订单号"));
+        list.add(Lists.newArrayList("客户"));
+        list.add(Lists.newArrayList("物料名称"));
+        result.getHeaderList().forEach(ele -> ele.getValue().forEach(aa -> list.add(Lists.newArrayList(ele.getLabel(),aa))));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("不良日报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            if (ele.getType() == 2) {
+                ele.setProductLineName(ele.getClassDateStr());
+            }
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassDateStr());
+            dataEle.add(ele.getClassName());
+            dataEle.add(ele.getClassGroupName());
+            dataEle.add(ele.getProduceOrderNo());
+            dataEle.add(ele.getCustomerName());
+            dataEle.add(ele.getMaterialName());
+            ele.getModule().forEach(aa -> aa.getValue().forEach(bb -> dataEle.add(bb)));
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "不良日报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    @Override
     public List<DefectCountRowVO> defectWeek(QtDefectReportDTO dto) {
         List<DefectCountRowVO> rowList = Lists.newArrayList();
         //查询缺陷类别
