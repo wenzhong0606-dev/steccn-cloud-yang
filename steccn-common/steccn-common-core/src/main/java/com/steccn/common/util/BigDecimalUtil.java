@@ -396,4 +396,16 @@ public class BigDecimalUtil {
         }
         return null;
     }
+
+    /**
+     * 百分比导出需要加百分号
+     * @param percent
+     * @return
+     */
+    public static String jointPercent(BigDecimal percent) {
+        if (Objects.nonNull(percent)) {
+            return percent + "%";
+        }
+        return null;
+    }
 }

@@ -171,6 +171,14 @@ public interface QtDefectReportService {
     List<DefectCountRowVO> defectWeek(QtDefectReportDTO dto);
 
     /**
+     * 不良周报表-下载
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    void defectWeekDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 不良月报表
      * @param dto – 请求参数
      * @return
