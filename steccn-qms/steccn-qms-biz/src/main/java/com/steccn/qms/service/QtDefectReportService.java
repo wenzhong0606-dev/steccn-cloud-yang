@@ -59,6 +59,14 @@ public interface QtDefectReportService {
     QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto);
 
     /**
+     * 厚度报表
+     *
+     * @param dto 请求
+     * @return 报表
+     */
+    void thickAvgDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 毛边宽报表
      *
      * @param dto 请求
@@ -142,4 +150,5 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
 }

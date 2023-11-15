@@ -110,6 +110,23 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.thickAvg(dto));
     }
 
+    @PostMapping("/thick/download")
+    @ApiOperation(value = "厚度报表-下载")
+    public void thickAvgDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDefectReportService.thickAvgDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/rbw")
     @ApiOperation(value = "毛板宽报表")
     public R<QtCheckItemMultiAvgVO> rbwAvg(@Valid @RequestBody QtDefectReportDTO dto) {
