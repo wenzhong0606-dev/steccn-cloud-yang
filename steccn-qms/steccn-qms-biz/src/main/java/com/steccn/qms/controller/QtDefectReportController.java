@@ -156,6 +156,23 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.roughness(dto));
     }
 
+    @PostMapping("/roughness/download")
+    @ApiOperation(value = "粗糙度报表-下载")
+    public void roughnessDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException{
+        try {
+            qtDefectReportService.roughnessDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/transmittance")
     @ApiOperation(value = "透光率报表")
     public R<QtCheckItemTransmitVO> transmittance(@Valid @RequestBody QtDefectReportDTO dto) {

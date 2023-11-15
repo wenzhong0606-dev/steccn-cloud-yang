@@ -91,6 +91,14 @@ public interface QtDefectReportService {
     QtCheckItemSingleAvgVO roughness(QtDefectReportDTO dto);
 
     /**
+     * 粗糙度报表
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    void roughnessDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 透光率报表
      *
      * @param dto – 请求参数

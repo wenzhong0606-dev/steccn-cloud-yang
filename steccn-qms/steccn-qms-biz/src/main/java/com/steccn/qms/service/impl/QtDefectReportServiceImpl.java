@@ -600,6 +600,53 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void roughnessDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        QtCheckItemSingleAvgVO result = roughness(dto);
+        List<QtCheckItemSingleAvgListVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("产线"));
+        if(dto.getGranularity() ==0){
+            list.add(Lists.newArrayList("班组"));
+        }
+        result.getDateList().forEach(ele -> {
+            list.add(Lists.newArrayList(ele));
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("粗糙度报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getProductLineName());
+            if (dto.getGranularity() == 0) {
+                dataEle.add(ele.getClassGroupName());
+            }
+            ele.getValueList().forEach(aa -> {
+                dataEle.add(aa);
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "粗糙度报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    @Override
     public QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto) {
         //获取粒度
         QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
