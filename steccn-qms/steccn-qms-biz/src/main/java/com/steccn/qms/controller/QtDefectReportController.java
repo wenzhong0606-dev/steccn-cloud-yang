@@ -202,6 +202,23 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.microBubble(dto));
     }
 
+    @PostMapping("/micro/bubble/download")
+    @ApiOperation(value = "微气泡报表-下载")
+    public void microBubbleDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException{
+        try {
+            qtDefectReportService.microBubbleDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/original/defect")
     @ApiOperation(value = "原片不良报表")
     public R<OriginalDefectVO> originalDefect(@Valid @RequestBody QtDefectReportDTO dto) {

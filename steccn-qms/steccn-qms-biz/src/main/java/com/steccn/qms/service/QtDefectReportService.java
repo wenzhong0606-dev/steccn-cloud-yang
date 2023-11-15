@@ -123,6 +123,14 @@ public interface QtDefectReportService {
     QtMicroBubbleVO microBubble(QtDefectReportDTO dto);
 
     /**
+     * 微气泡
+     *
+     * @param dto 请求参数
+     * @return vo
+     */
+    void microBubbleDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 原片不良报表
      *
      * @param dto 请求参数
