@@ -1452,6 +1452,78 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void defectMonthDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        List<DefectCountRowVO> rowList = defectMonth(dto);
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("月份"));
+        list.add(Lists.newArrayList("产线"));
+        list.add(Lists.newArrayList("原片不良"));
+        list.add(Lists.newArrayList("原片不良率"));
+        list.add(Lists.newArrayList("磨边不良"));
+        list.add(Lists.newArrayList("磨边不良率"));
+        list.add(Lists.newArrayList("钻孔不良"));
+        list.add(Lists.newArrayList("钻孔不良率"));
+        list.add(Lists.newArrayList("丝印不良"));
+        list.add(Lists.newArrayList("丝印不良率"));
+        list.add(Lists.newArrayList("镀膜不良"));
+        list.add(Lists.newArrayList("镀膜不良率"));
+        list.add(Lists.newArrayList("钢化不良"));
+        list.add(Lists.newArrayList("钢化不良率"));
+        list.add(Lists.newArrayList("使用数"));
+        list.add(Lists.newArrayList("成品数"));
+        list.add(Lists.newArrayList("合计不良"));
+        list.add(Lists.newArrayList("合计不良率"));
+        list.add(Lists.newArrayList("合计深加工不良"));
+        list.add(Lists.newArrayList("合计深加工不良率"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("不良月报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getTimeStr());
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getOriginDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getOriginDefectRate()));
+            dataEle.add(ele.getEdgeDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getEdgeDefectRate()));
+            dataEle.add(ele.getDrillDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getDrillDefectRate()));
+            dataEle.add(ele.getSilkDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getSilkDefectRate()));
+            dataEle.add(ele.getCoatDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getCoatDefectRate()));
+            dataEle.add(ele.getTemperDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getTemperDefectRate()));
+            dataEle.add(ele.getUseCountNum());
+            dataEle.add(ele.getInStorageNum());
+            dataEle.add(ele.getTotalDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getTotalDefectRate()));
+            dataEle.add(ele.getTotalDeepDefectNum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getTotalDeepDefectRate()));
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "不良月报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    @Override
     public SteccnTableDataDTO<QtFinishedRateDTO> finishedRate(QtDefectReportDTO dto) {
         SteccnTableDataDTO<QtFinishedRateDTO> result = new SteccnTableDataDTO();
         //转日期

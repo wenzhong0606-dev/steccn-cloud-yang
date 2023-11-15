@@ -186,6 +186,13 @@ public interface QtDefectReportService {
     List<DefectCountRowVO> defectMonth(QtDefectReportDTO dto);
 
     /**
+     * 不良月报表 - 下载
+     * @param dto – 请求参数
+     * @return
+     */
+    void defectMonthDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 成品率报表
      * @param dto
      * @return
@@ -198,5 +205,4 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
-
 }

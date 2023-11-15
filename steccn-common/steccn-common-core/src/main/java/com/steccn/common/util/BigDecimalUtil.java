@@ -404,7 +404,7 @@ public class BigDecimalUtil {
      */
     public static String jointPercent(BigDecimal percent) {
         if (Objects.nonNull(percent)) {
-            return percent + "%";
+            return format(percent, SCALE_2) + "%";
         }
         return null;
     }
