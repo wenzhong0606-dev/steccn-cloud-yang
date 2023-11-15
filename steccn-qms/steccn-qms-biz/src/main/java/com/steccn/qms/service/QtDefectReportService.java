@@ -139,6 +139,15 @@ public interface QtDefectReportService {
     OriginalDefectVO originalDefect(QtDefectReportDTO dto);
 
     /**
+     * 原片不良报表 - 下载
+     *
+     * @param dto 请求参数
+     * @return 原片不良报表
+     */
+    void originalDefectDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+
+    /**
      * 镀膜不良报表
      *
      * @param dto 请求参数
@@ -205,4 +214,5 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
 }

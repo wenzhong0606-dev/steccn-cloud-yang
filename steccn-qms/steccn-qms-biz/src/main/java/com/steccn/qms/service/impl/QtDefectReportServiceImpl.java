@@ -905,6 +905,45 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void originalDefectDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        OriginalDefectVO result = originalDefect(dto);
+        List<OriginalDefectRowVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("产线"));
+        result.getDateStrList().forEach(ele -> list.add(Lists.newArrayList(ele)));
+        list.add(Lists.newArrayList("合计"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("原片不良报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getProductLineName());
+            ele.getDateDataList().forEach(aa -> {
+                dataEle.add(StrUtil.isNotBlank(aa) && !"null".equals(aa)? Integer.parseInt(aa) : null);
+            });
+            dataEle.add(StrUtil.isNotBlank(ele.getSum()) && !"null".equals(ele.getSum())? Integer.parseInt(ele.getSum()) : null);
+            dataList.add(dataEle);
+        });
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "原片不良报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    @Override
     public CoatingFilmVO coatingFilm(QtDefectReportDTO dto) {
         QtItemCategory category = qtItemCategoryService.getOne(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getName, "镀膜不良"));
         Assert.notNull(category, "镀膜不良类别不存在");
