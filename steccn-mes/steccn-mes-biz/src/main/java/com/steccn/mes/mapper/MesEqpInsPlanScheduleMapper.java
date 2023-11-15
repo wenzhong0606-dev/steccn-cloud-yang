@@ -2,6 +2,7 @@ package com.steccn.mes.mapper;
 
 import com.steccn.mes.domain.MesEqpInsPlanSchedule;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author Admin
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2023-11-15 14:25:12
 * @Entity com.steccn.mes.domain.MesEqpInsPlanSchedule
 */
+@Mapper
 public interface MesEqpInsPlanScheduleMapper extends BaseMapper<MesEqpInsPlanSchedule> {
 
 }

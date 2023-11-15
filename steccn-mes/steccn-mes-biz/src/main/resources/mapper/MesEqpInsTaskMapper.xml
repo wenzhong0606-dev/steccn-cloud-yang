@@ -84,7 +84,7 @@
         on a.ins_task_id = b.id
         LEFT JOIN mes_eqp_ins_plan c
         ON c.id = b.plan_id
-        WHERE a.status = '0'
+        WHERE b.status = '0'
         <if test="dto.startTime != null">
             AND b.plan_time &gt;= #{dto.startTime}
         </if>
