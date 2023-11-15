@@ -1027,6 +1027,61 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void coatingFilmDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        CoatingFilmVO result = coatingFilm(dto);
+        List<CoatingFilmRowVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("月份"));
+        list.add(Lists.newArrayList("产线"));
+        result.getHeaderList().forEach(ele -> list.add(Lists.newArrayList(ele)));
+        list.add(Lists.newArrayList("使用数"));
+        list.add(Lists.newArrayList("合计不良"));
+        list.add(Lists.newArrayList("合计不良率"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("镀膜不良月报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            if (ele.getType() == 2) {
+                ele.setMonthStr(ele.getProductLineName());
+            }
+            dataEle.add(ele.getMonthStr());
+            dataEle.add(ele.getProductLineName());
+            for (int i = 0; i < ele.getValueList().size(); i++) {
+                if (i % 2 == 1) {
+                    dataEle.add(BigDecimalUtil.jointPercent(ele.getValueList().get(i)));
+                } else {
+                    dataEle.add(ele.getValueList().get(i));
+                }
+            }
+            dataEle.add(ele.getUseCount());
+            dataEle.add(ele.getDefectSum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getDefectRate()));
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "镀膜不良月报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+
+    @Override
     public DefectDayVO defectDay(QtDefectReportDTO dto) {
         LocalDateTime begin = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime over = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));

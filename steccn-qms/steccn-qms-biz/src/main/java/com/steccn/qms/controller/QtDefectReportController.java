@@ -248,6 +248,23 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.coatingFilm(dto));
     }
 
+    @PostMapping("/coating/film/download")
+    @ApiOperation(value = "镀膜不良月报表-下载")
+    public void coatingFilmDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException{
+        try {
+            qtDefectReportService.coatingFilmDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/defect/day")
     @ApiOperation(value = "不良日报表")
     public R<DefectDayVO> defectDay(@Valid @RequestBody QtDefectReportDTO dto) {

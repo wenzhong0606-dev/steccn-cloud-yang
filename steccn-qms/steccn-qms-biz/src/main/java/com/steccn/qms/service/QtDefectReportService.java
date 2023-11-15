@@ -156,6 +156,14 @@ public interface QtDefectReportService {
     CoatingFilmVO coatingFilm(QtDefectReportDTO dto);
 
     /**
+     * 镀膜不良报表
+     *
+     * @param dto 请求参数
+     * @return
+     */
+    void coatingFilmDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 不良日报表
      *
      * @param dto 请求参数
