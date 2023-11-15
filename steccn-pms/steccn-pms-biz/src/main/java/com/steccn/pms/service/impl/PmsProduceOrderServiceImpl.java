@@ -56,6 +56,7 @@ import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import feign.Feign;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1272,9 +1273,21 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                        .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
                        .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
            }
+
        }
         //逻辑分页
-        return LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
+        Page<PanoramicTracingVO> page = LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
+
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            //获取客户条码数据
+            Set<String> caseNos = page.getRecords().stream().map(PanoramicTracingVO::getCaseNo).collect(Collectors.toSet());
+            Map<String, String> customerBarcodeMap = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.customerBarcodeByCaseNos(caseNos), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            page.getRecords().forEach( panoramicTracingVO -> {
+                panoramicTracingVO.setCustomerBarcode(customerBarcodeMap.get(panoramicTracingVO.getCaseNo()));
+            });
+        }
+
+        return page;
     }
 
     @Override
