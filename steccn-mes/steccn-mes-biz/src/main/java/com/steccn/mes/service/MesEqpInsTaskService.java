@@ -10,6 +10,7 @@ import com.steccn.mes.vo.MesItemIdNameVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author Admin
@@ -44,5 +45,5 @@ public interface MesEqpInsTaskService extends IService<MesEqpInsTask> {
      * @param dto
      * @return
      */
-    SteccnTableDataDTO<MesInsTaskTmpDTO> tempReport(MesInsTaskTmpParamDTO dto);
+    SteccnTableDataDTO<Map<String,String>> tempReport(MesInsTaskTmpParamDTO dto);
 }

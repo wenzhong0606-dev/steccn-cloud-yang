@@ -206,4 +206,12 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean deleteData();
+
+
+    /**
+     * 根据箱号获取库存中的物料信息
+     * @param caseNos
+     * @return
+     */
+    Map<String,WmsInventory> inventoryMapByCaseNos(Set<String> caseNos);
 }

@@ -21,45 +21,17 @@ public class MesInsTaskTmpDTO {
     private Long insItemId;
 
     /**
-     * 点检项名称
-     */
-    private String insItemName;
-
-    /**
      * 点检项值
      */
-    private BigDecimal value;
+    private BigDecimal itemValue;
 
     /**
      * 产线code
      */
     private String officeAuth;
-    /**
-     * 产线名称
-     */
-    private String productLineName;
 
     /**
-     * 日期时间
+     * 计划时间
      */
     private LocalDateTime dateTime;
-
-    /**
-     * 日期
-     */
-    private LocalDate date;
-    /**
-     * 班次
-     */
-    private String classOrder;
-    /**
-     * 班组
-     */
-    private String classGroupName;
-    /**
-     * 时间
-     */
-    private LocalTime time;
-
-    private LocalDateTime planTime;
 }
