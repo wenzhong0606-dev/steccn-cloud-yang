@@ -107,6 +107,14 @@ public interface QtDefectReportService {
     QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
 
     /**
+     * 透光率报表-下载
+     *
+     * @param dto – 请求参数
+     * @return
+     */
+    void transmittanceDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
      * 微气泡
      *
      * @param dto 请求参数
@@ -166,5 +174,4 @@ public interface QtDefectReportService {
      * @return
      */
     void finishedRateDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException;
-
 }

@@ -729,6 +729,51 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public void transmittanceDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
+        QtCheckItemTransmitVO result = transmittance(dto);
+        List<QtCheckItemTransmitDataVO> rowList = result.getDataList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        result.getHeaderLeft().forEach(ele -> list.add(Lists.newArrayList(ele.getLabel())));
+        result.getHeaderRight().forEach(ele -> ele.getValue().forEach(aa -> list.add(Lists.newArrayList(ele.getLabel(), aa))));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("透光率报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassDateStr());
+            if (dto.getGranularity() == 0) {
+                dataEle.add(ele.getClassName());
+                dataEle.add(ele.getClassGroupName());
+            }
+            dataEle.add(ele.getFigureDepth());
+            dataEle.add(ele.getThickness());
+            ele.getModule().forEach(aa -> aa.getValue().forEach(bb -> dataEle.add(bb)));
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0, 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "透光率报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+
+    @Override
     public QtMicroBubbleVO microBubble(QtDefectReportDTO dto) {
         LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
