@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -41,4 +43,9 @@ public interface RemoteWmsCustomerBarcodeFeignApi {
     @GetMapping("/feign/wms/customer/barcode/list/barcode")
     @ApiOperation("根据客户条码查询箱号")
     R<List<String>> listByCustomerBarcode(@ApiParam("箱号") @RequestParam("customerBarcode") String customerBarcode);
+
+    @PostMapping("/feign/wms/customer/barcode/caseNos")
+    @ApiOperation("根据箱号批量查询客户条码")
+    R<Map<String,String>> customerBarcodeByCaseNos(@RequestBody Set<String> caseNos);
+
 }

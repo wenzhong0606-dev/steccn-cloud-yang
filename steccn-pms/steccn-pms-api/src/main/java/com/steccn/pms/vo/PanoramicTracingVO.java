@@ -37,4 +37,9 @@ public class PanoramicTracingVO {
      * 物料编码
      */
     private String materialCode;
+
+    /**
+     * 客户条码
+     */
+    private String customerBarcode;
 }
