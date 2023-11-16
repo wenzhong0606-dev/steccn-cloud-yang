@@ -208,4 +208,21 @@ public interface WmsManagerConstant {
         private final String name;
     }
 
+    /**
+     * erp对应产线编码
+     */
+    @Getter
+    @AllArgsConstructor
+    enum ErpProductionLineCodeEnum{
+        JP1("013402-03.01-01","基片一车间一产线"),
+        JP2("013402-03.01-01","基片一车间二产线"),
+        JG1("013402-03.02-01","深加工一车间一产线"),
+        JG2("013402-03.02-02","深加工一车间二产线"),
+        JG3("013402-03.02-03","深加工一车间三产线"),
+        JG4("013402-03.02-04","深加工一车间四产线");
+
+        private final String code;
+        private final String name;
+    }
+
 }
