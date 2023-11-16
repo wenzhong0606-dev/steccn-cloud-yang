@@ -1458,8 +1458,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                         List<RepaireBatchListVO> dataList = sourceList.stream()
                                 .filter(v -> v.getSpecifications().equals(spec) &&
                                         v.getProductLineName().equals(line.getOfficeName()) &&
-                                        (LocalDateUtil.isRange(split[0], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true) ||
-                                                LocalDateUtil.isRange(split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(10) : v.getEndTime(), true, true))).collect(Collectors.toList());
+                                        overlap(split[0], split[1], v.getStartTime(), Objects.isNull(v.getEndTime()) ? LocalDateTime.now().plusDays(1) : v.getEndTime())).collect(Collectors.toList());
                         for (RepaireBatchListVO data : dataList) {
                             RepaireBatchListVO resVo = BeanUtil.copyProperties(data, RepaireBatchListVO.class);
                             resVo.setType(0);
@@ -1503,7 +1502,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 List<Integer> valueList = checkTaskList.stream().filter(ele ->
                                         ele.getDefectCode().equals(defectItem.getCode()) &&
                                         ele.getProductLineId().equals(line.getId()) &&
-                                        ele.getProductBatch().equals(resVo.getBatchNo()) &&
+                                        Objects.equals(ele.getProductBatch(),resVo.getBatchNo()) &&
                                         ele.getClassId().equals(resVo.getClassId()) &&
                                         LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
                                 ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
@@ -1521,14 +1520,34 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     }
                 }
             }
-            //插入合计行
-            resList.add(rowCount(1, specSumUsePiece, specSumUseSquare, defectItemList, specDefectSumMap));
+            if(CollUtil.isNotEmpty(resList)){
+                //插入合计行
+                resList.add(rowCount(1, specSumUsePiece, specSumUseSquare, defectItemList, specDefectSumMap));
+            }
         }
         //插入总计行
-        RepaireBatchListVO totalRow = new RepaireBatchListVO();
-        resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
+        if(CollUtil.isNotEmpty(resList)){
+            resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
+        }
         return resVO;
     }
+
+    /**
+     * 判断A时间区间与B时间区间是否有交叉
+     *
+     * @param aStart A区间开始时间
+     * @param aEnd   A区间结束时间
+     * @param bStart B区间开始时间
+     * @param bEnd   B区间结束时间
+     * @return
+     */
+    private boolean overlap(LocalDateTime aStart, LocalDateTime aEnd, LocalDateTime bStart, LocalDateTime bEnd) {
+        if (LocalDateUtil.gt(aStart, bEnd) || LocalDateUtil.lt(aEnd, bStart)) {
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
 
     @Override
     public OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto) {
