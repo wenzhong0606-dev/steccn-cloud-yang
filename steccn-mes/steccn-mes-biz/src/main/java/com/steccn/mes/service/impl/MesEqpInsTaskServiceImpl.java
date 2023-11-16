@@ -28,6 +28,7 @@ import com.steccn.mes.mapper.MesEqpInsPlanScheduleMapper;
 import com.steccn.mes.service.MesEqpInsTaskService;
 import com.steccn.mes.mapper.MesEqpInsTaskMapper;
 import com.steccn.mes.vo.MesItemIdNameVO;
+import com.steccn.mes.vo.MesTempLineXDataVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaTodayClassVO;
@@ -320,7 +321,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
         for (int i = 0; i <= dayCount; i++) {
             //优先获取基片班组
             LocalDate date = dto.getStartDate().plusDays(i);
-            List<OaTodayClassVO> todayClassVOS = FeignOptional.of(() -> oaInfoService.getTodayClassInfo("基片二车间", date), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            List<OaTodayClassVO> todayClassVOS = FeignOptional.of(() -> oaInfoService.getTodayClassInfo(new TupleDTO<>("基片二车间", date)), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             //早班晚班 j=0是早班 j=1是晚班
             for(int j = 0; j < 2; j++){
                 String classOrderStr;
@@ -426,19 +427,29 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                 .collect(Collectors.toMap(MesEqpInsPlanSchedule::getExecuteTime, Function.identity(), (existing, replacement) -> existing))
                 .values()
                 .stream()
-                .sorted(Comparator.comparing(MesEqpInsPlanSchedule::getExecuteTime))
                 .collect(Collectors.toList());
         //根据早班晚班拆分
         List<LocalTime> dayTimes = Lists.newArrayList();
         List<LocalTime> nightTimes = Lists.newArrayList();
         mesEqpInsPlanSchedules.forEach(tmp->{
-            LocalTime timeTmp = LocalTime.parse(tmp.getExecuteTime());
+            LocalTime timeTmp;
+            if(tmp.getExecuteTime().length()==4){
+                timeTmp = LocalTime.parse(tmp.getExecuteTime(),DateTimeFormatter.ofPattern("H:mm"));
+            }else {
+                timeTmp = LocalTime.parse(tmp.getExecuteTime(),DateTimeFormatter.ofPattern("HH:mm"));
+            }
+
             if(LocalDateUtil.isRange(LocalDate.now().atTime(timeTmp),LocalDate.now().atTime(8,0,0),LocalDate.now().atTime(20,0,0),true,false)){
                 dayTimes.add(timeTmp);
             }else {
                 nightTimes.add(timeTmp);
             }
         });
+        Collections.sort(dayTimes);
+        //若时间晚于20点则排最前面
+        Collections.sort(nightTimes,Comparator.comparing(time ->
+                time.isAfter(LocalTime.parse("20:00")) ? LocalTime.MIN : time
+        ));
         for(int i = 0; i <= dayCount; i++){
             LocalDate date = dto.getStartDate().plusDays(i);
             xAxisList1.add(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
@@ -473,7 +484,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
             }
         }
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
-        qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
+        qtLineChartBarDTO.setXAxis(new MesTempLineXDataVO(xAxisList1, xAxisList2,xAxisList3));
         qtLineChartBarDTO.setXData(null);
         return qtLineChartBarDTO;
     }
