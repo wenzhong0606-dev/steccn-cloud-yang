@@ -1,5 +1,6 @@
 package com.steccn.wms.constant;
 
+import com.steccn.pms.constant.PmManagerConstant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -219,10 +220,35 @@ public interface WmsManagerConstant {
         JG1("013402-03.02-01","深加工一车间一产线"),
         JG2("013402-03.02-02","深加工一车间二产线"),
         JG3("013402-03.02-03","深加工一车间三产线"),
-        JG4("013402-03.02-04","深加工一车间四产线");
+        JG4("013402-03.02-04","深加工一车间四产线"),
+        XJP1("013402-03.01-02","基片一产线"),
+        XJP2("013402-03.01-02","基片二产线"),
+        XJP3("013402-03.01-02","基片三产线"),
+        XJP4("013402-03.01-02","基片四产线"),
+        XJP5("013402-03.01-02","基片五产线"),
+        XJP6("013402-03.01-02","基片六产线"),
+        XJP7("013402-03.01-02","基片七产线"),
+        XJP8("013402-03.01-02","基片八产线"),
+        XJG1("013402-03.08","深加工一产线"),
+        XJG2("013402-03.08","深加工二产线"),
+        XJG3("013402-03.08","深加工三产线"),
+        XJG4("013402-03.08","深加工四产线"),
+        XJG5("013402-03.09","深加工五产线"),
+        XJG6("013402-03.09","深加工六产线"),
+        XJG7("013402-03.09","深加工七产线"),
+        XJG8("013402-03.09","深加工八产线");
 
         private final String code;
         private final String name;
+
+        public static String getCodeByName(String name) {
+            for (WmsManagerConstant.ErpProductionLineCodeEnum value : WmsManagerConstant.ErpProductionLineCodeEnum.values()) {
+                if (value.getName().equals(name)) {
+                    return value.getCode();
+                }
+            }
+            return null;
+        }
     }
 
 }

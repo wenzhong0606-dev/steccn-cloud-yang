@@ -642,6 +642,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(list, WmsStorageReceiptInfoVO.class);
         wmsStorageReceiptInfoVOS.forEach(wmsStorageReceiptInfoVO -> {
+            wmsStorageReceiptInfoVO.setErpLineCode(WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(wmsStorageReceiptInfoVO.getProductionLineName()));
             wmsStorageReceiptInfoVO.setUnitName(dictMap.get(wmsStorageReceiptInfoVO.getUnit()));
             wmsStorageReceiptInfoVO.setSpecification(materialMap.get(wmsStorageReceiptInfoVO.getMaterialId()).getSpecifications());
         });
