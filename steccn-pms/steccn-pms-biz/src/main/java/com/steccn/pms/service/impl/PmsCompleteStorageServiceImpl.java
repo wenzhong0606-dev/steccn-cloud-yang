@@ -197,6 +197,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             if (!(CollUtil.isNotEmpty(list) && list.size() == 1)) {
                 throw new BusinessException("不同产线的订单不可以一起生成入库单");
             }
+            //获取产线名称
+            String productionName = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(Long.valueOf(list.get(0).getProductionLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //校验箱子不能重复出现在不同的入库单
             List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
             //创建主表
@@ -255,6 +257,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 wmsStorageReceiptInfoDTO.setUnit(caseInfo.getUnitId());
                 wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
                 wmsStorageReceiptInfoDTO.setBatch("0");
+                wmsStorageReceiptInfoDTO.setProductionLineName(productionName);
                 wmsStorageReceiptDTO.setWarehouseId(caseInfo.getWarehouseId());
                 wmsStorageReceiptDTO.setWarehouseName(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
                 materialList.add(wmsStorageReceiptInfoDTO);

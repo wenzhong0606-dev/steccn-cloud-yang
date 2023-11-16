@@ -137,4 +137,9 @@ public class WmsStorageReceiptInfo implements Serializable {
      * 金蝶通知单行号
      */
     private String erpLineId;
+
+    /**
+     * 产线名称
+     */
+    private String productionLineName;
 }

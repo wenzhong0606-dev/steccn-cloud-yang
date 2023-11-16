@@ -61,4 +61,10 @@ public class WmsStorageReceiptInfoVO {
 
     @ApiModelProperty("有效期截至")
     private LocalDate validTime;
+
+    @ApiModelProperty("产线名称")
+    private String productionLineName;
+
+    @ApiModelProperty("erp产线编码")
+    private String erpLineCode;
 }
