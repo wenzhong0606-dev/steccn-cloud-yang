@@ -84,4 +84,7 @@ public class WmsStorageReceiptInfoDTO {
 
     @ApiModelProperty("外部系统订单行编号")
     private String esFromPoLineNum;
+
+    @ApiModelProperty("产线名称（老线）")
+    private String productionLineName;
 }

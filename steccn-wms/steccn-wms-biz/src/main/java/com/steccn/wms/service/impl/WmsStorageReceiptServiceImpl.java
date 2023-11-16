@@ -1279,6 +1279,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return resMap;
     }
 
+
     @Override
     public String inStorageCodeRepeat(LocalDate current) {
         Long aLong = currentMaxCode();
