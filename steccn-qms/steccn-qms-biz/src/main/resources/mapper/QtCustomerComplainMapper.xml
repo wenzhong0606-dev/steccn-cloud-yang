@@ -50,9 +50,9 @@
             de.remarks
         FROM
             qt_customer_complain cc
-                LEFT JOIN qt_customer_complain_detail de ON cc.id = de.customer_complain_id
-                LEFT JOIN qt_customer_complain_module mo ON cc.id = mo.customer_complain_id
-        where cc.del_flag = 0 and de.del_flag = 0 and mo.del_flag = 0
+                LEFT JOIN qt_customer_complain_detail de ON cc.id = de.customer_complain_id and de.del_flag = 0
+                LEFT JOIN qt_customer_complain_module mo ON cc.id = mo.customer_complain_id AND mo.del_flag = 0
+        where cc.del_flag = 0
         and cc.reply_client_date &gt;= #{start}
         and cc.reply_client_date &lt;= #{end}
         <if test="customerIdList != null and customerIdList.size > 0">
