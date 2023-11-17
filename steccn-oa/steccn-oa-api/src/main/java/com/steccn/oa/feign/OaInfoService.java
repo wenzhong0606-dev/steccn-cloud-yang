@@ -104,12 +104,12 @@ public interface OaInfoService {
 
     /**
      * 获取基片当班信息
-     * @param workshopName date
+     * @param dto
      * @return
      */
     @ApiOperation("获取基片当班信息")
-    @GetMapping("/feign/oa/todayClass/info")
-    R<List<OaTodayClassVO>> getTodayClassInfo(@RequestParam("workshopName") String workshopName, @RequestParam("date") LocalDate date);
+    @PostMapping("/feign/oa/todayClass/info")
+    R<List<OaTodayClassVO>> getTodayClassInfo(@RequestBody TupleDTO<String,LocalDate> dto);
 
 
     /**
