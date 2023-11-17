@@ -30,6 +30,12 @@ public class WmsInventoryRecordVO {
     private Long type;
 
     /**
+     * 单据编码
+     */
+    @ApiModelProperty("编码")
+    private String code;
+
+    /**
      * 类型
      */
     @ApiModelProperty("类型名称")
