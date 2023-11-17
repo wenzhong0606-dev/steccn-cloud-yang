@@ -4,6 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -14,6 +18,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
@@ -50,8 +55,13 @@ import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtDefectReportDTO;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.feign.RemoteItemFeignApi;
+import com.steccn.qms.vo.CoatingFilmRowVO;
+import com.steccn.qms.vo.CoatingFilmVO;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
@@ -69,7 +79,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -1530,6 +1543,63 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
         }
         return resVO;
+    }
+
+    @Override
+    public void repaireBatchListDownload(RepaireBatchListDTO dto, HttpServletResponse response) throws IOException {
+        RepaireBatchVO result = repaireBatchList(dto);
+        List<RepaireBatchListVO> rowList = result.getDataList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList("规格（长X宽X厚度）"));
+        list.add(Lists.newArrayList("日期"));
+        list.add(Lists.newArrayList("产线"));
+        list.add(Lists.newArrayList("班次"));
+        list.add(Lists.newArrayList("班组"));
+        list.add(Lists.newArrayList("订单号"));
+        list.add(Lists.newArrayList("物料名称"));
+        result.getHeaderList().forEach(ele -> {
+            ele.getValue().forEach(aa -> list.add(Lists.newArrayList(ele.getLabel(), aa)));
+        });
+        list.add(Lists.newArrayList("合计"));
+        list.add(Lists.newArrayList("合计不良率"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("返洗不良报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getSpecifications());
+            dataEle.add(LocalDateUtil.format(ele.getClassDate(),"yyyy-MM-dd"));
+            dataEle.add(ele.getProductLineName());
+            dataEle.add(ele.getClassName());
+            dataEle.add(ele.getClassGroupName());
+            dataEle.add(ele.getProduceOrderNo());
+            dataEle.add(ele.getMaterialName());
+            ele.getModule().forEach(aa ->{
+                aa.getValue().forEach(bb ->{
+                    dataEle.add(bb);
+                });
+            });
+            dataEle.add(ele.getDefectSum());
+            dataEle.add(BigDecimalUtil.jointPercent(ele.getDefectRate()));
+            dataList.add(dataEle);
+        });
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "返洗不良报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**

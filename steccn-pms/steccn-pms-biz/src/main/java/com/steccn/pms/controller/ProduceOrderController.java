@@ -1,6 +1,8 @@
 package com.steccn.pms.controller;
 
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.steccn.common.annotation.SysLog;
@@ -12,6 +14,8 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtDefectReportDTO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +24,9 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -225,6 +231,23 @@ public class ProduceOrderController {
     @PostMapping("/repaire/batch")
     public R<RepaireBatchVO> repaireBatchList(@RequestBody RepaireBatchListDTO dto) {
         return R.success(pmsProduceOrderService.repaireBatchList(dto));
+    }
+
+    @PostMapping("/repaire/batch/download")
+    @ApiOperation(value = "返洗批次-下载")
+    public void repaireBatchListDownload(@Valid @RequestBody RepaireBatchListDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            pmsProduceOrderService.repaireBatchListDownload(dto, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @ApiOperation("外购原片不良日报表")

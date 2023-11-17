@@ -7,7 +7,10 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.dto.QtDefectReportDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -286,6 +289,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     RepaireBatchVO repaireBatchList(RepaireBatchListDTO dto);
+
+    /**
+     * 返洗不良日报表
+     * @param dto 请求类
+     * @return
+     */
+    void repaireBatchListDownload(RepaireBatchListDTO dto, HttpServletResponse response) throws IOException;
 
     /**
      * 外购原片不良日报表
