@@ -1,6 +1,7 @@
 package com.steccn.oa.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -13,6 +14,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.oa.constant.OaConstant;
@@ -23,6 +25,7 @@ import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.dto.OaRosterRecordDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.mapper.KqFormatDetailMapper;
 import com.steccn.oa.mapper.KqGroupMapper;
 import com.steccn.oa.service.KqGroupService;
@@ -32,6 +35,7 @@ import com.steccn.oa.service.KqMesGroupLeaderService;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.oa.vo.OaTodayClassVO;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -64,6 +68,10 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
     private final KqMesGroupLeaderService kqMesGroupLeaderService;
 
     private final KqFormatDetailMapper kqFormatDetailMapper;
+
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+
+    private final HrmresourceMapper hrmresourceMapper;
 
     @Override
     public List<OaGroupIdAndNameVO> findGroupByUserId(Set<Long> userId) {
@@ -382,6 +390,69 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
         //没有看到班长,先默认一个班长
         result.setClassLeader("刘军");
         return result;
+    }
+
+    @Override
+    public List<OaTodayClassVO> getTodayClassInfoWarehouse(TupleDTO<Set<Integer>, LocalDate> dto) {
+        List<OaTodayClassVO> results = Lists.newArrayList();
+        Assert.notEmpty(dto.getField1(),"仓库不能为空");
+        Assert.notNull(dto.getField2(),"日期不能为空");
+        //分为早班和晚班
+        for(int i = 0; i < 2;i++){
+            //过滤当前班次
+            OaTodayClassVO result = new OaTodayClassVO();
+            String classStr = "";
+            if(i==0){
+                result.setClassOrder("早班");
+                classStr = "白班";
+            } else {
+                result.setClassOrder("晚班");
+                classStr = "夜班";
+            }
+            String finalClassStr = classStr;
+            LocalTime time = LocalTime.now();
+            if(i==0){
+                time = LocalTime.of(8,0);
+            }else {
+                time = LocalTime.of(20,0);
+            }
+            //仓库班组的id为33,34,35
+            KqFormatDetail kqFormatDetail = kqFormatDetailMapper.selectOne(new LambdaQueryWrapper<KqFormatDetail>()
+                    .eq(KqFormatDetail::getWorkbegindate, dto.getField2().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                    .eq(KqFormatDetail::getWorkbegintime, time.toString())
+                    .in(KqFormatDetail::getGroupid, Sets.newHashSet(33, 34, 35))
+                    .last("LIMIT 1"));
+            KqGroup kqGroup = kqGroupService.getOne(new LambdaQueryWrapper<KqGroup>()
+                    .eq(KqGroup::getId, kqFormatDetail.getGroupid()), false);
+            String[] split = kqGroup.getGroupname().split("-");
+            result.setClassGroup(split[1]);
+            //拿到班组中对应的人
+            Map<String, String> oaMesMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>("OA_MES_WAREHOUSE", dto.getField1())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(oaMesMap)){
+                Set<Integer> departmentIds = oaMesMap.keySet().stream().map(Integer::parseInt).collect(Collectors.toSet());
+                //部门下的所有人
+                List<Hrmresource> hrmresources = hrmresourceMapper.selectList(new LambdaQueryWrapper<Hrmresource>()
+                        .in(Hrmresource::getDepartmentid, departmentIds));
+                //考情组下的人
+                List<KqGroupmember> kqGroupmembers = kqGroupmemberMapper.selectList(new LambdaQueryWrapper<KqGroupmember>()
+                        .eq(KqGroupmember::getGroupid, kqGroup.getId())
+                        .isNull(KqGroupmember::getIsdelete));
+                //考勤组的人要包括部门的人
+                if(CollUtil.isNotEmpty(hrmresources)
+                        &&CollUtil.isNotEmpty(kqGroupmembers)){
+                    List<Integer> hrmIdList = hrmresources.stream().map(Hrmresource::getId).collect(Collectors.toList());
+                    kqGroupmembers = kqGroupmembers.stream().filter(v->hrmIdList.contains(v.getTypevalue())).collect(Collectors.toList());
+                    //查到姓名
+                    if(CollUtil.isNotEmpty(kqGroupmembers)){
+                        List<Hrmresource> hrmNames = hrmresourceMapper.selectList(new LambdaQueryWrapper<Hrmresource>()
+                                .in(Hrmresource::getId, kqGroupmembers.stream().map(KqGroupmember::getTypevalue).collect(Collectors.toSet())));
+                        result.setClassMemberName(hrmNames.stream().map(Hrmresource::getLastname).collect(Collectors.toList()));
+                    }
+                }
+            }
+            results.add(result);
+        }
+        return null;
     }
 
 
