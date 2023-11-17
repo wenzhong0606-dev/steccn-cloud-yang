@@ -22,13 +22,17 @@ import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.wms.constant.WmsManagerConstant;
+import com.steccn.wms.domain.WmsInventory;
+import com.steccn.wms.domain.WmsInventoryRecord;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipInfoDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsTransferSlipInfoService;
 import com.steccn.wms.service.WmsTransferSlipService;
@@ -60,8 +64,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMapper, WmsTransferSlip>
-        implements WmsTransferSlipService {
+public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMapper, WmsTransferSlip> implements WmsTransferSlipService {
 
     private final RedissonClient redissonClient;
 
@@ -74,6 +77,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     private final RemoteErpFeignApi remoteErpFeignApi;
 
     private final WmsInventoryService wmsInventoryService;
+
+    private final WmsInventoryRecordService wmsInventoryRecordService;
 
 
     /**
@@ -111,8 +116,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             idSet.add(wmsTransferSlipVO.getTargetWarehouse());
             typeSet.add(wmsTransferSlipVO.getType());
         });
-        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         page.getRecords().forEach(wmsTransferSlipVO -> {
             wmsTransferSlipVO.setTypeName(dictMap.get(wmsTransferSlipVO.getType()));
             wmsTransferSlipVO.setSourceWarehouseName(officeMap.get(wmsTransferSlipVO.getSourceWarehouse()));
@@ -225,9 +230,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         addList.add(info);
                     }
                 }
-                LambdaQueryWrapper<WmsTransferSlipInfo> wrapper = new LambdaQueryWrapper<WmsTransferSlipInfo>()
-                        .eq(WmsTransferSlipInfo::getTransferSlipId, dto.getId())
-                        .notIn(CollUtil.isNotEmpty(ids), WmsTransferSlipInfo::getId, ids);
+                LambdaQueryWrapper<WmsTransferSlipInfo> wrapper = new LambdaQueryWrapper<WmsTransferSlipInfo>().eq(WmsTransferSlipInfo::getTransferSlipId, dto.getId()).notIn(CollUtil.isNotEmpty(ids), WmsTransferSlipInfo::getId, ids);
                 //获取需要删除的数据
                 List<WmsTransferSlipInfo> deleteList = wmsTransferSlipInfoService.list(wrapper);
                 if (CollUtil.isNotEmpty(deleteList)) {
@@ -275,7 +278,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         targetList.add(target);
                         //明细信息
                         WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
-                        BeanUtil.copyProperties(info,wmsTransferSlipInfo);
+                        BeanUtil.copyProperties(info, wmsTransferSlipInfo);
                         wmsTransferSlipInfo.setTransferSlipId(model.getId());
                         wmsTransferSlipInfo.setTargetCaseNo(target.getCaseNo());
                         list.add(wmsTransferSlipInfo);
@@ -308,7 +311,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         targetList.add(target);
                         //明细信息
                         WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
-                        BeanUtil.copyProperties(info,wmsTransferSlipInfo);
+                        BeanUtil.copyProperties(info, wmsTransferSlipInfo);
                         list.add(wmsTransferSlipInfo);
                     });
                     wmsInventoryService.editLockQuantity(sourceList);
@@ -330,8 +333,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //2.校验数据
         Assert.notNull(order, "该调拨单不存在");
         //3.校验状态
-        Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getStatus())
-                , "当前状态不可确认");
+        Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getStatus()), "当前状态不可确认");
         order.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
         order.setAffirmBy(SecurityUtils.getUser().getUserId());
         order.setAffirmName(SecurityUtils.getUser().getName());
@@ -340,8 +342,13 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //获取明细信息
         List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().eq(WmsTransferSlipInfo::getTransferSlipId, id));
         if (CollUtil.isNotEmpty(list)) {
+            List<WmsInventoryRecord> wmsInventoryRecords = Lists.newArrayList();
             List<WmsInventoryDTO> sourceList = Lists.newArrayList();
             List<WmsInventoryDTO> targetList = Lists.newArrayList();
+            //获取库存变化类型
+            SysDictVO incomingType = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.variableTypeEnum.TYPE_9.getType(), WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO outboundType = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.variableTypeEnum.TYPE_17.getType(), WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<String> caseNoList = Lists.newArrayList();
             list.forEach(info -> {
                 WmsInventoryDTO source = new WmsInventoryDTO();
                 BeanUtil.copyProperties(info, source);
@@ -355,7 +362,66 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 target.setWarehouseId(order.getTargetWarehouse());
                 sourceList.add(source);
                 targetList.add(target);
+                caseNoList.add(info.getCaseNo());
+                caseNoList.add(info.getTargetCaseNo());
             });
+            WmsInventory wmsInventory = new WmsInventory();
+            //根据箱号获取库存记录
+            Map<String, WmsInventory> inventoryByCaseNo = wmsInventoryService.getInventoryByCaseNo(caseNoList);
+            //调拨出库类型
+            sourceList.forEach(info->{
+                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
+                //生成库存记录
+                WmsInventoryRecord wmsInventoryRecord = new WmsInventoryRecord();
+                wmsInventoryRecord.setCode(order.getCode());
+                wmsInventoryRecord.setType(outboundType.getId());
+                wmsInventoryRecord.setWarehouseId(info.getWarehouseId());
+                wmsInventoryRecord.setShelfId(info.getShelfId());
+                wmsInventoryRecord.setMaterialId(info.getMaterialId());
+                wmsInventoryRecord.setMaterialName(info.getMaterialName());
+                //变动数量
+                wmsInventoryRecord.setVariableQuantity(info.getQuantity());
+                //变动前
+                wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
+                wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
+                wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
+                wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
+                //变动后
+                wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity());
+                wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity());
+                wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().subtract(info.getQuantity()));
+                wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity().subtract(info.getQuantity()));
+                wmsInventoryRecords.add(wmsInventoryRecord);
+            });
+            //调拨入库类型
+            targetList.forEach(info->{
+                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
+                //生成库存记录
+                WmsInventoryRecord wmsInventoryRecord = new WmsInventoryRecord();
+                wmsInventoryRecord.setType(incomingType.getId());
+                wmsInventoryRecord.setCode(order.getCode());
+                wmsInventoryRecord.setWarehouseId(info.getWarehouseId());
+                wmsInventoryRecord.setShelfId(info.getShelfId());
+                wmsInventoryRecord.setMaterialId(info.getMaterialId());
+                wmsInventoryRecord.setMaterialName(info.getMaterialName());
+                //变动数量
+                wmsInventoryRecord.setVariableQuantity(info.getQuantity());
+                //变动前
+                wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
+                wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
+                wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
+                wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
+                //变动后
+                wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
+                wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
+                wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
+                wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                wmsInventoryRecords.add(wmsInventoryRecord);
+            });
+            //保存记录
+            List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
+            wmsInventoryRecordService.saveBatch(recordList);
+            //在库存确认变更前 生成库存流水记录 同一物料调拨生成两条记录
             wmsInventoryService.affirmLockQuantity(sourceList);
             wmsInventoryService.affirm(targetList);
         }
@@ -369,8 +435,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //2.校验数据
         Assert.notNull(order, "该调拨单不存在");
         //3.校验状态
-        Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getStatus())
-                , "当前状态不可删除");
+        Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getStatus()), "当前状态不可删除");
         order.setStatus(WmsManagerConstant.OrderStateEnum.FOUR.getCode());
         //todo 获取订单详情信息 调用mes库存接口 减少原始货架占用库存数量，减少目标货架在途库存数量
         //获取明细信息
@@ -416,21 +481,20 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         idSet.add(wmsTransferSlipVO.getSourceWarehouse());
         idSet.add(wmsTransferSlipVO.getTargetWarehouse());
         typeSet.add(wmsTransferSlipVO.getType());
-        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         wmsTransferSlipVO.setTypeName(dictMap.get(wmsTransferSlipVO.getType()));
         wmsTransferSlipVO.setSourceWarehouseName(officeMap.get(wmsTransferSlipVO.getSourceWarehouse()));
         wmsTransferSlipVO.setTargetWarehouseName(officeMap.get(wmsTransferSlipVO.getTargetWarehouse()));
         //4.获取详情数据
-        List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>()
-                .eq(WmsTransferSlipInfo::getTransferSlipId, order.getId()));
+        List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().eq(WmsTransferSlipInfo::getTransferSlipId, order.getId()));
         //5.处理详情数据
         if (CollUtil.isNotEmpty(list)) {
             Set<Long> dictSet = Sets.newHashSet();
             List<WmsTransferSlipInfoVO> infoVOList = BeanUtil.copyToList(list, WmsTransferSlipInfoVO.class);
             infoVOList.forEach(info -> dictSet.add(info.getUnit()));
             wmsTransferSlipVO.setList(infoVOList);
-            Map<Long, String> dict = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dict = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             infoVOList.forEach(info -> info.setUnitName(dict.get(info.getUnit())));
         }
         return wmsTransferSlipVO;
@@ -440,11 +504,11 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     public Boolean linkErp(Long id) {
         //获取详情
         WmsTransferSlipVO wmsTransferSlipVO = get(id);
-        if(!wmsTransferSlipVO.getStatus().equals(OaConstant.NUM_1)){
+        if (!wmsTransferSlipVO.getStatus().equals(OaConstant.NUM_1)) {
             throw new BusinessException("只有已确认状态才可以同步");
         }
-        String sourceCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getSourceWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        String targetCode = FeignOptional.of(()->remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getTargetWarehouse().longValue()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getSourceWarehouse().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String targetCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsTransferSlipVO.getTargetWarehouse().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //组erp数据
         ErpCommonSaveDTO<ErpTransferSaveDetailDTO> erpDTO = new ErpCommonSaveDTO();
         erpDTO.setFmesbillid(wmsTransferSlipVO.getId().toString());
@@ -452,9 +516,9 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         erpDTO.setFdate(wmsTransferSlipVO.getCreateTime().toLocalDate());
         //组erp详情
         List<ErpTransferSaveDetailDTO> erpDetails = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(wmsTransferSlipVO.getList())){
+        if (CollUtil.isNotEmpty(wmsTransferSlipVO.getList())) {
             //获取所有仓库信息
-            for(WmsTransferSlipInfoVO tmp: wmsTransferSlipVO.getList()){
+            for (WmsTransferSlipInfoVO tmp : wmsTransferSlipVO.getList()) {
                 ErpTransferSaveDetailDTO erpDetail = new ErpTransferSaveDetailDTO();
                 erpDetail.setFmesentryid(tmp.getId().toString());
                 erpDetail.setFmatno(tmp.getMaterialCode());
@@ -469,13 +533,13 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //调用EPR
         String listR = remoteErpFeignApi.saveTransfer(erpDTO);
         JSONObject jsonObject = JSONObject.parseObject(listR);
-        if(jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)){
+        if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
             WmsTransferSlip wmsTransferSlip = new WmsTransferSlip();
             wmsTransferSlip.setId(id);
             wmsTransferSlip.setStatus(OaConstant.NUM_2);
             updateById(wmsTransferSlip);
-        }else {
-            String error = "同步失败-"+jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+        } else {
+            String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
             log.error(error);
             throw new BusinessException(error);
         }
@@ -488,9 +552,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         List<WmsTransferSlip> dbList = list(new LambdaQueryWrapper<WmsTransferSlip>().eq(WmsTransferSlip::getStatus, 1).ge(WmsTransferSlip::getAffirmTime, start).lt(WmsTransferSlip::getAffirmTime, start.plusDays(1)));
         if (CollUtil.isNotEmpty(dbList)) {
             Set<Long> idSet = dbList.stream().map(WmsTransferSlip::getId).collect(Collectors.toSet());
-            List<WmsTransferSlipInfo> sourceList = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId, idSet)
-                    .in(WmsTransferSlipInfo::getTargetShelf, shelfIdSet)
-                    .like(WmsTransferSlipInfo::getMaterialName, "原片"));
+            List<WmsTransferSlipInfo> sourceList = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId, idSet).in(WmsTransferSlipInfo::getTargetShelf, shelfIdSet).like(WmsTransferSlipInfo::getMaterialName, "原片"));
             if (CollUtil.isNotEmpty(sourceList)) {
                 List<BigDecimal> valueList = sourceList.stream().map(WmsTransferSlipInfo::getQuantity).collect(Collectors.toList());
                 return BigDecimalUtil.sum(valueList);
@@ -510,10 +572,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //2.获取系统最大code
         LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
         LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        WmsTransferSlip maxCodeModel = getOne(new LambdaQueryWrapper<WmsTransferSlip>()
-                .between(WmsTransferSlip::getCreateTime, min, max)
-                .orderByDesc(WmsTransferSlip::getCode)
-                .last(MpConstant.STR_LIMIT_1));
+        WmsTransferSlip maxCodeModel = getOne(new LambdaQueryWrapper<WmsTransferSlip>().between(WmsTransferSlip::getCreateTime, min, max).orderByDesc(WmsTransferSlip::getCode).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
@@ -533,11 +592,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         // 定义返回值
         Long currentMax = 0L;
         //获取规则箱号
-        WmsTransferSlipInfo maxCodeModel = wmsTransferSlipInfoService.getOne(new LambdaQueryWrapper<WmsTransferSlipInfo>()
-                .like(WmsTransferSlipInfo::getCaseNo, code)
-                .eq(WmsTransferSlipInfo::getTransferSlipId, id)
-                .orderByDesc(WmsTransferSlipInfo::getCaseNo)
-                .last(MpConstant.STR_LIMIT_1));
+        WmsTransferSlipInfo maxCodeModel = wmsTransferSlipInfoService.getOne(new LambdaQueryWrapper<WmsTransferSlipInfo>().like(WmsTransferSlipInfo::getCaseNo, code).eq(WmsTransferSlipInfo::getTransferSlipId, id).orderByDesc(WmsTransferSlipInfo::getCaseNo).last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分

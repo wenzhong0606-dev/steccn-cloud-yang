@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.wms.mapper.WmsInventoryRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.wms.domain.WmsInventoryRecord">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="type" column="type" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="warehouseId" column="warehouse_id" jdbcType="INTEGER"/>
+            <result property="shelfId" column="shelf_id" jdbcType="INTEGER"/>
+            <result property="variableQuantity" column="variable_quantity" jdbcType="DECIMAL"/>
+            <result property="frontTotalQuantity" column="front_total_quantity" jdbcType="DECIMAL"/>
+            <result property="frontAvailableQuantity" column="front_available_quantity" jdbcType="DECIMAL"/>
+            <result property="frontLockQuantity" column="front_lock_quantity" jdbcType="DECIMAL"/>
+            <result property="frontStockQuantity" column="front_stock_quantity" jdbcType="DECIMAL"/>
+            <result property="backTotalQuantity" column="back_total_quantity" jdbcType="DECIMAL"/>
+            <result property="backAvailableQuantity" column="back_available_quantity" jdbcType="DECIMAL"/>
+            <result property="backLockQuantity" column="back_lock_quantity" jdbcType="DECIMAL"/>
+            <result property="backStockQuantity" column="back_stock_quantity" jdbcType="DECIMAL"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,type,code,
+        material_id,warehouse_id,shelf_id,
+        variable_quantity,front_total_quantity,front_available_quantity,
+        front_lock_quantity,front_stock_quantity,back_total_quantity,
+        back_available_quantity,back_lock_quantity,back_stock_quantity,
+        create_by,create_name,create_time,
+        update_by,update_name,update_time,
+        del_flag,note
+    </sql>
+</mapper>
