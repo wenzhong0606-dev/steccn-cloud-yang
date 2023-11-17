@@ -90,7 +90,6 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
     private final WmsInventoryRecordService wmsInventoryRecordService;
 
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {

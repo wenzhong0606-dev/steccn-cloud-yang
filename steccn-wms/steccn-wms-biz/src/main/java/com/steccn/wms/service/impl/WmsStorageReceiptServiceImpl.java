@@ -1341,9 +1341,6 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             if (CollUtil.isNotEmpty(list)) {
                 //获取出库类型
                 SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_FOUR, WmsManagerConstant.OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                // 获取库存中物料的库存信息
-                Set<Long> materialId = list.stream().map(WmsStorageReceiptInfoVO::getMaterialId).collect(Collectors.toSet());
-                Map<Long, List<WmsInventory>> inventoryMap = wmsInventoryService.inventoryMap(materialId);
                 //获取库存变化类型
                 SysDictVO incomingType = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.variableTypeEnum.TYPE_15.getType(), WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //生成出库单
