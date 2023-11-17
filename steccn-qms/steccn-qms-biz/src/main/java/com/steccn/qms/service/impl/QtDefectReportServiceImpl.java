@@ -850,6 +850,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         List<List<String>> list = new ArrayList<>();
         list.add(Lists.newArrayList("产线"));
         list.add(Lists.newArrayList("班次"));
+        list.add(Lists.newArrayList("线别"));
         result.getDateStrList().forEach(ele -> {
             list.add(Lists.newArrayList(ele));
             list.add(Lists.newArrayList(ele));
@@ -867,6 +868,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             List<Object> dataEle = Lists.newArrayList();
             dataEle.add(ele.getProductLineName());
             dataEle.add(ele.getClassName());
+            dataEle.add(ele.getLineSite());
             ele.getDateDataList().forEach(aa -> {
                 aa.forEach(bb ->{
                     dataEle.add(StrUtil.isNotBlank(bb) ? Integer.parseInt(bb) : null);
