@@ -10,6 +10,36 @@ import lombok.Getter;
 public interface WmsManagerConstant {
 
 
+    /**
+     * 库存流水记录-排序字段 单据编码
+     */
+    String WMS_RECORD_CODE = "code";
+
+    /**
+     * 库存流水记录-排序字段 物料名称
+     */
+    String WMS_RECORD_MATERIAL_NAME = "materialName";
+
+    /**
+     * 库存流水记录-排序字段 规格
+     */
+    String WMS_RECORD_SPECIFICATION = "specification";
+
+    /**
+     * 库存流水记录-排序字段 仓库名称
+     */
+    String WMS_RECORD_WAREHOUSE_NAME = "warehouse_name";
+
+    /**
+     * 库存流水记录-排序字段 货架名称
+     */
+    String WMS_RECORD_SHELF_NAME = "shelf_name";
+
+    /**
+     * 库存流水记录-排序字段 变动时间
+     */
+    String WMS_RECORD_DATETIME = "dateTime";
+
     String Code_ZERO = "0";
 
     String VARIATION_TYPE= "variation_type";
