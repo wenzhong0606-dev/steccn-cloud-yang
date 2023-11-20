@@ -359,8 +359,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 dictIdSet.add(pmsMaterialRequisition.getTypeId());
                 Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Integer typeCode = PmManagerConstant.PmRequisitionWorkFlow.getCodeByName(dictMap.get(pmsMaterialRequisition.getTypeId()));
-//                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LX, typeCode.toString()));
-                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LX, "3"));
+                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LX, typeCode.toString()));
+//                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LX, "3"));
                 //备注
                 if (Objects.nonNull(pmsMaterialRequisition.getNote())) {
                     mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_BZ, pmsMaterialRequisition.getNote()));
