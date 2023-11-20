@@ -3,11 +3,15 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -20,14 +24,18 @@ import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsInventoryRecord;
 import com.steccn.wms.dto.WmsInventoryRecordDTO;
 import com.steccn.wms.dto.WmsInventoryRecordPageDTO;
+import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.mapper.WmsInventoryRecordMapper;
+import com.steccn.wms.service.WmsInventoryService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author 34872
@@ -42,6 +50,7 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final WmsInventoryMapper wmsInventoryMapper;
 
     @Override
     public Page<WmsInventoryRecordVO> pageList(WmsInventoryRecordPageDTO dto) {
@@ -110,6 +119,37 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
         }
         page.setRecords(res);
         return page;
+    }
+
+    @Override
+    public BigDecimal openingInventory(Long warehouseId, LocalDate date) {
+        BigDecimal quantity = null;
+        date = date.minusDays(1);
+        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getWarehouseId,warehouseId)).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(materialIds)){
+            for (Long materialId : materialIds) {
+                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, date).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(record)){
+                    quantity= BigDecimalUtil.add(quantity,record.getBackTotalQuantity());
+                }
+            }
+        }
+        return quantity;
+    }
+
+    @Override
+    public BigDecimal endingInventory(Long warehouseId, LocalDate date) {
+        BigDecimal quantity = null;
+        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getWarehouseId,warehouseId)).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(materialIds)){
+            for (Long materialId : materialIds) {
+                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, date).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(record)){
+                    quantity= BigDecimalUtil.add(quantity,record.getBackTotalQuantity());
+                }
+            }
+        }
+        return quantity;
     }
 
 }
