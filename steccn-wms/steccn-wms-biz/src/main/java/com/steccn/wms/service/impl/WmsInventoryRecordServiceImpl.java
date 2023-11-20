@@ -48,6 +48,7 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
     public Page<WmsInventoryRecordVO> pageList(WmsInventoryRecordPageDTO dto) {
         Page<WmsInventoryRecordVO> page = new Page<>();
         LambdaQueryWrapper<WmsInventoryRecord> like = new LambdaQueryWrapper<WmsInventoryRecord>()
+                .eq(Objects.nonNull(dto.getTypeId()),WmsInventoryRecord::getType,dto.getTypeId())
                 .like(Objects.nonNull(dto.getMaterialName()),WmsInventoryRecord::getMaterialName,dto.getMaterialName())
                 .like(Objects.nonNull(dto.getCode()),WmsInventoryRecord::getCode,dto.getCode())
                 .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventoryRecord::getWarehouseId,dto.getWarehouseId())
