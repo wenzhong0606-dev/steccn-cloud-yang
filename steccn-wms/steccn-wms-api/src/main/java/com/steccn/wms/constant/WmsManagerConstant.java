@@ -28,17 +28,17 @@ public interface WmsManagerConstant {
     /**
      * 库存流水记录-排序字段 仓库名称
      */
-    String WMS_RECORD_WAREHOUSE_NAME = "warehouse_name";
+    String WMS_RECORD_WAREHOUSE_NAME = "warehouseName";
 
     /**
      * 库存流水记录-排序字段 货架名称
      */
-    String WMS_RECORD_SHELF_NAME = "shelf_name";
+    String WMS_RECORD_SHELF_NAME = "shelfName";
 
     /**
      * 库存流水记录-排序字段 变动时间
      */
-    String WMS_RECORD_DATETIME = "dateTime";
+    String WMS_RECORD_DATETIME = "createTime";
 
     String Code_ZERO = "0";
 
