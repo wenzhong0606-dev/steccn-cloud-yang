@@ -37,6 +37,10 @@ public class SysLogFeignController {
         if (StrUtil.isBlank(sysLogDTO.getRequestUri()) || sysLogDTO.getRequestUri().indexOf("/feign") != -1) {
             return R.success(Boolean.TRUE);
         }
+        //过滤get请求
+        if (!"GET".equals(sysLogDTO.getMethod())) {
+            return R.success(Boolean.TRUE);
+        }
         return R.success(sysLogService.add(sysLogDTO));
     }
 }
