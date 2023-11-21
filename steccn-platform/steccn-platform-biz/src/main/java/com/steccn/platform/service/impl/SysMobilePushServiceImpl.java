@@ -47,7 +47,7 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
             Response response = null;
             try {
                 response = client.newCall(request).execute();
-                log.debug("response {}", response);
+                log.info("response {}", response);
             } catch (Exception e) {
                 log.error("异常原因 -> {}", e.getLocalizedMessage());
             } finally {
