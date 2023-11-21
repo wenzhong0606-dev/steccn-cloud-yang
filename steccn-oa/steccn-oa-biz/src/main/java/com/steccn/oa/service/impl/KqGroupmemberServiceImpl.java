@@ -452,7 +452,7 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
             }
             results.add(result);
         }
-        return null;
+        return results;
     }
 
 
