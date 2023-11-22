@@ -42,7 +42,7 @@ public class RequisitionStrategy extends AbstractOaProcessStrategy {
     protected void requisition(OaProcessNotifyDTO dto) {
         OaProcessDataDTO data = dto.getData();
         //通过,只有当归档时不是拒绝状态才算通过
-        if (dto.getType().equals(OaDataConstant.WORKFLOW_AGREE) && data.getNodeName().equals(OaDataConstant.WORKFLOW_END)) {
+        if (dto.getType().equals(OaDataConstant.WORKFLOW_AGREE) && data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED_2)) {
             //获取业务主键id
             Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             //根据id查询状态

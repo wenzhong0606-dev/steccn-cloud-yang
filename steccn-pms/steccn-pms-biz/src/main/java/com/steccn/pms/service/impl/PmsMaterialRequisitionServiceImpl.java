@@ -239,7 +239,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         List<Long> materialIdSet = Lists.newArrayList();
         dictIdSet.add(materialRequisitionVO.getStatus());
         dictIdSet.add(materialRequisitionVO.getTypeId());
-        officeIdSet.add(materialRequisitionVO.getDepartmentId());
+//        officeIdSet.add(materialRequisitionVO.getDepartmentId());
         officeIdSet.add(materialRequisitionVO.getWarehouseId());
         List<MaterialRequisitionInfoVO> infoList = Lists.newArrayList();
         Set<Long> infoIds = Sets.newHashSet();
@@ -292,7 +292,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         }
         materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
         materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
-        materialRequisitionVO.setDepartmentName(officeMap.get(materialRequisitionVO.getDepartmentId()));
+        materialRequisitionVO.setDepartmentName(FeignOptional.of(() -> oaInfoService.getDepartmentInfoById(materialRequisitionVO.getDepartmentId()), FeignConstant.STECCN_OA_SERVICE_NAME).get().getDepartmentName());
         materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
         materialRequisitionVO.setList(infoList);
         return materialRequisitionVO;
