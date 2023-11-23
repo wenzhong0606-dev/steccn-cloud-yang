@@ -117,4 +117,12 @@
             p.del_flag = 0 and p.type = #{meterType}
 	         and (a.show_flag = 1 or a.show_flag is null)
     </select>
+    <select id="selectLastValue" resultType="com.steccn.ems.domain.EpMeterRead">
+        select meter_id, sum(admin_value) as admin_value from ep_meter_read where meter_id in
+        <foreach collection="meterIdSet" item="meterId" open="(" close=")" separator=",">
+            #{meterId}
+        </foreach>
+        and read_date &lt; #{lastDate}
+        group by meter_id
+    </select>
 </mapper>

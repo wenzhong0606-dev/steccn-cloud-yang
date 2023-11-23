@@ -112,6 +112,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
         }
 
+        //如果是天然气类型，获取每个仪表最近第一天的读数
+        Map<Integer, BigDecimal> lastValueMap = new HashMap<>();
+        if (meterType == 3) {
+            List<MeterReadMapperVO> allMeterList = this.baseMapper.selectAllByMeterType(meterType);
+            if (CollUtil.isNotEmpty(allMeterList)) {
+                Set<Integer> meterIdSet = allMeterList.stream().map(MeterReadMapperVO::getMeterId).collect(Collectors.toSet());
+                //获取所有仪表firstDayOfMonth之前的读数和
+                List<EpMeterRead> lastValueList = this.baseMapper.selectLastValue(meterIdSet, firstDayOfMonth);
+                if (CollUtil.isNotEmpty(lastValueList)) {
+                    lastValueList.forEach(ele -> lastValueMap.put(ele.getMeterId(), ele.getAdminValue()));
+                }
+            }
+        }
+
         //获取抄表值
         List<MeterReadMapperVO> meterReadMapperVOList = getMeterReadMapperVOList(meterType, firstDayOfMonth, endDay);
         Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
@@ -145,6 +159,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             meterReadListVO.setPartitionNodeName(keys[4]);
 
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
+            //根据日期去遍历
+            BigDecimal preValue = lastValueMap.get(meterReadListVO.getMeterId());
             for (LocalDate localDate : localDateList) {
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
@@ -154,6 +170,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         if (CollectionUtils.isNotEmpty(collect)) {
                             readValueListVO.setReadValue(collect.get(0).getAdminValue());
                         }
+                    }else if(meterType == 3){
+                        readValueListVO.setReadValue(BigDecimalUtil.add(filterList.get(0).getAdminValue(), preValue));
+                        preValue = readValueListVO.getReadValue();
                     } else {
                         readValueListVO.setReadValue(filterList.get(0).getAdminValue());
                     }
