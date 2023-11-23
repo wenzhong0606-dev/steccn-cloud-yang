@@ -2,13 +2,16 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.StockInfoDTO;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 
 import java.util.List;
@@ -98,4 +101,12 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     WmsDeliveryReceiptDTO chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName);
+
+
+    /**
+     * 获取出库单及明细
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    Page<WmsReportWarehouseVO> outboundDelivery(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }

@@ -22,6 +22,8 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
@@ -53,10 +55,7 @@ import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsStorageReceiptMapper;
 import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
-import com.steccn.wms.vo.WmsSalesDeliveryVO;
-import com.steccn.wms.vo.WmsStorageFlagInfoVO;
-import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
-import com.steccn.wms.vo.WmsStorageReceiptVO;
+import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -1283,6 +1282,74 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
         }
         return true;
+    }
+
+    @Override
+    public Page<WmsReportWarehouseVO> warehouseWarrant(WmsReportWarehouseDTO dto) {
+        //处理时间
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
+        List<WmsReportWarehouseVO> resList = Lists.newArrayList();
+        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
+                .eq(Objects.nonNull(dto.getStatus()),WmsStorageReceipt::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getTypeId()),WmsStorageReceipt::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
+                .eq(Objects.nonNull(dto.getWarehouseId()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseId())
+                .notIn(WmsStorageReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        if (CollUtil.isNotEmpty(list)){
+            Map<Long,WmsStorageReceipt> map = Maps.newHashMap();
+            List<Long> typeIds = Lists.newArrayList();
+            list.forEach( receipt->{
+                map.put(receipt.getId(),receipt);
+                typeIds.add(receipt.getType());
+            });
+            Set<Long> ids = map.keySet();
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<WmsStorageReceiptInfo> infos = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().in(WmsStorageReceiptInfo::getStorageReceiptId,ids));
+            infos.forEach(info->{
+                WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
+                BeanUtil.copyProperties(info,wmsReportWarehouseVO);
+                WmsStorageReceipt wmsStorageReceipt = map.get(info.getStorageReceiptId());
+                Long typeId = wmsStorageReceipt.getType();
+                wmsReportWarehouseVO.setType(typeId);
+                wmsReportWarehouseVO.setCode(wmsStorageReceipt.getCode());
+                wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());
+                wmsReportWarehouseVO.setStatus(wmsStorageReceipt.getStatus());
+                wmsReportWarehouseVO.setAffirmName(wmsStorageReceipt.getAffirmName());
+                wmsReportWarehouseVO.setAffirmTime(wmsStorageReceipt.getAffirmTime());
+                wmsReportWarehouseVO.setCreateTime(wmsStorageReceipt.getCreateTime());
+                wmsReportWarehouseVO.setCreateName(wmsStorageReceipt.getCreateName());
+                resList.add(wmsReportWarehouseVO);
+            });
+        }
+        return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+    }
+
+    @Override
+    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> warehousingClassification(WmsReportWarehouseDTO dto) {
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>   chartVO =  new EpChartGraphVO<>();
+        //获取入库单数据
+        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
+//                .eq(Objects.nonNull(dto.getStatus()),WmsStorageReceipt::getStatus, dto.getStatus())
+//                .eq(Objects.nonNull(dto.getTypeId()),WmsStorageReceipt::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
+                .eq(Objects.nonNull(dto.getWarehouseId()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseId())
+                .notIn(WmsStorageReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        if (CollUtil.isNotEmpty(list)) {
+            Set<Long> ids = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toSet());
+            List<WmsStorageReceiptInfo> infos = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().in(WmsStorageReceiptInfo::getStorageReceiptId,ids));
+            List<Long> materialIds = infos.stream().map(WmsStorageReceiptInfo::getMaterialId).collect(Collectors.toList());
+            List<String> type = Lists.newArrayList();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            materialMap.forEach((key, value) -> type.add(value.getTypeName()));
+            chartVO.setLegend(type);
+            infos.forEach(info->{
+
+            });
+        }
+        return chartVO;
     }
 
     @Override

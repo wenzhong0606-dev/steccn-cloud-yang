@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -16,13 +17,11 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsDeliveryReceipt;
-import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
-import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.domain.WmsInventoryRecord;
+import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
@@ -32,6 +31,7 @@ import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
@@ -517,6 +517,49 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         wmsDeliveryReceiptInfoService.saveBatch(list);
         BeanUtils.copyProperties(wmsDeliveryReceipt,wmsDeliveryReceiptDTO);
         return wmsDeliveryReceiptDTO;
+    }
+
+    @Override
+    public Page<WmsReportWarehouseVO> outboundDelivery(WmsReportWarehouseDTO dto) {
+        //处理时间
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
+        List<WmsReportWarehouseVO> resList = Lists.newArrayList();
+        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                .eq(Objects.nonNull(dto.getStatus()),WmsDeliveryReceipt::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getTypeId()),WmsDeliveryReceipt::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
+                .eq(Objects.nonNull(dto.getWarehouseId()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseId())
+                .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        if (CollUtil.isNotEmpty(list)){
+            Map<Long,WmsDeliveryReceipt> map = Maps.newHashMap();
+            List<Long> typeIds = Lists.newArrayList();
+            list.forEach( receipt->{
+                map.put(receipt.getId(),receipt);
+                typeIds.add(receipt.getType());
+            });
+            Set<Long> ids = map.keySet();
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
+            infos.forEach(info->{
+                WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
+                BeanUtil.copyProperties(info,wmsReportWarehouseVO);
+                WmsDeliveryReceipt wmsDeliveryReceipt = map.get(info.getDeliveryReceiptId());
+                Long typeId = wmsDeliveryReceipt.getType();
+                wmsReportWarehouseVO.setType(typeId);
+                wmsReportWarehouseVO.setCode(wmsDeliveryReceipt.getCode());
+                wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());
+                wmsReportWarehouseVO.setStatus(wmsDeliveryReceipt.getStatus());
+                wmsReportWarehouseVO.setAffirmName(wmsDeliveryReceipt.getAffirmName());
+                wmsReportWarehouseVO.setAffirmTime(wmsDeliveryReceipt.getAffirmTime());
+                wmsReportWarehouseVO.setCreateTime(wmsDeliveryReceipt.getCreateTime());
+                wmsReportWarehouseVO.setCreateName(wmsDeliveryReceipt.getCreateName());
+                resList.add(wmsReportWarehouseVO);
+            });
+        }
+        return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
     }
 
     /**
