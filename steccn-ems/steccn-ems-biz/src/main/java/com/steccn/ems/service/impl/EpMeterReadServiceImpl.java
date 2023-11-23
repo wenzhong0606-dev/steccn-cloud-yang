@@ -112,6 +112,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
         }
 
+        //如果是天然气类型，获取每个仪表最近第一天的读数
+        Map<Integer, BigDecimal> lastValueMap = new HashMap<>();
+        if (meterType == 3) {
+            List<MeterReadMapperVO> allMeterList = this.baseMapper.selectAllByMeterType(meterType);
+            if (CollUtil.isNotEmpty(allMeterList)) {
+                Set<Integer> meterIdSet = allMeterList.stream().map(MeterReadMapperVO::getMeterId).collect(Collectors.toSet());
+                //获取所有仪表firstDayOfMonth之前的读数和
+                List<EpMeterRead> lastValueList = this.baseMapper.selectLastValue(meterIdSet, firstDayOfMonth);
+                if (CollUtil.isNotEmpty(lastValueList)) {
+                    lastValueList.forEach(ele -> lastValueMap.put(ele.getMeterId(), ele.getAdminValue()));
+                }
+            }
+        }
+
         //获取抄表值
         List<MeterReadMapperVO> meterReadMapperVOList = getMeterReadMapperVOList(meterType, firstDayOfMonth, endDay);
         Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
@@ -145,6 +159,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             meterReadListVO.setPartitionNodeName(keys[4]);
 
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
+            //根据日期去遍历
+            BigDecimal preValue = lastValueMap.get(meterReadListVO.getMeterId());
             for (LocalDate localDate : localDateList) {
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
@@ -154,6 +170,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         if (CollectionUtils.isNotEmpty(collect)) {
                             readValueListVO.setReadValue(collect.get(0).getAdminValue());
                         }
+                    }else if(meterType == 3){
+                        readValueListVO.setReadValue(BigDecimalUtil.add(filterList.get(0).getAdminValue(), preValue));
+                        preValue = readValueListVO.getReadValue();
                     } else {
                         readValueListVO.setReadValue(filterList.get(0).getAdminValue());
                     }
@@ -581,7 +600,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取远传仪表的数据 key => 仪表id + "_" + 班次日期 +"_" + 班次id + "_" + 厚度 value => 读数
         Map<String, BigDecimal> remoteDataMap = remoteRead(remoteMeterIdSet, dateSet);
         //获取手动抄表的数据 key => 仪表id + "_" + 班次日期  value => 读数
-        Map<String, BigDecimal> handReadDataMap = handRead(handMeterIdSet, dateSet);
+        Map<String, BigDecimal> handReadDataMap = handRead(energyType,handMeterIdSet, dateSet);
 
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().filter(v -> Objects.nonNull(v.getThick())).map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
@@ -697,12 +716,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     /**
      * 获取手动抄表的数据
-     *
+     * @param energyType 能源类型
      * @param meterIdSet 远传仪表id集合
      * @param dateSet    日期集合
      * @return
      */
-    private Map<String, BigDecimal> handRead(Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
+    private Map<String, BigDecimal> handRead(Integer energyType, Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
 
         //获取当前日期最小日期的前一天，用于求差值
@@ -733,8 +752,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
                         //手动抄表 一天一条,去取最后一条
                         BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
-                        if (!dateEntry.getKey().isEqual(minLocalDate)) {
+                        if (energyType != 3 && !dateEntry.getKey().isEqual(minLocalDate)) {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
+                        }else{
+                            resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), curValue);
                         }
                         preValue = curValue;
                     }
