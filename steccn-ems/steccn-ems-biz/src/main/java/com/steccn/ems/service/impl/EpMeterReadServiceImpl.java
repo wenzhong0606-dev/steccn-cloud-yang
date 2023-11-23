@@ -600,7 +600,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取远传仪表的数据 key => 仪表id + "_" + 班次日期 +"_" + 班次id + "_" + 厚度 value => 读数
         Map<String, BigDecimal> remoteDataMap = remoteRead(remoteMeterIdSet, dateSet);
         //获取手动抄表的数据 key => 仪表id + "_" + 班次日期  value => 读数
-        Map<String, BigDecimal> handReadDataMap = handRead(handMeterIdSet, dateSet);
+        Map<String, BigDecimal> handReadDataMap = handRead(energyType,handMeterIdSet, dateSet);
 
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().filter(v -> Objects.nonNull(v.getThick())).map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
@@ -716,12 +716,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     /**
      * 获取手动抄表的数据
-     *
+     * @param energyType 能源类型
      * @param meterIdSet 远传仪表id集合
      * @param dateSet    日期集合
      * @return
      */
-    private Map<String, BigDecimal> handRead(Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
+    private Map<String, BigDecimal> handRead(Integer energyType, Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
 
         //获取当前日期最小日期的前一天，用于求差值
@@ -752,8 +752,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
                         //手动抄表 一天一条,去取最后一条
                         BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
-                        if (!dateEntry.getKey().isEqual(minLocalDate)) {
+                        if (energyType != 3 && !dateEntry.getKey().isEqual(minLocalDate)) {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
+                        }else{
+                            resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), curValue);
                         }
                         preValue = curValue;
                     }

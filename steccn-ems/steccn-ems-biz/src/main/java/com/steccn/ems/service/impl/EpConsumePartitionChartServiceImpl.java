@@ -113,8 +113,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
                 epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
                 filterDataList = classDateAllData.stream()
-                        .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
-                                && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd)).collect(Collectors.toList());
+                        .filter(v -> LocalDateUtil.isRange(LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME), dataStart, dataEnd, true, false)).collect(Collectors.toList());
+
             }
             List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
             //遍历所有的分区节点
