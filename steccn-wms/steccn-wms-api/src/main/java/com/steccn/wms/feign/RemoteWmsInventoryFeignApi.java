@@ -110,7 +110,7 @@ public interface RemoteWmsInventoryFeignApi {
      * @return
      */
     @ApiOperation("创建调拨单")
-    @PostMapping(value = "/feign/wms/transfer/slip/create")
+    @PostMapping(value = "/feign/wms/inventory/transfer/slip/create")
     R<Boolean> createTransferSlip(@Validated(InsertGroup.class) @RequestBody WmsTransferSlipDTO dto);
 
 

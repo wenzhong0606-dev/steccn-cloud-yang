@@ -3,6 +3,7 @@ package com.steccn.oa.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * oa当班信息VO
@@ -24,4 +25,8 @@ public class OaTodayClassVO implements Serializable {
      * 班长
      */
     private String classLeader;
+    /**
+     * 班组成员
+     */
+    private List<String> classMemberName;
 }
