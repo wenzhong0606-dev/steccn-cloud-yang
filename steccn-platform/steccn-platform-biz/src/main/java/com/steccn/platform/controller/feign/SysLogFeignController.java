@@ -1,5 +1,6 @@
 package com.steccn.platform.controller.feign;
 
+import cn.hutool.core.util.StrUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.domain.SysLog;
 import com.steccn.platform.dto.SysLogDTO;
@@ -33,7 +34,11 @@ public class SysLogFeignController {
      */
     @PostMapping
     public R<Boolean> add(@RequestBody SysLogDTO sysLogDTO) {
-        if (sysLogDTO.getRequestUri().indexOf("/feign") != -1) {
+        if (StrUtil.isBlank(sysLogDTO.getRequestUri()) || sysLogDTO.getRequestUri().indexOf("/feign") != -1) {
+            return R.success(Boolean.TRUE);
+        }
+        //过滤get请求
+        if (!"GET".equals(sysLogDTO.getMethod())) {
             return R.success(Boolean.TRUE);
         }
         return R.success(sysLogService.add(sysLogDTO));

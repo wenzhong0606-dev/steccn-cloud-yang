@@ -32,6 +32,15 @@ public interface OaDataConstant {
      */
     String WORKFLOW_FINISHED = "主管副总";
 
+    /**
+     * 流程完成，部门副职
+     */
+    String WORKFLOW_FINISHED_2 = "部门领导";
+
+    /**
+     * 归档
+     */
+    String WORKFLOW_END = "归档";
 
     /**
      * 流程节点名称

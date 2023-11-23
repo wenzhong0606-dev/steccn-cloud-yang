@@ -27,6 +27,7 @@ import com.steccn.wms.vo.WmsDeliveryCustomerBarCodeVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     private final WmsInventoryMapper wmsInventoryMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(WmsCustomerBarcodeDTO dto) {
         WmsCustomerBarcode customerBarcode = getOne(new LambdaQueryWrapper<WmsCustomerBarcode>().eq(WmsCustomerBarcode::getCaseNo, dto.getCaseNo()));
         if (Objects.nonNull(customerBarcode)){
@@ -71,6 +73,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchUpdate(List<WmsCustomerBarcodeDTO> list) {
         if (CollUtil.isNotEmpty(list)){
             List<WmsCustomerBarcode> wmsCustomerBarcodes = Lists.newArrayList();
