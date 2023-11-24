@@ -543,18 +543,23 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         if (CollUtil.isNotEmpty(list)){
             Map<Long,WmsDeliveryReceipt> map = Maps.newHashMap();
             List<Long> typeIds = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
             list.forEach( receipt->{
                 map.put(receipt.getId(),receipt);
                 typeIds.add(receipt.getType());
+                officeIds.add(Math.toIntExact(receipt.getWarehouseId()));
             });
             Set<Long> ids = map.keySet();
             Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
             infos.forEach(info->{
                 WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
                 BeanUtil.copyProperties(info,wmsReportWarehouseVO);
                 WmsDeliveryReceipt wmsDeliveryReceipt = map.get(info.getDeliveryReceiptId());
                 Long typeId = wmsDeliveryReceipt.getType();
+                wmsReportWarehouseVO.setWarehouse(wmsDeliveryReceipt.getWarehouseId());
+                wmsReportWarehouseVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsDeliveryReceipt.getWarehouseId())));
                 wmsReportWarehouseVO.setType(typeId);
                 wmsReportWarehouseVO.setCode(wmsDeliveryReceipt.getCode());
                 wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());

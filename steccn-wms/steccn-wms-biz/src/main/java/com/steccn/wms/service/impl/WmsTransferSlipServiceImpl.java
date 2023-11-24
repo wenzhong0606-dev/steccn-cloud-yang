@@ -592,12 +592,16 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         if (CollUtil.isNotEmpty(list)){
             Map<Long,WmsTransferSlip> map = Maps.newHashMap();
             List<Long> typeIds = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
             list.forEach( receipt->{
                 map.put(receipt.getId(),receipt);
                 typeIds.add(receipt.getType());
+                officeIds.add(Math.toIntExact(receipt.getTargetWarehouse()));
+                officeIds.add(Math.toIntExact(receipt.getSourceWarehouse()));
             });
             Set<Long> ids = map.keySet();
             Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             List<WmsTransferSlipInfo> infos = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId,ids));
             infos.forEach(info->{
                 WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
@@ -605,6 +609,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 WmsTransferSlip wmsTransferSlip = map.get(info.getTransferSlipId());
                 Long typeId = wmsTransferSlip.getType();
                 wmsReportWarehouseVO.setType(typeId);
+                wmsReportWarehouseVO.setWarehouse(Long.valueOf(wmsTransferSlip.getTargetWarehouse()));
+                wmsReportWarehouseVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsTransferSlip.getSourceWarehouse())));
                 wmsReportWarehouseVO.setCode(wmsTransferSlip.getCode());
                 wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());
                 wmsReportWarehouseVO.setStatus(wmsTransferSlip.getStatus());

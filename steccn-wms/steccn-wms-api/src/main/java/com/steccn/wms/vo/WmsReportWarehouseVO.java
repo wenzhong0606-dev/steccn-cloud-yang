@@ -33,6 +33,12 @@ public class WmsReportWarehouseVO {
     @ApiModelProperty("数量")
     private BigDecimal quantity;
 
+    @ApiModelProperty("仓库")
+    private Long warehouse;
+
+    @ApiModelProperty("仓库名称")
+    private String warehouseName;
+
     @ApiModelProperty("类型")
     private Long type;
 
