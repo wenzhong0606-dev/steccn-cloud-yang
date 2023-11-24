@@ -1,9 +1,11 @@
 package com.steccn.qms.controller;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -38,14 +40,18 @@ public class QtCustomerComplaintController {
 
     private final QtCustomerComplainService qtCustomerComplainService;
 
-
     @PostMapping("/add")
     @ApiOperation(value = "新增客诉记录")
     @SysLog("新增客诉记录")
     public R<Boolean> add(@RequestBody QtCustomerComplainDTO dto) {
+        /**
+         * 只允许添加一条物料明细
+         */
+        if(CollUtil.isNotEmpty(dto.getDetails()) && dto.getDetails().size() > 1){
+           throw new BusinessException("客诉记录只允许添加一条物料明细");
+        }
         return R.success(qtCustomerComplainService.add(dto));
     }
-
 
     @ApiOperation(value = "客诉记录列表")
     @PostMapping("/list")
