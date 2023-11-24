@@ -24,6 +24,7 @@ import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsInventoryRecord;
 import com.steccn.wms.dto.WmsInventoryRecordDTO;
 import com.steccn.wms.dto.WmsInventoryRecordPageDTO;
+import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.mapper.WmsInventoryRecordMapper;
@@ -122,13 +123,15 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
     }
 
     @Override
-    public BigDecimal openingInventory(Long warehouseId, LocalDate date) {
+    public BigDecimal openingInventory(WmsReportWarehouseDTO dto) {
         BigDecimal quantity = null;
-        date = date.minusDays(1);
-        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getWarehouseId,warehouseId)).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setDate(dto.getDate().minusDays(1));
+        }
+        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsInventory::getWarehouseId,dto.getWarehouseIds())).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
         if (CollUtil.isNotEmpty(materialIds)){
             for (Long materialId : materialIds) {
-                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, date).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
+                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, dto.getDate()).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
                 if (Objects.nonNull(record)){
                     quantity= BigDecimalUtil.add(quantity,record.getBackTotalQuantity());
                 }
@@ -138,12 +141,12 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
     }
 
     @Override
-    public BigDecimal endingInventory(Long warehouseId, LocalDate date) {
+    public BigDecimal endingInventory(WmsReportWarehouseDTO dto) {
         BigDecimal quantity = null;
-        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getWarehouseId,warehouseId)).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
+        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsInventory::getWarehouseId,dto.getWarehouseIds())).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
         if (CollUtil.isNotEmpty(materialIds)){
             for (Long materialId : materialIds) {
-                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, date).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
+                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, dto.getDate()).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
                 if (Objects.nonNull(record)){
                     quantity= BigDecimalUtil.add(quantity,record.getBackTotalQuantity());
                 }

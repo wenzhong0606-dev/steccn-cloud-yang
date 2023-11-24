@@ -1,13 +1,10 @@
 package com.steccn.pms.feign;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,5 +159,14 @@ public interface RemoteMessFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     MesRoleListVO getAllRole();
+
+
+    /**
+     * 获取备件分类
+     */
+    @PostMapping(value = "/web/auth/spare/classification")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    Map<Long,ClassificationVO> spareClassification(@RequestBody Set<Long> classificationIds);
 
 }

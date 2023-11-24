@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
@@ -21,10 +20,10 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
-import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
@@ -40,11 +39,13 @@ import com.steccn.platform.vo.*;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
+import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
+import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.vo.MesClassificationVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
-import com.steccn.qms.vo.QtCheckTaskReportVO;
 import com.steccn.wms.config.SrmConfig;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
@@ -61,12 +62,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -115,7 +113,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final RemoteSrmFeignApi remoteSrmFeignApi;
 
     private final StringRedisTemplate stringRedisTemplate;
+
     private final WmsInventoryRecordService wmsInventoryRecordService;
+
+    private final RemoteMessFeignApi remoteMessFeignApi;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -1296,7 +1297,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 .eq(Objects.nonNull(dto.getStatus()),WmsStorageReceipt::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getTypeId()),WmsStorageReceipt::getType, dto.getTypeId())
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .eq(Objects.nonNull(dto.getWarehouseId()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseId())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseIds())
                 .notIn(WmsStorageReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
         if (CollUtil.isNotEmpty(list)){
             Map<Long,WmsStorageReceipt> map = Maps.newHashMap();
@@ -1328,29 +1329,51 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
     @Override
-    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> warehousingClassification(WmsReportWarehouseDTO dto) {
-        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>   chartVO =  new EpChartGraphVO<>();
+    public EpChartGraphVO<List<String>, BigDecimal> warehousingClassification(WmsReportWarehouseDTO dto) {
+        EpChartGraphVO<List<String>, BigDecimal>   chartVO =  new EpChartGraphVO<>();
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         //获取入库单数据
         List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
-//                .eq(Objects.nonNull(dto.getStatus()),WmsStorageReceipt::getStatus, dto.getStatus())
-//                .eq(Objects.nonNull(dto.getTypeId()),WmsStorageReceipt::getType, dto.getTypeId())
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .eq(Objects.nonNull(dto.getWarehouseId()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseId())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseIds())
                 .notIn(WmsStorageReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
         if (CollUtil.isNotEmpty(list)) {
             Set<Long> ids = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toSet());
             List<WmsStorageReceiptInfo> infos = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().in(WmsStorageReceiptInfo::getStorageReceiptId,ids));
+            List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
             List<Long> materialIds = infos.stream().map(WmsStorageReceiptInfo::getMaterialId).collect(Collectors.toList());
-            List<String> type = Lists.newArrayList();
+            Set<Long> typeIds = Sets.newHashSet();
+            List<String> types = Lists.newArrayList();
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            materialMap.forEach((key, value) -> type.add(value.getTypeName()));
-            chartVO.setLegend(type);
-            infos.forEach(info->{
-
-            });
+            materialMap.forEach((key, value) -> typeIds.add(value.getType()));
+            //获取物料分类
+            Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
+            if (CollUtil.isNotEmpty(classificationMap)){
+                classificationMap.forEach((key,value)-> types.add(value.getName()));
+                wmsStorageReceiptInfoVOS.forEach(infoVO-> {
+                    if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
+                        infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
+                    }
+                });
+                Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
+                        .filter(vo -> vo.getClassificationName() != null)
+                        .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                types.forEach(type->{
+                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                    List<BigDecimal> quantity = Lists.newArrayList();
+                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add));
+                    qtSeriesDataDTO.setData(quantity);
+                    qtSeriesDataDTO.setName(type);
+                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
+                    seriesDataVO.add(qtSeriesDataDTO);
+                });
+            }
+            chartVO.setXData(types);
+            chartVO.setSeriesDataVO(seriesDataVO);
         }
         return chartVO;
     }
+
 
     @Override
     public String inStorageCodeRepeat(LocalDate current) {

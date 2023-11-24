@@ -3,6 +3,7 @@ package com.steccn.wms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.StockInfoDTO;
 import com.steccn.common.vo.R;
@@ -14,6 +15,7 @@ import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -109,4 +111,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     Page<WmsReportWarehouseVO> outboundDelivery(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    /**
+     * 出库单分类分析
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    EpChartGraphVO<List<String>, BigDecimal> outboundDeliveryClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }
