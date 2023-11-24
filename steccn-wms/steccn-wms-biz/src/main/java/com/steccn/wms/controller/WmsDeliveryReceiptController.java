@@ -81,6 +81,12 @@ public class WmsDeliveryReceiptController {
         return R.success(wmsDeliveryReceiptService.get(id));
     }
 
+    @ApiOperation("出库凭证详情")
+    @GetMapping("/linkErp")
+    public R<Boolean> linkErp(@ApiParam("出库单id") @RequestParam("id") Long id){
+        return R.success(wmsDeliveryReceiptService.linkErp(id));
+    }
+
     @ApiOperation("扫描 根据箱号获取库存信息")
     @GetMapping("/api/getCaseNoByScanInventoryInfo")
     public R<WmsScanInventoryVO> getCaseNoByScanInventoryInfo(@ApiParam("箱号") @RequestParam("caseNo") String caseNo){

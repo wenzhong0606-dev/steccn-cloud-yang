@@ -17,6 +17,10 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
+import com.steccn.mes.dto.ErpReturnStockSaveDTO;
+import com.steccn.mes.dto.ErpStockSaveDetailDTO;
+import com.steccn.mes.feign.RemoteErpFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SalesLogisticsDTO;
 import com.steccn.platform.dto.SalesLogisticsInfoDTO;
 import com.steccn.platform.dto.SalesLogisticsSyncDTO;
@@ -80,6 +84,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final WmsCustomerBarcodeService wmsCustomerBarcodeService;
+
+    private final RemoteErpFeignApi remoteErpFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -670,6 +676,58 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             throw new BusinessException("物流单号不存在");
         }
         return wmsDeliverySellInfoVO;
+    }
+
+    @Override
+    public Boolean linkErp(Long id) {
+        WmsDeliveryReceiptVO wmsDeliveryReceiptVO = get(id);
+        Assert.notNull(wmsDeliveryReceiptVO, "该出库单不存在");
+        String warehouseCode = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(wmsDeliveryReceiptVO.getWarehouseId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()
+                .get(wmsDeliveryReceiptVO.getWarehouseId()).getOfficeCode();
+        //销售发货
+        if(wmsDeliveryReceiptVO.getType().equals(1582297407643815936L)){
+            ErpReturnStockSaveDTO erpParam = new ErpReturnStockSaveDTO();
+            erpParam.setFmesbillid(wmsDeliveryReceiptVO.getId());
+            erpParam.setFcustno(wmsDeliveryReceiptVO.getCode());
+            erpParam.setFdate(wmsDeliveryReceiptVO.getAffirmTime().toLocalDate());
+            //客户编码未知
+//            erpParam.setFcustno();
+            List<ErpStockSaveDetailDTO> erpDetails = com.google.common.collect.Lists.newArrayList();
+            wmsDeliveryReceiptVO.getList().forEach(tmp->{
+                ErpStockSaveDetailDTO erpDetail = new ErpStockSaveDetailDTO();
+                erpDetail.setFmatno(tmp.getMaterialCode());
+                erpDetail.setFqty(tmp.getQuantity());
+                erpDetail.setFstockno(warehouseCode);
+                //含税单价
+//                erpDetail.setFtaxprice();
+                //税率
+//                erpDetail.setFentrytaxrate();
+                //批号
+//                erpDetail.setFlot();
+                //发货通知单id
+//                erpDetail.setFsrcmesbillid();
+                //发货通知单编码
+//                erpDetail.setFsrcmesbillno();
+                //发货通知单分录id
+//                erpDetail.setFsrcmesentryid();
+                erpDetails.add(erpDetail);
+            });
+            String listR = remoteErpFeignApi.saveOutStock(erpParam);
+            //判断是否保存成功
+            JSONObject jsonObject = JSONObject.parseObject(listR);
+            if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
+                WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
+                wmsDeliveryReceipt.setId(id);
+                wmsDeliveryReceipt.setStatus(OaConstant.NUM_2);
+                updateById(wmsDeliveryReceipt);
+            } else {
+                String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+                log.error(error);
+                throw new BusinessException(error);
+            }
+            return true;
+        }
+        throw new BusinessException("单据类型不支持同步");
     }
 
     /**

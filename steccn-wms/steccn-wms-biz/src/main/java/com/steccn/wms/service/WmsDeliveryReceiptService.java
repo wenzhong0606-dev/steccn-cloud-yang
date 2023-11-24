@@ -114,4 +114,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     WmsDeliveryFlagVO deliveryFlagInfo(WmsDeliveryReceiptFlagInfoDto dto);
 
     WmsDeliverySellInfoVO deliverySellMaterialInfo(String number);
+
+    /**
+     * 同步至erp
+     * @param id
+     * @return
+     */
+    Boolean linkErp(Long id);
 }
