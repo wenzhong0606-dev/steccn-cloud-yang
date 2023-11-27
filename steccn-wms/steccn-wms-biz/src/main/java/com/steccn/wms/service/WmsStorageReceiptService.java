@@ -156,7 +156,7 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Map<Long, String> rwLinkSupplier(Set<Long> rwIdSet);
-    Boolean salesReceiptAdd(SalesStorageReceiptDTO dto);
+//    Boolean salesReceiptAdd(SalesStorageReceiptDTO dto);
 
 
     /**

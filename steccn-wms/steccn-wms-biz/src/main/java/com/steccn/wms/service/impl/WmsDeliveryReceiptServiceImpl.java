@@ -104,8 +104,6 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
     private final WmsInventoryRecordService wmsInventoryRecordService;
 
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
-
     private final RemoteMessFeignApi remoteMessFeignApi;
 
     @Override
