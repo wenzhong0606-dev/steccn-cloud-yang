@@ -10,6 +10,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -128,31 +129,17 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
         if (Objects.nonNull(dto.getDate())) {
             dto.setDate(dto.getDate().minusDays(1));
         }
-        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsInventory::getWarehouseId,dto.getWarehouseIds())).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
-        if (CollUtil.isNotEmpty(materialIds)){
-            for (Long materialId : materialIds) {
-                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, dto.getDate()).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
-                if (Objects.nonNull(record)){
-                    quantity= BigDecimalUtil.add(quantity,record.getBackTotalQuantity());
-                }
-            }
+        List<TupleDTO<Long, BigDecimal>> resList = wmsInventoryMapper.openingInventory(dto.getWarehouseIds(), dto.getDate());
+        if (CollUtil.isNotEmpty(resList)) {
+            List<BigDecimal> collect = resList.stream().map(TupleDTO::getField2).collect(Collectors.toList());
+            quantity = BigDecimalUtil.sum(collect);
         }
         return quantity;
     }
 
     @Override
     public BigDecimal endingInventory(WmsReportWarehouseDTO dto) {
-        BigDecimal quantity = null;
-        Set<Long> materialIds = wmsInventoryMapper.selectList(new LambdaQueryWrapper<WmsInventory>().in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsInventory::getWarehouseId,dto.getWarehouseIds())).stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
-        if (CollUtil.isNotEmpty(materialIds)){
-            for (Long materialId : materialIds) {
-                WmsInventoryRecord record = getOne(new LambdaQueryWrapper<WmsInventoryRecord>().eq(WmsInventoryRecord::getMaterialId, materialId).le(WmsInventoryRecord::getCreateTime, dto.getDate()).orderByDesc(WmsInventoryRecord::getCreateTime).last(MpConstant.STR_LIMIT_1));
-                if (Objects.nonNull(record)){
-                    quantity= BigDecimalUtil.add(quantity,record.getBackTotalQuantity());
-                }
-            }
-        }
-        return quantity;
+        return openingInventory(dto);
     }
 
 }
