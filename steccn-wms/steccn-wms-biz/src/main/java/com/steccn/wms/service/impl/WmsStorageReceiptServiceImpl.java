@@ -588,7 +588,6 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             //获取库存变动类型
             SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(receipt.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
-            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(inventoryDTOList)) {
                 List<String> caseNoList = Lists.newArrayList();
                 inventoryDTOList.forEach(wmsInventoryDTO -> {
@@ -597,33 +596,36 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 WmsInventory wmsInventory = new WmsInventory();
                 List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
                 Map<String, WmsInventory> inventoryByCaseNo = wmsInventoryService.getInventoryByCaseNo(caseNoList);
-                inventoryDTOList.forEach(info -> {
-                            WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
-                            WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
-                            wmsInventoryRecord.setMaterialId(info.getMaterialId());
-                            wmsInventoryRecord.setType(dictVO.getId());
-                            wmsInventoryRecord.setCode(receipt.getCode());
-                            wmsInventoryRecord.setMaterialName(info.getMaterialName());
-                            wmsInventoryRecord.setShelfId(orDefault.getShelfId());
-                            wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
-                            //变动数量
-                            wmsInventoryRecord.setVariableQuantity(info.getQuantity());
-                            //变动前
-                            wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
-                            wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
-                            wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
-                            wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
-                            //变动后
-                            wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
-                            wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
-                            wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
-                            wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
-                            wmsInventoryRecords.add(wmsInventoryRecord);
-                        });
-                //生成库存流水记录
-                List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
-                wmsInventoryRecordService.saveBatch(recordList);
-                Boolean aBoolean = wmsInventoryService.affirm(inventoryDTOList);
+                if (Objects.nonNull(type)) {
+                    SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    inventoryDTOList.forEach(info -> {
+                        WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
+                        WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
+                        wmsInventoryRecord.setMaterialId(info.getMaterialId());
+                        wmsInventoryRecord.setType(dictVO.getId());
+                        wmsInventoryRecord.setCode(receipt.getCode());
+                        wmsInventoryRecord.setMaterialName(info.getMaterialName());
+                        wmsInventoryRecord.setShelfId(orDefault.getShelfId());
+                        wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
+                        //变动数量
+                        wmsInventoryRecord.setVariableQuantity(info.getQuantity());
+                        //变动前
+                        wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
+                        wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
+                        wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
+                        wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
+                        //变动后
+                        wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
+                        wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
+                        wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
+                        wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                        wmsInventoryRecords.add(wmsInventoryRecord);
+                    });
+                    //生成库存流水记录
+                    List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
+                    wmsInventoryRecordService.saveBatch(recordList);
+                    Boolean aBoolean = wmsInventoryService.affirm(inventoryDTOList);
+                }
             }
         }
         //4.修改确认单状态
