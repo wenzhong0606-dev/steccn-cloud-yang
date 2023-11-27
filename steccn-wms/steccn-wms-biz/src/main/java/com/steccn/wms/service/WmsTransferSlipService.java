@@ -1,11 +1,14 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
 
 import java.math.BigDecimal;
@@ -76,4 +79,11 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     BigDecimal slipLineWarehouse(LocalDate date, Set<Integer> shelfIdSet);
+
+    /**
+     * 获取调拨单
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    Page<WmsReportWarehouseVO> transferSlip(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }

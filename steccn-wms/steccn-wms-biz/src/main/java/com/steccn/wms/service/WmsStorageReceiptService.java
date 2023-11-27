@@ -2,16 +2,16 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.*;
-import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsSalesDeliveryVO;
-import com.steccn.wms.vo.WmsStorageFlagInfoVO;
-import com.steccn.wms.vo.WmsStorageReceiptVO;
+import com.steccn.wms.vo.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -156,4 +156,15 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Map<Long, String> rwLinkSupplier(Set<Long> rwIdSet);
+    Boolean salesReceiptAdd(SalesStorageReceiptDTO dto);
+
+
+    /**
+     * 获取入库单明细
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    Page<WmsReportWarehouseVO> warehouseWarrant(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> warehousingClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }

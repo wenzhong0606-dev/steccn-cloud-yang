@@ -21,7 +21,7 @@ public class WmsInventoryDTO {
     private Long id;
 
     @ApiModelProperty("物料id")
-    private String materialId;
+    private Long materialId;
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;

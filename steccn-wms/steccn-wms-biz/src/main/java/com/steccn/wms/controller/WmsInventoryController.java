@@ -100,4 +100,23 @@ public class WmsInventoryController {
     public R<Boolean> deleteData (){
         return R.success(wmsInventoryService.deleteData());
     }
+
+
+    @ApiOperation("物料汇总列表")
+    @PostMapping("/material/list")
+    public R<Page<WmsInventoryVO>> materialList(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.materialList(dto));
+    }
+
+    @ApiOperation("仓库汇总列表")
+    @PostMapping("/warehouse/list")
+    public R<Page<WmsInventoryVO>> warehouseList(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.warehouseList(dto));
+    }
+
+    @ApiOperation("货架汇总列表")
+    @PostMapping("/shelf/list")
+    public R<Page<WmsInventoryVO>> shelfList(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.shelfList(dto));
+    }
 }

@@ -11,6 +11,10 @@ import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptFlagInfoDto;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.*;
+import com.steccn.wms.dto.WmsReportWarehouseDTO;
+import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsReportWarehouseVO;
+import com.steccn.wms.vo.WmsScanInventoryVO;
 
 import java.util.List;
 import java.util.Map;
@@ -121,4 +125,12 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     Boolean linkErp(Long id);
+
+
+    /**
+     * 获取出库单及明细
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    Page<WmsReportWarehouseVO> outboundDelivery(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }

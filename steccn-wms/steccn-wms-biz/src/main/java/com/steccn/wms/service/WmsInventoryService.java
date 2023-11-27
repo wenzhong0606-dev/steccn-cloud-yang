@@ -1,10 +1,7 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.CaseSiteDTO;
-import com.steccn.pms.dto.MessMaterialConsumeDTO;
-import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -206,6 +203,52 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean deleteData();
+
+    /**
+     * 物料汇总
+     * @param dto
+     * @return
+     */
+    Page<WmsInventoryVO> materialList(WmsInventoryPageDTO dto);
+
+
+    /**
+     * 仓库汇总
+     * @param dto
+     * @return
+     */
+    Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto);
+
+
+    /**
+     * 货架汇总
+     * @param dto
+     * @return
+     */
+    Page<WmsInventoryVO> shelfList(WmsInventoryPageDTO dto);
+
+    /**
+     * 根据箱号获取库存信息
+     * @param caseNo
+     * @return
+     */
+    Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo);
+
+    /**
+     * 根据库存id获取库存信息
+     * @param inventoryIds
+     * @return
+     */
+    Map<Long, WmsInventory> inventoryIdMap(Set<Long> inventoryIds);
+
+    /**\
+     * 添加库存  有则增加无则新增 并生成记录
+     * @param infoList
+     * @param code
+     * @param warehouseId
+     * @return
+     */
+    Boolean addInfo(List<WmsInventoryDTO> infoList, String code, Integer warehouseId);
 
 
     /**

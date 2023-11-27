@@ -1,5 +1,6 @@
 package com.steccn.wms.constant;
 
+import com.steccn.pms.constant.PmManagerConstant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,7 +12,39 @@ public interface WmsManagerConstant {
 
     String SERVER_CODE ="query_logistics";
 
+    /**
+     * 库存流水记录-排序字段 单据编码
+     */
+    String WMS_RECORD_CODE = "code";
+
+    /**
+     * 库存流水记录-排序字段 物料名称
+     */
+    String WMS_RECORD_MATERIAL_NAME = "materialName";
+
+    /**
+     * 库存流水记录-排序字段 规格
+     */
+    String WMS_RECORD_SPECIFICATION = "specification";
+
+    /**
+     * 库存流水记录-排序字段 仓库名称
+     */
+    String WMS_RECORD_WAREHOUSE_NAME = "warehouseName";
+
+    /**
+     * 库存流水记录-排序字段 货架名称
+     */
+    String WMS_RECORD_SHELF_NAME = "shelfName";
+
+    /**
+     * 库存流水记录-排序字段 变动时间
+     */
+    String WMS_RECORD_DATETIME = "createTime";
+
     String Code_ZERO = "0";
+
+    String VARIATION_TYPE= "variation_type";
 
     /**
      * one
@@ -223,6 +256,47 @@ public interface WmsManagerConstant {
 
         private final String code;
         private final String name;
+    }
+
+    /**
+     * 变动类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum variableTypeEnum{
+        TYPE_0("0","期初入库"),
+        TYPE_1("1","创建完工入库"),
+        TYPE_2("2","确认完工入库"),
+        TYPE_3("3","反向确认完工入库"),
+        TYPE_4("4","采购入库"),
+        TYPE_5("5","冲销入库"),
+        TYPE_6("6","销售退货入库"),
+        TYPE_7("7","生产退料入库"),
+        TYPE_8("8","其他入库"),
+        TYPE_9("9","调拨入库"),
+        TYPE_10("10","盘盈入库"),
+        TYPE_11("11","期初出库"),
+        TYPE_12("12","生产领料"),
+        TYPE_13("13","采购退货"),
+        TYPE_14("14","销售发货"),
+        TYPE_15("15","冲销出库"),
+        TYPE_16("16","其他出库"),
+        TYPE_17("17","调拨出库"),
+        TYPE_18("18","盘亏出库");
+
+        private final String type;
+
+        private final String name;
+
+
+        public static String getTypeByName(String name) {
+            for (WmsManagerConstant.variableTypeEnum value : WmsManagerConstant.variableTypeEnum.values()) {
+                if (value.getName().equals(name)) {
+                    return value.getType();
+                }
+            }
+            return null;
+        }
     }
 
 }
