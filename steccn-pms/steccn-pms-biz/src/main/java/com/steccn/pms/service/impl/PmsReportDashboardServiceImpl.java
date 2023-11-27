@@ -14,6 +14,8 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
+import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -62,6 +64,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    private final RemoteDpFeignApi remoteDpFeignApi;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -76,6 +79,17 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             resVal = BigDecimalUtil.setScale(resVal, 1);
         }
         return resVal;
+    }
+
+    @Override
+    public BigDecimal meltingRate(Integer workShopId, LocalDate date) {
+        BigDecimal pullForce = pullForceToday(workShopId, date);
+        List<DpWeightVO> dpWeightVOS = FeignOptional.of(() -> remoteDpFeignApi.count(new TupleDTO<>(date.atTime(8, 0, 0)
+                , date.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal weight = dpWeightVOS.stream().map(DpWeightVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal divide = BigDecimalUtil.divide(weight, new BigDecimal(1000));
+        BigDecimal result = BigDecimalUtil.percent(pullForce, divide, 2);
+        return result;
     }
 
     @Override

@@ -27,6 +27,15 @@ public interface PmsReportDashboardService {
     BigDecimal pullForceToday(Integer workShopId, LocalDate date);
 
     /**
+     * 熔化率
+     *
+     * @param workShopId 车间id
+     * @param date       班次日期
+     * @return
+     */
+    BigDecimal meltingRate(Integer workShopId, LocalDate date);
+
+    /**
      * 今日产量（单位/T/片/㎡）
      *
      * @param workShopId 车间id
