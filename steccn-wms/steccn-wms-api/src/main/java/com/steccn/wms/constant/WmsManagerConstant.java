@@ -13,6 +13,11 @@ public interface WmsManagerConstant {
     String SERVER_CODE ="query_logistics";
 
     /**
+     * 柱状图标识
+     */
+    String BAR = "bar";
+
+    /**
      * 库存流水记录-排序字段 单据编码
      */
     String WMS_RECORD_CODE = "code";

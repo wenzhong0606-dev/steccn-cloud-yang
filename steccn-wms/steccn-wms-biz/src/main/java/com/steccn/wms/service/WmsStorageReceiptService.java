@@ -166,5 +166,12 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      */
     Page<WmsReportWarehouseVO> warehouseWarrant(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 
-    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> warehousingClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    /**
+     * 入库单分类分析
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    EpChartGraphVO<List<String>, BigDecimal> warehousingClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
 }

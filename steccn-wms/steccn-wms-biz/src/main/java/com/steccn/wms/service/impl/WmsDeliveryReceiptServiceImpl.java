@@ -17,6 +17,9 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.dto.QtSeriesDataDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.ErpReturnStockSaveDTO;
 import com.steccn.mes.dto.ErpStockSaveDetailDTO;
@@ -29,12 +32,15 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SalesLogisticsVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
@@ -45,6 +51,7 @@ import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.util.WmsCodeUtil;
+import com.steccn.wms.vo.*;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
@@ -98,6 +105,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final WmsInventoryRecordService wmsInventoryRecordService;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+
+    private final RemoteMessFeignApi remoteMessFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -310,8 +319,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //获取库存变动类型
             SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(receipt.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
-            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            //获取物料名称
+            if (Objects.nonNull(type)) {
+                SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+           //获取物料名称
             Map<Long, String> materialNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             WmsInventory wmsInventory = new WmsInventory();
             List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
@@ -342,6 +352,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //生成库存流水记录
             List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
             wmsInventoryRecordService.saveBatch(recordList);
+            }
             wmsInventoryService.affirmLockQuantity(inventoryDTOList);
         }
         //4.修改确认单状态
@@ -794,23 +805,28 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 .eq(Objects.nonNull(dto.getStatus()),WmsDeliveryReceipt::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getTypeId()),WmsDeliveryReceipt::getType, dto.getTypeId())
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .eq(Objects.nonNull(dto.getWarehouseId()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseId())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseIds())
                 .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
         if (CollUtil.isNotEmpty(list)){
             Map<Long,WmsDeliveryReceipt> map = Maps.newHashMap();
             List<Long> typeIds = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
             list.forEach( receipt->{
                 map.put(receipt.getId(),receipt);
                 typeIds.add(receipt.getType());
+                officeIds.add(Math.toIntExact(receipt.getWarehouseId()));
             });
             Set<Long> ids = map.keySet();
             Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
             infos.forEach(info->{
                 WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
                 BeanUtil.copyProperties(info,wmsReportWarehouseVO);
                 WmsDeliveryReceipt wmsDeliveryReceipt = map.get(info.getDeliveryReceiptId());
                 Long typeId = wmsDeliveryReceipt.getType();
+                wmsReportWarehouseVO.setWarehouse(wmsDeliveryReceipt.getWarehouseId());
+                wmsReportWarehouseVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsDeliveryReceipt.getWarehouseId())));
                 wmsReportWarehouseVO.setType(typeId);
                 wmsReportWarehouseVO.setCode(wmsDeliveryReceipt.getCode());
                 wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());
@@ -823,6 +839,51 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             });
         }
         return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+    }
+    @Override
+    public EpChartGraphVO<List<String>, BigDecimal> outboundDeliveryClassification(WmsReportWarehouseDTO dto) {
+        EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        //获取出库单数据
+        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseIds())
+                .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        if (CollUtil.isNotEmpty(list)) {
+            Set<Long> ids = list.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toSet());
+            List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
+            List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
+            List<Long> materialIds = infos.stream().map(WmsDeliveryReceiptInfo::getMaterialId).collect(Collectors.toList());
+            Set<Long> typeIds = Sets.newHashSet();
+            List<String> types = Lists.newArrayList();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            materialMap.forEach((key, value) -> typeIds.add(value.getType()));
+            //获取物料分类
+            Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
+            if (CollUtil.isNotEmpty(classificationMap)){
+                classificationMap.forEach((key,value)-> types.add(value.getName()));
+                wmsStorageReceiptInfoVOS.forEach(infoVO-> {
+                    if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
+                        infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
+                    }
+                });
+                Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
+                        .filter(vo -> vo.getClassificationName() != null)
+                        .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                types.forEach(type->{
+                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                    List<BigDecimal> quantity = Lists.newArrayList();
+                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+                    qtSeriesDataDTO.setData(quantity);
+                    qtSeriesDataDTO.setName(type);
+                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
+                    seriesDataVO.add(qtSeriesDataDTO);
+                });
+            }
+            chartVO.setXData(types);
+            chartVO.setSeriesDataVO(seriesDataVO);
+        }
+        return chartVO;
     }
 
     /**
