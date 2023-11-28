@@ -1,10 +1,12 @@
 package com.steccn.oa.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.OaRosterRecordDTO;
@@ -16,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -36,6 +40,7 @@ public class HrmClassInfoServiceImpl implements HrmClassInfoService {
     private final OaService oaService;
     private final KqShiftmanagementMapper kqShiftmanagementMapper;
     private final KqShiftonoffworksectionsMapper kqShiftonoffworksectionsMapper;
+    private final KqFormatDetailMapper kqFormatDetailMapper;
 
     @Override
     public OaClassVO getClassByUserId(TupleDTO<LocalDate, Integer> dto) {
@@ -57,50 +62,74 @@ public class HrmClassInfoServiceImpl implements HrmClassInfoService {
                 .select(KqGroupmember::getGroupid)
                 .isNull(KqGroupmember::getIsdelete)
                 .eq(KqGroupmember::getTypevalue, dto.getField2())
-                .last("LIMIT 1"));
+                .last("LIMIT 1").orderByDesc(KqGroupmember::getId));
         if(Objects.nonNull(groupId)){
             KqGroup kqGroup = kqGroupMapper.selectOne(new LambdaQueryWrapper<KqGroup>()
-                    .select(KqGroup::getGroupname)
+                    .select(KqGroup::getGroupname,KqGroup::getId)
                     .eq(KqGroup::getId, groupId.getGroupid())
                     .last("LIMIT 1"));
             if(Objects.nonNull(kqGroup)){
-                result.setClassGroup(kqGroup.getGroupname());
-            }
-        }
-        if(Objects.nonNull(hrmresource.getJobtitle())){
-            OaRosterRecordDTO recordDTO = new OaRosterRecordDTO();
-            recordDTO.setStartdate(dto.getField1().toString());
-            recordDTO.setEnddate(dto.getField2().toString());
-            recordDTO.setJobtitle(hrmresource.getJobtitle().toString());
-            List<OaRosterRecordVO> rosterRecord = oaService.getRosterRecord(recordDTO);
-            OaRosterRecordVO oaRosterRecordVO = rosterRecord.stream().filter(v -> v.getWorkcode().equals(hrmresource.getWorkcode())).findFirst().orElse(null);
-            if(Objects.nonNull(oaRosterRecordVO)){
-                result.setClassOrder(oaRosterRecordVO.getSerial());
-                //找出班次的开始结束时间
-                //班次信息
-                KqShiftmanagement shiftManagement = kqShiftmanagementMapper.selectOne(new LambdaQueryWrapper<KqShiftmanagement>()
-                        .select(KqShiftmanagement::getId, KqShiftmanagement::getSerial)
-                        .eq(KqShiftmanagement::getSerial,oaRosterRecordVO.getSerial())
-                        .isNull(KqShiftmanagement::getIsdelete));
-                //班次开始、结束时间
-                //班次详情
-                if(Objects.nonNull(shiftManagement)){
-                    List<KqShiftonoffworksections> shiftManagementDetailList = kqShiftonoffworksectionsMapper.selectList(new LambdaQueryWrapper<KqShiftonoffworksections>()
-                            .select(KqShiftonoffworksections::getSerialid,KqShiftonoffworksections::getAcross,KqShiftonoffworksections::getTimes,KqShiftonoffworksections::getRecord,KqShiftonoffworksections::getOnoffworktype)
-                            .eq(KqShiftonoffworksections::getSerialid,shiftManagement.getId())
-                            .isNull(KqShiftonoffworksections::getIsdelete));
-                    if(CollUtil.isNotEmpty(shiftManagementDetailList)){
-                        OaKqGroupTimeRangeVO timeRange = findShiftManage(shiftManagement, shiftManagementDetailList).getTimeRange();
-                        result.setStartTime(dto.getField1().atTime(timeRange.getStartTime()));
-                        if(timeRange.getIsAcross().equals(OaConstant.NUM_1)){
-                            result.setEndTime(dto.getField1().plusDays(1).atTime(timeRange.getEndTime()));
+                //是否包含甲乙丙
+                if(kqGroup.getGroupname().contains(OaConstant.CLASS_A)){
+                    result.setClassGroup(OaConstant.CLASS_A);
+                }else if (kqGroup.getGroupname().contains(OaConstant.CLASS_B)) {
+                    result.setClassGroup(OaConstant.CLASS_B);
+                }else if (kqGroup.getGroupname().contains(OaConstant.CLASS_C)) {
+                    result.setClassGroup(OaConstant.CLASS_C);
+                }
+                if(StrUtil.isNotBlank(result.getClassGroup())){
+                    KqFormatDetail kqFormatDetail = kqFormatDetailMapper.selectOne(new LambdaQueryWrapper<KqFormatDetail>()
+                            .eq(KqFormatDetail::getWorkbegindate, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                            .eq(KqFormatDetail::getGroupid, kqGroup.getId())
+                            .last("LIMIT 1")
+                            .orderByAsc(KqFormatDetail::getWorkbegintime));
+                    if(Objects.nonNull(kqFormatDetail)){
+                        result.setStartTime(LocalDateTime.parse(kqFormatDetail.getWorkbegindate()+" "+kqFormatDetail.getWorkbegintime()+":00",DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        result.setEndTime(LocalDateTime.parse(kqFormatDetail.getWorkenddate()+" "+kqFormatDetail.getWorkendtime()+":00",DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        Integer classId = LocalDateUtil.getClassId(result.getStartTime(), false);
+                        if(classId.equals(Integer.valueOf(0))){
+                            result.setClassOrder("早班");
                         }else {
-                            result.setEndTime(dto.getField1().atTime(timeRange.getEndTime()));
+                            result.setClassOrder("晚班");
                         }
                     }
                 }
             }
         }
+//        if(Objects.nonNull(hrmresource.getJobtitle())){
+//            OaRosterRecordDTO recordDTO = new OaRosterRecordDTO();
+//            recordDTO.setStartdate(dto.getField1().toString());
+//            recordDTO.setEnddate(dto.getField2().toString());
+//            recordDTO.setJobtitle(hrmresource.getJobtitle().toString());
+//            List<OaRosterRecordVO> rosterRecord = oaService.getRosterRecord(recordDTO);
+//            OaRosterRecordVO oaRosterRecordVO = rosterRecord.stream().filter(v -> v.getWorkcode().equals(hrmresource.getWorkcode())).findFirst().orElse(null);
+//            if(Objects.nonNull(oaRosterRecordVO)){
+//                result.setClassOrder(oaRosterRecordVO.getSerial());
+//                //找出班次的开始结束时间
+//                //班次信息
+//                KqShiftmanagement shiftManagement = kqShiftmanagementMapper.selectOne(new LambdaQueryWrapper<KqShiftmanagement>()
+//                        .select(KqShiftmanagement::getId, KqShiftmanagement::getSerial)
+//                        .eq(KqShiftmanagement::getSerial,oaRosterRecordVO.getSerial())
+//                        .isNull(KqShiftmanagement::getIsdelete));
+//                //班次开始、结束时间
+//                //班次详情
+//                if(Objects.nonNull(shiftManagement)){
+//                    List<KqShiftonoffworksections> shiftManagementDetailList = kqShiftonoffworksectionsMapper.selectList(new LambdaQueryWrapper<KqShiftonoffworksections>()
+//                            .select(KqShiftonoffworksections::getSerialid,KqShiftonoffworksections::getAcross,KqShiftonoffworksections::getTimes,KqShiftonoffworksections::getRecord,KqShiftonoffworksections::getOnoffworktype)
+//                            .eq(KqShiftonoffworksections::getSerialid,shiftManagement.getId())
+//                            .isNull(KqShiftonoffworksections::getIsdelete));
+//                    if(CollUtil.isNotEmpty(shiftManagementDetailList)){
+//                        OaKqGroupTimeRangeVO timeRange = findShiftManage(shiftManagement, shiftManagementDetailList).getTimeRange();
+//                        result.setStartTime(dto.getField1().atTime(timeRange.getStartTime()));
+//                        if(timeRange.getIsAcross().equals(OaConstant.NUM_1)){
+//                            result.setEndTime(dto.getField1().plusDays(1).atTime(timeRange.getEndTime()));
+//                        }else {
+//                            result.setEndTime(dto.getField1().atTime(timeRange.getEndTime()));
+//                        }
+//                    }
+//                }
+//            }
+//        }
         return result;
     }
 

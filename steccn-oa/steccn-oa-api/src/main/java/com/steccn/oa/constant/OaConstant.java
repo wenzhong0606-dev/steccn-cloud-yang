@@ -127,6 +127,10 @@ public class OaConstant {
 
     public static final String JP_1 = "基片一车间";
     public static final String JP_2 = "基片二车间";
+
+    public static final String CLASS_A = "甲班";
+    public static final String CLASS_B = "乙班";
+    public static final String CLASS_C = "丙班";
 }
 
 /**
