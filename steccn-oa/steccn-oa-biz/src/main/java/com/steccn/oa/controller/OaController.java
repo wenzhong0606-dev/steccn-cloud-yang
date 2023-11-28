@@ -305,8 +305,8 @@ public class OaController {
 
     @ApiOperation("获取深加工当班信息")
     @GetMapping("/todayClass/info/sjg")
-    public R<OaTodayClassVO> getTodayClassInfoSJG(){
-        return R.success(kqGroupmemberService.getTodayClassInfoSJG());
+    public R<List<OaTodayClassVO>> getTodayClassInfoSJG(@RequestParam("workshopName") String workshopName, @RequestParam("date") LocalDate date){
+        return R.success(kqGroupmemberService.getTodayClassInfoSJG(workshopName,date));
     }
 
     @ApiOperation("获取仓库当班信息")
