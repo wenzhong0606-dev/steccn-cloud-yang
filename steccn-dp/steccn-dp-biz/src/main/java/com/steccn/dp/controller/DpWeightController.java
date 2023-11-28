@@ -1,0 +1,34 @@
+package com.steccn.dp.controller;
+
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.vo.R;
+import com.steccn.dp.service.AdsOpcUaAll3Service;
+import com.steccn.dp.vo.DpWeightVO;
+import groovy.lang.Tuple;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 类说明
+ *
+ * @author AndrewLuo
+ * @date 2023/11/23
+ */
+@Api("备件信息")
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/dp/weight")
+public class DpWeightController {
+    private final AdsOpcUaAll3Service adsOpcUaAll3Service;
+
+    @PostMapping("/count")
+    @ApiOperation(value = "电子秤读数")
+    public R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        return R.success(adsOpcUaAll3Service.getWeighCount(dto));
+    }
+}

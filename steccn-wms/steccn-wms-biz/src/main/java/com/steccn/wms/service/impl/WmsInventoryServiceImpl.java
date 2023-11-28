@@ -583,6 +583,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         }
         return map;
     }
+
     @Override
     public Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
@@ -593,6 +594,18 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         //逻辑分页
         return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
     }
+    @Override
+    public Map<String, WmsInventory> inventoryMapByCaseNos(Set<String> caseNos) {
+        Map<String, WmsInventory> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(caseNos)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNos));
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach( inventory-> map.put(inventory.getCaseNo(),inventory));
+            }
+        }
+        return map;
+    }
+
 
     @Override
     public Page<WmsInventoryVO> shelfList(WmsInventoryPageDTO dto) {

@@ -33,6 +33,12 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.pullForceToday(workShopId, date));
     }
 
+    @GetMapping("/pull/melting/today")
+    @ApiOperation("熔化率（单位/T）")
+    public R<BigDecimal> meltingRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
+        return R.success(pmsReportDashboardService.meltingRate(workShopId, date));
+    }
+
     @GetMapping("/produce/num/today")
     @ApiOperation("今日产量（单位/T/片/㎡）")
     public R<List<BigDecimal>> produceNumToday(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {

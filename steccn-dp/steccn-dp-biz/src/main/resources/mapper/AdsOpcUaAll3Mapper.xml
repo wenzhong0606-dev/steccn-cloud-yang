@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.AdsOpcUaAll3Mapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.AdsOpcUaAll3">
+            <id property="tagId" column="tag_id" jdbcType="VARCHAR"/>
+            <id property="servertimems" column="serverTimeMs" jdbcType="VARCHAR"/>
+            <result property="nodeid" column="nodeId" jdbcType="VARCHAR"/>
+            <result property="kafkatopic" column="kafkaTopic" jdbcType="VARCHAR"/>
+            <result property="opcpath" column="opcPath" jdbcType="VARCHAR"/>
+            <result property="servertime" column="serverTime" jdbcType="TIMESTAMP"/>
+            <result property="value" column="value" jdbcType="DECIMAL"/>
+            <result property="valueasstring" column="valueAsString" jdbcType="VARCHAR"/>
+            <result property="statuscode" column="statusCode" jdbcType="INTEGER"/>
+            <result property="valuetype" column="valueType" jdbcType="VARCHAR"/>
+            <result property="delFlag" column="del_flag" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        tag_id,serverTimeMs,nodeId,
+        kafkaTopic,opcPath,serverTime,
+        value,valueAsString,statusCode,
+        valueType,del_flag
+    </sql>
+
+    <select id="weightCount" resultType="com.steccn.dp.vo.DpWeightVO">
+        SELECT SUM(value) as value,
+        tag_id AS tagId
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY tag_id
+    </select>
+</mapper>

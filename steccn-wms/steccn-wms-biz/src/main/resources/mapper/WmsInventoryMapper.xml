@@ -122,6 +122,34 @@
         </if>
 
     </select>
+    <select id="getWhMaterial" resultType="java.lang.Long">
+        select distinct material_id from         wms_inventory a
+        WHERE   a.del_flag = 0
+        <if test="warehouseIds!=null and warehouseIds.size() >0 ">
+            and a.warehouse_id in
+            <foreach collection="warehouseIds" open="(" close=")" item="warehouseId" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+    </select>
+    <select id="openingInventory" resultType="com.steccn.common.dto.TupleDTO">
+        select distinct material_id as field1, back_lock_quantity as field2 from wms_inventory_record where del_flag = 0
+        and (material_id , create_time) in (
+
+        select material_id, max(create_time)   from wms_inventory_record
+        where material_id in (select distinct material_id from wms_inventory where del_flag = 0
+        <if test="warehouseIds!=null and warehouseIds.size() >0 ">
+            and warehouse_id in
+            <foreach collection="warehouseIds" open="(" close=")" item="warehouseId" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if> )
+        <if test="date!=null">
+            and create_time &lt;= #{date}
+        </if>
+               group by material_id
+        )
+    </select>
 
 
 </mapper>

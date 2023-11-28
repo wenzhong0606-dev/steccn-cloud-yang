@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -14,30 +15,33 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.mes.dto.ErpCommonSaveDTO;
 import com.steccn.mes.dto.ErpTransferSaveDetailDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.domain.WmsInventoryRecord;
-import com.steccn.wms.domain.WmsTransferSlip;
-import com.steccn.wms.domain.WmsTransferSlipInfo;
-import com.steccn.wms.dto.WmsInventoryDTO;
-import com.steccn.wms.dto.WmsTransferSlipDTO;
-import com.steccn.wms.dto.WmsTransferSlipInfoDTO;
-import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.domain.*;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsTransferSlipInfoService;
 import com.steccn.wms.service.WmsTransferSlipService;
 import com.steccn.wms.mapper.WmsTransferSlipMapper;
 import com.steccn.wms.util.WmsCodeUtil;
+import com.steccn.wms.vo.WmsReportWarehouseVO;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +83,10 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     private final WmsInventoryService wmsInventoryService;
 
     private final WmsInventoryRecordService wmsInventoryRecordService;
+
+    private final RemoteMessFeignApi remoteMessFeignApi;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
 
     /**
@@ -559,6 +567,115 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             }
         }
         return null;
+    }
+
+    @Override
+    public Page<WmsReportWarehouseVO> transferSlip(WmsReportWarehouseDTO dto) {
+        //处理时间
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
+        List<WmsReportWarehouseVO> resList = Lists.newArrayList();
+        LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
+                .eq(Objects.nonNull(dto.getStatus()), WmsTransferSlip::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getTypeId()), WmsTransferSlip::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsTransferSlip::getCreateTime, dto.getStartTime(), dto.getEndTime())
+                .notIn(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+        if (CollUtil.isNotEmpty(dto.getWarehouseIds())) {
+            wrapper.and(w -> {
+                w.in(WmsTransferSlip::getSourceWarehouse, dto.getWarehouseIds()).or()
+                        .in(WmsTransferSlip::getTargetWarehouse, dto.getWarehouseIds());
+            });
+        }
+        List<WmsTransferSlip> list = list(wrapper);
+        if (CollUtil.isNotEmpty(list)){
+            Map<Long,WmsTransferSlip> map = Maps.newHashMap();
+            List<Long> typeIds = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
+            list.forEach( receipt->{
+                map.put(receipt.getId(),receipt);
+                typeIds.add(receipt.getType());
+                officeIds.add(Math.toIntExact(receipt.getTargetWarehouse()));
+                officeIds.add(Math.toIntExact(receipt.getSourceWarehouse()));
+            });
+            Set<Long> ids = map.keySet();
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<WmsTransferSlipInfo> infos = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId,ids));
+            infos.forEach(info->{
+                WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
+                BeanUtil.copyProperties(info,wmsReportWarehouseVO);
+                WmsTransferSlip wmsTransferSlip = map.get(info.getTransferSlipId());
+                Long typeId = wmsTransferSlip.getType();
+                wmsReportWarehouseVO.setType(typeId);
+                wmsReportWarehouseVO.setWarehouse(Long.valueOf(wmsTransferSlip.getTargetWarehouse()));
+                wmsReportWarehouseVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsTransferSlip.getSourceWarehouse())));
+                wmsReportWarehouseVO.setCode(wmsTransferSlip.getCode());
+                wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());
+                wmsReportWarehouseVO.setStatus(wmsTransferSlip.getStatus());
+                wmsReportWarehouseVO.setAffirmName(wmsTransferSlip.getAffirmName());
+                wmsReportWarehouseVO.setAffirmTime(wmsTransferSlip.getAffirmTime());
+                wmsReportWarehouseVO.setCreateTime(wmsTransferSlip.getCreateTime());
+                wmsReportWarehouseVO.setCreateName(wmsTransferSlip.getCreateName());
+                resList.add(wmsReportWarehouseVO);
+            });
+        }
+        return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+    }
+
+    @Override
+    public EpChartGraphVO<List<String>, BigDecimal> transferSlipClassification(WmsReportWarehouseDTO dto) {
+        EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        //获取调拨单数据
+        LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
+                .eq(Objects.nonNull(dto.getStatus()), WmsTransferSlip::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getTypeId()), WmsTransferSlip::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsTransferSlip::getCreateTime, dto.getStartTime(), dto.getEndTime())
+                .notIn(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+        if (CollUtil.isNotEmpty(dto.getWarehouseIds())) {
+            wrapper.and(w -> {
+                w.in(WmsTransferSlip::getSourceWarehouse, dto.getWarehouseIds()).or()
+                        .in(WmsTransferSlip::getTargetWarehouse, dto.getWarehouseIds());
+            });
+        }
+        List<WmsTransferSlip> list = list(wrapper);
+        if (CollUtil.isNotEmpty(list)) {
+            Set<Long> ids = list.stream().map(WmsTransferSlip::getId).collect(Collectors.toSet());
+            List<WmsTransferSlipInfo> infos = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId,ids));
+            List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
+            List<Long> materialIds = infos.stream().map(WmsTransferSlipInfo::getMaterialId).collect(Collectors.toList());
+            Set<Long> typeIds = Sets.newHashSet();
+            List<String> types = Lists.newArrayList();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            materialMap.forEach((key, value) -> typeIds.add(value.getType()));
+            //获取物料分类
+            Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
+            if (CollUtil.isNotEmpty(classificationMap)){
+                classificationMap.forEach((key,value)-> types.add(value.getName()));
+                wmsStorageReceiptInfoVOS.forEach(infoVO-> {
+                    if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
+                        infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
+                    }
+                });
+                Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
+                        .filter(vo -> vo.getClassificationName() != null)
+                        .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                types.forEach(type->{
+                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                    List<BigDecimal> quantity = Lists.newArrayList();
+                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+                    qtSeriesDataDTO.setData(quantity);
+                    qtSeriesDataDTO.setName(type);
+                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
+                    seriesDataVO.add(qtSeriesDataDTO);
+                });
+            }
+            chartVO.setXData(types);
+            chartVO.setSeriesDataVO(seriesDataVO);
+        }
+        return chartVO;
     }
 
     /**

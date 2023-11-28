@@ -7,7 +7,10 @@ import com.steccn.wms.domain.WmsInventoryRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsInventoryRecordDTO;
 import com.steccn.wms.dto.WmsInventoryRecordPageDTO;
+import com.steccn.wms.dto.WmsReportWarehouseDTO;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -26,4 +29,15 @@ public interface WmsInventoryRecordService extends IService<WmsInventoryRecord> 
      */
     Page<WmsInventoryRecordVO> pageList(WmsInventoryRecordPageDTO dto);
 
+    /**
+     * 获取期初库存
+     * @return
+     */
+    BigDecimal openingInventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    /**
+     * 获取期末库存
+     * @return
+     */
+    BigDecimal endingInventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }

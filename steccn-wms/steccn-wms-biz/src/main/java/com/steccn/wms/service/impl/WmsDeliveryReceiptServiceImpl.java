@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -16,7 +17,14 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.dto.QtSeriesDataDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
+import com.steccn.mes.dto.ErpReturnStockSaveDTO;
+import com.steccn.mes.dto.ErpStockSaveDetailDTO;
+import com.steccn.mes.feign.RemoteErpFeignApi;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SalesLogisticsDTO;
 import com.steccn.platform.dto.SalesLogisticsInfoDTO;
 import com.steccn.platform.dto.SalesLogisticsSyncDTO;
@@ -36,6 +44,18 @@ import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsInventoryRecord;
+import com.steccn.platform.util.LogicalPageUtil;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.feign.RemoteSalesFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SalesLogisticsVO;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.ClassificationVO;
+import com.steccn.wms.constant.WmsManagerConstant;
+import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
@@ -44,6 +64,11 @@ import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.util.WmsCodeUtil;
+import com.steccn.wms.vo.*;
+import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
+import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsReportWarehouseVO;
+import com.steccn.wms.vo.WmsScanInventoryVO;
 import com.steccn.wms.vo.*;
 import com.sun.javafx.css.Size;
 import lombok.RequiredArgsConstructor;
@@ -88,8 +113,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
     private final WmsCustomerBarcodeService wmsCustomerBarcodeService;
 
+    private final RemoteErpFeignApi remoteErpFeignApi;
+
     private final WmsInventoryRecordService wmsInventoryRecordService;
 
+    private final RemoteMessFeignApi remoteMessFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -302,8 +330,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //获取库存变动类型
             SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(receipt.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
-            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            //获取物料名称
+            if (Objects.nonNull(type)) {
+                SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+           //获取物料名称
             Map<Long, String> materialNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             WmsInventory wmsInventory = new WmsInventory();
             List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
@@ -334,6 +363,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //生成库存流水记录
             List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
             wmsInventoryRecordService.saveBatch(recordList);
+            }
             wmsInventoryService.affirmLockQuantity(inventoryDTOList);
         }
         //4.修改确认单状态
@@ -720,6 +750,146 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             throw new BusinessException("物流单号不存在");
         }
         return wmsDeliverySellInfoVO;
+    }
+
+    @Override
+    public Boolean linkErp(Long id) {
+        WmsDeliveryReceiptVO wmsDeliveryReceiptVO = get(id);
+        Assert.notNull(wmsDeliveryReceiptVO, "该出库单不存在");
+        String warehouseCode = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(wmsDeliveryReceiptVO.getWarehouseId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()
+                .get(wmsDeliveryReceiptVO.getWarehouseId()).getOfficeCode();
+        //销售发货
+        if(wmsDeliveryReceiptVO.getType().equals(1582297407643815936L)){
+            ErpReturnStockSaveDTO erpParam = new ErpReturnStockSaveDTO();
+            erpParam.setFmesbillid(wmsDeliveryReceiptVO.getId());
+            erpParam.setFcustno(wmsDeliveryReceiptVO.getCode());
+            erpParam.setFdate(wmsDeliveryReceiptVO.getAffirmTime().toLocalDate());
+            //客户编码未知
+//            erpParam.setFcustno();
+            List<ErpStockSaveDetailDTO> erpDetails = com.google.common.collect.Lists.newArrayList();
+            wmsDeliveryReceiptVO.getList().forEach(tmp->{
+                ErpStockSaveDetailDTO erpDetail = new ErpStockSaveDetailDTO();
+                erpDetail.setFmatno(tmp.getMaterialCode());
+                erpDetail.setFqty(tmp.getQuantity());
+                erpDetail.setFstockno(warehouseCode);
+                //含税单价
+//                erpDetail.setFtaxprice();
+                //税率
+//                erpDetail.setFentrytaxrate();
+                //批号
+//                erpDetail.setFlot();
+                //发货通知单id
+//                erpDetail.setFsrcmesbillid();
+                //发货通知单编码
+//                erpDetail.setFsrcmesbillno();
+                //发货通知单分录id
+//                erpDetail.setFsrcmesentryid();
+                erpDetails.add(erpDetail);
+            });
+            String listR = remoteErpFeignApi.saveOutStock(erpParam);
+            //判断是否保存成功
+            JSONObject jsonObject = JSONObject.parseObject(listR);
+            if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
+                WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
+                wmsDeliveryReceipt.setId(id);
+                wmsDeliveryReceipt.setStatus(OaConstant.NUM_2);
+                updateById(wmsDeliveryReceipt);
+            } else {
+                String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+                log.error(error);
+                throw new BusinessException(error);
+            }
+            return true;
+        }
+        throw new BusinessException("单据类型不支持同步");
+    }
+
+    @Override
+    public Page<WmsReportWarehouseVO> outboundDelivery(WmsReportWarehouseDTO dto) {
+        //处理时间
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
+        List<WmsReportWarehouseVO> resList = Lists.newArrayList();
+        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                .eq(Objects.nonNull(dto.getStatus()),WmsDeliveryReceipt::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getTypeId()),WmsDeliveryReceipt::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseIds())
+                .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        if (CollUtil.isNotEmpty(list)){
+            Map<Long,WmsDeliveryReceipt> map = Maps.newHashMap();
+            List<Long> typeIds = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
+            list.forEach( receipt->{
+                map.put(receipt.getId(),receipt);
+                typeIds.add(receipt.getType());
+                officeIds.add(Math.toIntExact(receipt.getWarehouseId()));
+            });
+            Set<Long> ids = map.keySet();
+            Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
+            infos.forEach(info->{
+                WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
+                BeanUtil.copyProperties(info,wmsReportWarehouseVO);
+                WmsDeliveryReceipt wmsDeliveryReceipt = map.get(info.getDeliveryReceiptId());
+                Long typeId = wmsDeliveryReceipt.getType();
+                wmsReportWarehouseVO.setWarehouse(wmsDeliveryReceipt.getWarehouseId());
+                wmsReportWarehouseVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsDeliveryReceipt.getWarehouseId())));
+                wmsReportWarehouseVO.setType(typeId);
+                wmsReportWarehouseVO.setCode(wmsDeliveryReceipt.getCode());
+                wmsReportWarehouseVO.setTypeName(dictMap.get(typeId).getName());
+                wmsReportWarehouseVO.setStatus(wmsDeliveryReceipt.getStatus());
+                wmsReportWarehouseVO.setAffirmName(wmsDeliveryReceipt.getAffirmName());
+                wmsReportWarehouseVO.setAffirmTime(wmsDeliveryReceipt.getAffirmTime());
+                wmsReportWarehouseVO.setCreateTime(wmsDeliveryReceipt.getCreateTime());
+                wmsReportWarehouseVO.setCreateName(wmsDeliveryReceipt.getCreateName());
+                resList.add(wmsReportWarehouseVO);
+            });
+        }
+        return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+    }
+    @Override
+    public EpChartGraphVO<List<String>, BigDecimal> outboundDeliveryClassification(WmsReportWarehouseDTO dto) {
+        EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        //获取出库单数据
+        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassification(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)) {
+            List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
+            List<Long> materialIds = infos.stream().map(WmsDeliveryReceiptInfo::getMaterialId).collect(Collectors.toList());
+            Set<Long> typeIds = Sets.newHashSet();
+            List<String> types = Lists.newArrayList();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            materialMap.forEach((key, value) -> typeIds.add(value.getType()));
+            //获取物料分类
+            Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
+            if (CollUtil.isNotEmpty(classificationMap)){
+                classificationMap.forEach((key,value)-> types.add(value.getName()));
+                wmsStorageReceiptInfoVOS.forEach(infoVO-> {
+                    if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
+                        infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
+                    }
+                });
+                Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
+                        .filter(vo -> vo.getClassificationName() != null)
+                        .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                types.forEach(type->{
+                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                    List<BigDecimal> quantity = Lists.newArrayList();
+                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+                    qtSeriesDataDTO.setData(quantity);
+                    qtSeriesDataDTO.setName(type);
+                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
+                    seriesDataVO.add(qtSeriesDataDTO);
+                });
+            }
+            chartVO.setXData(types);
+            chartVO.setSeriesDataVO(seriesDataVO);
+        }
+        return chartVO;
     }
 
     /**

@@ -149,10 +149,12 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             dictIds.add(eqpSpareVO.getProcurementTypeId());
             dictIds.add(eqpSpareVO.getWeightUnitId());
             dictIds.add(eqpSpareVO.getWideUnitId());
+            dictIds.add(eqpSpareVO.getType());
             resMap.put(eqpSpareVO.getId(), eqpSpareVO);
         }
         Map<Long, String> map = sysDictService.listByIdCh(dictIds);
         eqpSpareVOList.forEach(vo -> {
+            vo.setTypeName(map.get(vo.getType()));
             vo.setHighUnitName(map.get(vo.getHighUnitId()));
             vo.setLengthUnitName(map.get(vo.getLengthUnitId()));
             vo.setThickUnitName(map.get(vo.getThickUnitId()));

@@ -80,6 +80,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-platform-api</artifactId>
+        </dependency>
         <!--添加actuator依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

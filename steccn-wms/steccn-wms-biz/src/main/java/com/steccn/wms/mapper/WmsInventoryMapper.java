@@ -1,13 +1,17 @@
 package com.steccn.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.MaterialStorageDTO;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.security.core.parameters.P;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -64,6 +68,19 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
     List<WmsStockVO> getByShelfCodeOrMaterialsInventoryList(@Param("shelfCodes")Set<String> shelfs,
                                                             @Param("materialsList") Set<Long> materials);
 
+    /**
+     * 获取仓库的物料
+     * @param warehouseIds
+     * @return
+     */
+    Set<Long> getWhMaterial(@Param("warehouseIds") List<Long> warehouseIds);
+
+    /**
+     * 获取期初库存
+     * @param warehouseIds 仓库id集合
+     * @return
+     */
+    List<TupleDTO<Long, BigDecimal>> openingInventory(@Param("warehouseIds") List<Long> warehouseIds,@Param("date") LocalDate date);
 }
 
 
