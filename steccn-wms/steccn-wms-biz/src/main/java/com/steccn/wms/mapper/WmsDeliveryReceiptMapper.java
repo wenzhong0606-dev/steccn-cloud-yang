@@ -3,12 +3,14 @@ package com.steccn.wms.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -35,6 +37,15 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     List<WmsDeliveryReceipt> rwLinkCaseNo(@Param("rwIdSet") Set<Long> rwIdSet);
+
+    /**
+     * 根据仓库获取入库单
+     * @param warehouseIds 仓库id集合
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return
+     */
+    List<WmsDeliveryReceiptInfo> outboundDeliveryClassification(@Param("warehouseIds") List<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }
 
 

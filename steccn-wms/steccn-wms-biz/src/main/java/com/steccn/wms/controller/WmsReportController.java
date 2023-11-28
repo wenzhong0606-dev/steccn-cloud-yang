@@ -102,16 +102,17 @@ public class WmsReportController {
 
     @PostMapping("/document/quantity")
     @ApiOperation("单据数量")
-    public R<WmsDocumentQuantityVO> documentQuantity(WmsReportWarehouseDTO dto){
+    public R<WmsDocumentQuantityVO> documentQuantity(WmsReportWarehouseDTO dto) {
         WmsDocumentQuantityVO wmsDocumentQuantityVO = new WmsDocumentQuantityVO();
-        wmsDocumentQuantityVO.setInboundSingular((wmsStorageReceiptService.list(new LambdaQueryWrapper<WmsStorageReceipt>()
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseIds())
-                .notIn(WmsStorageReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()))).size());
-        wmsDocumentQuantityVO.setOutboundSingular((wmsDeliveryReceiptService.list(new LambdaQueryWrapper<WmsDeliveryReceipt>()
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseIds())
-                .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()))).size());
+        long count1 = wmsStorageReceiptService.count(new LambdaQueryWrapper<WmsStorageReceipt>()
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsStorageReceipt::getCreateTime, dto.getStartTime(), dto.getEndTime())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()), WmsStorageReceipt::getWarehouseId, dto.getWarehouseIds())
+                .notIn(WmsStorageReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        wmsDocumentQuantityVO.setInboundSingular((int) count1);
+        wmsDocumentQuantityVO.setOutboundSingular((int) (wmsDeliveryReceiptService.count(new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsDeliveryReceipt::getCreateTime, dto.getStartTime(), dto.getEndTime())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()), WmsDeliveryReceipt::getWarehouseId, dto.getWarehouseIds())
+                .notIn(WmsDeliveryReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()))));
         LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsTransferSlip::getCreateTime, dto.getStartTime(), dto.getEndTime())
                 .notIn(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
@@ -121,7 +122,7 @@ public class WmsReportController {
                         .in(WmsTransferSlip::getTargetWarehouse, dto.getWarehouseIds());
             });
         }
-        wmsDocumentQuantityVO.setDialingSingular(wmsTransferSlipService.list(wrapper).size());
+        wmsDocumentQuantityVO.setDialingSingular((int) wmsTransferSlipService.count(wrapper));
         return R.success(wmsDocumentQuantityVO);
     }
 }

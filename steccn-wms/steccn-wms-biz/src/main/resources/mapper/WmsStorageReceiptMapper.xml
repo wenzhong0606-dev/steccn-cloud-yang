@@ -112,6 +112,23 @@
             #{id}
         </foreach>
     </select>
+    <select id="warehousingClassification" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
+        select info.material_id, sum(quantity) as quantity  from wms_storage_receipt wdr join wms_storage_receipt_info info on wdr.id = info.storage_receipt_id and info.del_flag = 0
+        where wdr.del_flag = 0
+        <if test="warehouseIds != null and warehouseIds.size > 0">
+            and wdr.warehouse_id in
+            <foreach collection="warehouseIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="startTime !=null and endTime !=null">
+            and wdr.create_time between #{startTime} and #{endTime}
+        </if>
+        and wdr.`status` != 5
+        group by info.material_id;
+
+
+    </select>
 
     <update id="salesAutoConfirm">
         UPDATE wms_storage_receipt
