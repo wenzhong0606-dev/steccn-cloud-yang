@@ -584,6 +584,9 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             //获取库存变动类型
             SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(receipt.getType()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
+            if (Objects.isNull(type)){
+                type = WmsManagerConstant.variableTypeEnum.getTypeByValue(sysDictVO.getName());
+            }
             if (CollUtil.isNotEmpty(inventoryDTOList)) {
                 List<String> caseNoList = Lists.newArrayList();
                 inventoryDTOList.forEach(wmsInventoryDTO -> {
@@ -592,8 +595,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 WmsInventory wmsInventory = new WmsInventory();
                 List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
                 Map<String, WmsInventory> inventoryByCaseNo = wmsInventoryService.getInventoryByCaseNo(caseNoList);
-                if (Objects.nonNull(type)) {
-                    SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                String finalType = type;
+                SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(finalType, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     inventoryDTOList.forEach(info -> {
                         WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
                         WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
@@ -623,7 +626,6 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     Boolean aBoolean = wmsInventoryService.affirm(inventoryDTOList);
                 }
             }
-        }
         //4.修改确认单状态
         receipt.setAffirmName(SecurityUtils.getUser().getName());
         receipt.setAffirmTime(LocalDateTime.now());

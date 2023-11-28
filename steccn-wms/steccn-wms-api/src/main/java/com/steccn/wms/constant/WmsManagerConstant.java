@@ -294,34 +294,45 @@ public interface WmsManagerConstant {
     @Getter
     @AllArgsConstructor
     enum variableTypeEnum{
-        TYPE_0("0","期初入库"),
-        TYPE_1("1","创建完工入库"),
-        TYPE_2("2","确认完工入库"),
-        TYPE_3("3","反向确认完工入库"),
-        TYPE_4("4","采购入库"),
-        TYPE_5("5","冲销入库"),
-        TYPE_6("6","销售退货入库"),
-        TYPE_7("7","生产退料入库"),
-        TYPE_8("8","其他入库"),
-        TYPE_9("9","调拨入库"),
-        TYPE_10("10","盘盈入库"),
-        TYPE_11("11","期初出库"),
-        TYPE_12("12","生产领料"),
-        TYPE_13("13","采购退货"),
-        TYPE_14("14","销售发货"),
-        TYPE_15("15","冲销出库"),
-        TYPE_16("16","其他出库"),
-        TYPE_17("17","调拨出库"),
-        TYPE_18("18","盘亏出库");
+        TYPE_0("0","期初入库",""),
+        TYPE_1("1","创建完工入库",""),
+        TYPE_2("2","确认完工入库","生产完工入库"),
+        TYPE_3("3","反向确认完工入库",""),
+        TYPE_4("4","采购入库",""),
+        TYPE_5("5","冲销入库",""),
+        TYPE_6("6","销售退货入库",""),
+        TYPE_7("7","生产退料入库",""),
+        TYPE_8("8","其他入库",""),
+        TYPE_9("9","调拨入库",""),
+        TYPE_10("10","盘盈入库",""),
+        TYPE_11("11","期初出库",""),
+        TYPE_12("12","生产领料",""),
+        TYPE_13("13","采购退货",""),
+        TYPE_14("14","销售发货",""),
+        TYPE_15("15","冲销出库",""),
+        TYPE_16("16","其他出库",""),
+        TYPE_17("17","调拨出库",""),
+        TYPE_18("18","盘亏出库","");
 
         private final String type;
 
         private final String name;
 
+        private final  String value;
+
 
         public static String getTypeByName(String name) {
             for (WmsManagerConstant.variableTypeEnum value : WmsManagerConstant.variableTypeEnum.values()) {
                 if (value.getName().equals(name)) {
+                    return value.getType();
+                }
+            }
+            return null;
+        }
+
+        public static String getTypeByValue(String name) {
+            for (WmsManagerConstant.variableTypeEnum value : WmsManagerConstant.variableTypeEnum.values()) {
+                if (value.getValue().equals(name)) {
                     return value.getType();
                 }
             }
