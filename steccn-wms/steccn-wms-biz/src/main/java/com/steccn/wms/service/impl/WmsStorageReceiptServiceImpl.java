@@ -48,17 +48,11 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.wms.config.SrmConfig;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsDeliveryReceipt;
-import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.domain.WmsStorageReceipt;
-import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.mapper.WmsStorageReceiptMapper;
-import com.steccn.wms.service.WmsDeliveryReceiptService;
-import com.steccn.wms.service.WmsInventoryService;
-import com.steccn.wms.service.WmsStorageReceiptInfoService;
-import com.steccn.wms.service.WmsStorageReceiptService;
+import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -1207,7 +1201,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 infoList.forEach( info->{
                     EqpSpareVO eqpSpareVO = materialMap.get(info.getMaterialCode());
                     Assert.isTrue(Objects.nonNull(eqpSpareVO),info.getMaterialCode()+"在物料清单中不存在，请检查");
-                    info.setMaterialId(eqpSpareVO.getId().toString());
+                    info.setMaterialId(eqpSpareVO.getId());
                     info.setMaterialName(eqpSpareVO.getName());
                     info.setUnit(eqpSpareVO.getUnitId());
                 });
