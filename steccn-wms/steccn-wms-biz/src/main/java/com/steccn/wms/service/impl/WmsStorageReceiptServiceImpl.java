@@ -1398,15 +1398,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
                         .filter(vo -> vo.getClassificationName() != null)
                         .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                List<BigDecimal> data = Lists.newArrayList();
+                qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
                 types.forEach(type->{
-                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
-                    List<BigDecimal> quantity = Lists.newArrayList();
-                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add));
-                    qtSeriesDataDTO.setData(quantity);
-                    qtSeriesDataDTO.setName(type);
-                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
-                    seriesDataVO.add(qtSeriesDataDTO);
+                    data.add(receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add));
                 });
+                qtSeriesDataDTO.setName(WmsManagerConstant.MATERIAL);
+                qtSeriesDataDTO.setData(data);
+                seriesDataVO.add(qtSeriesDataDTO);
             }
             chartVO.setXData(types);
             chartVO.setSeriesDataVO(seriesDataVO);

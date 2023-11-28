@@ -18,6 +18,11 @@ public interface WmsManagerConstant {
     String BAR = "bar";
 
     /**
+     * 物料
+     */
+    String MATERIAL = "物料";
+
+    /**
      * 库存流水记录-排序字段 单据编码
      */
     String WMS_RECORD_CODE = "code";

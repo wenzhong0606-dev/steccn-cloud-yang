@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -102,8 +104,12 @@ public class WmsReportController {
 
     @PostMapping("/document/quantity")
     @ApiOperation("单据数量")
-    public R<WmsDocumentQuantityVO> documentQuantity(WmsReportWarehouseDTO dto) {
+    public R<WmsDocumentQuantityVO> documentQuantity(@RequestBody  WmsReportWarehouseDTO dto) {
         WmsDocumentQuantityVO wmsDocumentQuantityVO = new WmsDocumentQuantityVO();
+        if (Objects.nonNull(dto.getDate())){
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
         long count1 = wmsStorageReceiptService.count(new LambdaQueryWrapper<WmsStorageReceipt>()
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsStorageReceipt::getCreateTime, dto.getStartTime(), dto.getEndTime())
                 .in(CollUtil.isNotEmpty(dto.getWarehouseIds()), WmsStorageReceipt::getWarehouseId, dto.getWarehouseIds())
