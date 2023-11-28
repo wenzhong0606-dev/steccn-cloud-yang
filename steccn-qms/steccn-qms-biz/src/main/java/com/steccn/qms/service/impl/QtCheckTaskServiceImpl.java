@@ -456,7 +456,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .eq(QtCheckTask::getProductLineId, dto.getProductLine().getId())
-                .between(QtCheckTask::getFinishedTime,dto.getDefectStartTime(),dto.getDefectEndTime())
+                .eq(QtCheckTask::getDefectStartTime,dto.getDefectStartTime())
+                .eq(QtCheckTask::getDefectEndTime,dto.getDefectEndTime())
                 .last("LIMIT 1"));
         if(Objects.isNull(taskOne)){
             return 0L;

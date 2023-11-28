@@ -1,5 +1,6 @@
 package com.steccn.oa.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.KqGroupmember;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaGroupLeaderDTO;
@@ -59,4 +60,11 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
      * @return
      */
     OaTodayClassVO getTodayClassInfoSJG();
+
+    /**
+     * 获取仓库信息
+     * @param dto
+     * @return
+     */
+    List<OaTodayClassVO> getTodayClassInfoWarehouse(TupleDTO<Set<Integer>, LocalDate> dto);
 }
