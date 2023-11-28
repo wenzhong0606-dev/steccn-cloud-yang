@@ -1374,13 +1374,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         EpChartGraphVO<List<String>, BigDecimal>   chartVO =  new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         //获取入库单数据
-        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseIds())
-                .notIn(WmsStorageReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
-        if (CollUtil.isNotEmpty(list)) {
-            Set<Long> ids = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toSet());
-            List<WmsStorageReceiptInfo> infos = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().in(WmsStorageReceiptInfo::getStorageReceiptId,ids));
+//        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
+//                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
+//                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsStorageReceipt::getWarehouseId,dto.getWarehouseIds())
+//                .notIn(WmsStorageReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        List<WmsStorageReceiptInfo> infos = this.baseMapper.warehousingClassification(dto.getWarehouseIds(),dto.getStartTime(),dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)) {
+//            Set<Long> ids = list.stream().map(WmsStorageReceipt::getId).collect(Collectors.toSet());
+//            List<WmsStorageReceiptInfo> infos = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().in(WmsStorageReceiptInfo::getStorageReceiptId,ids));
             List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
             List<Long> materialIds = infos.stream().map(WmsStorageReceiptInfo::getMaterialId).collect(Collectors.toList());
             Set<Long> typeIds = Sets.newHashSet();
