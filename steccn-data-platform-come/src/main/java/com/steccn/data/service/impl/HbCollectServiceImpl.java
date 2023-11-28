@@ -9,6 +9,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.SplitListUtil;
@@ -16,6 +17,7 @@ import com.steccn.data.constant.HbThirdPartyConstant;
 import com.steccn.data.domain.*;
 import com.steccn.data.dto.*;
 import com.steccn.data.service.*;
+import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaRosterRecordDTO;
 import com.steccn.oa.feign.OaInfoService;
@@ -58,6 +60,7 @@ public class HbCollectServiceImpl implements HbCollectService {
     private final MesEqpSignalService mesEqpSignalService;
     private final QtScreenCollectService qtScreenCollectService;
     private final RemoteMsgFeignApi remoteMsgFeignApi;
+    private final RemoteMesFeignApi remoteMesFeignApi;
     private final OaInfoService oaInfoService;
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
@@ -186,6 +189,21 @@ public class HbCollectServiceImpl implements HbCollectService {
             }
             model.setCreateTime(LocalDateTime.now());
             models.add(model);
+            //启停时修改mes状态
+            poolExecutor.execute(()->{
+                TupleDTO<String,String> param = new TupleDTO<>();
+                param.setField1(tmp.getCode());
+                //启停信号的state和业务表中的state相反
+                if(tmp.getValue().equals(OaConstant.NO)){
+                    param.setField2(OaConstant.YES.toString());
+                }else {
+                    param.setField2(OaConstant.NO.toString());
+                }
+                Boolean flag = FeignOptional.of(() -> remoteMesFeignApi.updateEqpState(param), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+                if(!flag){
+                    log.error("修改设备状态失败");
+                }
+            });
         });
         return mesEqpSignalService.saveBatch(models);
     }

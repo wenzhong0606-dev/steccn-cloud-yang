@@ -1,5 +1,6 @@
 package com.steccn.mes.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.MesEquipment;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.mes.vo.MesEqpVO;
@@ -21,4 +22,11 @@ public interface MesEquipmentService extends IService<MesEquipment> {
      * @return
      */
     MesEqpVO getEqpByCode(String eqpCode);
+
+    /**
+     * 修改设备状态 f1 设备code f2 0正常 1停用
+     * @param dto
+     * @return
+     */
+    Boolean changeEqpState(TupleDTO<String,String> dto);
 }

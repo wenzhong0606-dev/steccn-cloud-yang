@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.MesEqpServicePlan;
 import com.steccn.mes.domain.MesEquipment;
 import com.steccn.mes.service.MesEqpServicePlanService;
@@ -13,6 +14,7 @@ import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.mapper.MesEquipmentMapper;
 import com.steccn.mes.vo.MesEqpPartVO;
 import com.steccn.mes.vo.MesEqpVO;
+import com.steccn.oa.constant.OaConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,16 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
         MesEqpVO vo = new MesEqpVO();
         BeanUtil.copyProperties(one,vo);
         return vo;
+    }
+
+    @Override
+    public Boolean changeEqpState(TupleDTO<String, String> dto) {
+        MesEquipment equipment = new MesEquipment();
+        //修改设备启停
+        equipment.setState(dto.getField2());
+        return update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getEquipmentCode,dto.getField1())
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
     }
 }
 

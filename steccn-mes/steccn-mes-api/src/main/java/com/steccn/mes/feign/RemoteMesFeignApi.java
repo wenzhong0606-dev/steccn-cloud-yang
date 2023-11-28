@@ -30,4 +30,12 @@ public interface RemoteMesFeignApi {
      */
     @GetMapping("/feign/mes/eqp/getByCode")
     R<MesEqpVO> getByCode(@RequestParam("code") String code);
+
+    /**
+     * 修改设备状态 f1 设备code f2 0正常 1停用
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/mes/eqp/state")
+    R<Boolean> updateEqpState(@RequestBody TupleDTO<String,String> dto);
 }

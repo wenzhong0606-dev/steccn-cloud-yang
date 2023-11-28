@@ -1,15 +1,13 @@
 package com.steccn.mes.controller.feign;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 类说明
@@ -28,5 +26,11 @@ public class MesEqpFeignController {
     @GetMapping("/eqp/getByCode")
     public R<MesEqpVO> getByCode(@RequestParam("code") String code) {
         return R.success(mesEquipmentService.getEqpByCode(code));
+    }
+
+    @ApiOperation("修改设备运行状态")
+    @PostMapping("/eqp/state")
+    public R<Boolean> updateEqpState(@RequestBody TupleDTO<String,String> dto) {
+        return R.success(mesEquipmentService.changeEqpState(dto));
     }
 }
