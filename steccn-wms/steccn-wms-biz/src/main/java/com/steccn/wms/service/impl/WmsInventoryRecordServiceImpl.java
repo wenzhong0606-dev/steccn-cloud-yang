@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecordMapper, WmsInventoryRecord>
-    implements WmsInventoryRecordService{
+    implements WmsInventoryRecordService {
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
@@ -58,21 +58,21 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
     public Page<WmsInventoryRecordVO> pageList(WmsInventoryRecordPageDTO dto) {
         Page<WmsInventoryRecordVO> page = new Page<>();
         LambdaQueryWrapper<WmsInventoryRecord> like = new LambdaQueryWrapper<WmsInventoryRecord>()
-                .eq(Objects.nonNull(dto.getTypeId()),WmsInventoryRecord::getType,dto.getTypeId())
-                .like(Objects.nonNull(dto.getMaterialName()),WmsInventoryRecord::getMaterialName,dto.getMaterialName())
-                .like(Objects.nonNull(dto.getCode()),WmsInventoryRecord::getCode,dto.getCode())
-                .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventoryRecord::getWarehouseId,dto.getWarehouseId())
-                .eq(Objects.nonNull(dto.getShelfId()),WmsInventoryRecord::getShelfId,dto.getShelfId())
-                .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventoryRecord::getWarehouseId,dto.getWarehouseId())
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsInventoryRecord::getCreateTime,dto.getStartTime(),dto.getEndTime());
+                .eq(Objects.nonNull(dto.getTypeId()), WmsInventoryRecord::getType, dto.getTypeId())
+                .like(Objects.nonNull(dto.getMaterialName()), WmsInventoryRecord::getMaterialName, dto.getMaterialName())
+                .like(Objects.nonNull(dto.getCode()), WmsInventoryRecord::getCode, dto.getCode())
+                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventoryRecord::getWarehouseId, dto.getWarehouseId())
+                .eq(Objects.nonNull(dto.getShelfId()), WmsInventoryRecord::getShelfId, dto.getShelfId())
+                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventoryRecord::getWarehouseId, dto.getWarehouseId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsInventoryRecord::getCreateTime, dto.getStartTime(), dto.getEndTime());
         //自定义排序
-        if (Objects.nonNull(dto.getSortField())){
-            if (WmsManagerConstant.WMS_RECORD_CODE.equals(dto.getSortField())){
-                like.orderBy(Boolean.TRUE,dto.getAscFlag(),WmsInventoryRecord::getCode);
-            }else if (WmsManagerConstant.WMS_RECORD_MATERIAL_NAME.equals(dto.getSortField())){
-                like.orderBy(Boolean.TRUE,dto.getAscFlag(),WmsInventoryRecord::getMaterialName);
-            }else if (WmsManagerConstant.WMS_RECORD_DATETIME.equals(dto.getSortField())){
-                like.orderBy(Boolean.TRUE,dto.getAscFlag(),WmsInventoryRecord::getCreateTime);
+        if (Objects.nonNull(dto.getSortField())) {
+            if (WmsManagerConstant.WMS_RECORD_CODE.equals(dto.getSortField())) {
+                like.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsInventoryRecord::getCode);
+            } else if (WmsManagerConstant.WMS_RECORD_MATERIAL_NAME.equals(dto.getSortField())) {
+                like.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsInventoryRecord::getMaterialName);
+            } else if (WmsManagerConstant.WMS_RECORD_DATETIME.equals(dto.getSortField())) {
+                like.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsInventoryRecord::getCreateTime);
             }
         }
         Page<WmsInventoryRecord> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
@@ -98,23 +98,23 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
                 wmsInventoryVO.setWarehouseName(officeMap.get(Math.toIntExact(wmsInventoryVO.getWarehouseId())));
             });
             //排序
-            if (Objects.nonNull(dto.getSortField())){
+            if (Objects.nonNull(dto.getSortField())) {
                 if (WmsManagerConstant.WMS_RECORD_SPECIFICATION.equals(dto.getSortField())) {
-                    res.sort(Comparator.comparing(WmsInventoryRecordVO::getSpecification,Comparator.nullsFirst(String::compareTo)));
-                    if (!dto.getAscFlag()){
+                    res.sort(Comparator.comparing(WmsInventoryRecordVO::getSpecification, Comparator.nullsFirst(String::compareTo)));
+                    if (!dto.getAscFlag()) {
                         res.sort(Comparator.comparing(WmsInventoryRecordVO::getSpecification, Comparator.nullsFirst(String::compareTo)).reversed());
                     }
                 }
-                if (WmsManagerConstant.WMS_RECORD_SHELF_NAME.equals(dto.getSortField())){
-                    res.sort(Comparator.comparing(WmsInventoryRecordVO::getShelfName,Comparator.nullsFirst(String::compareTo)));
-                    if (!dto.getAscFlag()){
-                        res.sort(Comparator.comparing(WmsInventoryRecordVO::getShelfName,Comparator.nullsFirst(String::compareTo)).reversed());
+                if (WmsManagerConstant.WMS_RECORD_SHELF_NAME.equals(dto.getSortField())) {
+                    res.sort(Comparator.comparing(WmsInventoryRecordVO::getShelfName, Comparator.nullsFirst(String::compareTo)));
+                    if (!dto.getAscFlag()) {
+                        res.sort(Comparator.comparing(WmsInventoryRecordVO::getShelfName, Comparator.nullsFirst(String::compareTo)).reversed());
                     }
                 }
-                if (WmsManagerConstant.WMS_RECORD_WAREHOUSE_NAME.equals(dto.getSortField())){
-                    res.sort(Comparator.comparing(WmsInventoryRecordVO::getWarehouseName,Comparator.nullsFirst(String::compareTo)));
-                    if (!dto.getAscFlag()){
-                        res.sort(Comparator.comparing(WmsInventoryRecordVO::getWarehouseName,Comparator.nullsFirst(String::compareTo)).reversed());
+                if (WmsManagerConstant.WMS_RECORD_WAREHOUSE_NAME.equals(dto.getSortField())) {
+                    res.sort(Comparator.comparing(WmsInventoryRecordVO::getWarehouseName, Comparator.nullsFirst(String::compareTo)));
+                    if (!dto.getAscFlag()) {
+                        res.sort(Comparator.comparing(WmsInventoryRecordVO::getWarehouseName, Comparator.nullsFirst(String::compareTo)).reversed());
                     }
                 }
             }
@@ -139,7 +139,13 @@ public class WmsInventoryRecordServiceImpl extends ServiceImpl<WmsInventoryRecor
 
     @Override
     public BigDecimal endingInventory(WmsReportWarehouseDTO dto) {
-        return openingInventory(dto);
+        BigDecimal quantity = null;
+        List<TupleDTO<Long, BigDecimal>> resList = wmsInventoryMapper.openingInventory(dto.getWarehouseIds(), dto.getDate());
+        if (CollUtil.isNotEmpty(resList)) {
+            List<BigDecimal> collect = resList.stream().map(TupleDTO::getField2).collect(Collectors.toList());
+            quantity = BigDecimalUtil.sum(collect);
+        }
+        return quantity;
     }
 
 }
