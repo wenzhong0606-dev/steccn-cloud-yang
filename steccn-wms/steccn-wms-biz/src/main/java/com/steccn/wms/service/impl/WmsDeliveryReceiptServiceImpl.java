@@ -843,13 +843,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         //获取出库单数据
-        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>()
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseIds())
-                .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
-        if (CollUtil.isNotEmpty(list)) {
-            Set<Long> ids = list.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toSet());
-            List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
+        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassification(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)) {
             List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
             List<Long> materialIds = infos.stream().map(WmsDeliveryReceiptInfo::getMaterialId).collect(Collectors.toList());
             Set<Long> typeIds = Sets.newHashSet();
