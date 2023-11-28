@@ -662,15 +662,15 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
                         .filter(vo -> vo.getClassificationName() != null)
                         .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                List<BigDecimal> quantity = Lists.newArrayList();
                 types.forEach(type->{
-                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
-                    List<BigDecimal> quantity = Lists.newArrayList();
                     quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
-                    qtSeriesDataDTO.setData(quantity);
-                    qtSeriesDataDTO.setName(type);
-                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
-                    seriesDataVO.add(qtSeriesDataDTO);
                 });
+                qtSeriesDataDTO.setData(quantity);
+                qtSeriesDataDTO.setName(WmsManagerConstant.MATERIAL);
+                qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
+                seriesDataVO.add(qtSeriesDataDTO);
             }
             chartVO.setXData(types);
             chartVO.setSeriesDataVO(seriesDataVO);
