@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.AdsPmsPullForceMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.AdsPmsPullForce">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="pullForceDate" column="pull_force_date" jdbcType="DATE"/>
+            <result property="workshopId" column="workshop_id" jdbcType="BIGINT"/>
+            <result property="workshopName" column="workshop_name" jdbcType="VARCHAR"/>
+            <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
+            <result property="productLineName" column="product_line_name" jdbcType="VARCHAR"/>
+            <result property="classesId" column="classes_id" jdbcType="BIGINT"/>
+            <result property="classesName" column="classes_name" jdbcType="VARCHAR"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+            <result property="dt" column="dt" jdbcType="DATE"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,pull_force_date,workshop_id,
+        workshop_name,product_line_id,product_line_name,
+        classes_id,classes_name,quantity,
+        unit_id,dt
+    </sql>
+</mapper>

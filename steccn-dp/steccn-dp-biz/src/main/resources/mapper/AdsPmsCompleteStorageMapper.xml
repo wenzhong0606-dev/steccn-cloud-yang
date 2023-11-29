@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.AdsPmsCompleteStorageMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.AdsPmsCompleteStorage">
+            <id property="workshopId" column="workshop_id" jdbcType="BIGINT"/>
+            <id property="workshopName" column="workshop_name" jdbcType="VARCHAR"/>
+            <id property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
+            <id property="productLineName" column="product_line_name" jdbcType="VARCHAR"/>
+            <id property="classGroupId" column="class_group_id" jdbcType="BIGINT"/>
+            <id property="classGroupName" column="class_group_name" jdbcType="VARCHAR"/>
+            <id property="classesId" column="classes_id" jdbcType="BIGINT"/>
+            <id property="classesName" column="classes_name" jdbcType="VARCHAR"/>
+            <id property="unitId" column="unit_id" jdbcType="BIGINT"/>
+            <id property="dt" column="dt" jdbcType="DATE"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="quantity1d" column="quantity_1d" jdbcType="DECIMAL"/>
+            <result property="quantity7d" column="quantity_7d" jdbcType="DECIMAL"/>
+            <result property="quantity1m" column="quantity_1m" jdbcType="DECIMAL"/>
+            <result property="quantity3m" column="quantity_3m" jdbcType="DECIMAL"/>
+            <result property="quantity1y" column="quantity_1y" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        workshop_id,workshop_name,product_line_id,
+        product_line_name,class_group_id,class_group_name,
+        classes_id,classes_name,unit_id,
+        dt,material_id,material_name,
+        material_code,quantity_1d,quantity_7d,
+        quantity_1m,quantity_3m,quantity_1y
+    </sql>
+</mapper>

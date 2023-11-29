@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.AdsPmsReportWorkMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.AdsPmsReportWork">
+            <id property="dt" column="dt" jdbcType="DATE"/>
+            <id property="workshopId" column="workshop_id" jdbcType="BIGINT"/>
+            <id property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
+            <id property="classGroupId" column="class_group_id" jdbcType="BIGINT"/>
+            <id property="classesId" column="classes_id" jdbcType="BIGINT"/>
+            <id property="processId" column="process_id" jdbcType="BIGINT"/>
+            <id property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="workshopName" column="workshop_name" jdbcType="VARCHAR"/>
+            <result property="productLineName" column="product_line_name" jdbcType="VARCHAR"/>
+            <result property="classGroupName" column="class_group_name" jdbcType="VARCHAR"/>
+            <result property="classesName" column="classes_name" jdbcType="VARCHAR"/>
+            <result property="processCode" column="process_code" jdbcType="VARCHAR"/>
+            <result property="processName" column="process_name" jdbcType="VARCHAR"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+            <result property="processQuantity1d" column="process_quantity_1d" jdbcType="DECIMAL"/>
+            <result property="badnessQuantity1d" column="badness_quantity_1d" jdbcType="DECIMAL"/>
+            <result property="allQuantity1d" column="all_quantity_1d" jdbcType="DECIMAL"/>
+            <result property="processQuantity7d" column="process_quantity_7d" jdbcType="DECIMAL"/>
+            <result property="badnessQuantity7d" column="badness_quantity_7d" jdbcType="DECIMAL"/>
+            <result property="allQuantity7d" column="all_quantity_7d" jdbcType="DECIMAL"/>
+            <result property="processQuantity1m" column="process_quantity_1m" jdbcType="DECIMAL"/>
+            <result property="badnessQuantity1m" column="badness_quantity_1m" jdbcType="DECIMAL"/>
+            <result property="allQuantity1m" column="all_quantity_1m" jdbcType="DECIMAL"/>
+            <result property="processQuantity3m" column="process_quantity_3m" jdbcType="DECIMAL"/>
+            <result property="badnessQuantity3m" column="badness_quantity_3m" jdbcType="DECIMAL"/>
+            <result property="allQuantity3m" column="all_quantity_3m" jdbcType="DECIMAL"/>
+            <result property="processQuantity1y" column="process_quantity_1y" jdbcType="DECIMAL"/>
+            <result property="badnessQuantity1y" column="badness_quantity_1y" jdbcType="DECIMAL"/>
+            <result property="allQuantity1y" column="all_quantity_1y" jdbcType="DECIMAL"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        dt,workshop_id,product_line_id,
+        class_group_id,classes_id,process_id,
+        material_id,workshop_name,product_line_name,
+        class_group_name,classes_name,process_code,
+        process_name,material_code,material_name,
+        process_quantity_1d,badness_quantity_1d,all_quantity_1d,
+        process_quantity_7d,badness_quantity_7d,all_quantity_7d,
+        process_quantity_1m,badness_quantity_1m,all_quantity_1m,
+        process_quantity_3m,badness_quantity_3m,all_quantity_3m,
+        process_quantity_1y,badness_quantity_1y,all_quantity_1y,
+        unit_id
+    </sql>
+</mapper>
