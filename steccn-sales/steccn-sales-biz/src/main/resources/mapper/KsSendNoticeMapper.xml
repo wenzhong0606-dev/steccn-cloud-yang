@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.KsSendNoticeMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.KsSendNotice">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="messageMainAttachmentId" column="message_main_attachment_id" jdbcType="OTHER"/>
+            <result property="saleId" column="sale_id" jdbcType="OTHER"/>
+            <result property="contractId" column="contract_id" jdbcType="OTHER"/>
+            <result property="contractDetailsId" column="contract_details_id" jdbcType="OTHER"/>
+            <result property="customerId" column="customer_id" jdbcType="OTHER"/>
+            <result property="productId" column="product_id" jdbcType="OTHER"/>
+            <result property="saleQty" column="sale_qty" jdbcType="OTHER"/>
+            <result property="createUid" column="create_uid" jdbcType="OTHER"/>
+            <result property="writeUid" column="write_uid" jdbcType="OTHER"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="contractCode" column="contract_code" jdbcType="VARCHAR"/>
+            <result property="customerCode" column="customer_code" jdbcType="VARCHAR"/>
+            <result property="modelSpecs" column="model_specs" jdbcType="VARCHAR"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="sendDate" column="send_date" jdbcType="DATE"/>
+            <result property="priceQty" column="price_qty" jdbcType="NUMERIC"/>
+            <result property="unitPrice" column="unit_price" jdbcType="NUMERIC"/>
+            <result property="totalAmount" column="total_amount" jdbcType="NUMERIC"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="writeDate" column="write_date" jdbcType="TIMESTAMP"/>
+            <result property="state" column="state" jdbcType="VARCHAR"/>
+            <result property="sendQty" column="send_qty" jdbcType="OTHER"/>
+            <result property="customerProductCode" column="customer_product_code" jdbcType="VARCHAR"/>
+            <result property="sendStatus" column="send_status" jdbcType="VARCHAR"/>
+            <result property="contractDetailsQty" column="contract_details_qty" jdbcType="OTHER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,message_main_attachment_id,sale_id,
+        contract_id,contract_details_id,customer_id,
+        product_id,sale_qty,create_uid,
+        write_uid,name,contract_code,
+        customer_code,model_specs,note,
+        send_date,price_qty,unit_price,
+        total_amount,create_date,write_date,
+        state,send_qty,customer_product_code,
+        send_status,contract_details_qty
+    </sql>
+</mapper>

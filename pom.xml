@@ -31,6 +31,7 @@
         <module>steccn-hikvision</module>
         <module>steccn-mes</module>
         <module>steccn-dp</module>
+        <module>steccn-sales</module>
     </modules>
 
     <properties>
