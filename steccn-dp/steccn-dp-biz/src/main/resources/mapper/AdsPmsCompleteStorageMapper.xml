@@ -33,4 +33,15 @@
         material_code,quantity_1d,quantity_7d,
         quantity_1m,quantity_3m,quantity_1y
     </sql>
+    <select id="inStorageDay" resultType="com.steccn.dp.domain.AdsPmsCompleteStorage">
+        select dt,sum(quantity_1d) as quantity_1d from ads_pms_complete_storage where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id"  open="(" close=")"  separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN  #{start} and  #{end}
+        group by dt;
+    </select>
 </mapper>

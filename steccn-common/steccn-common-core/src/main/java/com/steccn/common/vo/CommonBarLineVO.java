@@ -19,16 +19,16 @@ public class CommonBarLineVO implements Serializable {
     /**
      * X轴数据
      */
-    private List<BaseValueVO<List<String>>> xAxis;
+    private BaseValueVO<List<String>> xAxis;
 
     /**
      * 图例数据
      */
-    private List<BaseValueVO<List<String>>> legend;
+    private BaseValueVO<List<String>> legend;
 
     /**
      * 数据集合
      */
-    private List<BaseValueVO<List<BigDecimal>>> series;
+    private List<BaseValueNameVO<List<BigDecimal>>> series;
 
 }

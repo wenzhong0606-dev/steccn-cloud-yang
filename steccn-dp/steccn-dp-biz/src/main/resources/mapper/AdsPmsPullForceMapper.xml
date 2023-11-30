@@ -24,4 +24,15 @@
         classes_id,classes_name,quantity,
         unit_id,dt
     </sql>
+    <select id="pullForceDay" resultType="com.steccn.dp.domain.AdsPmsPullForce">
+        select dt,sum(quantity) as quantity from ads_pms_pull_force where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id"  open="(" close=")"  separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN  #{start} and  #{end}
+        group by dt;
+    </select>
 </mapper>

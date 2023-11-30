@@ -3,6 +3,11 @@ package com.steccn.dp.mapper;
 import com.steccn.dp.domain.AdsPmsCompleteStorage;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -13,6 +18,16 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface AdsPmsCompleteStorageMapper extends BaseMapper<AdsPmsCompleteStorage> {
 
+    /**
+     * 完工入库
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<AdsPmsCompleteStorage> inStorageDay(@Param("start") LocalDate start,
+                                             @Param("end") LocalDate end,
+                                             @Param("workshopIdSet") Set<Integer> workshopIdSet);
 }
 
 

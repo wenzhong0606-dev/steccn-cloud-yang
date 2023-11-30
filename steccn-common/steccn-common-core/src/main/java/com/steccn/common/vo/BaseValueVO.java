@@ -1,6 +1,8 @@
 package com.steccn.common.vo;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -10,6 +12,8 @@ import java.io.Serializable;
  * @date 2023/11/29
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class BaseValueVO<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
