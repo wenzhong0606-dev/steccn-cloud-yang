@@ -656,6 +656,16 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
     @Override
+    public PmsCompleteStorageVO getCompleteStorage(String code) {
+        PmsCompleteStorageVO result = new PmsCompleteStorageVO();
+        PmsCompleteStorage one = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getInStorageVoucher, code).last("LIMIT 1"));
+        if(Objects.nonNull(one)){
+            BeanUtils.copyProperties(one, result);
+        }
+        return result;
+    }
+
+    @Override
     public Boolean wmsChargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO) {
         PmsCompleteStorage storage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getInStorageVoucher, wmsDeliveryReceiptDTO.getChargeAgainstCode()));
         storage.setState(PmManagerConstant.InVouchEnum.CHARGE.getCode());

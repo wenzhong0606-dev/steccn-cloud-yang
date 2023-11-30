@@ -39,13 +39,11 @@ import com.steccn.platform.vo.*;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
-import com.steccn.pms.vo.ClassificationVO;
+import com.steccn.pms.vo.*;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.MesClassificationVO;
-import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.wms.config.SrmConfig;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
@@ -900,6 +898,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             erpCommonSaveDTO.setFmesbillno(wmsStorageReceiptVO.getCode());
             //引入详细信息
             List<ErpSpinStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
+            //获取生产完工入库
+            PmsCompleteStorageVO pmsCompleteStorageVO = FeignOptional.of(() -> remoteCompleteStorageFeignApi.getCompleteStorage(wmsStorageReceiptVO.getCode()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //拿到epr关联的code
+            String erpDepCode = "";
+            if(!Objects.isNull(pmsCompleteStorageVO.getProductLineId())){
+                String officeName = FeignOptional.of(() -> remoteOfficeFeign.getNameById(pmsCompleteStorageVO.getProductLineId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(officeName);
+            }
             if (CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())) {
                 for (WmsStorageReceiptInfoVO tmp : wmsStorageReceiptVO.getList()) {
                     ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
@@ -907,15 +913,17 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-//                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+                    erpCommonSaveDetail.setFlot(tmp.getBatch());
                     erpCommonSaveDetail.setFstockno(sourceCode);
-                    if (Objects.isNull(tmp.getAssociatedNo())) {
-                        throw new BusinessException("没有关联生产订单");
+                    if (StrUtil.isBlank(tmp.getErpLineCode())) {
+                        if(StrUtil.isBlank(erpDepCode)){
+                            throw new BusinessException("没有erp对应的部门");
+                        }else {
+                            erpCommonSaveDetail.setFdeptno(erpDepCode);
+                        }
+                    }else {
+                        erpCommonSaveDetail.setFdeptno(tmp.getErpLineCode());
                     }
-                    PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(tmp.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                    //拿到epr关联的code
-                    SysErpOfficeVO sysErpOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.getErpCodeByOfficeId(pmsProduceOrderVO.getProductionLineId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                    erpCommonSaveDetail.setFdeptno(sysErpOfficeVO.getErpCode());
                     erpCommonSaveDetails.add(erpCommonSaveDetail);
                 }
             }
