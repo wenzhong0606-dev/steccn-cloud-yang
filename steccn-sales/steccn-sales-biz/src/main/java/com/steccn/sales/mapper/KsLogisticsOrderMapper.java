@@ -2,7 +2,11 @@ package com.steccn.sales.mapper;
 
 import com.steccn.sales.domain.KsLogisticsOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.sales.dto.KsLogisticsDashBoardDTO;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
 * @author Admin
@@ -12,6 +16,14 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface KsLogisticsOrderMapper extends BaseMapper<KsLogisticsOrder> {
+
+    /**
+     * 物流单看板
+     * @param warehouseName 仓库名称
+     * @param date 日期
+     * @return
+     */
+    List<KsLogisticsDashBoardDTO> selectLogisticsDashBoard(String warehouseName, LocalDate date);
 
 }
 

@@ -1,10 +1,13 @@
 package com.steccn.sales.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.sales.domain.KsLogisticsOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.sales.dto.KsLogisticsDTO;
 import com.steccn.sales.vo.KsLogisticsVO;
+
+import java.time.LocalDate;
 
 /**
 * @author Admin
@@ -18,4 +21,12 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
      * @return
      */
     Page<KsLogisticsVO> getLogisticsRecord(KsLogisticsDTO dto);
+
+    /**
+     * 获取物流单图表
+     * @param warehouseName
+     * @param date
+     * @return
+     */
+    QtLineChartBarDTO logisticsRecordDashBoard(String warehouseName, LocalDate date);
 }

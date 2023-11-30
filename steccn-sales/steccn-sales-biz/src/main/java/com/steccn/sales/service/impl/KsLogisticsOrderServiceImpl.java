@@ -7,26 +7,30 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.StackGraphUtil;
 import com.steccn.sales.constant.SalesConstant;
-import com.steccn.sales.domain.KsLogisticsOrder;
-import com.steccn.sales.domain.KsSendNotice;
-import com.steccn.sales.domain.ProductProduct;
-import com.steccn.sales.domain.ResPartner;
+import com.steccn.sales.domain.*;
 import com.steccn.sales.dto.KsLogisticsDTO;
+import com.steccn.sales.dto.KsLogisticsDashBoardDTO;
 import com.steccn.sales.dto.KsSaleIdAndNameDTO;
-import com.steccn.sales.mapper.KsSendNoticeMapper;
-import com.steccn.sales.mapper.ProductProductMapper;
-import com.steccn.sales.mapper.ResPartnerMapper;
+import com.steccn.sales.mapper.*;
 import com.steccn.sales.service.KsLogisticsOrderService;
-import com.steccn.sales.mapper.KsLogisticsOrderMapper;
 import com.steccn.sales.vo.KsLogisticsVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,7 +47,8 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     private final KsSendNoticeMapper ksSendNoticeMapper;
     private final ResPartnerMapper resPartnerMapper;
     private final ProductProductMapper productProductMapper;
-
+    private final KsLogisticsOrderMapper ksLogisticsOrderMapper;
+    private final KsLogisticsCompanyMapper ksLogisticsCompanyMapper;
 
     @Override
     public Page<KsLogisticsVO> getLogisticsRecord(KsLogisticsDTO dto) {
@@ -97,6 +102,39 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         //7.设置数据
         page.setRecords(resRecords);
         return page;
+    }
+
+    @Override
+    public QtLineChartBarDTO logisticsRecordDashBoard(String warehouseName, LocalDate date) {
+        //1、获取数据
+        List<KsLogisticsDashBoardDTO> dashBoard = ksLogisticsOrderMapper.selectLogisticsDashBoard(warehouseName, date);
+        SteccnTableAssertUtil.notEmpty(dashBoard, "数据为空");
+        //2、组数据
+        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+        List<Integer> locationList = dashBoard.stream().map(KsLogisticsDashBoardDTO::getCustomerId).distinct().sorted().collect(Collectors.toList());
+        List<Integer> companyList = dashBoard.stream().map(KsLogisticsDashBoardDTO::getCompanyId).distinct().sorted().collect(Collectors.toList());
+        //收货地址
+        List<ResPartner> resPartners = resPartnerMapper.selectList(new LambdaQueryWrapper<ResPartner>().in(ResPartner::getId, locationList));
+        //公司
+        List<KsLogisticsCompany> company = ksLogisticsCompanyMapper.selectList(new LambdaQueryWrapper<KsLogisticsCompany>().in(KsLogisticsCompany::getId, companyList));
+        for(Integer tmp:locationList){
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            String location = resPartners.stream().filter(v->v.getId().equals(tmp)).findFirst().orElse(null).getName();
+            stackGraphDTO.setXAxis(location);
+            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+            companyList.forEach(companyTmp->{
+                KsLogisticsDashBoardDTO ksLogisticsDashBoardDTO = dashBoard.stream().filter(v -> v.getCustomerId().equals(tmp) && v.getCompanyId().equals(companyTmp)).findFirst().orElse(null);
+                KsLogisticsCompany companyInfo = company.stream().filter(v -> v.getId().equals(companyTmp)).findFirst().orElse(null);
+                if(Objects.isNull(ksLogisticsDashBoardDTO)){
+                    datList.add(new TupleDTO<>(companyInfo.getName(),BigDecimal.ZERO));
+                }else {
+                    datList.add(new TupleDTO<>(companyInfo.getName(),new BigDecimal(ksLogisticsDashBoardDTO.getValue())));
+                }
+            });
+            stackGraphDTO.setData(datList);
+            dataList.add(stackGraphDTO);
+        }
+        return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
 }
 

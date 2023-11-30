@@ -72,4 +72,16 @@
         contract_details_qty,delivery_code,customer_barcode,
         old_sale_qty,warehouse_names
     </sql>
+
+    <select id="selectLogisticsDashBoard" resultType="com.steccn.sales.dto.KsLogisticsDashBoardDTO">
+        SELECT
+        COUNT(*) AS num,
+        logistics_company_id AS companyId,
+        customer_delivery_id AS customerId
+        FROM ks_logistics_order
+        WHERE warehouse_names = #{warehouseName} AND send_date = #{date}
+        GROUP BY logistics_company_id,customer_delivery_id
+
+
+    </select>
 </mapper>
