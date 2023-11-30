@@ -25,9 +25,9 @@ public interface AdsPmsCompleteStorageMapper extends BaseMapper<AdsPmsCompleteSt
      * @param workshopIdSet 产线集合
      * @return
      */
-    List<AdsPmsCompleteStorage> inStorageDay(@Param("start") LocalDate start,
-                                             @Param("end") LocalDate end,
-                                             @Param("workshopIdSet") Set<Integer> workshopIdSet);
+    List<AdsPmsCompleteStorage> inStorageMaterialDay(@Param("start") LocalDate start,
+                                                     @Param("end") LocalDate end,
+                                                     @Param("workshopIdSet") Set<Integer> workshopIdSet);
 }
 
 
