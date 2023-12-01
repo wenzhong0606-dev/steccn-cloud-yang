@@ -1,5 +1,7 @@
 package com.steccn.common.vo;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -19,6 +21,7 @@ public class CommonBarLineVO implements Serializable {
     /**
      * X轴数据
      */
+    @JsonProperty("xAxis")
     private BaseValueVO<List<String>> xAxis;
 
     /**

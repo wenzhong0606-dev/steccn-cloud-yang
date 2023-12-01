@@ -1,10 +1,12 @@
 package com.steccn.dp.mapper;
 
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.dp.domain.AdsPmsCompleteStorage;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -19,15 +21,26 @@ import java.util.Set;
 public interface AdsPmsCompleteStorageMapper extends BaseMapper<AdsPmsCompleteStorage> {
 
     /**
-     * 完工入库
+     * 完工入库-日
      * @param start 开始时间
      * @param end 结束时间
      * @param workshopIdSet 产线集合
      * @return
      */
-    List<AdsPmsCompleteStorage> inStorageMaterialDay(@Param("start") LocalDate start,
+    List<TripleDTO<String,Long, BigDecimal>> inStorageMaterialDay(@Param("start") LocalDate start,
                                                      @Param("end") LocalDate end,
                                                      @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
+     * 完工入库-月
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String,Long, BigDecimal>> inStorageMaterialMonth(@Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end,
+                                                                    @Param("workshopIdSet") Set<Integer> workshopIdSet);
 }
 
 

@@ -4,6 +4,7 @@ import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.service.DpPmsOperateService;
 import com.steccn.dp.vo.DpPmsOperateInStorageVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,12 @@ public class DpPmsOperateController {
     @PostMapping("/in/storage")
     @ApiOperation(value = "总入库数，入库合格率")
     public R<DpPmsOperateInStorageVO> inStorage(@RequestBody DpPmsOperateDTO dto) {
+        //只能是年度，月度
+        if (dto.getGranularity() == 0) {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        } else {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+        }
         return R.success(dpPmsOperateService.inStorage(dto));
     }
 }
