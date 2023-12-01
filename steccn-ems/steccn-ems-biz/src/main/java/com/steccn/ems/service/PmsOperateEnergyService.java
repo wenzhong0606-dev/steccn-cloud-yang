@@ -1,5 +1,6 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
 
@@ -17,4 +18,28 @@ public interface PmsOperateEnergyService {
      * @return
      */
     PmsOperateEnergyVO gas(DpPmsOperateDTO dto);
+
+    /**
+     * 重油
+     *
+     * @param dto dto
+     * @return
+     */
+    PmsOperateEnergyVO oil(DpPmsOperateDTO dto);
+
+    /**
+     * 水
+     *
+     * @param dto dto
+     * @return
+     */
+    PmsOperateEnergyVO water(DpPmsOperateDTO dto);
+
+    /**
+     * 电
+     *
+     * @param dto dto
+     * @return
+     */
+    PmsOperateEnergyVO electric(DpPmsOperateDTO dto);
 }

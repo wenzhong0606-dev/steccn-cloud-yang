@@ -43,4 +43,39 @@ public class PmsOperateEnergyController {
         return R.success(pmsOperateEnergyService.gas(dto));
     }
 
+    @PostMapping("/oil")
+    @ApiOperation(value = "总重油使用量")
+    public R<PmsOperateEnergyVO> oil(@Valid @RequestBody DpPmsOperateDTO dto) {
+        //只能是年度，月度
+        if (dto.getGranularity() == 0) {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        } else {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+        }
+        return R.success(pmsOperateEnergyService.oil(dto));
+    }
+
+    @PostMapping("/water")
+    @ApiOperation(value = "总用水量")
+    public R<PmsOperateEnergyVO> water(@Valid @RequestBody DpPmsOperateDTO dto) {
+        //只能是年度，月度
+        if (dto.getGranularity() == 0) {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        } else {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+        }
+        return R.success(pmsOperateEnergyService.water(dto));
+    }
+
+    @PostMapping("/electric")
+    @ApiOperation(value = "总用电量")
+    public R<PmsOperateEnergyVO> electric(@Valid @RequestBody DpPmsOperateDTO dto) {
+        //只能是年度，月度
+        if (dto.getGranularity() == 0) {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        } else {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+        }
+        return R.success(pmsOperateEnergyService.electric(dto));
+    }
 }
