@@ -45,7 +45,7 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @param endTime 结束时间
      * @return
      */
-    List<WmsDeliveryReceiptInfo> outboundDeliveryClassification(@Param("warehouseIds") List<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+    List<WmsDeliveryReceiptInfo> outboundDeliveryClassification(@Param("warehouseIds") Set<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }
 
 

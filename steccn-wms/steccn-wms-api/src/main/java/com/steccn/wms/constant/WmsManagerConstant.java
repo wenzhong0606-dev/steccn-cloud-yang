@@ -9,7 +9,7 @@ import lombok.Getter;
  */
 public interface WmsManagerConstant {
 
-
+    String INACTION_STOCK = "呆滞品";
     String SERVER_CODE ="query_logistics";
 
     /**
@@ -65,6 +65,8 @@ public interface WmsManagerConstant {
 
 
     String CODE_FOUR = "4";
+
+    String CODE_FIVE = "5";
 
     /**
      * 采购类型
