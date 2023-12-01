@@ -27,11 +27,12 @@ public class BigDecimalUtil {
     /**
      * 精度
      */
-    public static Integer DEFAULT_SCALE = 3;
-    public static Integer SCALE_2 = 2;
-    public static Integer SCALE_4 = 4;
-    public static Integer SCALE_6 = 6;
-    public static Integer SCALE_8 = 8;
+    public static final Integer DEFAULT_SCALE = 3;
+    public static final Integer SCALE_0 = 0;
+    public static final Integer SCALE_2 = 2;
+    public static final Integer SCALE_4 = 4;
+    public static final Integer SCALE_6 = 6;
+    public static final Integer SCALE_8 = 8;
 
 
     public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
