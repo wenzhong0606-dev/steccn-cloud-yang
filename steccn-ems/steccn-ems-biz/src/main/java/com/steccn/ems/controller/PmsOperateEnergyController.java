@@ -54,4 +54,16 @@ public class PmsOperateEnergyController {
         }
         return R.success(pmsOperateEnergyService.oil(dto));
     }
+
+    @PostMapping("/water")
+    @ApiOperation(value = "总用水量")
+    public R<PmsOperateEnergyVO> water(@Valid @RequestBody DpPmsOperateDTO dto) {
+        //只能是年度，月度
+        if (dto.getGranularity() == 0) {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        } else {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+        }
+        return R.success(pmsOperateEnergyService.water(dto));
+    }
 }

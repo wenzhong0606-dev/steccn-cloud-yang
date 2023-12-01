@@ -61,6 +61,11 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         return energy(dto, 4, UnitLengthUtil.UNIT_TON_LENGTH);
     }
 
+    @Override
+    public PmsOperateEnergyVO water(DpPmsOperateDTO dto) {
+        return energy(dto, 2, UnitLengthUtil.UNIT_TON_LENGTH);
+    }
+
     /**
      * 能源值
      *
@@ -76,11 +81,12 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
         Assert.notEmpty(dateList, "日期区间有误");
+        List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
         //根据能源类型 + 组织机构id获取
         EpPartition one = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, energy.getId()));
         Assert.notNull(one, "能源树，不存在此节点");
         //获取全量数据表
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(Sets.newHashSet(dateList), energyType, Arrays.asList(one.getId()));
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), energyType, Arrays.asList(one.getId()));
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //构建能源树
         Map<String, BigDecimal> valueMap = Maps.newHashMap();
@@ -102,8 +108,8 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         res.setCommonBarLineVO(commonBarLineVO);
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
-        commonBarLineVO.setLegend(new BaseValueVO(Arrays.asList(energy.getName() + res.getUnitName())));
-        commonBarLineVO.setSeries(Arrays.asList(new BaseValueNameVO<>(valueList, energy.getName() + res.getUnitName())));
+        commonBarLineVO.setLegend(new BaseValueVO(Arrays.asList(energy.getName() + "(" + res.getUnitName() + ")")));
+        commonBarLineVO.setSeries(Arrays.asList(new BaseValueNameVO<>(valueList, energy.getName() + "(" + res.getUnitName() + ")")));
         return res;
     }
 }
