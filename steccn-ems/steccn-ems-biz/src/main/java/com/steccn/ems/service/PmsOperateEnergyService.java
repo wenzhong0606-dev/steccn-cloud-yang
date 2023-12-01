@@ -34,4 +34,12 @@ public interface PmsOperateEnergyService {
      * @return
      */
     PmsOperateEnergyVO water(DpPmsOperateDTO dto);
+
+    /**
+     * 电
+     *
+     * @param dto dto
+     * @return
+     */
+    PmsOperateEnergyVO electric(DpPmsOperateDTO dto);
 }

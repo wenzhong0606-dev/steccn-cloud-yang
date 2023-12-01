@@ -66,6 +66,11 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         return energy(dto, 2, UnitLengthUtil.UNIT_TON_LENGTH);
     }
 
+    @Override
+    public PmsOperateEnergyVO electric(DpPmsOperateDTO dto) {
+        return energy(dto, 1, UnitLengthUtil.UNIT_CUBIC_METER_LENGTH);
+    }
+
     /**
      * 能源值
      *
