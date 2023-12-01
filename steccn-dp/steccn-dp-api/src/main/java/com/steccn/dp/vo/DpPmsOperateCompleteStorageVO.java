@@ -8,23 +8,23 @@ import java.math.BigDecimal;
 
 /**
  * @author yequan
- * @desc 总入库数，入库合格率
+ * @desc 总入库数，入库合格率 | 总完工数，完工合格率
  * @date 2023/11/29
  */
 @Data
-public class DpPmsOperateInStorageVO implements Serializable {
+public class DpPmsOperateCompleteStorageVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 总入库数
+     * 总入库数 , 完工数
      */
-    private BigDecimal totalInStorageQuantity;
+    private BigDecimal totalQuantity;
 
     /**
-     * 入库合格率
+     * 入库合格率 ， 完工合格率
      */
-    private BigDecimal totalInStorageRate;
+    private BigDecimal totalRate;
 
     /**
      * 折线图 + 条形图

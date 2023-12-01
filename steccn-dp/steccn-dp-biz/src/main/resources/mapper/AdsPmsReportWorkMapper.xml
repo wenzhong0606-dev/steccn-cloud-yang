@@ -51,4 +51,54 @@
         process_quantity_1y,badness_quantity_1y,all_quantity_1y,
         unit_id
     </sql>
+    <select id="jpCompleteMaterialDay" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y-%m-%d') field1, material_id field2, sum(process_quantity_1d) as field3 from ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y-%m-%d') , material_id;
+    </select>
+
+    <select id="sjgCompleteMaterialDay" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y-%m-%d') field1, material_id field2, sum(process_quantity_1d) as field3 from ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y-%m-%d') , material_id;
+    </select>
+
+
+    <select id="jpCompleteMaterialMonth" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y-%m') as field1, material_id field2, sum(process_quantity_1d) as field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y-%m'), material_id;
+    </select>
+    <select id="sjgCompleteMaterialMonth" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y-%m') as field1, material_id field2, sum(process_quantity_1d) as field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y-%m'), material_id;
+    </select>
+
 </mapper>

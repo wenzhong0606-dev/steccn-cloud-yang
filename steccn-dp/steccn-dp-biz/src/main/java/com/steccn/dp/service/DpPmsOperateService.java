@@ -1,7 +1,8 @@
 package com.steccn.dp.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.vo.DpPmsOperateInStorageVO;
+import com.steccn.dp.vo.DpPmsOperateCompleteStorageVO;
 
 /**
  * @author yequan
@@ -16,5 +17,12 @@ public interface DpPmsOperateService {
      * @param dto dto
      * @return
      */
-    DpPmsOperateInStorageVO inStorage(DpPmsOperateDTO dto);
+    DpPmsOperateCompleteStorageVO inStorage(DpPmsOperateDTO dto);
+
+    /**
+     * 总完工数，完工合格率
+     * @param dto
+     * @return
+     */
+    DpPmsOperateCompleteStorageVO complete(DpPmsOperateDTO dto);
 }
