@@ -2,6 +2,7 @@ package com.steccn.pms.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
 import com.steccn.pms.vo.DashboardProducePageVO;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -85,5 +87,11 @@ public class PmsReportDashboardController {
     @ApiOperation("产线入库信息")
     public R<QtLineChartBarDTO> lineInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
         return R.success(pmsReportDashboardService.lineInStorage(workShopId, date));
+    }
+
+    @PostMapping("/line/pull/force/melting")
+    @ApiOperation("拉引量/熔化率")
+    public R<QtLineChartBarDTO> pullForceMelting(@RequestBody @Valid DpPmsOperateDTO dto) {
+        return R.success(pmsReportDashboardService.pullForceMelting(dto));
     }
 }

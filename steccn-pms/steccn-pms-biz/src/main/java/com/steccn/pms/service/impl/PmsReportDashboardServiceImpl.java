@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
@@ -14,7 +15,10 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
+import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -29,6 +33,7 @@ import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.DashboardProducePageListVO;
@@ -42,6 +47,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,6 +72,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final RemoteDpFeignApi remoteDpFeignApi;
+    private final PmsPullForceMapper pmsPullForceMapper;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -438,6 +446,47 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);
         });
+        return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public QtLineChartBarDTO pullForceMelting(DpPmsOperateDTO dto) {
+        //获取电子秤读数
+        List<DpValueDateVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.countAsDay(new TupleDTO<LocalDateTime, LocalDateTime>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        //拉引量(基片车间)
+        List<PmsPullForce> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
+        if(CollUtil.isEmpty(weightCount)&&CollUtil.isEmpty(pullAmountCount)){
+            SteccnTableAssertUtil.notEmpty(Lists.newArrayList(), "暂无数据");
+        }
+        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+        int dayCount = dto.getEnd().getMonthValue() - dto.getEnd().getMonthValue();
+        for (int i = 0; i <= dayCount; i++) {
+            LocalDate start = dto.getStart().plusMonths(i);
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+            stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("YYYY-MM-dd")));
+            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+            //耗料总量
+            BigDecimal weightCountTmp = BigDecimal.ZERO;
+            if(CollUtil.isNotEmpty(weightCount)){
+                DpValueDateVO valueDateVO = weightCount.stream().filter(v -> v.getDay().equals(start)).findFirst().orElse(null);
+                if(Objects.nonNull(valueDateVO)){
+                    weightCountTmp = BigDecimalUtil.divide(valueDateVO.getValue(),new BigDecimal(1000),2) ;
+                }
+            }
+            //拉引总量
+            BigDecimal pullCountTmp = BigDecimal.ZERO;
+            if(CollUtil.isNotEmpty(pullAmountCount)){
+                PmsPullForce pmsPullForce = pullAmountCount.stream().filter(v -> v.getPullForceDate().equals(start)).findFirst().orElse(null);
+                if(Objects.nonNull(pmsPullForce)){
+                    pullCountTmp = pmsPullForce.getQuantity();
+                }
+            }
+            datList.add(new TupleDTO<>("料耗总量", weightCountTmp));
+            datList.add(new TupleDTO<>("拉引量T", pullCountTmp));
+            datList.add(new TupleDTO<>("熔化率", BigDecimalUtil.percent(pullCountTmp,weightCountTmp,2)));
+            stackGraphDTO.setData(datList);
+            dataList.add(stackGraphDTO);
+        }
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
     }
 }

@@ -3,6 +3,7 @@ package com.steccn.dp.service;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
 import java.math.BigDecimal;
@@ -22,4 +23,11 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 合计每天的电子秤读数
+     * @param dto
+     * @return
+     */
+    List<DpValueDateVO> weightCountAsDay(TupleDTO<LocalDateTime,LocalDateTime> dto);
 }

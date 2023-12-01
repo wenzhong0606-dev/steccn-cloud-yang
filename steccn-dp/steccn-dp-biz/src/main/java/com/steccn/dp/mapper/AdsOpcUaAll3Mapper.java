@@ -3,6 +3,7 @@ package com.steccn.dp.mapper;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -24,6 +25,13 @@ public interface AdsOpcUaAll3Mapper extends BaseMapper<AdsOpcUaAll3> {
      * @return
      */
     List<DpWeightVO> weightCount(@Param("dto") TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 电子称读数按天
+     * @param dto f1开始时间 f2结束时间
+     * @return
+     */
+    List<DpValueDateVO> weightCountAsDay(@Param("dto") TupleDTO<LocalDateTime,LocalDateTime> dto);
 }
 
 

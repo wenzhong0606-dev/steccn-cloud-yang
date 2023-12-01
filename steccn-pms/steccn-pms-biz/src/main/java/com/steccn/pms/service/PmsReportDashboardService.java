@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
 
@@ -100,4 +101,11 @@ public interface PmsReportDashboardService {
      * @return
      */
     QtLineChartBarDTO lineInStorage(Integer workShopId, LocalDate date);
+
+    /**
+     * 拉引量熔化率
+     * @param dto
+     * @return
+     */
+    QtLineChartBarDTO pullForceMelting(DpPmsOperateDTO dto);
 }

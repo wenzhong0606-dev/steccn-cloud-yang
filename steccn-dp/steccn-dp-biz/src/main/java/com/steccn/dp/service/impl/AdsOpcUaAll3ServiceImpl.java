@@ -10,6 +10,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
@@ -46,6 +47,13 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 tmp.setTagName(dpWeight.get(tmp.getTagId()).get(0).getRefContent());
             });
         }
+        return result;
+    }
+
+    @Override
+    public List<DpValueDateVO> weightCountAsDay(TupleDTO<LocalDateTime, LocalDateTime> dto) {
+        List<DpValueDateVO> result = Lists.newArrayList();
+        result = adsOpcUaAll3Mapper.weightCountAsDay(dto);
         return result;
     }
 }

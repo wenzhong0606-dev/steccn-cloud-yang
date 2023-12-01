@@ -3,6 +3,7 @@ package com.steccn.dp.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -30,4 +31,13 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/weight/count")
     @ApiOperation(value = "电子秤读数")
     R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 电子秤读数按天
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/dp/weight/countAsDay")
+    @ApiOperation(value = "电子秤读数按天")
+    R<List<DpValueDateVO>> countAsDay(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
 }

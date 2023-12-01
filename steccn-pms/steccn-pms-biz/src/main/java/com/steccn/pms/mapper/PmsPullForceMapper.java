@@ -3,6 +3,11 @@ package com.steccn.pms.mapper;
 import com.steccn.pms.domain.PmsPullForce;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -12,7 +17,14 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface PmsPullForceMapper extends BaseMapper<PmsPullForce> {
-
+    /**
+     * 聚合一天的拉引量
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param idSet id列表
+     * @return
+     */
+    List<PmsPullForce> selectPullForceByDay(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
 }
 
 
