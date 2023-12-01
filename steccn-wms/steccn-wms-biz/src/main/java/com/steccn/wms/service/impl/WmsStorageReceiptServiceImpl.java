@@ -913,7 +913,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmatno(tmp.getMaterialCode());
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
-                    erpCommonSaveDetail.setFlot(tmp.getBatch());
+                    //YWZ需求 批号为箱号
+                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
                     erpCommonSaveDetail.setFstockno(sourceCode);
                     if (StrUtil.isBlank(tmp.getErpLineCode())) {
                         if(StrUtil.isBlank(erpDepCode)){
@@ -928,6 +929,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 }
             }
             erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
+            System.out.println(JSONObject.toJSONString(erpCommonSaveDTO));
             String listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
