@@ -27,4 +27,9 @@ public interface UnitLengthUtil {
      */
     int UNIT_PERCENT_LENGTH = 2;
 
+    /**
+     * 立方米保留整数
+     */
+    int UNIT_CUBIC_METER_LENGTH = 0;
+
 }

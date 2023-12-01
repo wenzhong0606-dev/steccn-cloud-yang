@@ -17,4 +17,12 @@ public interface PmsOperateEnergyService {
      * @return
      */
     PmsOperateEnergyVO gas(DpPmsOperateDTO dto);
+
+    /**
+     * 重油
+     *
+     * @param dto dto
+     * @return
+     */
+    PmsOperateEnergyVO oil(DpPmsOperateDTO dto);
 }
