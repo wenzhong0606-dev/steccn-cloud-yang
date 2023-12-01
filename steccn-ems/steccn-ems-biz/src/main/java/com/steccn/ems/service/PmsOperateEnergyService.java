@@ -42,4 +42,11 @@ public interface PmsOperateEnergyService {
      * @return
      */
     PmsOperateEnergyVO electric(DpPmsOperateDTO dto);
+
+    /**
+     * 单耗 （天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+     * @param dto
+     * @return
+     */
+    PmsOperateEnergyVO unitConsume(DpPmsOperateDTO dto);
 }

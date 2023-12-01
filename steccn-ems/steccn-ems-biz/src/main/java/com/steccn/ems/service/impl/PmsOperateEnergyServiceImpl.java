@@ -15,6 +15,8 @@ import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.dto.DpPullForceDTO;
+import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.EpEnergyTypeService;
@@ -23,7 +25,11 @@ import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.service.PmsOperateEnergyService;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +42,8 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -50,6 +58,8 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private final EpPartitionService epPartitionService;
     private final EpEnergyTypeService epEnergyTypeService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public PmsOperateEnergyVO gas(DpPmsOperateDTO dto) {
@@ -69,6 +79,37 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     @Override
     public PmsOperateEnergyVO electric(DpPmsOperateDTO dto) {
         return energy(dto, 1, UnitLengthUtil.UNIT_CUBIC_METER_LENGTH);
+    }
+
+    @Override
+    public PmsOperateEnergyVO unitConsume(DpPmsOperateDTO dto) {
+        //天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+        EpPartition gas = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, 3));
+        Assert.notNull(gas, "天然气树，不存在此节点");
+        EpPartition oil = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, 4));
+        Assert.notNull(oil, "重油树，不存在此节点");
+        List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
+        //获取全量数据表
+        List<EpMeterReadAllDataVO> gasAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), gas.getType(), Arrays.asList(gas.getId()));
+        List<EpMeterReadAllDataVO> oilAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), oil.getType(), Arrays.asList(oil.getId()));
+        SteccnTableAssertUtil.notEmpty(gasAllData, "全量数据表为空");
+        SteccnTableAssertUtil.notEmpty(oilAllData, "全量数据表为空");
+        //获取拉引量
+        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
+        dpPullForceDTO.setStart(dto.getStart());
+        dpPullForceDTO.setEnd(dto.getEnd());
+        dpPullForceDTO.setGranularity(dto.getType());
+        //根据制造部，获取车间
+        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+        sysOfficeParentDTO.setId(dto.getOfficeId());
+        sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
+        Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        dpPullForceDTO.setWorkshopIdSet(wsIdSet);
+        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+
+        return null;
     }
 
     /**

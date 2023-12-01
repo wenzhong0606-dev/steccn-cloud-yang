@@ -31,7 +31,7 @@ public class DpPmsOperateController {
     @ApiOperation(value = "总入库数，入库合格率")
     public R<DpPmsOperateCompleteStorageVO> inStorage(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getGranularity() == 0) {
+        if (dto.getType() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
@@ -43,7 +43,7 @@ public class DpPmsOperateController {
     @ApiOperation(value = "总完工数，完工合格率")
     public R<DpPmsOperateCompleteStorageVO> complete(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getGranularity() == 0) {
+        if (dto.getType() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());

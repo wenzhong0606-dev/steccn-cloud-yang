@@ -70,7 +70,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取粒度
-        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getType());
         Assert.notNull(granularity, "粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> storageList = null;
         List<TupleDTO<String, BigDecimal>> pullForceList = null;
@@ -155,7 +155,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
 
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取粒度
-        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getType());
         Assert.notNull(granularity, "粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> completeList;
         List<TupleDTO<String, BigDecimal>> pullForceList;

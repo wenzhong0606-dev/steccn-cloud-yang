@@ -1,11 +1,8 @@
 package com.steccn.ems.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.ems.dto.EpUnitConsumeAlarmDTO;
 import com.steccn.ems.service.PmsOperateEnergyService;
-import com.steccn.ems.vo.EpUnitConsumeAlarmVO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
@@ -35,7 +32,7 @@ public class PmsOperateEnergyController {
     @ApiOperation(value = "总天然气使用量")
     public R<PmsOperateEnergyVO> gas(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getGranularity() == 0) {
+        if (dto.getType() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
@@ -47,7 +44,7 @@ public class PmsOperateEnergyController {
     @ApiOperation(value = "总重油使用量")
     public R<PmsOperateEnergyVO> oil(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getGranularity() == 0) {
+        if (dto.getType() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
@@ -59,7 +56,7 @@ public class PmsOperateEnergyController {
     @ApiOperation(value = "总用水量")
     public R<PmsOperateEnergyVO> water(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getGranularity() == 0) {
+        if (dto.getType() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
@@ -71,11 +68,23 @@ public class PmsOperateEnergyController {
     @ApiOperation(value = "总用电量")
     public R<PmsOperateEnergyVO> electric(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getGranularity() == 0) {
+        if (dto.getType() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
         }
         return R.success(pmsOperateEnergyService.electric(dto));
+    }
+
+    @PostMapping("/unit/consume")
+    @ApiOperation(value = "单耗")
+    public R<PmsOperateEnergyVO> unitConsume(@Valid @RequestBody DpPmsOperateDTO dto) {
+        //只能是年度，月度
+        if (dto.getType() == 0) {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        } else {
+            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+        }
+        return R.success(pmsOperateEnergyService.unitConsume(dto));
     }
 }

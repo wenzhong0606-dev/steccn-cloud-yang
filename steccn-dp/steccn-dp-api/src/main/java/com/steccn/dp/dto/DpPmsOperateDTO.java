@@ -26,7 +26,7 @@ public class DpPmsOperateDTO implements Serializable {
      * 粒度
      */
     @NotNull(message = "粒度不能为空")
-    private Integer granularity;
+    private Integer type;
 
     /**
      * 开始日期
@@ -39,5 +39,7 @@ public class DpPmsOperateDTO implements Serializable {
      */
     @NotNull(message = "结束日期不能为空")
     private LocalDate end;
+
+    private Integer granularity;
 
 }
