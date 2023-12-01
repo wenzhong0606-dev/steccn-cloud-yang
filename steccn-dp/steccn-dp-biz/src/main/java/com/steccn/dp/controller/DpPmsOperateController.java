@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 /**
  * @author yequan
  * @desc 生产驾驶舱运营看板
@@ -28,7 +30,7 @@ public class DpPmsOperateController {
 
     @PostMapping("/in/storage")
     @ApiOperation(value = "总入库数，入库合格率")
-    public R<DpPmsOperateInStorageVO> inStorage(@RequestBody DpPmsOperateDTO dto) {
+    public R<DpPmsOperateInStorageVO> inStorage(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
         if (dto.getGranularity() == 0) {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
@@ -37,4 +39,6 @@ public class DpPmsOperateController {
         }
         return R.success(dpPmsOperateService.inStorage(dto));
     }
+
+
 }
