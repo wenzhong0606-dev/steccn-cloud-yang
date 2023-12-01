@@ -75,7 +75,7 @@
 
     <select id="selectLogisticsDashBoard" resultType="com.steccn.sales.dto.KsLogisticsDashBoardDTO">
         SELECT
-        COUNT(*) AS num,
+        COUNT(*) AS value,
         logistics_company_id AS companyId,
         customer_delivery_id AS customerId
         FROM ks_logistics_order

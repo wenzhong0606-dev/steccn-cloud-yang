@@ -2,6 +2,7 @@ package com.steccn.sales.mapper;
 
 import com.steccn.sales.domain.KsLogisticsCompany;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author Admin
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2023-11-30 16:17:58
 * @Entity com.steccn.sales.domain.KsLogisticsCompany
 */
+@Mapper
 public interface KsLogisticsCompanyMapper extends BaseMapper<KsLogisticsCompany> {
 
 }
