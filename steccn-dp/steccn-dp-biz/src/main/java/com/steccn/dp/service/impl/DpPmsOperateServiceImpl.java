@@ -18,6 +18,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.mapper.AdsPmsCompleteStorageMapper;
 import com.steccn.dp.mapper.AdsPmsPullForceMapper;
 import com.steccn.dp.mapper.AdsPmsReportWorkMapper;
+import com.steccn.dp.service.AdsPmsReportWorkService;
 import com.steccn.dp.service.DpPmsOperateService;
 import com.steccn.dp.vo.DpPmsOperateCompleteStorageVO;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -162,10 +163,18 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            completeList = adsPmsReportWorkMapper.jpCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+            if (type == 0) {
+                completeList = adsPmsReportWorkMapper.sjgCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+            } else {
+                completeList = adsPmsReportWorkMapper.jpCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+            }
             pullForceList = adsPmsPullForceMapper.pullForceDay(dto.getStart(), dto.getEnd(), wsIdSet);
         } else {
-            completeList = adsPmsReportWorkMapper.jpCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+            if (type == 0) {
+                completeList = adsPmsReportWorkMapper.sjgCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+            } else {
+                completeList = adsPmsReportWorkMapper.jpCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+            }
             pullForceList = adsPmsPullForceMapper.pullForceMonth(dto.getStart(), dto.getEnd(), wsIdSet);
         }
         //获取总数
