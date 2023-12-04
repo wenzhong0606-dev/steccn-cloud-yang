@@ -6,6 +6,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,5 +94,11 @@ public class PmsReportDashboardController {
     @ApiOperation("拉引量/熔化率")
     public R<QtLineChartBarDTO> pullForceMelting(@RequestBody @Valid DpPmsOperateDTO dto) {
         return R.success(pmsReportDashboardService.pullForceMelting(dto));
+    }
+
+    @GetMapping("/line/pull/force/melting/num")
+    @ApiOperation("拉引量/熔化率/数值")
+    public R<PmsPullForceMeltingNumVO> pullForceMeltingNum(@RequestParam("start") LocalDate start,@RequestParam("end")LocalDate end) {
+        return R.success(pmsReportDashboardService.pullForceMeltingNum(start,end));
     }
 }

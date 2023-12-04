@@ -6,6 +6,7 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -108,4 +109,12 @@ public interface PmsReportDashboardService {
      * @return
      */
     QtLineChartBarDTO pullForceMelting(DpPmsOperateDTO dto);
+
+    /**
+     * 拉引量熔化率数值
+     * @param start
+     * @param end
+     * @return
+     */
+    PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start,LocalDate end);
 }

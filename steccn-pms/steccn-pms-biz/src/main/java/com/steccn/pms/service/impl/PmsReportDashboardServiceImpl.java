@@ -41,6 +41,7 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.DashboardProducePageListVO;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -531,5 +532,28 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             dataList.add(stackGraphDTO);
         }
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start, LocalDate end) {
+        PmsPullForceMeltingNumVO result = new PmsPullForceMeltingNumVO();
+        //获取电子秤读数
+        List<DpValueDateVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.countAsDay(new TupleDTO<LocalDateTime, LocalDateTime>(start.atTime(8, 0, 0), end.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        //拉引量(基片车间)
+        List<PmsPullForceDayCountDTO> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(start,end,Sets.newHashSet(75,76));
+        if(CollUtil.isNotEmpty(weightCount)){
+            BigDecimal sum = weightCount.stream()
+                    .map(DpValueDateVO::getValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            result.setWeightCount(BigDecimalUtil.divide(sum,new BigDecimal(1000),2));
+        }
+        if(CollUtil.isNotEmpty(pullAmountCount)){
+            BigDecimal sum = pullAmountCount.stream()
+                    .map(PmsPullForceDayCountDTO::getQuantity)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            result.setPullForce(sum);
+        }
+        result.setPercent(BigDecimalUtil.percent(result.getPullForce(),result.getWeightCount(),2));
+        return result;
     }
 }
