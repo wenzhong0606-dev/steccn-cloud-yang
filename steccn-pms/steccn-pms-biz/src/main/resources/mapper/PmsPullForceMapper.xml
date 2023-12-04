@@ -29,7 +29,7 @@
         update_time,del_flag
     </sql>
 
-    <select id="selectPullForceByDay" resultType="com.steccn.pms.domain.PmsPullForce">
+    <select id="selectPullForceByDay" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
         SELECT SUM(quantity) AS quantity,
                pull_force_date AS pullForceDate
         FROM pms_pull_force

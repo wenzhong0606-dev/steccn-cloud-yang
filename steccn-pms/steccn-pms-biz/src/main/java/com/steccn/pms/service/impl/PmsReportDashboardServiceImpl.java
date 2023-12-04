@@ -21,6 +21,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -34,6 +35,7 @@ import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.dto.PmsPullForceDayCountDTO;
 import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
@@ -455,21 +457,60 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //获取电子秤读数
         List<DpValueDateVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.countAsDay(new TupleDTO<LocalDateTime, LocalDateTime>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //拉引量(基片车间)
-        List<PmsPullForce> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
+        List<PmsPullForceDayCountDTO> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
         if(CollUtil.isEmpty(weightCount)&&CollUtil.isEmpty(pullAmountCount)){
             SteccnTableAssertUtil.notEmpty(Lists.newArrayList(), "暂无数据");
         }
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        int dayCount = LocalDateTimeUtil.betweenPeriod(dto.getStart(), dto.getEnd()).getDays();
+        int dayCount = 0;
+        if(dto.getType().equals(OaConstant.NO)){
+            dayCount = LocalDateTimeUtil.betweenPeriod(dto.getStart(), dto.getEnd()).getDays();
+        }else {
+            dayCount =  dto.getEnd().getMonthValue() - dto.getStart().getMonthValue();
+        }
+        //若是年度报表则全部重置为月初
+        if(dto.getType().equals(OaConstant.NUM_1)){
+            if(CollUtil.isNotEmpty(weightCount)){
+                // 使用 Stream API 进行按月份合并累加
+                weightCount = weightCount.stream()
+                        .collect(Collectors.groupingBy(
+                                dpValue -> dpValue.getDay().withDayOfMonth(1), // 使用每月的第一天作为默认值
+                                Collectors.mapping(DpValueDateVO::getValue, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                        ))
+                        .entrySet().stream()
+                        .map(entry -> new DpValueDateVO(entry.getKey(), entry.getValue()))
+                        .collect(Collectors.toList());
+            }
+            if(CollUtil.isNotEmpty(pullAmountCount)){
+                // 使用 Stream API 进行按月份合并累加
+                pullAmountCount = pullAmountCount.stream()
+                        .collect(Collectors.groupingBy(
+                                v -> v.getPullForceDate().withDayOfMonth(1), // 使用每月的第一天作为默认值
+                                Collectors.mapping(PmsPullForceDayCountDTO::getQuantity, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                        ))
+                        .entrySet().stream()
+                        .map(entry ->new PmsPullForceDayCountDTO(entry.getKey(), entry.getValue()))
+                        .collect(Collectors.toList());
+            }
+        }
         for (int i = 0; i <= dayCount; i++) {
-            LocalDate start = dto.getStart().plusDays(i);
+            LocalDate start = dto.getStart();
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("YYYY-MM-dd")));
+            //0是日报表，1是月报表
+            if(dto.getType().equals(OaConstant.NO)){
+                start = dto.getStart().plusDays(i);
+                stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            }else {
+                start = dto.getStart().plusMonths(i);
+                stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            }
+
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
             //耗料总量
             BigDecimal weightCountTmp = BigDecimal.ZERO;
             if(CollUtil.isNotEmpty(weightCount)){
-                DpValueDateVO valueDateVO = weightCount.stream().filter(v -> v.getDay().equals(start)).findFirst().orElse(null);
+                LocalDate finalStart1 = start;
+                DpValueDateVO valueDateVO = weightCount.stream().filter(v -> v.getDay().equals(finalStart1)).findFirst().orElse(null);
                 if(Objects.nonNull(valueDateVO)){
                     weightCountTmp = BigDecimalUtil.divide(valueDateVO.getValue(),new BigDecimal(1000),2) ;
                 }
@@ -477,7 +518,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             //拉引总量
             BigDecimal pullCountTmp = BigDecimal.ZERO;
             if(CollUtil.isNotEmpty(pullAmountCount)){
-                PmsPullForce pmsPullForce = pullAmountCount.stream().filter(v -> v.getPullForceDate().equals(start)).findFirst().orElse(null);
+                LocalDate finalStart = start;
+                PmsPullForceDayCountDTO pmsPullForce = pullAmountCount.stream().filter(v -> v.getPullForceDate().equals(finalStart)).findFirst().orElse(null);
                 if(Objects.nonNull(pmsPullForce)){
                     pullCountTmp = pmsPullForce.getQuantity();
                 }

@@ -2,6 +2,7 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmsPullForce;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.PmsPullForceDayCountDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -24,7 +25,7 @@ public interface PmsPullForceMapper extends BaseMapper<PmsPullForce> {
      * @param idSet id列表
      * @return
      */
-    List<PmsPullForce> selectPullForceByDay(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
+    List<PmsPullForceDayCountDTO> selectPullForceByDay(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
 }
 
 
