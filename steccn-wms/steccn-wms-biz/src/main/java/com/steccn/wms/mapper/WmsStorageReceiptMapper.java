@@ -53,7 +53,7 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @param endTime 结束时间
      * @return
      */
-    List<WmsStorageReceiptInfo> warehousingClassification(@Param("warehouseIds") List<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+    List<WmsStorageReceiptInfo> warehousingClassification(@Param("warehouseIds") Set<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }
 
 

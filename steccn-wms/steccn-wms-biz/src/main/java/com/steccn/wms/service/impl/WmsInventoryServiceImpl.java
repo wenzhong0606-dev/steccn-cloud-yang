@@ -10,7 +10,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -582,6 +584,37 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             }
         }
         return map;
+    }
+
+    /**
+     * 获取实时库存中仓库下呆滞库存的物料之合
+     * @param dto
+     * @return
+     */
+    @Override
+    public BigDecimal inactionStock(WmsReportWarehouseDTO dto) {
+        BigDecimal quantity = null;
+        //获取仓库下的呆滞货架
+        if (Objects.nonNull(dto.getWarehouseIds())){
+            SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+            sysOfficeParentDTO.setOfficeType(WmsManagerConstant.CODE_FIVE);
+            Set<Integer> warehouseIds = dto.getWarehouseIds().stream()
+                    .map(Long::intValue)
+                    .collect(Collectors.toSet());
+            sysOfficeParentDTO.setParentIds(warehouseIds);
+            List<SysOfficeVO> officeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (CollUtil.isNotEmpty(officeVOList)){
+                //获取呆滞品货架
+                Set<Integer> shelfIds= officeVOList.stream()
+                        .filter(vo ->WmsManagerConstant.INACTION_STOCK.equals(vo.getOfficeName())).map(SysOfficeVO::getId).collect(Collectors.toSet());
+                List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getShelfId, shelfIds));
+                if (CollUtil.isNotEmpty(list)){
+                    List<BigDecimal> collect = list.stream().map(WmsInventory::getTotalQuantity).collect(Collectors.toList());
+                    quantity = BigDecimalUtil.sum(collect);
+                }
+            }
+        }
+        return quantity;
     }
 
     @Override

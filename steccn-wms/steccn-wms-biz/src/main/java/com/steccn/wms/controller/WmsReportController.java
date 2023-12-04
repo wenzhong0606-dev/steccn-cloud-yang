@@ -7,15 +7,13 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.pms.vo.PanoramicTracingVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
-import com.steccn.wms.service.WmsDeliveryReceiptService;
-import com.steccn.wms.service.WmsInventoryRecordService;
-import com.steccn.wms.service.WmsStorageReceiptService;
-import com.steccn.wms.service.WmsTransferSlipService;
+import com.steccn.wms.service.*;
 import com.steccn.wms.vo.WmsDocumentQuantityVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import io.swagger.annotations.ApiOperation;
@@ -50,6 +48,8 @@ public class WmsReportController {
 
     private final WmsTransferSlipService wmsTransferSlipService;
 
+    private final WmsInventoryService wmsInventoryService;
+
     @PostMapping("/opening/inventory")
     @ApiOperation("获取期初库存")
     public R<BigDecimal>  openingInventory(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
@@ -62,6 +62,13 @@ public class WmsReportController {
     public R<BigDecimal>  endingInventory(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
         return R.success(wmsInventoryRecordService.endingInventory(wmsReportWarehouseDTO));
     }
+
+    @PostMapping("/inaction/stock")
+    @ApiOperation("获取呆滞库存")
+    public R<BigDecimal>  inactionStock(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
+        return R.success(wmsInventoryService.inactionStock(wmsReportWarehouseDTO));
+    }
+
 
     @PostMapping("/warehouse/warrant")
     @ApiOperation("获取入库单")

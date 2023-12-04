@@ -8,6 +8,7 @@ import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.ReceiptStatusDTO;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,12 @@ public class PmsCompleteStorageFeignController {
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
     public R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code){
         return R.success(pmsCompleteStorageService.getCompleteStorageByCode(code));
+    }
+
+    @GetMapping("/code/query")
+    @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
+    public R<PmsCompleteStorageVO> getCompleteStorageInfoByCode(@RequestParam("code")String code){
+        return R.success(pmsCompleteStorageService.getCompleteStorage(code));
     }
 
     @PostMapping("/order/num")

@@ -109,6 +109,13 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      */
     Boolean getCompleteStorageByCode(String code);
 
+    /**
+     * 根据入库单编码查询是否存在生产入库
+     * @param code
+     * @return
+     */
+    PmsCompleteStorageVO getCompleteStorage(String code);
+
 
     /**
      * 根据wms 的出库单创建对应的出库单以及修改入库单的状态

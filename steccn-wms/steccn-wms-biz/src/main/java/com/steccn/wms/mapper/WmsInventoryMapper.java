@@ -80,7 +80,7 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
      * @param warehouseIds 仓库id集合
      * @return
      */
-    List<TupleDTO<Long, BigDecimal>> openingInventory(@Param("warehouseIds") List<Long> warehouseIds,@Param("date") LocalDate date);
+    List<TupleDTO<Long, BigDecimal>> openingInventory(@Param("warehouseIds") Set<Long> warehouseIds,@Param("date") LocalDate date);
 }
 
 

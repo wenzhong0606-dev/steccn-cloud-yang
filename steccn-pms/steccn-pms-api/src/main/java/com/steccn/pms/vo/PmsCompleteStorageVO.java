@@ -62,4 +62,7 @@ public class PmsCompleteStorageVO {
 
     @ApiModelProperty("打印次数")
     private Integer printCount;
+
+    @ApiModelProperty("产线id")
+    private Integer productLineId;
 }

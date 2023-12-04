@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 仓储驾驶仓单据DTO
@@ -35,7 +36,7 @@ public class WmsReportWarehouseDTO extends BasePageDTO implements Serializable {
      * 仓库id
      */
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库不能为空")
-    private List<Long> warehouseIds;
+    private Set<Long> warehouseIds;
 
     /**
      * 类型id

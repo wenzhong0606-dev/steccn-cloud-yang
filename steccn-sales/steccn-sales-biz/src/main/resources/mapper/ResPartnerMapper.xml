@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.ResPartnerMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.ResPartner">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="companyId" column="company_id" jdbcType="OTHER"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="title" column="title" jdbcType="OTHER"/>
+            <result property="parentId" column="parent_id" jdbcType="OTHER"/>
+            <result property="userId" column="user_id" jdbcType="OTHER"/>
+            <result property="stateId" column="state_id" jdbcType="OTHER"/>
+            <result property="countryId" column="country_id" jdbcType="OTHER"/>
+            <result property="industryId" column="industry_id" jdbcType="OTHER"/>
+            <result property="color" column="color" jdbcType="OTHER"/>
+            <result property="commercialPartnerId" column="commercial_partner_id" jdbcType="OTHER"/>
+            <result property="createUid" column="create_uid" jdbcType="OTHER"/>
+            <result property="writeUid" column="write_uid" jdbcType="OTHER"/>
+            <result property="displayName" column="display_name" jdbcType="VARCHAR"/>
+            <result property="ref" column="ref" jdbcType="VARCHAR"/>
+            <result property="lang" column="lang" jdbcType="VARCHAR"/>
+            <result property="tz" column="tz" jdbcType="VARCHAR"/>
+            <result property="vat" column="vat" jdbcType="VARCHAR"/>
+            <result property="companyRegistry" column="company_registry" jdbcType="VARCHAR"/>
+            <result property="website" column="website" jdbcType="VARCHAR"/>
+            <result property="function" column="function" jdbcType="VARCHAR"/>
+            <result property="type" column="type" jdbcType="VARCHAR"/>
+            <result property="street" column="street" jdbcType="VARCHAR"/>
+            <result property="street2" column="street2" jdbcType="VARCHAR"/>
+            <result property="zip" column="zip" jdbcType="VARCHAR"/>
+            <result property="city" column="city" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
+            <result property="mobile" column="mobile" jdbcType="VARCHAR"/>
+            <result property="commercialCompanyName" column="commercial_company_name" jdbcType="VARCHAR"/>
+            <result property="companyName" column="company_name" jdbcType="VARCHAR"/>
+            <result property="date" column="date" jdbcType="DATE"/>
+            <result property="comment" column="comment" jdbcType="VARCHAR"/>
+            <result property="partnerLatitude" column="partner_latitude" jdbcType="NUMERIC"/>
+            <result property="partnerLongitude" column="partner_longitude" jdbcType="NUMERIC"/>
+            <result property="active" column="active" jdbcType="BOOLEAN"/>
+            <result property="employee" column="employee" jdbcType="BOOLEAN"/>
+            <result property="isCompany" column="is_company" jdbcType="BOOLEAN"/>
+            <result property="partnerShare" column="partner_share" jdbcType="BOOLEAN"/>
+            <result property="writeDate" column="write_date" jdbcType="TIMESTAMP"/>
+            <result property="messageMainAttachmentId" column="message_main_attachment_id" jdbcType="OTHER"/>
+            <result property="messageBounce" column="message_bounce" jdbcType="OTHER"/>
+            <result property="emailNormalized" column="email_normalized" jdbcType="VARCHAR"/>
+            <result property="signupToken" column="signup_token" jdbcType="VARCHAR"/>
+            <result property="signupType" column="signup_type" jdbcType="VARCHAR"/>
+            <result property="signupExpiration" column="signup_expiration" jdbcType="TIMESTAMP"/>
+            <result property="calendarLastNotifAck" column="calendar_last_notif_ack" jdbcType="TIMESTAMP"/>
+            <result property="teamId" column="team_id" jdbcType="OTHER"/>
+            <result property="partnerGid" column="partner_gid" jdbcType="OTHER"/>
+            <result property="additionalInfo" column="additional_info" jdbcType="VARCHAR"/>
+            <result property="phoneSanitized" column="phone_sanitized" jdbcType="VARCHAR"/>
+            <result property="supplierRank" column="supplier_rank" jdbcType="OTHER"/>
+            <result property="customerRank" column="customer_rank" jdbcType="OTHER"/>
+            <result property="invoiceWarn" column="invoice_warn" jdbcType="VARCHAR"/>
+            <result property="invoiceWarnMsg" column="invoice_warn_msg" jdbcType="VARCHAR"/>
+            <result property="debitLimit" column="debit_limit" jdbcType="NUMERIC"/>
+            <result property="lastTimeEntriesChecked" column="last_time_entries_checked" jdbcType="TIMESTAMP"/>
+            <result property="saleWarn" column="sale_warn" jdbcType="VARCHAR"/>
+            <result property="saleWarnMsg" column="sale_warn_msg" jdbcType="VARCHAR"/>
+            <result property="customerCode" column="customer_code" jdbcType="VARCHAR"/>
+            <result property="customerCategory" column="customer_category" jdbcType="VARCHAR"/>
+            <result property="customerGroups" column="customer_groups" jdbcType="VARCHAR"/>
+            <result property="customerStatus" column="customer_status" jdbcType="VARCHAR"/>
+            <result property="isDisable" column="is_disable" jdbcType="VARCHAR"/>
+            <result property="orgName" column="org_name" jdbcType="VARCHAR"/>
+            <result property="approveName" column="approve_name" jdbcType="VARCHAR"/>
+            <result property="invoiceTitle" column="invoice_title" jdbcType="VARCHAR"/>
+            <result property="bankName" column="bank_name" jdbcType="VARCHAR"/>
+            <result property="creditCode" column="credit_code" jdbcType="VARCHAR"/>
+            <result property="bankAccount" column="bank_account" jdbcType="VARCHAR"/>
+            <result property="invoiceTel" column="invoice_tel" jdbcType="VARCHAR"/>
+            <result property="invoiceAdds" column="invoice_adds" jdbcType="VARCHAR"/>
+            <result property="contactList" column="contact_list" jdbcType="VARCHAR"/>
+            <result property="contactName" column="contact_name" jdbcType="VARCHAR"/>
+            <result property="approveDate" column="approve_date" jdbcType="TIMESTAMP"/>
+            <result property="mileage" column="mileage" jdbcType="DOUBLE"/>
+            <result property="price" column="price" jdbcType="DOUBLE"/>
+            <result property="tonPrice" column="ton_price" jdbcType="NUMERIC"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,company_id,create_date,
+        name,title,parent_id,
+        user_id,state_id,country_id,
+        industry_id,color,commercial_partner_id,
+        create_uid,write_uid,display_name,
+        ref,lang,tz,
+        vat,company_registry,website,
+        function,type,street,
+        street2,zip,city,
+        email,phone,mobile,
+        commercial_company_name,company_name,date,
+        comment,partner_latitude,partner_longitude,
+        active,employee,is_company,
+        partner_share,write_date,message_main_attachment_id,
+        message_bounce,email_normalized,signup_token,
+        signup_type,signup_expiration,calendar_last_notif_ack,
+        team_id,partner_gid,additional_info,
+        phone_sanitized,supplier_rank,customer_rank,
+        invoice_warn,invoice_warn_msg,debit_limit,
+        last_time_entries_checked,sale_warn,sale_warn_msg,
+        customer_code,customer_category,customer_groups,
+        customer_status,is_disable,org_name,
+        approve_name,invoice_title,bank_name,
+        credit_code,bank_account,invoice_tel,
+        invoice_adds,contact_list,contact_name,
+        approve_date,mileage,price,
+        ton_price
+    </sql>
+
+    <select id="selectSaleName" resultType="com.steccn.sales.dto.KsSaleIdAndNameDTO">
+        SELECT
+        ru.id AS saleId,
+        rp.name As saleName
+        FROM
+        res_users ru
+        LEFT join  res_partner rp ON ru.partner_id = rp.id
+        WHERE
+            ru.id in
+            <foreach collection="saleIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+    </select>
+</mapper>

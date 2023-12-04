@@ -7,10 +7,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.MapUtil;
-import com.steccn.common.util.ShardTimeUtil;
-import com.steccn.common.util.UnitLengthUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
@@ -83,6 +80,10 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
 
     @Override
     public PmsOperateEnergyVO unitConsume(DpPmsOperateDTO dto) {
+        Integer bit = 4;
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        Assert.notEmpty(dateList, "日期区间有误");
         //天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
         EpPartition gas = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, 3));
         Assert.notNull(gas, "天然气树，不存在此节点");
@@ -109,7 +110,47 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         dpPullForceDTO.setWorkshopIdSet(wsIdSet);
         Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
 
-        return null;
+        Map<String, BigDecimal> gasValueMap = Maps.newHashMap();
+        gasAllData.forEach(ele -> {
+            String convert = XAxisUtil.convert(granularity, ele.getReadDate());
+            MapUtil.add(gasValueMap, convert, ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
+        Map<String, BigDecimal> oilValueMap = Maps.newHashMap();
+        oilAllData.forEach(ele -> {
+            String convert = XAxisUtil.convert(granularity, ele.getReadDate());
+            MapUtil.add(oilValueMap, convert, ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
+        List<String> xAisList = Lists.newArrayList();
+        List<BigDecimal> valueList = Lists.newArrayList();
+        for (int i = 1; i < dateList.size(); i++) {
+            LocalDate ele = dateList.get(i - 1);
+            String convert = XAxisUtil.convert(granularity, ele);
+            xAisList.add(convert);
+            //y轴：（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+            BigDecimal gasValue = gasValueMap.get(convert);
+            BigDecimal oilValue = oilValueMap.get(convert);
+            BigDecimal pullForceValue;
+            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+                pullForceValue = pullForceMap.get(LocalDateUtil.format(ele, "yyyy-MM-dd"));
+            } else {
+                pullForceValue = pullForceMap.get(LocalDateUtil.format(ele, "yyyy-MM"));
+            }
+            BigDecimal gasValueMu = BigDecimalUtil.multiply(gasValue, new BigDecimal("7800"), bit);
+            BigDecimal oilValueMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300"), bit);
+            BigDecimal multiply = BigDecimalUtil.add(gasValueMu, oilValueMu, bit);
+            BigDecimal pullForceValueMu = BigDecimalUtil.multiply(pullForceValue, new BigDecimal("1000"), bit);
+            BigDecimal result = BigDecimalUtil.divide(multiply, pullForceValueMu, bit);
+            valueList.add(BigDecimalUtil.setScale(result, bit));
+        }
+        PmsOperateEnergyVO res = new PmsOperateEnergyVO();
+        res.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(valueList), bit));
+        res.setUnitName("kcal/kg");
+        CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
+        res.setCommonBarLineVO(commonBarLineVO);
+        commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
+        commonBarLineVO.setLegend(new BaseValueVO(Arrays.asList("单耗(kcal/kg)")));
+        commonBarLineVO.setSeries(Arrays.asList(new BaseValueNameVO<>(valueList, "单耗(kcal/kg)")));
+        return res;
     }
 
     /**
