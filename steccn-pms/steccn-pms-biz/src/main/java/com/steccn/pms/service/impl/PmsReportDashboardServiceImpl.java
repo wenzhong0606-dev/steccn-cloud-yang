@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -459,9 +460,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             SteccnTableAssertUtil.notEmpty(Lists.newArrayList(), "暂无数据");
         }
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        int dayCount = dto.getEnd().getMonthValue() - dto.getEnd().getMonthValue();
+        int dayCount = LocalDateTimeUtil.betweenPeriod(dto.getStart(), dto.getEnd()).getDays();
         for (int i = 0; i <= dayCount; i++) {
-            LocalDate start = dto.getStart().plusMonths(i);
+            LocalDate start = dto.getStart().plusDays(i);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("YYYY-MM-dd")));
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();

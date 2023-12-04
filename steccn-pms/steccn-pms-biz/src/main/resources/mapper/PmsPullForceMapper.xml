@@ -32,11 +32,13 @@
     <select id="selectPullForceByDay" resultType="com.steccn.pms.domain.PmsPullForce">
         SELECT SUM(quantity) AS quantity,
                pull_force_date AS pullForceDate
+        FROM pms_pull_force
         WHERE del_flag = 0
         AND pull_force_date between #{start} AND #{end}
         AND workshop_id IN
         <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
             #{id}
-        </foreach>)
+        </foreach>
+        GROUP BY  pull_force_date
     </select>
 </mapper>

@@ -43,7 +43,7 @@
 
     <select id="weightCountAsDay" resultType="com.steccn.dp.vo.DpValueDateVO">
         SELECT DATE(DATE_ADD(serverTime, INTERVAL -8 HOUR)) AS day,
-        SUM(value) AS totalValue
+        SUM(value) AS value
         FROM ads_opc_ua_all3
         <where>
             del_flag = 0
