@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.KsLogisticsOrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.KsLogisticsOrder">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="messageMainAttachmentId" column="message_main_attachment_id" jdbcType="OTHER"/>
+            <result property="sendNoticeId" column="send_notice_id" jdbcType="OTHER"/>
+            <result property="customerId" column="customer_id" jdbcType="OTHER"/>
+            <result property="productId" column="product_id" jdbcType="OTHER"/>
+            <result property="saleQty" column="sale_qty" jdbcType="OTHER"/>
+            <result property="customerDeliveryId" column="customer_delivery_id" jdbcType="OTHER"/>
+            <result property="enterFactoryId" column="enter_factory_id" jdbcType="OTHER"/>
+            <result property="logisticsCompanyId" column="logistics_company_id" jdbcType="OTHER"/>
+            <result property="createUid" column="create_uid" jdbcType="OTHER"/>
+            <result property="writeUid" column="write_uid" jdbcType="OTHER"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="customerCode" column="customer_code" jdbcType="VARCHAR"/>
+            <result property="modelSpecs" column="model_specs" jdbcType="VARCHAR"/>
+            <result property="driverAdds" column="driver_adds" jdbcType="VARCHAR"/>
+            <result property="timeSpan" column="time_span" jdbcType="VARCHAR"/>
+            <result property="driverName" column="driver_name" jdbcType="VARCHAR"/>
+            <result property="carCode" column="car_code" jdbcType="VARCHAR"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
+            <result property="sendDate" column="send_date" jdbcType="DATE"/>
+            <result property="makeDate" column="make_date" jdbcType="DATE"/>
+            <result property="signDate" column="sign_date" jdbcType="DATE"/>
+            <result property="priceQty" column="price_qty" jdbcType="NUMERIC"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="writeDate" column="write_date" jdbcType="TIMESTAMP"/>
+            <result property="weight" column="weight" jdbcType="DOUBLE"/>
+            <result property="deliveryFreight" column="delivery_freight" jdbcType="DOUBLE"/>
+            <result property="signQty" column="sign_qty" jdbcType="OTHER"/>
+            <result property="packType" column="pack_type" jdbcType="VARCHAR"/>
+            <result property="state" column="state" jdbcType="VARCHAR"/>
+            <result property="signType" column="sign_type" jdbcType="VARCHAR"/>
+            <result property="signArea" column="sign_area" jdbcType="DOUBLE"/>
+            <result property="pieceQty" column="piece_qty" jdbcType="OTHER"/>
+            <result property="customerProductCode" column="customer_product_code" jdbcType="VARCHAR"/>
+            <result property="outQty" column="out_qty" jdbcType="OTHER"/>
+            <result property="orderOrigin" column="order_origin" jdbcType="VARCHAR"/>
+            <result property="realityFreight" column="reality_freight" jdbcType="DOUBLE"/>
+            <result property="unitPrice" column="unit_price" jdbcType="NUMERIC"/>
+            <result property="totalAmount" column="total_amount" jdbcType="NUMERIC"/>
+            <result property="saleId" column="sale_id" jdbcType="OTHER"/>
+            <result property="contractCode" column="contract_code" jdbcType="VARCHAR"/>
+            <result property="driverPhone" column="driver_phone" jdbcType="VARCHAR"/>
+            <result property="contractDetailsQty" column="contract_details_qty" jdbcType="OTHER"/>
+            <result property="deliveryCode" column="delivery_code" jdbcType="VARCHAR"/>
+            <result property="customerBarcode" column="customer_barcode" jdbcType="VARCHAR"/>
+            <result property="oldSaleQty" column="old_sale_qty" jdbcType="OTHER"/>
+            <result property="warehouseNames" column="warehouse_names" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,message_main_attachment_id,send_notice_id,
+        customer_id,product_id,sale_qty,
+        customer_delivery_id,enter_factory_id,logistics_company_id,
+        create_uid,write_uid,name,
+        customer_code,model_specs,driver_adds,
+        time_span,driver_name,car_code,
+        phone,send_date,make_date,
+        sign_date,price_qty,create_date,
+        write_date,weight,delivery_freight,
+        sign_qty,pack_type,state,
+        sign_type,sign_area,piece_qty,
+        customer_product_code,out_qty,order_origin,
+        reality_freight,unit_price,total_amount,
+        sale_id,contract_code,driver_phone,
+        contract_details_qty,delivery_code,customer_barcode,
+        old_sale_qty,warehouse_names
+    </sql>
+
+    <select id="selectLogisticsDashBoard" resultType="com.steccn.sales.dto.KsLogisticsDashBoardDTO">
+        SELECT
+        COUNT(*) AS value,
+        logistics_company_id AS companyId,
+        customer_delivery_id AS customerId
+        FROM ks_logistics_order
+        WHERE warehouse_names = #{warehouseName} AND send_date = #{date}
+        GROUP BY logistics_company_id,customer_delivery_id
+
+
+    </select>
+</mapper>

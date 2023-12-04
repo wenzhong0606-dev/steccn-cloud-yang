@@ -5,6 +5,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.ReceiptStatusDTO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +42,10 @@ public interface RemoteCompleteStorageFeignApi {
     @GetMapping("/feign/pms/complete/storage/code")
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
     R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code);
+
+    @GetMapping("/feign/pms/complete/storage/code/query")
+    @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
+    R<PmsCompleteStorageVO> getCompleteStorage(@RequestParam("code")String code);
 
     @PostMapping("/feign/pms/complete/storage/order/num")
     @ApiOperation("查询订单入库量-产线|班次日期|班次|订单")

@@ -1,6 +1,7 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsInventory;
@@ -257,4 +258,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Map<String,WmsInventory> inventoryMapByCaseNos(Set<String> caseNos);
+
+    /**
+     * 获取实时仓库下呆滞货架的库存
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    BigDecimal inactionStock(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }
