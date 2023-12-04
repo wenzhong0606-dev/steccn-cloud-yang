@@ -85,6 +85,7 @@ public class PmsOperateEnergyController {
         } else {
             dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
         }
-        return R.success(pmsOperateEnergyService.unitConsume(dto));
+        PmsOperateEnergyVO pmsOperateEnergyVO = pmsOperateEnergyService.unitConsume(dto);
+        return R.success(pmsOperateEnergyVO);
     }
 }
