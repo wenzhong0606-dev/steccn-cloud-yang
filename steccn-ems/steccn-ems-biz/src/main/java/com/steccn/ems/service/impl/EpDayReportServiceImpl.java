@@ -10,10 +10,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.ClassUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.MapUtil;
+import com.steccn.common.util.*;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
@@ -643,14 +640,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             for (LocalDate classDate : timeList) {
                 List<BigDecimal> valueList = dataList.stream().filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
                 BigDecimal dataValue = BigDecimalUtil.sum(valueList);
-                consumeList.add(BigDecimalUtil.setScale(dataValue, 0));
+                consumeList.add(BigDecimalUtil.setScale(dataValue, UnitLengthUtil.UNIT_TON_LENGTH));
             }
             row.setConsumeList(consumeList);
             row.setEnergyType(epEnergy.getName());
             row.setUnit(epEnergy.getMeasureUnitName());
             row.setDepartmentName(tripleDTO.getField3());
             BigDecimal sum = BigDecimalUtil.sum(consumeList);
-            row.setSumStr(BigDecimalUtil.setScale(sum, 0));
+            row.setSumStr(BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_TON_LENGTH));
             rowList.add(row);
         }
 
