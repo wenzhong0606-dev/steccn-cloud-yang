@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -23,6 +25,12 @@ public class PmsWorkOrderCraftStation implements Serializable {
      * 执行工位名称
      */
     private String executeStationName;
+
+
+    /**
+     * 工位编码
+     */
+    private String executeStationCode;
 
     /**
      * 执行工位id
