@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.platform.domain.SysConfiguration;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.service.SysConfigurationService;
 import com.steccn.platform.mapper.SysConfigurationMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -70,6 +72,19 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
             });
         }
         return resMap;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "MesSignal")
+    public Set<String> contentByType(String type) {
+        Set<String> results = Sets.newHashSet();
+        List<SysConfiguration> list = list(new LambdaQueryWrapper<SysConfiguration>()
+                .select(SysConfiguration::getContent)
+                .eq(SysConfiguration::getType, type));
+        if(CollUtil.isNotEmpty(list)){
+            results = list.stream().map(SysConfiguration::getContent).collect(Collectors.toSet());
+        }
+        return results;
     }
 
 }

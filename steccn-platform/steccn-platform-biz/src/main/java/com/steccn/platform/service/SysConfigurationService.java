@@ -32,4 +32,11 @@ public interface SysConfigurationService extends IService<SysConfiguration> {
      * @return
      */
     <T> Map<String, List<T>> confList(String type, Set<String> contentList,Function<SysConfigurationDTO, T> function);
+
+    /**
+     * 根据类型获取ref
+     * @param type
+     * @return
+     */
+    Set<String> contentByType(String type);
 }

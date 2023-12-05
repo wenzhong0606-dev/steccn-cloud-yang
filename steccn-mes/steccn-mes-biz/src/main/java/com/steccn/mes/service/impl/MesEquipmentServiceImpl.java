@@ -5,6 +5,9 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.MesEqpServicePlan;
@@ -15,11 +18,14 @@ import com.steccn.mes.mapper.MesEquipmentMapper;
 import com.steccn.mes.vo.MesEqpPartVO;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +40,7 @@ import java.util.stream.Collectors;
 public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, MesEquipment>
     implements MesEquipmentService{
     private final MesEqpServicePlanService mesEqpServicePlanService;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
     public List<MesEqpVO> getEqpInfo() {
@@ -77,10 +84,58 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
     @Override
     public Boolean changeEqpState(TupleDTO<String, String> dto) {
         MesEquipment equipment = new MesEquipment();
+        //找到设备code信号
+        Set<String> signalCode = FeignOptional.of(() -> remoteSysConfigurationFeignApi.contentByType("EQP_SIGNAL"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //修改设备启停
         equipment.setState(dto.getField2());
+        //需要修改的id
+        Set<Long> idSet = Sets.newHashSet();
+        //获取设备自身信息和上级信息
+        MesEquipment eqp = getOne(new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getEquipmentCode, dto.getField1())
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                .last("limit 1"));
+        if(Objects.isNull(eqp)){
+            log.error(dto.getField1()+"设备不存在");
+        }
+        MesEquipment parent = getOne(new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getEquipmentCode, eqp.getEquipmentCode())
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                .last("limit 1"));
+        //设备停止时，1)下级设备全部停止 2)同级是否是否都停止，若都停止则上级也停止
+        if(equipment.getState().equals(OaConstant.NUM_1.toString())){
+            //1)下级设备全部停止
+            List<MesEquipment> childrenList = list(new LambdaQueryWrapper<MesEquipment>()
+                    .eq(MesEquipment::getParentCode, dto.getField1())
+                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+            if(CollUtil.isNotEmpty(childrenList)){
+                //仅对设备信号外的设备有效
+                childrenList.forEach(tmp->{
+                    if(!signalCode.contains(tmp.getEquipmentCode())){
+                        idSet.add(tmp.getId());
+                    }
+                });
+            }
+            //2)同级是否是否都停止，若都停止则上级也停止
+            List<MesEquipment> platList = list(new LambdaQueryWrapper<MesEquipment>()
+                    .eq(MesEquipment::getParentCode, eqp.getParentCode())
+                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+            if(CollUtil.isNotEmpty(platList)){
+                //判断同级设备是否都停止
+                int size = platList.size();
+                platList = platList.stream().filter(v->v.getState().equals(OaConstant.NUM_1.toString())).collect(Collectors.toList());
+                if(size == platList.size()&&!signalCode.contains(parent.getEquipmentCode())){
+                    idSet.add(parent.getId());
+                }
+            }
+
+        }
         return update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                .eq(MesEquipment::getEquipmentCode,dto.getField1())
+                .in(MesEquipment::getId,idSet)
                 .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
     }
 }
