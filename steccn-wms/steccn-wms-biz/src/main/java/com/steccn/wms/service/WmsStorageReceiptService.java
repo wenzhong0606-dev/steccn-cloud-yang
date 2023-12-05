@@ -174,4 +174,10 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      */
     EpChartGraphVO<List<String>, BigDecimal> warehousingClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 
+    /**
+     * 入库单明细总数
+     * @param dto
+     * @return
+     */
+    BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
 }

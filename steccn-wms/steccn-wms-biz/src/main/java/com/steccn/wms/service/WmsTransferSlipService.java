@@ -96,4 +96,11 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     EpChartGraphVO<List<String>, BigDecimal> transferSlipClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    /**
+     * 获取调拨单明细总数
+     * @param dto
+     * @return
+     */
+    BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
 }

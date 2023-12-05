@@ -17,7 +17,6 @@ public class WmsDocumentQuantityVO implements Serializable {
      */
     private Integer inboundSingular;
 
-
     /**
      * 出库单数
      */

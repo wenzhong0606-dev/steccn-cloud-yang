@@ -15,6 +15,7 @@ import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.service.*;
 import com.steccn.wms.vo.WmsDocumentQuantityVO;
+import com.steccn.wms.vo.WmsReportTotalQuantityVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -137,6 +138,24 @@ public class WmsReportController {
         }
         wmsDocumentQuantityVO.setDialingSingular((int) wmsTransferSlipService.count(wrapper));
         return R.success(wmsDocumentQuantityVO);
+    }
+
+
+    @PostMapping("/total/quantity")
+    @ApiOperation("获取单据明细总数")
+    public R<WmsReportTotalQuantityVO> totalQuantity(@RequestBody WmsReportWarehouseDTO dto) {
+        WmsReportTotalQuantityVO quantityVO = new WmsReportTotalQuantityVO();
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
+        //获取入库单据明细总数
+        quantityVO.setWarehouseTotalQuantity(wmsStorageReceiptService.totalQuantity(dto));
+        //获取出库单据明细总数
+        quantityVO.setOutboundTotalQuantity(wmsDeliveryReceiptService.totalQuantity(dto));
+        //获取调拨单据明细总数
+        quantityVO.setTransferTotalQuantity(wmsTransferSlipService.totalQuantity(dto));
+        return R.success(quantityVO);
     }
 }
 
