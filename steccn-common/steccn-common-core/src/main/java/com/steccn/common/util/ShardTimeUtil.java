@@ -283,7 +283,8 @@ public class ShardTimeUtil {
                     start = start.plusMonths(1);
                     //
                     if (!end.isAfter(start)) {
-                        listDate.add(LocalDate.of(end.getYear(), end.getMonth().getValue() + 1, 1));
+                        LocalDate over = end.plusMonths(1);
+                        listDate.add(LocalDate.of(over.getYear(), over.getMonth(), 1));
                     }
                     break;
                 case "W":
