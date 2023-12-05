@@ -134,10 +134,10 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             inStorageQuantityList.add(storage);
             rateList.add(BigDecimalUtil.percent(storage, actualUse));
         }
-        List<String> legendList = Arrays.asList("入库产量（T）", "入库成品率");
+        List<String> legendList = Arrays.asList("入库产量（㎡）", "入库成品率");
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
         commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
-        BaseValueNameVO<List<BigDecimal>> storageBv = new BaseValueNameVO<>(inStorageQuantityList, "入库产量（T）");
+        BaseValueNameVO<List<BigDecimal>> storageBv = new BaseValueNameVO<>(inStorageQuantityList, "入库产量（㎡）");
         BaseValueNameVO<List<BigDecimal>> pullForceBv = new BaseValueNameVO<>(rateList, "入库成品率");
         commonBarLineVO.setSeries(Arrays.asList(storageBv, pullForceBv));
         resVo.setCommonBarLineVO(commonBarLineVO);
@@ -146,6 +146,8 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
 
     /**
      * 基片车间入库
+     * 入库产量：柱状图，对应时间所有基片车间的完工入库入库明细（入库单不为冲销和删除状态）数量汇总，转化为重量，保留两位小数，单位吨
+     * 入库合格率：折线图，入库产量 / 拉引量 * 100，保留两位小数，百分比显示
      *
      * @param dto             请求参数
      * @param sysOfficeVOList 组织机构集合
@@ -252,29 +254,38 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
         //判断是基片还是深加工
-        long type = sysOfficeVOList.stream().filter(ele -> ele.getOfficeName().indexOf("基片") != -1).count();
+        long sjgCount = sysOfficeVOList.stream().filter(ele -> ele.getOfficeName().indexOf("深加工") != -1).count();
+        DpPmsOperateCompleteStorageVO res;
+        if (sjgCount != 0) {
+            res = sjgComplete(dto, sysOfficeVOList, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+        } else {
+            res = jpComplete(dto, sysOfficeVOList, UnitLengthUtil.UNIT_TON_LENGTH);
+        }
+        return res;
+    }
 
+    /**
+     * 基片加工产量
+     *
+     * @param dto             dto
+     * @param sysOfficeVOList 组织机构集合
+     * @param bit             保留位数
+     * @return
+     */
+    private DpPmsOperateCompleteStorageVO jpComplete(DpPmsOperateDTO dto, List<SysOfficeVO> sysOfficeVOList, int bit) {
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取粒度
-        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getType());
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> completeList;
         List<TupleDTO<String, BigDecimal>> pullForceList;
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            if (type == 0) {
-                completeList = adsPmsReportWorkMapper.sjgCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-            } else {
-                completeList = adsPmsReportWorkMapper.jpCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-            }
+            completeList = adsPmsReportWorkMapper.jpCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
             pullForceList = adsPmsPullForceMapper.pullForceDay(dto.getStart(), dto.getEnd(), wsIdSet);
         } else {
-            if (type == 0) {
-                completeList = adsPmsReportWorkMapper.sjgCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-            } else {
-                completeList = adsPmsReportWorkMapper.jpCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-            }
+            completeList = adsPmsReportWorkMapper.jpCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
             pullForceList = adsPmsPullForceMapper.pullForceMonth(dto.getStart(), dto.getEnd(), wsIdSet);
         }
         //获取总数
@@ -292,8 +303,8 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             Assert.notNull(tonSysDict, "吨单位不存在");
             completeList.forEach(ele -> {
                 List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
-                BigDecimal tonQuantity = UnitConvertUtil.convertMaterial(convertList, pieceSysDict.getId(), tonSysDict.getId(), ele.getField3(), UnitLengthUtil.UNIT_TON_LENGTH);
-                completeMap.put(ele.getField1(), BigDecimalUtil.add(completeMap.get(ele.getField1()), tonQuantity, UnitLengthUtil.UNIT_TON_LENGTH));
+                BigDecimal tonQuantity = UnitConvertUtil.convertMaterial(convertList, pieceSysDict.getId(), tonSysDict.getId(), ele.getField3(), bit);
+                completeMap.put(ele.getField1(), BigDecimalUtil.add(completeMap.get(ele.getField1()), tonQuantity, bit));
             });
             totalQuantity = BigDecimalUtil.sum(completeMap.values());
         }
@@ -330,6 +341,85 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
         commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
         BaseValueNameVO<List<BigDecimal>> completeBv = new BaseValueNameVO<>(completeQuantityList, "生产产量（T）");
+        BaseValueNameVO<List<BigDecimal>> pullForceBv = new BaseValueNameVO<>(rateList, "生产成品率");
+        commonBarLineVO.setSeries(Arrays.asList(completeBv, pullForceBv));
+        resVo.setCommonBarLineVO(commonBarLineVO);
+        return resVo;
+    }
+
+    /**
+     * 深加工产量
+     * 入库产量：柱状图，对应时间所有深加工车间的完工入库入库明细（入库单不为冲销和删除状态）数量汇总，转化为平方米，保留两位小数
+     * 入库合格率：折线图，入库产量 / 实际使用数 * 100，保留两位小数，百分比显示
+     *
+     * @param dto             dto
+     * @param sysOfficeVOList 组织机构集合
+     * @param bit             保留位数
+     * @return
+     */
+    private DpPmsOperateCompleteStorageVO sjgComplete(DpPmsOperateDTO dto, List<SysOfficeVO> sysOfficeVOList, int bit) {
+        Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取粒度
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        List<TripleDTO<String, Long, BigDecimal>> completeList;
+        List<TripleDTO<String, Long, BigDecimal>> actualUseList;
+        //根据车间+时间查询完工数
+        //根据车间+时间查询实际使用量
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            completeList = adsPmsReportWorkMapper.sjgCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+            actualUseList = adsPmsReportWorkMapper.actualUseMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+        } else {
+            completeList = adsPmsReportWorkMapper.sjgCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+            actualUseList = adsPmsReportWorkMapper.actualUseMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+        }
+        //获取总数
+        BigDecimal totalQuantity = null;
+        BigDecimal totalActualUseQuantity = null;
+        Map<String, BigDecimal> completeMap = Maps.newHashMap();
+        Map<String, BigDecimal> actualUseMap = Maps.newHashMap();
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(sqSysDict, "平方米单位不存在");
+        if (CollUtil.isNotEmpty(completeList)) {
+            //进行单位转换，放入map
+            completeMap = unitConvert(pieceSysDict, sqSysDict, completeList, bit);
+            totalQuantity = BigDecimalUtil.sum(completeMap.values());
+        }
+        if (CollUtil.isNotEmpty(actualUseList)) {
+            actualUseMap = unitConvert(pieceSysDict, sqSysDict, actualUseList, bit);
+            totalActualUseQuantity = BigDecimalUtil.sum(actualUseMap.values());
+        }
+        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
+        resVo.setTotalQuantity(totalQuantity);
+        resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalActualUseQuantity));
+        //柱状图 + 折线图
+        CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
+        //根据粒度 分割日期
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        List<String> xAisList = Lists.newArrayList();
+        List<BigDecimal> completeQuantityList = Lists.newArrayList();
+        List<BigDecimal> rateList = Lists.newArrayList();
+        for (int i = 1; i < dateList.size(); i++) {
+            LocalDate ele = dateList.get(i - 1);
+            xAisList.add(XAxisUtil.convert(granularity, ele));
+            //获取值的方式必须统一
+            String key;
+            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } else {
+                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            }
+            BigDecimal complete = completeMap.get(key);
+            BigDecimal actualUse = actualUseMap.get(key);
+            completeQuantityList.add(complete);
+            rateList.add(BigDecimalUtil.percent(complete, actualUse));
+        }
+        List<String> legendList = Arrays.asList("生产产量（㎡）", "生产成品率");
+        commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
+        commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
+        BaseValueNameVO<List<BigDecimal>> completeBv = new BaseValueNameVO<>(completeQuantityList, "生产产量（㎡）");
         BaseValueNameVO<List<BigDecimal>> pullForceBv = new BaseValueNameVO<>(rateList, "生产成品率");
         commonBarLineVO.setSeries(Arrays.asList(completeBv, pullForceBv));
         resVo.setCommonBarLineVO(commonBarLineVO);
