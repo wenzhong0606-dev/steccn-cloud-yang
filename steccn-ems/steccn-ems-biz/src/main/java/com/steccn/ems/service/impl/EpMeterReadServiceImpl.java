@@ -25,6 +25,7 @@ import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.common.util.UnitLengthUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.*;
@@ -48,6 +49,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -170,7 +172,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         if (CollectionUtils.isNotEmpty(collect)) {
                             readValueListVO.setReadValue(collect.get(0).getAdminValue());
                         }
-                    }else if(meterType == 3){
+                    } else if (meterType == 3) {
                         readValueListVO.setReadValue(BigDecimalUtil.add(filterList.get(0).getAdminValue(), preValue));
                         preValue = readValueListVO.getReadValue();
                     } else {
@@ -314,7 +316,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
-                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(localDateList.get(localDateList.size()-1))) {
+                if (!localDate.isEqual(firstDayOfMonth) && !localDate.isEqual(localDateList.get(localDateList.size() - 1))) {
                     readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
                     readValueListVO.setReadDate(LocalDateTimeUtil.format(localDate, "MM-dd"));
                     readValueListVO.setMeterId(meterReadListVO.getMeterId());
@@ -368,13 +370,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     /**
      * 排序
+     *
      * @param eleList
      */
     private void eleSort(List<MeterReadListVO> eleList) {
         Collections.sort(eleList, Comparator.nullsLast(Comparator.comparing(MeterReadListVO::getSort)));
-        if(CollUtil.isNotEmpty(eleList)){
+        if (CollUtil.isNotEmpty(eleList)) {
             for (MeterReadListVO ele : eleList) {
-                if(CollUtil.isNotEmpty(ele.getMeterReadListVOList())){
+                if (CollUtil.isNotEmpty(ele.getMeterReadListVOList())) {
                     eleSort(ele.getMeterReadListVOList());
                 }
             }
@@ -383,16 +386,17 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     /**
      * 设置序号
+     *
      * @param eleList
      * @param sortMap
      */
-    private void setSort(List<MeterReadListVO> eleList, Map<Long,Integer> sortMap){
-        if(CollUtil.isNotEmpty(eleList) && CollUtil.isNotEmpty(sortMap)){
+    private void setSort(List<MeterReadListVO> eleList, Map<Long, Integer> sortMap) {
+        if (CollUtil.isNotEmpty(eleList) && CollUtil.isNotEmpty(sortMap)) {
             for (MeterReadListVO ele : eleList) {
                 Long partitionNode = ele.getPartitionNode();
-                ele.setSort(sortMap.getOrDefault(partitionNode,Integer.MAX_VALUE));
-                if(CollUtil.isNotEmpty(ele.getMeterReadListVOList())){
-                    setSort(ele.getMeterReadListVOList(),sortMap);
+                ele.setSort(sortMap.getOrDefault(partitionNode, Integer.MAX_VALUE));
+                if (CollUtil.isNotEmpty(ele.getMeterReadListVOList())) {
+                    setSort(ele.getMeterReadListVOList(), sortMap);
                 }
             }
         }
@@ -401,7 +405,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     private void reduceRecursion(List<MeterReadListVO> meterReadListVOList, List<List<ReadValueListVO>> readValueAllList) {
         for (MeterReadListVO meterReadListVO : meterReadListVOList) {
-            if(Objects.equals(meterReadListVO.getEntityTable(), 2)){
+            if (Objects.equals(meterReadListVO.getEntityTable(), 2)) {
                 reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
             } else if (!Objects.equals(meterReadListVO.getEntityTable(), 2)) {
                 readValueAllList.add(meterReadListVO.getReadValueList());
@@ -558,7 +562,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Map<Long, EpPartition> epPartitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
         List<EpEnergyConsumeDTO> rowList = consumeTable(dateSet, energyType, nodeLinkMeterMap);
         //最后将全量数据表的map转换为有用的list集合 对外输出-根据需要的节点过滤
-        return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, epPartitionMap, rowList , Maps.newHashMap());
+        return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, epPartitionMap, rowList, Maps.newHashMap());
     }
 
     /**
@@ -600,7 +604,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取远传仪表的数据 key => 仪表id + "_" + 班次日期 +"_" + 班次id + "_" + 厚度 value => 读数
         Map<String, BigDecimal> remoteDataMap = remoteRead(remoteMeterIdSet, dateSet);
         //获取手动抄表的数据 key => 仪表id + "_" + 班次日期  value => 读数
-        Map<String, BigDecimal> handReadDataMap = handRead(energyType,handMeterIdSet, dateSet);
+        Map<String, BigDecimal> handReadDataMap = handRead(energyType, handMeterIdSet, dateSet);
 
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().filter(v -> Objects.nonNull(v.getThick())).map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
@@ -704,7 +708,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     resVo.setSysOfficeId(epPartition.getOfficeId());
                     resVo.setOfficeName(epPartition.getOfficeName());
                     resVo.setProductNum(yieldMap.get(key));
-                    if(CollUtil.isNotEmpty(classGroupMap)){
+                    if (CollUtil.isNotEmpty(classGroupMap)) {
                         resVo.setClassGroupId(classGroupMap.get(row.getReadDate() + "_" + row.getClassId() + "_" + epPartition.getOfficeId()));
                     }
                     resList.add(resVo);
@@ -716,6 +720,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     /**
      * 获取手动抄表的数据
+     *
      * @param energyType 能源类型
      * @param meterIdSet 远传仪表id集合
      * @param dateSet    日期集合
@@ -752,10 +757,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
                         //手动抄表 一天一条,去取最后一条
                         BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
-                        if (energyType != 3 && !dateEntry.getKey().isEqual(minLocalDate)) {
-                            resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
-                        }else{
+                        if (energyType == 3 && !dateEntry.getKey().isEqual(minLocalDate)) {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), curValue);
+                        } else if (energyType == 4 && !dateEntry.getKey().isEqual(minLocalDate)) {
+                            BigDecimal subtract = BigDecimalUtil.subtract(curValue, preValue);
+                            resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.divide(subtract, new BigDecimal("1000"), UnitLengthUtil.UNIT_TON_LENGTH));
+                        } else {
+                            resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
                         }
                         preValue = curValue;
                     }
@@ -808,7 +816,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      */
     public List<EpMeterReadDistantDTO> orderDetail(Set<LocalDate> dateSet, Collection<EpInstrumentAccountDTO> meterIdSet) {
         List<EpMeterReadDistantDTO> resList = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(dateSet) && CollUtil.isNotEmpty(meterIdSet)){
+        if (CollUtil.isNotEmpty(dateSet) && CollUtil.isNotEmpty(meterIdSet)) {
             List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
                     .in(EpMeterReadDistant::getMeterId, meterIdSet.stream().map(EpInstrumentAccountDTO::getId).collect(Collectors.toSet()))
                     .in(EpMeterReadDistant::getReadDate, dateSet));
@@ -933,7 +941,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             } else if (jpLineSet.contains(lineId)) {
                 //基片产线节点
                 rowDTO.setProductLineId(lineId);
-                jpDataList.add(convertToJpDto(rowDTO,lineId));
+                jpDataList.add(convertToJpDto(rowDTO, lineId));
             }
             orderMap.put(rowDTO.getUuid(), rowDTO);
             orderRowList.add(rowDTO);
@@ -961,7 +969,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Map<Long, Set<Long>> lineParentMap = getLineParentMap(partitionMap.values(), jpLineSet, sjgLineSet);
         EpPartition root = root(partitionMap.values());
         //根节点为空，则直接返回
-        if(Objects.isNull(root)){
+        if (Objects.isNull(root)) {
             return Lists.newArrayList();
         }
         //获取父节点的产线孩子节点-不含有根节点
@@ -988,8 +996,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         //过滤出相同的班次日期，相同班次，相同厚度的订单
                         List<BigDecimal> yieldSumList = orderRowList.stream().filter(ele -> ele.getReadDate().equals(consumeDTO.getReadDate()) &&
                                 Objects.equals(ele.getClassId(), consumeDTO.getClassId()) &&
-                                Objects.equals(ele.getThick(), consumeDTO.getThick())  &&
-                                Objects.equals(ele.getMeterId(),account.getId())
+                                Objects.equals(ele.getThick(), consumeDTO.getThick()) &&
+                                Objects.equals(ele.getMeterId(), account.getId())
                         ).filter(ele -> lineId.equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
                         BigDecimal yieldSum = BigDecimalUtil.sum(yieldSumList);
                         unitMap.put(epPartition.getId(), yieldSum);
@@ -1107,7 +1115,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @param rowDTO 对象
      * @return
      */
-    private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO,Integer lineId) {
+    private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO, Integer lineId) {
         QtEmsPullAmountDTO dto = new QtEmsPullAmountDTO();
         BeanUtils.copyProperties(rowDTO, dto);
         dto.setClassDate(rowDTO.getReadDate());
@@ -1204,7 +1212,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 entry.setValue(BigDecimalUtil.add(gasMu, oilMu));
             }
         }
-        return row2List(gasOilEnergyType, Sets.newHashSet(partitionIdList), gasOilNodeLinkMeterMap, gasOilPartitionMap, unitTable , Maps.newHashMap());
+        return row2List(gasOilEnergyType, Sets.newHashSet(partitionIdList), gasOilNodeLinkMeterMap, gasOilPartitionMap, unitTable, Maps.newHashMap());
     }
 
     private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {

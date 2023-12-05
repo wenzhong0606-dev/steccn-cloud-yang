@@ -52,7 +52,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
-    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
