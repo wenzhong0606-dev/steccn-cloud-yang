@@ -20,6 +20,10 @@ public class PmsWorkOrderCraftStationVO {
     @ApiModelProperty("工位名称")
     private String executeStationName;
 
+
+    @ApiModelProperty("工位编码")
+    private String executeStationCode;
+
     @ApiModelProperty("工位Id")
     private Long executeStationId;
 }
