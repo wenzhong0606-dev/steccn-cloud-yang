@@ -51,6 +51,14 @@ public interface EpPmsConsumeReportService {
     EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date);
 
     /**
+     * 获取今日能源单耗
+     * @param officeId 单位id
+     * @param date     日期
+     * @return
+     */
+    EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate date);
+
+    /**
      * 查询电耗范围
      * @param officeId 组织机构id
      * @param start 开始时间
@@ -58,4 +66,5 @@ public interface EpPmsConsumeReportService {
      * @return
      */
     List<PmElectricConsumeVO> electricRange(Integer officeId, LocalDate start, LocalDate end);
+
 }

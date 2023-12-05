@@ -53,6 +53,12 @@ public class EpPmsConsumeReportController {
         return R.success(consumeReportService.consumeUseOil(officeId, date));
     }
 
+    @GetMapping("/consume/use/unit/consume")
+    @ApiOperation(value = "获取今日能源单耗")
+    public R<EpPmsConsumeVO> consumeUseUnitConsume(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success(consumeReportService.consumeUseUnitConsume(officeId, date));
+    }
+
     @GetMapping("/consume/electric")
     @ApiOperation(value = "能耗信息-电耗")
     public R<List<EpPmsConsumeVO>> electricRange(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate end, @RequestParam("timeCode") Integer timeCode) {

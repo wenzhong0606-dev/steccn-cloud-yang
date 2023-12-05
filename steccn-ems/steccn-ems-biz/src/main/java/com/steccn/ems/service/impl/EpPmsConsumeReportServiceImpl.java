@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
-import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.dp.dto.DpPullForceDTO;
+import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.EpEnergyTypeService;
@@ -41,6 +43,7 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpPartitionService epPartitionService;
     private final EpMeterReadService epMeterReadService;
+    private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
 
     @Override
     public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate date) {
@@ -62,6 +65,27 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         EpPmsConsumeVO epPmsConsumeVO = consumeUse(officeId, date, 4);
         epPmsConsumeVO.setSum(BigDecimalUtil.setScale(epPmsConsumeVO.getSum(), 1));
         return epPmsConsumeVO;
+    }
+
+    @Override
+    public EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate date) {
+        EpPmsConsumeVO oil = consumeUseOil(officeId, date);
+        EpPmsConsumeVO gas = consumeUseGas(officeId, date);
+        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
+        dpPullForceDTO.setWorkshopIdSet(Sets.newHashSet(officeId));
+        dpPullForceDTO.setGranularity(0);
+        dpPullForceDTO.setStart(date);
+        dpPullForceDTO.setEnd(date);
+        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+        BigDecimal gasMu = BigDecimalUtil.multiply(gas.getSum(), new BigDecimal("7800"));
+        BigDecimal oilMu = BigDecimalUtil.multiply(oil.getSum(), new BigDecimal("9300000"));
+        BigDecimal addMu = BigDecimalUtil.add(gasMu, oilMu);
+        BigDecimal pullForceMu = BigDecimalUtil.multiply(pullForceMap.get(LocalDateUtil.format(date, "yyyy-MM-dd")), new BigDecimal("1000"));
+        EpPmsConsumeVO res = new EpPmsConsumeVO();
+        res.setUnitName("kcal/kg");
+        res.setSum(BigDecimalUtil.divide(addMu, pullForceMu, 1));
+        return res;
     }
 
     @Override

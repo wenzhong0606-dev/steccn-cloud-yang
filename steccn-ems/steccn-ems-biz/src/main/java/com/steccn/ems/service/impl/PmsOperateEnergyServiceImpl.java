@@ -136,7 +136,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
                 pullForceValue = pullForceMap.get(LocalDateUtil.format(ele, "yyyy-MM"));
             }
             BigDecimal gasValueMu = BigDecimalUtil.multiply(gasValue, new BigDecimal("7800"), bit);
-            BigDecimal oilValueMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300"), bit);
+            BigDecimal oilValueMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300000"), bit);
             BigDecimal multiply = BigDecimalUtil.add(gasValueMu, oilValueMu, bit);
             BigDecimal pullForceValueMu = BigDecimalUtil.multiply(pullForceValue, new BigDecimal("1000"), bit);
             BigDecimal result = BigDecimalUtil.divide(multiply, pullForceValueMu, bit);
