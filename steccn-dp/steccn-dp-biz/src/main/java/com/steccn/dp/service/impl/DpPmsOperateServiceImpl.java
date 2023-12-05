@@ -9,6 +9,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.util.UnitLengthUtil;
 import com.steccn.common.vo.BaseValueNameVO;
@@ -68,12 +69,95 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
         List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
+        long sjgCount = sysOfficeVOList.stream().filter(ele -> ele.getOfficeName().indexOf("深加工") != -1).count();
+        DpPmsOperateCompleteStorageVO res;
+        if (sjgCount != 0) {
+            res = sjgInStorage(dto, sysOfficeVOList, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH);
+        } else {
+            res = jpInStorage(dto, sysOfficeVOList, UnitLengthUtil.UNIT_TON_LENGTH);
+        }
+        return res;
+    }
+
+    /**
+     * 深加工入库
+     * 入库产量：柱状图，对应时间所有深加工车间的完工入库入库明细（入库单不为冲销和删除状态）数量汇总，转化为平方米，保留两位小数
+     * 实际使用数：柱状图，取自磨边工位报工加工数，转换为平方米
+     * 入库合格率：折线图，入库产量 / 实际使用数 * 100，保留两位小数，百分比显示
+     *
+     * @param dto
+     * @param sysOfficeVOList
+     * @return
+     */
+    private DpPmsOperateCompleteStorageVO sjgInStorage(DpPmsOperateDTO dto, List<SysOfficeVO> sysOfficeVOList, Integer bit) {
+        //获取车间主键集合
+        Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<TripleDTO<String, Long, BigDecimal>> storageList;
+        List<TripleDTO<String, Long, BigDecimal>> actualUseList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            storageList = adsPmsCompleteStorageMapper.inStorageMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+            actualUseList = adsPmsReportWorkMapper.actualUseMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
+        } else {
+            storageList = adsPmsCompleteStorageMapper.inStorageMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+            actualUseList = adsPmsReportWorkMapper.actualUseMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+        }
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO smSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(smSysDict, "平方米单位不存在");
+        Map<String, BigDecimal> storageMap = unitConvert(pieceSysDict, smSysDict, storageList, bit);
+        Map<String, BigDecimal> actualUseMap = unitConvert(pieceSysDict, smSysDict, actualUseList, bit);
+
+        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
+        resVo.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(storageMap.values()), bit));
+        resVo.setTotalRate(BigDecimalUtil.percent(resVo.getTotalQuantity(), BigDecimalUtil.sum(actualUseMap.values())));
+        //柱状图 + 折线图
+        CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
+        //根据粒度 分割日期
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        List<String> xAisList = Lists.newArrayList();
+        List<BigDecimal> inStorageQuantityList = Lists.newArrayList();
+        List<BigDecimal> rateList = Lists.newArrayList();
+        for (int i = 1; i < dateList.size(); i++) {
+            LocalDate ele = dateList.get(i - 1);
+            xAisList.add(XAxisUtil.convert(granularity, ele));
+            //获取值的方式必须统一
+            String key;
+            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } else {
+                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            }
+            BigDecimal storage = storageMap.get(key);
+            BigDecimal actualUse = actualUseMap.get(key);
+            inStorageQuantityList.add(storage);
+            rateList.add(BigDecimalUtil.percent(storage, actualUse));
+        }
+        List<String> legendList = Arrays.asList("入库产量（T）", "入库成品率");
+        commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
+        commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
+        BaseValueNameVO<List<BigDecimal>> storageBv = new BaseValueNameVO<>(inStorageQuantityList, "入库产量（T）");
+        BaseValueNameVO<List<BigDecimal>> pullForceBv = new BaseValueNameVO<>(rateList, "入库成品率");
+        commonBarLineVO.setSeries(Arrays.asList(storageBv, pullForceBv));
+        resVo.setCommonBarLineVO(commonBarLineVO);
+        return resVo;
+    }
+
+    /**
+     * 基片车间入库
+     *
+     * @param dto             请求参数
+     * @param sysOfficeVOList 组织机构集合
+     * @param bit             保留几位
+     * @return
+     */
+    private DpPmsOperateCompleteStorageVO jpInStorage(DpPmsOperateDTO dto, List<SysOfficeVO> sysOfficeVOList, int bit) {
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取粒度
-        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getType());
-        Assert.notNull(granularity, "粒度不存在");
-        List<TripleDTO<String, Long, BigDecimal>> storageList = null;
-        List<TupleDTO<String, BigDecimal>> pullForceList = null;
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<TripleDTO<String, Long, BigDecimal>> storageList;
+        List<TupleDTO<String, BigDecimal>> pullForceList;
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
@@ -90,17 +174,11 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         Map<String, BigDecimal> pullForceMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(storageList)) {
             //进行单位转换，放入map
-            Set<Long> materialIdSet = storageList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
-            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysDictVO tonSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Assert.notNull(pieceSysDict, "片单位不存在");
             Assert.notNull(tonSysDict, "吨单位不存在");
-            storageList.forEach(ele -> {
-                List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
-                BigDecimal tonQuantity = UnitConvertUtil.convertMaterial(convertList, pieceSysDict.getId(), tonSysDict.getId(), ele.getField3(), UnitLengthUtil.UNIT_TON_LENGTH);
-                storageMap.put(ele.getField1(), BigDecimalUtil.add(storageMap.get(ele.getField1()), tonQuantity, UnitLengthUtil.UNIT_TON_LENGTH));
-            });
+            storageMap = unitConvert(pieceSysDict, tonSysDict, storageList, bit);
             totalInStorageQuantity = BigDecimalUtil.sum(storageMap.values());
         }
         if (CollUtil.isNotEmpty(pullForceList)) {
@@ -142,6 +220,29 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         resVo.setCommonBarLineVO(commonBarLineVO);
         return resVo;
     }
+
+    /**
+     * 单位转换
+     *
+     * @param sourceSysDict 原始单位
+     * @param targetSysDict 目标单位
+     * @param dataList      数据集合
+     * @return map
+     */
+    private Map<String, BigDecimal> unitConvert(SysDictVO sourceSysDict, SysDictVO targetSysDict, List<TripleDTO<String, Long, BigDecimal>> dataList, Integer bit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dataList)) {
+            Set<Long> materialIdSet = dataList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            dataList.forEach(ele -> {
+                List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
+                BigDecimal convertQuantity = UnitConvertUtil.convertMaterial(convertList, sourceSysDict.getId(), targetSysDict.getId(), ele.getField3(), bit);
+                MapUtil.add(resMap, ele.getField1(), convertQuantity, (x, y) -> BigDecimalUtil.add(x, y, bit));
+            });
+        }
+        return resMap;
+    }
+
 
     @Override
     public DpPmsOperateCompleteStorageVO complete(DpPmsOperateDTO dto) {
