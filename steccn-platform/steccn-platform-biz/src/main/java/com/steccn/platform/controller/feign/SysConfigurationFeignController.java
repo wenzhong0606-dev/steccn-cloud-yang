@@ -12,10 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -84,5 +81,11 @@ public class SysConfigurationFeignController {
             BeanUtils.copyProperties(x, configurationDTO);
             return configurationDTO;
         }));
+    }
+
+    @ApiOperation(value = "根据code获取content的配置")
+    @GetMapping("/contentByType")
+    public R<Set<String>> contentByType(@RequestParam("type") String type) {
+        return R.success(sysConfigurationService.contentByType(type));
     }
 }

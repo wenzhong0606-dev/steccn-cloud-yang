@@ -1,6 +1,5 @@
 package com.steccn.platform.feign;
 
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -8,14 +7,14 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * @author yequan
@@ -36,7 +35,7 @@ public interface RemoteSysConfigurationFeignApi {
 
     /**
      * 根据code获取list的配置
-     * @param tupleDTO type content
+     * @param TripleDTO type content
      * @return list
      */
     @ApiOperation(value = "根据code获取list的配置")
@@ -55,10 +54,19 @@ public interface RemoteSysConfigurationFeignApi {
     /**
      * 根据code获取list的配置
      *
-     * @param tupleDTO type content
+     * @param TripleDTO type content
      * @return list
      */
     @ApiOperation(value = "根据code获取list的配置")
     @PostMapping("/feign/platform/sys/conf/list/string")
     R<Map<String, List<String>>> confListString(@RequestBody TripleDTO<String, Set<String>,Integer> dto);
+
+    /**
+     * 根据type获取content
+     * @param type
+     * @return
+     */
+    @ApiOperation(value = "根据code获取list的配置")
+    @GetMapping("/feign/platform/sys/conf/contentByType")
+    R<Set<String>> contentByType(@RequestParam("type") String type);
 }
