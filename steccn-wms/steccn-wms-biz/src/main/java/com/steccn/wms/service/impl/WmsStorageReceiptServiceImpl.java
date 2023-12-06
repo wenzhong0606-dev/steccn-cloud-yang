@@ -1387,6 +1387,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     public EpChartGraphVO<List<String>, BigDecimal> warehousingClassification(WmsReportWarehouseDTO dto) {
         EpChartGraphVO<List<String>, BigDecimal>   chartVO =  new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
         //获取入库单数据
 //        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
 //                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsStorageReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
@@ -1428,6 +1432,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             chartVO.setSeriesDataVO(seriesDataVO);
         }
         return chartVO;
+    }
+
+    @Override
+    public BigDecimal totalQuantity(WmsReportWarehouseDTO dto) {
+        BigDecimal quantity = null;
+       List<WmsStorageReceiptInfo> infos = this.baseMapper.warehousingClassification(dto.getWarehouseIds(),dto.getStartTime(),dto.getEndTime());
+       if (CollUtil.isNotEmpty(infos)) {
+           quantity = infos.stream().map(WmsStorageReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+       }
+        return quantity;
     }
 
 

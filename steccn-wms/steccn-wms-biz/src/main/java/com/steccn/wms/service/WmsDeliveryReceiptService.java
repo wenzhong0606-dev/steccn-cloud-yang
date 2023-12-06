@@ -142,4 +142,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     EpChartGraphVO<List<String>, BigDecimal> outboundDeliveryClassification(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    /**
+     * 出库单明细总数
+     * @param dto
+     * @return
+     */
+    BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
 }

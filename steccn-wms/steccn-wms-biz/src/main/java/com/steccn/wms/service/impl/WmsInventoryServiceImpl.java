@@ -618,6 +618,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
+    public BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO) {
+        return this.baseMapper.inventory(wmsReportWarehouseDTO.getWarehouseIds());
+    }
+
+    @Override
     public Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
