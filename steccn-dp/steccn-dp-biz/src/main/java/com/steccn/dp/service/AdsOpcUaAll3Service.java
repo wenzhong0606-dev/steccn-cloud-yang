@@ -1,8 +1,10 @@
 package com.steccn.dp.service;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
@@ -30,4 +32,11 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     List<DpValueDateVO> weightCountAsDay(TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 拉引量熔化率
+     * @param dto
+     * @return
+     */
+    QtLineChartBarDTO weightCountDashBoard(DpPmsOperateDTO dto);
 }
