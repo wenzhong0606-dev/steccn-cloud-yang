@@ -265,4 +265,12 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     BigDecimal inactionStock(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+
+    /**
+     * 获取实时库存
+     * @param wmsReportWarehouseDTO
+     * @return
+     */
+    BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }

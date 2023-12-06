@@ -678,6 +678,17 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         return chartVO;
     }
 
+    @Override
+    public BigDecimal totalQuantity(WmsReportWarehouseDTO dto) {
+        BigDecimal quantity  = null;
+        //获取出库单数据
+        List<WmsTransferSlipInfo> infos = this.baseMapper.totalQuantity(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)){
+            quantity = infos.stream().map(WmsTransferSlipInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add);
+        }
+        return quantity;
+    }
+
     /**
      * 当前最大的code值
      *

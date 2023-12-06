@@ -150,6 +150,14 @@
                group by material_id
         )
     </select>
+    <select id="inventory" resultType="java.math.BigDecimal">
+        SELECT SUM(total_quantity)
+        FROM wms_inventory
+        WHERE warehouse_id IN
+        <foreach collection="warehouseIds" open="(" close=")" item="warehouseId" separator=",">
+            #{warehouseId}
+        </foreach>
+    </select>
 
 
 </mapper>
