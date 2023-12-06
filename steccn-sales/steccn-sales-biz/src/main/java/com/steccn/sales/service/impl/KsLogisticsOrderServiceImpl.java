@@ -54,7 +54,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     public Page<KsLogisticsVO> getLogisticsRecord(KsLogisticsDTO dto) {
         //2.条件查询
         LambdaQueryWrapper<KsLogisticsOrder> condition = new LambdaQueryWrapper<KsLogisticsOrder>()
-                .eq(KsLogisticsOrder::getWarehouseNames, dto.getWarehouseName())
+                .in(KsLogisticsOrder::getWarehouseNames, dto.getWarehouseName())
                 .eq(KsLogisticsOrder::getSendDate,dto.getDate())
                 .orderByDesc(KsLogisticsOrder::getName);
         //3.定义分页对象
@@ -105,9 +105,9 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     }
 
     @Override
-    public QtLineChartBarDTO logisticsRecordDashBoard(String warehouseName, LocalDate date) {
+    public QtLineChartBarDTO logisticsRecordDashBoard(KsLogisticsDTO dto) {
         //1、获取数据
-        List<KsLogisticsDashBoardDTO> dashBoard = ksLogisticsOrderMapper.selectLogisticsDashBoard(warehouseName, date);
+        List<KsLogisticsDashBoardDTO> dashBoard = ksLogisticsOrderMapper.selectLogisticsDashBoard(dto);
         SteccnTableAssertUtil.notEmpty(dashBoard, "数据为空");
         //2、组数据
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
