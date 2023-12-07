@@ -183,6 +183,12 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.getListByTypeAndKey(dto));
     }
 
+    @PostMapping("/list/listByTypeAndNameList")
+    @ApiOperation("根据机构类型以及关键字名称返回SysOffice列表信息")
+    public R<List<SysOfficeVO>> getListByTypeAndNameList(@RequestBody SysOfficeTypeKeyDTO dto) {
+        return R.success(sysOfficeService.getListByTypeAndNameList(dto));
+    }
+
     @GetMapping("/getByIdSysOfficeInfo")
     @ApiOperation("根据主键获取结构code")
     public R<String> getByIdSysOfficeInfo(@RequestParam Long id) {

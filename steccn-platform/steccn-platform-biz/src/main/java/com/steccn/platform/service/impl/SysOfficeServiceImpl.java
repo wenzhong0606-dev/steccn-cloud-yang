@@ -770,6 +770,26 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return vos;
     }
 
+    /**
+     * 根据机构类型以及关键字返回SysOfficeVO集合信息
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SysOfficeVO> getListByTypeAndNameList(SysOfficeTypeKeyDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).in(SysOffice::getOfficeType, dto.getType()).in(CollUtil.isNotEmpty(dto.getKeyList()), SysOffice::getOfficeName, dto.getKeyList()));
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp, vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
     @Override
     public Map<Integer, SysOfficeVO> parentInfo(Set<Integer> childIdList) {
 

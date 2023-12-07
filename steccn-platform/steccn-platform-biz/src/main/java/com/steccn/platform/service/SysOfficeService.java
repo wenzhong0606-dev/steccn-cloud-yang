@@ -154,6 +154,14 @@ public interface SysOfficeService extends IService<SysOffice> {
      */
     List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto);
 
+    /**
+     * 根据机构类型以及名称返回SysOfficeVO集合信息
+     *
+     * @param dto
+     * @return
+     */
+    List<SysOfficeVO> getListByTypeAndNameList(SysOfficeTypeKeyDTO dto);
+
 
     /**
      * 根据子节点id 获取父级信息
