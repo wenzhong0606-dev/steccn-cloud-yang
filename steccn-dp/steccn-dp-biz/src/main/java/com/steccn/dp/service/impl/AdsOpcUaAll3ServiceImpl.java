@@ -22,6 +22,7 @@ import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +73,25 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<DpWeightVO> result = Lists.newArrayList();
         result = adsOpcUaAll3Mapper.weightCountAsDayAndTag(new TupleDTO<>(dto.getStart().atTime(8,0,0),dto.getEnd().plusDays(1).atTime(7,59,59)));
         SteccnTableAssertUtil.notEmpty(result, "暂无数据");
+        if(dto.getType().equals(OaConstant.NUM_1)){
+            //把日期重置成第一天
+            result.forEach(tmp->{
+                tmp.setDate(tmp.getDate().withDayOfMonth(1));
+            });
+            // 使用 Stream API 进行按月份和 tagId 合并累加
+            result = result.stream()
+                    .collect(Collectors.toMap(
+                            v -> v.getDate() + "-" + v.getTagId(),
+                            Function.identity(),
+                            (v1, v2) -> {
+                                v1.setValue(BigDecimalUtil.add(v1.getValue(), v2.getValue()));
+                                return v1;
+                            }
+                    ))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+        }
         Set<String> refSet = result.stream().map(DpWeightVO::getTagId).collect(Collectors.toSet());
         Map<String, List<SysConfigurationDTO>> dpWeight = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("DP_WEIGHT", refSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //组图表
@@ -82,14 +103,14 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             dayCount =  dto.getEnd().getMonthValue() - dto.getStart().getMonthValue();
         }
         for (int i = 0; i <= dayCount; i++) {
-            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             LocalDate start = dto.getStart();
+            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             //0是日报表，1是月报表
             if(dto.getType().equals(OaConstant.NO)){
                 start = dto.getStart().plusDays(i);
                 stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             }else {
-                start = dto.getStart().plusMonths(i);
+                start = dto.getStart().withDayOfMonth(1).plusMonths(i);
                 stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             }
             LocalDate finalStart = start;
@@ -102,20 +123,23 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 if(tmpName.contains("2#")){
                     continue;
                 }
+                if(tmpName.contains("1#")){
+                    tmpName = tmpName.substring(2);
+                }
                 //若是硅砂和碎玻璃则累加
                 if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh1_FLOAT")){
                     DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh2_FLOAT")).findFirst().orElse(null);
                     if(Objects.nonNull(twoResult)){
-                        tmp.setValue(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()));
+                        tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
                     }
                 }
                 if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh9_FLOAT")){
                     DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh10_FLOAT")).findFirst().orElse(null);
                     if(Objects.nonNull(twoResult)){
-                        tmp.setValue(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()));
+                        tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
                     }
                 }
-                datList.add(new TupleDTO<>(tmpName, tmp.getValue()));
+                datList.add(new TupleDTO<>(tmpName, BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
             }
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);

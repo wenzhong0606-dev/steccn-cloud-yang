@@ -1,7 +1,9 @@
 package com.steccn.dp.controller;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.vo.DpWeightVO;
 import groovy.lang.Tuple;
@@ -30,5 +32,11 @@ public class DpWeightController {
     @ApiOperation(value = "电子秤读数")
     public R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(adsOpcUaAll3Service.getWeighCount(dto));
+    }
+
+    @PostMapping("/dashboard")
+    @ApiOperation(value = "电子秤读数图表")
+    public R<QtLineChartBarDTO> dashBoard(@RequestBody DpPmsOperateDTO dto) {
+        return R.success(adsOpcUaAll3Service.weightCountDashBoard(dto));
     }
 }

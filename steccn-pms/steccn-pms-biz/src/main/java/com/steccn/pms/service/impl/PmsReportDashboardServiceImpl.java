@@ -502,7 +502,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 start = dto.getStart().plusDays(i);
                 stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             }else {
-                start = dto.getStart().plusMonths(i);
+                start = dto.getStart().withDayOfMonth(1).plusMonths(i);
                 stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             }
 
