@@ -21,6 +21,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.QtSeriesDataDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
@@ -30,10 +31,8 @@ import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SrmDeliveryBodyDTO;
 import com.steccn.platform.dto.SrmDeliveryDTO;
 import com.steccn.platform.dto.SrmOaWorkFlowDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSrmFeignApi;
+import com.steccn.platform.dto.SysConfigurationDTO;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.*;
 import com.steccn.pms.dto.PmExcelDTO;
@@ -114,6 +113,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final WmsInventoryRecordService wmsInventoryRecordService;
 
     private final RemoteMessFeignApi remoteMessFeignApi;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -890,6 +890,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         }
         //仓库编码
         String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsStorageReceiptVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取erp中的code
+        Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", Sets.newHashSet(sourceCode))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if(CollUtil.isEmpty(erpWarehouse)){
+            throw new BusinessException("erp中没有对应的仓库");
+        }
+        String erpStockCode = erpWarehouse.get(sourceCode).get(0).getRefContent();
         //类型为生产完工入库
         if (wmsStorageReceiptVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
             ErpCommonSaveDTO<ErpSpinStockSaveDetailDTO> erpCommonSaveDTO = new ErpCommonSaveDTO<>();
@@ -915,7 +921,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
                     //YWZ需求 批号为箱号
                     erpCommonSaveDetail.setFlot(tmp.getCaseNo());
-                    erpCommonSaveDetail.setFstockno(sourceCode);
+                    erpCommonSaveDetail.setFstockno(erpStockCode);
                     if (StrUtil.isBlank(tmp.getErpLineCode())) {
                         if(StrUtil.isBlank(erpDepCode)){
                             throw new BusinessException("没有erp对应的部门");

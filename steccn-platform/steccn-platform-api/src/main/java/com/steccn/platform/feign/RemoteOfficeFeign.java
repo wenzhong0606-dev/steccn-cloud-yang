@@ -201,6 +201,10 @@ public interface RemoteOfficeFeign {
     @ApiOperation("根据机构类型以及关键字名称返回SysOffice列表信息")
     R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto);
 
+    @PostMapping("/feign/platform/sys/office/list/listByTypeAndNameList")
+    @ApiOperation("根据机构类型以及名称返回SysOffice列表信息")
+    R<List<SysOfficeVO>> getListByTypeAndNameList(@RequestBody SysOfficeTypeKeyDTO dto);
+
     @PostMapping("/list/parentIds")
     @ApiOperation("根据车间编码列表选择产线")
     R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentIdsDTO dto);

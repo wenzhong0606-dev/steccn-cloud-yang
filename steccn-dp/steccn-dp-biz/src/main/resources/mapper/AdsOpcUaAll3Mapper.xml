@@ -56,4 +56,20 @@
         </where>
         GROUP BY day
     </select>
+
+    <select id="weightCountAsDayAndTag" resultType="com.steccn.dp.vo.DpWeightVO">
+        SELECT DATE(DATE_ADD(serverTime, INTERVAL -8 HOUR)) AS day,tag_id AS tagId
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY day,tag_id
+    </select>
 </mapper>

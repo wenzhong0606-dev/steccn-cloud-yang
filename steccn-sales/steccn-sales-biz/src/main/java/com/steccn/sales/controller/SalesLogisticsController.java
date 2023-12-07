@@ -33,9 +33,9 @@ public class SalesLogisticsController {
         return R.success(ksLogisticsOrderService.getLogisticsRecord(dto));
     }
 
-    @GetMapping("/dashBoard")
+    @PostMapping("/dashBoard")
     @ApiOperation("图表")
-    R<QtLineChartBarDTO> logisticsRecordDashBoard(@RequestParam("warehouseName") String warehouseName, @RequestParam("date")LocalDate date){
-        return R.success(ksLogisticsOrderService.logisticsRecordDashBoard(warehouseName,date));
+    R<QtLineChartBarDTO> logisticsRecordDashBoard(@Valid @RequestBody KsLogisticsDTO dto){
+        return R.success(ksLogisticsOrderService.logisticsRecordDashBoard(dto));
     }
 }

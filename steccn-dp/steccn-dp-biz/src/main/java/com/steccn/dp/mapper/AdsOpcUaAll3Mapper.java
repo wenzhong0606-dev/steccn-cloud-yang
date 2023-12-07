@@ -32,6 +32,13 @@ public interface AdsOpcUaAll3Mapper extends BaseMapper<AdsOpcUaAll3> {
      * @return
      */
     List<DpValueDateVO> weightCountAsDay(@Param("dto") TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 电子称读数
+     * @param dto f1开始时间 f2结束时间
+     * @return
+     */
+    List<DpWeightVO> weightCountAsDayAndTag(@Param("dto") TupleDTO<LocalDateTime,LocalDateTime> dto);
 }
 
 

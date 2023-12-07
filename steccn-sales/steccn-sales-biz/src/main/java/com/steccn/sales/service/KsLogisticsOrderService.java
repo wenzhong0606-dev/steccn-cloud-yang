@@ -24,9 +24,8 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
 
     /**
      * 获取物流单图表
-     * @param warehouseName
-     * @param date
+     * @param dto
      * @return
      */
-    QtLineChartBarDTO logisticsRecordDashBoard(String warehouseName, LocalDate date);
+    QtLineChartBarDTO logisticsRecordDashBoard(KsLogisticsDTO dto);
 }

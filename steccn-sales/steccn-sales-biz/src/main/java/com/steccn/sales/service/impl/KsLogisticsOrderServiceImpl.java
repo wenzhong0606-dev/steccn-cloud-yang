@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
@@ -14,6 +15,10 @@ import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.sales.constant.SalesConstant;
 import com.steccn.sales.domain.*;
 import com.steccn.sales.dto.KsLogisticsDTO;
@@ -30,6 +35,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,12 +55,25 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     private final ProductProductMapper productProductMapper;
     private final KsLogisticsOrderMapper ksLogisticsOrderMapper;
     private final KsLogisticsCompanyMapper ksLogisticsCompanyMapper;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<KsLogisticsVO> getLogisticsRecord(KsLogisticsDTO dto) {
+        //需要传入仓库对应的货架
+        SysOfficeTypeKeyDTO typeKey = new SysOfficeTypeKeyDTO();
+        typeKey.setType(Lists.newArrayList("12"));
+        typeKey.setKeyList(Lists.newArrayList(dto.getWarehouseName()));
+        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(typeKey), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+        parentDTO.setParentIds(sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet()));
+        parentDTO.setOfficeType("5");
+        List<SysOfficeVO> sysOfficeVOS1 = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(sysOfficeVOS1)){
+            dto.getWarehouseName().addAll(sysOfficeVOS1.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toSet()));
+        }
         //2.条件查询
         LambdaQueryWrapper<KsLogisticsOrder> condition = new LambdaQueryWrapper<KsLogisticsOrder>()
-                .eq(KsLogisticsOrder::getWarehouseNames, dto.getWarehouseName())
+                .in(KsLogisticsOrder::getWarehouseNames, dto.getWarehouseName())
                 .eq(KsLogisticsOrder::getSendDate,dto.getDate())
                 .orderByDesc(KsLogisticsOrder::getName);
         //3.定义分页对象
@@ -105,10 +124,22 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     }
 
     @Override
-    public QtLineChartBarDTO logisticsRecordDashBoard(String warehouseName, LocalDate date) {
+    public QtLineChartBarDTO logisticsRecordDashBoard(KsLogisticsDTO dto) {
         //1、获取数据
-        List<KsLogisticsDashBoardDTO> dashBoard = ksLogisticsOrderMapper.selectLogisticsDashBoard(warehouseName, date);
-        SteccnTableAssertUtil.notEmpty(dashBoard, "数据为空");
+        //需要传入仓库对应的货架
+        SysOfficeTypeKeyDTO typeKey = new SysOfficeTypeKeyDTO();
+        typeKey.setType(Lists.newArrayList("12"));
+        typeKey.setKeyList(Lists.newArrayList(dto.getWarehouseName()));
+        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(typeKey), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeParentDTO parentDTO = new SysOfficeParentDTO();
+        parentDTO.setParentIds(sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet()));
+        parentDTO.setOfficeType("5");
+        List<SysOfficeVO> sysOfficeVOS1 = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(parentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(sysOfficeVOS1)){
+            dto.getWarehouseName().addAll(sysOfficeVOS1.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toSet()));
+        }
+        List<KsLogisticsDashBoardDTO> dashBoard = ksLogisticsOrderMapper.selectLogisticsDashBoard(dto);
+        SteccnTableAssertUtil.notEmpty(dashBoard, "暂无数据");
         //2、组数据
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         List<Integer> locationList = dashBoard.stream().map(KsLogisticsDashBoardDTO::getCustomerId).distinct().sorted().collect(Collectors.toList());

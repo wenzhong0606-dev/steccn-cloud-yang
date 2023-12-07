@@ -79,9 +79,11 @@
         logistics_company_id AS companyId,
         customer_delivery_id AS customerId
         FROM ks_logistics_order
-        WHERE warehouse_names = #{warehouseName} AND send_date = #{date}
+        WHERE warehouse_names IN
+        <foreach collection="dto.warehouseName" item="tmp"  open="(" close=")" separator=",">
+            #{tmp}
+        </foreach>
+            AND send_date = #{dto.date}
         GROUP BY logistics_company_id,customer_delivery_id
-
-
     </select>
 </mapper>

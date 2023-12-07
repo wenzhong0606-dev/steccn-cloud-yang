@@ -7,6 +7,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Set;
 
 /**
  * 仓库
@@ -20,7 +21,7 @@ public class KsLogisticsDTO extends BasePageDTO implements Serializable {
      * 仓库名称
      */
     @NotEmpty(message = "仓库名称不能为空")
-    private String warehouseName;
+    private Set<String> warehouseName;
     /**
      * 日期
      */
