@@ -53,7 +53,7 @@
                 and a.create_time between #{dto.startCreateTime} and #{dto.endCreateTime}
             </if>
             <if test="dto.associatedNo !=null  and dto.associatedNo !=''">
-                and a.associatedNo = #{associatedNo}
+                and a.associated_no = #{dto.associatedNo}
             </if>
         </where>
         Order By create_time DESC
