@@ -906,6 +906,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             List<ErpSpinStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
             //获取生产完工入库
             PmsCompleteStorageVO pmsCompleteStorageVO = FeignOptional.of(() -> remoteCompleteStorageFeignApi.getCompleteStorage(wmsStorageReceiptVO.getCode()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            erpCommonSaveDTO.setFdate(pmsCompleteStorageVO.getInStorageTime().toLocalDate());
             //拿到epr关联的code
             String erpDepCode = "";
             if(!Objects.isNull(pmsCompleteStorageVO.getProductLineId())){
@@ -935,7 +936,6 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 }
             }
             erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
-            System.out.println(JSONObject.toJSONString(erpCommonSaveDTO));
             String listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
