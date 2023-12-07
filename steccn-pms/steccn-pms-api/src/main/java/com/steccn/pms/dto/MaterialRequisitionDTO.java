@@ -42,6 +42,11 @@ public class MaterialRequisitionDTO {
     @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注长度不超过100个中文")
     private String note;
 
+    /**
+     * 关联单据
+     */
+    private String associatedNo;
+
     @ApiModelProperty("领料单详情")
     @Valid
     private List<MaterialRequisitionInfoDTO> list;
