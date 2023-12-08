@@ -2,9 +2,7 @@ package com.steccn.dp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.FeignOptional;
@@ -14,15 +12,19 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.BaseValueNameVO;
+import com.steccn.common.vo.BaseValueVO;
+import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.dto.SalesContractCustomerDTO;
 import com.steccn.dp.dto.SalesContractModelDTO;
-import com.steccn.dp.dto.SalesContractThickDTO;
+import com.steccn.dp.dto.SalesContractClassDTO;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
+import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
@@ -30,9 +32,8 @@ import com.steccn.platform.dto.SalesContractDTO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
-import com.steccn.platform.vo.SalesLogisticsVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import lombok.NoArgsConstructor;
+import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -215,7 +216,9 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     }
 
     @Override
-    public List<QtLineChartBarDTO> salesContract(TupleDTO<LocalDate, LocalDate> dto) {
+    public DpSalesContractVO salesContract(TupleDTO<LocalDate, LocalDate> dto) {
+        DpSalesContractVO vo = new DpSalesContractVO();
+        List<CommonBarLineVO> results = Lists.newArrayList();
         //调用三方接口
         SalesContractDTO contractDTO = new SalesContractDTO();
         contractDTO.setServer_code("query_contract");
@@ -227,9 +230,69 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 .getJSONObject("mdMappings").getJSONArray("customer").toJavaList(SalesContractCustomerDTO.class);
         List<SalesContractModelDTO> models = jsonObject.getJSONObject("result")
                 .getJSONObject("mdMappings").getJSONArray("model").toJavaList(SalesContractModelDTO.class);
-        List<SalesContractThickDTO> thick = jsonObject.getJSONObject("result")
-                .getJSONObject("mdMappings").getJSONArray("thick").toJavaList(SalesContractThickDTO.class);
-        return null;
+        List<SalesContractClassDTO> productClass = jsonObject.getJSONObject("result")
+                .getJSONObject("mdMappings").getJSONArray("class").toJavaList(SalesContractClassDTO.class);
+        SteccnTableAssertUtil.notEmpty(customers, "暂无数据");
+        //开始组数据 customers
+        //柱状图 + 折线图
+        CommonBarLineVO commonBarLineVO1 = new CommonBarLineVO();
+        //根据粒度 分割日期
+        List<String> xAisList1 = Lists.newArrayList();
+        List<BigDecimal> quantityList1 = Lists.newArrayList();
+        List<BigDecimal> rateList1 = Lists.newArrayList();
+        customers.forEach(tmp->{
+            xAisList1.add(tmp.getCustomer_name());
+            quantityList1.add(tmp.getQty());
+            rateList1.add(tmp.getRatio());
+        });
+        List<String> legendList1 = Arrays.asList("下单量（㎡）", "百分比%");
+        commonBarLineVO1.setXAxis(new BaseValueVO(xAisList1));
+        commonBarLineVO1.setLegend(new BaseValueVO<>(legendList1));
+        BaseValueNameVO<List<BigDecimal>> quantityBv1 = new BaseValueNameVO<>(quantityList1, "下单量（㎡）");
+        BaseValueNameVO<List<BigDecimal>> rateBv1 = new BaseValueNameVO<>(rateList1, "百分比%");
+        commonBarLineVO1.setSeries(Arrays.asList(quantityBv1, rateBv1));
+        results.add(commonBarLineVO1);
+        //开始组数据 models
+        //柱状图 + 折线图
+        CommonBarLineVO commonBarLineVO2 = new CommonBarLineVO();
+        //根据粒度 分割日期
+        List<String> xAisList2 = Lists.newArrayList();
+        List<BigDecimal> quantityList2 = Lists.newArrayList();
+        List<BigDecimal> rateList2 = Lists.newArrayList();
+        models.forEach(tmp->{
+            xAisList2.add(tmp.getModel_specs());
+            quantityList2.add(tmp.getQty());
+            rateList2.add(tmp.getRatio());
+        });
+        List<String> legendList2 = Arrays.asList("接单量（㎡）", "占比%");
+        commonBarLineVO2.setXAxis(new BaseValueVO(xAisList2));
+        commonBarLineVO2.setLegend(new BaseValueVO<>(legendList2));
+        BaseValueNameVO<List<BigDecimal>> quantityBv2 = new BaseValueNameVO<>(quantityList2, "下单量（㎡）");
+        BaseValueNameVO<List<BigDecimal>> rateBv2 = new BaseValueNameVO<>(rateList2, "百分比%");
+        commonBarLineVO2.setSeries(Arrays.asList(quantityBv2, rateBv2));
+        results.add(commonBarLineVO2);
+        //开始组数据 productClass
+        //柱状图 + 折线图
+        CommonBarLineVO commonBarLineVO3 = new CommonBarLineVO();
+        //根据粒度 分割日期
+        List<String> xAisList3 = Lists.newArrayList();
+        List<BigDecimal> quantityList3 = Lists.newArrayList();
+        List<BigDecimal> rateList3 = Lists.newArrayList();
+        productClass.forEach(tmp->{
+            xAisList3.add(tmp.getProduct_class());
+            quantityList3.add(tmp.getQty());
+            rateList3.add(tmp.getRatio());
+        });
+        List<String> legendList3 = Arrays.asList("接单量（㎡）", "百分比%");
+        commonBarLineVO3.setXAxis(new BaseValueVO(xAisList3));
+        commonBarLineVO3.setLegend(new BaseValueVO<>(legendList3));
+        BaseValueNameVO<List<BigDecimal>> quantityBv3 = new BaseValueNameVO<>(quantityList3, "接单量（㎡）");
+        BaseValueNameVO<List<BigDecimal>> rateBv3 = new BaseValueNameVO<>(rateList3, "百分比%");
+        commonBarLineVO3.setSeries(Arrays.asList(quantityBv3, rateBv3));
+        results.add(commonBarLineVO3);
+        vo.setCommonBarLineVO(results);
+        vo.setCountData(customers.stream().map(SalesContractCustomerDTO::getQty).reduce(BigDecimal.ZERO,BigDecimal::add));
+        return vo;
     }
 }
 

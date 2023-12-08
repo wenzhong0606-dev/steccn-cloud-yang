@@ -11,8 +11,8 @@ import java.math.BigDecimal;
  * @date 2023/12/07
  */
 @Data
-public class SalesContractThickDTO {
-    private String thick;
+public class SalesContractClassDTO {
+    private String product_class;
     private BigDecimal qty;
     private BigDecimal ratio;
 }

@@ -2,9 +2,11 @@ package com.steccn.dp.service;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
@@ -53,5 +55,5 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @param dto
      * @return
      */
-    List<QtLineChartBarDTO> salesContract(TupleDTO<LocalDate,LocalDate> dto);
+    DpSalesContractVO salesContract(TupleDTO<LocalDate,LocalDate> dto);
 }

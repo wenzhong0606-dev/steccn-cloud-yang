@@ -143,7 +143,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         //2、组数据
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         List<Integer> locationList = dashBoard.stream().map(KsLogisticsDashBoardDTO::getCustomerId).distinct().sorted().collect(Collectors.toList());
-        List<Integer> companyList = dashBoard.stream().map(KsLogisticsDashBoardDTO::getCompanyId).distinct().sorted().collect(Collectors.toList());
+        List<Integer> companyList = dashBoard.stream().filter(v->Objects.nonNull(v.getCompanyId())).map(KsLogisticsDashBoardDTO::getCompanyId).distinct().sorted().collect(Collectors.toList());
         //收货地址
         List<ResPartner> resPartners = resPartnerMapper.selectList(new LambdaQueryWrapper<ResPartner>().in(ResPartner::getId, locationList));
         //公司
@@ -154,7 +154,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
             stackGraphDTO.setXAxis(location);
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
             companyList.forEach(companyTmp->{
-                KsLogisticsDashBoardDTO ksLogisticsDashBoardDTO = dashBoard.stream().filter(v -> v.getCustomerId().equals(tmp) && v.getCompanyId().equals(companyTmp)).findFirst().orElse(null);
+                KsLogisticsDashBoardDTO ksLogisticsDashBoardDTO = dashBoard.stream().filter(v -> v.getCustomerId().equals(tmp) && Objects.nonNull(v.getCompanyId()) && v.getCompanyId().equals(companyTmp)).findFirst().orElse(null);
                 KsLogisticsCompany companyInfo = company.stream().filter(v -> v.getId().equals(companyTmp)).findFirst().orElse(null);
                 if(Objects.isNull(ksLogisticsDashBoardDTO)){
                     datList.add(new TupleDTO<>(companyInfo.getName(),BigDecimal.ZERO));

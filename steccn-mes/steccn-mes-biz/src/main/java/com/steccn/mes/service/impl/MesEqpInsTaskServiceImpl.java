@@ -341,25 +341,39 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                     }
                     if(CollUtil.isNotEmpty(taskTmpDTOS)){
                         //根据时间排序
-                        taskTmpDTOS.forEach(tmp->tmp.getDateTime().withSecond(0));
+                        taskTmpDTOS.forEach(tmp->tmp.setDateTime(tmp.getDateTime().withSecond(0)));
                         //按时间分组并排序
                         Map<LocalDateTime, List<MesInsTaskTmpDTO>> localDateTimeListMap = taskTmpDTOS.stream().collect(Collectors.groupingBy(MesInsTaskTmpDTO::getDateTime));
                         TreeMap<LocalDateTime, List<MesInsTaskTmpDTO>> localDateTimeListTreeMap = MapUtil.sort(localDateTimeListMap);
                         for(Map.Entry<LocalDateTime, List<MesInsTaskTmpDTO>> entry:localDateTimeListTreeMap.entrySet()){
                             Map<String,String> dataTmp = Maps.newHashMap();
-                            //放入班次班组
-                            dataTmp.put("date",date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                            dataTmp.put("classOrder",classOrderStr);
-                            if(CollUtil.isNotEmpty(todayClassVOS)){
-                                OaTodayClassVO oaTodayClassVO = todayClassVOS.stream().filter(v -> v.getClassOrder().equals(classOrderStr)).findFirst().orElse(new OaTodayClassVO());
-                                dataTmp.put("classGroupName",oaTodayClassVO.getClassGroup());
+                            String time = entry.getKey().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+                            String dateStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                            //查找是否有相同日期相同时间的行
+                            Boolean isExistColumn = false;
+                            if(CollUtil.isNotEmpty(tableList)){
+                                Map<String, String> mapTmp = tableList.stream().filter(map -> map.containsKey("date") && map.get("date").equals(dateStr)
+                                        && map.containsKey("time") && map.get("time")!=null && map.get("time").equals(time)).findFirst().orElse(null);
+                                if(Objects.nonNull(mapTmp)){
+                                    dataTmp = mapTmp;
+                                    isExistColumn = true;
+                                }
                             }
-                            dataTmp.put("time",entry.getKey().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                            //放入班次班组
+                            if(!isExistColumn){
+                                dataTmp.put("date",dateStr);
+                                dataTmp.put("classOrder",classOrderStr);
+                                if(CollUtil.isNotEmpty(todayClassVOS)){
+                                    OaTodayClassVO oaTodayClassVO = todayClassVOS.stream().filter(v -> v.getClassOrder().equals(classOrderStr)).findFirst().orElse(new OaTodayClassVO());
+                                    dataTmp.put("classGroupName",oaTodayClassVO.getClassGroup());
+                                }
+                                dataTmp.put("time",time);
+                            }
                             //温度项数据
                             for(MesItemIdNameVO tempItem:tempItems){
                                 dataTmp.put(tempItemMap.get(tempItem.getItemId()).getCode()+officeTmp.getId(),null);
                             }
-                            entry.getValue().forEach(tmp->{
+                            for(MesInsTaskTmpDTO tmp:entry.getValue()){
                                 String itemValueStr;
                                 if(Objects.isNull(tmp.getItemValue())){
                                     itemValueStr = null;
@@ -367,24 +381,38 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                                     itemValueStr = tmp.getItemValue().toString();
                                 }
                                 dataTmp.put(tempItemMap.get(tmp.getInsItemId()).getCode()+officeTmp.getId(),itemValueStr);
-                            });
-                            tableList.add(dataTmp);
+                            }
+                            if(!isExistColumn){
+                                tableList.add(dataTmp);
+                            }
                         }
                     }else {
                         Map<String,String> dataTmp = Maps.newHashMap();
-                        //放入班次班组
-                        dataTmp.put("date",date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                        dataTmp.put("classOrder",classOrderStr);
-                        if(CollUtil.isNotEmpty(todayClassVOS)){
-                            OaTodayClassVO oaTodayClassVO = todayClassVOS.stream().filter(v -> v.getClassOrder().equals(classOrderStr)).findFirst().orElse(new OaTodayClassVO());
-                            dataTmp.put("classGroupName",oaTodayClassVO.getClassGroup());
+                        String dateStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        //查找是否有相同日期相同时间的行
+                        Boolean isExistColumn = false;
+                        if(CollUtil.isNotEmpty(tableList)){
+                            List<Map<String, String>> mapTmp = tableList.stream().filter(map -> map.containsKey("date") && map.get("date").equals(dateStr)
+                                    ).collect(Collectors.toList());
+                            if(CollUtil.isNotEmpty(mapTmp)){
+                                isExistColumn = true;
+                            }
                         }
-                        dataTmp.put("time",null);
-                        //温度项数据
-                        for(MesItemIdNameVO tempItem:tempItems){
-                            dataTmp.put(tempItemMap.get(tempItem.getItemId()).getCode()+officeTmp.getId(),null);
+                        if(!isExistColumn){
+                            //放入班次班组
+                            dataTmp.put("date",date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                            dataTmp.put("classOrder",classOrderStr);
+                            if(CollUtil.isNotEmpty(todayClassVOS)){
+                                OaTodayClassVO oaTodayClassVO = todayClassVOS.stream().filter(v -> v.getClassOrder().equals(classOrderStr)).findFirst().orElse(new OaTodayClassVO());
+                                dataTmp.put("classGroupName",oaTodayClassVO.getClassGroup());
+                            }
+                            dataTmp.put("time",null);
+                            //温度项数据
+                            for(MesItemIdNameVO tempItem:tempItems){
+                                dataTmp.put(tempItemMap.get(tempItem.getItemId()).getCode()+officeTmp.getId(),null);
+                            }
+                            tableList.add(dataTmp);
                         }
-                        tableList.add(dataTmp);
                     }
 
                 }
@@ -403,7 +431,7 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
         Assert.notEmpty(tempValue,"数据为空");
         //把时间置为0秒
         tempValue.forEach(tmp->{
-            tmp.getDateTime().withSecond(0);
+            tmp.setDateTime(tmp.getDateTime().withSecond(0));
         });
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         List<String> xAxisList1 = Lists.newArrayList();
