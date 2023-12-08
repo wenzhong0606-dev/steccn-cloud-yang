@@ -3,6 +3,7 @@ package com.steccn.wms.mapper;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author W10
@@ -13,6 +14,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface WmsStorageReceiptInfoMapper extends BaseMapper<WmsStorageReceiptInfo> {
 
+
+    /**
+     * 根据箱号获取入库单明细并且不包括已冲销和已删除
+     * @param caseNo
+     * @return
+     */
+    WmsStorageReceiptInfo getByCaseNo(@Param("caseNo") String caseNo);
 }
 
 

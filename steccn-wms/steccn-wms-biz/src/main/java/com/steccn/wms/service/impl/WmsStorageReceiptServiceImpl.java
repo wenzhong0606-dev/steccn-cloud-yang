@@ -862,13 +862,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
      */
     @Override
     public Boolean chargeAgainstById(Long id) {
-        WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = chargeAgainst(id, SecurityUtils.getUser().getName());
+        chargeAgainst(id, SecurityUtils.getUser().getName());
         WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
-        //查询该入库单是否在生产入库单中存在，如果存在,则创建对应的出库单
+        //查询该入库单是否在生产入库单中存在
         Boolean aBoolean = FeignOptional.of(() -> remoteCompleteStorageFeignApi.getCompleteStorageByCode(wmsStorageReceiptVO.getCode()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         if (aBoolean) {
-            //在pms中创建对应的出库单
-            wmsDeliveryReceiptDTO.setChargeAgainstCode(wmsStorageReceiptVO.getCode());
+            //在pms对入库中对应的箱状态进行修改
+            PmsCompleteStorageDTO pmsCompleteStorageDTO = new PmsCompleteStorageDTO();
+            pmsCompleteStorageDTO.setCode(wmsStorageReceiptVO.getCode());
+            pmsCompleteStorageDTO.setConfirmName(SecurityUtils.getUser().getName());
+            FeignOptional.of(() -> remoteCompleteStorageFeignApi.completeStorageStatue(pmsCompleteStorageDTO), FeignConstant.STECCN_PMS_SERVICE_NAME);
         }
         return true;
     }
@@ -1048,7 +1051,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             }
         }
         //2.箱号是否关联了入库单
-        WmsStorageReceiptInfo receiptInfo = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>().eq(WmsStorageReceiptInfo::getCaseNo, dto.getCaseNo()).last(MpConstant.STR_LIMIT_1));
+        WmsStorageReceiptInfo receiptInfo =  wmsStorageReceiptInfoService.getByCaseNo(dto.getCaseNo());
         if (Objects.nonNull(receiptInfo)) {
             flagInfoVO.setRelevancyFlag(1);
             //2.1 箱号关联的入库单状态是否为已创建
@@ -1482,11 +1485,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsDeliveryReceiptInfoDTO> infoDTOList = Lists.newArrayList();
                 List<WmsInventory> wmsInventoryList = Lists.newArrayList();
                 List<WmsInventoryRecord> wmsInventoryRecordList = Lists.newArrayList();
-
                 for (WmsStorageReceiptInfoVO info : list) {
                     //处理库存数据
                     List<WmsInventory> inventoryList = inventoryMap.get(info.getMaterialId());
                     Assert.isTrue(CollUtil.isNotEmpty(inventoryList), info.getMaterialName() + "库存不足,冲销失败");
+                    //过滤可用库存为O的数据
+                  inventoryList = inventoryList.stream()
+                            .filter(inventory -> inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
+                            .collect(Collectors.toList());
                     BigDecimal quantity = info.getQuantity();
                     for (WmsInventory inventory : inventoryList) {
                         if (quantity.compareTo(BigDecimal.ZERO) == 0) {
@@ -1547,7 +1553,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 }
                 wmsDeliveryReceiptDTO.setList(infoDTOList);
                 //生成出库单并自动确认
-                wmsDeliveryReceiptDTO1 = wmsDeliveryReceiptService.chargeAgainst(wmsDeliveryReceiptDTO, userName);
+                wmsDeliveryReceiptService.chargeAgainst(wmsDeliveryReceiptDTO, userName);
                 //生成库存变化流水记录
                 wmsInventoryRecordService.saveBatch(wmsInventoryRecordList);
                 //扣除库存
@@ -1561,6 +1567,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             lock.unlock();
         }
         return wmsDeliveryReceiptDTO1;
+
     }
 
 

@@ -7,9 +7,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.mapper.WmsStorageReceiptInfoMapper;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +25,11 @@ import java.util.Set;
  * @createDate 2022-12-09 11:18:09
  */
 @Service
+@RequiredArgsConstructor
 public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageReceiptInfoMapper, WmsStorageReceiptInfo>
         implements WmsStorageReceiptInfoService {
+
+    private final  WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
     @Override
     public Map<Long, WmsStorageReceiptInfo> infoMap(List<Long> updateIds) {
         Map<Long, WmsStorageReceiptInfo> map = Maps.newHashMap();
@@ -35,6 +40,11 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
             });
         }
         return map;
+    }
+
+    @Override
+    public WmsStorageReceiptInfo getByCaseNo(String caseNo) {
+       return wmsStorageReceiptInfoMapper.getByCaseNo(caseNo);
     }
 }
 

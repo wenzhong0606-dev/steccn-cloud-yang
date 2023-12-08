@@ -20,4 +20,12 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
      * @return
      */
     Map<Long, WmsStorageReceiptInfo> infoMap(List<Long> updateIds);
+
+
+    /**
+     * 根据箱号获取数据（不包含已删除以及已冲销）
+     * @param caseNo
+     * @return
+     */
+    WmsStorageReceiptInfo getByCaseNo(String caseNo);
 }

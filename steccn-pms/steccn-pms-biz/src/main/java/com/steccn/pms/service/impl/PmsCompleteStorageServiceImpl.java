@@ -108,13 +108,13 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
         //1.判断装箱单（PP-XXXXX）已扫描，入库单为SI-XXXXX
-        PmsCompleteStorageInfo pmsCompleteStorageInfo = completeStorageInfoService.getOne(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
-                .eq(PmsCompleteStorageInfo::getCaseNo, caseNo)
-                .last(MpConstant.STR_LIMIT_1));
-        if (Objects.nonNull(pmsCompleteStorageInfo)) {
-            PmsCompleteStorage pmsCompleteStorage = getById(pmsCompleteStorageInfo.getCompleteStorageId());
-            throw new BusinessException("装箱单" + caseNo + "已扫描，入库单为" + pmsCompleteStorage.getCode());
-        }
+//        PmsCompleteStorageInfo pmsCompleteStorageInfo = completeStorageInfoService.getOne(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
+//                .eq(PmsCompleteStorageInfo::getCaseNo, caseNo)
+//                .last(MpConstant.STR_LIMIT_1));
+//        if (Objects.nonNull(pmsCompleteStorageInfo)) {
+//            PmsCompleteStorage pmsCompleteStorage = getById(pmsCompleteStorageInfo.getCompleteStorageId());
+//            throw new BusinessException("装箱单" + caseNo + "已扫描，入库单为" + pmsCompleteStorage.getCode());
+//        }
         //2.根据箱号查询箱信息
         PmsBarcodePrint pmsBarcodePrint = pmsBarcodePrintService.getOne(new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getCaseNo, caseNo)
@@ -492,6 +492,34 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsBarcodePrintService.reviseAlreadyPutInStatue(caseNoList, PmManagerConstant.CaseStateEnum.ALREADY.getCode());
         return R.success(true);
     }
+
+
+    /**
+     * 根据入库单编码找到入库凭证修改完成状态（用于仓储对完工入库单冲销后 修改完工入库单状态：已冲销 以及箱状态 已完工）
+     *
+     * @param code
+     * @return
+     */
+    @Override
+    public R<Boolean> completeStorageStatue(String code, String confirmName) {
+        if (Objects.isNull(code) || Objects.isNull(confirmName)) {
+            throw new BusinessException("确认用户名或者入库单编码不能为空");
+        }
+        //根据入库单编号查找入库单
+        PmsCompleteStorage getOneCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
+        if (Objects.isNull(getOneCompleteStorage)) {
+            throw new BusinessException("未找到此入库单编码");
+        }
+        if (getOneCompleteStorage.getCode().equals(getOneCompleteStorage.getInStorageVoucher())) {
+            getOneCompleteStorage.setState(PmManagerConstant.InVouchEnum.CHARGE.getCode());
+            //更新生产订单完成入库数据表
+            updateById(getOneCompleteStorage);
+        }
+        List<String> caseNoList = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
+        pmsBarcodePrintService.reviseAlreadyPutInStatue(caseNoList, PmManagerConstant.CaseStateEnum.FINISH.getCode());
+        return R.success(true);
+    }
+
 
     @Override
     public String connectLine(ConnectLineStorageDTO dto) {

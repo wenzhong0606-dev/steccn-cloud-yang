@@ -35,6 +35,10 @@ public interface RemoteCompleteStorageFeignApi {
     @PostMapping("/feign/pms/complete/storage/complete")
     R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto);
 
+    @ApiOperation("完工入库变更状态")
+    @PostMapping("/feign/pms/complete/storage/revise/complete")
+    R<Boolean> completeStorageStatue(@RequestBody PmsCompleteStorageDTO dto);
+
     @ApiOperation("完工入库单据状态变更")
     @PostMapping("/feign/pms/complete/storage/change/state")
     R<Boolean> changeReceiptState(@RequestBody ReceiptStatusDTO dto);

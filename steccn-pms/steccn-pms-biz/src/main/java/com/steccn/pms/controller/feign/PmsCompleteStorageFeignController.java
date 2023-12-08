@@ -44,6 +44,13 @@ public class PmsCompleteStorageFeignController {
         return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode(),dto.getConfirmName());
     }
 
+    @PostMapping("/revise/complete")
+    @ApiOperation("根据完成生产订单入库单编码修改状态为已冲销")
+    @SysLog("revise/complete")
+    public R<Boolean> completeStorageStatue(@RequestBody PmsCompleteStorageDTO dto) {
+        return pmsCompleteStorageService.completeStorageStatue(dto.getCode(),dto.getConfirmName());
+    }
+
     @ApiOperation("完工入库单据状态变更")
     @PostMapping("/change/state")
     R<Boolean> changeReceiptState(@RequestBody ReceiptStatusDTO dto) {

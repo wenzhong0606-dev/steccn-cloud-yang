@@ -31,4 +31,21 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <select id="getByCaseNo" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
+        SELECT
+            wsri.id,
+            wsri.storage_receipt_id,
+            wsri.material_id,
+            wsri.quantity,
+            wsri.unit,
+            wsri.batch,
+            wsri.case_no,
+            wsri.associated_no,
+            wsri.valid_time
+        FROM
+            wms_storage_receipt_info wsri
+                LEFT JOIN wms_storage_receipt wsr ON wsr.id = wsri.storage_receipt_id
+        WHERE wsr.del_flag = 0 and wsr.`status`!= 5 and wsri.case_no = #{caseNo}
+        order by wsri.valid_time desc limit 1
+    </select>
 </mapper>

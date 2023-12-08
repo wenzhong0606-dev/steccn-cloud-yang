@@ -80,6 +80,15 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
     R<Boolean> completeStorageReviseStatue(String code,String confirmName);
 
     /**
+     * 根据入库单编码找到入库凭证修改完成状态（用于仓储对完工入库单冲销后 修改完工入库单状态：已冲销 以及箱状态 已完工）
+     *
+     * @param code
+     * @return
+     */
+    R<Boolean> completeStorageStatue(String code,String confirmName);
+
+
+    /**
      * 连线入库
      * @param dto 请求参数
      * @return 入库单编码
