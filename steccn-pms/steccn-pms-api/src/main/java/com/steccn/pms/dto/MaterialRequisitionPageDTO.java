@@ -48,4 +48,7 @@ public class MaterialRequisitionPageDTO extends BasePageDTO {
 
     @ApiModelProperty("状态")
     private Long status;
+
+    @ApiModelProperty("关联单据")
+    private String associatedNo;
 }
