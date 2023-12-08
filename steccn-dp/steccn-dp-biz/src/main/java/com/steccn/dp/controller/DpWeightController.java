@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,6 +33,12 @@ public class DpWeightController {
     @ApiOperation(value = "电子秤读数")
     public R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(adsOpcUaAll3Service.getWeighCount(dto));
+    }
+
+    @PostMapping("/count/date")
+    @ApiOperation(value = "电子秤读数按日期")
+    public R<List<DpWeightVO>> countDate(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
+        return R.success(adsOpcUaAll3Service.getWeighCountDate(dto));
     }
 
     @PostMapping("/dashboard")

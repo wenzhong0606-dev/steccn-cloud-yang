@@ -9,6 +9,7 @@ import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,13 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
     List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime,LocalDateTime> dto);
 
     /**
+     * 获取电子秤读数
+     * @param dto
+     * @return
+     */
+    List<DpWeightVO> getWeighCountDate(TupleDTO<LocalDate,LocalDate> dto);
+
+    /**
      * 合计每天的电子秤读数
      * @param dto
      * @return
@@ -39,4 +47,11 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     QtLineChartBarDTO weightCountDashBoard(DpPmsOperateDTO dto);
+
+    /**
+     * 销售系统合同
+     * @param dto
+     * @return
+     */
+    List<QtLineChartBarDTO> salesContract(TupleDTO<LocalDate,LocalDate> dto);
 }

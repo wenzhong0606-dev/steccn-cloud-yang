@@ -1,7 +1,9 @@
 package com.steccn.dp.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -15,13 +17,19 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.dto.SalesContractCustomerDTO;
+import com.steccn.dp.dto.SalesContractModelDTO;
+import com.steccn.dp.dto.SalesContractThickDTO;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.dto.SalesContractDTO;
 import com.steccn.platform.dto.SysConfigurationDTO;
+import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.platform.vo.SalesLogisticsVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +54,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     implements AdsOpcUaAll3Service{
     private final AdsOpcUaAll3Mapper adsOpcUaAll3Mapper;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final RemoteSalesFeignApi remoteSalesFeignApi;
 
     @Override
     public List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime, LocalDateTime> dto) {
@@ -59,6 +68,44 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             });
         }
         return result;
+    }
+
+    @Override
+    public List<DpWeightVO> getWeighCountDate(TupleDTO<LocalDate, LocalDate> dto) {
+        List<DpWeightVO> weighCount = getWeighCount(new TupleDTO<>(dto.getField1().atTime(8, 0, 0), dto.getField2().plusDays(1).atTime(7, 59, 59)));
+        List<DpWeightVO> results = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(weighCount)){
+            //合并硅砂和碎玻璃
+            List<DpWeightVO> sand = weighCount.stream().filter(v -> v.getTagName().contains("硅砂")).collect(Collectors.toList());
+            List<DpWeightVO> glass = weighCount.stream().filter(v -> v.getTagName().contains("碎玻璃")).collect(Collectors.toList());
+            BigDecimal sandValue = sand.stream().map(DpWeightVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal glassValue = glass.stream().map(DpWeightVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            for(DpWeightVO tmp:weighCount){
+                if(tmp.getTagName().equals("2#硅砂")||tmp.getTagName().equals("2#碎玻璃")){
+                    continue;
+                }else if(tmp.getTagName().equals("1#硅砂")){
+                    DpWeightVO result = new DpWeightVO();
+                    BeanUtil.copyProperties(tmp,result);
+                    result.setValue(BigDecimalUtil.divide(sandValue,new BigDecimal(1000),2) );
+                    result.setTagName("硅砂");
+                    results.add(result);
+                }else if(tmp.getTagName().equals("1#碎玻璃")){
+                    DpWeightVO result = new DpWeightVO();
+                    BeanUtil.copyProperties(tmp,result);
+                    result.setValue(BigDecimalUtil.divide(glassValue,new BigDecimal(1000),2) );
+                    result.setTagName("碎玻璃");
+                    results.add(result);
+                }else {
+                    DpWeightVO result = new DpWeightVO();
+                    BeanUtil.copyProperties(tmp,result);
+                    result.setValue(BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2) );
+                    results.add(result);
+                }
+
+            }
+            results = results.stream().sorted(Comparator.comparing(DpWeightVO::getTagId)).collect(Collectors.toList());
+        }
+        return results;
     }
 
     @Override
@@ -145,6 +192,24 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             dataList.add(stackGraphDTO);
         }
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public List<QtLineChartBarDTO> salesContract(TupleDTO<LocalDate, LocalDate> dto) {
+        //调用三方接口
+        SalesContractDTO contractDTO = new SalesContractDTO();
+        contractDTO.setServer_code("query_contract");
+        contractDTO.setStart_date(dto.getField1().toString());
+        contractDTO.setStart_date(dto.getField2().toString());
+        String jsonResult = remoteSalesFeignApi.contractDashBoard(contractDTO);
+        JSONObject jsonObject = JSONObject.parseObject(jsonResult);
+        List<SalesContractCustomerDTO> customers = jsonObject.getJSONObject("result")
+                .getJSONObject("mdMappings").getJSONArray("customer").toJavaList(SalesContractCustomerDTO.class);
+        List<SalesContractModelDTO> models = jsonObject.getJSONObject("result")
+                .getJSONObject("mdMappings").getJSONArray("model").toJavaList(SalesContractModelDTO.class);
+        List<SalesContractThickDTO> thick = jsonObject.getJSONObject("result")
+                .getJSONObject("mdMappings").getJSONArray("thick").toJavaList(SalesContractThickDTO.class);
+        return null;
     }
 }
 
