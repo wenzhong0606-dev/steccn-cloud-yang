@@ -14,6 +14,7 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.dto.DpPmsOperateDTO;
@@ -39,6 +40,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -120,6 +122,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<DpWeightVO> result = Lists.newArrayList();
         result = adsOpcUaAll3Mapper.weightCountAsDayAndTag(new TupleDTO<>(dto.getStart().atTime(8,0,0),dto.getEnd().plusDays(1).atTime(7,59,59)));
         SteccnTableAssertUtil.notEmpty(result, "暂无数据");
+        //找到所有的的tagName
+        List<String> tagNameList = result.stream().map(DpWeightVO::getTagId).distinct().sorted().collect(Collectors.toList());
         if(dto.getType().equals(OaConstant.NUM_1)){
             //把日期重置成第一天
             result.forEach(tmp->{
@@ -145,7 +149,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         int dayCount = 0;
         if(dto.getType().equals(OaConstant.NO)){
-            dayCount = LocalDateTimeUtil.betweenPeriod(dto.getStart(), dto.getEnd()).getDays();
+            dayCount = (int)ChronoUnit.DAYS.between(dto.getStart(), dto.getEnd());
         }else {
             dayCount =  dto.getEnd().getMonthValue() - dto.getStart().getMonthValue();
         }
@@ -164,29 +168,45 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             List<DpWeightVO> resultTmp = result.stream().filter(v -> v.getDate().equals(finalStart))
                     .sorted(Comparator.comparing(DpWeightVO::getTagId)).collect(Collectors.toList());
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-            for(DpWeightVO tmp:resultTmp){
-                String tmpName = dpWeight.get(tmp.getTagId()).get(0).getRefContent();
-                //2#则跳过
-                if(tmpName.contains("2#")){
-                    continue;
-                }
-                if(tmpName.contains("1#")){
-                    tmpName = tmpName.substring(2);
-                }
-                //若是硅砂和碎玻璃则累加
-                if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh1_FLOAT")){
-                    DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh2_FLOAT")).findFirst().orElse(null);
-                    if(Objects.nonNull(twoResult)){
-                        tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
+            //若为空则空柱子
+            if(CollUtil.isEmpty(resultTmp)){
+                for(String str:tagNameList){
+                    String tmpName = dpWeight.get(str).get(0).getRefContent();
+                    //2#则跳过
+                    if(tmpName.contains("2#")){
+                        continue;
                     }
-                }
-                if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh9_FLOAT")){
-                    DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh10_FLOAT")).findFirst().orElse(null);
-                    if(Objects.nonNull(twoResult)){
-                        tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
+                    if(tmpName.contains("1#")){
+                        tmpName = tmpName.substring(2);
                     }
+                    datList.add(new TupleDTO<>(tmpName, null));
                 }
-                datList.add(new TupleDTO<>(tmpName, BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
+            }else {
+                for(DpWeightVO tmp:resultTmp){
+                    String tmpName = dpWeight.get(tmp.getTagId()).get(0).getRefContent();
+                    //2#则跳过
+                    if(tmpName.contains("2#")){
+                        continue;
+                    }
+                    if(tmpName.contains("1#")){
+                        tmpName = tmpName.substring(2);
+                    }
+                    //若是硅砂和碎玻璃则累加
+                    if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh1_FLOAT")){
+                        DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh2_FLOAT")).findFirst().orElse(null);
+                        if(Objects.nonNull(twoResult)){
+                            tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
+                        }
+                    }
+                    if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh9_FLOAT")){
+                        DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh10_FLOAT")).findFirst().orElse(null);
+                        if(Objects.nonNull(twoResult)){
+                            tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
+                        }
+                    }
+                    datList.add(new TupleDTO<>(tmpName, BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
+                }
+
             }
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);
