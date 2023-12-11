@@ -2,6 +2,8 @@ package com.steccn.platform.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 物流单详情DTO
  *
@@ -26,4 +28,12 @@ public class SalesLogisticsInfoDTO {
      * 客户编码
      */
     private String customer_code;
+    /**
+     * 出库单号
+     */
+    private String delivery_code;
+    /**
+     * 客户条码
+     */
+    private List<String> customer_barcode;
 }
