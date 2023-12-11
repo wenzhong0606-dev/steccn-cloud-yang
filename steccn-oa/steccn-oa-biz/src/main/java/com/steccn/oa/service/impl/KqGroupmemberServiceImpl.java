@@ -85,7 +85,8 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
                 .selectAs(KqGroup::getGroupname,OaGroupDTO::getGroupName)
                 .leftJoin(KqGroup.class,KqGroup::getId,KqGroupmember::getGroupid)
                 .isNull(KqGroupmember::getIsdelete)
-                .in(KqGroupmember::getTypevalue,userId);
+                .in(KqGroupmember::getTypevalue,userId)
+                .orderByDesc(KqGroupmember::getId);
         List<OaGroupDTO> oaGroupDTOS = kqGroupmemberMapper.selectJoinList(OaGroupDTO.class, mpjLambdaWrapper);
         oaGroupDTOS.forEach(tmp -> {
             OaGroupIdAndNameVO vo = new OaGroupIdAndNameVO();
@@ -107,8 +108,16 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
             return result;
         }
         //修改映射关系
-        resultList = changeGroupRelation(resultList);
+//        resultList = changeGroupRelation(resultList);
         result = resultList.get(0);
+        //映射关系修改
+        if(result.getClassGroupName().contains(OaConstant.CLASS_A)){
+            result.setClassGroupName(OaConstant.CLASS_A);
+        }else if(result.getClassGroupName().contains(OaConstant.CLASS_B)){
+            result.setClassGroupName(OaConstant.CLASS_B);
+        }else if(result.getClassGroupName().contains(OaConstant.CLASS_C)){
+            result.setClassGroupName(OaConstant.CLASS_C);
+        }
         return result;
     }
 
