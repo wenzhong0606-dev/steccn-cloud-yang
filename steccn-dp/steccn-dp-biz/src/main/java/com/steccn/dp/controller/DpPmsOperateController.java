@@ -57,7 +57,7 @@ public class DpPmsOperateController {
     }
 
     @PostMapping("/salesContract")
-    @ApiOperation(value = "总完工数，完工合格率")
+    @ApiOperation(value = "销售系统")
     public R<DpSalesContractVO> salesContract(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
         return R.success(adsOpcUaAll3Service.salesContract(dto));
     }

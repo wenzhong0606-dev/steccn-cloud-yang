@@ -223,9 +223,13 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         SalesContractDTO contractDTO = new SalesContractDTO();
         contractDTO.setServer_code("query_contract");
         contractDTO.setStart_date(dto.getField1().toString());
-        contractDTO.setStart_date(dto.getField2().toString());
+        contractDTO.setEnd_date(dto.getField2().toString());
         String jsonResult = remoteSalesFeignApi.contractDashBoard(contractDTO);
         JSONObject jsonObject = JSONObject.parseObject(jsonResult);
+        if(jsonObject.getJSONObject("result")
+                .getJSONObject("mdMappings").getJSONArray("customer")==null){
+            SteccnTableAssertUtil.notEmpty(Lists.newArrayList(), "暂无数据");
+        }
         List<SalesContractCustomerDTO> customers = jsonObject.getJSONObject("result")
                 .getJSONObject("mdMappings").getJSONArray("customer").toJavaList(SalesContractCustomerDTO.class);
         List<SalesContractModelDTO> models = jsonObject.getJSONObject("result")
