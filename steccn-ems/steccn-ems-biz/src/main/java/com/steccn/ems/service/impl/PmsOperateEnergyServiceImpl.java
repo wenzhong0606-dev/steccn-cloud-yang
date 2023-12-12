@@ -20,6 +20,7 @@ import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.service.PmsOperateEnergyService;
+import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -135,15 +136,15 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             } else {
                 pullForceValue = pullForceMap.get(LocalDateUtil.format(ele, "yyyy-MM"));
             }
-            BigDecimal gasValueMu = BigDecimalUtil.multiply(gasValue, new BigDecimal("7800"), bit);
-            BigDecimal oilValueMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300000"), bit);
-            BigDecimal multiply = BigDecimalUtil.add(gasValueMu, oilValueMu, bit);
-            BigDecimal pullForceValueMu = BigDecimalUtil.multiply(pullForceValue, new BigDecimal("1000"), bit);
-            BigDecimal result = BigDecimalUtil.divide(multiply, pullForceValueMu, bit);
-            valueList.add(BigDecimalUtil.setScale(result, bit));
+            BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue, pullForceValue, bit);
+            valueList.add(result);
         }
         PmsOperateEnergyVO res = new PmsOperateEnergyVO();
-        res.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(valueList), bit));
+        BigDecimal gasSum = BigDecimalUtil.sum(gasValueMap.values());
+        BigDecimal oilSum = BigDecimalUtil.sum(oilValueMap.values());
+        BigDecimal pullForceSum = BigDecimalUtil.sum(pullForceMap.values());
+        BigDecimal unitConsumeAvg = UnitConsumeUtil.unitConsume(gasSum, oilSum, pullForceSum, bit);
+        res.setTotalQuantity(unitConsumeAvg);
         res.setUnitName("kcal/kg");
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         res.setCommonBarLineVO(commonBarLineVO);
