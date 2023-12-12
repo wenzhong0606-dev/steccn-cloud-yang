@@ -57,12 +57,21 @@ public interface EpMeterReadMapper extends BaseMapper<EpMeterRead> {
     List<MeterReadMapperVO> selectAllByMeterType(@Param("meterType") Integer meterType);
 
     /**
-     * 获取最近读数
+     * 获取最近读数-求和
      * @param meterIdSet 仪表集合
      * @param lastDate 日期
      * @return
      */
     List<EpMeterRead> selectLastValue(@Param("meterIdSet") Set<Integer> meterIdSet, @Param("lastDate") LocalDate lastDate);
+
+    /**
+     * 获取最近读数-求最大值
+     * @param meterIdSet 仪表集合
+     * @param lastDate 日期
+     * @return
+     */
+    List<EpMeterRead> selectLastValueMax(@Param("meterIdSet") Set<Integer> meterIdSet, @Param("lastDate") LocalDate lastDate);
+
 }
 
 

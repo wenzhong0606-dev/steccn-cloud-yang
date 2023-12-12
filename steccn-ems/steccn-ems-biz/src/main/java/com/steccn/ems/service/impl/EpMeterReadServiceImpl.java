@@ -740,6 +740,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     .in(EpMeterRead::getMeterId, meterIdSet)
                     .in(EpMeterRead::getReadDate, sortedDateList));
             if (CollUtil.isNotEmpty(dataList)) {
+                Map<Integer, BigDecimal> lastValueMap = Maps.newHashMap();
+                List<EpMeterRead> lastValueList = this.baseMapper.selectLastValueMax(meterIdSet, minLocalDate);
+                if (CollUtil.isNotEmpty(lastValueList)) {
+                    lastValueList.forEach(ele -> lastValueMap.put(ele.getMeterId(), ele.getAdminValue()));
+                }
                 //手抄仪表，根据班次日期+仪表id排序
                 List<EpMeterRead> sortDataList = dataList.stream().sorted(Comparator.comparing(EpMeterRead::getReadDate).thenComparing(EpMeterRead::getMeterId)).collect(Collectors.toList());
                 //求手抄仪表的差值
@@ -751,9 +756,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     MapUtil.biCompute(groupMap, ele.getMeterId(), ele.getReadDate(), ele);
                 });
 
-                BigDecimal preValue;
+                BigDecimal preValue ;
                 for (Map.Entry<Integer, Map<LocalDate, List<EpMeterRead>>> meterEntry : groupMap.entrySet()) {
-                    preValue = BigDecimal.ZERO;
+                    preValue = lastValueMap.get(meterEntry.getKey());
                     for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
                         //手动抄表 一天一条,去取最后一条
                         BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
@@ -765,7 +770,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         } else {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
                         }
-                        preValue = curValue;
+                        if(Objects.nonNull(curValue)){
+                            preValue = curValue;
+                        }
                     }
                 }
             }

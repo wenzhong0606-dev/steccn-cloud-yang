@@ -125,4 +125,12 @@
         and read_date &lt; #{lastDate}
         group by meter_id
     </select>
+    <select id="selectLastValueMax" resultType="com.steccn.ems.domain.EpMeterRead">
+        select meter_id, max(admin_value) as admin_value from ep_meter_read where meter_id in
+        <foreach collection="meterIdSet" item="meterId" open="(" close=")" separator=",">
+            #{meterId}
+        </foreach>
+        and read_date &lt; #{lastDate}
+        group by meter_id
+    </select>
 </mapper>
