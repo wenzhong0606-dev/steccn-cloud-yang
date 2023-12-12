@@ -80,11 +80,12 @@ public class PmsOperateEnergyController {
     @ApiOperation(value = "单耗")
     public R<PmsOperateEnergyVO> unitConsume(@Valid @RequestBody DpPmsOperateDTO dto) {
         //只能是年度，月度
-        if (dto.getType() == 0) {
-            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
-        } else {
-            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
-        }
+//        if (dto.getType() == 0) {
+//            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+//        } else {
+//            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
+//        }
+        dto.setGranularity(dto.getType());
         PmsOperateEnergyVO pmsOperateEnergyVO = pmsOperateEnergyService.unitConsume(dto);
         return R.success(pmsOperateEnergyVO);
     }

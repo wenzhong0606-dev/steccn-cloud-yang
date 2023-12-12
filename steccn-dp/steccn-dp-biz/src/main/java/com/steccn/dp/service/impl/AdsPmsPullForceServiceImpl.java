@@ -1,9 +1,15 @@
 package com.steccn.dp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.dp.domain.AdsPmsPullForce;
 import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.service.AdsPmsPullForceService;
@@ -13,8 +19,11 @@ import com.steccn.qms.util.XAxisUtil;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -28,16 +37,24 @@ public class AdsPmsPullForceServiceImpl extends ServiceImpl<AdsPmsPullForceMappe
     @Override
     public Map<String, BigDecimal> pullForceSum(DpPullForceDTO dto) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
-        List<TupleDTO<String, BigDecimal>> dbList;
-
-        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularityEnum)) {
-            dbList = baseMapper.pullForceDay(dto.getStart(), dto.getEnd(), dto.getWorkshopIdSet());
-        } else {
-            dbList = baseMapper.pullForceMonth(dto.getStart(), dto.getEnd(), dto.getWorkshopIdSet());
-        }
-        if (CollUtil.isNotEmpty(dbList)) {
-            dbList.forEach(ele -> resMap.put(ele.getField1(), ele.getField2()));
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        List<AdsPmsPullForce> dataList = this.list(new QueryWrapper<AdsPmsPullForce>()
+                .select("pull_force_date, sum(quantity) as quantity").lambda()
+                .in(CollUtil.isNotEmpty(dto.getWorkshopIdSet()), AdsPmsPullForce::getWorkshopId, dto.getWorkshopIdSet())
+                .ge(Objects.nonNull(dto.getStart()), AdsPmsPullForce::getPullForceDate, dto.getStart())
+                .le(Objects.nonNull(dto.getEnd()), AdsPmsPullForce::getPullForceDate, dto.getEnd())
+                .groupBy(AdsPmsPullForce::getPullForceDate));
+        if (CollUtil.isNotEmpty(dataList)) {
+            List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+            Assert.notEmpty(dataList, "日期区间有误");
+            for (int i = 1; i < dateList.size(); i++) {
+                LocalDate left = dateList.get(i - 1);
+                LocalDate right = dateList.get(i);
+                String convert = XAxisUtil.convert(granularity, left);
+                List<BigDecimal> valueList = dataList.stream().filter(xx -> LocalDateUtil.isRange(xx.getPullForceDate(), left, right, Boolean.TRUE, Boolean.FALSE)).map(AdsPmsPullForce::getQuantity).collect(Collectors.toList());
+                resMap.put(convert, BigDecimalUtil.sum(valueList));
+            }
         }
         return resMap;
     }

@@ -30,11 +30,6 @@ public class RemoteDpPullForceFeignController {
     @PostMapping("/sum")
     @ApiOperation(value = "数据中台拉引量汇总")
     public R<Map<String, BigDecimal>> pullForceSum(@Valid @RequestBody DpPullForceDTO dto) {
-        if (dto.getGranularity() == 0) {
-            dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
-        } else {
-            dto.setGranularity(QtManagerConstant.QtGranularityEnum.MONTH.getCode());
-        }
         return R.success(adsPmsPullForceService.pullForceSum(dto));
     }
 }
