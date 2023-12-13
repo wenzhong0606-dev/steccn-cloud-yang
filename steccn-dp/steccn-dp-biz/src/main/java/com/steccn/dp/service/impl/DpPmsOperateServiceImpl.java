@@ -225,25 +225,20 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //根据车间+时间查询拉引量
         //获取总数
         Map<String, BigDecimal> completeMap = adsPmsReportWorkService.jpComplete(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
-        BigDecimal totalQuantity = BigDecimalUtil.sum(completeMap.values());
-
         DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
         dpPullForceDTO.setStart(dto.getStart());
         dpPullForceDTO.setEnd(dto.getEnd());
         dpPullForceDTO.setGranularity(dto.getGranularity());
         dpPullForceDTO.setWorkshopIdSet(wsIdSet);
         Map<String, BigDecimal> pullForceMap = adsPmsPullForceService.pullForceSum(dpPullForceDTO);
-        BigDecimal totalPullForceQuantity = BigDecimalUtil.sum(pullForceMap.values());
 
-        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
-        resVo.setTotalQuantity(totalQuantity);
-        resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalPullForceQuantity));
         //柱状图 + 折线图
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         //根据粒度 分割日期
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> completeQuantityList = Lists.newArrayList();
+        List<BigDecimal> pullForceValueList = Lists.newArrayList();
         List<BigDecimal> rateList = Lists.newArrayList();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate ele = dateList.get(i - 1);
@@ -253,8 +248,15 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             BigDecimal complete = completeMap.get(key);
             BigDecimal pullForce = pullForceMap.get(key);
             completeQuantityList.add(complete);
+            pullForceValueList.add(pullForce);
             rateList.add(BigDecimalUtil.percent(complete, pullForce));
         }
+        //计算总计
+        BigDecimal totalQuantity = BigDecimalUtil.sum(completeQuantityList);
+        BigDecimal totalPullForceQuantity = BigDecimalUtil.sum(pullForceValueList);
+        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
+        resVo.setTotalQuantity(totalQuantity);
+        resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalPullForceQuantity));
         List<String> legendList = Arrays.asList("生产产量（T）", "生产成品率");
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
         commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
@@ -282,19 +284,15 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         Assert.notNull(granularity, "粒度不存在");
         //根据车间+时间查询完工数
         Map<String, BigDecimal> completeMap = adsPmsReportWorkService.sjgComplete(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
-        BigDecimal totalQuantity = BigDecimalUtil.sum(completeMap.values());
         //根据车间+时间查询实际使用量
         Map<String, BigDecimal> actualUseMap = adsPmsReportWorkService.actualUse(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
-        BigDecimal totalActualUseQuantity = BigDecimalUtil.sum(actualUseMap.values());
-        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
-        resVo.setTotalQuantity(totalQuantity);
-        resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalActualUseQuantity));
         //柱状图 + 折线图
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         //根据粒度 分割日期
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> completeQuantityList = Lists.newArrayList();
+        List<BigDecimal> actualValueList = Lists.newArrayList();
         List<BigDecimal> rateList = Lists.newArrayList();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate ele = dateList.get(i - 1);
@@ -304,8 +302,16 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             BigDecimal complete = completeMap.get(key);
             BigDecimal actualUse = actualUseMap.get(key);
             completeQuantityList.add(complete);
+            actualValueList.add(actualUse);
             rateList.add(BigDecimalUtil.percent(complete, actualUse));
         }
+        //计算总计
+        BigDecimal totalQuantity = BigDecimalUtil.sum(completeQuantityList);
+        BigDecimal totalActualUseQuantity = BigDecimalUtil.sum(actualValueList);
+        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
+        resVo.setTotalQuantity(totalQuantity);
+        resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalActualUseQuantity));
+
         List<String> legendList = Arrays.asList("生产产量（㎡）", "生产成品率");
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
         commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
