@@ -7,7 +7,6 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.common.util.ShardTimeUtil;
@@ -18,8 +17,8 @@ import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.mapper.AdsPmsCompleteStorageMapper;
-import com.steccn.dp.mapper.AdsPmsPullForceMapper;
 import com.steccn.dp.mapper.AdsPmsReportWorkMapper;
+import com.steccn.dp.service.AdsPmsCompleteStorageService;
 import com.steccn.dp.service.AdsPmsPullForceService;
 import com.steccn.dp.service.AdsPmsReportWorkService;
 import com.steccn.dp.service.DpPmsOperateService;
@@ -59,14 +58,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DpPmsOperateServiceImpl implements DpPmsOperateService {
 
-    private final AdsPmsCompleteStorageMapper adsPmsCompleteStorageMapper;
-    private final AdsPmsReportWorkMapper adsPmsReportWorkMapper;
-    private final AdsPmsPullForceMapper adsPmsPullForceMapper;
     private final RemoteOfficeFeign remoteOfficeFeign;
-    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
-    private final RemoteDictFeignApi remoteDictFeignApi;
     private final AdsPmsPullForceService adsPmsPullForceService;
     private final AdsPmsReportWorkService adsPmsReportWorkService;
+    private final AdsPmsCompleteStorageService adsPmsCompleteStorageService;
 
     @Override
     public DpPmsOperateCompleteStorageVO inStorage(DpPmsOperateDTO dto) {
@@ -100,31 +95,9 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
-        List<TripleDTO<String, Long, BigDecimal>> storageList;
-        List<TripleDTO<String, Long, BigDecimal>> actualUseList;
-        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            storageList = adsPmsCompleteStorageMapper.inStorageMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-            actualUseList = adsPmsReportWorkMapper.actualUseMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
-            storageList = adsPmsCompleteStorageMapper.inStorageMaterialWeek(dto.getStart(), dto.getEnd(), wsIdSet);
-            actualUseList = adsPmsReportWorkMapper.actualUseMaterialWeek(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
-            storageList = adsPmsCompleteStorageMapper.inStorageMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-            actualUseList = adsPmsReportWorkMapper.actualUseMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else {
-            storageList = adsPmsCompleteStorageMapper.inStorageMaterialYear(dto.getStart(), dto.getEnd(), wsIdSet);
-            actualUseList = adsPmsReportWorkMapper.actualUseMaterialYear(dto.getStart(), dto.getEnd(), wsIdSet);
-        }
-        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysDictVO smSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notNull(pieceSysDict, "片单位不存在");
-        Assert.notNull(smSysDict, "平方米单位不存在");
-        Map<String, BigDecimal> storageMap = unitConvert(pieceSysDict, smSysDict, storageList, bit);
-        Map<String, BigDecimal> actualUseMap = unitConvert(pieceSysDict, smSysDict, actualUseList, bit);
-
+        Map<String, BigDecimal> storageMap = adsPmsCompleteStorageService.sjgInStorage(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
+        Map<String, BigDecimal> actualUseMap = adsPmsReportWorkService.actualUse(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
         DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
-        resVo.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(storageMap.values()), bit));
-        resVo.setTotalRate(BigDecimalUtil.percent(resVo.getTotalQuantity(), BigDecimalUtil.sum(actualUseMap.values())));
         //柱状图 + 折线图
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         //根据粒度 分割日期
@@ -132,21 +105,21 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> inStorageQuantityList = Lists.newArrayList();
         List<BigDecimal> rateList = Lists.newArrayList();
+        List<BigDecimal> actualUseValueList = Lists.newArrayList();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate ele = dateList.get(i - 1);
             xAisList.add(XAxisUtil.convert(granularity, ele));
             //获取值的方式必须统一
-            String key;
-            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            } else {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            }
+            String key = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal storage = storageMap.get(key);
             BigDecimal actualUse = actualUseMap.get(key);
             inStorageQuantityList.add(storage);
+            actualUseValueList.add(actualUse);
             rateList.add(BigDecimalUtil.percent(storage, actualUse));
         }
+        //计算总量
+        resVo.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(inStorageQuantityList), bit));
+        resVo.setTotalRate(BigDecimalUtil.percent(resVo.getTotalQuantity(), BigDecimalUtil.sum(actualUseValueList)));
         List<String> legendList = Arrays.asList("入库产量（㎡）", "入库成品率");
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
         commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
@@ -172,14 +145,9 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //获取粒度
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
-        List<TripleDTO<String, Long, BigDecimal>> storageList;
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
-        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            storageList = adsPmsCompleteStorageMapper.inStorageMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else {
-            storageList = adsPmsCompleteStorageMapper.inStorageMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-        }
+        Map<String, BigDecimal> storageMap = adsPmsCompleteStorageService.jpInStorage(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
         //获取拉引量
         DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
         dpPullForceDTO.setStart(dto.getStart());
@@ -187,46 +155,31 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         dpPullForceDTO.setGranularity(dto.getGranularity());
         dpPullForceDTO.setWorkshopIdSet(wsIdSet);
         Map<String, BigDecimal> pullForceMap = adsPmsPullForceService.pullForceSum(dpPullForceDTO);
-
-        //获取总数
-        BigDecimal totalInStorageQuantity = null;
-        BigDecimal totalPullForceQuantity = null;
-        Map<String, BigDecimal> storageMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(storageList)) {
-            //进行单位转换，放入map
-            SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            SysDictVO tonSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Assert.notNull(pieceSysDict, "片单位不存在");
-            Assert.notNull(tonSysDict, "吨单位不存在");
-            storageMap = unitConvert(pieceSysDict, tonSysDict, storageList, bit);
-            totalInStorageQuantity = BigDecimalUtil.sum(storageMap.values());
-        }
-
-        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
-        resVo.setTotalQuantity(totalInStorageQuantity);
-        resVo.setTotalRate(BigDecimalUtil.percent(totalInStorageQuantity, totalPullForceQuantity));
         //柱状图 + 折线图
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         //根据粒度 分割日期
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> inStorageQuantityList = Lists.newArrayList();
+        List<BigDecimal> pullForceValueList = Lists.newArrayList();
         List<BigDecimal> rateList = Lists.newArrayList();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate ele = dateList.get(i - 1);
             xAisList.add(XAxisUtil.convert(granularity, ele));
             //获取值的方式必须统一
-            String key;
-            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            } else {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            }
+            String key = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal storage = storageMap.get(key);
             BigDecimal pullForce = pullForceMap.get(key);
             inStorageQuantityList.add(storage);
+            pullForceValueList.add(pullForce);
             rateList.add(BigDecimalUtil.percent(storage, pullForce));
         }
+        //获取总数
+        BigDecimal totalInStorageQuantity = BigDecimalUtil.sum(inStorageQuantityList);
+        BigDecimal totalPullForceQuantity = BigDecimalUtil.sum(pullForceValueList);
+        DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
+        resVo.setTotalQuantity(totalInStorageQuantity);
+        resVo.setTotalRate(BigDecimalUtil.percent(totalInStorageQuantity, totalPullForceQuantity));
         List<String> legendList = Arrays.asList("入库产量（T）", "入库成品率");
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));
         commonBarLineVO.setLegend(new BaseValueVO<>(legendList));
@@ -236,29 +189,6 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         resVo.setCommonBarLineVO(commonBarLineVO);
         return resVo;
     }
-
-    /**
-     * 单位转换
-     *
-     * @param sourceSysDict 原始单位
-     * @param targetSysDict 目标单位
-     * @param dataList      数据集合
-     * @return map
-     */
-    private Map<String, BigDecimal> unitConvert(SysDictVO sourceSysDict, SysDictVO targetSysDict, List<TripleDTO<String, Long, BigDecimal>> dataList, Integer bit) {
-        Map<String, BigDecimal> resMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(dataList)) {
-            Set<Long> materialIdSet = dataList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
-            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            dataList.forEach(ele -> {
-                List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
-                BigDecimal convertQuantity = UnitConvertUtil.convertMaterial(convertList, sourceSysDict.getId(), targetSysDict.getId(), ele.getField3(), bit);
-                MapUtil.add(resMap, ele.getField1(), convertQuantity, (x, y) -> BigDecimalUtil.add(x, y, bit));
-            });
-        }
-        return resMap;
-    }
-
 
     @Override
     public DpPmsOperateCompleteStorageVO complete(DpPmsOperateDTO dto) {
@@ -370,7 +300,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             LocalDate ele = dateList.get(i - 1);
             xAisList.add(XAxisUtil.convert(granularity, ele));
             //获取值的方式必须统一
-            String key = MysqlDateKeyUtil.convert(granularity,ele);
+            String key = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal complete = completeMap.get(key);
             BigDecimal actualUse = actualUseMap.get(key);
             completeQuantityList.add(complete);
