@@ -15,6 +15,7 @@ import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.service.AdsPmsPullForceService;
 import com.steccn.dp.mapper.AdsPmsPullForceMapper;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +52,7 @@ public class AdsPmsPullForceServiceImpl extends ServiceImpl<AdsPmsPullForceMappe
             for (int i = 1; i < dateList.size(); i++) {
                 LocalDate left = dateList.get(i - 1);
                 LocalDate right = dateList.get(i);
-                String convert = XAxisUtil.convert(granularity, left);
+                String convert = MysqlDateKeyUtil.convert(granularity, left);
                 List<BigDecimal> valueList = dataList.stream().filter(xx -> LocalDateUtil.isRange(xx.getPullForceDate(), left, right, Boolean.TRUE, Boolean.FALSE)).map(AdsPmsPullForce::getQuantity).collect(Collectors.toList());
                 resMap.put(convert, BigDecimalUtil.sum(valueList));
             }

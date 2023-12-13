@@ -21,6 +21,7 @@ import com.steccn.dp.mapper.AdsPmsCompleteStorageMapper;
 import com.steccn.dp.mapper.AdsPmsPullForceMapper;
 import com.steccn.dp.mapper.AdsPmsReportWorkMapper;
 import com.steccn.dp.service.AdsPmsPullForceService;
+import com.steccn.dp.service.AdsPmsReportWorkService;
 import com.steccn.dp.service.DpPmsOperateService;
 import com.steccn.dp.vo.DpPmsOperateCompleteStorageVO;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -34,6 +35,7 @@ import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
@@ -64,6 +66,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final AdsPmsPullForceService adsPmsPullForceService;
+    private final AdsPmsReportWorkService adsPmsReportWorkService;
 
     @Override
     public DpPmsOperateCompleteStorageVO inStorage(DpPmsOperateDTO dto) {
@@ -96,15 +99,21 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //获取车间主键集合
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        Assert.notNull(granularity,"粒度不存在");
+        Assert.notNull(granularity, "粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> storageList;
         List<TripleDTO<String, Long, BigDecimal>> actualUseList;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
             storageList = adsPmsCompleteStorageMapper.inStorageMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
             actualUseList = adsPmsReportWorkMapper.actualUseMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else {
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            storageList = adsPmsCompleteStorageMapper.inStorageMaterialWeek(dto.getStart(), dto.getEnd(), wsIdSet);
+            actualUseList = adsPmsReportWorkMapper.actualUseMaterialWeek(dto.getStart(), dto.getEnd(), wsIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
             storageList = adsPmsCompleteStorageMapper.inStorageMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
             actualUseList = adsPmsReportWorkMapper.actualUseMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
+        } else {
+            storageList = adsPmsCompleteStorageMapper.inStorageMaterialYear(dto.getStart(), dto.getEnd(), wsIdSet);
+            actualUseList = adsPmsReportWorkMapper.actualUseMaterialYear(dto.getStart(), dto.getEnd(), wsIdSet);
         }
         SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO smSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -162,7 +171,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取粒度
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        Assert.notNull(granularity,"粒度不存在");
+        Assert.notNull(granularity, "粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> storageList;
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
@@ -282,41 +291,20 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //获取粒度
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
-        List<TripleDTO<String, Long, BigDecimal>> completeList;
-        List<TupleDTO<String, BigDecimal>> pullForceList;
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
-        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            completeList = adsPmsReportWorkMapper.jpCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-            pullForceList = adsPmsPullForceMapper.pullForceDay(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else {
-            completeList = adsPmsReportWorkMapper.jpCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-            pullForceList = adsPmsPullForceMapper.pullForceMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-        }
         //获取总数
-        BigDecimal totalQuantity = null;
-        BigDecimal totalPullForceQuantity = null;
-        Map<String, BigDecimal> completeMap = Maps.newHashMap();
-        Map<String, BigDecimal> pullForceMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(completeList)) {
-            //进行单位转换，放入map
-            Set<Long> materialIdSet = completeList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
-            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            SysDictVO tonSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Assert.notNull(pieceSysDict, "片单位不存在");
-            Assert.notNull(tonSysDict, "吨单位不存在");
-            completeList.forEach(ele -> {
-                List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
-                BigDecimal tonQuantity = UnitConvertUtil.convertMaterial(convertList, pieceSysDict.getId(), tonSysDict.getId(), ele.getField3(), bit);
-                completeMap.put(ele.getField1(), BigDecimalUtil.add(completeMap.get(ele.getField1()), tonQuantity, bit));
-            });
-            totalQuantity = BigDecimalUtil.sum(completeMap.values());
-        }
-        if (CollUtil.isNotEmpty(pullForceList)) {
-            pullForceList.forEach(ele -> pullForceMap.put(ele.getField1(), ele.getField2()));
-            totalPullForceQuantity = BigDecimalUtil.sum(pullForceMap.values());
-        }
+        Map<String, BigDecimal> completeMap = adsPmsReportWorkService.jpComplete(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
+        BigDecimal totalQuantity = BigDecimalUtil.sum(completeMap.values());
+
+        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
+        dpPullForceDTO.setStart(dto.getStart());
+        dpPullForceDTO.setEnd(dto.getEnd());
+        dpPullForceDTO.setGranularity(dto.getGranularity());
+        dpPullForceDTO.setWorkshopIdSet(wsIdSet);
+        Map<String, BigDecimal> pullForceMap = adsPmsPullForceService.pullForceSum(dpPullForceDTO);
+        BigDecimal totalPullForceQuantity = BigDecimalUtil.sum(pullForceMap.values());
+
         DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
         resVo.setTotalQuantity(totalQuantity);
         resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalPullForceQuantity));
@@ -331,12 +319,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             LocalDate ele = dateList.get(i - 1);
             xAisList.add(XAxisUtil.convert(granularity, ele));
             //获取值的方式必须统一
-            String key;
-            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            } else {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            }
+            String key = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal complete = completeMap.get(key);
             BigDecimal pullForce = pullForceMap.get(key);
             completeQuantityList.add(complete);
@@ -367,35 +350,12 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //获取粒度
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
-        List<TripleDTO<String, Long, BigDecimal>> completeList;
-        List<TripleDTO<String, Long, BigDecimal>> actualUseList;
         //根据车间+时间查询完工数
+        Map<String, BigDecimal> completeMap = adsPmsReportWorkService.sjgComplete(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
+        BigDecimal totalQuantity = BigDecimalUtil.sum(completeMap.values());
         //根据车间+时间查询实际使用量
-        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            completeList = adsPmsReportWorkMapper.sjgCompleteMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-            actualUseList = adsPmsReportWorkMapper.actualUseMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-        } else {
-            completeList = adsPmsReportWorkMapper.sjgCompleteMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-            actualUseList = adsPmsReportWorkMapper.actualUseMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-        }
-        //获取总数
-        BigDecimal totalQuantity = null;
-        BigDecimal totalActualUseQuantity = null;
-        Map<String, BigDecimal> completeMap = Maps.newHashMap();
-        Map<String, BigDecimal> actualUseMap = Maps.newHashMap();
-        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notNull(pieceSysDict, "片单位不存在");
-        Assert.notNull(sqSysDict, "平方米单位不存在");
-        if (CollUtil.isNotEmpty(completeList)) {
-            //进行单位转换，放入map
-            completeMap = unitConvert(pieceSysDict, sqSysDict, completeList, bit);
-            totalQuantity = BigDecimalUtil.sum(completeMap.values());
-        }
-        if (CollUtil.isNotEmpty(actualUseList)) {
-            actualUseMap = unitConvert(pieceSysDict, sqSysDict, actualUseList, bit);
-            totalActualUseQuantity = BigDecimalUtil.sum(actualUseMap.values());
-        }
+        Map<String, BigDecimal> actualUseMap = adsPmsReportWorkService.actualUse(granularity, dto.getStart(), dto.getEnd(), wsIdSet, bit);
+        BigDecimal totalActualUseQuantity = BigDecimalUtil.sum(actualUseMap.values());
         DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();
         resVo.setTotalQuantity(totalQuantity);
         resVo.setTotalRate(BigDecimalUtil.percent(totalQuantity, totalActualUseQuantity));
@@ -410,12 +370,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             LocalDate ele = dateList.get(i - 1);
             xAisList.add(XAxisUtil.convert(granularity, ele));
             //获取值的方式必须统一
-            String key;
-            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            } else {
-                key = ele.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            }
+            String key = MysqlDateKeyUtil.convert(granularity,ele);
             BigDecimal complete = completeMap.get(key);
             BigDecimal actualUse = actualUseMap.get(key);
             completeQuantityList.add(complete);

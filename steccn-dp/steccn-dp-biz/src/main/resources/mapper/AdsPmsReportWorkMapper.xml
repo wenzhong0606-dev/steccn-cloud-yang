@@ -79,6 +79,32 @@
         group by DATE_FORMAT(dt,'%Y-%m-%d') , material_id;
     </select>
 
+    <select id="jpCompleteMaterialWeek" resultType="com.steccn.common.dto.TripleDTO">
+        select  YEARWEEK(dt,7) field1, material_id field2, sum(process_quantity_1d) as field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN #{start} and #{end}
+        group by field1 , material_id;
+    </select>
+
+    <select id="sjgCompleteMaterialWeek" resultType="com.steccn.common.dto.TripleDTO">
+        select YEARWEEK(dt,7) field1, material_id field2, sum(process_quantity_1d-badness_quantity_1d) as
+        field3 from ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and process_name = '磨边工序'
+        and dt BETWEEN #{start} and #{end}
+        group by YEARWEEK(dt,7) , material_id;
+    </select>
 
     <select id="jpCompleteMaterialMonth" resultType="com.steccn.common.dto.TripleDTO">
         select DATE_FORMAT(dt,'%Y-%m') as field1, material_id field2, sum(process_quantity_1d) as field3 from
@@ -106,6 +132,35 @@
         and dt BETWEEN #{start} and #{end}
         group by DATE_FORMAT(dt,'%Y-%m'), material_id;
     </select>
+
+    <select id="jpCompleteMaterialYear" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y') as field1, material_id field2, sum(process_quantity_1d) as field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y'), material_id;
+    </select>
+    <select id="sjgCompleteMaterialYear" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y') as field1, material_id field2, sum(process_quantity_1d-badness_quantity_1d) as
+        field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and process_name = '磨边工序'
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y'), material_id;
+    </select>
+
+
     <select id="actualUseMaterialDay" resultType="com.steccn.common.dto.TripleDTO">
         select DATE_FORMAT(dt,'%Y-%m-%d') field1, material_id field2, sum(process_quantity_1d) as
         field3 from ads_pms_report_work where
@@ -133,5 +188,30 @@
         and dt BETWEEN #{start} and #{end}
         group by DATE_FORMAT(dt,'%Y-%m'), material_id;
     </select>
-
+    <select id="actualUseMaterialWeek" resultType="com.steccn.common.dto.TripleDTO">
+        select YEARWEEK(dt,7) as field1, material_id field2, sum(process_quantity_1d) as field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and process_name = '磨边工序'
+        and dt BETWEEN #{start} and #{end}
+        group by YEARWEEK(dt,7) , material_id;
+    </select>
+    <select id="actualUseMaterialYear" resultType="com.steccn.common.dto.TripleDTO">
+        select DATE_FORMAT(dt,'%Y') as field1, material_id field2, sum(process_quantity_1d) as field3 from
+        ads_pms_report_work where
+        <if test="workshopIdSet != null and workshopIdSet.size > 0">
+            workshop_id in
+            <foreach collection="workshopIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        and process_name = '磨边工序'
+        and dt BETWEEN #{start} and #{end}
+        group by DATE_FORMAT(dt,'%Y'), material_id;
+    </select>
 </mapper>

@@ -32,6 +32,17 @@ public interface AdsPmsCompleteStorageMapper extends BaseMapper<AdsPmsCompleteSt
                                                      @Param("workshopIdSet") Set<Integer> workshopIdSet);
 
     /**
+     * 完工入库-周
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String,Long, BigDecimal>> inStorageMaterialWeek(@Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end,
+                                                                    @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
      * 完工入库-月
      * @param start 开始时间
      * @param end 结束时间
@@ -39,6 +50,17 @@ public interface AdsPmsCompleteStorageMapper extends BaseMapper<AdsPmsCompleteSt
      * @return
      */
     List<TripleDTO<String,Long, BigDecimal>> inStorageMaterialMonth(@Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end,
+                                                                    @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
+     * 完工入库-年
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String,Long, BigDecimal>> inStorageMaterialYear(@Param("start") LocalDate start,
                                                                     @Param("end") LocalDate end,
                                                                     @Param("workshopIdSet") Set<Integer> workshopIdSet);
 }
