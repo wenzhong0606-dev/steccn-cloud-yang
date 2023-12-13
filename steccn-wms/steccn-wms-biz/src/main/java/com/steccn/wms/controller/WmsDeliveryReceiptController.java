@@ -126,8 +126,6 @@ public class WmsDeliveryReceiptController {
         WmsDeliveryReceipt wmsDeliveryReceipt = wmsDeliveryReceiptService.getOne(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getCode, code), false);
         Assert.notNull(wmsDeliveryReceipt, "出库单为空");
         wmsDeliveryReceiptService.affirm(wmsDeliveryReceipt.getId());
-        //同步数据到销售系统
-        wmsDeliveryReceiptService.logistics(wmsDeliveryReceipt);
         return R.success(code);
     }
 
