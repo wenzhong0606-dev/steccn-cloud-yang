@@ -29,6 +29,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
@@ -133,7 +134,8 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             //y轴：（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
             BigDecimal gasValue = gasValueMap.get(convert);
             BigDecimal oilValue = oilValueMap.get(convert);
-            BigDecimal pullForceValue = pullForceMap.get(convert);
+            String mysqlKey = MysqlDateKeyUtil.convert(granularity, ele);
+            BigDecimal pullForceValue = pullForceMap.get(mysqlKey);
             BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue, pullForceValue, bit);
             valueList.add(result);
             gasValueList.add(gasValue);
