@@ -576,7 +576,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         WmsDeliverySellFlagVO wmsDeliverySellFlagVO = new WmsDeliverySellFlagVO();
         //调用物流单明细查询接口
         SalesLogisticsDTO dto = new SalesLogisticsDTO();
-        dto.setServer_code(WmsManagerConstant.SERVER_CODE);
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE1);
         List<String> codes = Lists.newArrayList();
         codes.add(number);
         dto.setCode(codes);
@@ -692,22 +692,18 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
      */
     private void logistics(WmsDeliveryReceipt wmsDeliveryReceipt,List<String> customerCode) {
         SalesLogisticsSyncDTO dto = new SalesLogisticsSyncDTO();
-        List<SalesLogisticsInfoDTO> data = Lists.newArrayList();
+        List<SalesLogisticsInfoDetailDTO> data = Lists.newArrayList();
         List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS = wmsDeliveryReceiptInfoService.infoList(wmsDeliveryReceipt.getId());
         BigDecimal sum = wmsDeliveryReceiptInfoVOS.stream().map(WmsDeliveryReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
-        SalesLogisticsInfoDTO salesLogisticsInfoDTO = new SalesLogisticsInfoDTO();
-        salesLogisticsInfoDTO.setLogistics_code(wmsDeliveryReceipt.getSalesOrder());
-        List<SalesLogisticsInfoDetailDTO> details = Lists.newArrayList();
         SalesLogisticsInfoDetailDTO salesLogisticsInfoDetailDTO = new SalesLogisticsInfoDetailDTO();
         salesLogisticsInfoDetailDTO.setState(WmsManagerConstant.LogisticsBillState.OUT_OF_STORAGE.getName());
         salesLogisticsInfoDetailDTO.setOut_qty(sum.intValue());
         salesLogisticsInfoDetailDTO.setDelivery_code(wmsDeliveryReceipt.getCode());
+        salesLogisticsInfoDetailDTO.setLogistics_code(wmsDeliveryReceipt.getSalesOrder());
         if (CollUtil.isNotEmpty(customerCode)) {
             salesLogisticsInfoDetailDTO.setCustomer_barcode(customerCode);
         }
-        details.add(salesLogisticsInfoDetailDTO);
-        salesLogisticsInfoDTO.setData(details);
-        data.add(salesLogisticsInfoDTO);
+        data.add(salesLogisticsInfoDetailDTO);
         dto.setServer_code(WmsManagerConstant.SERVER_CODE);
         dto.setData(data);
         String s = remoteSalesFeignApi.syncLogistics(dto);
@@ -744,7 +740,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         WmsDeliverySellInfoVO wmsDeliverySellInfoVO = new WmsDeliverySellInfoVO();
         //调用物流单明细查询接口
         SalesLogisticsDTO dto = new SalesLogisticsDTO();
-        dto.setServer_code(WmsManagerConstant.SERVER_CODE);
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE1);
         List<String> codes = Lists.newArrayList();
         codes.add(number);
         dto.setCode(codes);
