@@ -100,7 +100,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
         dpPullForceDTO.setStart(dto.getStart());
         dpPullForceDTO.setEnd(dto.getEnd());
-        dpPullForceDTO.setGranularity(dto.getType());
+        dpPullForceDTO.setGranularity(dto.getGranularity());
         //根据制造部，获取车间
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(dto.getOfficeId());
@@ -123,6 +123,9 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         });
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> valueList = Lists.newArrayList();
+        List<BigDecimal> gasValueList = Lists.newArrayList();
+        List<BigDecimal> oilValueList = Lists.newArrayList();
+        List<BigDecimal> pullForceValueList = Lists.newArrayList();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate ele = dateList.get(i - 1);
             String convert = XAxisUtil.convert(granularity, ele);
@@ -133,11 +136,14 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             BigDecimal pullForceValue = pullForceMap.get(convert);
             BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue, pullForceValue, bit);
             valueList.add(result);
+            gasValueList.add(gasValue);
+            oilValueList.add(oilValue);
+            pullForceValueList.add(pullForceValue);
         }
         PmsOperateEnergyVO res = new PmsOperateEnergyVO();
-        BigDecimal gasSum = BigDecimalUtil.sum(gasValueMap.values());
-        BigDecimal oilSum = BigDecimalUtil.sum(oilValueMap.values());
-        BigDecimal pullForceSum = BigDecimalUtil.sum(pullForceMap.values());
+        BigDecimal gasSum = BigDecimalUtil.sum(gasValueList);
+        BigDecimal oilSum = BigDecimalUtil.sum(oilValueList);
+        BigDecimal pullForceSum = BigDecimalUtil.sum(pullForceValueList);
         BigDecimal unitConsumeAvg = UnitConsumeUtil.unitConsume(gasSum, oilSum, pullForceSum, bit);
         res.setTotalQuantity(unitConsumeAvg);
         res.setUnitName("kcal/kg");
@@ -162,6 +168,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         Assert.notNull(energy, "能源类型不存在");
         Map<Long, String> measureUnitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(energy.getMeasureUnit())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
         Assert.notEmpty(dateList, "日期区间有误");
         List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());

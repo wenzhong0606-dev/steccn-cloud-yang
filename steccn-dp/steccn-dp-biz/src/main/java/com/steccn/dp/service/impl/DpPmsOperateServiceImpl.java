@@ -16,9 +16,11 @@ import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.mapper.AdsPmsCompleteStorageMapper;
 import com.steccn.dp.mapper.AdsPmsPullForceMapper;
 import com.steccn.dp.mapper.AdsPmsReportWorkMapper;
+import com.steccn.dp.service.AdsPmsPullForceService;
 import com.steccn.dp.service.DpPmsOperateService;
 import com.steccn.dp.vo.DpPmsOperateCompleteStorageVO;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -61,6 +63,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final AdsPmsPullForceService adsPmsPullForceService;
 
     @Override
     public DpPmsOperateCompleteStorageVO inStorage(DpPmsOperateDTO dto) {
@@ -93,6 +96,7 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         //获取车间主键集合
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity,"粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> storageList;
         List<TripleDTO<String, Long, BigDecimal>> actualUseList;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
@@ -158,22 +162,27 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取粒度
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity,"粒度不存在");
         List<TripleDTO<String, Long, BigDecimal>> storageList;
-        List<TupleDTO<String, BigDecimal>> pullForceList;
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
             storageList = adsPmsCompleteStorageMapper.inStorageMaterialDay(dto.getStart(), dto.getEnd(), wsIdSet);
-            pullForceList = adsPmsPullForceMapper.pullForceDay(dto.getStart(), dto.getEnd(), wsIdSet);
         } else {
             storageList = adsPmsCompleteStorageMapper.inStorageMaterialMonth(dto.getStart(), dto.getEnd(), wsIdSet);
-            pullForceList = adsPmsPullForceMapper.pullForceMonth(dto.getStart(), dto.getEnd(), wsIdSet);
         }
+        //获取拉引量
+        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
+        dpPullForceDTO.setStart(dto.getStart());
+        dpPullForceDTO.setEnd(dto.getEnd());
+        dpPullForceDTO.setGranularity(dto.getGranularity());
+        dpPullForceDTO.setWorkshopIdSet(wsIdSet);
+        Map<String, BigDecimal> pullForceMap = adsPmsPullForceService.pullForceSum(dpPullForceDTO);
+
         //获取总数
         BigDecimal totalInStorageQuantity = null;
         BigDecimal totalPullForceQuantity = null;
         Map<String, BigDecimal> storageMap = Maps.newHashMap();
-        Map<String, BigDecimal> pullForceMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(storageList)) {
             //进行单位转换，放入map
             SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -182,10 +191,6 @@ public class DpPmsOperateServiceImpl implements DpPmsOperateService {
             Assert.notNull(tonSysDict, "吨单位不存在");
             storageMap = unitConvert(pieceSysDict, tonSysDict, storageList, bit);
             totalInStorageQuantity = BigDecimalUtil.sum(storageMap.values());
-        }
-        if (CollUtil.isNotEmpty(pullForceList)) {
-            pullForceList.forEach(ele -> pullForceMap.put(ele.getField1(), ele.getField2()));
-            totalPullForceQuantity = BigDecimalUtil.sum(pullForceMap.values());
         }
 
         DpPmsOperateCompleteStorageVO resVo = new DpPmsOperateCompleteStorageVO();

@@ -1,6 +1,8 @@
 package com.steccn.common.util;
 
+import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.DayOfWeek;
@@ -229,8 +231,10 @@ public class ShardTimeUtil {
      */
     public static List<LocalDate> cutDate(String dateType, LocalDate start, LocalDate end) {
         List<LocalDate> listDate = new ArrayList<>();
+        //需要校验type
+        boolean contains = Sets.newHashSet("Y", "Q", "M", "W", "D").contains(dateType);
+        Assert.isTrue(contains, "粒度类型错误");
         while (end.isAfter(start)) {
-
             switch (dateType) {
                 case "Y":
                     listDate.add(LocalDate.of(start.getYear(), 1, 1));
@@ -301,6 +305,8 @@ public class ShardTimeUtil {
                     if (!end.isAfter(start)) {
                         listDate.add(end);
                     }
+                    break;
+                default:
                     break;
             }
         }
