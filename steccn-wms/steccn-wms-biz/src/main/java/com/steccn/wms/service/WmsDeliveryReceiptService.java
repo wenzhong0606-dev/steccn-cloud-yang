@@ -110,8 +110,6 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
 
     String sell(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO);
 
-    void logistics(WmsDeliveryReceipt wmsDeliveryReceipt);
-
     /**
      * 箱号获取出库标识
      * @param dto
