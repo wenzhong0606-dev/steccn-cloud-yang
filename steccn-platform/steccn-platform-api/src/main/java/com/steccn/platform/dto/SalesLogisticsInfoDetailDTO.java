@@ -32,4 +32,9 @@ public class SalesLogisticsInfoDetailDTO {
      * 客户条码
      */
     private List<String> customer_barcode;
+
+    /**
+     * 物流单号
+     */
+    private String logistics_code;
 }

@@ -20,5 +20,5 @@ public class SalesLogisticsSyncDTO {
     /**
      * 物料单详情
      */
-    private List<SalesLogisticsInfoDTO> data;
+    private List<SalesLogisticsInfoDetailDTO> data;
 }
