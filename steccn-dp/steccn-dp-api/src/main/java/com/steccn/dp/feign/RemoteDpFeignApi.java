@@ -3,6 +3,7 @@ package com.steccn.dp.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
@@ -39,5 +40,5 @@ public interface RemoteDpFeignApi {
      */
     @PostMapping("/feign/dp/weight/countAsDay")
     @ApiOperation(value = "电子秤读数按天")
-    R<List<DpValueDateVO>> countAsDay(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
+    R<List<DpValueDateVO>> countAsDay(@RequestBody DpPmsOperateDTO dto);
 }

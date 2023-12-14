@@ -19,4 +19,5 @@ import java.time.LocalDate;
 public class DpValueDateVO {
     private LocalDate day;
     private BigDecimal value;
+    private String dateStr;
 }

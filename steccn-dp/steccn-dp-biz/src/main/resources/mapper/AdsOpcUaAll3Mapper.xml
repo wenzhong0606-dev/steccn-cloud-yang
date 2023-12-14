@@ -42,7 +42,7 @@
     </select>
 
     <select id="weightCountAsDay" resultType="com.steccn.dp.vo.DpValueDateVO">
-        SELECT DATE(DATE_ADD(serverTime, INTERVAL -8 HOUR)) AS day,
+        SELECT DATE_FORMAT(DATE_ADD(serverTime, INTERVAL -8 HOUR),'%Y-%m-%d') dateStr,
         SUM(value) AS value
         FROM ads_opc_ua_all3
         <where>
@@ -54,11 +54,59 @@
                 and serverTime &lt;= #{dto.field2}
             </if>
         </where>
-        GROUP BY day
+        GROUP BY dateStr
+    </select>
+
+    <select id="weightCountAsWeek" resultType="com.steccn.dp.vo.DpValueDateVO">
+        SELECT YEARWEEK(DATE_ADD(serverTime, INTERVAL -8 HOUR),7) dateStr,
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY dateStr
+    </select>
+
+    <select id="weightCountAsMonth" resultType="com.steccn.dp.vo.DpValueDateVO">
+        SELECT DATE_FORMAT(DATE_ADD(serverTime, INTERVAL -8 HOUR),'%Y-%m') dateStr,
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY dateStr
+    </select>
+
+    <select id="weightCountAsYear" resultType="com.steccn.dp.vo.DpValueDateVO">
+        SELECT DATE_FORMAT(DATE_ADD(serverTime, INTERVAL -8 HOUR),'%Y') dateStr,
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY dateStr
     </select>
 
     <select id="weightCountAsDayAndTag" resultType="com.steccn.dp.vo.DpWeightVO">
-        SELECT DATE(DATE_ADD(serverTime, INTERVAL -8 HOUR)) AS date,tag_id AS tagId,
+        SELECT DATE_FORMAT(DATE_ADD(serverTime, INTERVAL -8 HOUR),'%Y-%m-%d') dateStr ,tag_id AS tagId,
         SUM(value) AS value
         FROM ads_opc_ua_all3
         <where>
@@ -70,6 +118,54 @@
                 and serverTime &lt;= #{dto.field2}
             </if>
         </where>
-        GROUP BY date,tag_id
+        GROUP BY dateStr,tag_id
+    </select>
+
+    <select id="weightCountAsWeekAndTag" resultType="com.steccn.dp.vo.DpWeightVO">
+        SELECT YEARWEEK(DATE_ADD(serverTime, INTERVAL -8 HOUR),7) dateStr ,tag_id AS tagId,
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY dateStr,tag_id
+    </select>
+
+    <select id="weightCountAsMonthAndTag" resultType="com.steccn.dp.vo.DpWeightVO">
+        SELECT DATE_FORMAT(DATE_ADD(serverTime, INTERVAL -8 HOUR),'%Y-%m') dateStr ,tag_id AS tagId,
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY dateStr,tag_id
+    </select>
+
+    <select id="weightCountAsYearAndTag" resultType="com.steccn.dp.vo.DpWeightVO">
+        SELECT DATE_FORMAT(DATE_ADD(serverTime, INTERVAL -8 HOUR),'%Y') dateStr ,tag_id AS tagId,
+        SUM(value) AS value
+        FROM ads_opc_ua_all3
+        <where>
+            del_flag = 0
+            <if test="dto.field1 !=null">
+                and serverTime &gt;= #{dto.field1}
+            </if>
+            <if test="dto.field2 != null">
+                and serverTime &lt;= #{dto.field2}
+            </if>
+        </where>
+        GROUP BY dateStr,tag_id
     </select>
 </mapper>

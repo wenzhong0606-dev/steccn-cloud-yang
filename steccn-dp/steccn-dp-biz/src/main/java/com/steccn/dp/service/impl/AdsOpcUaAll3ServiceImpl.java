@@ -2,6 +2,7 @@ package com.steccn.dp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -10,6 +11,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ShardTimeUtil;
@@ -32,7 +34,9 @@ import com.steccn.platform.dto.SalesContractDTO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -112,71 +116,43 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     }
 
     @Override
-    public List<DpValueDateVO> weightCountAsDay(TupleDTO<LocalDateTime, LocalDateTime> dto) {
+    public List<DpValueDateVO> weightCountAsDay(DpPmsOperateDTO dto) {
         List<DpValueDateVO> result = Lists.newArrayList();
-        result = adsOpcUaAll3Mapper.weightCountAsDay(dto);
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        result = weightCountAsDayTool(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
         return result;
     }
 
     @Override
     public QtLineChartBarDTO weightCountDashBoard(DpPmsOperateDTO dto) {
-        List<DpWeightVO> result = Lists.newArrayList();
-        result = adsOpcUaAll3Mapper.weightCountAsDayAndTag(new TupleDTO<>(dto.getStart().atTime(8,0,0),dto.getEnd().plusDays(1).atTime(7,59,59)));
-        SteccnTableAssertUtil.notEmpty(result, "暂无数据");
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        List<DpWeightVO> tripleDTOS = weightCount(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        SteccnTableAssertUtil.notEmpty(tripleDTOS, "暂无数据");
         //找到所有的的tagName
-        List<String> tagNameList = result.stream().map(DpWeightVO::getTagId).distinct().sorted().collect(Collectors.toList());
-        if(dto.getType().equals(OaConstant.NUM_1)){
-            //把日期重置成第一天
-            result.forEach(tmp->{
-                tmp.setDate(tmp.getDate().withDayOfMonth(1));
-            });
-            // 使用 Stream API 进行按月份和 tagId 合并累加
-            result = result.stream()
-                    .collect(Collectors.toMap(
-                            v -> v.getDate() + "-" + v.getTagId(),
-                            Function.identity(),
-                            (v1, v2) -> {
-                                v1.setValue(BigDecimalUtil.add(v1.getValue(), v2.getValue()));
-                                return v1;
-                            }
-                    ))
-                    .values()
-                    .stream()
-                    .collect(Collectors.toList());
-        }
-        Set<String> refSet = result.stream().map(DpWeightVO::getTagId).collect(Collectors.toSet());
+        List<String> tagNameList = tripleDTOS.stream().map(DpWeightVO::getTagId).distinct().sorted().collect(Collectors.toList());
+        Set<String> refSet = tripleDTOS.stream().map(DpWeightVO::getTagId).collect(Collectors.toSet());
         Map<String, List<SysConfigurationDTO>> dpWeight = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("DP_WEIGHT", refSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //组图表
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        int dayCount = 0;
-        if(dto.getType().equals(OaConstant.NO)){
-            dayCount = (int)ChronoUnit.DAYS.between(dto.getStart(), dto.getEnd());
-        }else {
-            dayCount =  dto.getEnd().getMonthValue() - dto.getStart().getMonthValue();
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
+            dateList.add(dto.getStart());
         }
-        for (int i = 0; i <= dayCount; i++) {
-            LocalDate start = dto.getStart();
+        for (int i = 1; i <= dateList.size(); i++) {
+            LocalDate start = dateList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            //0是日报表，1是月报表
-            if(dto.getType().equals(OaConstant.NO)){
-                start = dto.getStart().plusDays(i);
-                stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            }else {
-                start = dto.getStart().withDayOfMonth(1).plusMonths(i);
-                stackGraphDTO.setXAxis(start.format(DateTimeFormatter.ofPattern("yyyy-MM")));
-            }
-            LocalDate finalStart = start;
-            List<DpWeightVO> resultTmp = result.stream().filter(v -> v.getDate().equals(finalStart))
+            stackGraphDTO.setXAxis(XAxisUtil.convert(granularity, start));
+            //获取值的方式必须统一
+            String key = MysqlDateKeyUtil.convert(granularity, start);
+            List<DpWeightVO> resultTmp = tripleDTOS.stream().filter(v -> v.getDateStr().equals(key))
                     .sorted(Comparator.comparing(DpWeightVO::getTagId)).collect(Collectors.toList());
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
             //若为空则空柱子
             if(CollUtil.isEmpty(resultTmp)){
                 for(String str:tagNameList){
                     String tmpName = dpWeight.get(str).get(0).getRefContent();
-                    //2#则跳过
-                    if(tmpName.contains("2#")){
-                        continue;
-                    }
                     if(tmpName.contains("1#")){
                         tmpName = tmpName.substring(2);
                     }
@@ -185,25 +161,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             }else {
                 for(DpWeightVO tmp:resultTmp){
                     String tmpName = dpWeight.get(tmp.getTagId()).get(0).getRefContent();
-                    //2#则跳过
-                    if(tmpName.contains("2#")){
-                        continue;
-                    }
                     if(tmpName.contains("1#")){
                         tmpName = tmpName.substring(2);
-                    }
-                    //若是硅砂和碎玻璃则累加
-                    if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh1_FLOAT")){
-                        DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh2_FLOAT")).findFirst().orElse(null);
-                        if(Objects.nonNull(twoResult)){
-                            tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
-                        }
-                    }
-                    if(tmp.getTagId().equals("Raw_YL.ZHM.fact_weigh9_FLOAT")){
-                        DpWeightVO twoResult = resultTmp.stream().filter(v -> v.getTagId().equals("Raw_YL.ZHM.fact_weigh10_FLOAT")).findFirst().orElse(null);
-                        if(Objects.nonNull(twoResult)){
-                            tmp.setValue(BigDecimalUtil.divide(BigDecimalUtil.add(tmp.getValue(),twoResult.getValue()),new BigDecimal(1000),2));
-                        }
                     }
                     datList.add(new TupleDTO<>(tmpName, BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
                 }
@@ -297,6 +256,63 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         vo.setCommonBarLineVO(results);
         vo.setCountData(customers.stream().map(SalesContractCustomerDTO::getQty).reduce(BigDecimal.ZERO,BigDecimal::add));
         return vo;
+    }
+
+    public List<DpWeightVO> weightCount(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        List<DpWeightVO> weightCountList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsDayAndTag(dto);
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsWeekAndTag(dto);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsMonthAndTag(dto);
+        } else {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsYearAndTag(dto);
+        }
+        //合并硅砂和碎玻璃
+        if(CollUtil.isNotEmpty(weightCountList)){
+            //重置
+            weightCountList = weightCountList.stream()
+                    .map(weight -> {
+                        if (weight.getTagId() != null && weight.getTagId().equals("Raw_YL.CS.ZHM.fact_weigh2_FLOAT")) {
+                            weight.setTagId("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
+                        }
+                        if (weight.getTagId() != null && weight.getTagId().equals("Raw_YL.CS.ZHM.fact_weigh10_FLOAT")) {
+                            weight.setTagId("Raw_YL.CS.ZHM.fact_weigh9_FLOAT");
+                        }
+                        return weight;
+                    })
+                    .collect(Collectors.toList());
+            //合并
+            // 使用 Stream API 进行按月份和 tagId 合并累加
+            weightCountList = weightCountList.stream()
+                    .collect(Collectors.toMap(
+                            v -> v.getDateStr() + "-" + v.getTagId(),
+                            Function.identity(),
+                            (v1, v2) -> {
+                                v1.setValue(BigDecimalUtil.add(v1.getValue(), v2.getValue()));
+                                return v1;
+                            }
+                    ))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+        }
+        return weightCountList;
+    }
+
+    public List<DpValueDateVO> weightCountAsDayTool(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto){
+        List<DpValueDateVO> weightCountList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsDay(dto);
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsYear(dto);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsMonth(dto);
+        } else {
+            weightCountList = adsOpcUaAll3Mapper.weightCountAsYear(dto);
+        }
+        return weightCountList;
     }
 }
 

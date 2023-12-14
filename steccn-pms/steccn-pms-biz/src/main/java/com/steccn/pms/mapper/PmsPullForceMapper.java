@@ -19,13 +19,40 @@ import java.util.Set;
 @Mapper
 public interface PmsPullForceMapper extends BaseMapper<PmsPullForce> {
     /**
-     * 聚合一天的拉引量
+     * 聚合一天的拉引量(日)
      * @param start 开始时间
      * @param end 结束时间
      * @param idSet id列表
      * @return
      */
     List<PmsPullForceDayCountDTO> selectPullForceByDay(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
+
+    /**
+     * 聚合一天的拉引量(周)
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param idSet id列表
+     * @return
+     */
+    List<PmsPullForceDayCountDTO> selectPullForceByWeek(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
+
+    /**
+     * 聚合一天的拉引量(月)
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param idSet id列表
+     * @return
+     */
+    List<PmsPullForceDayCountDTO> selectPullForceByMonth(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
+
+    /**
+     * 聚合一天的拉引量(年)
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param idSet id列表
+     * @return
+     */
+    List<PmsPullForceDayCountDTO> selectPullForceByYear(@Param("start")LocalDate start, @Param("end")LocalDate end, @Param("idSet")Set<Integer> idSet);
 }
 
 

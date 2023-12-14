@@ -19,4 +19,5 @@ import java.time.LocalDate;
 public class PmsPullForceDayCountDTO {
     private LocalDate pullForceDate;
     private BigDecimal quantity;
+    private String pullForceDateStr;
 }

@@ -17,4 +17,5 @@ public class DpWeightVO {
     private String tagName;
     private BigDecimal value;
     private LocalDate date;
+    private String dateStr;
 }
