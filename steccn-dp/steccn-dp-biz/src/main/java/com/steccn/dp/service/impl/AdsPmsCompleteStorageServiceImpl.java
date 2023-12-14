@@ -11,9 +11,11 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.dp.domain.AdsPmsCompleteStorage;
+import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.service.AdsPmsCompleteStorageService;
 import com.steccn.dp.mapper.AdsPmsCompleteStorageMapper;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
@@ -42,6 +44,7 @@ public class AdsPmsCompleteStorageServiceImpl extends ServiceImpl<AdsPmsComplete
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Map<String, BigDecimal> sjgInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> wsIdSet, Integer bit) {
@@ -59,6 +62,20 @@ public class AdsPmsCompleteStorageServiceImpl extends ServiceImpl<AdsPmsComplete
         Assert.notNull(pieceSysDict, "片单位不存在");
         Assert.notNull(tonSysDict, "吨单位不存在");
         return inStorage(granularity, start, end, wsIdSet, bit, pieceSysDict, tonSysDict);
+    }
+
+    @Override
+    public Map<String, BigDecimal> inStorageSum(DpPullForceDTO dto) {
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(dto.getWorkshopIdSet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(officeMap, "组织机构不存在");
+        long sjgCount = officeMap.values().stream().filter(ele -> ele.indexOf("深加工") != -1).count();
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
+        if (sjgCount != 0) {
+            return sjgInStorage(granularityEnum, dto.getStart(), dto.getEnd(), dto.getWorkshopIdSet(), 4);
+        } else {
+            return jpInStorage(granularityEnum, dto.getStart(), dto.getEnd(), dto.getWorkshopIdSet(), 4);
+        }
     }
 
     /**

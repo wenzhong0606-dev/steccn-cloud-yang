@@ -1,7 +1,9 @@
 package com.steccn.dp.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.dp.domain.AdsPmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 
 import java.math.BigDecimal;
@@ -39,4 +41,11 @@ public interface AdsPmsCompleteStorageService extends IService<AdsPmsCompleteSto
      * @return
      */
     Map<String, BigDecimal> jpInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> wsIdSet, Integer bit);
+
+    /**
+     * 深加工还是基片
+     * @param dto
+     * @return
+     */
+    Map<String, BigDecimal> inStorageSum(DpPullForceDTO dto);
 }
