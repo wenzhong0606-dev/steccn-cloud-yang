@@ -258,6 +258,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
                 wmsStorageReceiptInfoDTO.setBatch("0");
                 wmsStorageReceiptInfoDTO.setProductionLineName(productionName);
+                wmsStorageReceiptInfoDTO.setAssociatedNo(list.get(0).getCode());
                 wmsStorageReceiptDTO.setWarehouseId(caseInfo.getWarehouseId());
                 wmsStorageReceiptDTO.setWarehouseName(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
                 materialList.add(wmsStorageReceiptInfoDTO);
