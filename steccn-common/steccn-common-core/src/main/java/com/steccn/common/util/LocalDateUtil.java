@@ -329,7 +329,7 @@ public class LocalDateUtil {
     }
 
     /**
-     * 判断time是否在start-end之前
+     * 判断time是否在start-end之间
      *
      * @param time    时间
      * @param start   开始时间
@@ -339,6 +339,35 @@ public class LocalDateUtil {
      * @return
      */
     public static Boolean isRange(LocalDateTime time, LocalDateTime start, LocalDateTime end, boolean leftEq, boolean rightEq) {
+        Assert.notNull(time, "时间不能为空");
+        Assert.notNull(start, "开始时间不能为空");
+        Assert.notNull(end, "结束时间不能为空");
+        // start < time < end
+        if (time.isAfter(start) && time.isBefore(end)) {
+            return Boolean.TRUE;
+        }
+        //左包含 start == time
+        if (leftEq && start.isEqual(time)) {
+            return Boolean.TRUE;
+        }
+        //右包含 end == time
+        if (rightEq) {
+            return end.isEqual(time);
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 判断time是否在start-end之间
+     *
+     * @param time    时间
+     * @param start   开始时间
+     * @param end     结束时间
+     * @param leftEq  左包含
+     * @param rightEq 右包含
+     * @return
+     */
+    public static Boolean isRange(LocalDate time, LocalDate start, LocalDate end, boolean leftEq, boolean rightEq) {
         Assert.notNull(time, "时间不能为空");
         Assert.notNull(start, "开始时间不能为空");
         Assert.notNull(end, "结束时间不能为空");

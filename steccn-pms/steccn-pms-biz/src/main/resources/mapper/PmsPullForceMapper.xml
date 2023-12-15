@@ -31,7 +31,7 @@
 
     <select id="selectPullForceByDay" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
         SELECT SUM(quantity) AS quantity,
-               pull_force_date AS pullForceDate
+               DATE_FORMAT(pull_force_date,'%Y-%m-%d') pullForceDateStr
         FROM pms_pull_force
         WHERE del_flag = 0
         AND pull_force_date between #{start} AND #{end}
@@ -39,6 +39,46 @@
         <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
             #{id}
         </foreach>
-        GROUP BY  pull_force_date
+        GROUP BY  pullForceDateStr
     </select>
+
+    <select id="selectPullForceByWeek" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
+        SELECT SUM(quantity) AS quantity,
+        YEARWEEK(pull_force_date,7) pullForceDateStr
+        FROM pms_pull_force
+        WHERE del_flag = 0
+        AND pull_force_date between #{start} AND #{end}
+        AND workshop_id IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+        GROUP BY  pullForceDateStr
+    </select>
+
+    <select id="selectPullForceByMonth" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
+        SELECT SUM(quantity) AS quantity,
+        DATE_FORMAT(pull_force_date,'%Y-%m') pullForceDateStr
+        FROM pms_pull_force
+        WHERE del_flag = 0
+        AND pull_force_date between #{start} AND #{end}
+        AND workshop_id IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+        GROUP BY  pullForceDateStr
+    </select>
+
+    <select id="selectPullForceByYear" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
+        SELECT SUM(quantity) AS quantity,
+        DATE_FORMAT(pull_force_date,'%Y') pullForceDateStr
+        FROM pms_pull_force
+        WHERE del_flag = 0
+        AND pull_force_date between #{start} AND #{end}
+        AND workshop_id IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+        GROUP BY  pullForceDateStr
+    </select>
+
 </mapper>

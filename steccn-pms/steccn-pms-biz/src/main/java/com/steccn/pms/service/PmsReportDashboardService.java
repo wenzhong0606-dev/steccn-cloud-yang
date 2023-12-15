@@ -111,7 +111,7 @@ public interface PmsReportDashboardService {
     QtLineChartBarDTO pullForceMelting(DpPmsOperateDTO dto);
 
     /**
-     * 拉引量熔化率数值
+     * 拉引量熔化率数值(弃用)
      * @param start
      * @param end
      * @return

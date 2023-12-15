@@ -41,7 +41,7 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @param dto
      * @return
      */
-    List<DpValueDateVO> weightCountAsDay(TupleDTO<LocalDateTime,LocalDateTime> dto);
+    List<DpValueDateVO> weightCountAsDay(DpPmsOperateDTO dto);
 
     /**
      * 拉引量熔化率

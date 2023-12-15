@@ -45,15 +45,28 @@ public interface AdsPmsReportWorkMapper extends BaseMapper<AdsPmsReportWork> {
                                                                     @Param("workshopIdSet") Set<Integer> workshopIdSet);
 
     /**
-     * 实际使用数：柱状图，取自磨边工位报工加工数，转换为平方米
+     * 产量-周-基片
+     *
      * @param start         开始时间
      * @param end           结束时间
      * @param workshopIdSet 产线集合
      * @return
      */
-    List<TripleDTO<String, Long, BigDecimal>> actualUseMaterialDay(@Param("start") LocalDate start,
-                                                                   @Param("end") LocalDate end,
-                                                                   @Param("workshopIdSet") Set<Integer> workshopIdSet);
+    List<TripleDTO<String, Long, BigDecimal>> jpCompleteMaterialWeek(@Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end,
+                                                                    @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
+     * 产量-周-深加工
+     *
+     * @param start         开始时间
+     * @param end           结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String, Long, BigDecimal>> sjgCompleteMaterialWeek(@Param("start") LocalDate start,
+                                                                     @Param("end") LocalDate end,
+                                                                     @Param("workshopIdSet") Set<Integer> workshopIdSet);
 
     /**
      * 产量-月-基片
@@ -80,6 +93,54 @@ public interface AdsPmsReportWorkMapper extends BaseMapper<AdsPmsReportWork> {
                                                                       @Param("workshopIdSet") Set<Integer> workshopIdSet);
 
     /**
+     * 产量-年-基片
+     *
+     * @param start         开始时间
+     * @param end           结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String, Long, BigDecimal>> jpCompleteMaterialYear(@Param("start") LocalDate start,
+                                                                      @Param("end") LocalDate end,
+                                                                      @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
+     * 产量-年-深加工
+     *
+     * @param start         开始时间
+     * @param end           结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String, Long, BigDecimal>> sjgCompleteMaterialYear(@Param("start") LocalDate start,
+                                                                       @Param("end") LocalDate end,
+                                                                       @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+
+
+    /**
+     * 实际使用数：柱状图，取自磨边工位报工加工数，转换为平方米
+     * @param start         开始时间
+     * @param end           结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String, Long, BigDecimal>> actualUseMaterialDay(@Param("start") LocalDate start,
+                                                                   @Param("end") LocalDate end,
+                                                                   @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
+     * 实际使用数：柱状图，取自磨边工位报工加工数，转换为平方米
+     * @param start         开始时间
+     * @param end           结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String, Long, BigDecimal>> actualUseMaterialWeek(@Param("start") LocalDate start,
+                                                                     @Param("end") LocalDate end,
+                                                                     @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
      * 实际使用数：柱状图，取自磨边工位报工加工数，转换为平方米
      * @param start         开始时间
      * @param end           结束时间
@@ -89,6 +150,17 @@ public interface AdsPmsReportWorkMapper extends BaseMapper<AdsPmsReportWork> {
     List<TripleDTO<String, Long, BigDecimal>> actualUseMaterialMonth(@Param("start") LocalDate start,
                                                                      @Param("end") LocalDate end,
                                                                      @Param("workshopIdSet") Set<Integer> workshopIdSet);
+
+    /**
+     * 实际使用数：柱状图，取自磨边工位报工加工数，转换为平方米
+     * @param start         开始时间
+     * @param end           结束时间
+     * @param workshopIdSet 产线集合
+     * @return
+     */
+    List<TripleDTO<String, Long, BigDecimal>> actualUseMaterialYear(@Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end,
+                                                                    @Param("workshopIdSet") Set<Integer> workshopIdSet);
 }
 
 
