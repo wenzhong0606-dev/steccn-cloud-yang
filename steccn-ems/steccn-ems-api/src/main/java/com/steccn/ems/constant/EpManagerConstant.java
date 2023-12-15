@@ -322,6 +322,7 @@ public interface EpManagerConstant {
     Integer ENERGY_GAS = 3;
     Integer ENERGY_OIL = 4;
     Integer ENERGY_GAS_OIL = 5;
+    Integer ENERGY_ELECTRIC_OTHER = 7;
 
 
     /**
@@ -331,6 +332,8 @@ public interface EpManagerConstant {
     String CONF_EMS_DAY_COUNT_WATER = "EMS_DAY_COUNT_WATER";
     String CONF_EMS_DAY_COUNT_GAS = "EMS_DAY_COUNT_GAS";
     String CONF_EMS_DAY_COUNT_OIL = "EMS_DAY_COUNT_OIL";
+    String CONF_EMS_DAY_COUNT_ELEC_OTHER = "EMS_DAY_COUNT_ELEC_OTHER";
+
 
     /**
      * content映射类型
@@ -363,4 +366,26 @@ public interface EpManagerConstant {
             return resSet;
         }
     }
+
+    /**
+     * 配置EMS_DAY_COUNT 的content映射
+     */
+    @Getter
+    @AllArgsConstructor
+    enum ELECOtherConfContentEnum {
+        ELEC_110KV_STATION,
+        LIGHT_ELEC,
+        HEAT_POWER,
+        HEAT_POWER_OUT_STATION;
+
+        //根据code查找值
+        public static Set<String> allContentConf() {
+            Set<String> resSet = Sets.newHashSet();
+            for (ELECOtherConfContentEnum value : ELECOtherConfContentEnum.values()) {
+                resSet.add(value.toString());
+            }
+            return resSet;
+        }
+    }
+
 }

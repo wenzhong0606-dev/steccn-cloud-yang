@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -12,13 +13,14 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpInstrumentAccount;
+import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -43,10 +45,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
     private final EpEnergyTypeService epEnergyTypeService;
     private final EpPartitionService epPartitionService;
-    private final EpHeatPowerService epHeatPowerService;
     private final EpMeterReadService meterReadService;
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final EpMeterReadService epMeterReadService;
 
     @Override
 //    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
@@ -100,9 +102,18 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 EpEnergyTypeVO elecEnergy = eleOp.get();
                 List<EpDayReportCountRowVO> elecList = calElec(elecEnergy, start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC));
                 //获取能源类型
-                EpDayReportCountRowVO heatPowerRow = heatPowerRow(start, end, elecEnergy);
+                //获取电表（其他） - 余热发电的仪表
+                List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
+                Optional<TripleDTO<Long, Integer, String>> heatPowerOp = eleConfList.stream().filter(ele -> ele.getField3().contains("余热发电")).findFirst();
+                if (heatPowerOp.isPresent()) {
+                    Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(heatPowerOp.get().getField2()));
+                    if (CollUtil.isNotEmpty(accountMap)) {
+                        Optional<EpInstrumentAccount> heatPowerAccount = accountMap.values().stream().findFirst();
+                        EpDayReportCountRowVO heatPowerRow = heatPowerRow(start, end, elecEnergy, heatPowerAccount.get());
+                        elecList.add(heatPowerRow);
+                    }
+                }
                 //插入合计行
-                elecList.add(heatPowerRow);
                 EpDayReportCountRowVO sumRow = countRow(elecList, elecEnergy);
                 elecList.add(sumRow);
                 return elecList;
@@ -148,13 +159,46 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 throw new BusinessException("业务执行异常");
             }
         }).exceptionally(ex -> Lists.newArrayList());
-        //4个都执行完毕，才来执行继续
+
+        CompletableFuture<List<EpDayReportCountRowVO>> elecOtherFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                RequestContextHolder.setRequestAttributes(attributes);
+                List<EpDayReportCountRowVO> resList = Lists.newArrayList();
+                Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC_OTHER.equals(v.getId())).findFirst();
+                EpEnergyTypeVO elecEnergy = eleOp.get();
+
+                //获取用电量
+                //获取电表（其他） - 余热发电的仪表
+                List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
+                List<TripleDTO<Long, Integer, String>> heatPowerList = eleConfList.stream().filter(ele -> !"余热发电".equals(ele.getField3())).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(heatPowerList)) {
+                    Set<Integer> hpIdSet = heatPowerList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
+                    Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, hpIdSet);
+                    if (CollUtil.isNotEmpty(accountMap)) {
+                        accountMap.entrySet().forEach(ele ->{
+                            EpDayReportCountRowVO res = heatPowerRow(start, end, elecEnergy, ele.getValue());
+                            resList.add(res);
+                        });
+                    }
+                }
+                //插入合计行
+                EpDayReportCountRowVO sumRow = countRow(resList, elecEnergy);
+                resList.add(sumRow);
+                return resList;
+            } catch (Exception e) {
+                log.error("elecOther -> {}", e.getLocalizedMessage());
+                throw new BusinessException("业务执行异常");
+            }
+        }).exceptionally(ex -> Lists.newArrayList());
+
+        //5个都执行完毕，才来执行继续
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture);
         completableFuture.isDone();
         dataList.addAll(elecFuture.get());
         dataList.addAll(waterFuture.get());
         dataList.addAll(gasFuture.get());
         dataList.addAll(oilFuture.get());
+        dataList.addAll(elecOtherFuture.get());
         return dataList;
     }
 
@@ -184,19 +228,28 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param energy 能源类型
      * @return
      */
-    private EpDayReportCountRowVO heatPowerRow(LocalDate start, LocalDate end, EpEnergyTypeVO energy) {
-        //计算余热发电
-        List<BigDecimal> heatPowerList = epHeatPowerService.heatPower(start, end);
+    private EpDayReportCountRowVO heatPowerRow(LocalDate start, LocalDate end, EpEnergyTypeVO energy, EpInstrumentAccount account ) {
+        //计算余热发电-能源抄表
+        List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                .between(EpMeterRead::getReadDate, start, end)
+                .eq(EpMeterRead::getMeterId, account.getId()));
         EpDayReportCountRowVO heatPowerRow = new EpDayReportCountRowVO();
-        List<BigDecimal> heatPowerListNew = Lists.newArrayList();
-        //余热发电数据不准确，临时解决方案，默认为null
-//        heatPowerList.forEach(ele -> heatPowerListNew.add(BigDecimalUtil.setScale(ele, 0)));
-        heatPowerList.forEach(ele -> heatPowerListNew.add(null));
-        heatPowerRow.setConsumeList(heatPowerListNew);
+        Map<LocalDate, BigDecimal> dpMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                dpMap.put(ele.getReadDate(), BigDecimalUtil.setScale(ele.getAdminValue(), 0));
+            });
+        }
+        List<BigDecimal> valueList = Lists.newArrayList();
+        List<LocalDate> dateList = ShardTimeUtil.cutDate("D", start, end);
+        dateList.forEach(ele -> {
+            valueList.add(dpMap.get(ele));
+        });
         heatPowerRow.setEnergyType(energy.getName());
-        heatPowerRow.setDepartmentName("余热发电");
+        heatPowerRow.setDepartmentName(account.getMeterName());
         heatPowerRow.setUnit(energy.getMeasureUnitName());
-        BigDecimal heatPowerSum = BigDecimalUtil.sum(heatPowerListNew);
+        heatPowerRow.setConsumeList(valueList);
+        BigDecimal heatPowerSum = BigDecimalUtil.sum(valueList);
         heatPowerRow.setSumStr(BigDecimalUtil.setScale(heatPowerSum, 0));
         return heatPowerRow;
     }
