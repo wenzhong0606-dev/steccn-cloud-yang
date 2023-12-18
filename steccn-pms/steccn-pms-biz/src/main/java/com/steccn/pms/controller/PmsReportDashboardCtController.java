@@ -57,8 +57,8 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/pull/force/date")
     @ApiOperation("累计拉引量总数")
-    public R<QtLineChartBarDTO> pullForceDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.pullForceDate(workShopId, start, end.plusDays(1), UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+    public R<QtLineChartBarDTO> pullForceDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+        return R.success(pmsReportDashboardCtService.pullForceDate(workShopId, start, end, granularity, UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/yield/rate/date/pm")

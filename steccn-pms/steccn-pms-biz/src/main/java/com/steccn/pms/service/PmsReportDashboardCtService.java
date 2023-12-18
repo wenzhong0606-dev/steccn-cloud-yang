@@ -54,11 +54,12 @@ public interface PmsReportDashboardCtService {
      * @param workShopId 车间主键
      * @param start      开始日期
      * @param end        结束日期
+     * @param granularity 班次，日，周，月，年
      * @param bit        位数
      * @param unit       单位
      * @return
      */
-    QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit);
+    QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit);
 
     /**
      * 各产线成品率-完工

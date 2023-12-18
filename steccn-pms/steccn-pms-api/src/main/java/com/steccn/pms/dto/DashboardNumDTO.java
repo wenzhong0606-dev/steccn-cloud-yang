@@ -54,5 +54,4 @@ public class DashboardNumDTO implements Serializable {
      */
     private String unit;
 
-
 }

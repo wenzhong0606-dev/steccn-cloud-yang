@@ -97,7 +97,7 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
     List<PmsPullForceDataVO> getDataFromPeriods(PmsPullForceQueryDTO dto);
 
     /**
-     * 查询班次日期的拉引量
+     * 查询班次日期的拉引量 key = classDate +""
      *
      * @param lineIdList 产线
      * @param start      开始日期
@@ -105,6 +105,16 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Map<String, BigDecimal> datePullForce(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+    /**
+     * 查询班次日期的拉引量 key = classDate +"_"+classId
+     *
+     * @param lineIdList 产线
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    Map<String, BigDecimal> dateClassPullForce(List<Integer> lineIdList, LocalDate start, LocalDate end);
 
     /**
      * 查询产线+班次日期+班次的拉引量
