@@ -180,17 +180,21 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     public QtLineChartBarDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
-        List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
-        Assert.notEmpty(timeList, "日期选择有误");
         //根据车间获取产线
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
-        //根据日期区间获取班次+日期+产线的产量
-        Map<String, BigDecimal> numMap = reportWorkService.dateClassLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
-        if (granularity == QtManagerConstant.QtGranularityEnum.CLASS) {
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+            Assert.notEmpty(timeList, "日期选择有误");
+            //根据日期区间获取班次+日期+产线的产量
+            Map<String, BigDecimal> numMap = reportWorkService.dateClassLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
             return dateClassQuantity(wsLineList, timeList, numMap, "入库总数");
         } else {
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), start, end);
+            Assert.notEmpty(timeList, "日期选择有误");
+            //根据日期区间获取日期+产线的产量
+            Map<String, BigDecimal> numMap = reportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
             return dateQuantity(wsLineList, timeList, numMap, "入库总数",granularity);
         }
     }

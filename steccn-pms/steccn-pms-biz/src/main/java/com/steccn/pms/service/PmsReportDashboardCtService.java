@@ -99,10 +99,10 @@ public interface PmsReportDashboardCtService {
      * @param workShopId 车间主键
      * @param start      开始日期
      * @param end        结束日期
-     * @param dateType   班次，日，周，月，年
+     * @param granularity   班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType);
+    QtLineChartBarDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 各产线拉引量总数

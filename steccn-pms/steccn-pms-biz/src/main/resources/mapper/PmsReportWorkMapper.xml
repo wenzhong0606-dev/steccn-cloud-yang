@@ -765,6 +765,40 @@
         material_id
     </select>
 
+    <select id="dateLineInStorageUnit" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        SELECT
+        enter_time as classDate,
+        material_id,
+        production_line_id as productLineId,
+        sum( quantity ) AS quantity
+        FROM
+        (
+        SELECT
+        IF( HOUR ( enter_time ) >= 8, DATE_FORMAT( enter_time, '%Y-%m-%d' ), DATE_SUB( DATE_FORMAT( enter_time, '%Y-%m-%d' ), INTERVAL 1 DAY ) ) AS enter_time,
+        ppo.material_id,
+        pcsi.quantity,
+        ppo.production_line_id
+        FROM
+        pms_complete_storage pcs
+        JOIN pms_complete_storage_info pcsi ON pcsi.complete_storage_id = pcs.id
+        JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0
+        AND ppo.del_flag = 0
+        AND pcs.state != 2
+        AND ppo.production_line_id in
+        <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND pcs.enter_time &gt;= #{start}
+        AND pcs.enter_time &lt; #{end}
+        ) AS tt
+        GROUP BY
+        enter_time,
+        production_line_id,
+        material_id
+    </select>
+
     <select id="getStorageCount" resultType="com.steccn.pms.dto.PmsStorageCountDTO">
         SELECT
         ppo.id as produceOrderId,
