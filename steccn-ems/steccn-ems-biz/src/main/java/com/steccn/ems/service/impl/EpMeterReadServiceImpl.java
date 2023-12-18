@@ -1,5 +1,6 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
@@ -20,6 +21,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
@@ -35,15 +37,23 @@ import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
+import com.steccn.wms.dto.WmsStockInventoryDTO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +67,8 @@ import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.apache.ibatis.ognl.DynamicSubscript.last;
 
 /**
  * @author yequan
@@ -86,6 +98,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    @Autowired
+    private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -434,6 +450,67 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         epMeterRead.setAdminValue(dto.getReadValue());
 
         save(epMeterRead);
+        //仅当仪表类型为燃料油计量表时：任一班次日期D的读数成功录入后，触发自动出库
+        //查询仪表获取仪表类型
+        EpInstrumentAccountVO epInstrumentAccountVO = epInstrumentAccountService.getEpInstrumentAccountVO(dto.getMeterId());
+        if (Objects.nonNull(epInstrumentAccountVO) && epInstrumentAccountVO.getMeterType().equals(4)) {
+            //仪表类型为燃料油计量表，自动出库
+            Set<String> names = Sets.newHashSet();
+            //获取仓库信息
+            names.add(EpManagerConstant.FUEL_POWER_WAREHOUSE);
+            Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(names), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取出库单类型
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", EpManagerConstant.OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = new WmsDeliveryReceiptDTO();
+            wmsDeliveryReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
+            wmsDeliveryReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
+            wmsDeliveryReceiptDTO.setType(sysDictVO.getId());
+            Integer warehouseId = officeMap.get(EpManagerConstant.FUEL_POWER_WAREHOUSE).getId();
+            wmsDeliveryReceiptDTO.setWarehouseId(warehouseId);
+            wmsDeliveryReceiptDTO.setWarehouseName(EpManagerConstant.FUEL_POWER_WAREHOUSE);
+            wmsDeliveryReceiptDTO.setNote("能源抄表自动出库");
+            List<WmsDeliveryReceiptInfoDTO> list = Lists.newArrayList();
+            //获取燃料仓库中的库存，优先消耗入库时间早的库存
+            Set<Integer> warehouseIds = Sets.newHashSet();
+            warehouseIds.add(warehouseId);
+            Map<Integer, List<WmsStockInventoryDTO>> inventortyMap = FeignOptional.of(() -> remoteWmsInventoryFeignApi.materialByWarehouse(warehouseIds), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            List<WmsStockInventoryDTO> inventoryDTOList = inventortyMap.get(warehouseId);
+            //获取库存消耗量（当前读数减去前一天读数）
+            if (CollUtil.isNotEmpty(inventoryDTOList)) {
+                //计算消耗量并转换单位为吨
+                BigDecimal readValue = previousDayMeterReading(dto.getReadDate(), dto.getMeterId());
+                BigDecimal consumption = BigDecimalUtil.subtract(dto.getReadValue(), readValue);
+                BigDecimal divide = BigDecimalUtil.divide(consumption, new BigDecimal("1000"));
+                inventoryDTOList = inventoryDTOList.stream()
+                        .sorted(Comparator.comparing(WmsStockInventoryDTO::getCreateDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .collect(Collectors.toList());
+                //过滤可用库存小于等于O的数据
+                List<WmsStockInventoryDTO> collect = inventoryDTOList.stream().filter(wmsInventory -> wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(collect)) {
+                    for (WmsStockInventoryDTO wmsInventory : collect) {
+                        WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO = new WmsDeliveryReceiptInfoDTO();
+                        BeanUtil.copyProperties(wmsInventory, wmsDeliveryReceiptInfoDTO);
+                        if (wmsInventory.getAvailableQuantity().compareTo(divide) >= 0){
+                            wmsDeliveryReceiptInfoDTO.setQuantity(divide);
+                            list.add(wmsDeliveryReceiptInfoDTO);
+                            break;
+                        }else {
+                            divide = BigDecimalUtil.subtract(divide,wmsInventory.getAvailableQuantity());
+                            wmsDeliveryReceiptInfoDTO.setQuantity(wmsInventory.getAvailableQuantity());
+                            wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
+                            list.add(wmsDeliveryReceiptInfoDTO);
+                        }
+                    }
+                } else {
+                    log.info("燃料油抄表扣除库存数不足消耗");
+                }
+            }
+            wmsDeliveryReceiptDTO.setList(list);
+            //自动确认标识
+            wmsDeliveryReceiptDTO.setAffirmFlag("1");
+            Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.createDelivery(wmsDeliveryReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            log.info("燃料油抄表自动创建出库单->" + aBoolean);
+        }
         SteccnUser user = SecurityUtils.getUser();
         epMeterOperationRecord.setReadId(epMeterRead.getId());
         epMeterOperationRecord.setOpBy(user.getUserId());
@@ -444,6 +521,29 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         epMeterOperationRecordMapper.insert(epMeterOperationRecord);
 
         return true;
+    }
+
+    /**
+     * 获取前一天抄表数据
+     *
+     * @return
+     */
+    public BigDecimal previousDayMeterReading(LocalDate date, Integer meterId) {
+        LocalDate recentDay = date.minusDays(1);
+        //查找前一天的抄表数据
+        EpMeterRead read = getOne(new LambdaQueryWrapper<EpMeterRead>().eq(EpMeterRead::getMeterId, meterId).eq(EpMeterRead::getReadDate, recentDay).orderByDesc(EpMeterRead::getReadDate).last(MpConstant.STR_LIMIT_1));
+        //创建一个计数器，用来限制查找天数（7天）
+        int count = 0;
+        while (Objects.isNull(read) && count < 7) {
+            recentDay = recentDay.minusDays(1);
+            read = getOne(new LambdaQueryWrapper<EpMeterRead>().eq(EpMeterRead::getMeterId, meterId).eq(EpMeterRead::getReadDate, recentDay).orderByDesc(EpMeterRead::getReadDate).last(MpConstant.STR_LIMIT_1));
+            count++;
+        }
+        if (Objects.isNull(read)) {
+            //如果7天内都没有抄表数，则返回为0
+            return BigDecimal.ZERO;
+        }
+        return read.getReadValue();
     }
 
     @Override
@@ -756,7 +856,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     MapUtil.biCompute(groupMap, ele.getMeterId(), ele.getReadDate(), ele);
                 });
 
-                BigDecimal preValue ;
+                BigDecimal preValue;
                 for (Map.Entry<Integer, Map<LocalDate, List<EpMeterRead>>> meterEntry : groupMap.entrySet()) {
                     preValue = lastValueMap.get(meterEntry.getKey());
                     for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
@@ -770,7 +870,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         } else {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
                         }
-                        if(Objects.nonNull(curValue)){
+                        if (Objects.nonNull(curValue)) {
                             preValue = curValue;
                         }
                     }
