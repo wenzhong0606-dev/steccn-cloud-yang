@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
@@ -98,7 +99,9 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
                 .last("limit 1"));
         if(Objects.isNull(eqp)){
             log.error(dto.getField1()+"设备不存在");
+            throw new BusinessException(dto.getField1()+"设备不存在");
         }
+        idSet.add(eqp.getId());
         MesEquipment parent = getOne(new LambdaQueryWrapper<MesEquipment>()
                 .eq(MesEquipment::getEquipmentCode, eqp.getEquipmentCode())
                 .eq(MesEquipment::getStatus, OaConstant.NO.toString())
