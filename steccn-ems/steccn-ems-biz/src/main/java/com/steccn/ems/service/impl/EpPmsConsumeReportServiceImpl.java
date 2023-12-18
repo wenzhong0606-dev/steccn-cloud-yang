@@ -16,6 +16,7 @@ import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.service.EpPmsConsumeReportService;
+import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.ems.vo.PmElectricConsumeVO;
@@ -73,18 +74,16 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         EpPmsConsumeVO gas = consumeUseGas(officeId, date);
         DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
         dpPullForceDTO.setWorkshopIdSet(Sets.newHashSet(officeId));
-        dpPullForceDTO.setGranularity(0);
+        dpPullForceDTO.setGranularity(1);
         dpPullForceDTO.setStart(date);
         dpPullForceDTO.setEnd(date);
         Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
-        BigDecimal gasMu = BigDecimalUtil.multiply(gas.getSum(), new BigDecimal("7800"));
-        BigDecimal oilMu = BigDecimalUtil.multiply(oil.getSum(), new BigDecimal("9300000"));
-        BigDecimal addMu = BigDecimalUtil.add(gasMu, oilMu);
-        BigDecimal pullForceMu = BigDecimalUtil.multiply(pullForceMap.get(LocalDateUtil.format(date, "yyyy-MM-dd")), new BigDecimal("1000"));
+        BigDecimal pullForce = pullForceMap.get(LocalDateUtil.format(date, "yyyy-MM-dd"));
+        BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), pullForce, 1);
         EpPmsConsumeVO res = new EpPmsConsumeVO();
         res.setUnitName("kcal/kg");
-        res.setSum(BigDecimalUtil.divide(addMu, pullForceMu, 1));
+        res.setSum(sum);
         return res;
     }
 
