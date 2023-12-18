@@ -115,4 +115,14 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Map<String, BigDecimal> dateClassLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+    /**
+     * 查询产线+班次日期的拉引量
+     *
+     * @param lineIdList 产线
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end);
 }

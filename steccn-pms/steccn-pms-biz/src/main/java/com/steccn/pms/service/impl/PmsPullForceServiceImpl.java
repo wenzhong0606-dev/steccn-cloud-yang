@@ -349,6 +349,21 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         }
         return resMap;
     }
+
+    @Override
+    public Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsPullForce> dbList = list(new LambdaQueryWrapper<PmsPullForce>()
+                .ge(PmsPullForce::getPullForceDate, start)
+                .le(PmsPullForce::getPullForceDate, end)
+                .in(CollUtil.isNotEmpty(lineIdList), PmsPullForce::getProductLineId, lineIdList));
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getPullForceDate(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        return resMap;
+    }
 }
 
 
