@@ -87,14 +87,8 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/line/date/pm")
     @ApiOperation("各产线总产量")
-    public R<QtLineChartBarDTO> lineDatePm(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("type") Integer type) {
-        Integer dateType;
-        if (type == 0) {
-            dateType = 1;
-        } else {
-            dateType = 7;
-        }
-        return R.success(pmsReportDashboardCtService.lineDatePm(workShopId, start, end.plusDays(1), dateType));
+    public R<QtLineChartBarDTO> lineDatePm(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+        return R.success(pmsReportDashboardCtService.lineDatePm(workShopId, start, end, granularity));
     }
 
     @GetMapping("/line/date/in/storage")
