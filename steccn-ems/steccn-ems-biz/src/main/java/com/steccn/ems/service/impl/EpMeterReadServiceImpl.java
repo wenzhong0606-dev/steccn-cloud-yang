@@ -673,6 +673,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 });
                 //仓储批量冲销
                 Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.chargeAgainstAssociated(againstDTOList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                log.info("仓储冲销:"+aBoolean);
+                //重新生成入库单
+                for (EpMeterReadUpdateDTO epMeterReadUpdateDTO : dtoList) {
+                    EpMeterReadAddDTO epMeterReadAddDTO = BeanUtil.copyProperties(epMeterReadUpdateDTO, EpMeterReadAddDTO.class);
+                    createDeliveryReceipt(epMeterReadAddDTO);
+                }
             }
         }
         return true;
