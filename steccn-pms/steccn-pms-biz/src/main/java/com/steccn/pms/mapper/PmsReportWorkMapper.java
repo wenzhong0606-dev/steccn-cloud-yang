@@ -267,6 +267,19 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                        @Param("start") LocalDateTime start,
                                        @Param("end") LocalDateTime end);
 
+
+    /**
+     * 获取班次日期_班次产量
+     * *
+     * @param lineIdList 产线id
+     * @param start 开始时间
+     * @param end   结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> getDateClassPmUnit(@Param("lineList") List<Integer> lineIdList,
+                                       @Param("start") LocalDateTime start,
+                                       @Param("end") LocalDateTime end);
+
     /**
      * 获取班次日期入库数量
      * *
@@ -279,6 +292,17 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                               @Param("start") LocalDateTime start,
                                               @Param("end") LocalDateTime end);
 
+    /**
+     * 获取班次日期入库数量
+     * *
+     * @param lineIdList 产线id
+     * @param start 开始时间
+     * @param end   结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> getDateClassInStorageUnit(@Param("lineList") List<Integer> lineIdList,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end);
 
     /**
      * 根据产线id，班次日期获取停机时间
@@ -301,6 +325,18 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                              @Param("end") LocalDateTime end);
 
     /**
+     * 获取产线+班次日期的产量
+     *
+     * @param lineIdList 产线id
+     * @param start      开始时间
+     * @param end        结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> dateLinePmUnit(@Param("lineList") List<Integer> lineIdList,
+                                        @Param("start") LocalDateTime start,
+                                        @Param("end") LocalDateTime end);
+
+    /**
      * 获取产线+班次日期+班次的入库量
      *
      * @param lineIdList 产线id
@@ -309,6 +345,18 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return
      */
     List<PmsUseCountDTO> dateClassLineInStorageUnit(@Param("lineList") List<Integer> lineIdList,
+                                                    @Param("start") LocalDateTime start,
+                                                    @Param("end") LocalDateTime end);
+
+    /**
+     * 获取产线+班次日期的入库量
+     *
+     * @param lineIdList 产线id
+     * @param start      开始时间
+     * @param end        结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> dateLineInStorageUnit(@Param("lineList") List<Integer> lineIdList,
                                                     @Param("start") LocalDateTime start,
                                                     @Param("end") LocalDateTime end);
 

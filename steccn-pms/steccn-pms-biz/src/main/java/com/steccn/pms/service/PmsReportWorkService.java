@@ -340,6 +340,19 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<String, BigDecimal> datePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
 
     /**
+     * 获取班次日期产量 单位为unit
+     *
+     * @param lineIdList 产线
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param type      类型 0基片 1深加工
+     * @param unit      单位
+     * @return
+     */
+    Map<String, BigDecimal> dateClassPmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
+
+
+    /**
      * 获取班次日期入库 单位为unit
      *
      * @param lineIdList 产线
@@ -349,6 +362,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> dateInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
+    /**
+     * 获取班次日期入库 单位为unit
+     *
+     * @param lineIdList 产线
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param unit      单位
+     * @return
+     */
+    Map<String, BigDecimal> dateClassInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
 
     /**
      * 获取停工时长
@@ -369,6 +393,18 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<String, BigDecimal> dateClassLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
 
     /**
+     * 获取班次日期，班次，产线的产量 key => line_date
+     * @param lineIdList 产线
+     * @param start      班次日期-开始
+     * @param end        班次日期-结束
+     * @param type       0基片 1深加工
+     * @param unit       单位
+     * @return
+     */
+    Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
+
+
+    /**
      * 获取班次日期，班次，产线的入库量 key => line_date_classId
      *
      * @param lineIdList 产线
@@ -380,9 +416,22 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<String, BigDecimal> dateClassLineInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
 
     /**
+     * 获取班次日期，班次，产线的入库量 key => line_date
+     *
+     * @param lineIdList 产线
+     * @param start      班次日期-开始
+     * @param end        班次日期-结束
+     * @param unit       单位
+     * @return
+     */
+    Map<String, BigDecimal> dateLineInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
+
+    /**
      * 获取生产批次关联的报工信息
      * @param batchSet 生产批次no集合
      * @return
      */
     Map<String, List<PmsReportWork>> batchLinkReportWorkMap(Set<String> batchSet);
+
 }
