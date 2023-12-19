@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.lang.Assert;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
@@ -333,6 +334,10 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private QtLineChartBarCountDTO dateQuantity(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> numMap, String hintCh,QtManagerConstant.QtGranularityEnum granularity) {
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        //统计信息：选择时间内，拉引量汇总，显示“x线总拉引量”
+        //统计信息：选择时间内，报工汇总，显示“总入库产量”
+        //统计信息：选择时间内，报工汇总，显示“x线总报工产量”
+        Map<String,BigDecimal> countLineMap = Maps.newLinkedHashMap();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             LocalDate end = timeList.get(i);
@@ -349,6 +354,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                 }
                 lineBd = BigDecimalUtil.sum(lineBdList);
                 lineBd = BigDecimalUtil.setScale(lineBd, UnitLengthUtil.UNIT_TON_LENGTH);
+                MapUtil.add(countLineMap, line.getOfficeName(), lineBd, (x, y) -> BigDecimalUtil.add(x, y, UnitLengthUtil.UNIT_TON_LENGTH));
                 dataList.add(new TupleDTO<>(line.getOfficeName() + hintCh, lineBd));
             });
             stackGraphDTO.setData(dataList);
@@ -357,6 +363,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
         QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        resDto.setLineQuantity(countLineMap);
         return resDto;
     }
 
@@ -375,6 +382,10 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<String> xAxisList1 = Lists.newArrayList();
         List<String> xAxisList2 = Lists.newArrayList();
         List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //统计信息：选择时间内，拉引量汇总，显示“x线总拉引量”
+        //统计信息：选择时间内，报工汇总，显示“总入库产量”
+        //统计信息：选择时间内，报工汇总，显示“x线总报工产量”
+        Map<String,BigDecimal> countLineMap = Maps.newLinkedHashMap();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             String convert = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, classDate);
@@ -387,6 +398,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                 wsLineList.forEach(line -> {
                     BigDecimal lineBd = numMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, line.getId(), classDate, ele.getId()));
                     lineBd = BigDecimalUtil.setScale(lineBd, UnitLengthUtil.UNIT_TON_LENGTH);
+                    MapUtil.add(countLineMap, line.getOfficeName(), lineBd, (x, y) -> BigDecimalUtil.add(x, y, UnitLengthUtil.UNIT_TON_LENGTH));
                     dataList.add(new TupleDTO<>(line.getOfficeName() + hintCh, lineBd));
                 });
                 stackGraphDTO.setData(dataList);
@@ -398,6 +410,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         qtLineChartBarDTO.setXData(null);
         QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        resDto.setLineQuantity(countLineMap);
         return resDto;
     }
 

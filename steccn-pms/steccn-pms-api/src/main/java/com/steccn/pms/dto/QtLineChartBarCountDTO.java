@@ -2,8 +2,10 @@ package com.steccn.pms.dto;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -29,4 +31,9 @@ public class QtLineChartBarCountDTO implements Serializable {
      * 总率
      */
     private BigDecimal totalRate;
+
+    /**
+     * 产线
+     */
+    private Map<String, BigDecimal> lineQuantity;
 }
