@@ -279,6 +279,17 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                               @Param("start") LocalDateTime start,
                                               @Param("end") LocalDateTime end);
 
+    /**
+     * 获取班次日期入库数量
+     * *
+     * @param lineIdList 产线id
+     * @param start 开始时间
+     * @param end   结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> getDateClassInStorageUnit(@Param("lineList") List<Integer> lineIdList,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end);
 
     /**
      * 根据产线id，班次日期获取停机时间

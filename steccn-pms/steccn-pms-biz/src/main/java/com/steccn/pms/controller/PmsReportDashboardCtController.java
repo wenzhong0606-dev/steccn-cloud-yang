@@ -51,8 +51,8 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/in/storage/date")
     @ApiOperation("累计入库量总数")
-    public R<QtLineChartBarDTO> inStorageDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.inStorageDate(workShopId, start, end.plusDays(1), UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+    public R<QtLineChartBarDTO> inStorageDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+        return R.success(pmsReportDashboardCtService.inStorageDate(workShopId, start, end, granularity , UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/pull/force/date")

@@ -351,6 +351,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<String, BigDecimal> dateInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
 
     /**
+     * 获取班次日期入库 单位为unit
+     *
+     * @param lineIdList 产线
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param unit      单位
+     * @return
+     */
+    Map<String, BigDecimal> dateClassInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
+    /**
      * 获取停工时长
      * @param dto
      * @return

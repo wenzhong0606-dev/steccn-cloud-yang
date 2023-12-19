@@ -92,18 +92,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, int bit, String unit) {
-        DashboardNumDTO numDTO = new DashboardNumDTO();
-        numDTO.setWorkShopId(workShopId);
-        numDTO.setStart(start);
-        numDTO.setEnd(end);
-        numDTO.setBit(bit);
-        numDTO.setUnit(unit);
-        return num("累计入库总数量", numDTO, (x) -> reportWorkService.dateInStorageUnit(x.getLineIdList(), x.getStart(), x.getEnd(), unit),null);
-    }
-
-    @Override
-    public QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end,Integer granularity, int bit, String unit) {
+    public QtLineChartBarDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit) {
         DashboardNumDTO numDTO = new DashboardNumDTO();
         numDTO.setWorkShopId(workShopId);
         numDTO.setStart(start);
@@ -112,9 +101,26 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         numDTO.setUnit(unit);
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
         Assert.notNull(granularityEnum, "粒度不存在");
-        if(QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)){
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
+            return numClass("累计入库总数量", numDTO, (x) -> reportWorkService.dateClassInStorageUnit(x.getLineIdList(), x.getStart(), x.getEnd(), unit));
+        } else {
+            return num("累计入库总数量", numDTO, (x) -> reportWorkService.dateInStorageUnit(x.getLineIdList(), x.getStart(), x.getEnd(), unit), granularityEnum);
+        }
+    }
+
+    @Override
+    public QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit) {
+        DashboardNumDTO numDTO = new DashboardNumDTO();
+        numDTO.setWorkShopId(workShopId);
+        numDTO.setStart(start);
+        numDTO.setEnd(end);
+        numDTO.setBit(bit);
+        numDTO.setUnit(unit);
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
+        Assert.notNull(granularityEnum, "粒度不存在");
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
             return numClass("累计拉引量总数", numDTO, (x) -> pmsPullForceService.dateClassPullForce(x.getLineIdList(), x.getStart(), x.getEnd()));
-        }else {
+        } else {
             return num("累计拉引量总数", numDTO, (x) -> pmsPullForceService.datePullForce(x.getLineIdList(), x.getStart(), x.getEnd()), granularityEnum);
         }
     }
