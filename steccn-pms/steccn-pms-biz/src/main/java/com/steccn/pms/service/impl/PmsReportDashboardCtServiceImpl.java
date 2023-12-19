@@ -554,12 +554,13 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<BigDecimal> countValueList = Lists.newArrayList();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
-            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.CLASS, classDate));
-            xAxisList1.add(stackGraphDTO.getXAxis());
-            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+            String convert = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.CLASS, classDate);
+            xAxisList1.add(convert);
             //遍历班次
             for (SysDictVO ele : sysDictVOList) {
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                stackGraphDTO.setXAxis(convert);
+                List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
                 xAxisList2.add(ele.getName());
                 BigDecimal value = numValueMap.get(classDate.toString() + "_" + ele.getId());
                 countValueList.add(value);
