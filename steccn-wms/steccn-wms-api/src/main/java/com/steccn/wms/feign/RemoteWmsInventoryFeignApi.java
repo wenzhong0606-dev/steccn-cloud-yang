@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -138,5 +139,8 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping("/feign/wms/inventory/material/warehouse")
     R<Map<Integer,List<WmsStockInventoryDTO>>> materialByWarehouse(@RequestParam("set") Set<Integer> set);
 
+    @ApiOperation("根据关联的单据号对出库单进行批量冲销")
+    @PostMapping("/feign/wms/inventory/charge/against/associated")
+    R<Boolean> chargeAgainstAssociated(@RequestBody List<BatchChargeAgainstDTO> dtoList);
 
 }

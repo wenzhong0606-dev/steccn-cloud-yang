@@ -49,6 +49,7 @@ import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.wms.dto.BatchChargeAgainstDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 import com.steccn.wms.dto.WmsStockInventoryDTO;
@@ -450,6 +451,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         epMeterRead.setAdminValue(dto.getReadValue());
 
         save(epMeterRead);
+        Boolean aBoolean = createDeliveryReceipt(dto);
+        log.info("创建出库单->"+ aBoolean);
+        SteccnUser user = SecurityUtils.getUser();
+        epMeterOperationRecord.setReadId(epMeterRead.getId());
+        epMeterOperationRecord.setOpBy(user.getUserId());
+        epMeterOperationRecord.setOpName(user.getName());
+        epMeterOperationRecord.setOpValueOld(dto.getReadValue());
+        epMeterOperationRecord.setOpTime(LocalDateTime.now());
+        epMeterOperationRecordMapper.insert(epMeterOperationRecord);
+
+        return true;
+    }
+
+    public Boolean createDeliveryReceipt(EpMeterReadAddDTO dto){
         //仅当仪表类型为燃料油计量表时：任一班次日期D的读数成功录入后，触发自动出库
         //查询仪表获取仪表类型
         EpInstrumentAccountVO epInstrumentAccountVO = epInstrumentAccountService.getEpInstrumentAccountVO(dto.getMeterId());
@@ -492,11 +507,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         BeanUtil.copyProperties(wmsInventory, wmsDeliveryReceiptInfoDTO);
                         if (wmsInventory.getAvailableQuantity().compareTo(divide) >= 0){
                             wmsDeliveryReceiptInfoDTO.setQuantity(divide);
+                            wmsDeliveryReceiptInfoDTO.setAssociatedNo(String.valueOf(dto.getMeterId()));
                             list.add(wmsDeliveryReceiptInfoDTO);
                             break;
                         }else {
                             divide = BigDecimalUtil.subtract(divide,wmsInventory.getAvailableQuantity());
                             wmsDeliveryReceiptInfoDTO.setQuantity(wmsInventory.getAvailableQuantity());
+                            wmsDeliveryReceiptInfoDTO.setAssociatedNo(String.valueOf(dto.getMeterId()));
                             wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
                             list.add(wmsDeliveryReceiptInfoDTO);
                         }
@@ -511,16 +528,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.createDelivery(wmsDeliveryReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             log.info("燃料油抄表自动创建出库单->" + aBoolean);
         }
-        SteccnUser user = SecurityUtils.getUser();
-        epMeterOperationRecord.setReadId(epMeterRead.getId());
-        epMeterOperationRecord.setOpBy(user.getUserId());
-        epMeterOperationRecord.setOpName(user.getName());
-        epMeterOperationRecord.setOpValueOld(dto.getReadValue());
-        epMeterOperationRecord.setOpTime(LocalDateTime.now());
-
-        epMeterOperationRecordMapper.insert(epMeterOperationRecord);
-
-        return true;
+        return Boolean.TRUE;
     }
 
     /**
@@ -646,6 +654,33 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         }
         epMeterOperationRecordService.saveBatch(epMeterOperationRecordList);
         updateBatchById(list);
+        if (CollUtil.isNotEmpty(dtoList)){
+            Set<Integer> meterIds = dtoList.stream().map(EpMeterReadUpdateDTO::getMeterId).collect(Collectors.toSet());
+            List<EpInstrumentAccount> instrumentAccounts = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>().in(EpInstrumentAccount::getId,meterIds).eq(EpInstrumentAccount::getMeterType, 4));
+            if (CollUtil.isNotEmpty(instrumentAccounts)){
+                Map<Integer,EpMeterReadUpdateDTO> map = Maps.newHashMap();
+                for (EpMeterReadUpdateDTO epMeterReadUpdateDTO : dtoList) {
+                    map.put(epMeterReadUpdateDTO.getMeterId(),epMeterReadUpdateDTO);
+                }
+                List<BatchChargeAgainstDTO> againstDTOList = Lists.newArrayList();
+                instrumentAccounts.forEach(epInstrumentAccount -> {
+                    BatchChargeAgainstDTO batchChargeAgainstDTO = new BatchChargeAgainstDTO();
+                    batchChargeAgainstDTO.setCode(epInstrumentAccount.getId().toString());
+                    batchChargeAgainstDTO.setUserName(SecurityUtils.getUser().getName());
+                    batchChargeAgainstDTO.setStartTime(LocalDateUtil.getStartTimeOfDayStr(map.get(epInstrumentAccount.getId()).getReadDate()));
+                    batchChargeAgainstDTO.setEndTime(LocalDateUtil.getEndTimeOfDayStr(map.get(epInstrumentAccount.getId()).getReadDate()));
+                    againstDTOList.add(batchChargeAgainstDTO);
+                });
+                //仓储批量冲销
+                Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.chargeAgainstAssociated(againstDTOList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                log.info("仓储冲销:"+aBoolean);
+                //重新生成入库单
+                for (EpMeterReadUpdateDTO epMeterReadUpdateDTO : dtoList) {
+                    EpMeterReadAddDTO epMeterReadAddDTO = BeanUtil.copyProperties(epMeterReadUpdateDTO, EpMeterReadAddDTO.class);
+                    createDeliveryReceipt(epMeterReadAddDTO);
+                }
+            }
+        }
         return true;
 
     }

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.valid.InsertGroup;
@@ -74,7 +75,7 @@ public class WmsStorageReceiptController {
         //调用确认接口
         WmsStorageReceipt wmsStorageReceipt = wmsStorageReceiptService.getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getCode, code), false);
         Assert.notNull(wmsStorageReceipt, "入库单为空");
-        wmsStorageReceiptService.affirm(wmsStorageReceipt.getId());
+        wmsStorageReceiptService.affirm(wmsStorageReceipt.getId(), SecurityUtils.getUser().getName());
         return R.success(code);
     }
 
@@ -98,7 +99,7 @@ public class WmsStorageReceiptController {
     @SysLog("入库凭证确认")
     public R<Boolean> affirm(@RequestBody WmsStorageReceiptDTO dto) {
         Assert.notNull(dto.getId(), "入库凭证id不能为空");
-        return R.success(wmsStorageReceiptService.affirm(dto.getId()));
+        return R.success(wmsStorageReceiptService.affirm(dto.getId(),SecurityUtils.getUser().getName()));
     }
 
     @ApiOperation("冲销")
@@ -113,7 +114,7 @@ public class WmsStorageReceiptController {
     public R<Boolean> affirmByCode(@RequestBody WmsStorageReceiptDTO dto) {
         WmsStorageReceipt one = wmsStorageReceiptService.getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getCode, dto.getCode()), false);
         Assert.notNull(one, "入库单不存在");
-        return R.success(wmsStorageReceiptService.affirm(one.getId()));
+        return R.success(wmsStorageReceiptService.affirm(one.getId(),SecurityUtils.getUser().getName()));
     }
 
     @ApiOperation("入库凭证删除")

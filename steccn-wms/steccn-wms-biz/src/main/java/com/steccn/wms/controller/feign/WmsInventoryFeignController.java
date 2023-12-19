@@ -109,4 +109,10 @@ public class WmsInventoryFeignController {
     public R<Map<Integer,List<WmsStockInventoryDTO>>> materialByWarehouse(@RequestParam("set") Set<Integer> set){
         return R.success(wmsInventoryService.materialByWarehouse(set));
     }
+
+    @ApiOperation("根据关联的单据号对出库单进行批量冲销")
+    @PostMapping("/charge/against/associated")
+    public R<Boolean> chargeAgainstAssociated(@RequestBody List<BatchChargeAgainstDTO> dtoList){
+        return R.success(wmsStorageReceiptService.chargeAgainstAssociated(dtoList));
+    }
 }
