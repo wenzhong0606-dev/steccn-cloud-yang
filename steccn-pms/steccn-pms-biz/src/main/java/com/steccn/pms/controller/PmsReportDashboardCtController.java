@@ -39,8 +39,8 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/yield/rate/date")
     @ApiOperation("总成品率")
-    public R<QtLineChartBarDTO> yieldRateDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end.plusDays(1)));
+    public R<QtLineChartBarDTO> yieldRateDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+        return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end,granularity));
     }
 
     @GetMapping("/pm/date")

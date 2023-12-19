@@ -17,12 +17,13 @@ public interface PmsReportDashboardCtService {
     /**
      * 班次日期总成品率
      *
-     * @param workShopId 车间主键
-     * @param start      开始日期
-     * @param end        结束日期
+     * @param workShopId  车间主键
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end);
+    QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 班次日期产量

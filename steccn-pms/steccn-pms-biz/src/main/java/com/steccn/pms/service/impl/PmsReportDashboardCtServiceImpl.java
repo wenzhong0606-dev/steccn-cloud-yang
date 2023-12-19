@@ -51,32 +51,76 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
-    public QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end) {
-        List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
-        Assert.notEmpty(timeList, "暂无时间窗口");
+    public QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
+        Assert.notNull(granularityEnum, "粒度不存在");
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
-
-        Map<String, BigDecimal> pmMap = reportWorkService.datePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
-        Map<String, BigDecimal> inStorageMap = reportWorkService.dateInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
-        Map<String, BigDecimal> forceMap = pmsPullForceService.datePullForce(lineIdList, start, end);
-
-        //定义数据集合
-        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
-        for (int i = 1; i < timeList.size(); i++) {
-            LocalDate classDate = timeList.get(i - 1);
-            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-            stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, classDate));
-            List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-            //产量，入库，耗用
-            dataList.add(new TupleDTO<>("完工总成品率(%)", BigDecimalUtil.percent(pmMap.get(classDate.toString()), forceMap.get(classDate.toString()))));
-            dataList.add(new TupleDTO<>("入库总成品率(%)", BigDecimalUtil.percent(inStorageMap.get(classDate.toString()), forceMap.get(classDate.toString()))));
-            stackGraphDTO.setData(dataList);
-            stackGraphDTOList.add(stackGraphDTO);
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+            Assert.notEmpty(timeList, "暂无时间窗口");
+            Map<String, BigDecimal> pmMap = reportWorkService.dateClassPmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+            Map<String, BigDecimal> inStorageMap = reportWorkService.dateClassInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
+            Map<String, BigDecimal> forceMap = pmsPullForceService.dateClassPullForce(lineIdList, start, end);
+            //获取班次
+            List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //定义数据集合
+            List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+            List<String> xAxisList1 = Lists.newArrayList();
+            List<String> xAxisList2 = Lists.newArrayList();
+            for (int i = 1; i < timeList.size(); i++) {
+                LocalDate classDate = timeList.get(i - 1);
+                xAxisList1.add(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.CLASS, classDate));
+                sysDictVOList.forEach(ele -> {
+                    xAxisList2.add(ele.getName());
+                    StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                    stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.CLASS, classDate));
+                    List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+                    //产量，入库，耗用
+                    dataList.add(new TupleDTO<>("完工总成品率(%)", BigDecimalUtil.percent(pmMap.get(classDate + "_" + ele.getId()), forceMap.get(classDate + "_" + ele.getId()))));
+                    dataList.add(new TupleDTO<>("入库总成品率(%)", BigDecimalUtil.percent(inStorageMap.get(classDate + "_" + ele.getId()), forceMap.get(classDate + "_" + ele.getId()))));
+                    stackGraphDTO.setData(dataList);
+                    stackGraphDTOList.add(stackGraphDTO);
+                });
+            }
+            //自定义转换工具
+            QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
+            qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
+            qtLineChartBarDTO.setXData(null);
+            return qtLineChartBarDTO;
+        }else {
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), start, end);
+            Assert.notEmpty(timeList, "暂无时间窗口");
+            Map<String, BigDecimal> pmMap = reportWorkService.datePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+            Map<String, BigDecimal> inStorageMap = reportWorkService.dateInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
+            Map<String, BigDecimal> forceMap = pmsPullForceService.datePullForce(lineIdList, start, end);
+            //定义数据集合
+            List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+            for (int i = 1; i < timeList.size(); i++) {
+                LocalDate classDate = timeList.get(i - 1);
+                LocalDate classDateEnd = timeList.get(i);
+                List<BigDecimal> pmValueList = Lists.newArrayList();
+                List<BigDecimal> inStorageValueList = Lists.newArrayList();
+                List<BigDecimal> forceValueList = Lists.newArrayList();
+                for (LocalDate ldt = classDate; LocalDateUtil.lt(ldt, classDateEnd); ldt = ldt.plusDays(1)) {
+                    pmValueList.add(pmMap.get(ldt.toString()));
+                    inStorageValueList.add(inStorageMap.get(ldt.toString()));
+                    forceValueList.add(forceMap.get(ldt.toString()));
+                }
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                stackGraphDTO.setXAxis(XAxisUtil.convert(granularityEnum, classDate));
+                List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+                //产量，入库，耗用
+                BigDecimal forceValue = BigDecimalUtil.sum(forceValueList);
+                dataList.add(new TupleDTO<>("完工总成品率(%)", BigDecimalUtil.percent(BigDecimalUtil.sum(pmValueList), forceValue)));
+                dataList.add(new TupleDTO<>("入库总成品率(%)", BigDecimalUtil.percent(BigDecimalUtil.sum(inStorageValueList), forceValue)));
+                stackGraphDTO.setData(dataList);
+                stackGraphDTOList.add(stackGraphDTO);
+            }
+            //自定义转换工具
+            return StackGraphUtil.convertData(stackGraphDTOList);
         }
-        //自定义转换工具
-        return StackGraphUtil.convertData(stackGraphDTOList);
     }
 
     @Override
