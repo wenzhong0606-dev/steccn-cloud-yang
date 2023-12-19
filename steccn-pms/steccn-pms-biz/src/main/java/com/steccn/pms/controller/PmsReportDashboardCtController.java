@@ -64,31 +64,31 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/yield/rate/date/pm")
     @ApiOperation("各产线成品率-完工")
-    public R<QtLineChartBarDTO> yieldRateDatePm(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<QtLineChartBarCountDTO> yieldRateDatePm(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.yieldRateDatePm(workShopId, start, end, granularity));
     }
 
     @GetMapping("/yield/rate/date/in/storage")
     @ApiOperation("各产线成品率-入库")
-    public R<QtLineChartBarDTO> yieldRateDateInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<QtLineChartBarCountDTO> yieldRateDateInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.yieldRateDateInStorage(workShopId, start, end, granularity));
     }
 
     @GetMapping("/line/date/pm")
     @ApiOperation("各产线总产量")
-    public R<QtLineChartBarDTO> lineDatePm(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<QtLineChartBarCountDTO> lineDatePm(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.lineDatePm(workShopId, start, end, granularity));
     }
 
     @GetMapping("/line/date/in/storage")
     @ApiOperation("各产线入库总数")
-    public R<QtLineChartBarDTO> lineDateInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<QtLineChartBarCountDTO> lineDateInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.lineDateInStorage(workShopId, start, end, granularity));
     }
 
     @GetMapping("/line/date/pf")
     @ApiOperation("各产线拉引量总数")
-    public R<QtLineChartBarDTO> lineDatePf(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<QtLineChartBarCountDTO> lineDatePf(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.lineDatePf(workShopId, start, end, granularity));
     }
 

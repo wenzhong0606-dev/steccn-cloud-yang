@@ -74,7 +74,7 @@ public interface PmsReportDashboardCtService {
      * @param granularity 班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    QtLineChartBarCountDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 各产线成品率-入库
@@ -85,7 +85,7 @@ public interface PmsReportDashboardCtService {
      * @param granularity 班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO yieldRateDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    QtLineChartBarCountDTO yieldRateDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 各产线总产量
@@ -96,7 +96,7 @@ public interface PmsReportDashboardCtService {
      * @param granularity 班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO lineDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    QtLineChartBarCountDTO lineDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 各产线入库总数
@@ -107,7 +107,7 @@ public interface PmsReportDashboardCtService {
      * @param granularity   班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    QtLineChartBarCountDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 各产线拉引量总数
@@ -118,5 +118,5 @@ public interface PmsReportDashboardCtService {
      * @param granularity 班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO lineDatePf(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    QtLineChartBarCountDTO lineDatePf(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 }

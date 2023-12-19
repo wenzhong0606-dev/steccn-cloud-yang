@@ -200,7 +200,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+    public QtLineChartBarCountDTO yieldRateDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
@@ -225,7 +225,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO yieldRateDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+    public QtLineChartBarCountDTO yieldRateDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
@@ -250,7 +250,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO lineDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+    public QtLineChartBarCountDTO lineDatePm(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
@@ -273,7 +273,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+    public QtLineChartBarCountDTO lineDateInStorage(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
@@ -296,7 +296,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO lineDatePf(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
+    public QtLineChartBarCountDTO lineDatePf(Integer workShopId, LocalDate start, LocalDate end, Integer dateType) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
 
@@ -330,7 +330,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      * @param granularity 粒度
      * @return
      */
-    private QtLineChartBarDTO dateQuantity(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> numMap, String hintCh,QtManagerConstant.QtGranularityEnum granularity) {
+    private QtLineChartBarCountDTO dateQuantity(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> numMap, String hintCh,QtManagerConstant.QtGranularityEnum granularity) {
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         for (int i = 1; i < timeList.size(); i++) {
@@ -355,7 +355,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             stackGraphDTOList.add(stackGraphDTO);
         }
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
-        return qtLineChartBarDTO;
+        QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+        resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        return resDto;
     }
 
     /**
@@ -367,7 +369,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      * @param hintCh     提示语
      * @return
      */
-    private QtLineChartBarDTO dateClassQuantity(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> numMap, String hintCh) {
+    private QtLineChartBarCountDTO dateClassQuantity(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> numMap, String hintCh) {
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         List<String> xAxisList1 = Lists.newArrayList();
@@ -394,7 +396,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
         qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
         qtLineChartBarDTO.setXData(null);
-        return qtLineChartBarDTO;
+        QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+        resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        return resDto;
     }
 
     /**
@@ -406,9 +410,12 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      * @param map2       数据map2
      * @return
      */
-    public QtLineChartBarDTO dateRate(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> map1, Map<String, BigDecimal> map2,QtManagerConstant.QtGranularityEnum granularity) {
+    public QtLineChartBarCountDTO dateRate(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> map1, Map<String, BigDecimal> map2,QtManagerConstant.QtGranularityEnum granularity) {
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        //统计信息：选择时间内，对应产线报工/入库总数汇总 / 对应拉引量汇总，显示“X线总入库/加工成品率”
+        List<BigDecimal> countValueList1 = Lists.newArrayList();
+        List<BigDecimal> countValueList2 = Lists.newArrayList();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             LocalDate end = timeList.get(i);
@@ -425,13 +432,20 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     lineBd1 = BigDecimalUtil.add(map1.get(joint), lineBd1);
                     lineBd2 = BigDecimalUtil.add(map2.get(joint), lineBd2);
                 }
+                countValueList1.add(lineBd1);
+                countValueList2.add(lineBd2);
                 dataList.add(new TupleDTO<>(line.getOfficeName() + "完工成品率", BigDecimalUtil.percent(lineBd1, lineBd2)));
             });
             stackGraphDTO.setData(dataList);
             stackGraphDTOList.add(stackGraphDTO);
         }
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
-        return qtLineChartBarDTO;
+        QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+        resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        BigDecimal sum = BigDecimalUtil.sum(countValueList1);
+        resDto.setTotalQuantity(sum);
+        resDto.setTotalRate(BigDecimalUtil.percent(sum, BigDecimalUtil.sum(countValueList2)));
+        return resDto;
     }
 
     /**
@@ -443,12 +457,15 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      * @param map2       数据map2
      * @return
      */
-    public QtLineChartBarDTO dateClassRate(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> map1, Map<String, BigDecimal> map2) {
+    public QtLineChartBarCountDTO dateClassRate(List<SysOfficeVO> wsLineList, List<LocalDate> timeList, Map<String, BigDecimal> map1, Map<String, BigDecimal> map2) {
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         List<String> xAxisList1 = Lists.newArrayList();
         List<String> xAxisList2 = Lists.newArrayList();
         List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //统计信息：选择时间内，对应产线报工/入库总数汇总 / 对应拉引量汇总，显示“X线总入库/加工成品率”
+        List<BigDecimal> countValueList1 = Lists.newArrayList();
+        List<BigDecimal> countValueList2 = Lists.newArrayList();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             String convert = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, classDate);
@@ -463,16 +480,23 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, line.getId(), classDate, ele.getId());
                     lineBd1 = map1.get(joint);
                     lineBd2 = map2.get(joint);
+                    countValueList1.add(lineBd1);
+                    countValueList2.add(lineBd2);
                     dataList.add(new TupleDTO<>(line.getOfficeName() + "完工成品率", BigDecimalUtil.percent(lineBd1, lineBd2)));
                 });
                 stackGraphDTO.setData(dataList);
                 stackGraphDTOList.add(stackGraphDTO);
             }
         }
+        QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
         qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
         qtLineChartBarDTO.setXData(null);
-        return qtLineChartBarDTO;
+        resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        BigDecimal sum = BigDecimalUtil.sum(countValueList1);
+        resDto.setTotalQuantity(sum);
+        resDto.setTotalRate(BigDecimalUtil.percent(sum, BigDecimalUtil.sum(countValueList2)));
+        return resDto;
     }
 
     /**
