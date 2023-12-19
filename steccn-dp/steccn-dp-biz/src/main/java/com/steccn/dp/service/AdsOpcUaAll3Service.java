@@ -1,6 +1,7 @@
 package com.steccn.dp.service;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
@@ -56,4 +57,11 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     DpSalesContractVO salesContract(TupleDTO<LocalDate,LocalDate> dto);
+
+    /**
+     * 获取图表
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> weightDetail(LocalDate date);
 }

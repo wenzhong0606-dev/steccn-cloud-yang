@@ -479,10 +479,10 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         }
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
-        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
-            dateList.add(dto.getStart());
-        }
-        for (int i = 1; i <= dateList.size(); i++) {
+//        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
+//            dateList.add(dto.getStart());
+//        }
+        for (int i = 1; i < dateList.size(); i++) {
             LocalDate start = dateList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             stackGraphDTO.setXAxis(XAxisUtil.convert(granularity, start));

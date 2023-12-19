@@ -1,6 +1,7 @@
 package com.steccn.dp.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 类说明
@@ -45,5 +47,11 @@ public class DpWeightController {
     @ApiOperation(value = "电子秤读数图表")
     public R<QtLineChartBarDTO> dashBoard(@RequestBody DpPmsOperateDTO dto) {
         return R.success(adsOpcUaAll3Service.weightCountDashBoard(dto));
+    }
+
+    @GetMapping("/weightDetail")
+    @ApiOperation(value = "获取电子秤读数详情")
+    public R<SteccnTableDataDTO> weightDetail(@RequestParam("date") LocalDate date){
+        return R.success(adsOpcUaAll3Service.weightDetail(date));
     }
 }
