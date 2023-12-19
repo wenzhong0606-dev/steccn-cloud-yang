@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.pms.dto.QtLineChartBarCountDTO;
 
 import java.time.LocalDate;
 
@@ -23,7 +24,7 @@ public interface PmsReportDashboardCtService {
      * @param granularity 班次，日，周，月，年
      * @return
      */
-    QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 
     /**
      * 班次日期产量

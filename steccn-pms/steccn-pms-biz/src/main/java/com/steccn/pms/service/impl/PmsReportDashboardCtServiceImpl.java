@@ -15,6 +15,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DashboardNumDTO;
+import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -51,7 +52,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
-    public QtLineChartBarDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
+    public QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
         Assert.notNull(granularityEnum, "粒度不存在");
         List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
@@ -69,6 +70,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
             List<String> xAxisList1 = Lists.newArrayList();
             List<String> xAxisList2 = Lists.newArrayList();
+            List<BigDecimal> countPmValueList = Lists.newArrayList();
+            List<BigDecimal> countInStorageValueList = Lists.newArrayList();
+            List<BigDecimal> countForceValueList = Lists.newArrayList();
             for (int i = 1; i < timeList.size(); i++) {
                 LocalDate classDate = timeList.get(i - 1);
                 xAxisList1.add(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.CLASS, classDate));
@@ -78,6 +82,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     stackGraphDTO.setXAxis(XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.CLASS, classDate));
                     List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
                     //产量，入库，耗用
+                    countPmValueList.add(pmMap.get(classDate + "_" + ele.getId()));
+                    countInStorageValueList.add(inStorageMap.get(classDate + "_" + ele.getId()));
+                    countForceValueList.add(forceMap.get(classDate + "_" + ele.getId()));
                     dataList.add(new TupleDTO<>("完工总成品率(%)", BigDecimalUtil.percent(pmMap.get(classDate + "_" + ele.getId()), forceMap.get(classDate + "_" + ele.getId()))));
                     dataList.add(new TupleDTO<>("入库总成品率(%)", BigDecimalUtil.percent(inStorageMap.get(classDate + "_" + ele.getId()), forceMap.get(classDate + "_" + ele.getId()))));
                     stackGraphDTO.setData(dataList);
@@ -88,7 +95,12 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
             qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
             qtLineChartBarDTO.setXData(null);
-            return qtLineChartBarDTO;
+            QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+            resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+            //统计信息：选择时间内，报工/入库总数汇总 / 拉引量汇总，显示“总入库成品率、完工成品率”
+            resDto.setTotalRate(BigDecimalUtil.percent(BigDecimalUtil.sum(countPmValueList), BigDecimalUtil.sum(countForceValueList)));
+            resDto.setTotalQuantity(BigDecimalUtil.percent(BigDecimalUtil.sum(countInStorageValueList), BigDecimalUtil.sum(countForceValueList)));
+            return resDto;
         }else {
             List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), start, end);
             Assert.notEmpty(timeList, "暂无时间窗口");
@@ -97,6 +109,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             Map<String, BigDecimal> forceMap = pmsPullForceService.datePullForce(lineIdList, start, end);
             //定义数据集合
             List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+            List<BigDecimal> countPmValueList = Lists.newArrayList();
+            List<BigDecimal> countInStorageValueList = Lists.newArrayList();
+            List<BigDecimal> countForceValueList = Lists.newArrayList();
             for (int i = 1; i < timeList.size(); i++) {
                 LocalDate classDate = timeList.get(i - 1);
                 LocalDate classDateEnd = timeList.get(i);
@@ -107,6 +122,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     pmValueList.add(pmMap.get(ldt.toString()));
                     inStorageValueList.add(inStorageMap.get(ldt.toString()));
                     forceValueList.add(forceMap.get(ldt.toString()));
+                    countPmValueList.add(pmMap.get(ldt.toString()));
+                    countInStorageValueList.add(inStorageMap.get(ldt.toString()));
+                    countForceValueList.add(forceMap.get(ldt.toString()));
                 }
                 StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
                 stackGraphDTO.setXAxis(XAxisUtil.convert(granularityEnum, classDate));
@@ -119,7 +137,13 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                 stackGraphDTOList.add(stackGraphDTO);
             }
             //自定义转换工具
-            return StackGraphUtil.convertData(stackGraphDTOList);
+            QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
+            QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+            resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+            //统计信息：选择时间内，报工/入库总数汇总 / 拉引量汇总，显示“总入库成品率、完工成品率”
+            resDto.setTotalRate(BigDecimalUtil.percent(BigDecimalUtil.sum(countPmValueList), BigDecimalUtil.sum(countForceValueList)));
+            resDto.setTotalQuantity(BigDecimalUtil.percent(BigDecimalUtil.sum(countInStorageValueList), BigDecimalUtil.sum(countForceValueList)));
+            return resDto;
         }
     }
 

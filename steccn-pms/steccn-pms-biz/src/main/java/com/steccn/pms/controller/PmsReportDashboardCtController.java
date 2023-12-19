@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.UnitLengthUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.util.PmsUnitUtil;
 import io.swagger.annotations.ApiOperation;
@@ -39,7 +40,7 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/yield/rate/date")
     @ApiOperation("总成品率")
-    public R<QtLineChartBarDTO> yieldRateDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<QtLineChartBarCountDTO> yieldRateDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.yieldRateDate(workShopId, start, end,granularity));
     }
 
