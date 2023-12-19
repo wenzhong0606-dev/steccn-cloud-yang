@@ -27,14 +27,15 @@ public interface PmsReportDashboardCtService {
     /**
      * 班次日期产量
      *
-     * @param workShopId 车间主键
-     * @param start      开始日期
-     * @param end        结束日期
-     * @param bit        位数
-     * @param unit       单位
+     * @param workShopId  车间主键
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 班次，日，周，月，年
+     * @param bit         位数
+     * @param unit        单位
      * @return
      */
-    QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer bit , String unit);
+    QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end,Integer granularity, Integer bit , String unit);
 
     /**
      * 累计入库量总数

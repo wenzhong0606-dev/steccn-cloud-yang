@@ -638,6 +638,25 @@
         group by rw.class_date , rw.station_id , po.material_id
     </select>
 
+    <select id="getDateClassPmUnit" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        select
+        rw.class_date,
+        rw.station_id ,
+        po.material_id,
+        rw.classes_id as classId,
+        sum(rw.process_quantity) as quantity,
+        sum(rw.badness_quantity) as badQuantity
+        from pms_report_work rw join pms_produce_order po on rw.produce_order_id = po.id
+        where rw.del_flag = 0
+        AND rw.start_time &gt;= #{start}
+        AND rw.start_time &lt; #{end}
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        group by rw.class_date , rw.station_id , po.material_id , rw.classes_id
+    </select>
+
     <select id="getProcessWorkHour" resultType="com.steccn.pms.vo.ProcessReportWorkHourVO">
         SELECT
             prw.product_line_id,

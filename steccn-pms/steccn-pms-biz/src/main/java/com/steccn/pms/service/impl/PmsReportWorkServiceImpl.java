@@ -1602,6 +1602,48 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<String, BigDecimal> dateClassPmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getDateClassPmUnit(lineIdSet, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+            //考虑物料的单位转换
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (type == 0) {
+                //基片
+                //所有工位报工汇总
+                dbList.forEach(ele -> {
+                    BigDecimal quantity = ele.getQuantity();
+                    if (!sysDict1.equals(sysDict2)) {
+                        quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                    }
+                    MapUtil.add(resMap, ele.getClassDate() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(new ArrayList<>(lineIdSet));
+                dbList.forEach(ele -> {
+                    if (stationIds.contains(ele.getStationId())) {
+                        BigDecimal quantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity());
+                        if (!sysDict1.equals(sysDict2)) {
+                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
+                        }
+                        MapUtil.add(resMap, ele.getClassDate() + "_" + ele.getClassId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, BigDecimal> dateInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);

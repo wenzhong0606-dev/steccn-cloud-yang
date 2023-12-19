@@ -32,9 +32,9 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/produce/class")
     @ApiOperation("累计产量总数")
-    public R<QtLineChartBarDTO> produceClass(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType) {
+    public R<QtLineChartBarDTO> produceClass(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("unitType") Integer unitType, @RequestParam(value = "granularity",defaultValue = "7") Integer granularity) {
         TupleDTO<String, Integer> unit = PmsUnitUtil.unit(unitType);
-        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end.plusDays(1), unit.getField2(), unit.getField1()));
+        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end, granularity, unit.getField2(), unit.getField1()));
     }
 
     @GetMapping("/yield/rate/date")
@@ -45,14 +45,14 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/pm/date")
     @ApiOperation("累计产量总数")
-    public R<QtLineChartBarDTO> pmDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
-        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end.plusDays(1), UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+    public R<QtLineChartBarDTO> pmDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+        return R.success(pmsReportDashboardCtService.pmDate(workShopId, start, end, granularity, UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/in/storage/date")
     @ApiOperation("累计入库量总数")
     public R<QtLineChartBarDTO> inStorageDate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
-        return R.success(pmsReportDashboardCtService.inStorageDate(workShopId, start, end, granularity , UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
+        return R.success(pmsReportDashboardCtService.inStorageDate(workShopId, start, end, granularity, UnitLengthUtil.UNIT_TON_LENGTH, PmManagerConstant.MEASURE_UNIT_TON));
     }
 
     @GetMapping("/pull/force/date")

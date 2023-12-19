@@ -80,7 +80,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer bit, String unit) {
+    public QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, Integer bit, String unit) {
         DashboardNumDTO numDTO = new DashboardNumDTO();
         numDTO.setType(0);
         numDTO.setWorkShopId(workShopId);
@@ -88,7 +88,13 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         numDTO.setEnd(end);
         numDTO.setBit(bit);
         numDTO.setUnit(unit);
-        return num("累计产量总数", numDTO, (x) -> reportWorkService.datePmUnit(x.getLineIdList(), x.getStart(), x.getEnd(), x.getType(), unit),null);
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
+        Assert.notNull(granularityEnum, "粒度不存在");
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
+            return numClass("累计产量总数", numDTO, (x) -> reportWorkService.dateClassPmUnit(x.getLineIdList(), x.getStart(), x.getEnd(), x.getType(), unit));
+        } else {
+            return num("累计产量总数", numDTO, (x) -> reportWorkService.datePmUnit(x.getLineIdList(), x.getStart(), x.getEnd(), x.getType(), unit), granularityEnum);
+        }
     }
 
     @Override
