@@ -148,7 +148,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, Integer bit, String unit) {
+    public QtLineChartBarCountDTO pmDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, Integer bit, String unit) {
         DashboardNumDTO numDTO = new DashboardNumDTO();
         numDTO.setType(0);
         numDTO.setWorkShopId(workShopId);
@@ -166,7 +166,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit) {
+    public QtLineChartBarCountDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit) {
         DashboardNumDTO numDTO = new DashboardNumDTO();
         numDTO.setWorkShopId(workShopId);
         numDTO.setStart(start);
@@ -183,7 +183,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit) {
+    public QtLineChartBarCountDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit) {
         DashboardNumDTO numDTO = new DashboardNumDTO();
         numDTO.setWorkShopId(workShopId);
         numDTO.setStart(start);
@@ -486,7 +486,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      *
      * @return
      */
-    private QtLineChartBarDTO num(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function , QtManagerConstant.QtGranularityEnum granularityEnum) {
+    private QtLineChartBarCountDTO num(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function , QtManagerConstant.QtGranularityEnum granularityEnum) {
         List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), numDTO.getStart(), numDTO.getEnd());
         Assert.notEmpty(timeList, "暂无时间窗口");
         List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
@@ -497,6 +497,10 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Map<String, BigDecimal> numValueMap = function.apply(numDTO);
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        //统计信息：选择时间内，报工汇总，显示“总报工产量”
+        //统计信息：选择时间内，报工汇总，显示“总入库产量”
+        //统计信息：选择时间内，拉引量汇总，显示“总拉引量”
+        List<BigDecimal> countValueList = Lists.newArrayList();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             LocalDate end = timeList.get(i);
@@ -507,6 +511,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             //不同粒度下的聚合
             for (LocalDate ldt = classDate; LocalDateUtil.lt(ldt, end); ldt = ldt.plusDays(1)) {
                 valueList.add(numValueMap.get(ldt.toString()));
+                countValueList.add(numValueMap.get(ldt.toString()));
             }
             //产量，入库，耗用
             dataList.add(new TupleDTO<>(hint, BigDecimalUtil.setScale(BigDecimalUtil.sum(valueList), numDTO.getBit())));
@@ -514,7 +519,11 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             stackGraphDTOList.add(stackGraphDTO);
         }
         //自定义转换工具
-        return StackGraphUtil.convertData(stackGraphDTOList);
+        QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
+        QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+        resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        resDto.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(countValueList),numDTO.getBit()));
+        return resDto;
     }
 
     /**
@@ -527,7 +536,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      *
      * @return
      */
-    private QtLineChartBarDTO numClass(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function) {
+    private QtLineChartBarCountDTO numClass(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function) {
         List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), numDTO.getStart(), numDTO.getEnd());
         Assert.notEmpty(timeList, "暂无时间窗口");
         List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
@@ -542,6 +551,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         List<String> xAxisList1 = Lists.newArrayList();
         List<String> xAxisList2 = Lists.newArrayList();
+        List<BigDecimal> countValueList = Lists.newArrayList();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
@@ -552,6 +562,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             for (SysDictVO ele : sysDictVOList) {
                 xAxisList2.add(ele.getName());
                 BigDecimal value = numValueMap.get(classDate.toString() + "_" + ele.getId());
+                countValueList.add(value);
                 //产量，入库，耗用
                 dataList.add(new TupleDTO<>(hint, BigDecimalUtil.setScale(value, numDTO.getBit())));
                 stackGraphDTO.setData(dataList);
@@ -562,7 +573,10 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
         qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
         qtLineChartBarDTO.setXData(null);
-        return qtLineChartBarDTO;
+        QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
+        resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
+        resDto.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(countValueList),numDTO.getBit()));
+        return resDto;
     }
 
     /**

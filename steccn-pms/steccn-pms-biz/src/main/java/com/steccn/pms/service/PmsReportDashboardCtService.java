@@ -37,7 +37,7 @@ public interface PmsReportDashboardCtService {
      * @param unit        单位
      * @return
      */
-    QtLineChartBarDTO pmDate(Integer workShopId, LocalDate start, LocalDate end,Integer granularity, Integer bit , String unit);
+    QtLineChartBarCountDTO pmDate(Integer workShopId, LocalDate start, LocalDate end,Integer granularity, Integer bit , String unit);
 
     /**
      * 累计入库量总数
@@ -50,7 +50,7 @@ public interface PmsReportDashboardCtService {
      * @param unit        单位
      * @return
      */
-    QtLineChartBarDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit);
+    QtLineChartBarCountDTO inStorageDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit);
 
     /**
      * 累计拉引量总数
@@ -63,7 +63,7 @@ public interface PmsReportDashboardCtService {
      * @param unit       单位
      * @return
      */
-    QtLineChartBarDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit);
+    QtLineChartBarCountDTO pullForceDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, int bit, String unit);
 
     /**
      * 各产线成品率-完工
