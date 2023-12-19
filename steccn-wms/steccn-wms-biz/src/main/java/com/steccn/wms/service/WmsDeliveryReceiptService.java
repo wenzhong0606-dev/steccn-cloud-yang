@@ -100,11 +100,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
 
 
     /**
-     *  冲销出库
+     *  创建出库单确认
      * @param wmsDeliveryReceiptDTO
      * @return
      */
-    WmsDeliveryReceiptDTO chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName);
+    WmsDeliveryReceiptDTO createAndAffirm(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName);
 
     WmsDeliverySellFlagVO sellFlag(String number);
 

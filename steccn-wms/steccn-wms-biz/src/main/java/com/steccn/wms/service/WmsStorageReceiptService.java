@@ -9,6 +9,7 @@ import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.vo.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -67,7 +68,7 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @param id
      * @return
      */
-    Boolean affirm(Long id);
+    Boolean affirm(Long id,String userName);
 
     /**
      * 删除
@@ -180,4 +181,12 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
+
+
+    /**
+     * 根据关联单号批量对出库单进行冲销
+     * @param dtoList
+     * @return
+     */
+    Boolean chargeAgainstAssociated(@RequestBody List<BatchChargeAgainstDTO> dtoList);
 }
