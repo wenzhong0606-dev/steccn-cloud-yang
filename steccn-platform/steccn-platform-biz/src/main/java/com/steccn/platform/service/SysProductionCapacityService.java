@@ -5,8 +5,12 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysProductionCapacity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysProductionCapacityAddDTO;
+import com.steccn.platform.dto.SysProductionCapacityInfoDTO;
 import com.steccn.platform.dto.SysProductionCapacityPageDTO;
+import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
+
+import java.util.List;
 
 /**
  * @author yequan
@@ -25,8 +29,31 @@ public interface SysProductionCapacityService extends IService<SysProductionCapa
 
     /**
      * 新增标准产能
+     *
      * @param dto
      * @return
      */
     Boolean addCapacity(SysProductionCapacityAddDTO dto);
+
+    /**
+     * 删除标准产能
+     *
+     * @param id 主键
+     * @return
+     */
+    Boolean deleteCapacity(Integer id);
+
+    /**
+     * 标准产能的明细
+     * @param id 主键
+     * @return
+     */
+    List<SysProductionCapacityInfoVO> infoCapacity(Integer id);
+
+    /**
+     * 标准产能明细更新
+     * @param list 数据
+     * @return
+     */
+    Boolean updateCapacity(List<SysProductionCapacityInfoDTO> list);
 }
