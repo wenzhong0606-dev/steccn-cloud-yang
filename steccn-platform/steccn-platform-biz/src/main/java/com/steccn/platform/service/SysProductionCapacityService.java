@@ -5,6 +5,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysProductionCapacity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysProductionCapacityAddDTO;
+import com.steccn.platform.dto.SysProductionCapacityInfoDTO;
 import com.steccn.platform.dto.SysProductionCapacityPageDTO;
 import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
@@ -48,4 +49,11 @@ public interface SysProductionCapacityService extends IService<SysProductionCapa
      * @return
      */
     List<SysProductionCapacityInfoVO> infoCapacity(Integer id);
+
+    /**
+     * 标准产能明细更新
+     * @param list 数据
+     * @return
+     */
+    Boolean updateCapacity(List<SysProductionCapacityInfoDTO> list);
 }

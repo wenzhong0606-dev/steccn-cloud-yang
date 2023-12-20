@@ -19,15 +19,15 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.JointUtil;
 import com.steccn.platform.domain.SysProductionCapacity;
 import com.steccn.platform.domain.SysProductionCapacityInfo;
-import com.steccn.platform.dto.*;
-import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.dto.SysOfficeMultiTreeDTO;
+import com.steccn.platform.dto.SysProductionCapacityAddDTO;
+import com.steccn.platform.dto.SysProductionCapacityInfoDTO;
+import com.steccn.platform.dto.SysProductionCapacityPageDTO;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
-import com.steccn.platform.feign.RemoteSysOfficeCollectFeignApi;
-import com.steccn.platform.service.SysConfigurationService;
+import com.steccn.platform.mapper.SysProductionCapacityMapper;
 import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.service.SysProductionCapacityInfoService;
 import com.steccn.platform.service.SysProductionCapacityService;
-import com.steccn.platform.mapper.SysProductionCapacityMapper;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
@@ -146,6 +146,17 @@ public class SysProductionCapacityServiceImpl extends ServiceImpl<SysProductionC
             return infoList;
         }
         return Lists.newArrayList();
+    }
+
+    @Override
+    public Boolean updateCapacity(List<SysProductionCapacityInfoDTO> list) {
+        List<SysProductionCapacityInfo> batchList = Lists.newArrayList();
+        for (SysProductionCapacityInfoDTO ele : list) {
+            SysProductionCapacityInfo info = new SysProductionCapacityInfo();
+            BeanUtil.copyProperties(ele, info);
+            batchList.add(info);
+        }
+        return sysProductionCapacityInfoService.updateBatchById(batchList);
     }
 
     /**

@@ -1,11 +1,9 @@
 package com.steccn.platform.vo;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -49,7 +47,7 @@ public class SysProductionCapacityInfoVO implements Serializable {
     private Integer lineNum;
 
     /**
-     * 产线基数
+     * 产能主键
      */
     private Integer capacityId;
 
