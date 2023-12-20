@@ -429,6 +429,8 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         //统计信息：选择时间内，对应产线报工/入库总数汇总 / 对应拉引量汇总，显示“X线总入库/加工成品率”
         List<BigDecimal> countValueList1 = Lists.newArrayList();
         List<BigDecimal> countValueList2 = Lists.newArrayList();
+        Map<String,BigDecimal> countLineMap1 = Maps.newLinkedHashMap();
+        Map<String,BigDecimal> countLineMap2 = Maps.newLinkedHashMap();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             LocalDate end = timeList.get(i);
@@ -444,6 +446,8 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, line.getId(), ldt);
                     lineBd1 = BigDecimalUtil.add(map1.get(joint), lineBd1);
                     lineBd2 = BigDecimalUtil.add(map2.get(joint), lineBd2);
+                    MapUtil.add(countLineMap1, line.getOfficeName(), lineBd1, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(countLineMap2, line.getOfficeName(), lineBd2, (x, y) -> BigDecimalUtil.add(x, y));
                 }
                 countValueList1.add(lineBd1);
                 countValueList2.add(lineBd2);
@@ -455,9 +459,11 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
         QtLineChartBarCountDTO resDto = new QtLineChartBarCountDTO();
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
-        BigDecimal sum = BigDecimalUtil.sum(countValueList1);
-        resDto.setTotalQuantity(sum);
-        resDto.setTotalRate(BigDecimalUtil.percent(sum, BigDecimalUtil.sum(countValueList2)));
+        Map<String, BigDecimal> countLineMap = Maps.newLinkedHashMap();
+        countLineMap1.forEach((k,v) ->{
+            countLineMap.put(k, BigDecimalUtil.percent(countLineMap2.get(k), v));
+        });
+        resDto.setLineQuantity(countLineMap);
         return resDto;
     }
 
@@ -477,8 +483,8 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<String> xAxisList2 = Lists.newArrayList();
         List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //统计信息：选择时间内，对应产线报工/入库总数汇总 / 对应拉引量汇总，显示“X线总入库/加工成品率”
-        List<BigDecimal> countValueList1 = Lists.newArrayList();
-        List<BigDecimal> countValueList2 = Lists.newArrayList();
+        Map<String,BigDecimal> countLineMap1 = Maps.newLinkedHashMap();
+        Map<String,BigDecimal> countLineMap2 = Maps.newLinkedHashMap();
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate classDate = timeList.get(i - 1);
             String convert = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, classDate);
@@ -493,8 +499,8 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, line.getId(), classDate, ele.getId());
                     lineBd1 = map1.get(joint);
                     lineBd2 = map2.get(joint);
-                    countValueList1.add(lineBd1);
-                    countValueList2.add(lineBd2);
+                    MapUtil.add(countLineMap1, line.getOfficeName(), lineBd1, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(countLineMap2, line.getOfficeName(), lineBd2, (x, y) -> BigDecimalUtil.add(x, y));
                     dataList.add(new TupleDTO<>(line.getOfficeName() + "完工成品率", BigDecimalUtil.percent(lineBd1, lineBd2)));
                 });
                 stackGraphDTO.setData(dataList);
@@ -506,9 +512,11 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         qtLineChartBarDTO.setXAxis(new LineProduceClassGroupVO(xAxisList1, xAxisList2));
         qtLineChartBarDTO.setXData(null);
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
-        BigDecimal sum = BigDecimalUtil.sum(countValueList1);
-        resDto.setTotalQuantity(sum);
-        resDto.setTotalRate(BigDecimalUtil.percent(sum, BigDecimalUtil.sum(countValueList2)));
+        Map<String, BigDecimal> countLineMap = Maps.newLinkedHashMap();
+        countLineMap1.forEach((k,v) ->{
+            countLineMap.put(k, BigDecimalUtil.percent(countLineMap2.get(k), v));
+        });
+        resDto.setLineQuantity(countLineMap);
         return resDto;
     }
 

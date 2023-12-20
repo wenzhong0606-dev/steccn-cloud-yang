@@ -4,15 +4,14 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.util.StackGraphUtil;
@@ -35,6 +34,8 @@ import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.vo.PmRawMaterialVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
@@ -62,6 +63,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     private final AdsOpcUaAll3Mapper adsOpcUaAll3Mapper;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final RemoteSalesFeignApi remoteSalesFeignApi;
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime, LocalDateTime> dto) {
@@ -137,10 +139,10 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         //组图表
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
-        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
-            dateList.add(dto.getStart());
-        }
-        for (int i = 1; i <= dateList.size(); i++) {
+//        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
+//            dateList.add(dto.getStart());
+//        }
+        for (int i = 1; i < dateList.size(); i++) {
             LocalDate start = dateList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
             stackGraphDTO.setXAxis(XAxisUtil.convert(granularity, start));
@@ -256,6 +258,92 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         vo.setCommonBarLineVO(results);
         vo.setCountData(customers.stream().map(SalesContractCustomerDTO::getQty).reduce(BigDecimal.ZERO,BigDecimal::add));
         return vo;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> weightDetail(LocalDate date) {
+        List<AdsOpcUaAll3> adsOpcUaAll3s = adsOpcUaAll3Mapper.selectList(new LambdaQueryWrapper<AdsOpcUaAll3>()
+                .select(AdsOpcUaAll3::getTagId,AdsOpcUaAll3::getServertime,AdsOpcUaAll3::getValue)
+                .ge(AdsOpcUaAll3::getServertime, date.atTime(8, 0, 0))
+                .lt(AdsOpcUaAll3::getServertime, date.plusDays(1).atTime(7, 59, 59)));
+        Assert.notEmpty(adsOpcUaAll3s,"数据为空");
+        //按照时间升序排列
+        List<LocalDateTime> serverTimeList = adsOpcUaAll3s.stream()
+                .map(AdsOpcUaAll3::getServertime)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        //按照时间组成map
+        Map<LocalDateTime, List<AdsOpcUaAll3>> serverTimeMap = adsOpcUaAll3s.stream()
+                .collect(Collectors.groupingBy(AdsOpcUaAll3::getServertime));
+        //生成报表数据
+        SteccnTableDataDTO<Map<String,String>> result = new SteccnTableDataDTO();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("num","序号",null));
+        //获取名称
+        Set<String> refSet = adsOpcUaAll3s.stream().map(AdsOpcUaAll3::getTagId).collect(Collectors.toSet());
+        Map<String, List<SysConfigurationDTO>> dpWeight = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("DP_WEIGHT", refSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //组第一层表格
+        List<String> tagNameList = new ArrayList<>(refSet);
+        Collections.sort(tagNameList);
+        for(String tagName:tagNameList){
+            columns.add(new SteccnTableColumn(tagName+"_name",dpWeight.get(tagName).get(0).getRefContent(),
+                    Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null))));
+        }
+        columns.add(new SteccnTableColumn("total","总计",null));
+        //开始组数据
+        List<Map<String,String>> tableList = Lists.newArrayList();
+        //总计数据
+        Map<String,BigDecimal> count = Maps.newHashMap();
+        for(int i = 0; i < serverTimeList.size(); i++){
+            Map<String,String> oneLine = Maps.newHashMap();
+            LocalDateTime dateTime = serverTimeList.get(i);
+            List<AdsOpcUaAll3> dataColumn = serverTimeMap.get(dateTime);
+            oneLine.put("time",dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            oneLine.put("num",String.valueOf(i+1));
+            oneLine.put("type","0");
+            for(AdsOpcUaAll3 tmp:dataColumn){
+                oneLine.put(tmp.getTagId(),tmp.getValue().toString());
+                //合计
+                BigDecimalUtil.accumulate(count,tmp.getTagId(),tmp.getValue());
+            }
+            tableList.add(oneLine);
+        }
+        //总计行
+        Map<String,String> oneLine = Maps.newHashMap();
+        oneLine.put("time","统计报表");
+        oneLine.put("type","1");
+        for(Map.Entry<String,BigDecimal> entry:count.entrySet()){
+            oneLine.put(entry.getKey(),entry.getValue().toString());
+        }
+        //合计碎玻璃和硅砂
+        BigDecimal countG = BigDecimalUtil.add(count.get("Raw_YL.CS.ZHM.fact_weigh1_FLOAT"),count.get("Raw_YL.CS.ZHM.fact_weigh2_FLOAT"));
+        oneLine.put("Raw_YL.CS.ZHM.fact_weigh1_FLOAT",countG.toString());
+        oneLine.put("Raw_YL.CS.ZHM.fact_weigh2_FLOAT",countG.toString());
+        BigDecimal countS = BigDecimalUtil.add(count.get("Raw_YL.CS.ZHM.fact_weigh9_FLOAT"),count.get("Raw_YL.CS.ZHM.fact_weigh10_FLOAT"));
+        oneLine.put("Raw_YL.CS.ZHM.fact_weigh9_FLOAT",countS.toString());
+        oneLine.put("Raw_YL.CS.ZHM.fact_weigh10_FLOAT",countS.toString());
+        BigDecimal totalSum = count.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        oneLine.put("total",totalSum.toString());
+        tableList.add(oneLine);
+        List<PmRawMaterialVO> pmRawMaterialVOS = FeignOptional.of(() -> remotePmsFeignApi.listByDate(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(pmRawMaterialVOS)){
+            Map<String,String> oneLine2 = Maps.newHashMap();
+            oneLine2.put("time","确认数量");
+            oneLine2.put("type","2");
+            pmRawMaterialVOS.forEach(tmp->{
+                oneLine2.put(tmp.getTagId(),tmp.getValue().toString());
+            });
+            BigDecimal totalReduce = pmRawMaterialVOS.stream().map(PmRawMaterialVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            oneLine2.put("total",totalReduce.toString());
+            tableList.add(oneLine2);
+        }
+        result.setTableList(tableList);
+        result.setColumns(columns);
+        return result;
     }
 
     public List<DpWeightVO> weightCount(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto) {
