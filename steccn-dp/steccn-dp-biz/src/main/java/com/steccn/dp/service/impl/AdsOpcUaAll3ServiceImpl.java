@@ -288,6 +288,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         //组第一层表格
         List<String> tagNameList = new ArrayList<>(refSet);
         Collections.sort(tagNameList);
+        tagNameList.add(tagNameList.remove(0));
         for(String tagName:tagNameList){
             columns.add(new SteccnTableColumn(tagName+"_name",dpWeight.get(tagName).get(0).getRefContent(),
                     Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null))));
