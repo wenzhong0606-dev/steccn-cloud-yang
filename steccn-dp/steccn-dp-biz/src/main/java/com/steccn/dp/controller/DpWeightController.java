@@ -50,7 +50,7 @@ public class DpWeightController {
     }
 
     @GetMapping("/weightDetail")
-    @ApiOperation(value = "获取电子秤读数详情")
+    @ApiOperation(value = "获取原料配料详情")
     public R<SteccnTableDataDTO> weightDetail(@RequestParam("date") LocalDate date){
         return R.success(adsOpcUaAll3Service.weightDetail(date));
     }
