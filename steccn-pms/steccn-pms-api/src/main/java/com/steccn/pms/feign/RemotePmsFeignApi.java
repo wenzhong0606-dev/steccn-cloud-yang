@@ -1,10 +1,12 @@
 package com.steccn.pms.feign;
 
+import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.vo.PmRawMaterialVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.pms.vo.WorkOrderVO;
@@ -42,6 +44,7 @@ public interface RemotePmsFeignApi {
 
     /**
      * 获取当前班次时间内的生产订单
+     *
      * @param tupleDTO
      * @return
      */
@@ -122,10 +125,11 @@ public interface RemotePmsFeignApi {
 
     @ApiOperation("根据班次时间查询物料id")
     @GetMapping("/feign/pms/produce/order/getThickByClassTime")
-    R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime")LocalDateTime endTime);
+    R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime") LocalDateTime endTime);
 
     /**
      * 领用单状态更改
+     *
      * @param dto
      * @return
      */
@@ -135,6 +139,7 @@ public interface RemotePmsFeignApi {
 
     /**
      * 根据requestId查询业务主键
+     *
      * @param requestId
      * @return
      */
@@ -144,6 +149,7 @@ public interface RemotePmsFeignApi {
 
     /**
      * 根据业务id查询状态
+     *
      * @param id
      * @return
      */
@@ -153,7 +159,7 @@ public interface RemotePmsFeignApi {
 
     @ApiOperation("根据业务id查询状态")
     @PostMapping("/feign/pms/produce/order/defect")
-    R<List<PmsDefectDayOrderBasicDTO>> defectDay(@RequestBody TripleDTO<List<Integer>,LocalDateTime,LocalDateTime> dto);
+    R<List<PmsDefectDayOrderBasicDTO>> defectDay(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> dto);
 
     @GetMapping("/feign/pms/produce/order/get/caseNo/flag")
     @ApiOperation(("箱号是否存在"))
@@ -169,5 +175,7 @@ public interface RemotePmsFeignApi {
     @GetMapping("/feign/pms/produce/order/number/caseNo")
     R<PmsProducerOrderInfoDTO> getNumberByCaseNo(@RequestParam("caseNo") String caseNo);
 
-
+    @ApiOperation("根据日期获取原料配料数据")
+    @PostMapping("/feign/pms/raw/material/listByDate")
+    R<List<PmRawMaterialVO>> listByDate(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO);
 }
