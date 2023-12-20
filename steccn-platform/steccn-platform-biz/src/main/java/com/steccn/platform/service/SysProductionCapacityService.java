@@ -6,7 +6,10 @@ import com.steccn.platform.domain.SysProductionCapacity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysProductionCapacityAddDTO;
 import com.steccn.platform.dto.SysProductionCapacityPageDTO;
+import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
+
+import java.util.List;
 
 /**
  * @author yequan
@@ -38,4 +41,11 @@ public interface SysProductionCapacityService extends IService<SysProductionCapa
      * @return
      */
     Boolean deleteCapacity(Integer id);
+
+    /**
+     * 标准产能的明细
+     * @param id 主键
+     * @return
+     */
+    List<SysProductionCapacityInfoVO> infoCapacity(Integer id);
 }

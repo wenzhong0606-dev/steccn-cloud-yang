@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysProductionCapacityAddDTO;
 import com.steccn.platform.dto.SysProductionCapacityPageDTO;
 import com.steccn.platform.service.SysProductionCapacityService;
+import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * @author yequan
@@ -44,4 +46,9 @@ public class SysProductionCapacityController {
         return R.success(sysProductionCapacityService.deleteCapacity(id));
     }
 
+    @ApiOperation("标准产能查询")
+    @GetMapping("/{id}")
+    public R<List<SysProductionCapacityInfoVO>> info(@PathVariable("id") Integer id) {
+        return R.success(sysProductionCapacityService.infoCapacity(id));
+    }
 }

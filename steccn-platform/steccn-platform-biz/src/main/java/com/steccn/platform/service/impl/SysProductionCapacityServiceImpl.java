@@ -15,6 +15,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysConfigurationConf;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.JointUtil;
 import com.steccn.platform.domain.SysProductionCapacity;
 import com.steccn.platform.domain.SysProductionCapacityInfo;
@@ -28,6 +29,7 @@ import com.steccn.platform.service.SysProductionCapacityInfoService;
 import com.steccn.platform.service.SysProductionCapacityService;
 import com.steccn.platform.mapper.SysProductionCapacityMapper;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -117,6 +119,33 @@ public class SysProductionCapacityServiceImpl extends ServiceImpl<SysProductionC
     public Boolean deleteCapacity(Integer id) {
         removeById(id);
         return sysProductionCapacityInfoService.remove(new LambdaQueryWrapper<SysProductionCapacityInfo>().eq(SysProductionCapacityInfo::getCapacityId, id));
+    }
+
+    @Override
+    public List<SysProductionCapacityInfoVO> infoCapacity(Integer id) {
+        SysProductionCapacity exist = getById(id);
+        Assert.notNull(exist, "产能不存在");
+        List<SysProductionCapacityInfo> dbList = sysProductionCapacityInfoService.list(new LambdaQueryWrapper<SysProductionCapacityInfo>().eq(SysProductionCapacityInfo::getCapacityId, id));
+        if (CollUtil.isNotEmpty(dbList)) {
+            List<SysProductionCapacityInfoVO> infoList = BeanUtil.copyToList(dbList, SysProductionCapacityInfoVO.class);
+            Set<Integer> wlsIdSet = Sets.newHashSet();
+            infoList.forEach(ele -> {
+                wlsIdSet.add(ele.getWorkshopId());
+                wlsIdSet.add(ele.getLineId());
+                wlsIdSet.add(ele.getStationId());
+            });
+            Map<Integer, String> wlsIdNameMap = sysOfficeService.listByCh(wlsIdSet);
+
+            BigDecimal avgCapacity = BigDecimalUtil.divide(exist.getStandardCapacity(), new BigDecimal(exist.getLineNum()), 2);
+            infoList.forEach(ele -> {
+                ele.setStandardCapacity(BigDecimalUtil.multiply(avgCapacity, new BigDecimal(ele.getLineNum()), 2));
+                ele.setWorkshopName(wlsIdNameMap.get(ele.getWorkshopId()));
+                ele.setLineName(wlsIdNameMap.get(ele.getLineId()));
+                ele.setStationName(wlsIdNameMap.get(ele.getStationId()));
+            });
+            return infoList;
+        }
+        return Lists.newArrayList();
     }
 
     /**
