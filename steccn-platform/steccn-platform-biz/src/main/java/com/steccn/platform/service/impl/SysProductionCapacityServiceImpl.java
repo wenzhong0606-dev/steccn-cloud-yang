@@ -6,16 +6,15 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.domain.SysProductionCapacity;
-import com.steccn.platform.dto.SysProductionCapacityDTO;
+import com.steccn.platform.dto.SysProductionCapacityAddDTO;
+import com.steccn.platform.dto.SysProductionCapacityPageDTO;
 import com.steccn.platform.service.SysProductionCapacityService;
 import com.steccn.platform.mapper.SysProductionCapacityMapper;
 import com.steccn.platform.vo.SysProductionCapacityVO;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,7 +28,7 @@ public class SysProductionCapacityServiceImpl extends ServiceImpl<SysProductionC
         implements SysProductionCapacityService {
 
     @Override
-    public Page<SysProductionCapacityVO> capacityPage(SysProductionCapacityDTO dto) {
+    public Page<SysProductionCapacityVO> capacityPage(SysProductionCapacityPageDTO dto) {
         //获取日期
         LocalDate start = null, end = null;
         if (StrUtil.isNotBlank(dto.getMonthStr())) {
@@ -49,6 +48,16 @@ public class SysProductionCapacityServiceImpl extends ServiceImpl<SysProductionC
             resPage.setRecords(resList);
         }
         return resPage;
+    }
+
+    @Override
+    public Boolean addCapacity(SysProductionCapacityAddDTO dto) {
+        //获取配置的车间
+        //车间下产线下的所有工位
+        //查询最近的工位默认配置
+        //保存接口
+
+        return null;
     }
 
 

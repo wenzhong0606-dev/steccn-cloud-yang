@@ -11,11 +11,11 @@ import java.io.Serializable;
  * @date 2023/12/20
  */
 @Data
-public class SysProductionCapacityDTO extends BasePageDTO implements Serializable {
+public class SysProductionCapacityPageDTO extends BasePageDTO implements Serializable {
 
     /**
      * 月份字符串
      */
-    @Pattern(regexp = "yyyy-MM", message = "月份必须要符合yyyy-MM格式")
+    @Pattern(regexp = "\\d{4}-\\d{2}", message = "月份必须要符合yyyy-MM格式")
     private String monthStr;
 }

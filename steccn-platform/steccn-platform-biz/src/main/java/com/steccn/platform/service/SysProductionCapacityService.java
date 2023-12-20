@@ -4,7 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysProductionCapacity;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.platform.dto.SysProductionCapacityDTO;
+import com.steccn.platform.dto.SysProductionCapacityAddDTO;
+import com.steccn.platform.dto.SysProductionCapacityPageDTO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
 
 /**
@@ -20,5 +21,12 @@ public interface SysProductionCapacityService extends IService<SysProductionCapa
      * @param dto 请求类
      * @return
      */
-    Page<SysProductionCapacityVO> capacityPage(SysProductionCapacityDTO dto);
+    Page<SysProductionCapacityVO> capacityPage(SysProductionCapacityPageDTO dto);
+
+    /**
+     * 新增标准产能
+     * @param dto
+     * @return
+     */
+    Boolean addCapacity(SysProductionCapacityAddDTO dto);
 }
