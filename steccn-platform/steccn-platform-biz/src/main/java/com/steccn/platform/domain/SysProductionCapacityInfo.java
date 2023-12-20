@@ -4,13 +4,15 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 标准产能明细表
+ *
  * @TableName sys_production_capacity_info
  */
-@TableName(value ="sys_production_capacity_info")
+@TableName(value = "sys_production_capacity_info")
 @Data
 public class SysProductionCapacityInfo implements Serializable {
     /**
@@ -42,6 +44,12 @@ public class SysProductionCapacityInfo implements Serializable {
      */
     @TableField(value = "line_num")
     private Integer lineNum;
+
+    /**
+     * 产线基数
+     */
+    @TableField(value = "capacity_id")
+    private Integer capacityId;
 
     /**
      * 创建人id

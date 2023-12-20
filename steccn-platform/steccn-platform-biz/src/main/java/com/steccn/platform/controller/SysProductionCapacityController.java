@@ -33,9 +33,15 @@ public class SysProductionCapacityController {
     }
 
     @ApiOperation("标准产能新增")
-    @PostMapping()
+    @PostMapping
     public R<Boolean> addCapacity(@Valid @RequestBody SysProductionCapacityAddDTO dto) {
         return R.success(sysProductionCapacityService.addCapacity(dto));
+    }
+
+    @ApiOperation("标准产能删除")
+    @DeleteMapping("/{id}")
+    public R<Boolean> deleteCapacity(@PathVariable("id") Integer id) {
+        return R.success(sysProductionCapacityService.deleteCapacity(id));
     }
 
 }

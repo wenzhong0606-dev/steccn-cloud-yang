@@ -96,9 +96,7 @@ public class SysOfficeController {
     @PostMapping("/multi/tree")
     @ApiOperation("根据机构类型+根节点查询下拉选项树结构")
     public R<List<SysOfficeVO>> multiTree(@RequestBody SysOfficeMultiTreeDTO dto) {
-        List<SysOfficeVO> sysOfficeVOList = typeDataList(dto.getOfficeTypeList());
-        List<SysOfficeVO> collect = sysOfficeVOList.stream().filter(ele -> dto.getRootCodeList().contains(ele.getOfficeCode())).collect(Collectors.toList());
-        return R.success(collect);
+        return R.success(sysOfficeService.multiTree(dto));
     }
 
     @ApiOperation("货架的仓库")

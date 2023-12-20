@@ -25,8 +25,17 @@ public interface SysProductionCapacityService extends IService<SysProductionCapa
 
     /**
      * 新增标准产能
+     *
      * @param dto
      * @return
      */
     Boolean addCapacity(SysProductionCapacityAddDTO dto);
+
+    /**
+     * 删除标准产能
+     *
+     * @param id 主键
+     * @return
+     */
+    Boolean deleteCapacity(Integer id);
 }
