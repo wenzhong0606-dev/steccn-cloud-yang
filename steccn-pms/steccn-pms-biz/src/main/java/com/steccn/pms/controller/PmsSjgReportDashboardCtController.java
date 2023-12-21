@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.util.PmsUnitUtil;
+import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author yequan
@@ -81,4 +83,11 @@ public class PmsSjgReportDashboardCtController {
     public R<SjgDashboardLineProduceVO> lineGroupPassRateDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(pmsSjgReportDashboardService.lineGroupPassRateDetail(workShopId, start, end));
     }
+
+    @GetMapping("/count/report")
+    @ApiOperation("深加工统计报表")
+    public R<List<SjgCountReportVO>> countReport(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success();
+    }
+
 }
