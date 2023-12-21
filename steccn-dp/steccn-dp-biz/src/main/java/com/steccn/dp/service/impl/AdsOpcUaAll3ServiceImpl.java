@@ -18,6 +18,7 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
+import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.dto.SalesContractCustomerDTO;
@@ -320,12 +321,12 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             oneLine.put(entry.getKey(),entry.getValue().toString());
         }
         //合计碎玻璃和硅砂
-        BigDecimal countG = BigDecimalUtil.add(count.get("Raw_YL.CS.ZHM.fact_weigh1_FLOAT"),count.get("Raw_YL.CS.ZHM.fact_weigh2_FLOAT"));
-        oneLine.put("Raw_YL.CS.ZHM.fact_weigh1_FLOAT",countG.toString());
-        oneLine.put("Raw_YL.CS.ZHM.fact_weigh2_FLOAT",countG.toString());
-        BigDecimal countS = BigDecimalUtil.add(count.get("Raw_YL.CS.ZHM.fact_weigh9_FLOAT"),count.get("Raw_YL.CS.ZHM.fact_weigh10_FLOAT"));
-        oneLine.put("Raw_YL.CS.ZHM.fact_weigh9_FLOAT",countS.toString());
-        oneLine.put("Raw_YL.CS.ZHM.fact_weigh10_FLOAT",countS.toString());
+        BigDecimal countG = BigDecimalUtil.add(count.get(DpConstant.DP_WEIGHT_GUISHA_1_TAGID),count.get(DpConstant.DP_WEIGHT_GUISHA_2_TAGID));
+        oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID,countG.toString());
+        oneLine.put(DpConstant.DP_WEIGHT_GUISHA_2_TAGID,countG.toString());
+        BigDecimal countS = BigDecimalUtil.add(count.get(DpConstant.DP_WEIGHT_GLASS_1_TAGID),count.get(DpConstant.DP_WEIGHT_GLASS_2_TAGID));
+        oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID,countS.toString());
+        oneLine.put(DpConstant.DP_WEIGHT_GLASS_2_TAGID,countS.toString());
         BigDecimal totalSum = count.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         oneLine.put("total",totalSum.toString());
@@ -363,11 +364,11 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             //重置
             weightCountList = weightCountList.stream()
                     .map(weight -> {
-                        if (weight.getTagId() != null && weight.getTagId().equals("Raw_YL.CS.ZHM.fact_weigh2_FLOAT")) {
-                            weight.setTagId("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
+                        if (weight.getTagId() != null && weight.getTagId().equals(DpConstant.DP_WEIGHT_GUISHA_2_TAGID)) {
+                            weight.setTagId(DpConstant.DP_WEIGHT_GUISHA_1_TAGID);
                         }
-                        if (weight.getTagId() != null && weight.getTagId().equals("Raw_YL.CS.ZHM.fact_weigh10_FLOAT")) {
-                            weight.setTagId("Raw_YL.CS.ZHM.fact_weigh9_FLOAT");
+                        if (weight.getTagId() != null && weight.getTagId().equals(DpConstant.DP_WEIGHT_GLASS_2_TAGID)) {
+                            weight.setTagId(DpConstant.DP_WEIGHT_GLASS_1_TAGID);
                         }
                         return weight;
                     })
