@@ -1,10 +1,7 @@
 package com.steccn.platform.service;
 
 import com.steccn.common.constant.ResultCode;
-import com.steccn.platform.dto.SysOfficeDTO;
-import com.steccn.platform.dto.SysOfficeParentIdsDTO;
-import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -263,4 +260,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> listByParentIds(Set<Long> ids);
+
+    /**
+     * 获取多颗树及孩子
+     * @param dto
+     * @return
+     */
+    List<SysOfficeVO> multiTree(SysOfficeMultiTreeDTO dto);
 }

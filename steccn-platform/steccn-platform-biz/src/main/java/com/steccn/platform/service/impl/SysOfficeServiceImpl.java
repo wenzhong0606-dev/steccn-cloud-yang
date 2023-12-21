@@ -19,10 +19,7 @@ import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.dto.SysOfficeDTO;
-import com.steccn.platform.dto.SysOfficeParentIdsDTO;
-import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -656,6 +653,30 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return results;
     }
 
+    @Override
+    public List<SysOfficeVO> multiTree(SysOfficeMultiTreeDTO dto) {
+        List<SysOfficeVO> sysOfficeVOList = typeDataList(dto.getOfficeTypeList());
+        List<SysOfficeVO> collect = sysOfficeVOList.stream().filter(ele -> dto.getRootCodeList().contains(ele.getOfficeCode())).collect(Collectors.toList());
+        return collect;
+    }
+
+
+    /**
+     * 根据组织机构类型获取数据
+     * @param typeList 类型集合
+     * @return
+     */
+    private List<SysOfficeVO> typeDataList(List<String> typeList) {
+        if (typeList.size() == 3 && typeList.contains(SysOfficeConstant.WORKSHOP) && typeList.contains(SysOfficeConstant.PRODUCT_LINE) && typeList.contains(SysOfficeConstant.STATION)) {
+            return workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION));
+        } else if (typeList.size() == 2 && typeList.contains(SysOfficeConstant.WORKSHOP) && typeList.contains(SysOfficeConstant.PRODUCT_LINE)) {
+            return workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE));
+        } else if (typeList.size() == 2 && typeList.contains(SysOfficeConstant.PRODUCT_LINE) && typeList.contains(SysOfficeConstant.STATION)) {
+            return workShopLineStation(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION));
+        } else {
+            return warehouseAndShelf(typeList);
+        }
+    }
 
     @Override
     public SysOfficeVO parentOffice(Integer childId) {
