@@ -3,6 +3,7 @@ package com.steccn.wms.feign;
 import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.FeignConstant;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CaseSiteDTO;
@@ -103,6 +104,26 @@ public interface RemoteWmsInventoryFeignApi {
     @ApiOperation("创建出库单")
     @PostMapping(value = "/feign/wms/inventory/delivery/create")
     R<Boolean> createDelivery(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
+
+    /**
+     * 创建出库单返回id
+     *
+     * @param dto
+     * @return
+     */
+    @ApiOperation("创建出库单")
+    @PostMapping(value = "/feign/wms/inventory/delivery/create/id")
+    R<Long> createDeliveryId(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
+
+    /**
+     * 冲销出库单
+     *
+     * @param dto
+     * @return
+     */
+    @ApiOperation("冲销出库单")
+    @PostMapping(value = "/feign/wms/inventory/charge/against/delivery")
+    R<Boolean> chargeAgainstDelivery(@RequestBody TupleDTO<Long,String> dto);
 
 
     /**

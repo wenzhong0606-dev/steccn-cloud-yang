@@ -1,5 +1,6 @@
 package com.steccn.wms.controller.feign;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CaseSiteDTO;
@@ -92,6 +93,12 @@ public class WmsInventoryFeignController {
         return R.success(wmsDeliveryReceiptService.add(dto));
     }
 
+    @ApiOperation("创建出库单(返回id)")
+    @PostMapping("/delivery/create/id")
+    public R<Long> deliveryCreateId(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto) {
+        return R.success(wmsDeliveryReceiptService.addId(dto));
+    }
+
     @ApiOperation("创建调拨单")
     @PostMapping("/transfer/slip/create")
     public R<Boolean> createTransferSlip(@Validated(InsertGroup.class) @RequestBody WmsTransferSlipDTO dto) {
@@ -114,5 +121,11 @@ public class WmsInventoryFeignController {
     @PostMapping("/charge/against/associated")
     public R<Boolean> chargeAgainstAssociated(@RequestBody List<BatchChargeAgainstDTO> dtoList){
         return R.success(wmsStorageReceiptService.chargeAgainstAssociated(dtoList));
+    }
+
+    @ApiOperation("根据关联的单据号对出库单进行批量冲销")
+    @PostMapping("/charge/against/delivery")
+    public R<Boolean> chargeAgainstDelivery(@RequestBody TupleDTO<Long,String> dto){
+        return R.success(wmsStorageReceiptService.chargeAgainstDelivery(dto.getField1(),dto.getField2()));
     }
 }

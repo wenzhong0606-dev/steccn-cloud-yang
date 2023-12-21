@@ -50,6 +50,11 @@ public class PmRawMaterialCount implements Serializable {
     private Long materialId;
 
     /**
+     * 出库单id
+     */
+    private Long deliveryId;
+
+    /**
      * 创建人id
      */
     private Long createBy;

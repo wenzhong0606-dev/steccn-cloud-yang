@@ -46,6 +46,13 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     Boolean add(WmsDeliveryReceiptDTO dto);
 
     /**
+     * 新增
+     * @param dto
+     * @return
+     */
+    Long addId(WmsDeliveryReceiptDTO dto);
+
+    /**
      * 编辑
      * @param dto
      * @return
