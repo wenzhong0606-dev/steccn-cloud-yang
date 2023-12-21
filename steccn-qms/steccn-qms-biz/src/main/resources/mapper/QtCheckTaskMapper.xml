@@ -497,7 +497,7 @@
         JOIN qt_check_item item ON detail.item_id = item.id
         WHERE
         task.STATUS = 2 AND task.task_type = 4
-        AND detail.check_result IS NOT NULL
+        AND detail.check_result IS NOT NULL  and detail.check_result != ''
         AND item.code IN
         <foreach collection="codeList" item="code" open="(" close=")" separator=",">
             #{code}

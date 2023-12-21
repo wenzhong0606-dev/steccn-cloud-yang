@@ -461,7 +461,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
         Map<String, BigDecimal> countLineMap = Maps.newLinkedHashMap();
         countLineMap1.forEach((k,v) ->{
-            countLineMap.put(k, BigDecimalUtil.percent(countLineMap2.get(k), v));
+            countLineMap.put(k, BigDecimalUtil.percent(v, countLineMap2.get(k)));
         });
         resDto.setLineQuantity(countLineMap);
         return resDto;
@@ -514,7 +514,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
         Map<String, BigDecimal> countLineMap = Maps.newLinkedHashMap();
         countLineMap1.forEach((k,v) ->{
-            countLineMap.put(k, BigDecimalUtil.percent(countLineMap2.get(k), v));
+            countLineMap.put(k, BigDecimalUtil.percent(v, countLineMap2.get(k)));
         });
         resDto.setLineQuantity(countLineMap);
         return resDto;
