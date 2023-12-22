@@ -93,4 +93,13 @@ public class PmMaterialVO {
      */
     @ApiModelProperty("组件报废百分比")
     private Float componentScrapingPercent;
+
+    /**
+     * 是否是主物料
+     */
+    @ApiModelProperty("是否是主物料")
+    /**
+     * 是否主物料
+     */
+    private Integer isMainMaterial;
 }

@@ -528,6 +528,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                     BeanUtil.copyProperties(wmsInventory, wmsStockInventoryDTO);
                     wmsStockInventoryDTO.setBatchNo(wmsInventory.getBatch());
                     wmsStockInventoryDTO.setInventoryId(wmsInventory.getId());
+                    wmsStockInventoryDTO.setCreateDate(wmsInventory.getCreateTime());
                     wmsStockInventoryDTOS.add(wmsStockInventoryDTO);
                 });
                 res = wmsStockInventoryDTOS.stream().collect(Collectors.groupingBy(WmsStockInventoryDTO::getWarehouseId));

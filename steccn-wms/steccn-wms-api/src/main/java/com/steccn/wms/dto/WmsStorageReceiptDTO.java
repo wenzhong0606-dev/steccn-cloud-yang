@@ -41,6 +41,15 @@ public class WmsStorageReceiptDTO {
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库id不能为空")
     private Integer warehouseId;
 
+    @ApiModelProperty("货架名称")
+    private String shelfName;
+
+    @ApiModelProperty("货架编码")
+    private String  shelfCode;
+
+    @ApiModelProperty("货架id")
+    private Integer shelfId;
+
     @ApiModelProperty("仓库名称")
     private String warehouseName;
     @ApiModelProperty("备注")
