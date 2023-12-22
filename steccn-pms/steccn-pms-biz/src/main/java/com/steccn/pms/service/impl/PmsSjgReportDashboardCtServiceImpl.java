@@ -1,14 +1,13 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.SteccnRow;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -32,9 +31,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -453,7 +451,40 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public List<SjgCountReportVO> countReport(Integer workShopId, LocalDate start, LocalDate end) {
-        return null;
+        List<SjgCountReportVO> resList = Lists.newArrayList();
+        //构建表头
+        List<TableHeadColumnDTO> columnList1 = setCountReportHead(start,end);
+        SjgCountReportVO sjgCountReportVO = new SjgCountReportVO();
+        sjgCountReportVO.setColumns(columnList1);
+        resList.add(sjgCountReportVO);
+
+        return resList;
+    }
+
+    /**
+     * 设置深加工统计报表头
+     * @return
+     */
+    private List<TableHeadColumnDTO> setCountReportHead(LocalDate start, LocalDate end) {
+        String currentStartStr = LocalDateUtil.format(start, "MM.dd");
+        String currentEndStr = LocalDateUtil.format(end, "MM.dd");
+        LocalDate preEnd = start.minusDays(1);
+        long daysBetween = ChronoUnit.DAYS.between(start, end);
+        LocalDate preStart = preEnd.minusDays(daysBetween);
+        String preStartStr = LocalDateUtil.format(preStart, "MM.dd");
+        String preEndStr = LocalDateUtil.format(preEnd, "MM.dd");
+        List<TableHeadColumnDTO> resList = Lists.newArrayList();
+        resList.add(new TableHeadColumnDTO("类别", "categoryName"));
+        resList.add(new TableHeadColumnDTO("线别", "lineName"));
+        resList.add(new TableHeadColumnDTO("本区间产量" + currentStartStr + "-" + currentEndStr, "currentValueTuple" , Arrays.asList(new TableHeadColumnDTO("currentValue", "㎡"), new TableHeadColumnDTO("currentValueRate", "%"))));
+        resList.add(new TableHeadColumnDTO("上区间产量" + preStartStr + "-" + preEndStr, "preValueTuple" , Arrays.asList(new TableHeadColumnDTO("preValue", "㎡"), new TableHeadColumnDTO("preValueRate", "%"))));
+        resList.add(new TableHeadColumnDTO("产量","valueDiff"));
+        resList.add(new TableHeadColumnDTO("成品率","valueDiffRate"));
+        resList.add(new TableHeadColumnDTO("本区间合计", "currentValueSumTuple" , Arrays.asList(new TableHeadColumnDTO("currentValueSum", "㎡"), new TableHeadColumnDTO("currentValueSumRate", "%"))));
+        resList.add(new TableHeadColumnDTO("上区间合计", "preValueSumTuple" , Arrays.asList(new TableHeadColumnDTO("preValueSum", "㎡"), new TableHeadColumnDTO("preValueSumRate", "%"))));
+        resList.add(new TableHeadColumnDTO("产量","valueDiffSum"));
+        resList.add(new TableHeadColumnDTO("成品率","valueDiffSumRate"));
+        return resList;
     }
 
     /**
