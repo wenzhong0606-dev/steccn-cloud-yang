@@ -23,6 +23,7 @@ import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -448,6 +449,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         result.setHeadList(headList);
         result.setRowList(rowList);
         return result;
+    }
+
+    @Override
+    public List<SjgCountReportVO> countReport(Integer workShopId, LocalDate start, LocalDate end) {
+        return null;
     }
 
     /**
