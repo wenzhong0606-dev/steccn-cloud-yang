@@ -901,5 +901,41 @@
         AND prw.end_time  &lt;= #{end}
 
     </select>
+    <select id="processSet" resultType="com.steccn.common.dto.TupleDTO">
+        select DISTINCT process.id field1,process.`name` field2 from pms_report_work rw
+            join pms_produce_order_craft craft on rw.process_id = craft.id
+            join pm_process process on process.id = craft.process_id
+        where rw.del_flag = 0  and craft.del_flag =0  and process.del_flag = 0 and rw.process_quantity > 0
+        AND rw.product_line_id in
+        <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+         and rw.class_date BETWEEN #{start} and #{end}
+         order by process.id
+    </select>
+    <select id="lineProcessPmMap" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+        SELECT
+            po.material_id,
+            rw.product_line_id ,
+            process.id as stationId,
+            sum( rw.process_quantity ) AS quantity,
+            sum( rw.badness_quantity ) AS badQuantity
+        FROM
+            pms_report_work rw
+                JOIN pms_produce_order po ON po.id = rw.produce_order_id
+                JOIN pms_produce_order_craft craft ON rw.process_id = craft.id
+                JOIN pm_process process ON process.id = craft.process_id
+        WHERE
+        rw.del_flag = 0  and craft.del_flag =0  and process.del_flag = 0 and rw.process_quantity > 0 and po.del_flag = 0
+            AND rw.product_line_id in
+            <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        GROUP BY
+            rw.product_line_id,
+            process.id,
+            po.material_id
+    </select>
 
 </mapper>

@@ -3,7 +3,10 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
@@ -16,6 +19,7 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -24,6 +28,7 @@ import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -453,24 +458,39 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     public List<SjgCountReportVO> countReport(Integer workShopId, LocalDate start, LocalDate end) {
         List<SjgCountReportVO> resList = Lists.newArrayList();
         //构建表头
-        List<TableHeadColumnDTO> columnList1 = setCountReportHead(start,end);
+        LocalDate preEnd = start.minusDays(1);
+        long daysBetween = ChronoUnit.DAYS.between(start, end);
+        LocalDate preStart = preEnd.minusDays(daysBetween);
+        List<TableHeadColumnDTO> columnList1 = setCountReportHead(start, end, preStart, preEnd);
         SjgCountReportVO sjgCountReportVO = new SjgCountReportVO();
         sjgCountReportVO.setColumns(columnList1);
         resList.add(sjgCountReportVO);
+        //查询产线
+        List<SysOfficeVO> lineList = getWsLineList(workShopId);
+        SteccnTableAssertUtil.notEmpty(lineList, "车间下暂无产线");
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //类别：按时间区间内，本车间所有产线订单的报工数据（按工序名）进行分组（仅选择产量大于0的数据）
+        List<TupleDTO<Integer, String>> processList = pmsReportWorkMapper.processSet(lineIdList, start, end);
+        SteccnTableAssertUtil.notEmpty(processList, "工序集合为空");
+        //根据时间和产线获取产量map key - processid_lineid value - (pm,rate)
+        Map<String, TupleDTO<BigDecimal, BigDecimal>> currentPmMap = reportWorkService.lineProcessPmMap(lineIdList, start, end);
+        Map<String, TupleDTO<BigDecimal, BigDecimal>> prePmMap = reportWorkService.lineProcessPmMap(lineIdList, preStart, preEnd);
 
         return resList;
     }
 
     /**
      * 设置深加工统计报表头
+     *
+     * @param start    开始日期
+     * @param end      结束日期
+     * @param preStart 前区间开始日期
+     * @param preEnd   前区间结束日期
      * @return
      */
-    private List<TableHeadColumnDTO> setCountReportHead(LocalDate start, LocalDate end) {
+    private List<TableHeadColumnDTO> setCountReportHead(LocalDate start, LocalDate end , LocalDate preStart, LocalDate preEnd) {
         String currentStartStr = LocalDateUtil.format(start, "MM.dd");
         String currentEndStr = LocalDateUtil.format(end, "MM.dd");
-        LocalDate preEnd = start.minusDays(1);
-        long daysBetween = ChronoUnit.DAYS.between(start, end);
-        LocalDate preStart = preEnd.minusDays(daysBetween);
         String preStartStr = LocalDateUtil.format(preStart, "MM.dd");
         String preEndStr = LocalDateUtil.format(preEnd, "MM.dd");
         List<TableHeadColumnDTO> resList = Lists.newArrayList();

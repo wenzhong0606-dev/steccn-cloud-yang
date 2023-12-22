@@ -2,6 +2,7 @@ package com.steccn.pms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
@@ -380,6 +381,30 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<OutSourcingListDTO> outsourcingClass(@Param("lineList") List<Integer> productLineList,
                                               @Param("start") LocalDateTime start,
                                               @Param("end") LocalDateTime end);
+
+    /**
+     * 获取区间内工序的集合
+     *
+     * @param productLineList 产线集合
+     * @param start      开始时间
+     * @param end        结束时间
+     * @return
+     */
+    List<TupleDTO<Integer, String>> processSet(@Param("lineList") List<Integer> productLineList,
+                                               @Param("start") LocalDate start,
+                                               @Param("end") LocalDate end);
+
+    /**
+     * 根据时间和产线获取产量map key - processid_lineid value - (pm,rate)
+     *
+     * @param productLineList 产线集合
+     * @param start           开始时间
+     * @param end             结束时间
+     * @return
+     */
+    List<PmsUseCountDTO> lineProcessPmMap(@Param("lineList") List<Integer> productLineList,
+                                          @Param("start") LocalDate start,
+                                          @Param("end") LocalDate end);
 }
 
 
