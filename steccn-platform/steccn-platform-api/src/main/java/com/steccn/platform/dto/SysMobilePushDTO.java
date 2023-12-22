@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -45,7 +46,7 @@ public class SysMobilePushDTO implements Serializable {
     private String request_id;
 
     @ApiModelProperty("消息分类，没申请可以不传这个参数")
-    private String options;
+    private Map<String,Map<String,String>> options;
 
     @ApiModelProperty("用户id")
     private Long userId;
