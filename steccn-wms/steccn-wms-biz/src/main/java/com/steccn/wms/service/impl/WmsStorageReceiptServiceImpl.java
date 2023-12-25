@@ -463,19 +463,19 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsStorageReceiptInfoDTO> infoList = dto.getList();
                 for (WmsStorageReceiptInfoDTO info : infoList) {
                     //如果是生产完工入库关联单据必填且查询生产订单，生产订单必须要有批次信息，批次为生产订单带出
-                    if (receiptType == 1) {
-                        PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(info.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                        if (pmsProduceOrderVO.getId() == null) {
-                            throw new BusinessException("关联的生产订单不存在");
-                        }
-                        List<PmsWorkOrderBatchVO> pmsWorkOrderBatchVOS = FeignOptional.of(() -> remotePmsFeignApi.getAllBatchByOrderId(pmsProduceOrderVO.getId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                        if (CollUtil.isEmpty(pmsWorkOrderBatchVOS)) {
-                            throw new BusinessException("该订单下没有批次信息");
-                        }
-                        if (Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v -> v.getCode().equals(info.getBatch())).findFirst().orElse(null))) {
-                            throw new BusinessException("与该订单下的批次信息不符合");
-                        }
-                    }
+//                    if (receiptType == 1) {
+//                        PmsProduceOrderVO pmsProduceOrderVO = FeignOptional.of(() -> remotePmsFeignApi.allCode(info.getAssociatedNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//                        if (pmsProduceOrderVO.getId() == null) {
+//                            throw new BusinessException("关联的生产订单不存在");
+//                        }
+//                        List<PmsWorkOrderBatchVO> pmsWorkOrderBatchVOS = FeignOptional.of(() -> remotePmsFeignApi.getAllBatchByOrderId(pmsProduceOrderVO.getId()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//                        if (CollUtil.isEmpty(pmsWorkOrderBatchVOS)) {
+//                            throw new BusinessException("该订单下没有批次信息");
+//                        }
+//                        if (Objects.isNull(pmsWorkOrderBatchVOS.stream().filter(v -> v.getCode().equals(info.getBatch())).findFirst().orElse(null))) {
+//                            throw new BusinessException("与该订单下的批次信息不符合");
+//                        }
+//                    }
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
                         info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
