@@ -342,6 +342,21 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             BigDecimal totalReduce = pmRawMaterialVOS.stream().map(PmRawMaterialVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             oneLine2.put("total",totalReduce.toString());
             tableList.add(oneLine2);
+        }else {
+            //若无则需要返回总计行数据
+            Map<String,String> oneLine2 = Maps.newHashMap();
+            oneLine2.put("time","确认数量");
+            oneLine2.put("type","2");
+            for(Map.Entry<String,BigDecimal> entry:count.entrySet()){
+                oneLine2.put(entry.getKey(),entry.getValue().toString());
+            }
+            //合计碎玻璃和硅砂
+            oneLine2.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID,countG.toString());
+            oneLine2.put(DpConstant.DP_WEIGHT_GUISHA_2_TAGID,countG.toString());
+            oneLine2.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID,countS.toString());
+            oneLine2.put(DpConstant.DP_WEIGHT_GLASS_2_TAGID,countS.toString());
+            oneLine2.put("total",totalSum.toString());
+            tableList.add(oneLine2);
         }
         result.setTableList(tableList);
         result.setColumns(columns);
