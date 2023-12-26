@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
@@ -11,6 +12,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -24,11 +26,9 @@ import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
-import com.steccn.pms.vo.LineProduceClassGroupVO;
-import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.SjgCountReportVO;
-import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -38,6 +38,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -470,13 +471,66 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         SteccnTableAssertUtil.notEmpty(lineList, "车间下暂无产线");
         List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         //类别：按时间区间内，本车间所有产线订单的报工数据（按工序名）进行分组（仅选择产量大于0的数据）
-        List<TupleDTO<Integer, String>> processList = pmsReportWorkMapper.processSet(lineIdList, start, end);
+        List<IdNameDTO> processList = pmsReportWorkMapper.processSet(lineIdList, start, end);
         SteccnTableAssertUtil.notEmpty(processList, "工序集合为空");
-        //根据时间和产线获取产量map key - processid_lineid value - (pm,rate)
+        //根据时间和产线获取产量map key - processid_lineid value - (pm(加工数 - 不良数), 加工数)
         Map<String, TupleDTO<BigDecimal, BigDecimal>> currentPmMap = reportWorkService.lineProcessPmMap(lineIdList, start, end);
         Map<String, TupleDTO<BigDecimal, BigDecimal>> prePmMap = reportWorkService.lineProcessPmMap(lineIdList, preStart, preEnd);
-
+        //工序最外层  需要添加上产线产量
+        processList.add(new IdNameDTO(0, "产线产量"));
+        List<SjgCountReportRowVO> rowList = Lists.newArrayList();
+        //本周合计，上周合计，产量，成品率
+        for (IdNameDTO process : processList) {
+            BigDecimal preWeekProcess = sjgProcessSum(prePmMap, process.getId(), lineList, x -> x.getField1());
+            BigDecimal preWeekSum = sjgProcessSum(prePmMap, process.getId(), lineList, x -> x.getField2());
+            BigDecimal curWeekProcess = sjgProcessSum(currentPmMap, process.getId(), lineList, x -> x.getField1());
+            BigDecimal curWeekSum = sjgProcessSum(currentPmMap, process.getId(), lineList, x -> x.getField2());
+            BigDecimal currentValueSumRate = BigDecimalUtil.percent(curWeekProcess, curWeekSum);
+            BigDecimal preValueSumRate = BigDecimalUtil.percent(preWeekProcess, preWeekSum);
+            BigDecimal valueDiffSum = BigDecimalUtil.subtract(curWeekProcess, preWeekProcess, BigDecimalUtil.SCALE_2);
+            BigDecimal valueDiffSumRate = BigDecimalUtil.percent(valueDiffSum, curWeekProcess);
+            for (SysOfficeVO line : lineList) {
+                SjgCountReportRowVO row = new SjgCountReportRowVO();
+                row.setCategoryName(process.getName());
+                row.setLineName(line.getOfficeName());
+                row.setCurrentValue(currentPmMap.getOrDefault(process.getId() + "_" + line.getId(),new TupleDTO<>()).getField1());
+                BigDecimal currentProcessQuantity = currentPmMap.getOrDefault(process.getId() + "_" + line.getId(), new TupleDTO<>()).getField2();
+                row.setCurrentValueRate(BigDecimalUtil.percent(row.getCurrentValue(), currentProcessQuantity));
+                row.setPreValue(prePmMap.getOrDefault(process.getId() + "_" + line.getId(),new TupleDTO<>()).getField1());
+                BigDecimal preProcessQuantity = prePmMap.getOrDefault(process.getId() + "_" + line.getId(), new TupleDTO<>()).getField2();
+                row.setPreValueRate(BigDecimalUtil.percent(row.getPreValue(), preProcessQuantity));
+                row.setValueDiff(BigDecimalUtil.subtract(row.getCurrentValue(), row.getPreValue(), 2));
+                //产量增长 / 区间产量；保留两位小数；负数则显示为红色，正数为绿色
+                row.setValueDiffRate(BigDecimalUtil.percent(row.getValueDiff(), row.getCurrentValue()));
+                row.setCurrentValueSum(curWeekProcess);
+                row.setCurrentValueSumRate(currentValueSumRate);
+                row.setPreValueSum(preWeekProcess);
+                row.setPreValueSumRate(preValueSumRate);
+                row.setValueDiffSum(valueDiffSum);
+                row.setValueDiffSumRate(valueDiffSumRate);
+                rowList.add(row);
+            }
+        }
+        sjgCountReportVO.setRowList(rowList);
         return resList;
+    }
+
+    /**
+     * 深加工工序汇总
+     *
+     * @param valueMap  值集合
+     * @param processId 工序主键
+     * @param lineList  产线集合
+     * @param function  函数
+     * @return
+     */
+    private BigDecimal sjgProcessSum(Map<String, TupleDTO<BigDecimal, BigDecimal>> valueMap, Integer processId, List<SysOfficeVO> lineList, Function<TupleDTO<BigDecimal,BigDecimal>, BigDecimal> function) {
+        List<BigDecimal> sumList = Lists.newArrayList();
+        lineList.forEach(line -> {
+            TupleDTO<BigDecimal, BigDecimal> tupleDTO = valueMap.getOrDefault(processId + "_" + line.getId(),new TupleDTO<>());
+            sumList.add(function.apply(tupleDTO));
+        });
+        return BigDecimalUtil.sum(sumList);
     }
 
     /**

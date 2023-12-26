@@ -49,40 +49,40 @@ public class SjgCountReportRowVO implements Serializable {
     /**
      * 差值-产量
      */
-    private String valueDiff;
+    private BigDecimal valueDiff;
 
     /**
      * 差值-比率
      */
-    private String valueDiffRate;
+    private BigDecimal valueDiffRate;
 
     /**
      * 本区间合计
      */
-    private String currentValueSum;
+    private BigDecimal currentValueSum;
 
     /**
      * 本区间合计-比率
      */
-    private String currentValueSumRate;
+    private BigDecimal currentValueSumRate;
 
     /**
      * 本区间合计
      */
-    private String preValueSum;
+    private BigDecimal preValueSum;
 
     /**
      * 本区间合计-比率
      */
-    private String preValueSumRate;
+    private BigDecimal preValueSumRate;
 
     /**
      * 差值-数值
      */
-    private String valueDiffSum;
+    private BigDecimal valueDiffSum;
 
     /**
      * 差值-比率
      */
-    private String valueDiffSumRate;
+    private BigDecimal valueDiffSumRate;
 }

@@ -901,8 +901,8 @@
         AND prw.end_time  &lt;= #{end}
 
     </select>
-    <select id="processSet" resultType="com.steccn.common.dto.TupleDTO">
-        select DISTINCT process.id field1,process.`name` field2 from pms_report_work rw
+    <select id="processSet" resultType="com.steccn.common.dto.IdNameDTO">
+        select DISTINCT process.id  id,process.`name` name from pms_report_work rw
             join pms_produce_order_craft craft on rw.process_id = craft.id
             join pm_process process on process.id = craft.process_id
         where rw.del_flag = 0  and craft.del_flag =0  and process.del_flag = 0 and rw.process_quantity > 0
@@ -911,7 +911,7 @@
             #{productLineId}
         </foreach>
          and rw.class_date BETWEEN #{start} and #{end}
-         order by process.id
+         order by id
     </select>
     <select id="lineProcessPmMap" resultType="com.steccn.pms.dto.PmsUseCountDTO">
         SELECT

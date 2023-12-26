@@ -1585,7 +1585,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             });
             //单位转换完成,考虑计算产量，百分比
             pmMap.forEach((k,v) ->{
-                resMap.put(k, new TupleDTO<>(v, BigDecimalUtil.percent(v, sumMap.get(k))));
+                resMap.put(k, new TupleDTO<>(v, sumMap.get(k)));
             }) ;
         }
         return resMap;
