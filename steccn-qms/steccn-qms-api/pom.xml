@@ -54,13 +54,6 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
         </dependency>
-
-        <!-- easyExcel-->
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>easyexcel</artifactId>
-            <version>3.1.1</version>
-        </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-pms-api</artifactId>

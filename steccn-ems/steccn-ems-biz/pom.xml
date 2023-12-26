@@ -153,12 +153,6 @@
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
-            <artifactId>steccn-websocket-api</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
             <artifactId>steccn-dp-api</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
