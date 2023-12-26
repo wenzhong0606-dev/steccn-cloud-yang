@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -44,8 +45,7 @@ public class KqGroupServiceImpl extends ServiceImpl<KqGroupMapper, KqGroup>
         //1、获取所有数据
         //考勤组
         List<KqGroup> groupList = list(new LambdaQueryWrapper<KqGroup>()
-                .select(KqGroup::getId, KqGroup::getGroupname, KqGroup::getKqtype,KqGroup::getWeekday)
-                .isNull(KqGroup::getIsdelete));
+                .select(KqGroup::getId, KqGroup::getGroupname, KqGroup::getKqtype,KqGroup::getWeekday,KqGroup::getIsdelete));
         //班次信息
         List<KqShiftmanagement> shiftManagementList = kqShiftmanagementMapper.selectList(new LambdaQueryWrapper<KqShiftmanagement>()
                 .select(KqShiftmanagement::getId, KqShiftmanagement::getSerial)
@@ -71,10 +71,13 @@ public class KqGroupServiceImpl extends ServiceImpl<KqGroupMapper, KqGroup>
             result.setGroupId(tmp.getId());
             result.setGroupName(tmp.getGroupname());
             result.setKqType(tmp.getKqtype());
+            result.setIsDelete(tmp.getIsdelete());
             //只有周期制有开始时间
             if(tmp.getKqtype().equals(OaConstant.NUM_2)){
                 KqShiftschedule kqShiftschedule = shiftscheduleList.stream().filter(v -> v.getGroupid().equals(tmp.getId())).findFirst().orElse(null);
-                result.setStartTime(LocalDate.parse(kqShiftschedule.getKqdate()));
+                if(Objects.nonNull(kqShiftschedule)){
+                    result.setStartTime(LocalDate.parse(kqShiftschedule.getKqdate()));
+                }
             }
             //固定班制没有周期找fixed表
             if(tmp.getKqtype().equals(OaConstant.NUM_1)){

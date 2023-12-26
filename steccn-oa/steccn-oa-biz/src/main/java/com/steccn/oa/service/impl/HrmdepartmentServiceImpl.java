@@ -126,9 +126,9 @@ public class HrmdepartmentServiceImpl extends ServiceImpl<HrmdepartmentMapper, H
     public List<OaDepartmentVO> getAllDepartment(TupleDTO<LocalDateTime,LocalDateTime> dto) {
         //部门列表
         List<Hrmdepartment> departmentList = list(new LambdaQueryWrapper<Hrmdepartment>()
-                .isNull(Hrmdepartment::getCanceled)
                 .le(Objects.nonNull(dto.getField2()),Hrmdepartment::getModified,dto.getField2())
-                .ge(Objects.nonNull(dto.getField1()),Hrmdepartment::getModified,dto.getField1()));
+                .ge(Objects.nonNull(dto.getField1()),Hrmdepartment::getModified,dto.getField1())
+                .orderByDesc(Hrmdepartment::getModified));
         List<OaDepartmentVO> results = Lists.newArrayList();
         if(CollUtil.isNotEmpty(departmentList)){
             departmentList.stream().forEach(tmp->{
@@ -136,10 +136,12 @@ public class HrmdepartmentServiceImpl extends ServiceImpl<HrmdepartmentMapper, H
                 oaDepartmentVO.setId(tmp.getId());
                 oaDepartmentVO.setSuperId(tmp.getSupdepid());
                 oaDepartmentVO.setDepartmentName(tmp.getDepartmentname());
+                oaDepartmentVO.setDepartmentRemark(tmp.getDepartmentmark());
                 oaDepartmentVO.setTLevel(tmp.getTlevel());
                 oaDepartmentVO.setShowOrder(tmp.getShoworder());
                 oaDepartmentVO.setShowOrderOfTree(tmp.getShoworderoftree());
                 oaDepartmentVO.setUpdateTime(tmp.getModified());
+                oaDepartmentVO.setCanceled(tmp.getCanceled());
                 results.add(oaDepartmentVO);
             });
         }

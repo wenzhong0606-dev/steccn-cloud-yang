@@ -32,6 +32,11 @@ public class OaDepartmentVO implements Serializable {
     private String departmentName;
 
     /**
+     * 部门全称
+     */
+    private String departmentRemark;
+
+    /**
      * 树层级
      */
     private Integer tLevel;
@@ -55,4 +60,9 @@ public class OaDepartmentVO implements Serializable {
      * 分部id
      */
     private Integer subCompanyId;
+
+    /**
+     * 是否封存
+     */
+    private String canceled;
 }

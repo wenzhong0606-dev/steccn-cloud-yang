@@ -51,6 +51,12 @@ public class OaController {
         return R.success(oaService.getMenuList(userId));
     }
 
+    @ApiOperation(value = "获取oa用户的菜单权限")
+    @GetMapping("/menuList2")
+    public R getOaMenuList2(@RequestParam("userId") String userId) {
+        return R.success(oaService.getMenuList2(userId));
+    }
+
     @ApiOperation(value = "校验oa中的用户名密码")
     @PostMapping("/checkLogin")
     public R checkLogin(@RequestBody OaLoginParam oaLoginParam) {

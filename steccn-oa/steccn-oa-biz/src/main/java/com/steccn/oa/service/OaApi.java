@@ -55,6 +55,15 @@ public interface OaApi {
     String getOaMenu(@RequestHeader MultiValueMap<String,String> headers);
 
     /**
+     * 获取账号菜单,请求oa接口用
+     * @param headers 传参需要放入header中
+     * @return
+     */
+    @GetMapping(value = "/api/portal/account/getAccountMenu")
+    @ResponseBody
+    String getOaAccountMenu(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
      * 调用oa
      * @param oaUserParam MultiValueMap
      * @return
