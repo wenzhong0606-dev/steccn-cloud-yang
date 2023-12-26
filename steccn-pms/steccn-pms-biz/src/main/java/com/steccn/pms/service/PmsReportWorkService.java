@@ -443,4 +443,15 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, TupleDTO<BigDecimal, BigDecimal>> lineProcessPmMap(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+    /**
+     * 获取产线班次入库数量 单位为unit
+     *
+     * @param lineIdList 产线
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param unit      单位
+     * @return
+     */
+    Map<Integer, BigDecimal> lineInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
 }

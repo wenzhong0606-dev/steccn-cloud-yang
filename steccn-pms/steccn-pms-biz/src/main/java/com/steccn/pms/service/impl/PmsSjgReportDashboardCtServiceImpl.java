@@ -23,7 +23,9 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
+import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.vo.*;
@@ -476,11 +478,13 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //根据时间和产线获取产量map key - processid_lineid value - (pm(加工数 - 不良数), 加工数)
         Map<String, TupleDTO<BigDecimal, BigDecimal>> currentPmMap = reportWorkService.lineProcessPmMap(lineIdList, start, end);
         Map<String, TupleDTO<BigDecimal, BigDecimal>> prePmMap = reportWorkService.lineProcessPmMap(lineIdList, preStart, preEnd);
-        //工序最外层  需要添加上产线产量
-        processList.add(new IdNameDTO(0, "产线产量"));
+        Map<Integer, BigDecimal> currentInStorageMap = reportWorkService.lineInStorage(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
+        Map<Integer, BigDecimal> preInStorageMap = reportWorkService.lineInStorage(lineIdList, preStart, preEnd, PmManagerConstant.MEASURE_UNIT_SM);
         List<SjgCountReportRowVO> rowList = Lists.newArrayList();
-        //本周合计，上周合计，产量，成品率
+        //构建磨边工序的加工数量
+        Map<String, BigDecimal> mbProcessQuantityMap = Maps.newHashMap();
         for (IdNameDTO process : processList) {
+            //本周合计，上周合计，产量，成品率
             BigDecimal preWeekProcess = sjgProcessSum(prePmMap, process.getId(), lineList, x -> x.getField1());
             BigDecimal preWeekSum = sjgProcessSum(prePmMap, process.getId(), lineList, x -> x.getField2());
             BigDecimal curWeekProcess = sjgProcessSum(currentPmMap, process.getId(), lineList, x -> x.getField1());
@@ -508,8 +512,43 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                 row.setPreValueSumRate(preValueSumRate);
                 row.setValueDiffSum(valueDiffSum);
                 row.setValueDiffSumRate(valueDiffSumRate);
+                if (process.getName().indexOf("磨边") != -1) {
+                    MapUtil.add(mbProcessQuantityMap, line.getId() + "_CUR", row.getCurrentValue(), (x, y) -> BigDecimalUtil.add(x, y, BigDecimalUtil.SCALE_2));
+                    MapUtil.add(mbProcessQuantityMap, line.getId() + "_PRE", row.getPreValue(), (x, y) -> BigDecimalUtil.add(x, y, BigDecimalUtil.SCALE_2));
+                }
                 rowList.add(row);
             }
+        }
+        //入库产量
+        //㎡：入库时间介于时间区间内，所有本产线对应订单的入库单（类型为完工入库，排除冲销和删除状态）明细数量汇总；转换为平方米，保留两位小数
+        //%：入库产量 / 磨边工序加工数
+        BigDecimal preWeekInStorage = sjgInStorageSum(preInStorageMap, lineList, x -> x.getId());
+        BigDecimal preWeekMbQuantity = sjgInStorageSum(mbProcessQuantityMap, lineList, x -> x.getId() + "_PRE");
+        BigDecimal curWeekInStorage = sjgInStorageSum(currentInStorageMap, lineList, x -> x.getId());
+        BigDecimal curWeekMbQuantity =  sjgInStorageSum(mbProcessQuantityMap, lineList, x -> x.getId() + "_CUR");
+        BigDecimal currentValueSumRate = BigDecimalUtil.percent(curWeekInStorage, curWeekMbQuantity);
+        BigDecimal preValueSumRate = BigDecimalUtil.percent(preWeekInStorage, preWeekMbQuantity);
+        BigDecimal valueDiffSum = BigDecimalUtil.subtract(curWeekInStorage, preWeekInStorage, BigDecimalUtil.SCALE_2);
+        BigDecimal valueDiffSumRate = BigDecimalUtil.percent(valueDiffSum, curWeekInStorage);
+        for (SysOfficeVO line : lineList) {
+            SjgCountReportRowVO row = new SjgCountReportRowVO();
+            row.setCategoryName("产线产量");
+            row.setLineName(line.getOfficeName());
+            row.setCurrentValue(currentInStorageMap.get(line.getId()));
+            //入库产量 / 磨边工序加工数
+            row.setCurrentValueRate(BigDecimalUtil.percent(row.getCurrentValue(), mbProcessQuantityMap.get(line.getId() + "_CUR")));
+            row.setPreValue(preInStorageMap.get(line.getId()));
+            row.setPreValueRate(BigDecimalUtil.percent(row.getPreValue(), mbProcessQuantityMap.get(line.getId() + "_PRE")));
+            row.setValueDiff(BigDecimalUtil.subtract(row.getCurrentValue(), row.getPreValue(), 2));
+            //产量增长 / 区间产量；保留两位小数；负数则显示为红色，正数为绿色
+            row.setValueDiffRate(BigDecimalUtil.percent(row.getValueDiff(), row.getCurrentValue()));
+            row.setCurrentValueSum(curWeekInStorage);
+            row.setCurrentValueSumRate(currentValueSumRate);
+            row.setPreValueSum(preWeekInStorage);
+            row.setPreValueSumRate(preValueSumRate);
+            row.setValueDiffSum(valueDiffSum);
+            row.setValueDiffSumRate(valueDiffSumRate);
+            rowList.add(row);
         }
         sjgCountReportVO.setRowList(rowList);
         return resList;
@@ -529,6 +568,21 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         lineList.forEach(line -> {
             TupleDTO<BigDecimal, BigDecimal> tupleDTO = valueMap.getOrDefault(processId + "_" + line.getId(),new TupleDTO<>());
             sumList.add(function.apply(tupleDTO));
+        });
+        return BigDecimalUtil.sum(sumList);
+    }
+
+    /**
+     * 深加工入库数量汇总
+     *
+     * @param valueMap  值集合
+     * @param lineList  产线集合
+     * @return
+     */
+    private BigDecimal sjgInStorageSum(Map<? extends Object, BigDecimal> valueMap, List<SysOfficeVO> lineList, Function<SysOfficeVO, Object> function) {
+        List<BigDecimal> sumList = Lists.newArrayList();
+        lineList.forEach(line -> {
+            sumList.add(valueMap.get(function.apply(line)));
         });
         return BigDecimalUtil.sum(sumList);
     }
