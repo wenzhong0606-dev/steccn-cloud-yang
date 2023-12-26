@@ -40,6 +40,11 @@ public class WmsStorageReceipt implements Serializable {
     private Long warehouseId;
 
     /**
+     * 货架id
+     */
+    private Integer shelfId;
+
+    /**
      * 确认时间
      */
     private LocalDateTime affirmTime;

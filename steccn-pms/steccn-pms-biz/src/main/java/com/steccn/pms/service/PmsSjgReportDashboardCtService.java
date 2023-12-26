@@ -4,10 +4,12 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author yequan
@@ -99,4 +101,13 @@ public interface PmsSjgReportDashboardCtService {
      * @return
      */
     SjgDashboardLineProduceVO lineGroupPassRateDetail(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 深加工统计报表
+     * @param workShopId
+     * @param start
+     * @param end
+     * @return
+     */
+    SjgCountReportVO countReport(Integer workShopId, LocalDate start, LocalDate end);
 }

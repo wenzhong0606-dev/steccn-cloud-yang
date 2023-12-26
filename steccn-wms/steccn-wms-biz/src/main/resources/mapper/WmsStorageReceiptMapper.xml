@@ -40,6 +40,7 @@
         a.update_time,
         a.`status`,
         a.warehouse_id,
+        a.shelf_id,
         a.affirm_time,
         a.affirm_name,
         a.note

@@ -102,6 +102,13 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.affirm(dto.getId(),SecurityUtils.getUser().getName()));
     }
 
+    @ApiOperation("批量修改入库单货架")
+    @PostMapping("/update/batch/shelf")
+    @SysLog("批量修改入库单货架为同一货架")
+    public R<Boolean> updateBatchShelf(@RequestBody WmsUpdateBatchShelfDTO dto){
+        return R.success(wmsStorageReceiptService.updateBatchShelf(dto));
+    }
+
     @ApiOperation("冲销")
     @PostMapping("/charge/against")
     public R<Boolean> chargeAgainst(@RequestBody WmsStorageReceiptDTO dto){

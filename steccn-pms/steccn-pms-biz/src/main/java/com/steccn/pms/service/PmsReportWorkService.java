@@ -434,4 +434,24 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      */
     Map<String, List<PmsReportWork>> batchLinkReportWorkMap(Set<String> batchSet);
 
+    /**
+     * 根据时间和产线获取产量map key - processid_lineid value - (pm(加工数-不良数),pm(加工数))
+     *
+     * @param lineIdList 产线集合
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    Map<String, TupleDTO<BigDecimal, BigDecimal>> lineProcessPmMap(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+    /**
+     * 获取产线班次入库数量 单位为unit
+     *
+     * @param lineIdList 产线
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @param unit      单位
+     * @return
+     */
+    Map<Integer, BigDecimal> lineInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
 }

@@ -191,6 +191,13 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Boolean chargeAgainstAssociated(@RequestBody List<BatchChargeAgainstDTO> dtoList);
 
     /**
+     * 根据入库单号批量修改入库单的明细货架内容
+     * @param dto
+     * @return
+     */
+    Boolean updateBatchShelf(WmsUpdateBatchShelfDTO dto);
+
+    /**
      *
      * 对出库单进行冲销
      * @param deliveryId
