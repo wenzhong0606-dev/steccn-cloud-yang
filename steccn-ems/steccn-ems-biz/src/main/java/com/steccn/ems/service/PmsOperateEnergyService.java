@@ -3,6 +3,9 @@ package com.steccn.ems.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
+import com.steccn.pms.vo.SjgCountReportVO;
+
+import java.time.LocalDate;
 
 /**
  * @author yequan
@@ -49,4 +52,14 @@ public interface PmsOperateEnergyService {
      * @return
      */
     PmsOperateEnergyVO unitConsume(DpPmsOperateDTO dto);
+
+    /**
+     * 深加工统计报表-电耗
+     *
+     * @param workShopId 车间主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    SjgCountReportVO electricCountReport(Integer workShopId, LocalDate start, LocalDate end);
 }
