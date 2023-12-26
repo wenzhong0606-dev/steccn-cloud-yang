@@ -257,13 +257,16 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                         .selectAs(Hrmresource::getLoginid,OaUserVO::getUserName)
                         .selectAs(Hrmjobtitles::getJobtitlename, OaUserVO::getJobTitleName)
                         .selectAs(Hrmresource::getDepartmentid, OaUserVO::getDepartmentId)
+                        .selectAs(Hrmresource::getWorkcode,OaUserVO::getWorkCode)
+                        .selectAs(Hrmresource::getStatus,OaUserVO::getStatus)
                         .selectAs(Hrmdepartment::getDepartmentname, OaUserVO::getDepartmentName)
                         .leftJoin(Hrmjobtitles.class, Hrmjobtitles::getId, Hrmresource::getJobtitle)
                         .leftJoin(Hrmdepartment.class, Hrmdepartment::getId, Hrmresource::getDepartmentid)
-                        .ne(Hrmresource::getStatus, OaConstant.NUM_5)
+//                        .ne(Hrmresource::getStatus, OaConstant.NUM_5)
                         .isNull(Hrmjobtitles::getCanceled)
                         .le(Hrmresource::getModified, dto.getField2().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                        .ge(Hrmresource::getModified, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+                        .ge(Hrmresource::getModified, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                        .orderByDesc(Hrmresource::getModified));
         oaUserVOS = oaUserVOS.stream().filter(v->StrUtil.isNotBlank(v.getUserName())).collect(Collectors.toList());
         return oaUserVOS;
     }
