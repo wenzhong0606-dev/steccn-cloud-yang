@@ -25,6 +25,9 @@ public class WmsStorageReceiptInfoDTO {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("库存id")
+    private Long inventoryId;
+
     @ApiModelProperty("物料id")
 //    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料id不能为空")
     private Long materialId;

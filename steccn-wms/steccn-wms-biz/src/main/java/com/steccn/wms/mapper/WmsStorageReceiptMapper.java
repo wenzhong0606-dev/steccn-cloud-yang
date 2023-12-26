@@ -1,9 +1,11 @@
 package com.steccn.wms.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.dto.BatchChargeAgainstDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
@@ -54,6 +56,14 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @return
      */
     List<WmsStorageReceiptInfo> warehousingClassification(@Param("warehouseIds") Set<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+
+    /**
+     * 根据明细的关联单号获取单据信息
+     * @param dtoList
+     * @return
+     */
+    List<WmsDeliveryReceipt> listByAssociatedNo(@Param("dtoList") List<BatchChargeAgainstDTO> dtoList);
 }
 
 

@@ -59,11 +59,7 @@ import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
-import com.steccn.wms.service.WmsCustomerBarcodeService;
-import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
-import com.steccn.wms.service.WmsDeliveryReceiptService;
-import com.steccn.wms.service.WmsInventoryRecordService;
-import com.steccn.wms.service.WmsInventoryService;
+import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.*;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
@@ -76,6 +72,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -549,7 +546,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
-    public WmsDeliveryReceiptDTO chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName) {
+    public WmsDeliveryReceiptDTO createAndAffirm(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName) {
         //生成出库单并自动确认
         WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
         BeanUtil.copyProperties(wmsDeliveryReceiptDTO,wmsDeliveryReceipt);

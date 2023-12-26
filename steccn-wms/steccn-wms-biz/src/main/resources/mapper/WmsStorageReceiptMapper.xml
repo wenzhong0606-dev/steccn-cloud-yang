@@ -8,7 +8,7 @@
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="code" column="code" jdbcType="VARCHAR"/>
         <result property="type" column="type" jdbcType="BIGINT"/>
-        <result property="state" column="state" jdbcType="TINYINT"/>
+        <result property="status" column="state" jdbcType="TINYINT"/>
         <result property="warehouseId" column="warehouse_id" jdbcType="BIGINT"/>
         <result property="affirmTime" column="affirm_time" jdbcType="TIMESTAMP"/>
         <result property="affirmName" column="affirm_name" jdbcType="VARCHAR"/>
@@ -40,6 +40,7 @@
         a.update_time,
         a.`status`,
         a.warehouse_id,
+        a.shelf_id,
         a.affirm_time,
         a.affirm_name,
         a.note
@@ -47,7 +48,7 @@
         wms_storage_receipt a
         LEFT JOIN wms_storage_receipt_info b ON a.id = b.storage_receipt_id
         <where>
-            a.del_flag = 0 and b.del_flag = 0
+            a.del_flag = 0
             <if test="dto.status != null">
                 AND a.status = #{dto.status}
             </if>
@@ -135,4 +136,21 @@
         SET status = 1,affirm_name = #{dto.operateName},create_by = #{dto.operateId},create_name = #{dto.operateName},update_by = #{dto.operateId},update_name = #{dto.operateName},source_type = 1,affirm_time = #{dto.operateTime}
         WHERE id = #{dto.id}
     </update>
+
+
+    <select id="listByAssociatedNo" resultType="com.steccn.wms.domain.WmsDeliveryReceipt">
+        SELECT DISTINCT
+        b.id
+        FROM
+        wms_delivery_receipt_info a
+        LEFT JOIN wms_delivery_receipt b ON b.id = a.delivery_receipt_id
+        WHERE
+        b.status= 1 and b.del_flag = 0
+        <if test="dtoList != null and dtoList.size >0">
+            and
+            <foreach collection="dtoList" item="dto" open="(" close=")" separator="or">
+               (a.associated_no = #{dto.code} and a.create_time between #{dto.startTime} and #{dto.endTime})
+            </foreach>
+        </if>
+    </select>
 </mapper>

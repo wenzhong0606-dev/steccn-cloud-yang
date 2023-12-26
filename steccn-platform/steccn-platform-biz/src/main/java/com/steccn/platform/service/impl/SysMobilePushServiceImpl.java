@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.google.common.collect.Maps;
 import com.steccn.platform.dto.SysMobilePushDTO;
 import com.steccn.platform.service.SysMobilePushService;
 import com.steccn.platform.service.SysUserClientRefService;
@@ -10,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -30,6 +33,11 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
         String clientId = sysUserClientRefService.lastClientId(dto.getUserId());
         if (StrUtil.isNotBlank(clientId)) {
             dto.setCids(clientId);
+            Map<String,Map<String,String>> map = Maps.newHashMap();
+            Map<String,String> xmMap = Maps.newHashMap();
+            xmMap.put("/extra.channel_id","113866");
+            map.put("XM",xmMap);
+            dto.setOptions(map);
             dto.setForce_notification(Boolean.TRUE);
             dto.setRequest_id(UUID.randomUUID().toString().replaceAll("-", ""));
             OkHttpClient client = new OkHttpClient().newBuilder().build();
@@ -59,4 +67,5 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
 
         return Boolean.TRUE;
     }
+
 }
