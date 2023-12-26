@@ -458,8 +458,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     }
 
     @Override
-    public List<SjgCountReportVO> countReport(Integer workShopId, LocalDate start, LocalDate end) {
-        List<SjgCountReportVO> resList = Lists.newArrayList();
+    public SjgCountReportVO countReport(Integer workShopId, LocalDate start, LocalDate end) {
         //构建表头
         LocalDate preEnd = start.minusDays(1);
         long daysBetween = ChronoUnit.DAYS.between(start, end);
@@ -467,7 +466,6 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         List<TableHeadColumnDTO> columnList1 = setCountReportHead(start, end, preStart, preEnd);
         SjgCountReportVO sjgCountReportVO = new SjgCountReportVO();
         sjgCountReportVO.setColumns(columnList1);
-        resList.add(sjgCountReportVO);
         //查询产线
         List<SysOfficeVO> lineList = getWsLineList(workShopId);
         SteccnTableAssertUtil.notEmpty(lineList, "车间下暂无产线");
@@ -551,7 +549,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             rowList.add(row);
         }
         sjgCountReportVO.setRowList(rowList);
-        return resList;
+        return sjgCountReportVO;
     }
 
     /**

@@ -109,5 +109,5 @@ public interface PmsSjgReportDashboardCtService {
      * @param end
      * @return
      */
-    List<SjgCountReportVO> countReport(Integer workShopId, LocalDate start, LocalDate end);
+    SjgCountReportVO countReport(Integer workShopId, LocalDate start, LocalDate end);
 }

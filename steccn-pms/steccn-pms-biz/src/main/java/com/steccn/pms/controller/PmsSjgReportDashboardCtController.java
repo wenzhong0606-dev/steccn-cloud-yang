@@ -86,7 +86,7 @@ public class PmsSjgReportDashboardCtController {
 
     @GetMapping("/count/report")
     @ApiOperation("深加工统计报表")
-    public R<List<SjgCountReportVO>> countReport(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+    public R<SjgCountReportVO> countReport(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(pmsSjgReportDashboardService.countReport(workShopId,start,end));
     }
 
