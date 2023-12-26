@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TableHeadColumnDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
@@ -29,6 +30,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
@@ -39,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +108,46 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         }
     }
 
+    @Override
+    public SjgCountReportVO electricCountReport(Integer workShopId, LocalDate start, LocalDate end) {
+        //构建表头
+        LocalDate preEnd = start.minusDays(1);
+        long daysBetween = ChronoUnit.DAYS.between(start, end);
+        LocalDate preStart = preEnd.minusDays(daysBetween);
+
+        //获取本区间电量和上一个区间电量
+
+
+        return null;
+    }
+
+    /**
+     * 设置深加工统计报表头
+     *
+     * @param start    开始日期
+     * @param end      结束日期
+     * @param preStart 前区间开始日期
+     * @param preEnd   前区间结束日期
+     * @return
+     */
+    private List<TableHeadColumnDTO> setCountReportHead(LocalDate start, LocalDate end , LocalDate preStart, LocalDate preEnd) {
+        String currentStartStr = LocalDateUtil.format(start, "MM.dd");
+        String currentEndStr = LocalDateUtil.format(end, "MM.dd");
+        String preStartStr = LocalDateUtil.format(preStart, "MM.dd");
+        String preEndStr = LocalDateUtil.format(preEnd, "MM.dd");
+        List<TableHeadColumnDTO> resList = Lists.newArrayList();
+        resList.add(new TableHeadColumnDTO("类别", "categoryName"));
+        resList.add(new TableHeadColumnDTO("线别", "lineName"));
+        resList.add(new TableHeadColumnDTO("本区间" + currentStartStr + "-" + currentEndStr, "currentValueTuple" , Arrays.asList(new TableHeadColumnDTO("currentValue", "电量"), new TableHeadColumnDTO("currentValueRate", "单耗"))));
+        resList.add(new TableHeadColumnDTO("上区间" + preStartStr + "-" + preEndStr, "preValueTuple" , Arrays.asList(new TableHeadColumnDTO("preValue", "电量"), new TableHeadColumnDTO("preValueRate", "单耗"))));
+        resList.add(new TableHeadColumnDTO("电量","valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("valueDiff", "(+/-)"))));
+        resList.add(new TableHeadColumnDTO("单耗","valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("valueDiffRate", "(+/-)"))));
+        resList.add(new TableHeadColumnDTO("本区间合计", "currentValueSumTuple" , Arrays.asList(new TableHeadColumnDTO("currentValueSum", "电量"), new TableHeadColumnDTO("currentValueSumRate", "单耗"))));
+        resList.add(new TableHeadColumnDTO("上区间合计", "preValueSumTuple" , Arrays.asList(new TableHeadColumnDTO("preValueSum", "电量"), new TableHeadColumnDTO("preValueSumRate", "单耗"))));
+        resList.add(new TableHeadColumnDTO("电量","valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("valueDiffSum", "(+/-)"))));
+        resList.add(new TableHeadColumnDTO("单耗","valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("valueDiffSumRate", "(+/-)"))));
+        return resList;
+    }
 
     /**
      * 深加工单耗-电耗/入库产量

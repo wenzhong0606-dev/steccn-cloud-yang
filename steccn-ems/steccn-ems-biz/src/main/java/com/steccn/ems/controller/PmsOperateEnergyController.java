@@ -4,16 +4,15 @@ import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.ems.service.PmsOperateEnergyService;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
+import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
 
 /**
  * @author yequan
@@ -57,5 +56,11 @@ public class PmsOperateEnergyController {
     public R<PmsOperateEnergyVO> unitConsume(@Valid @RequestBody DpPmsOperateDTO dto) {
         PmsOperateEnergyVO pmsOperateEnergyVO = pmsOperateEnergyService.unitConsume(dto);
         return R.success(pmsOperateEnergyVO);
+    }
+
+    @GetMapping("/pms/sjg/report/dashboard/count/report")
+    @ApiOperation("深加工统计报表-电耗")
+    public R<SjgCountReportVO> countReport(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsOperateEnergyService.electricCountReport(workShopId, start, end));
     }
 }
