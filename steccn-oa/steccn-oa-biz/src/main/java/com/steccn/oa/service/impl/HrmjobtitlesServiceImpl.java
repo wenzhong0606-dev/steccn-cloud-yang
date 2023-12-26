@@ -41,9 +41,9 @@ public class HrmjobtitlesServiceImpl extends ServiceImpl<HrmjobtitlesMapper, Hrm
     public List<OaJobTitleVO> getAllJobTitle(TupleDTO<LocalDateTime, LocalDateTime> dto) {
         List<OaJobTitleVO> results = Lists.newArrayList();
         List<Hrmjobtitles> list = list(new LambdaQueryWrapper<Hrmjobtitles>()
-                .isNull(Hrmjobtitles::getCanceled)
                 .le(dto.getField2() != null, Hrmjobtitles::getModified, dto.getField2())
-                .ge(dto.getField1() != null, Hrmjobtitles::getModified, dto.getField1()));
+                .ge(dto.getField1() != null, Hrmjobtitles::getModified, dto.getField1())
+                .orderByDesc(Hrmjobtitles::getModified));
         if(CollUtil.isNotEmpty(list)){
             list.forEach(tmp->{
                 OaJobTitleVO oaJobTitleVO = new OaJobTitleVO();

@@ -31,6 +31,11 @@ public class OaJobTitleVO implements Serializable {
     private String jobTitleCode;
 
     /**
+     * 是否封存
+     */
+    private String canceled;
+
+    /**
      * 修改时间
      */
     private LocalDateTime updateTime;

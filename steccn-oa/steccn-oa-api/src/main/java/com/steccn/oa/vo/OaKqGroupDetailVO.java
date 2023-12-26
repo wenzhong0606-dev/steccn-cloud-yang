@@ -42,4 +42,9 @@ public class OaKqGroupDetailVO implements Serializable {
      * 周期
      */
     private OaKqGroupShiftCycleVO shiftCycle;
+
+    /**
+     * 1表示删除
+     */
+    private Integer isDelete;
 }

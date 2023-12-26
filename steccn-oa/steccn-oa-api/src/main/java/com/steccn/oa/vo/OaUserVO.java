@@ -21,6 +21,10 @@ public class OaUserVO implements Serializable {
      */
     private String userName;
     /**
+     * 员工工号
+     */
+    private String workCode;
+    /**
      * oa姓名
      */
     private String name;
@@ -40,4 +44,10 @@ public class OaUserVO implements Serializable {
      * 岗位名称
      */
     private String jobTitleName;
+    /**
+     * 状态 0试用 1正式 2临时 3试用延期 4解聘 5离职 6退休 7无效 8在职
+     */
+    private Integer status;
+
+
 }

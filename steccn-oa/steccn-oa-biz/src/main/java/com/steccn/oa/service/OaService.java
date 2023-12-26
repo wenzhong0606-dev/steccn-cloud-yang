@@ -167,6 +167,47 @@ public class OaService {
     }
 
     /**
+     * 获取oa菜单请求
+     * @param userId
+     * @return List<OaMenuResult>
+     */
+    public JSONArray getMenuList2(String userId){
+        List<OaMenuResult> oaMenuResults = new ArrayList<>();
+        //先获取apiToken
+        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
+        if(!oaApiTokenResult.isStatus()){
+            OaMenuResult oaMenuResult = new OaMenuResult();
+            oaMenuResult.setStatus(false);
+            oaMenuResults.add(oaMenuResult);
+            log.error(oaApiTokenResult.getMsg());
+            return new JSONArray();
+        }else{
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            //放入Token
+            headers.set("appid",OaConstant.OA_API_APPID);
+            headers.set("token",oaApiTokenResult.getToken());
+            //根据泛微加密算法加入rsa
+            RSA rsa = new RSA();
+            //注册进系统时已生成
+            String spk = OaConstant.OA_SPK;
+            //用户id加密
+            String userIdSecret = rsa.encrypt(null, userId, null, "utf-8", spk, false);
+            headers.set("userid",userIdSecret);
+
+            String result = OutSystemOptional.of(() -> oaApi.getOaAccountMenu(headers), FeignConstant.OA_SERVICE_NAME).get();
+            JSONArray jsonArray = JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATA);
+            //递归拿到树状数据
+//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
+//                for(int i = 0; i < jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).size(); i++){
+//                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).getJSONObject(i)));
+//                }
+//            }
+            return jsonArray;
+        }
+
+    }
+
+    /**
      * 递归获取菜单数据
      * @param jsonObject
      * @return OaMenuResult
