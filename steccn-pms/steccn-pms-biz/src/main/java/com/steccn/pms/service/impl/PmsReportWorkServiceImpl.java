@@ -1618,6 +1618,24 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<Integer, BigDecimal> getGhQuantity(LocalDate start, LocalDate end, List<Integer> lineIdList) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        Map<String, TupleDTO<BigDecimal, BigDecimal>> currentPmMap = lineProcessPmMap(lineIdList, start, end);
+        PmProcess pmProcess = pmProcessService.getOne(new LambdaQueryWrapper<PmProcess>().eq(PmProcess::getCode, "GHGX"));
+        Assert.notNull(pmProcess,"钢化工序不存在");
+        if (CollUtil.isNotEmpty(currentPmMap)) {
+            currentPmMap.forEach((k, v) -> {
+                if (k.indexOf(pmProcess.getId() + "_") != -1) {
+                    String[] split = k.split("_");
+                    Integer line = Integer.parseInt(split[1]);
+                    MapUtil.add(resMap, line, v.getField1(), (x, y) -> BigDecimalUtil.add(x, y, BigDecimalUtil.SCALE_2));
+                }
+            });
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);

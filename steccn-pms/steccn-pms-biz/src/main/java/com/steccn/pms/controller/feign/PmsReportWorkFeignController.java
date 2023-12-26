@@ -15,10 +15,8 @@ import com.steccn.pms.vo.SubstrateDataListVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,6 +33,7 @@ import java.util.Set;
 @Api("报工feign")
 @RequestMapping("/feign/pms/report/work")
 @RequiredArgsConstructor
+@Slf4j
 public class PmsReportWorkFeignController {
 
     private final PmsReportWorkService pmsReportWorkService;
@@ -106,5 +105,11 @@ public class PmsReportWorkFeignController {
     @PostMapping("/substrate")
     R<List<SubstrateDataListVO>> getSubstrateDataList(@RequestBody SubstrateDataDTO dto) {
         return R.success(reportService.substrateDataList(dto));
+    }
+
+    @ApiOperation("获取钢化工位的报工产量")
+    @PostMapping("/ghgw/quantity")
+    R<Map<Integer, BigDecimal>> getGhQuantity(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tripleDTO) {
+        return R.success(pmsReportWorkService.getGhQuantity(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
 }

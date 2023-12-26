@@ -58,7 +58,7 @@ public class PmsOperateEnergyController {
         return R.success(pmsOperateEnergyVO);
     }
 
-    @GetMapping("/pms/sjg/report/dashboard/count/report")
+    @GetMapping("/sjg/report/dashboard/count/report")
     @ApiOperation("深加工统计报表-电耗")
     public R<SjgCountReportVO> countReport(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(pmsOperateEnergyService.electricCountReport(workShopId, start, end));

@@ -454,4 +454,14 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Integer, BigDecimal> lineInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
+    /**
+     * 获取钢化工位的报工产量
+     *
+     * @param start      开始日期
+     * @param end        结束日期
+     * @param lineIdList 产线集合
+     * @return
+     */
+    Map<Integer, BigDecimal> getGhQuantity(LocalDate start, LocalDate end, List<Integer> lineIdList);
 }

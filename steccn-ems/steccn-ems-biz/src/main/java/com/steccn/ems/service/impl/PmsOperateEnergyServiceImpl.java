@@ -1,5 +1,6 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Maps;
@@ -8,6 +9,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TableHeadColumnDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
@@ -30,6 +32,8 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.feign.RemoteReportWorkFeignApi;
+import com.steccn.pms.vo.SjgCountReportRowVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
@@ -64,6 +68,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDpCompleteStorageFeignApi remoteCompleteStorageFeignApi;
+    private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
 
     @Override
     public PmsOperateEnergyVO gas(DpPmsOperateDTO dto) {
@@ -114,11 +119,96 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         LocalDate preEnd = start.minusDays(1);
         long daysBetween = ChronoUnit.DAYS.between(start, end);
         LocalDate preStart = preEnd.minusDays(daysBetween);
-
+        SjgCountReportVO reportVO = new SjgCountReportVO();
+        reportVO.setColumns(setCountReportHead(start, end, preStart, preEnd));
+        //先获取产线
+        List<SysOfficeVO> lineList = getWsLineList(workShopId);
+        Assert.notEmpty(lineList, "车间下暂无产线");
+        //根据产线获取电能节点
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        List<EpPartition> epPartitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, lineIdList).eq(EpPartition::getType, 1));
+        Assert.notNull(epPartitionList, "能源树上不存在此节点");
+        List<Long> partitionIdList = epPartitionList.stream().map(EpPartition::getId).collect(Collectors.toList());
         //获取本区间电量和上一个区间电量
+        Map<Integer, BigDecimal> currentConsumeMap = eleConsume(start, end, partitionIdList);
+        Map<Integer, BigDecimal> preConsumeMap = eleConsume(preStart, preEnd, partitionIdList);
+        List<SjgCountReportRowVO> rowList = Lists.newArrayList();
+        Map<Integer, BigDecimal> curGhQuantityMap = FeignOptional.of(() -> remoteReportWorkFeignApi.getGhQuantity(new TripleDTO<>(start, end, lineIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<Integer, BigDecimal> preGhQuantityMap = FeignOptional.of(() -> remoteReportWorkFeignApi.getGhQuantity(new TripleDTO<>(preStart, preEnd, lineIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        //本周合计，上周合计，电量，单耗
+        BigDecimal curSum = countSum(currentConsumeMap);
+        BigDecimal preSum = countSum(preConsumeMap);
+        BigDecimal curGhSum = countSum(curGhQuantityMap);
+        BigDecimal preGhSum = countSum(preGhQuantityMap);
+        for (SysOfficeVO line : lineList) {
+            SjgCountReportRowVO row = new SjgCountReportRowVO();
+            row.setCategoryName("电");
+            row.setLineName(line.getOfficeName());
+            row.setCurrentValue(currentConsumeMap.get(line.getId()));
+            //单耗：电量 / 该产线钢化产量
+            row.setCurrentValueRate(BigDecimalUtil.percent(row.getCurrentValue(), curGhQuantityMap.get(line.getId())));
+            row.setPreValue(preConsumeMap.get(line.getId()));
+            row.setPreValueRate(BigDecimalUtil.percent(row.getPreValue(), preGhQuantityMap.get(line.getId())));
+            row.setValueDiff(BigDecimalUtil.subtract(row.getCurrentValue(), row.getPreValue(), BigDecimalUtil.SCALE_0));
+            row.setValueDiffRate(BigDecimalUtil.percent(row.getValueDiff(), row.getCurrentValue()));
+            //本周合计，上周合计，电量，单耗
+            row.setCurrentValueSum(curSum);
+            row.setCurrentValueSumRate(BigDecimalUtil.percent(curSum, curGhSum));
+            row.setPreValueSum(preSum);
+            row.setPreValueSumRate(BigDecimalUtil.percent(preSum, preGhSum));
+            //电量，单耗
+            row.setValueDiffSum(BigDecimalUtil.subtract(curSum, preSum, BigDecimalUtil.SCALE_0));
+            row.setValueDiffSumRate(BigDecimalUtil.percent(row.getValueDiffSum(), curSum));
+            rowList.add(row);
+        }
+        reportVO.setRowList(rowList);
+        return reportVO;
+    }
 
+    /**
+     * 本周合计
+     *
+     * @param valueMap 值集合
+     * @return
+     */
+    private BigDecimal countSum(Map<Integer, BigDecimal> valueMap) {
+        BigDecimal sum = BigDecimalUtil.sum(valueMap.values());
+        return BigDecimalUtil.setScale(sum, BigDecimalUtil.SCALE_0);
+    }
 
-        return null;
+    /**
+     * 获取时间区间内的电耗量
+     *
+     * @param start           开始日期
+     * @param end             结束日期
+     * @param partitionIdList 组织结构节点
+     * @return
+     */
+    private Map<Integer, BigDecimal> eleConsume(LocalDate start, LocalDate end, List<Long> partitionIdList) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+        List<EpMeterReadAllDataVO> electricAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), 1, partitionIdList);
+        if(CollUtil.isNotEmpty(electricAllData)){
+            electricAllData.forEach(ele -> {
+                MapUtil.add(resMap, ele.getSysOfficeId(), ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, BigDecimalUtil.SCALE_0));
+            });
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取车间的产线集合
+     *
+     * @param workShopId 车间
+     * @return
+     */
+    private List<SysOfficeVO> getWsLineList(Integer workShopId) {
+        //根据车间获取产线集合
+        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
+        sysOfficeParent.setId(workShopId);
+        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
+        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        return lineOfficeList;
     }
 
     /**
@@ -130,7 +220,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
      * @param preEnd   前区间结束日期
      * @return
      */
-    private List<TableHeadColumnDTO> setCountReportHead(LocalDate start, LocalDate end , LocalDate preStart, LocalDate preEnd) {
+    private List<TableHeadColumnDTO> setCountReportHead(LocalDate start, LocalDate end, LocalDate preStart, LocalDate preEnd) {
         String currentStartStr = LocalDateUtil.format(start, "MM.dd");
         String currentEndStr = LocalDateUtil.format(end, "MM.dd");
         String preStartStr = LocalDateUtil.format(preStart, "MM.dd");
@@ -138,14 +228,14 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         List<TableHeadColumnDTO> resList = Lists.newArrayList();
         resList.add(new TableHeadColumnDTO("类别", "categoryName"));
         resList.add(new TableHeadColumnDTO("线别", "lineName"));
-        resList.add(new TableHeadColumnDTO("本区间" + currentStartStr + "-" + currentEndStr, "currentValueTuple" , Arrays.asList(new TableHeadColumnDTO("currentValue", "电量"), new TableHeadColumnDTO("currentValueRate", "单耗"))));
-        resList.add(new TableHeadColumnDTO("上区间" + preStartStr + "-" + preEndStr, "preValueTuple" , Arrays.asList(new TableHeadColumnDTO("preValue", "电量"), new TableHeadColumnDTO("preValueRate", "单耗"))));
-        resList.add(new TableHeadColumnDTO("电量","valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("valueDiff", "(+/-)"))));
-        resList.add(new TableHeadColumnDTO("单耗","valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("valueDiffRate", "(+/-)"))));
-        resList.add(new TableHeadColumnDTO("本区间合计", "currentValueSumTuple" , Arrays.asList(new TableHeadColumnDTO("currentValueSum", "电量"), new TableHeadColumnDTO("currentValueSumRate", "单耗"))));
-        resList.add(new TableHeadColumnDTO("上区间合计", "preValueSumTuple" , Arrays.asList(new TableHeadColumnDTO("preValueSum", "电量"), new TableHeadColumnDTO("preValueSumRate", "单耗"))));
-        resList.add(new TableHeadColumnDTO("电量","valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("valueDiffSum", "(+/-)"))));
-        resList.add(new TableHeadColumnDTO("单耗","valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("valueDiffSumRate", "(+/-)"))));
+        resList.add(new TableHeadColumnDTO("本区间" + currentStartStr + "-" + currentEndStr, "currentValueTuple", Arrays.asList(new TableHeadColumnDTO("电量", "currentValue"), new TableHeadColumnDTO("单耗", "currentValueRate"))));
+        resList.add(new TableHeadColumnDTO("上区间" + preStartStr + "-" + preEndStr, "preValueTuple", Arrays.asList(new TableHeadColumnDTO("电量", "preValue"), new TableHeadColumnDTO("单耗", "preValueRate"))));
+        resList.add(new TableHeadColumnDTO("电量", "valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiff"))));
+        resList.add(new TableHeadColumnDTO("单耗", "valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffRate"))));
+        resList.add(new TableHeadColumnDTO("本区间合计", "currentValueSumTuple", Arrays.asList(new TableHeadColumnDTO("电量", "currentValueSum"), new TableHeadColumnDTO("单耗", "currentValueSumRate"))));
+        resList.add(new TableHeadColumnDTO("上区间合计", "preValueSumTuple", Arrays.asList(new TableHeadColumnDTO("电量", "preValueSum"), new TableHeadColumnDTO("单耗", "preValueSumRate"))));
+        resList.add(new TableHeadColumnDTO("电量", "valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSum"))));
+        resList.add(new TableHeadColumnDTO("单耗", "valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSumRate"))));
         return resList;
     }
 
