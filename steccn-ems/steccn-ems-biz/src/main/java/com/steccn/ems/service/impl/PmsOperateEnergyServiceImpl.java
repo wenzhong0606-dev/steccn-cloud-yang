@@ -9,6 +9,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TableHeadColumnDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
@@ -31,6 +32,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.SjgCountReportRowVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -66,6 +68,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDpCompleteStorageFeignApi remoteCompleteStorageFeignApi;
+    private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
 
     @Override
     public PmsOperateEnergyVO gas(DpPmsOperateDTO dto) {
@@ -120,18 +123,18 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         reportVO.setColumns(setCountReportHead(start, end, preStart, preEnd));
         //先获取产线
         List<SysOfficeVO> lineList = getWsLineList(workShopId);
-        Assert.notEmpty(lineList,"车间下暂无产线");
+        Assert.notEmpty(lineList, "车间下暂无产线");
         //根据产线获取电能节点
-        Set<Integer> lineIdSet = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        List<EpPartition> epPartitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, lineIdSet).eq(EpPartition::getType, 1));
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        List<EpPartition> epPartitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, lineIdList).eq(EpPartition::getType, 1));
         Assert.notNull(epPartitionList, "能源树上不存在此节点");
         List<Long> partitionIdList = epPartitionList.stream().map(EpPartition::getId).collect(Collectors.toList());
         //获取本区间电量和上一个区间电量
         Map<Integer, BigDecimal> currentConsumeMap = eleConsume(start, end, partitionIdList);
         Map<Integer, BigDecimal> preConsumeMap = eleConsume(preStart, preEnd, partitionIdList);
         List<SjgCountReportRowVO> rowList = Lists.newArrayList();
-        Map<Integer,BigDecimal> curGhQuantityMap = Maps.newHashMap();
-        Map<Integer,BigDecimal> preGhQuantityMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> curGhQuantityMap = FeignOptional.of(() -> remoteReportWorkFeignApi.getGhQuantity(new TripleDTO<>(start, end, lineIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<Integer, BigDecimal> preGhQuantityMap = FeignOptional.of(() -> remoteReportWorkFeignApi.getGhQuantity(new TripleDTO<>(preStart, preEnd, lineIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         //本周合计，上周合计，电量，单耗
         BigDecimal curSum = countSum(currentConsumeMap);
         BigDecimal preSum = countSum(preConsumeMap);

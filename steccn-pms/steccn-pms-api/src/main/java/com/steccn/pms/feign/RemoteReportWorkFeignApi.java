@@ -12,8 +12,10 @@ import com.steccn.pms.vo.ProcessReportWorkHourVO;
 import com.steccn.pms.vo.SubstrateDataListVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -104,4 +106,9 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("获取基片日报表数据")
     @PostMapping("/feign/pms/report/work/substrate")
     R<List<SubstrateDataListVO>> getSubstrateDataList(@RequestBody SubstrateDataDTO dto);
+
+    @ApiOperation("获取钢化工位的报工产量")
+    @PostMapping("/feign/pms/report/work/ghgw/quantity")
+    R<Map<Integer, BigDecimal>> getGhQuantity(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tripleDTO);
+
 }
