@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.pms.vo.SjgCountReportStopVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 
@@ -110,4 +111,14 @@ public interface PmsSjgReportDashboardCtService {
      * @return
      */
     SjgCountReportVO countReport(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 深加工统计报表-停机信息
+     *
+     * @param lineId 产线主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    List<SjgCountReportStopVO> countReportStop(Integer lineId, LocalDate start, LocalDate end);
 }
