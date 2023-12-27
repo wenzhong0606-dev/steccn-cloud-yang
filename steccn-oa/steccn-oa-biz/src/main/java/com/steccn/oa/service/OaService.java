@@ -169,7 +169,11 @@ public class OaService {
                         vo.setId(tmp.getId());
                         vo.setSname(tmp.getSname());
                         vo.setIcon(tmp.getIcon());
-                        vo.setUrl(firstNonNullMobxRouteUrl.getMobxrouteurl()+"?menuIds="+tmp.getId()+","+firstNonNullMobxRouteUrl.getId());
+                        if(firstNonNullMobxRouteUrl.getMobxrouteurl().startsWith("/main")){
+                            vo.setUrl(firstNonNullMobxRouteUrl.getMobxrouteurl()+"?menuIds="+tmp.getId()+","+firstNonNullMobxRouteUrl.getId());
+                        }else {
+                            vo.setUrl("/main"+firstNonNullMobxRouteUrl.getMobxrouteurl()+"?menuIds="+tmp.getId()+","+firstNonNullMobxRouteUrl.getId());
+                        }
                         vos.add(vo);
                     }
                 }
