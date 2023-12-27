@@ -25,4 +25,25 @@
         create_name,create_time,update_by,
         update_name,update_time,del_flag
     </sql>
+    <select id="countReportStop" resultType="com.steccn.pms.vo.SjgCountReportStopRowVO">
+        SELECT
+            process.id as processId,
+            process.`name` as processName,
+            rw.station_id,
+            rw.class_date,
+            wh.note,
+            wh.man_hour
+        FROM
+            pms_report_work_hour wh
+                JOIN pms_report_work rw ON wh.report_work_id = rw.id
+                JOIN pms_produce_order_craft craft ON rw.process_id = craft.id
+                JOIN pm_process process ON process.id = craft.process_id
+        WHERE
+            rw.del_flag = 0
+          AND craft.del_flag = 0
+          AND process.del_flag = 0
+          AND rw.product_line_id = #{lineId}
+          AND rw.class_date BETWEEN #{start} AND #{end}
+
+    </select>
 </mapper>
