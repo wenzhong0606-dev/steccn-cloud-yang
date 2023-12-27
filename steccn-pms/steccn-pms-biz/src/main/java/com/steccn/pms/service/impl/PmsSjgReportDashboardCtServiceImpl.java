@@ -24,8 +24,10 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
+import com.steccn.pms.mapper.PmsReportWorkHourMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsCompleteStorageService;
+import com.steccn.pms.service.PmsReportWorkHourService;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.vo.*;
@@ -57,6 +59,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsReportWorkMapper pmsReportWorkMapper;
+    private final PmsReportWorkHourMapper pmsReportWorkHourMapper;
 
     @Override
     public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
@@ -554,8 +557,8 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public List<SjgCountReportStopVO> countReportStop(Integer lineId, LocalDate start, LocalDate end) {
-
-
+        //先根据产线，日期区间获取数据
+        List<SjgCountReportStopRowVO> resList = pmsReportWorkHourMapper.countReportStop(lineId, start, end);
         return null;
     }
 
