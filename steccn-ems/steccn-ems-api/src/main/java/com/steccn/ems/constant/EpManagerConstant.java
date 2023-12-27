@@ -340,7 +340,7 @@ public interface EpManagerConstant {
     @Getter
     @AllArgsConstructor
     enum ELECOtherConfContentEnum {
-        ELEC_110KV_STATION, LIGHT_ELEC, HEAT_POWER, HEAT_POWER_OUT_STATION;
+        LIGHT_ELEC, HEAT_POWER, ELEC_110KV_STATION;
 
         //根据code查找值
         public static Set<String> allContentConf() {
