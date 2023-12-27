@@ -552,6 +552,13 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         return sjgCountReportVO;
     }
 
+    @Override
+    public List<SjgCountReportStopVO> countReportStop(Integer lineId, LocalDate start, LocalDate end) {
+
+
+        return null;
+    }
+
     /**
      * 深加工工序汇总
      *

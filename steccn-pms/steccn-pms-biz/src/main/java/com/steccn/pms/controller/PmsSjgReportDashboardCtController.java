@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.util.PmsUnitUtil;
+import com.steccn.pms.vo.SjgCountReportStopVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import io.swagger.annotations.ApiOperation;
@@ -90,4 +91,9 @@ public class PmsSjgReportDashboardCtController {
         return R.success(pmsSjgReportDashboardService.countReport(workShopId,start,end));
     }
 
+    @GetMapping("/count/report/stop")
+    @ApiOperation("深加工统计报表-停机信息")
+    public R<List<SjgCountReportStopVO>> countReportStop(@RequestParam("lineId") Integer lineId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.countReportStop(lineId, start, end));
+    }
 }
