@@ -165,8 +165,10 @@ public class OaService {
                     OaMenuListDTO firstNonNullMobxRouteUrl = findFirstNonNullMobxRouteUrl(tmp.getChild());
                     if(Objects.nonNull(firstNonNullMobxRouteUrl)){
                         OaMenuListVO vo = new OaMenuListVO();
-                        vo.setMenuName(tmp.getFname());
+                        vo.setFname(tmp.getFname());
                         vo.setId(tmp.getId());
+                        vo.setSname(tmp.getSname());
+                        vo.setIcon(tmp.getIcon());
                         vo.setUrl(firstNonNullMobxRouteUrl.getMobxrouteurl()+"?menuIds="+tmp.getId()+","+firstNonNullMobxRouteUrl.getId());
                         vos.add(vo);
                     }

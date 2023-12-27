@@ -15,7 +15,15 @@ public class OaMenuListVO implements Serializable {
     /**
      * 菜单名称
      */
-    private String menuName;
+    private String fname;
+    /**
+     * 菜单详情
+     */
+    private String sname;
+    /**
+     * 图标
+     */
+    private String icon;
     /**
      * 菜单的拼接url
      */

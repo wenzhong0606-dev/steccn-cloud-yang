@@ -16,5 +16,7 @@ public class OaMenuListDTO implements Serializable {
     private String fname;
     private String id;
     private String mobxrouteurl;
+    private String sname;
+    private String icon;
     private List<OaMenuListDTO> child;
 }
