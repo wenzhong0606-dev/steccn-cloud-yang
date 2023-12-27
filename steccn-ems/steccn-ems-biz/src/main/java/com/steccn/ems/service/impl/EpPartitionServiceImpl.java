@@ -619,7 +619,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         Map<String, List<SysConfigurationDTO>> eleOtherConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC_OTHER, EpManagerConstant.ELECOtherConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysConfigurationDTO> eleOtherConfList = Lists.newArrayList();
         for (EpManagerConstant.ELECOtherConfContentEnum elecOtherConfContentEnum : EpManagerConstant.ELECOtherConfContentEnum.values()) {
-            eleOtherConfList.addAll(eleOtherConfMap.get(elecOtherConfContentEnum.toString()));
+            List<SysConfigurationDTO> tmpList = eleOtherConfMap.get(elecOtherConfContentEnum.toString());
+            if (CollUtil.isNotEmpty(tmpList)) {
+                eleOtherConfList.addAll(tmpList);
+            }
         }
         Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, eleConfList));
