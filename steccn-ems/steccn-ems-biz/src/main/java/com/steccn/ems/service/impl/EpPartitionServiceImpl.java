@@ -617,8 +617,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         List<SysConfigurationDTO> oilConfList = oilConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         //站外电
         Map<String, List<SysConfigurationDTO>> eleOtherConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC_OTHER, EpManagerConstant.ELECOtherConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<SysConfigurationDTO> eleOtherConfList = eleOtherConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
-
+        List<SysConfigurationDTO> eleOtherConfList = Lists.newArrayList();
+        for (EpManagerConstant.ELECOtherConfContentEnum elecOtherConfContentEnum : EpManagerConstant.ELECOtherConfContentEnum.values()) {
+            eleOtherConfList.addAll(eleOtherConfMap.get(elecOtherConfContentEnum.toString()));
+        }
         Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, eleConfList));
         resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterConfList));
@@ -638,7 +640,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<SysConfigurationDTO> configurationDTOList) {
         List<TripleDTO<Long, Integer, String>> resList = Lists.newArrayList();
         if(CollUtil.isNotEmpty(configurationDTOList)){
-            Map<Integer,String> idNameMap = Maps.newHashMap();
+            Map<Integer,String> idNameMap = Maps.newLinkedHashMap();
             for (SysConfigurationDTO configurationDTO : configurationDTOList) {
                 try {
                     int id = Integer.parseInt(configurationDTO.getRefContent());
@@ -649,10 +651,15 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
             List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeId, idNameMap.keySet()));
             if (CollUtil.isNotEmpty(dbList)) {
-                for (EpPartition epPartition : dbList) {
-                    String officeName = idNameMap.get(epPartition.getOfficeId());
-                    resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), StrUtil.isNotBlank(officeName) ? officeName : epPartition.getOfficeName()));
-                }
+                Map<Integer,EpPartition> epMap = Maps.newHashMap();
+                dbList.forEach(ele -> epMap.put(ele.getOfficeId(), ele));
+                idNameMap.forEach((k,v) ->{
+                    EpPartition epPartition = epMap.get(k);
+                    if(Objects.nonNull(epPartition)){
+                        String officeName = v;
+                        resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), StrUtil.isNotBlank(officeName) ? officeName : epPartition.getOfficeName()));
+                    }
+                });
             }
         }
         return resList;
