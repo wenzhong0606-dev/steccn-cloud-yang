@@ -579,16 +579,16 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                 table.setProcessName(k);
                 table.setTable(v);
                 v.forEach(ele -> {
+                    ele.setManHour(BigDecimalUtil.divide(ele.getManHour(), new BigDecimal("60"), 1));
                     Optional<SysProductionCapacityDetailVO> first = capacityDetailVOList.stream().filter(aa -> aa.getStationId().equals(ele.getStationId()) && LocalDateUtil.isRange(ele.getClassDate(), aa.getStart(), Objects.nonNull(aa.getEnd()) ? aa.getEnd() : end.plusDays(1), true, false)).findFirst();
                     if (first.isPresent()) {
                         SysProductionCapacityDetailVO capacityDetailVO = first.get();
                         ele.setLineNum(capacityDetailVO.getStationLineNum());
                         //影响产量/㎡：根据该时间对应的标准产能内，工位产能计算； 工位明细产能  / 24 * 时长,，保留整数
-                        BigDecimal divide = BigDecimalUtil.divide(ele.getManHour(), new BigDecimal("1440"), 2);
-                        divide = BigDecimalUtil.multiply(divide, capacityDetailVO.getStationStandardCapacity(), BigDecimalUtil.SCALE_0);
-                        ele.setEffectQuantity(divide);
+                        BigDecimal multiply = BigDecimalUtil.multiply(ele.getManHour(), capacityDetailVO.getStationStandardCapacity(), BigDecimalUtil.SCALE_8);
+                        multiply = BigDecimalUtil.divide(multiply, new BigDecimal("24"), BigDecimalUtil.SCALE_0);
+                        ele.setEffectQuantity(multiply);
                     }
-                    ele.setManHour(BigDecimalUtil.divide(ele.getManHour(), new BigDecimal("60"), 2));
                 });
                 resList.add(table);
             });
