@@ -11,20 +11,21 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.query.MPJQueryWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.OutSystemOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
-import com.steccn.oa.domain.Docdetaillog;
-import com.steccn.oa.domain.Hrmdepartment;
-import com.steccn.oa.domain.Hrmresource;
+import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.*;
+import com.steccn.oa.mapper.KqFormatDetailMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
 import com.steccn.oa.vo.*;
@@ -46,6 +47,7 @@ import weaver.rsa.security.RSA;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -75,6 +77,8 @@ public class OaService {
     private final KqGroupmemberMapper kqGroupmemberMapper;
     private final HrmdepartmentService hrmdepartmentService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final KqFormatDetailMapper kqFormatDetailMapper;
+    private final KqGroupService kqGroupService;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -743,6 +747,56 @@ public class OaService {
                         resultMap.put(entry.getKey(),groupCountDTO);
                     }
                 }
+            }
+        }
+        return resultMap;
+    }
+
+    /**
+     * 获取班次班组
+     * @param dateDTO filed1为开始时间 filed2为结束时间
+     * @return
+     */
+    public Map<String,OaGroupCountDTO> getClassGroupMapJp(TupleDTO<LocalDate,LocalDate> dateDTO){
+        Map<String,OaGroupCountDTO> resultMap = MapUtil.newHashMap();
+        List<LocalDate> dateRange = LocalDateUtil.getLocalDateByStartEndDate(dateDTO.getField1(), dateDTO.getField2());
+        List<KqFormatDetail> kqFormatDetails = kqFormatDetailMapper.selectList(new LambdaQueryWrapper<KqFormatDetail>()
+                .in(KqFormatDetail::getWorkbegindate, dateRange.stream().map(date -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))).collect(Collectors.toList()))
+                .in(KqFormatDetail::getGroupid, Sets.newHashSet(53, 54, 55)));
+        List<KqGroup> kqGroups = kqGroupService.list(new LambdaQueryWrapper<KqGroup>()
+                .eq(KqGroup::getId, kqFormatDetails.stream().map(KqFormatDetail::getGroupid).collect(Collectors.toSet())));
+        //分为早班和晚班
+        for(LocalDate tmp:dateRange){
+            String dateStr = tmp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            for(int i = 0; i < 2;i++){
+                //过滤当前班次
+                String classOrderStr = "";
+                String classStr = "";
+                if(i==0){
+                    classOrderStr = "早班";
+                    classStr = "白班";
+                } else {
+                    classOrderStr = "晚班";
+                    classStr = "夜班";
+                }
+                String finalClassStr = classStr;
+                LocalTime time = LocalTime.now();
+                if(i==0){
+                    time = LocalTime.of(8,0);
+                }else {
+                    time = LocalTime.of(20,0);
+                }
+                //基片班组的id为53,54,55
+                LocalTime finalTime = time;
+                KqFormatDetail kqFormatDetail = kqFormatDetails.stream().filter(v->
+                        Objects.nonNull(v.getWorkbegindate())&&v.getWorkbegindate().equals(dateStr)
+                                &&Objects.nonNull(v.getWorkbegintime())&&v.getWorkbegintime().equals(finalTime.toString())).findFirst().orElse(new KqFormatDetail());
+                KqGroup kqGroup = kqGroups.stream().filter(v -> v.getId().equals(kqFormatDetail.getGroupid())).findFirst().orElse(new KqGroup());
+                String[] split = kqGroup.getGroupname().split("-");
+                OaGroupCountDTO oaGroupCountDTO =  new OaGroupCountDTO();
+                oaGroupCountDTO.setGroupId(kqGroup.getId());
+                oaGroupCountDTO.setGroupName(split[1]);
+                resultMap.put(dateStr+":"+classOrderStr,oaGroupCountDTO);
             }
         }
         return resultMap;

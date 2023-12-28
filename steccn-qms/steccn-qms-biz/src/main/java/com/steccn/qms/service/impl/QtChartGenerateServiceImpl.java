@@ -1250,7 +1250,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
 //        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(, );
         TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(LocalDate.parse(resultList.get(0).getWorkOrderTime()), LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime()));
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         resultList.forEach(tmp->{
             OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(tmp.getWorkOrderTime() + ":" + tmp.getWorkOrder());
             if(Objects.nonNull(oaGroupCountDTO)){

@@ -111,6 +111,12 @@ public class OaFeignController {
         return R.success(oaService.getClassGroupMap(dateDTO));
     }
 
+    @ApiOperation("获取班次对应的班组(基片)")
+    @PostMapping("/group/count/jp")
+    public R<Map<String, OaGroupCountDTO>> getGroupInfoJp(@RequestBody TupleDTO<LocalDate,LocalDate> dateDTO){
+        return R.success(oaService.getClassGroupMapJp(dateDTO));
+    }
+
     @ApiOperation("获取班组长信息")
     @PostMapping("/group/workshop/leader")
     public R<Map<String, List<OaClassUserNameDTO>>> getLeaderName(@RequestBody Set<String> productWorkShop ){

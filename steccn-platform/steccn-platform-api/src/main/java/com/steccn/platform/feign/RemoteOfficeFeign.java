@@ -63,7 +63,7 @@ public interface RemoteOfficeFeign {
      * @param id 机构id
      * @return
      */
-    @GetMapping("feign/platform/sys/office/name")
+    @GetMapping("/feign/platform/sys/office/name")
     @ApiOperation("通过id获取名字")
     R<String> getNameById(@RequestParam("id") Integer id);
 
