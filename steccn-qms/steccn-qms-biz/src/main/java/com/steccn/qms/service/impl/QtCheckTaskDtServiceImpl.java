@@ -24,10 +24,7 @@ import com.steccn.qms.vo.QtCheckTaskDtVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +63,33 @@ public class QtCheckTaskDtServiceImpl implements QtCheckTaskDtService {
                 .likeRight(QtCheckItem::getName, QtManagerConstant.HENGXIANG)
                 .or().likeRight(QtCheckItem::getName, QtManagerConstant.ZONGXIANG)
                 .or().eq(QtCheckItem::getName, QtManagerConstant.MAOBAN));
+        //过滤掉重复名字,相同名字取最大id
+        Map<String, List<QtCheckItem>> groupedItems = qtCheckItems.stream()
+                .collect(Collectors.groupingBy(QtCheckItem::getName));
+
+        qtCheckItems = groupedItems.values().stream()
+                .flatMap(items -> {
+                    items.sort(Comparator.comparing(QtCheckItem::getId).reversed());
+                    return items.stream().limit(2);
+                })
+                .collect(Collectors.toList());
+        //找到所有需要的详情
+        StringJoiner joiner = new StringJoiner(", ", "(", ")");
+        dto.getProductLineId().forEach(integer -> joiner.add(integer.toString()));
+        MPJLambdaWrapper mpjLambdaWrapper = new MPJLambdaWrapper<QtCheckTaskDtVO>()
+                .selectAs(QtCheckTaskDetail::getCheckResult,QtCheckTaskDtVO::getValue)
+                .selectAs(QtCheckTaskDetail::getItemId,QtCheckTaskDtVO::getItemId)
+                .selectAs(QtCheckTask::getProductLineId,QtCheckTaskDtVO::getProductLineId)
+                .selectAs(QtCheckTaskDetail::getUpdateTime,QtCheckTaskDtVO::getUpdateTime)
+                .leftJoin(QtCheckTaskDetail.class,QtCheckTaskDetail::getTaskId,QtCheckTask::getId)
+                .isNotNull(QtCheckTaskDetail::getCheckResult)
+                .ne(QtCheckTaskDetail::getCheckResult,"")
+                .ne(QtCheckTaskDetail::getCheckResult,"-")
+                .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .in(QtCheckTaskDetail::getItemId,qtCheckItems.stream().map(QtCheckItem::getId).collect(Collectors.toSet()))
+                .apply("JSON_EXTRACT(t.product_line, '$.id') IN " + joiner);
+        List<QtCheckTaskDtVO> qtCheckTaskDtVOS = qtCheckTaskMapper.selectJoinList(QtCheckTaskDtVO.class, mpjLambdaWrapper);
+        List<QtCheckItem> finalQtCheckItems = qtCheckItems;
         dto.getProductLineId().forEach(tmp -> {
             List<QtCheckTaskDtVO> value = Lists.newArrayList();
             //开始查找车间下数据
@@ -79,22 +103,26 @@ public class QtCheckTaskDtServiceImpl implements QtCheckTaskDtService {
                     itemName = QtManagerConstant.ZONGXIANG + i;
                 }
                 //收集该检验项相关数据
-                List<Integer> itemId = qtCheckItems.stream().filter(v->v.getName().equals(itemName))
+                List<Integer> itemId = finalQtCheckItems.stream().filter(v->v.getName().equals(itemName))
                         .map(QtCheckItem::getId).collect(Collectors.toList());
                 //关联查询数据
                 if(CollUtil.isNotEmpty(itemId)){
-                    MPJLambdaWrapper mpjLambdaWrapper = new MPJLambdaWrapper<QtCheckTaskDtVO>()
-                            .selectAs(QtCheckTaskDetail::getCheckResult,QtCheckTaskDtVO::getValue)
-                            .leftJoin(QtCheckTaskDetail.class,QtCheckTaskDetail::getTaskId,QtCheckTask::getId)
-                            .isNotNull(QtCheckTaskDetail::getCheckResult)
-                            .ne(QtCheckTaskDetail::getCheckResult,"")
-                            .ne(QtCheckTaskDetail::getCheckResult,"-")
-                            .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                            .in(QtCheckTaskDetail::getItemId,itemId)
-                            .apply("JSON_CONTAINS(t.product_line, JSON_OBJECT('id', {0}))",tmp)
-                            .orderByDesc(QtCheckTaskDetail::getUpdateTime)
-                            .last("LIMIT 1");
-                    QtCheckTaskDtVO qtCheckTaskDtVO = qtCheckTaskMapper.selectJoinOne(QtCheckTaskDtVO.class, mpjLambdaWrapper);
+//                    MPJLambdaWrapper mpjLambdaWrapper2 = new MPJLambdaWrapper<QtCheckTaskDtVO>()
+//                            .selectAs(QtCheckTaskDetail::getCheckResult,QtCheckTaskDtVO::getValue)
+//                            .leftJoin(QtCheckTaskDetail.class,QtCheckTaskDetail::getTaskId,QtCheckTask::getId)
+//                            .isNotNull(QtCheckTaskDetail::getCheckResult)
+//                            .ne(QtCheckTaskDetail::getCheckResult,"")
+//                            .ne(QtCheckTaskDetail::getCheckResult,"-")
+//                            .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+//                            .in(QtCheckTaskDetail::getItemId,itemId)
+//                            .apply("JSON_CONTAINS(t.product_line, JSON_OBJECT('id', {0}))",tmp)
+//                            .orderByDesc(QtCheckTaskDetail::getUpdateTime)
+//                            .last("LIMIT 1");
+//                    QtCheckTaskDtVO qtCheckTaskDtVO = qtCheckTaskMapper.selectJoinOne(QtCheckTaskDtVO.class, mpjLambdaWrapper2);
+                    QtCheckTaskDtVO qtCheckTaskDtVO = qtCheckTaskDtVOS.stream().filter(v->v.getProductLineId().equals(tmp)
+                            &&itemId.contains(v.getItemId()))
+                            .sorted((v1, v2) -> v2.getUpdateTime().compareTo(v1.getUpdateTime()))
+                            .findFirst().orElse(null);
                     //判断是否有值
                     if(Objects.isNull(qtCheckTaskDtVO)){
                         QtCheckTaskDtVO noValue = new QtCheckTaskDtVO();

@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 数字孪生VO
@@ -14,4 +15,7 @@ import java.math.BigDecimal;
 public class QtCheckTaskDtVO {
     private String itemName;
     private BigDecimal value;
+    private Integer itemId;
+    private Integer productLineId;
+    private LocalDateTime updateTime;
 }
