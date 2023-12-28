@@ -764,7 +764,7 @@ public class OaService {
                 .in(KqFormatDetail::getWorkbegindate, dateRange.stream().map(date -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))).collect(Collectors.toList()))
                 .in(KqFormatDetail::getGroupid, Sets.newHashSet(53, 54, 55)));
         List<KqGroup> kqGroups = kqGroupService.list(new LambdaQueryWrapper<KqGroup>()
-                .eq(KqGroup::getId, kqFormatDetails.stream().map(KqFormatDetail::getGroupid).collect(Collectors.toSet())));
+                .in(KqGroup::getId, kqFormatDetails.stream().map(KqFormatDetail::getGroupid).collect(Collectors.toSet())));
         //分为早班和晚班
         for(LocalDate tmp:dateRange){
             String dateStr = tmp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
