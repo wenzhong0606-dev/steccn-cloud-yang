@@ -17,11 +17,6 @@ public class SjgCountReportStopRowVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 工序主键
-     */
-    private Integer processId;
-
-    /**
      * 工序名称
      */
     private String processName;

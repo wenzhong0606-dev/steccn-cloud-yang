@@ -3,10 +3,11 @@ package com.steccn.platform.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
-import com.steccn.platform.vo.SysOfficeCollectVO;
+import com.steccn.platform.vo.SysProductionCapacityDetailVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,6 @@ public interface RemoteSysProductionCapacityFeignApi {
      * @return
      */
     @PostMapping("/feign/platform/sys/production/capacity/station")
-    R<List<SysOfficeCollectVO>> listOnlyStation(@RequestBody TripleDTO<Set<Integer>, LocalDate, LocalDate> tripleDTO);
+    R<List<SysProductionCapacityDetailVO>> capacityStation(@RequestBody TripleDTO<Set<Integer>, LocalDate, LocalDate> tripleDTO);
 
 }

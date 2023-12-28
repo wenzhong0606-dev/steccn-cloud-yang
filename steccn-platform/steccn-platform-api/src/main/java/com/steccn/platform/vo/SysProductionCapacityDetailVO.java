@@ -1,7 +1,6 @@
 package com.steccn.platform.vo;
 
 import lombok.Data;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,9 +16,14 @@ public class SysProductionCapacityDetailVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 班次日期
+     * 开始日期
      */
-    private LocalDate classDate;
+    private LocalDate start;
+
+    /**
+     * 结束日期
+     */
+    private LocalDate end;
 
     /**
      * 标准产能

@@ -24,4 +24,26 @@
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+    <select id="capacityStation" resultType="com.steccn.platform.vo.SysProductionCapacityDetailVO">
+        SELECT
+            ca.class_date as start,
+            ca.standard_capacity,
+            ca.line_num,
+            info.workshop_id,
+            info.line_id,
+            info.station_id,
+            info.line_num as stationLineNum
+        FROM
+            sys_production_capacity ca
+                JOIN sys_production_capacity_info info ON ca.id = info.capacity_id
+        WHERE
+            ca.del_flag = 0
+          AND info.del_flag = 0
+          AND ca.class_date between #{start} and #{end}
+          AND info.station_id IN
+           <foreach collection="stationIdSet" item="item" open="(" close=")" separator=",">
+            #{item}
+           </foreach>
+          order by ca.class_date desc
+    </select>
 </mapper>

@@ -7,10 +7,13 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysProductionCapacityAddDTO;
 import com.steccn.platform.dto.SysProductionCapacityInfoDTO;
 import com.steccn.platform.dto.SysProductionCapacityPageDTO;
+import com.steccn.platform.vo.SysProductionCapacityDetailVO;
 import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -56,4 +59,14 @@ public interface SysProductionCapacityService extends IService<SysProductionCapa
      * @return
      */
     Boolean updateCapacity(List<SysProductionCapacityInfoDTO> list);
+
+    /**
+     * 查询工位指定日期区间的标准产能
+     *
+     * @param stationIdSet 工位集合
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    List<SysProductionCapacityDetailVO> capacityStation(Set<Integer> stationIdSet, LocalDate start, LocalDate end);
 }

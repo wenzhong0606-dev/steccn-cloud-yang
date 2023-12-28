@@ -29,6 +29,7 @@ import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.service.SysProductionCapacityInfoService;
 import com.steccn.platform.service.SysProductionCapacityService;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysProductionCapacityDetailVO;
 import com.steccn.platform.vo.SysProductionCapacityInfoVO;
 import com.steccn.platform.vo.SysProductionCapacityVO;
 import lombok.RequiredArgsConstructor;
@@ -157,6 +158,28 @@ public class SysProductionCapacityServiceImpl extends ServiceImpl<SysProductionC
             batchList.add(info);
         }
         return sysProductionCapacityInfoService.updateBatchById(batchList);
+    }
+
+    @Override
+    public List<SysProductionCapacityDetailVO> capacityStation(Set<Integer> stationIdSet, LocalDate start, LocalDate end) {
+        List<SysProductionCapacityDetailVO> resList = Lists.newArrayList();
+        //获取所有工位离开始日期最近的日期，避免考虑有区间损失的问题
+        SysProductionCapacity one = getOne(new LambdaQueryWrapper<SysProductionCapacity>()
+                .lt(SysProductionCapacity::getClassDate, start)
+                .orderByDesc(SysProductionCapacity::getClassDate).last(MpConstant.STR_LIMIT_1));
+        start = Objects.nonNull(one) ? one.getClassDate() : start;
+        List<SysProductionCapacityDetailVO> dbList = baseMapper.capacityStation(stationIdSet, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Integer, LocalDate> stationEndMap = Maps.newHashMap();
+            dbList.forEach(ele -> {
+                ele.setEnd(stationEndMap.get(ele.getStationId()));
+                stationEndMap.put(ele.getStationId(), ele.getStart());
+                BigDecimal divide = BigDecimalUtil.divide(ele.getStandardCapacity(), new BigDecimal(ele.getLineNum()), 2);
+                ele.setStationStandardCapacity(BigDecimalUtil.multiply(divide, new BigDecimal(ele.getStationLineNum()), 2));
+                resList.add(ele);
+            });
+        }
+        return resList;
     }
 
     /**

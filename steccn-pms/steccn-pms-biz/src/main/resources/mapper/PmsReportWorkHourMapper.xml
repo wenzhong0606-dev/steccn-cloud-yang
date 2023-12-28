@@ -27,7 +27,6 @@
     </sql>
     <select id="countReportStop" resultType="com.steccn.pms.vo.SjgCountReportStopRowVO">
         SELECT
-            process.id as processId,
             process.`name` as processName,
             rw.station_id,
             rw.class_date,

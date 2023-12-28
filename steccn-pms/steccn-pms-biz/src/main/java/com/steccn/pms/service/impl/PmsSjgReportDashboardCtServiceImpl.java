@@ -18,8 +18,10 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSysProductionCapacityFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysProductionCapacityDetailVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
@@ -60,6 +62,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsReportWorkMapper pmsReportWorkMapper;
     private final PmsReportWorkHourMapper pmsReportWorkHourMapper;
+    private final RemoteSysProductionCapacityFeignApi sysProductionCapacityFeignApi;
 
     @Override
     public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
@@ -564,6 +567,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             //获取所有的工位
             Set<Integer> stationIdSet = dbList.stream().map(SjgCountReportStopRowVO::getStationId).collect(Collectors.toSet());
             //根据工位和开始日期，结束日期查询标准产能
+            List<SysProductionCapacityDetailVO> capacityDetailVOList = FeignOptional.of(() -> sysProductionCapacityFeignApi.capacityStation(new TripleDTO<>(stationIdSet, start, end)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             Map<String, List<SjgCountReportStopRowVO>> resMap = Maps.newLinkedHashMap();
             //根据map构建返回集合
@@ -574,6 +578,18 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                 SjgCountReportStopVO table = new SjgCountReportStopVO();
                 table.setProcessName(k);
                 table.setTable(v);
+                v.forEach(ele -> {
+                    Optional<SysProductionCapacityDetailVO> first = capacityDetailVOList.stream().filter(aa -> aa.getStationId().equals(ele.getStationId()) && LocalDateUtil.isRange(ele.getClassDate(), aa.getStart(), Objects.nonNull(aa.getEnd()) ? aa.getEnd() : end.plusDays(1), true, false)).findFirst();
+                    if (first.isPresent()) {
+                        SysProductionCapacityDetailVO capacityDetailVO = first.get();
+                        ele.setLineNum(capacityDetailVO.getStationLineNum());
+                        //影响产量/㎡：根据该时间对应的标准产能内，工位产能计算； 工位明细产能  / 24 * 时长,，保留整数
+                        BigDecimal divide = BigDecimalUtil.divide(ele.getManHour(), new BigDecimal("1440"), 2);
+                        divide = BigDecimalUtil.multiply(divide, capacityDetailVO.getStationStandardCapacity(), BigDecimalUtil.SCALE_0);
+                        ele.setEffectQuantity(divide);
+                    }
+                    ele.setManHour(BigDecimalUtil.divide(ele.getManHour(), new BigDecimal("60"), 2));
+                });
                 resList.add(table);
             });
         }
