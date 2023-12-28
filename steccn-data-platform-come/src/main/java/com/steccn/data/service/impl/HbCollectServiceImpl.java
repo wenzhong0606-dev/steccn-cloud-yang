@@ -190,20 +190,20 @@ public class HbCollectServiceImpl implements HbCollectService {
             model.setCreateTime(LocalDateTime.now());
             models.add(model);
             //启停时修改mes状态
-            poolExecutor.execute(()->{
-                TupleDTO<String,String> param = new TupleDTO<>();
-                param.setField1(tmp.getCode());
-                //启停信号的state和业务表中的state相反
-                if(tmp.getValue().equals(OaConstant.NO)){
-                    param.setField2(OaConstant.YES.toString());
-                }else {
-                    param.setField2(OaConstant.NO.toString());
-                }
-                Boolean flag = FeignOptional.of(() -> remoteMesFeignApi.updateEqpState(param), FeignConstant.STECCN_MES_SERVICE_NAME).get();
-                if(!flag){
-                    log.error("修改设备状态失败");
-                }
-            });
+//            poolExecutor.execute(()->{
+//                TupleDTO<String,String> param = new TupleDTO<>();
+//                param.setField1(tmp.getCode());
+//                //启停信号的state和业务表中的state相反
+//                if(tmp.getValue().equals(OaConstant.NO)){
+//                    param.setField2(OaConstant.YES.toString());
+//                }else {
+//                    param.setField2(OaConstant.NO.toString());
+//                }
+//                Boolean flag = FeignOptional.of(() -> remoteMesFeignApi.updateEqpState(param), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+//                if(!flag){
+//                    log.error("修改设备状态失败");
+//                }
+//            });
         });
         return mesEqpSignalService.saveBatch(models);
     }

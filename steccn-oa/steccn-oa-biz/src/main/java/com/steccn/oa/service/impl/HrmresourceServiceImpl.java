@@ -268,6 +268,19 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                         .ge(Hrmresource::getModified, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .orderByDesc(Hrmresource::getModified));
         oaUserVOS = oaUserVOS.stream().filter(v->StrUtil.isNotBlank(v.getUserName())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(oaUserVOS)){
+            List<KqGroupmember> kqGroupmembers = kqGroupmemberMapper.selectList(new LambdaQueryWrapper<KqGroupmember>()
+                    .isNull(KqGroupmember::getIsdelete)
+                    .in(KqGroupmember::getTypevalue, oaUserVOS.stream().map(OaUserVO::getId).collect(Collectors.toSet())));
+            oaUserVOS.forEach(tmp -> {
+                KqGroupmember kqGroupmember = kqGroupmembers.stream()
+                        .filter(v -> v.getTypevalue().equals(tmp.getId()))
+                        .max(Comparator.comparing(KqGroupmember::getId))
+                        .orElse(new KqGroupmember());
+                tmp.setGroupId(kqGroupmember.getGroupid());
+            });
+
+        }
         return oaUserVOS;
     }
 

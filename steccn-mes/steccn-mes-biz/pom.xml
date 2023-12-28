@@ -119,6 +119,10 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-redis</artifactId>
         </dependency>
