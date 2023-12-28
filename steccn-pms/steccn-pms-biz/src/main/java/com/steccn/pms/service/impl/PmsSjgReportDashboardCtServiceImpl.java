@@ -648,12 +648,12 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         resList.add(new TableHeadColumnDTO("线别", "lineName"));
         resList.add(new TableHeadColumnDTO("本区间产量" + currentStartStr + "-" + currentEndStr, "currentValueTuple", Arrays.asList(new TableHeadColumnDTO("㎡", "currentValue"), new TableHeadColumnDTO("%", "currentValueRate"))));
         resList.add(new TableHeadColumnDTO("上区间产量" + preStartStr + "-" + preEndStr, "preValueTuple", Arrays.asList(new TableHeadColumnDTO("㎡", "preValue"), new TableHeadColumnDTO("%", "preValueRate"))));
-        resList.add(new TableHeadColumnDTO("产量", "valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiff"))));
-        resList.add(new TableHeadColumnDTO("成品率", "valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffRate"))));
+        resList.add(new TableHeadColumnDTO("产量增长", "valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiff"))));
+        resList.add(new TableHeadColumnDTO("产量增长率", "valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffRate"))));
         resList.add(new TableHeadColumnDTO("本区间合计", "currentValueSumTuple", Arrays.asList(new TableHeadColumnDTO("㎡", "currentValueSum"), new TableHeadColumnDTO("%", "currentValueSumRate"))));
         resList.add(new TableHeadColumnDTO("上区间合计", "preValueSumTuple", Arrays.asList(new TableHeadColumnDTO("㎡", "preValueSum"), new TableHeadColumnDTO("%", "preValueSumRate"))));
-        resList.add(new TableHeadColumnDTO("产量", "valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSum"))));
-        resList.add(new TableHeadColumnDTO("成品率", "valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSumRate"))));
+        resList.add(new TableHeadColumnDTO("汇总产量增长", "valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSum"))));
+        resList.add(new TableHeadColumnDTO("汇总产量增长率", "valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSumRate"))));
         return resList;
     }
 

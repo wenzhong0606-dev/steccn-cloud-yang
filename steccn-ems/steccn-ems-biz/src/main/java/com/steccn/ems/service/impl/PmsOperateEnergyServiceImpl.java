@@ -228,14 +228,14 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         List<TableHeadColumnDTO> resList = Lists.newArrayList();
         resList.add(new TableHeadColumnDTO("类别", "categoryName"));
         resList.add(new TableHeadColumnDTO("线别", "lineName"));
-        resList.add(new TableHeadColumnDTO("本区间" + currentStartStr + "-" + currentEndStr, "currentValueTuple", Arrays.asList(new TableHeadColumnDTO("电量", "currentValue"), new TableHeadColumnDTO("单耗", "currentValueRate"))));
-        resList.add(new TableHeadColumnDTO("上区间" + preStartStr + "-" + preEndStr, "preValueTuple", Arrays.asList(new TableHeadColumnDTO("电量", "preValue"), new TableHeadColumnDTO("单耗", "preValueRate"))));
-        resList.add(new TableHeadColumnDTO("电量", "valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiff"))));
-        resList.add(new TableHeadColumnDTO("单耗", "valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffRate"))));
+        resList.add(new TableHeadColumnDTO("本区间能耗" + currentStartStr + "-" + currentEndStr, "currentValueTuple", Arrays.asList(new TableHeadColumnDTO("电量", "currentValue"), new TableHeadColumnDTO("单耗", "currentValueRate"))));
+        resList.add(new TableHeadColumnDTO("上区间能耗，" + preStartStr + "-" + preEndStr, "preValueTuple", Arrays.asList(new TableHeadColumnDTO("电量", "preValue"), new TableHeadColumnDTO("单耗", "preValueRate"))));
+        resList.add(new TableHeadColumnDTO("电量增长", "valueDiffSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiff"))));
+        resList.add(new TableHeadColumnDTO("电量增长率", "valueDiffRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffRate"))));
         resList.add(new TableHeadColumnDTO("本区间合计", "currentValueSumTuple", Arrays.asList(new TableHeadColumnDTO("电量", "currentValueSum"), new TableHeadColumnDTO("单耗", "currentValueSumRate"))));
         resList.add(new TableHeadColumnDTO("上区间合计", "preValueSumTuple", Arrays.asList(new TableHeadColumnDTO("电量", "preValueSum"), new TableHeadColumnDTO("单耗", "preValueSumRate"))));
-        resList.add(new TableHeadColumnDTO("电量", "valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSum"))));
-        resList.add(new TableHeadColumnDTO("单耗", "valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSumRate"))));
+        resList.add(new TableHeadColumnDTO("汇总电量增长", "valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSum"))));
+        resList.add(new TableHeadColumnDTO("汇总电量增长率", "valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSumRate"))));
         return resList;
     }
 
