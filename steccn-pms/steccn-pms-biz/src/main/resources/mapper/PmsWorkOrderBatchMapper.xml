@@ -48,8 +48,7 @@
         WHERE
         batch.del_flag = 0
         AND o.del_flag = 0
-        AND batch.start_time &gt;= #{begin}
-        AND batch.end_time &lt; #{over}
+        AND batch.id not in (select id from pms_work_order_batch where end_time &lt;= #{begin} or start_time &gt;= #{over} )
         AND o.production_line_id in
         <foreach collection="lineList" item="lineId" open="(" close=")" separator=",">
             #{lineId}

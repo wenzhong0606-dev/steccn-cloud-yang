@@ -1137,7 +1137,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
                 Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
                 //获取满足条件的批次
-                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), ele.getEndTime(), Boolean.TRUE, Boolean.FALSE) && ele.getProductLineId().equals(line)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
+                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), Objects.nonNull(ele.getEndTime()) ? ele.getEndTime() : LocalDateTime.now().plusDays(1), Boolean.TRUE, Boolean.FALSE) && ele.getProductLineId().equals(line)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
                 List<String> orderNoList = new ArrayList<>(orderNoSet);
                 Collections.sort(orderNoList);
                 String classDateStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, startTmp);
