@@ -1670,7 +1670,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     /**
      * 对出库单进行冲销
      */
-    public Boolean chargeAgainstDelivery(Long deliveryId,String userName){
+    @Override
+    public Boolean chargeAgainstDelivery(Long deliveryId, String userName){
         WmsDeliveryReceipt wmsDeliveryReceipt =wmsDeliveryReceiptService.getById(deliveryId);
         Assert.notNull(wmsDeliveryReceipt,"单据不存在");
         return chargeAgainstStorage(deliveryId,userName);

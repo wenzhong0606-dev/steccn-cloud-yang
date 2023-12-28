@@ -265,6 +265,10 @@ public interface OaInfoService {
     @PostMapping("/feign/oa/group/count")
     R<Map<String,OaGroupCountDTO>> getGroupInfo(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO);
 
+    @ApiOperation("精准获取基片班组")
+    @PostMapping("/feign/oa/group/count/jp")
+    R<Map<String,OaGroupCountDTO>> getGroupInfoJp(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO);
+
     /**
      * 获取班组长信息
      * @param productWorkShop 车间名称set

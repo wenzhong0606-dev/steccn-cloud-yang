@@ -1,5 +1,6 @@
 package com.steccn.oa.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
@@ -10,20 +11,21 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.query.MPJQueryWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.OutSystemOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
-import com.steccn.oa.domain.Docdetaillog;
-import com.steccn.oa.domain.Hrmdepartment;
-import com.steccn.oa.domain.Hrmresource;
+import com.steccn.oa.domain.*;
 import com.steccn.oa.dto.*;
+import com.steccn.oa.mapper.KqFormatDetailMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
 import com.steccn.oa.vo.*;
@@ -45,6 +47,7 @@ import weaver.rsa.security.RSA;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -74,6 +77,8 @@ public class OaService {
     private final KqGroupmemberMapper kqGroupmemberMapper;
     private final HrmdepartmentService hrmdepartmentService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final KqFormatDetailMapper kqFormatDetailMapper;
+    private final KqGroupService kqGroupService;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -130,16 +135,13 @@ public class OaService {
      * @param userId
      * @return List<OaMenuResult>
      */
-    public JSONArray getMenuList(String userId){
-        List<OaMenuResult> oaMenuResults = new ArrayList<>();
+    public List<OaMenuListVO> getMenuList(String userId){
+        List<OaMenuListVO> vos = Lists.newArrayList();
         //先获取apiToken
         OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
         if(!oaApiTokenResult.isStatus()){
-            OaMenuResult oaMenuResult = new OaMenuResult();
-            oaMenuResult.setStatus(false);
-            oaMenuResults.add(oaMenuResult);
             log.error(oaApiTokenResult.getMsg());
-            return new JSONArray();
+            return vos;
         }else{
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             //放入Token
@@ -155,57 +157,37 @@ public class OaService {
 
             String result = OutSystemOptional.of(() -> oaApi.getOaMenu(headers), FeignConstant.OA_SERVICE_NAME).get();
             JSONArray jsonArray = JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATA);
-            //递归拿到树状数据
+            //递归转换树状数据
+            List<OaMenuListDTO> oaMenuListDTOS = convertMenuArray(jsonArray);
 //            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
 //                for(int i = 0; i < jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).size(); i++){
 //                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).getJSONObject(i)));
 //                }
 //            }
-            return jsonArray;
+            for(OaMenuListDTO tmp:oaMenuListDTOS){
+                if(tmp.getChild()!=null){
+                    OaMenuListDTO firstNonNullMobxRouteUrl = findFirstNonNullMobxRouteUrl(tmp.getChild());
+                    if(Objects.nonNull(firstNonNullMobxRouteUrl)){
+                        OaMenuListVO vo = new OaMenuListVO();
+                        vo.setFname(tmp.getFname());
+                        vo.setId(tmp.getId());
+                        vo.setSname(tmp.getSname());
+                        vo.setIcon(tmp.getIcon());
+                        if(firstNonNullMobxRouteUrl.getMobxrouteurl().startsWith("/main")){
+                            vo.setUrl(firstNonNullMobxRouteUrl.getMobxrouteurl()+"?menuIds="+tmp.getId()+","+firstNonNullMobxRouteUrl.getId());
+                        }else {
+                            vo.setUrl("/main"+firstNonNullMobxRouteUrl.getMobxrouteurl()+"?menuIds="+tmp.getId()+","+firstNonNullMobxRouteUrl.getId());
+                        }
+                        vos.add(vo);
+                    }
+                }
+
+            }
+            return vos;
         }
 
     }
 
-    /**
-     * 获取oa菜单请求
-     * @param userId
-     * @return List<OaMenuResult>
-     */
-    public JSONArray getMenuList2(String userId){
-        List<OaMenuResult> oaMenuResults = new ArrayList<>();
-        //先获取apiToken
-        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
-        if(!oaApiTokenResult.isStatus()){
-            OaMenuResult oaMenuResult = new OaMenuResult();
-            oaMenuResult.setStatus(false);
-            oaMenuResults.add(oaMenuResult);
-            log.error(oaApiTokenResult.getMsg());
-            return new JSONArray();
-        }else{
-            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            //放入Token
-            headers.set("appid",OaConstant.OA_API_APPID);
-            headers.set("token",oaApiTokenResult.getToken());
-            //根据泛微加密算法加入rsa
-            RSA rsa = new RSA();
-            //注册进系统时已生成
-            String spk = OaConstant.OA_SPK;
-            //用户id加密
-            String userIdSecret = rsa.encrypt(null, userId, null, "utf-8", spk, false);
-            headers.set("userid",userIdSecret);
-
-            String result = OutSystemOptional.of(() -> oaApi.getOaAccountMenu(headers), FeignConstant.OA_SERVICE_NAME).get();
-            JSONArray jsonArray = JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATA);
-            //递归拿到树状数据
-//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
-//                for(int i = 0; i < jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).size(); i++){
-//                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).getJSONObject(i)));
-//                }
-//            }
-            return jsonArray;
-        }
-
-    }
 
     /**
      * 递归获取菜单数据
@@ -771,6 +753,56 @@ public class OaService {
     }
 
     /**
+     * 获取班次班组
+     * @param dateDTO filed1为开始时间 filed2为结束时间
+     * @return
+     */
+    public Map<String,OaGroupCountDTO> getClassGroupMapJp(TupleDTO<LocalDate,LocalDate> dateDTO){
+        Map<String,OaGroupCountDTO> resultMap = MapUtil.newHashMap();
+        List<LocalDate> dateRange = LocalDateUtil.getLocalDateByStartEndDate(dateDTO.getField1(), dateDTO.getField2());
+        List<KqFormatDetail> kqFormatDetails = kqFormatDetailMapper.selectList(new LambdaQueryWrapper<KqFormatDetail>()
+                .in(KqFormatDetail::getWorkbegindate, dateRange.stream().map(date -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))).collect(Collectors.toList()))
+                .in(KqFormatDetail::getGroupid, Sets.newHashSet(53, 54, 55)));
+        List<KqGroup> kqGroups = kqGroupService.list(new LambdaQueryWrapper<KqGroup>()
+                .in(KqGroup::getId, kqFormatDetails.stream().map(KqFormatDetail::getGroupid).collect(Collectors.toSet())));
+        //分为早班和晚班
+        for(LocalDate tmp:dateRange){
+            String dateStr = tmp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            for(int i = 0; i < 2;i++){
+                //过滤当前班次
+                String classOrderStr = "";
+                String classStr = "";
+                if(i==0){
+                    classOrderStr = "早班";
+                    classStr = "白班";
+                } else {
+                    classOrderStr = "晚班";
+                    classStr = "夜班";
+                }
+                String finalClassStr = classStr;
+                LocalTime time = LocalTime.now();
+                if(i==0){
+                    time = LocalTime.of(8,0);
+                }else {
+                    time = LocalTime.of(20,0);
+                }
+                //基片班组的id为53,54,55
+                LocalTime finalTime = time;
+                KqFormatDetail kqFormatDetail = kqFormatDetails.stream().filter(v->
+                        Objects.nonNull(v.getWorkbegindate())&&v.getWorkbegindate().equals(dateStr)
+                                &&Objects.nonNull(v.getWorkbegintime())&&v.getWorkbegintime().equals(finalTime.toString())).findFirst().orElse(new KqFormatDetail());
+                KqGroup kqGroup = kqGroups.stream().filter(v -> v.getId().equals(kqFormatDetail.getGroupid())).findFirst().orElse(new KqGroup());
+                String[] split = kqGroup.getGroupname().split("-");
+                OaGroupCountDTO oaGroupCountDTO =  new OaGroupCountDTO();
+                oaGroupCountDTO.setGroupId(kqGroup.getId());
+                oaGroupCountDTO.setGroupName(split[1]);
+                resultMap.put(dateStr+":"+classOrderStr,oaGroupCountDTO);
+            }
+        }
+        return resultMap;
+    }
+
+    /**
      * 获取人员的sessionKey
      * @return
      */
@@ -1004,6 +1036,41 @@ public class OaService {
             return groupCountDTO;
         }
         return groupCountDTO;
+    }
+
+    private static List<OaMenuListDTO> convertMenuArray(JSONArray jsonArray){
+        List<OaMenuListDTO> menus = Lists.newArrayList();
+        for (int i = 0; i < jsonArray.size(); i++) {
+            OaMenuListDTO modelMenu = new OaMenuListDTO();
+            JSONObject m = jsonArray.getJSONObject(i);
+            JSONArray child=new JSONArray();
+            child = m.getJSONArray("child");
+            modelMenu = m.toJavaObject(OaMenuListDTO.class);
+            if (child!=null&&child.size() > 0) {
+                modelMenu.setChild(convertMenuArray(child));
+            }
+            menus.add(modelMenu);
+        }
+        return menus;
+    }
+
+    private static OaMenuListDTO findFirstNonNullMobxRouteUrl(List<OaMenuListDTO> menuList) {
+        if (menuList != null) {
+            for (OaMenuListDTO menu : menuList) {
+                if (StrUtil.isNotBlank(menu.getMobxrouteurl()) && StrUtil.isNotBlank(menu.getId())) {
+                    return menu;
+                }
+
+                // 如果有子菜单，递归查找
+                if (menu.getChild() != null) {
+                    OaMenuListDTO childResult = findFirstNonNullMobxRouteUrl(menu.getChild());
+                    if (childResult != null) {
+                        return childResult;
+                    }
+                }
+            }
+        }
+        return null; // 没有找到满足条件的对象
     }
 
 }

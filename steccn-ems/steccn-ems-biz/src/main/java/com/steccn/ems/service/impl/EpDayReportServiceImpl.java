@@ -169,7 +169,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
                 //获取用电量
                 //获取电表（其他） - 余热发电的仪表
-                List<TripleDTO<Long, Integer, String>> heatPowerList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
+                List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
+                List<TripleDTO<Long, Integer, String>> heatPowerList = eleConfList.stream().filter(ele -> !"余热发电站（站用电）".equals(ele.getField3())).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(heatPowerList)) {
                     List<Integer> hpIdSet = heatPowerList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
                     Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(hpIdSet));

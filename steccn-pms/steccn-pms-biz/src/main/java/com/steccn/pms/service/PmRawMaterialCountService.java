@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmRawMaterialCount;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsRawMaterialCountDTO;
 import com.steccn.pms.vo.PmRawMaterialVO;
 
 import java.time.LocalDate;
@@ -20,4 +21,11 @@ public interface PmRawMaterialCountService extends IService<PmRawMaterialCount> 
      * @return
      */
     List<PmRawMaterialVO> getListByDate(TupleDTO<LocalDate,LocalDate> dto);
+
+    /**
+     * 生成出库单并保存
+     * @param pmsRawMaterialCountDTO
+     * @return
+     */
+    Boolean generateDeliveryAndSave(PmsRawMaterialCountDTO pmsRawMaterialCountDTO);
 }

@@ -77,6 +77,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -157,6 +158,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(WmsDeliveryReceiptDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_DELIVERY_RECEIPT);
         lock.lock();
@@ -201,6 +203,56 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             lock.unlock();
         }
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long addId(WmsDeliveryReceiptDTO dto) {
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_DELIVERY_RECEIPT);
+        lock.lock();
+        Long id = null;
+        try {
+            //1.校验数据是否存在
+            Assert.isTrue(Objects.nonNull(dto), "出库凭证信息为空");
+            //2.定义数据模型
+            WmsDeliveryReceipt model = new WmsDeliveryReceipt();
+            BeanUtil.copyProperties(dto, model);
+            //3.给当前出库单生成编码
+            model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+            model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
+            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())){
+                model.setCreateBy(dto.getCreateBy());
+                model.setCreateName(dto.getCreateName());
+            }
+            //4.保存出库单信息
+            save(model);
+            id = model.getId();
+            //5.保存出库单明细信息
+            if (CollUtil.isNotEmpty(dto.getList())) {
+                List<WmsInventoryDTO> infoList = Lists.newArrayList();
+                List<WmsDeliveryReceiptInfo> receiptInfoList = Lists.newArrayList();
+                dto.getList().forEach(info -> {
+                    WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                    BeanUtil.copyProperties(info, wmsInventoryDTO);
+                    wmsInventoryDTO.setId(info.getInventoryId());
+                    infoList.add(wmsInventoryDTO);
+                    WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
+                    BeanUtil.copyProperties(info, wmsDeliveryReceiptInfo);
+                    wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
+                    receiptInfoList.add(wmsDeliveryReceiptInfo);
+                });
+                //调整锁定库存信息
+                wmsInventoryService.updateLockQuantity(infoList, WmsManagerConstant.InventoryEnum.ZERO.getCode());
+                //保存明细信息
+                wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
+            }
+            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
+                affirm(model.getId(),dto.getCreateName());
+            }
+        } finally {
+            lock.unlock();
+        }
+        return id;
     }
 
     public Boolean affirm(Long id,String affirmName) {

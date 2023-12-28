@@ -130,7 +130,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
         TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(date, date);
         //根据时间获取班组
-        Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
 
         //总计

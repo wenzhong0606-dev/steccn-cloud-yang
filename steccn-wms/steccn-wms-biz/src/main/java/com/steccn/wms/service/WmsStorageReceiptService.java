@@ -196,4 +196,13 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Boolean updateBatchShelf(WmsUpdateBatchShelfDTO dto);
+
+    /**
+     *
+     * 对出库单进行冲销
+     * @param deliveryId
+     * @param userName
+     * @return
+     */
+    Boolean chargeAgainstDelivery(Long deliveryId,String userName);
 }
