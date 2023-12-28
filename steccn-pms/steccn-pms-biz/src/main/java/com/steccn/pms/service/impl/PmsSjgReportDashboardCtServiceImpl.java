@@ -557,9 +557,27 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public List<SjgCountReportStopVO> countReportStop(Integer lineId, LocalDate start, LocalDate end) {
+        List<SjgCountReportStopVO> resList = Lists.newArrayList();
         //先根据产线，日期区间获取数据
-        List<SjgCountReportStopRowVO> resList = pmsReportWorkHourMapper.countReportStop(lineId, start, end);
-        return null;
+        List<SjgCountReportStopRowVO> dbList = pmsReportWorkHourMapper.countReportStop(lineId, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取所有的工位
+            Set<Integer> stationIdSet = dbList.stream().map(SjgCountReportStopRowVO::getStationId).collect(Collectors.toSet());
+            //根据工位和开始日期，结束日期查询标准产能
+
+            Map<String, List<SjgCountReportStopRowVO>> resMap = Maps.newLinkedHashMap();
+            //根据map构建返回集合
+            dbList.forEach(ele -> {
+                MapUtil.compute(resMap, ele.getProcessName(), ele);
+            });
+            resMap.forEach((k, v) -> {
+                SjgCountReportStopVO table = new SjgCountReportStopVO();
+                table.setProcessName(k);
+                table.setTable(v);
+                resList.add(table);
+            });
+        }
+        return resList;
     }
 
     /**
