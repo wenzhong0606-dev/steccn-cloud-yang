@@ -23,6 +23,11 @@ public class SjgCountReportRowVO implements Serializable {
     /**
      * 产线
      */
+    private Integer lineId;
+
+    /**
+     * 产线
+     */
     private String lineName;
 
     /**

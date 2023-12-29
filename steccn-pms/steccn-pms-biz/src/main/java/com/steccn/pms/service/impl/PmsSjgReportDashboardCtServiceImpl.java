@@ -499,6 +499,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             BigDecimal valueDiffSumRate = BigDecimalUtil.percent(valueDiffSum, curWeekProcess);
             for (SysOfficeVO line : lineList) {
                 SjgCountReportRowVO row = new SjgCountReportRowVO();
+                row.setLineId(line.getId());
                 row.setCategoryName(process.getName());
                 row.setLineName(line.getOfficeName());
                 row.setCurrentValue(currentPmMap.getOrDefault(process.getId() + "_" + line.getId(),new TupleDTO<>()).getField1());
@@ -537,6 +538,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         for (SysOfficeVO line : lineList) {
             SjgCountReportRowVO row = new SjgCountReportRowVO();
             row.setCategoryName("产线产量");
+            row.setLineId(line.getId());
             row.setLineName(line.getOfficeName());
             row.setCurrentValue(currentInStorageMap.get(line.getId()));
             //入库产量 / 磨边工序加工数

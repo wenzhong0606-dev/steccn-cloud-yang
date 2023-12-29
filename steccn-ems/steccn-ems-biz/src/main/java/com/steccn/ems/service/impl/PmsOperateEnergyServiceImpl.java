@@ -143,6 +143,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         for (SysOfficeVO line : lineList) {
             SjgCountReportRowVO row = new SjgCountReportRowVO();
             row.setCategoryName("电");
+            row.setLineId(line.getId());
             row.setLineName(line.getOfficeName());
             row.setCurrentValue(currentConsumeMap.get(line.getId()));
             //单耗：电量 / 该产线钢化产量
