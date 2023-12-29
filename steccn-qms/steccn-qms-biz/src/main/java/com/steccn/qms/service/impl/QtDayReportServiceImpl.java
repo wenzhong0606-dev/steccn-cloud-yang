@@ -2002,20 +2002,20 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
         }
         //如果是班次报表则处理班组数据,和拉引量一致
-        if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
-            //拿到拉引量的班组
-            QtDayReportLossDataVO tableDataLaTmp = tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals("拉引量")).findFirst().orElse(null);
-            if(Objects.nonNull(tableDataLaTmp)){
-                tableData.stream().filter(v->v.getType().equals(OaConstant.NO)).forEach(v -> {
-                    for(int i = 0;i<v.getModule().size();i++){
-                        if(i!=v.getModule().size()-1){
-                            v.getModule().get(i).getValue().set(0,tableDataLaTmp.getModule().get(i).getValue().get(0));
-                        }
-                    }
-                });
-            }
-
-        }
+//        if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+//            //拿到拉引量的班组
+//            QtDayReportLossDataVO tableDataLaTmp = tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals("拉引量")).findFirst().orElse(null);
+//            if(Objects.nonNull(tableDataLaTmp)){
+//                tableData.stream().filter(v->v.getType().equals(OaConstant.NO)).forEach(v -> {
+//                    for(int i = 0;i<v.getModule().size();i++){
+//                        if(i!=v.getModule().size()-1){
+//                            v.getModule().get(i).getValue().set(0,tableDataLaTmp.getModule().get(i).getValue().get(0));
+//                        }
+//                    }
+//                });
+//            }
+//
+//        }
         chart.setTableData(tableData);
         return chart;
     }

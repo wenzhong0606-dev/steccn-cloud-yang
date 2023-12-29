@@ -36,7 +36,10 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
             Map<String,Map<String,String>> map = Maps.newHashMap();
             Map<String,String> xmMap = Maps.newHashMap();
             xmMap.put("/extra.channel_id","113866");
+            Map<String,String> hwMap = Maps.newHashMap();
+            xmMap.put("/message/android/category","WORK");
             map.put("XM",xmMap);
+            map.put("HW",hwMap);
             dto.setOptions(map);
             dto.setForce_notification(Boolean.TRUE);
             dto.setRequest_id(UUID.randomUUID().toString().replaceAll("-", ""));

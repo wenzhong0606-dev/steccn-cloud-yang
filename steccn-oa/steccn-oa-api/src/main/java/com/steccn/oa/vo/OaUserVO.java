@@ -49,5 +49,7 @@ public class OaUserVO implements Serializable {
      */
     private Integer status;
 
+    private Integer groupId;
+
 
 }
