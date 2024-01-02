@@ -20,10 +20,7 @@ import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.AdsOpcUaAll3;
-import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.dto.SalesContractCustomerDTO;
-import com.steccn.dp.dto.SalesContractModelDTO;
-import com.steccn.dp.dto.SalesContractClassDTO;
+import com.steccn.dp.dto.*;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
 import com.steccn.dp.vo.DpSalesContractVO;
@@ -175,6 +172,75 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             dataList.add(stackGraphDTO);
         }
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public List<WeightCountDTO> countDTO(DpPmsOperateDTO dto) {
+        List<WeightCountDTO> results = Lists.newArrayList();
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<DpWeightVO> tripleDTOS = weightCount(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        if(CollUtil.isEmpty(tripleDTOS)){
+            return results;
+        }
+        //找到所有的的tagName
+        List<String> tagNameList = tripleDTOS.stream().map(DpWeightVO::getTagId).distinct().sorted().collect(Collectors.toList());
+        Set<String> refSet = tripleDTOS.stream().map(DpWeightVO::getTagId).collect(Collectors.toSet());
+        Map<String, List<SysConfigurationDTO>> dpWeight = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("DP_WEIGHT", refSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        for(String str:tagNameList){
+            String tmpName = dpWeight.get(str).get(0).getRefContent();
+            if(tmpName.contains("1#")){
+                tmpName = tmpName.substring(2);
+            }
+            WeightCountDTO result = new WeightCountDTO();
+            result.setUnit("吨");
+            result.setName(tmpName);
+            results.add(result);
+        }
+        //组数据
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        for (int i = 1; i < dateList.size(); i++) {
+            LocalDate start = dateList.get(i - 1);
+            //获取值的方式必须统一
+            String key = MysqlDateKeyUtil.convert(granularity, start);
+            List<DpWeightVO> resultTmp = tripleDTOS.stream().filter(v -> v.getDateStr().equals(key))
+                    .sorted(Comparator.comparing(DpWeightVO::getTagId)).collect(Collectors.toList());
+            //若为空则空柱子
+            if(CollUtil.isEmpty(resultTmp)){
+                for(String str:tagNameList){
+                    String tmpName = dpWeight.get(str).get(0).getRefContent();
+                    if(tmpName.contains("1#")){
+                        tmpName = tmpName.substring(2);
+                    }
+                    String finalTmpName = tmpName;
+                    WeightCountDTO countTmp = results.stream().filter(v -> v.getName().equals(finalTmpName)).findFirst().orElse(null);
+                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                    if(Objects.isNull(countTmp.getValueMap())){
+                        countTmp.setValueMap(valueMap);
+                    }else {
+                        valueMap = countTmp.getValueMap();
+                    }
+                    valueMap.put(key,null);
+                }
+            }else {
+                for(DpWeightVO tmp:resultTmp){
+                    String tmpName = dpWeight.get(tmp.getTagId()).get(0).getRefContent();
+                    if(tmpName.contains("1#")){
+                        tmpName = tmpName.substring(2);
+                    }
+                    String finalTmpName = tmpName;
+                    WeightCountDTO countTmp = results.stream().filter(v -> v.getName().equals(finalTmpName)).findFirst().orElse(null);
+                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                    if(Objects.isNull(countTmp.getValueMap())){
+                        countTmp.setValueMap(valueMap);
+                    }else {
+                        valueMap = countTmp.getValueMap();
+                    }
+                    valueMap.put(key,BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
+                }
+
+            }
+        }
+        return results;
     }
 
     @Override

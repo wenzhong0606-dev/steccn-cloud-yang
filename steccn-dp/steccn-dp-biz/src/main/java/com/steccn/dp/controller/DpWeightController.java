@@ -5,6 +5,7 @@ import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.dto.WeightCountDTO;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.vo.DpWeightVO;
 import groovy.lang.Tuple;
@@ -53,5 +54,11 @@ public class DpWeightController {
     @ApiOperation(value = "获取原料配料详情")
     public R<SteccnTableDataDTO> weightDetail(@RequestParam("date") LocalDate date){
         return R.success(adsOpcUaAll3Service.weightDetail(date));
+    }
+
+    @PostMapping("/test")
+    @ApiOperation(value = "电子秤读数图表")
+    public R<List<WeightCountDTO>> test(@RequestBody DpPmsOperateDTO dto) {
+        return R.success(adsOpcUaAll3Service.countDTO(dto));
     }
 }
