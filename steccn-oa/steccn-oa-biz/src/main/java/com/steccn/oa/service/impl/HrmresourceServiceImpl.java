@@ -28,10 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -296,6 +293,17 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             result.setJobTitleId(one.getJobtitle());
         }
         return result;
+    }
+
+    @Override
+    public List<Integer> getUserIdByJobTitleId(Set<Integer> jobTitles) {
+        List<Integer> results = Lists.newArrayList();
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
+                .in(Hrmresource::getJobtitle,jobTitles));
+        if(CollUtil.isNotEmpty(list)){
+            results = list.stream().map(Hrmresource::getId).collect(Collectors.toList());
+        }
+        return results;
     }
 }
 

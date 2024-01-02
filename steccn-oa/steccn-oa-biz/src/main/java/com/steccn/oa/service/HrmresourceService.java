@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -110,4 +111,10 @@ public interface HrmresourceService extends IService<Hrmresource> {
      */
     OaUserVO getOaUserByLoginCode(String loginCode);
 
+    /**
+     * 根据岗位id获取用户id
+     * @param jobTitles
+     * @return
+     */
+    List<Integer> getUserIdByJobTitleId(Set<Integer> jobTitles);
 }

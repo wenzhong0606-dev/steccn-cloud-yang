@@ -313,4 +313,12 @@ public interface OaInfoService {
     @ApiOperation("获取当前节点操作人")
     @PostMapping("/feign/oa/workflow/operator")
     R<OaUserIdAndName> getOperator(@RequestBody TupleDTO<Integer,Integer> dto);
+
+    /**
+     * 根据岗位id获取用户id
+     * @param jobTitles
+     * @return
+     */
+    @PostMapping("/feign/oa/jobTitle/id")
+    R<List<Integer>> getJobTitleById(@RequestBody Set<Integer> jobTitles);
 }
