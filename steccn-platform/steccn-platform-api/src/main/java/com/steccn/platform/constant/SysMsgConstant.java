@@ -57,7 +57,8 @@ public interface SysMsgConstant {
         REPAIR_NOTICE(20,"维修通知",MsgCategoryEnum.SYS_REMIND.code, "维修工单生成,请及时查看",0),
         OFFLINE_NOTICE(21,"断线报警",MsgCategoryEnum.SYS_REMIND.code, "%s,时间为%s",0),
         RISK_NOTICE(22,"缺陷通知",MsgCategoryEnum.SYS_REMIND.code,"设备%s的%s部位发生%s的隐患",0),
-        INS_NOTICE(23,"点检通知",MsgCategoryEnum.SYS_REMIND.code,"点检任务:%s未完成",0),;
+        INS_NOTICE(23,"点检通知",MsgCategoryEnum.SYS_REMIND.code,"点检任务:%s未完成",0),
+        EQP_NOTICE(24,"设备故障报警",MsgCategoryEnum.SYS_REMIND.code,"设备:%s故障报警",0),;
 
 
         private Integer code;
