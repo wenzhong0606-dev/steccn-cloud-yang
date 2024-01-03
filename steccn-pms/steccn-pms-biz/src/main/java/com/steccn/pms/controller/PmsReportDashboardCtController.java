@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author yequan
@@ -97,7 +98,7 @@ public class PmsReportDashboardCtController {
 
     @GetMapping("/count/report/detail")
     @ApiOperation("基片统计报表")
-    public R<JpCountReportDetailVO> countReportDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+    public R<JpCountReportDetailVO> countReportDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) throws ExecutionException, InterruptedException {
         return R.success(pmsReportDashboardCtService.countReportDetail(workShopId, start, end, granularity));
     }
 

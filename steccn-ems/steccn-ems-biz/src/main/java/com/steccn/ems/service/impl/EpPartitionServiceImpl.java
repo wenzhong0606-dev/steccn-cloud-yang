@@ -633,6 +633,20 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public List<TripleDTO<Long, Integer, String>> jpCountReportHeatPowerDefaultNode() {
+        //站外电
+        Map<String, List<SysConfigurationDTO>> eleOtherConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC_OTHER, EpManagerConstant.ELECOtherConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleOtherConfList = Lists.newArrayList();
+        for (EpManagerConstant.ELECOtherConfContentEnum elecOtherConfContentEnum : EpManagerConstant.ELECOtherConfContentEnum.values()) {
+            List<SysConfigurationDTO> tmpList = eleOtherConfMap.get(elecOtherConfContentEnum.toString());
+            if (CollUtil.isNotEmpty(tmpList)) {
+                eleOtherConfList.addAll(tmpList);
+            }
+        }
+        return queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList);
+    }
+
     /**
      * 根据officeName获取指定能源类型的节点id和节点名称
      *

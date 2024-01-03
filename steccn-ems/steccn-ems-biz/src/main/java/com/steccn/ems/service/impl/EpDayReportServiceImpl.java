@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -9,16 +10,20 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -76,6 +81,33 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         hintList1.addAll(hintList2);
         resVo.setHintLineList(hintList1);
         return resVo;
+    }
+
+    @Override
+    public List<CommonReportDTO> heatPowerElecWater(LocalDate start, LocalDate end, Integer granularityInt) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        List<CommonReportDTO> resList = Lists.newArrayList();
+        List<TripleDTO<Long, Integer, String>> eleConfList = epPartitionService.jpCountReportHeatPowerDefaultNode();
+        EpEnergyType electricType = epEnergyTypeService.getById(1);
+        Assert.notNull(electricType, "能源类型-电不存在");
+        //获取余热发电-电
+        List<TripleDTO<Long, Integer, String>> heatPowerList = eleConfList.stream().filter(ele -> "余热发电站（站用电）".equals(ele.getField3())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(heatPowerList)) {
+            List<Integer> hpIdSet = heatPowerList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
+            Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(hpIdSet));
+            if (CollUtil.isNotEmpty(accountMap)) {
+                hpIdSet.forEach(ele -> {
+                    CommonReportDTO res = jpHeatPowerRow(granularity, start, end, electricType, accountMap.get(ele));
+                    resList.add(res);
+                });
+            }
+        }
+        return resList;
+    }
+
+    private CommonReportDTO jpHeatPowerRow(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, EpEnergyType epEnergyType, EpInstrumentAccount account) {
+        return null;
     }
 
     /**

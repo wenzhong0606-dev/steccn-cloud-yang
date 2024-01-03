@@ -140,4 +140,12 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode();
+
+    /**
+     * 基片统计报表-余热发电
+     *
+     * @return
+     */
+    List<TripleDTO<Long, Integer, String>> jpCountReportHeatPowerDefaultNode();
+
 }

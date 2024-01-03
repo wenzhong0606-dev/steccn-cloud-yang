@@ -3,11 +3,13 @@ package com.steccn.ems.controller.feign;
 import cn.hutool.core.lang.Assert;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.Tuple5DTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
+import com.steccn.ems.service.EpDayReportService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
@@ -29,6 +31,7 @@ import java.util.List;
 public class EpMeterReadFeignController {
 
     private final EpMeterReadService epMeterReadService;
+    private final EpDayReportService epDayReportService;
 
     /**
      * 获取指定能源的耗用数
@@ -40,5 +43,17 @@ public class EpMeterReadFeignController {
     public R<CommonReportDTO> energyConsume(@RequestBody Tuple5DTO<Integer, Integer, LocalDate, LocalDate, Integer> dto) {
         Assert.isTrue(LocalDateUtil.le(dto.getField3(), dto.getField4()), "结束时间必须小于等于开始时间");
         return R.success(epMeterReadService.energyConsume(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
+    }
+
+    /**
+     * 余热发电
+     *
+     * @param dto 日期start，日期end，粒度  3元组
+     * @return
+     */
+    @PostMapping("/feign/ems/meter/read/heat/power")
+    R<List<CommonReportDTO>> heatPower(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto) {
+        Assert.isTrue(LocalDateUtil.le(dto.getField1(), dto.getField2()), "结束时间必须小于等于开始时间");
+        return R.success(epDayReportService.heatPowerElecWater(dto.getField1(), dto.getField2(), dto.getField3()));
     }
 }

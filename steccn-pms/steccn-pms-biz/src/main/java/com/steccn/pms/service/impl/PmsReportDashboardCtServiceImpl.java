@@ -9,6 +9,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
+import com.steccn.ems.vo.EpDayReportCountRowVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -36,6 +37,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -325,7 +328,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     }
 
     @Override
-    public JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
+    public JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) throws ExecutionException, InterruptedException {
         //确定粒度存在
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
         Assert.notNull(granularity, "粒度不存在");
@@ -333,14 +336,33 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Assert.notEmpty(timeList, "时间区间不存在");
         JpCountReportDetailVO resVo = new JpCountReportDetailVO();
         List<String> dateStrList = Lists.newArrayList();
-        CommonReportDTO gasRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(3, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        CommonReportDTO oilRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(4, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        CommonReportDTO kcalRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(5, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        CommonReportDTO electricRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(1, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        CommonReportDTO waterRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(2, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+
+        //并行执行
+        CompletableFuture<CommonReportDTO> gasFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(3, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> oilFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(4, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> kcalFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(5, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> electricFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(1, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> waterFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(2, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
+        completableFuture.isDone();
         List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
-        countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasRow, oilRow, kcalRow), Boolean.TRUE, granularity, timeList);
-        countReportDetailRow(rowList, "水电", Lists.newArrayList(electricRow, waterRow), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "水电", Lists.newArrayList(electricFuture.get(), waterFuture.get()), Boolean.FALSE, granularity, timeList);
+        //获取余热发电
+
+        //获取光伏发电
+
+        //获取脱硫脱硝
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate areaStart = timeList.get(i - 1);
             dateStrList.add(XAxisUtil.convert(granularity, areaStart));

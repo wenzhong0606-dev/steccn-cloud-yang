@@ -7,6 +7,7 @@ import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.vo.JpCountReportDetailVO;
 
 import java.time.LocalDate;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author yequan
@@ -130,5 +131,5 @@ public interface PmsReportDashboardCtService {
      * @param granularity 班次，日，周，月，年
      * @return
      */
-    JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+    JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) throws ExecutionException, InterruptedException;
 }

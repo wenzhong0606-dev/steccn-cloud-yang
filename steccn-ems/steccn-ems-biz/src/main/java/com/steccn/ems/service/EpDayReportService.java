@@ -1,8 +1,11 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.ems.vo.EpDayReportCountVO;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author yequan
@@ -12,8 +15,19 @@ import java.time.LocalDate;
 public interface EpDayReportService {
     /**
      * 能耗日统计报表
+     *
      * @param month 年月
      * @return 结果
      */
-    EpDayReportCountVO count(LocalDate month,boolean flag);
+    EpDayReportCountVO count(LocalDate month, boolean flag);
+
+    /**
+     * 余热发电 - 电 & 水
+     *
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    List<CommonReportDTO> heatPowerElecWater(LocalDate start, LocalDate end, Integer granularityInt);
 }
