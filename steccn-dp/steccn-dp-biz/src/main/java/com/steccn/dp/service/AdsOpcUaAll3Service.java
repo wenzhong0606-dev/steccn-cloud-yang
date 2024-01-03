@@ -7,6 +7,7 @@ import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.dto.WeightCountDTO;
 import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -50,6 +51,8 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     QtLineChartBarDTO weightCountDashBoard(DpPmsOperateDTO dto);
+
+    List<WeightCountDTO> countDTO(DpPmsOperateDTO dto);
 
     /**
      * 销售系统合同

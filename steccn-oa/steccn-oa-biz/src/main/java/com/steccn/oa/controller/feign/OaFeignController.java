@@ -152,4 +152,10 @@ public class OaFeignController {
     public R<List<OaTodayClassVO>> getTodayClassInfo(@RequestBody TupleDTO<String,LocalDate> dto){
         return R.success(kqGroupmemberService.getTodayClassInfo(dto.getField1(),dto.getField2()));
     }
+
+    @ApiOperation("获取当班信息")
+    @PostMapping("/jobTitle/id")
+    public R<List<Integer>> getJobTitleById(@RequestBody Set<Integer> jobTitles){
+        return R.success(hrmresourceService.getUserIdByJobTitleId(jobTitles));
+    }
 }

@@ -1779,7 +1779,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                         row.setSlice(tmp.getQuantity());
                         BigDecimalUtil.accumulate(productLineCountMap,1,row.getSlice());
                         //所在行成品数（片）* 所在行长 * 所在行宽 / 1000000
-                        BigDecimal stepOne = BigDecimalUtil.multiply(row.getPerWeight(), row.getLength());
+                        BigDecimal stepOne = BigDecimalUtil.multiply(row.getSlice(), row.getLength());
                         BigDecimal stepTwo = BigDecimalUtil.multiply(stepOne, row.getWidth());
                         row.setSquareMeter(BigDecimalUtil.divide(stepTwo,new BigDecimal(1000000),2));
                         BigDecimalUtil.accumulate(productLineCountMap,2,row.getSquareMeter());

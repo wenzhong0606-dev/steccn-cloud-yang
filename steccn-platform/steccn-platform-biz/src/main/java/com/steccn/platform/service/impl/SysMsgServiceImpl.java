@@ -161,7 +161,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
 //                        longIds.add(tmp.getId().longValue());
 //                    });
 //                }
-                longIds.add(881L);
+//                longIds.add(881L);
                 //发给副段长
 //                List<OaUserIdAndName> oaUserIdAndNames1 = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_DIANGONG, PmManagerConstant.DIRECTOR_ID_DIANQI), FeignConstant.STECCN_OA_SERVICE_NAME).get();
 //                if(CollUtil.isNotEmpty(oaUserIdAndNames1)){
@@ -170,6 +170,12 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
 //                    });
 //                }
                 //发送当班电工
+                List<Integer> integers = FeignOptional.of(() -> oaInfoService.getJobTitleById(Sets.newHashSet(117, 177)), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(CollUtil.isNotEmpty(integers)){
+                    integers.forEach(tmp->{
+                        longIds.add(tmp.longValue());
+                    });
+                }
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.DIAN_GONG2));
             }
@@ -192,9 +198,16 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
 //                    });
 //                }
                 //发给机修工段副段长 王蒙蒙
-                longIds.add(913L);
+//                longIds.add(913L);
                 //发给机修工段段长 胡建斌
-                longIds.add(926L);
+//                longIds.add(926L);
+                List<Integer> integers = FeignOptional.of(() -> oaInfoService.getJobTitleById(Sets.newHashSet(121, 172,120,178)), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(CollUtil.isNotEmpty(integers)){
+                    integers.forEach(tmp->{
+                        longIds.add(tmp.longValue());
+                    });
+                }
+
                 //发送当班机修工
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG1));
                 longIds.addAll(this.getCurrentClassWorker(PmManagerConstant.JXIU_GONG2));
