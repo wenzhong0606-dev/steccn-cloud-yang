@@ -1,6 +1,8 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
@@ -27,15 +29,13 @@ import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -333,27 +333,72 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Assert.notEmpty(timeList, "时间区间不存在");
         JpCountReportDetailVO resVo = new JpCountReportDetailVO();
         List<String> dateStrList = Lists.newArrayList();
+        CommonReportDTO gasRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(3, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        CommonReportDTO oilRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(4, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        CommonReportDTO kcalRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(5, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         CommonReportDTO electricRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(1, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        CommonReportDTO waterRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(2, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
-        JpCountReportDetailRowVO electricRowRes = new JpCountReportDetailRowVO();
-        List<BigDecimal> electricValueList = Lists.newArrayList();
-        electricRowRes.setValueList(electricValueList);
-        electricRowRes.setCategory("燃料");
-        electricRowRes.setName(electricRow.getName());
-        electricRowRes.setUnitName(electricRow.getUnit());
-        electricRowRes.setType(1);
-        rowList.add(electricRowRes);
+        countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasRow, oilRow, kcalRow), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "水电", Lists.newArrayList(electricRow, waterRow), Boolean.FALSE, granularity, timeList);
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate areaStart = timeList.get(i - 1);
-            String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
-            BigDecimal electricValue = electricRow.getValueMap().get(convert);
-            electricValueList.add(electricValue);
             dateStrList.add(XAxisUtil.convert(granularity, areaStart));
         }
-        electricRowRes.setRowCount(BigDecimalUtil.sum(electricValueList));
         resVo.setDateStrList(dateStrList);
         resVo.setRowList(rowList);
         return resVo;
+    }
+
+    /**
+     * 获取类别数据
+     *
+     * @param rowList     返回结果
+     * @param category    类型
+     * @param dataRowList 数据行
+     * @param ctFlag      是否需要合计行
+     * @param granularity 粒度
+     * @param timeList    时间区间
+     */
+    private void countReportDetailRow(List<JpCountReportDetailRowVO> rowList, String category, List<CommonReportDTO> dataRowList, Boolean ctFlag, QtManagerConstant.QtGranularityEnum granularity, List<LocalDate> timeList) {
+        if (CollUtil.isNotEmpty(dataRowList)) {
+            Map<Integer, BigDecimal> ctDataMap = Maps.newLinkedHashMap();
+            for (CommonReportDTO ele : dataRowList) {
+                if (Objects.nonNull(ele)) {
+                    JpCountReportDetailRowVO row = new JpCountReportDetailRowVO();
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    row.setValueList(valueList);
+                    row.setCategory(category);
+                    row.setName(ele.getName());
+                    row.setUnitName(ele.getUnit());
+                    row.setType(0);
+                    rowList.add(row);
+                    for (int i = 1; i < timeList.size(); i++) {
+                        LocalDate areaStart = timeList.get(i - 1);
+                        String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
+                        BigDecimal value = ele.getValueMap().get(convert);
+                        valueList.add(value);
+                        //需要考虑小计
+                        if (ctFlag) {
+                            MapUtil.add(ctDataMap, i - 1, value, (x, y) -> BigDecimalUtil.add(x, y));
+                        }
+                    }
+                    row.setRowCount(BigDecimalUtil.sum(valueList));
+                }
+            }
+            //如果有小计
+            if (ctFlag) {
+                JpCountReportDetailRowVO ctRow = new JpCountReportDetailRowVO();
+                ctRow.setCategory(category);
+                ctRow.setType(1);
+                ctRow.setName("小计");
+                //计算合计
+                Collection<BigDecimal> values = ctDataMap.values();
+                ctRow.setValueList(values.stream().collect(Collectors.toList()));
+                ctRow.setRowCount(BigDecimalUtil.sum(values));
+                rowList.add(ctRow);
+            }
+        }
     }
 
     /**

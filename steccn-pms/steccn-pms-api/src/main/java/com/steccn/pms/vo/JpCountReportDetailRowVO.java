@@ -22,10 +22,10 @@ public class JpCountReportDetailRowVO implements Serializable {
      */
     private Integer type;
 
-    /**
-     * 排序，用于区分内容之间的次序关系
-     */
-    private Integer sort;
+//    /**
+//     * 排序，用于区分内容之间的次序关系
+//     */
+//    private Integer sort;
 
     /**
      * 分类
