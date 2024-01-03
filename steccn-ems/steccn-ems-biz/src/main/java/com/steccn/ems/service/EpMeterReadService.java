@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
@@ -91,4 +92,16 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @return
      */
     EpMeterReadVO kvDay(String readMonth, Integer energyType);
+
+    /**
+     * 获取指定能源的耗用数
+     *
+     * @param energyType     能源类型
+     * @param workshopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    CommonReportDTO energyConsume(Integer energyType, Integer workshopId, LocalDate start, LocalDate end, Integer granularityInt);
 }

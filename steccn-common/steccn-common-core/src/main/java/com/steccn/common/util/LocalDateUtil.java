@@ -329,6 +329,18 @@ public class LocalDateUtil {
     }
 
     /**
+     * 判断time是否在[start,end)之间
+     *
+     * @param time    时间
+     * @param start   开始时间
+     * @param end     结束时间
+     * @return
+     */
+    public static Boolean isRange(LocalDateTime time, LocalDateTime start, LocalDateTime end) {
+        return isRange(time, start, end, true, false);
+    }
+
+    /**
      * 判断time是否在start-end之间
      *
      * @param time    时间
@@ -355,6 +367,18 @@ public class LocalDateUtil {
             return end.isEqual(time);
         }
         return Boolean.FALSE;
+    }
+
+    /**
+     * 判断time是否在[start,end)之间
+     *
+     * @param time    时间
+     * @param start   开始时间
+     * @param end     结束时间
+     * @return
+     */
+    public static Boolean isRange(LocalDate time, LocalDate start, LocalDate end) {
+        return isRange(time, start, end, true, false);
     }
 
     /**

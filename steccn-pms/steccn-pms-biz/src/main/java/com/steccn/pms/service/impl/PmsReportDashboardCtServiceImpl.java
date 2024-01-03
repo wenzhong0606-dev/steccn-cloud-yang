@@ -4,10 +4,9 @@ import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
+import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -20,9 +19,11 @@ import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.vo.JpCountReportDetailRowVO;
 import com.steccn.pms.vo.JpCountReportDetailVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmsPullForceService pmsPullForceService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
 
     @Override
     public QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
@@ -331,13 +333,26 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Assert.notEmpty(timeList, "时间区间不存在");
         JpCountReportDetailVO resVo = new JpCountReportDetailVO();
         List<String> dateStrList = Lists.newArrayList();
+        CommonReportDTO electricRow = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(1, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
+        JpCountReportDetailRowVO electricRowRes = new JpCountReportDetailRowVO();
+        List<BigDecimal> electricValueList = Lists.newArrayList();
+        electricRowRes.setValueList(electricValueList);
+        electricRowRes.setCategory("燃料");
+        electricRowRes.setName(electricRow.getName());
+        electricRowRes.setUnitName(electricRow.getUnit());
+        electricRowRes.setType(1);
+        rowList.add(electricRowRes);
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate areaStart = timeList.get(i - 1);
-            LocalDate areaEnd = timeList.get(i);
+            String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
+            BigDecimal electricValue = electricRow.getValueMap().get(convert);
+            electricValueList.add(electricValue);
             dateStrList.add(XAxisUtil.convert(granularity, areaStart));
         }
+        electricRowRes.setRowCount(BigDecimalUtil.sum(electricValueList));
         resVo.setDateStrList(dateStrList);
-
+        resVo.setRowList(rowList);
         return resVo;
     }
 
