@@ -2,12 +2,14 @@ package com.steccn.pms.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.UnitLengthUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.util.PmsUnitUtil;
+import com.steccn.pms.vo.JpCountReportDetailVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -90,6 +93,12 @@ public class PmsReportDashboardCtController {
     @ApiOperation("各产线拉引量总数")
     public R<QtLineChartBarCountDTO> lineDatePf(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
         return R.success(pmsReportDashboardCtService.lineDatePf(workShopId, start, end, granularity));
+    }
+
+    @GetMapping("/count/report/detail")
+    @ApiOperation("基片统计报表")
+    public R<JpCountReportDetailVO> countReportDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) {
+        return R.success(pmsReportDashboardCtService.countReportDetail(workShopId, start, end, granularity));
     }
 
 }

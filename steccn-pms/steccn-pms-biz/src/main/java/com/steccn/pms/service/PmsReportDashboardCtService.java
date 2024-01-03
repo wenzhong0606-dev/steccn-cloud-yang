@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.dto.QtLineChartBarCountDTO;
+import com.steccn.pms.vo.JpCountReportDetailVO;
 
 import java.time.LocalDate;
 
@@ -119,4 +120,15 @@ public interface PmsReportDashboardCtService {
      * @return
      */
     QtLineChartBarCountDTO lineDatePf(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 基片统计报表
+     *
+     * @param workShopId  车间主键
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 班次，日，周，月，年
+     * @return
+     */
+    JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularity);
 }

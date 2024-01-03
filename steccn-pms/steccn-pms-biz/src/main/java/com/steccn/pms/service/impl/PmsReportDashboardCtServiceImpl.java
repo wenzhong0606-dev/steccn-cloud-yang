@@ -20,6 +20,7 @@ import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.vo.JpCountReportDetailVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.XAxisUtil;
@@ -319,6 +320,16 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             Map<String, BigDecimal> numMap = pmsPullForceService.dateLinePmUnit(lineIdList, start, end);
             return dateQuantity(wsLineList, timeList, numMap, "拉引量总数", granularity);
         }
+    }
+
+    @Override
+    public JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
+        //确定粒度存在
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), start, end);
+        Assert.notEmpty(timeList, "时间区间不存在");
+        return null;
     }
 
     /**
