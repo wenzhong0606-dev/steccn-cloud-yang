@@ -3,16 +3,14 @@ package com.steccn.dp.service;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.dto.WeightCountDTO;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,7 +50,7 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      */
     QtLineChartBarDTO weightCountDashBoard(DpPmsOperateDTO dto);
 
-    List<WeightCountDTO> countDTO(DpPmsOperateDTO dto);
+    List<CommonReportDTO> countDTO(DpPmsOperateDTO dto);
 
     /**
      * 销售系统合同

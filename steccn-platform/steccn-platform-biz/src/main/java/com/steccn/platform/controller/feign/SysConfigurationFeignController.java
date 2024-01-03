@@ -88,4 +88,10 @@ public class SysConfigurationFeignController {
     public R<Set<String>> contentByType(@RequestParam("type") String type) {
         return R.success(sysConfigurationService.contentByType(type));
     }
+
+    @ApiOperation(value = "根据类型和content获取信息")
+    @PostMapping("/infoByContentAndType")
+    public R<SysConfigurationDTO> infoByContentAndType(@RequestBody TupleDTO<String, String> dto) {
+        return R.success(sysConfigurationService.infoByTypeAndContent(dto.getField1(), dto.getField2()));
+    }
 }

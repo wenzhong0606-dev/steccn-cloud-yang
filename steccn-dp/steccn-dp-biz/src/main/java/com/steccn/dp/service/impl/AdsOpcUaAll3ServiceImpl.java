@@ -26,12 +26,10 @@ import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
 import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
-import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SalesContractDTO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
-import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmRawMaterialVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -44,7 +42,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -175,8 +172,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     }
 
     @Override
-    public List<WeightCountDTO> countDTO(DpPmsOperateDTO dto) {
-        List<WeightCountDTO> results = Lists.newArrayList();
+    public List<CommonReportDTO> countDTO(DpPmsOperateDTO dto) {
+        List<CommonReportDTO> results = Lists.newArrayList();
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         List<DpWeightVO> tripleDTOS = weightCount(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
         if(CollUtil.isEmpty(tripleDTOS)){
@@ -191,7 +188,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             if(tmpName.contains("1#")){
                 tmpName = tmpName.substring(2);
             }
-            WeightCountDTO result = new WeightCountDTO();
+            CommonReportDTO result = new CommonReportDTO();
             result.setUnit("吨");
             result.setName(tmpName);
             results.add(result);
@@ -212,7 +209,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                         tmpName = tmpName.substring(2);
                     }
                     String finalTmpName = tmpName;
-                    WeightCountDTO countTmp = results.stream().filter(v -> v.getName().equals(finalTmpName)).findFirst().orElse(null);
+                    CommonReportDTO countTmp = results.stream().filter(v -> v.getName().equals(finalTmpName)).findFirst().orElse(null);
                     Map<String,BigDecimal> valueMap = Maps.newHashMap();
                     if(Objects.isNull(countTmp.getValueMap())){
                         countTmp.setValueMap(valueMap);
@@ -228,7 +225,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                         tmpName = tmpName.substring(2);
                     }
                     String finalTmpName = tmpName;
-                    WeightCountDTO countTmp = results.stream().filter(v -> v.getName().equals(finalTmpName)).findFirst().orElse(null);
+                    CommonReportDTO countTmp = results.stream().filter(v -> v.getName().equals(finalTmpName)).findFirst().orElse(null);
                     Map<String,BigDecimal> valueMap = Maps.newHashMap();
                     if(Objects.isNull(countTmp.getValueMap())){
                         countTmp.setValueMap(valueMap);
