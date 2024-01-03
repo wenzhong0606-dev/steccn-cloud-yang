@@ -143,7 +143,7 @@ public class MesEquipment implements Serializable {
     private String bitNumber;
 
     /**
-     * 设备状态（0：正常，1：停用，2：维修，3：报废）
+     * 设备状态（0：运行，1：告警，2：待机，3：关机）
      */
     private String state;
 

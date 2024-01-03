@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.JsSysEmployeeMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.JsSysEmployee">
+            <result property="empCode" column="emp_code" jdbcType="VARCHAR"/>
+            <result property="empName" column="emp_name" jdbcType="VARCHAR"/>
+            <result property="empNameEn" column="emp_name_en" jdbcType="VARCHAR"/>
+            <result property="empNo" column="emp_no" jdbcType="VARCHAR"/>
+            <result property="officeCode" column="office_code" jdbcType="VARCHAR"/>
+            <result property="officeName" column="office_name" jdbcType="VARCHAR"/>
+            <result property="companyCode" column="company_code" jdbcType="VARCHAR"/>
+            <result property="companyName" column="company_name" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="corpCode" column="corp_code" jdbcType="VARCHAR"/>
+            <result property="corpName" column="corp_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        emp_code,emp_name,emp_name_en,
+        emp_no,office_code,office_name,
+        company_code,company_name,status,
+        create_by,create_date,update_by,
+        update_date,remarks,corp_code,
+        corp_name
+    </sql>
+</mapper>
