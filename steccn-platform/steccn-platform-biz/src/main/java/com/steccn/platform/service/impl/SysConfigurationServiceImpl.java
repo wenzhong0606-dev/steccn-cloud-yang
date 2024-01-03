@@ -87,6 +87,18 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
         return results;
     }
 
+    @Override
+    public SysConfigurationDTO infoByTypeAndContent(String type, String content) {
+        SysConfigurationDTO result = new SysConfigurationDTO();
+        SysConfiguration config = getOne(new LambdaQueryWrapper<SysConfiguration>().eq(SysConfiguration::getType, type)
+                .eq(SysConfiguration::getContent,content),false);
+        if(Objects.nonNull(config)){
+            BeanUtils.copyProperties(config, result);
+        }
+        return result;
+    }
+
+
 }
 
 

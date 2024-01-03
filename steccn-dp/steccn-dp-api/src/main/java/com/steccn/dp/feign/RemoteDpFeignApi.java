@@ -4,7 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.dto.WeightCountDTO;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
@@ -12,7 +12,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -50,5 +49,5 @@ public interface RemoteDpFeignApi {
      */
     @PostMapping("/feign/dp/weight/consume")
     @ApiOperation(value = "耗料数")
-    R<List<WeightCountDTO>> consumeMaterial(@RequestBody DpPmsOperateDTO dto);
+    R<List<CommonReportDTO>> consumeMaterial(@RequestBody DpPmsOperateDTO dto);
 }

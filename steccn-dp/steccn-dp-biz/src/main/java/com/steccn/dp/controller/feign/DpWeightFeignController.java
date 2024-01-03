@@ -3,7 +3,7 @@ package com.steccn.dp.controller.feign;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.dto.WeightCountDTO;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -43,7 +43,7 @@ public class DpWeightFeignController {
 
     @PostMapping("/consume")
     @ApiOperation(value = "耗料数")
-    public R<List<WeightCountDTO>> consumeMaterial(@RequestBody DpPmsOperateDTO dto) {
+    public R<List<CommonReportDTO>> consumeMaterial(@RequestBody DpPmsOperateDTO dto) {
         return R.success(adsOpcUaAll3Service.countDTO(dto));
     }
 }

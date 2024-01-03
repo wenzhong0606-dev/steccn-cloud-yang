@@ -69,4 +69,13 @@ public interface RemoteSysConfigurationFeignApi {
     @ApiOperation(value = "根据code获取list的配置")
     @GetMapping("/feign/platform/sys/conf/contentByType")
     R<Set<String>> contentByType(@RequestParam("type") String type);
+
+    /**
+     * 根据type和content获取信息
+     * @param dto
+     * @return
+     */
+    @ApiOperation(value = "根据类型和content获取信息")
+    @PostMapping("/feign/platform/sys/conf/infoByContentAndType")
+    R<SysConfigurationDTO> infoByContentAndType(@RequestBody TupleDTO<String, String> dto);
 }

@@ -1,4 +1,4 @@
-package com.steccn.dp.dto;
+package com.steccn.common.dto;
 
 import lombok.Data;
 
@@ -12,7 +12,7 @@ import java.util.Map;
  * @date 2024/01/02
  */
 @Data
-public class WeightCountDTO {
+public class CommonReportDTO {
     /**
      * 名字
      */
