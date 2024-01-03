@@ -329,7 +329,16 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Assert.notNull(granularity, "粒度不存在");
         List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), start, end);
         Assert.notEmpty(timeList, "时间区间不存在");
-        return null;
+        JpCountReportDetailVO resVo = new JpCountReportDetailVO();
+        List<String> dateStrList = Lists.newArrayList();
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate areaStart = timeList.get(i - 1);
+            LocalDate areaEnd = timeList.get(i);
+            dateStrList.add(XAxisUtil.convert(granularity, areaStart));
+        }
+        resVo.setDateStrList(dateStrList);
+
+        return resVo;
     }
 
     /**
