@@ -8,6 +8,8 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
+import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -54,6 +56,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final PmsPullForceService pmsPullForceService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
+    private final RemoteDpFeignApi remoteDpFeignApi;
 
     @Override
     public QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
@@ -335,6 +338,15 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<String> dateStrList = Lists.newArrayList();
 
         //并行执行
+        //获取耗料
+        CompletableFuture<List<CommonReportDTO>> hlList = CompletableFuture.supplyAsync(() -> {
+            DpPmsOperateDTO  dpPmsOperateDTO = new DpPmsOperateDTO();
+            dpPmsOperateDTO.setStart(start);
+            dpPmsOperateDTO.setEnd(end);
+            dpPmsOperateDTO.setGranularity(granularityInt);
+            dpPmsOperateDTO.setOfficeId(workShopId);
+            return FeignOptional.of(() -> remoteDpFeignApi.consumeMaterial(dpPmsOperateDTO), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
         CompletableFuture<CommonReportDTO> gasFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(3, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> null);
@@ -353,6 +365,8 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
         completableFuture.isDone();
         List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
+
+        countReportDetailRow(rowList, "耗料", hlList.get(), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "水电", Lists.newArrayList(electricFuture.get(), waterFuture.get()), Boolean.FALSE, granularity, timeList);
         //获取余热发电
