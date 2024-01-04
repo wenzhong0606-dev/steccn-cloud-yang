@@ -362,6 +362,14 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<CommonReportDTO> waterFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(2, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> null);
+        //获取光伏发电
+        CompletableFuture<List<CommonReportDTO>> gfList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.gfPowerList(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+        //获取余热发电
+        CompletableFuture<List<CommonReportDTO>> heatPowerList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.heatPower(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
         completableFuture.isDone();
         List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
@@ -369,16 +377,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         countReportDetailRow(rowList, "耗料", hlList.get(), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "水电", Lists.newArrayList(electricFuture.get(), waterFuture.get()), Boolean.FALSE, granularity, timeList);
-        //获取余热发电
-        CompletableFuture<List<CommonReportDTO>> heatPowerList = CompletableFuture.supplyAsync(() -> {
-            return FeignOptional.of(() -> remoteMeterReadFeignApi.heatPower(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        }).exceptionally(ex -> Lists.newArrayList());
         countReportDetailRow(rowList, "余热发电", heatPowerList.get(), Boolean.FALSE, granularity, timeList);
-
-        //获取光伏发电
-        CompletableFuture<List<CommonReportDTO>> gfList = CompletableFuture.supplyAsync(() -> {
-            return FeignOptional.of(() -> remoteMeterReadFeignApi.gfPowerList(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        }).exceptionally(ex -> Lists.newArrayList());
         countReportDetailRow(rowList, "光伏发电", gfList.get(), Boolean.FALSE, granularity, timeList);
 
         //获取脱硫脱硝
