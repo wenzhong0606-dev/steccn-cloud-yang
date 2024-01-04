@@ -653,6 +653,13 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public List<TripleDTO<Long, Integer, String>> jpCountReportGfDefaultNode() {
+        Map<String, List<SysConfigurationDTO>> elecConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_ELEC, Sets.newHashSet(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_ELEC_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleOtherConfList = elecConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        return queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList);
+    }
+
     /**
      * 根据officeName获取指定能源类型的节点id和节点名称
      *

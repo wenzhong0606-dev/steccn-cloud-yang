@@ -32,10 +32,19 @@ public interface RemoteMeterReadFeignApi {
     /**
      * 余热发电
      *
-     * @param dto 能源类型，车间，日期start，日期end，粒度  5元组
+     * @param dto  日期start，日期end，粒度  3元组
      * @return
      */
     @PostMapping("/feign/ems/meter/read/heat/power")
     R<List<CommonReportDTO>> heatPower(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto);
 
+
+    /**
+     * 光伏发电
+     *
+     * @param dto 日期start，日期end，粒度  3元组
+     * @return
+     */
+    @PostMapping("/feign/ems/meter/read/gf/power")
+    R<List<CommonReportDTO>> gfPowerList(TripleDTO<LocalDate, LocalDate, Integer> dto);
 }

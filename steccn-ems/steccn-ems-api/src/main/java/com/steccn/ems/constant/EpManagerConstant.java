@@ -307,7 +307,7 @@ public interface EpManagerConstant {
     String CONF_EMS_DAY_COUNT_GAS = "EMS_DAY_COUNT_GAS";
     String CONF_EMS_DAY_COUNT_OIL = "EMS_DAY_COUNT_OIL";
     String CONF_EMS_DAY_COUNT_ELEC_OTHER = "EMS_DAY_COUNT_ELEC_OTHER";
-
+    String CONF_EMS_JP_COUNT_REPORT_ELEC = "CONF_EMS_JP_COUNT_REPORT_ELEC";
 
     /**
      * content映射类型
@@ -315,6 +315,7 @@ public interface EpManagerConstant {
     String CONF_EMS_WATER_CONTENT = "EMS_WATER_CONTENT";
     String CONF_EMS_GAS_CONTENT = "EMS_GAS_CONTENT";
     String CONF_EMS_OIL_CONTENT = "EMS_OIL_CONTENT";
+    String CONF_EMS_JP_COUNT_REPORT_ELEC_CONTENT = "CONF_EMS_JP_COUNT_REPORT_ELEC_CONTENT";
 
     /**
      * 配置EMS_DAY_COUNT 的content映射

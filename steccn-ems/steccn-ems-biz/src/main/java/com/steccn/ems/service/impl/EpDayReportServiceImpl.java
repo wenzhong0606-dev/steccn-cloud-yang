@@ -93,7 +93,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<CommonReportDTO> resList = Lists.newArrayList();
         Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap = epPartitionService.jpCountReportHeatPowerDefaultNode();
         List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
-        EpEnergyType electricType = epEnergyTypeService.getById(1);
+        EpEnergyType electricType = epEnergyTypeService.getById(7);
         Assert.notNull(electricType, "能源类型-电不存在");
         EpEnergyType waterType = epEnergyTypeService.getById(2);
         Assert.notNull(waterType, "能源类型-水不存在");
@@ -103,10 +103,20 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<Integer> hpIdSet = heatPowerList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
             Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(hpIdSet));
             if (CollUtil.isNotEmpty(accountMap)) {
-                hpIdSet.forEach(ele -> {
-                    CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, accountMap.get(ele));
-                    resList.add(res);
-                });
+                Set<Integer> accoutIdSet = accountMap.values().stream().map(EpInstrumentAccount::getId).collect(Collectors.toSet());
+                List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                        .between(EpMeterRead::getReadDate, start, end)
+                        .in(EpMeterRead::getMeterId, accoutIdSet));
+                if (CollUtil.isNotEmpty(dbList)) {
+                    hpIdSet.forEach(ele -> {
+                        EpInstrumentAccount acc = accountMap.get(ele);
+                        if (Objects.nonNull(acc)) {
+                            List<EpMeterRead> collect = dbList.stream().filter(aa -> acc.getId().equals(aa.getMeterId())).collect(Collectors.toList());
+                            CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, collect);
+                            resList.add(res);
+                        }
+                    });
+                }
             }
         }
         //获取余热发电-水
@@ -119,6 +129,36 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 CommonReportDTO res = jpHeatPowerWaterRow(granularity, start, end, waterType, waterAccountMap.get(ele));
                 resList.add(res);
             });
+        }
+        return resList;
+    }
+
+    @Override
+    public List<CommonReportDTO> gfPowerList(LocalDate start, LocalDate end, Integer granularityInt) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        EpEnergyType electricType = epEnergyTypeService.getById(7);
+        Assert.notNull(electricType, "能源类型-电不存在");
+        List<CommonReportDTO> resList = Lists.newArrayList();
+        List<TripleDTO<Long, Integer, String>> defaultConfList = epPartitionService.jpCountReportGfDefaultNode();
+        if (CollUtil.isNotEmpty(defaultConfList)) {
+            Set<Integer> hpIdSet = defaultConfList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
+            //获取能耗
+            Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, hpIdSet);
+            if(CollUtil.isNotEmpty(accountMap)){
+                Set<Integer> accIdSet = accountMap.values().stream().map(EpInstrumentAccount::getId).collect(Collectors.toSet());
+                List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                        .between(EpMeterRead::getReadDate, start, end)
+                        .in(EpMeterRead::getMeterId, accIdSet));
+                if (CollUtil.isNotEmpty(dbList)) {
+                    hpIdSet.forEach(ele -> {
+                        CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, dbList);
+                        resList.add(res);
+                    });
+                }
+
+            }
+
         }
         return resList;
     }
@@ -164,14 +204,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param start       开始日期
      * @param end         结束日期
      * @param energy      能源类型
-     * @param account     仪表
+     * @param dbList      数据
      * @return
      */
-    private CommonReportDTO jpHeatPowerElecRow(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, EpEnergyType energy, EpInstrumentAccount account) {
-        //计算余热发电-能源抄表
-        List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
-                .between(EpMeterRead::getReadDate, start, end)
-                .eq(EpMeterRead::getMeterId, account.getId()));
+    private CommonReportDTO jpHeatPowerElecRow(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, EpEnergyType energy, List<EpMeterRead> dbList) {
         CommonReportDTO heatPowerRow = new CommonReportDTO();
         Map<String, BigDecimal> valueMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(dbList)) {

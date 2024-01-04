@@ -30,4 +30,15 @@ public interface EpDayReportService {
      * @return
      */
     List<CommonReportDTO> heatPowerElecWater(LocalDate start, LocalDate end, Integer granularityInt);
+
+
+    /**
+     * 光伏发电
+     *
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    List<CommonReportDTO> gfPowerList(LocalDate start, LocalDate end, Integer granularityInt);
 }
