@@ -58,6 +58,18 @@ public class EqpSpareFeignController {
         return R.success(eqpSpareService.getByName(name));
     }
 
+    /**
+     * 根据名称查询备件的信息
+     *
+     * @param materialNames 物料名称
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/listByName")
+    @ApiOperation("根据id查询备件的信息")
+    public R<Map<String, EqpSpareVO>> listByName(@RequestBody List<String> materialNames){
+        return R.success(eqpSpareService.listByName(materialNames));
+    }
+
     @RequestMapping("/listByCode")
     @ApiOperation("根据code查询备件的数据")
     public R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList) {
