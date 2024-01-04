@@ -156,9 +156,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                         resList.add(res);
                     });
                 }
-
             }
-
         }
         return resList;
     }
