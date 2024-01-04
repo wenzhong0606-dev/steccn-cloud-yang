@@ -146,6 +146,6 @@ public interface EpPartitionService extends IService<EpPartition> {
      *
      * @return
      */
-    List<TripleDTO<Long, Integer, String>> jpCountReportHeatPowerDefaultNode();
+    Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportHeatPowerDefaultNode();
 
 }

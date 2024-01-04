@@ -51,7 +51,7 @@ public class EpMeterReadFeignController {
      * @param dto 日期start，日期end，粒度  3元组
      * @return
      */
-    @PostMapping("/feign/ems/meter/read/heat/power")
+    @PostMapping("/heat/power")
     R<List<CommonReportDTO>> heatPower(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto) {
         Assert.isTrue(LocalDateUtil.le(dto.getField1(), dto.getField2()), "结束时间必须小于等于开始时间");
         return R.success(epDayReportService.heatPowerElecWater(dto.getField1(), dto.getField2(), dto.getField3()));

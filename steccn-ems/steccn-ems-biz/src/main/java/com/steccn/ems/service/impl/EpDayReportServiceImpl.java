@@ -20,10 +20,12 @@ import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
-import com.steccn.platform.dto.SysConfigurationDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +56,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final EpMeterReadService epMeterReadService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
 //    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
@@ -88,9 +91,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
         Assert.notNull(granularity, "粒度不存在");
         List<CommonReportDTO> resList = Lists.newArrayList();
-        List<TripleDTO<Long, Integer, String>> eleConfList = epPartitionService.jpCountReportHeatPowerDefaultNode();
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap = epPartitionService.jpCountReportHeatPowerDefaultNode();
+        List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
         EpEnergyType electricType = epEnergyTypeService.getById(1);
         Assert.notNull(electricType, "能源类型-电不存在");
+        EpEnergyType waterType = epEnergyTypeService.getById(2);
+        Assert.notNull(waterType, "能源类型-水不存在");
         //获取余热发电-电
         List<TripleDTO<Long, Integer, String>> heatPowerList = eleConfList.stream().filter(ele -> "余热发电站（站用电）".equals(ele.getField3())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(heatPowerList)) {
@@ -98,16 +104,87 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(hpIdSet));
             if (CollUtil.isNotEmpty(accountMap)) {
                 hpIdSet.forEach(ele -> {
-                    CommonReportDTO res = jpHeatPowerRow(granularity, start, end, electricType, accountMap.get(ele));
+                    CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, accountMap.get(ele));
                     resList.add(res);
                 });
             }
         }
+        //获取余热发电-水
+        List<TripleDTO<Long, Integer, String>> waterConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_WATER, Lists.newArrayList());
+        List<TripleDTO<Long, Integer, String>> waterOfficeList = waterConfList.stream().filter(ele -> "余热发电".equals(ele.getField3())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(waterOfficeList)){
+            List<Integer> hpIdSet = waterOfficeList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
+            Map<Integer, EpInstrumentAccount> waterAccountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_WATER, Sets.newHashSet(hpIdSet));
+            hpIdSet.forEach(ele -> {
+                CommonReportDTO res = jpHeatPowerWaterRow(granularity, start, end, waterType, waterAccountMap.get(ele));
+                resList.add(res);
+            });
+        }
         return resList;
     }
 
-    private CommonReportDTO jpHeatPowerRow(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, EpEnergyType epEnergyType, EpInstrumentAccount account) {
-        return null;
+    /**
+     * 基片统计报表-余热发电-水
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param energy      能源类型
+     * @param account     仪表
+     * @return
+     */
+    private CommonReportDTO jpHeatPowerWaterRow(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, EpEnergyType energy, EpInstrumentAccount account) {
+        //查询全量数据表
+        LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
+        LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集
+        List<TupleDTO<LocalDate, Integer>> classRangeList = ClassUtil.classRange(startLdt, endLdt);
+        Set<LocalDate> dateSet = classRangeList.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        //获取全量数据表
+        List<EpMeterReadAllDataVO> dataList = meterReadService.classDateAllData(dateSet, energy.getId(), Lists.newArrayList(account.getPartitionNode()));
+        CommonReportDTO waterReport = new CommonReportDTO();
+        Map<String, BigDecimal> valueMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dataList)) {
+            dataList.forEach(ele -> {
+                String convert = MysqlDateKeyUtil.convert(granularity, ele.getReadDate());
+                MapUtil.add(valueMap, convert, ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        waterReport.setName(energy.getName());
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(energy.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        waterReport.setUnit(GetValueUtil.get(sysDictVO, x -> x.getName()));
+        waterReport.setValueMap(valueMap);
+        return waterReport;
+    }
+
+    /**
+     * 基片统计报表-余热发电-电
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param energy      能源类型
+     * @param account     仪表
+     * @return
+     */
+    private CommonReportDTO jpHeatPowerElecRow(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, EpEnergyType energy, EpInstrumentAccount account) {
+        //计算余热发电-能源抄表
+        List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                .between(EpMeterRead::getReadDate, start, end)
+                .eq(EpMeterRead::getMeterId, account.getId()));
+        CommonReportDTO heatPowerRow = new CommonReportDTO();
+        Map<String, BigDecimal> valueMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                String convert = MysqlDateKeyUtil.convert(granularity, ele.getReadDate());
+                MapUtil.add(valueMap, convert, ele.getAdminValue(), (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        heatPowerRow.setName(energy.getName());
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(energy.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        heatPowerRow.setUnit(GetValueUtil.get(sysDictVO, x -> x.getName()));
+        heatPowerRow.setValueMap(valueMap);
+        return heatPowerRow;
     }
 
     /**

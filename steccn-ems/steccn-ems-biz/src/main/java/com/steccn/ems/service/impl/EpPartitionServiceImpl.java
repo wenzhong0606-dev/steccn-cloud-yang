@@ -634,7 +634,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
-    public List<TripleDTO<Long, Integer, String>> jpCountReportHeatPowerDefaultNode() {
+    public Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportHeatPowerDefaultNode() {
         //站外电
         Map<String, List<SysConfigurationDTO>> eleOtherConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC_OTHER, EpManagerConstant.ELECOtherConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysConfigurationDTO> eleOtherConfList = Lists.newArrayList();
@@ -644,14 +644,20 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 eleOtherConfList.addAll(tmpList);
             }
         }
-        return queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList);
+        //水
+        Map<String, List<SysConfigurationDTO>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> waterConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
+        resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterConfList));
+        return resMap;
     }
 
     /**
      * 根据officeName获取指定能源类型的节点id和节点名称
      *
-     * @param energyType     能源类型
-     * @param officeNameList 组织结构名称集合
+     * @param energyType           能源类型
+     * @param configurationDTOList 组织结构名称集合
      * @return
      */
     private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<SysConfigurationDTO> configurationDTOList) {

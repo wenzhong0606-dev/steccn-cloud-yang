@@ -359,6 +359,10 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "水电", Lists.newArrayList(electricFuture.get(), waterFuture.get()), Boolean.FALSE, granularity, timeList);
         //获取余热发电
+        CompletableFuture<List<CommonReportDTO>> heatPowerList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.heatPower(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+        countReportDetailRow(rowList, "余热发电", heatPowerList.get(), Boolean.FALSE, granularity, timeList);
 
         //获取光伏发电
 
