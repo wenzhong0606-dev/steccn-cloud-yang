@@ -62,7 +62,7 @@
         SELECT
         pmri.material_id AS materialId,
         SUM(pmri.receive_quantity) AS receiveQuantity,
-        DATE_FORMAT(DATE_ADD( pmri.require_date, INTERVAL - 8 HOUR ), '%Y-%m-%d' ) AS requireDate
+        pmri.require_date AS requireDate
         FROM
         pms_material_requisition_info pmri
         LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
@@ -86,7 +86,7 @@
         SELECT
         pmri.material_id AS materialId,
         SUM(pmri.receive_quantity) AS receiveQuantity,
-        YEARWEEK(DATE_ADD(pmri.require_date, INTERVAL -8 HOUR),7) AS requireDate
+        pmri.require_date AS requireDate
         FROM
         pms_material_requisition_info pmri
         LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
@@ -110,7 +110,7 @@
         SELECT
         pmri.material_id AS materialId,
         SUM(pmri.receive_quantity) AS receiveQuantity,
-        DATE_FORMAT(DATE_ADD(pmri.require_date, INTERVAL -8 HOUR),'%Y-%m') AS requireDate
+        pmri.require_date AS requireDate
         FROM
         pms_material_requisition_info pmri
         LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
@@ -134,7 +134,7 @@
         SELECT
         pmri.material_id AS materialId,
         SUM(pmri.receive_quantity) AS receiveQuantity,
-        DATE_FORMAT(DATE_ADD(pmri.require_date, INTERVAL -8 HOUR),'%Y') AS requireDate
+        pmri.require_date AS requireDate
         FROM
         pms_material_requisition_info pmri
         LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id

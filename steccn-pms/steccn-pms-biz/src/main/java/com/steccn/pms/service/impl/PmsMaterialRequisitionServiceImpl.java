@@ -59,9 +59,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -745,7 +743,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 List<RequisitionInfoDTO> requisitionInfoDTOS = map.get(v.getId());
                 if (CollUtil.isNotEmpty(requisitionInfoDTOS)){
                     collect.forEach( ele ->{
-                        String convert = MysqlDateKeyUtil.convert(granularity, ele.getRequireDate());
+                        String convert = MysqlDateKeyUtil.convert(granularity,ele.getRequireDate());
                         MapUtil.add(valueMap,convert,ele.getReceiveQuantity(),(x,y)->BigDecimalUtil.add(x,y));
                     });
                 }
