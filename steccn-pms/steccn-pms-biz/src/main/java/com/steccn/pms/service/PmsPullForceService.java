@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
@@ -135,4 +136,15 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+    /**
+     * 基片统计报表 - 获取车间的拉引量
+     *
+     * @param workShopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度整数
+     * @return
+     */
+    CommonReportDTO jpCountReportPf(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
 }

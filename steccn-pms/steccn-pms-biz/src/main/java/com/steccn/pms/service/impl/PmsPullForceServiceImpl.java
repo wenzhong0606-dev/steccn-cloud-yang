@@ -10,6 +10,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -29,6 +30,8 @@ import com.steccn.pms.vo.PmsPullForceClassQuantity;
 import com.steccn.pms.vo.PmsPullForceDataVO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -378,6 +381,28 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             });
         }
         return resMap;
+    }
+
+    @Override
+    public CommonReportDTO jpCountReportPf(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        CommonReportDTO res = new CommonReportDTO();
+        List<PmsPullForce> dbList = list(new LambdaQueryWrapper<PmsPullForce>()
+                .ge(PmsPullForce::getPullForceDate, start)
+                .le(PmsPullForce::getPullForceDate, end)
+                .eq(PmsPullForce::getWorkshopId, workShopId));
+        Map<String, BigDecimal> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                String convert = MysqlDateKeyUtil.convert(granularity, ele.getPullForceDate());
+                MapUtil.add(map, convert, ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        res.setName("拉引量");
+        res.setUnit("T");
+        res.setValueMap(map);
+        return res;
     }
 }
 

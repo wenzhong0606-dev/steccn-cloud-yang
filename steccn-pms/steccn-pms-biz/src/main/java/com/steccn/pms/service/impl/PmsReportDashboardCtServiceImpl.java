@@ -375,6 +375,14 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<List<CommonReportDTO>> scList = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.scList(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> Lists.newArrayList());
+        //拉引量
+        CompletableFuture<CommonReportDTO> pullForce = CompletableFuture.supplyAsync(() -> {
+            return pmsPullForceService.jpCountReportPf(workShopId, start, end, granularityInt);
+        }).exceptionally(ex -> null);
+
+        //生产产量
+
+        //入库成品率
 
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
         completableFuture.isDone();
@@ -386,6 +394,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         countReportDetailRow(rowList, "余热发电", heatPowerList.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "光伏发电", gfList.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "脱硫脱硝", scList.get(), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "拉引量", Lists.newArrayList(pullForce.get()), Boolean.FALSE, granularity, timeList);
 
         //获取脱硫脱硝
         for (int i = 1; i < timeList.size(); i++) {
