@@ -370,6 +370,13 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<List<CommonReportDTO>> heatPowerList = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.heatPower(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> Lists.newArrayList());
+        //脱硫脱硝/电：取值与能耗日统计报表中“电/余热发电站（站用电）”相同
+        //脱硫脱硝/水：抄表管理->水表->设备动力部->脱硫脱硝，根据读数差计算每日耗水量
+        CompletableFuture<List<CommonReportDTO>> scList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.scList(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+
+
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
         completableFuture.isDone();
         List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();

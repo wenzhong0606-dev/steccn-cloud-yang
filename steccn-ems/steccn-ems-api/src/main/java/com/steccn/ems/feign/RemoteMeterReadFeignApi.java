@@ -46,5 +46,15 @@ public interface RemoteMeterReadFeignApi {
      * @return
      */
     @PostMapping("/feign/ems/meter/read/gf/power")
-    R<List<CommonReportDTO>> gfPowerList(TripleDTO<LocalDate, LocalDate, Integer> dto);
+    R<List<CommonReportDTO>> gfPowerList(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto);
+
+    /**
+     *  脱硫脱硝/电：取值与能耗日统计报表中“电/余热发电站（站用电）”相同
+     *  脱硫脱硝/水：抄表管理->水表->设备动力部->脱硫脱硝，根据读数差计算每日耗水量
+     *
+     * @param dto 日期start，日期end，粒度  3元组
+     * @return
+     */
+    @PostMapping("/feign/ems/meter/read/sc")
+    R<List<CommonReportDTO>> scList(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto);
 }
