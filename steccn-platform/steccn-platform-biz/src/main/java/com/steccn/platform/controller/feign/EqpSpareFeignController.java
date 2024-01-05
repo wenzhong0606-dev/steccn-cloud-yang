@@ -64,7 +64,7 @@ public class EqpSpareFeignController {
      * @param materialNames 物料名称
      * @return
      */
-    @PostMapping("/feign/platform/eqpSpare/listByName")
+    @PostMapping("/listByName")
     @ApiOperation("根据id查询备件的信息")
     public R<Map<String, EqpSpareVO>> listByName(@RequestBody List<String> materialNames){
         return R.success(eqpSpareService.listByName(materialNames));

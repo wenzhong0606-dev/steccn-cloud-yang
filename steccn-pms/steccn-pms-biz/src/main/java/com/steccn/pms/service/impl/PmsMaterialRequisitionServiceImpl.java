@@ -29,6 +29,7 @@ import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -717,12 +718,18 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //获取当前部门（领用部门）下的部门的领用数据
         List<Integer> officeIds = Lists.newArrayList();
         officeIds.add(dto.getOfficeId());
-        Map<Integer, List<Integer>> officeMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Integer> integers = officeMap.get(dto.getOfficeId());
+        SysOfficeParentDTO officeDTO = new SysOfficeParentDTO();
+        officeDTO.setId(dto.getOfficeId());
+        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> integers = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(officeVOS)) {
+            integers.addAll(officeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toList()));
+        }
+        integers.add(dto.getOfficeId());
         integers.add(dto.getOfficeId());
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         List<RequisitionInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
-        List<String> materialNames = Arrays.asList("低铁硅砂","纯碱","方解石","白云石","氧化铝","复合澄清剂","碎玻璃");
+        List<String> materialNames = Arrays.asList("石英砂（低铁硅砂）","纯碱","方解石","白云石（普通白云石）","氧化铝","复合澄清剂","碎玻璃（外购）");
         Map<String, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listByName(materialNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Long> materialIds =  Lists.newArrayList();
         spareMap.forEach( (key,value)->{
@@ -730,23 +737,27 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         });
         if (CollUtil.isNotEmpty(requisitionInfoList)){
             List<RequisitionInfoDTO> collect = requisitionInfoList.stream().filter(vo -> materialIds.contains(vo.getMaterialId())).collect(Collectors.toList());
-            materialNames.forEach( name ->{
+            Map<Long, List<RequisitionInfoDTO>> map = collect.stream().collect(Collectors.groupingBy(RequisitionInfoDTO::getMaterialId));
+            spareMap.forEach( (k,v)->{
                 CommonReportDTO commonReportDTO = new CommonReportDTO();
                 Map<String,BigDecimal> valueMap = Maps.newHashMap();
-                commonReportDTO.setName(name);
-                collect.forEach( ele ->{
-                    String convert = MysqlDateKeyUtil.convert(granularity, ele.getRequireDate());
-                    MapUtil.add(valueMap,convert,ele.getReceiveQuantity(),(x,y)->BigDecimalUtil.add(x,y));
-                });
-                EqpSpareVO eqpSpareVO = spareMap.get(name);
-                commonReportDTO.setName(eqpSpareVO.getUnit());
+                commonReportDTO.setName(v.getName());
+                List<RequisitionInfoDTO> requisitionInfoDTOS = map.get(v.getId());
+                if (CollUtil.isNotEmpty(requisitionInfoDTOS)){
+                    collect.forEach( ele ->{
+                        String convert = MysqlDateKeyUtil.convert(granularity, ele.getRequireDate());
+                        MapUtil.add(valueMap,convert,ele.getReceiveQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                    });
+                }
+                commonReportDTO.setUnit(v.getUnit());
                 commonReportDTO.setValueMap(valueMap);
                 resList.add(commonReportDTO);
             });
         }else {
-            materialNames.forEach( name ->{
+            spareMap.forEach( (k,v)->{
                 CommonReportDTO commonReportDTO = new CommonReportDTO();
-                commonReportDTO.setName(name);
+                commonReportDTO.setName(v.getName());
+                commonReportDTO.setUnit(v.getUnit());
                 resList.add(commonReportDTO);
             });
         }

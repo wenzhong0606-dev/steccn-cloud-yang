@@ -75,7 +75,7 @@
                 </foreach>
             </if>
             <if test="startTime != null and endTime != null">
-                pmri.require_date between #{startTime} AND #{endTime}
+               and pmri.require_date between #{startTime} AND #{endTime}
             </if>
         </where>
         GROUP BY
@@ -99,7 +99,7 @@
                 </foreach>
             </if>
             <if test="startTime != null and endTime != null">
-                pmri.require_date between #{startTime} AND #{endTime}
+               and pmri.require_date between #{startTime} AND #{endTime}
             </if>
         </where>
         GROUP BY
@@ -123,7 +123,7 @@
                 </foreach>
             </if>
             <if test="startTime != null and endTime != null">
-                pmri.require_date between #{startTime} AND #{endTime}
+               and pmri.require_date between #{startTime} AND #{endTime}
             </if>
         </where>
         GROUP BY
@@ -147,7 +147,7 @@
                 </foreach>
             </if>
             <if test="startTime != null and endTime != null">
-                pmri.require_date between #{startTime} AND #{endTime}
+              and  pmri.require_date between #{startTime} AND #{endTime}
             </if>
         </where>
         GROUP BY
