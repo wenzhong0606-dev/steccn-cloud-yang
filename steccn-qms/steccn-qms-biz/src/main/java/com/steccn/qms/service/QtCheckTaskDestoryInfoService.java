@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.qms.domain.QtCheckTaskDestoryInfo;
 import com.steccn.qms.dto.QtCheckTaskDestoryInfoDTO;
 import com.steccn.qms.dto.QtDestoryInfoFallDTO;
@@ -34,4 +35,6 @@ public interface QtCheckTaskDestoryInfoService extends IService<QtCheckTaskDesto
      * @return list
      */
     List<QtDestoryInfoFallDTO> falling(List<Integer> productLineList, LocalDateTime start, LocalDateTime end);
+
+    CommonReportDTO getRecord();
 }
