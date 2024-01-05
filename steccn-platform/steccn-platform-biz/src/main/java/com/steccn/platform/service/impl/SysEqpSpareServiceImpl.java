@@ -290,6 +290,25 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         BeanUtil.copyProperties(eqpSpareDto,sysEqpSpare);
         return updateById(sysEqpSpare);
     }
+
+    @Override
+    public Map<String, EqpSpareVO> listByName(List<String> materialNames) {
+        Map<String, EqpSpareVO> map = Maps.newHashMap();
+        List<SysEqpSpare> list = list(new LambdaQueryWrapper<SysEqpSpare>().in(SysEqpSpare::getName, materialNames));
+        if (CollUtil.isNotEmpty(list)){
+            Set<Long> dictIdSet = Sets.newHashSet();
+            list.forEach(sysEqpSpare -> {
+                dictIdSet.add(sysEqpSpare.getUnitId());
+            });
+            Map<Long, String> dictMap = sysDictService.listByIdCh(dictIdSet);
+            list.forEach(sysEqpSpare -> {
+                EqpSpareVO eqpSpareVO = BeanUtil.copyProperties(sysEqpSpare, EqpSpareVO.class);
+                eqpSpareVO.setUnit(dictMap.get(eqpSpareVO.getUnitId()));
+                map.put(sysEqpSpare.getName(),eqpSpareVO);
+            });
+        }
+        return map;
+    }
 }
 
 

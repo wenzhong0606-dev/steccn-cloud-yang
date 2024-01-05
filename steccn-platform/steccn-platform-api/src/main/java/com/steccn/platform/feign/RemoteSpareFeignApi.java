@@ -44,6 +44,16 @@ public interface RemoteSpareFeignApi {
 
 
     /**
+     * 根据名称查询备件的信息
+     *
+     * @param materialNames 物料名称
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/listByName")
+    @ApiOperation("根据id查询备件的信息")
+    R<Map<String, EqpSpareVO>> listByName(@RequestBody List<String> materialNames);
+
+    /**
      * 根据id查询备件的信息
      *
      * @param materialIds 物料id

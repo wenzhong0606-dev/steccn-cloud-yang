@@ -1,8 +1,10 @@
 package com.steccn.pms.controller.feign;
 
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.service.PmsMaterialRequisitionWorkflowService;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 领用单feign
@@ -45,5 +49,11 @@ public class MaterialRequisitionFeignController {
     @GetMapping("/type")
     public R<Long> getStatusById(@RequestParam("id") Long id) {
         return R.success(pmsMaterialRequisitionService.getStatusById(id));
+    }
+
+    @ApiOperation("基片统计报表领料数")
+    @PostMapping("/substrate")
+    public R<List<CommonReportDTO>> substrate(@RequestBody DpPmsOperateDTO dto){
+        return R.success(pmsMaterialRequisitionService.substrate(dto));
     }
 }

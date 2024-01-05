@@ -16,14 +16,20 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -41,6 +47,8 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsMaterialRequisitionMapper;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import io.swagger.models.auth.In;
@@ -51,9 +59,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -702,6 +708,72 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             wmsTransferSlipDTO.setList(list);
             return FeignOptional.of(() -> remoteWmsInventoryFeignApi.createTransferSlip(wmsTransferSlipDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         }
+    }
+
+    @Override
+    public List<CommonReportDTO> substrate(DpPmsOperateDTO dto) {
+        List<CommonReportDTO> resList = Lists.newArrayList();
+        //获取当前部门（领用部门）下的部门的领用数据
+        List<Integer> officeIds = Lists.newArrayList();
+        officeIds.add(dto.getOfficeId());
+        SysOfficeParentDTO officeDTO = new SysOfficeParentDTO();
+        officeDTO.setId(dto.getOfficeId());
+        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> integers = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(officeVOS)) {
+            integers.addAll(officeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toList()));
+        }
+        integers.add(dto.getOfficeId());
+        integers.add(dto.getOfficeId());
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<RequisitionInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        List<String> materialNames = Arrays.asList("石英砂（低铁硅砂）","纯碱","方解石","白云石（普通白云石）","氧化铝","复合澄清剂","碎玻璃（外购）");
+        Map<String, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listByName(materialNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Long> materialIds =  Lists.newArrayList();
+        spareMap.forEach( (key,value)->{
+            materialIds.add(value.getId());
+        });
+        if (CollUtil.isNotEmpty(requisitionInfoList)){
+            List<RequisitionInfoDTO> collect = requisitionInfoList.stream().filter(vo -> materialIds.contains(vo.getMaterialId())).collect(Collectors.toList());
+            Map<Long, List<RequisitionInfoDTO>> map = collect.stream().collect(Collectors.groupingBy(RequisitionInfoDTO::getMaterialId));
+            spareMap.forEach( (k,v)->{
+                CommonReportDTO commonReportDTO = new CommonReportDTO();
+                Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                commonReportDTO.setName(v.getName());
+                List<RequisitionInfoDTO> requisitionInfoDTOS = map.get(v.getId());
+                if (CollUtil.isNotEmpty(requisitionInfoDTOS)){
+                    collect.forEach( ele ->{
+                        String convert = MysqlDateKeyUtil.convert(granularity,ele.getRequireDate());
+                        MapUtil.add(valueMap,convert,ele.getReceiveQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                    });
+                }
+                commonReportDTO.setUnit(v.getUnit());
+                commonReportDTO.setValueMap(valueMap);
+                resList.add(commonReportDTO);
+            });
+        }else {
+            spareMap.forEach( (k,v)->{
+                CommonReportDTO commonReportDTO = new CommonReportDTO();
+                commonReportDTO.setName(v.getName());
+                commonReportDTO.setUnit(v.getUnit());
+                resList.add(commonReportDTO);
+            });
+        }
+        return resList;
+    }
+
+    public  List<RequisitionInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity,List<Integer> integers, TupleDTO<LocalDateTime,LocalDateTime> dto){
+        List<RequisitionInfoDTO> requisitionInfoList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            requisitionInfoList = this.baseMapper.substrateDayData(integers,dto.getField1(),dto.getField2());
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            requisitionInfoList = this.baseMapper.substrateWeekData(integers,dto.getField1(),dto.getField2());
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            requisitionInfoList = this.baseMapper.substrateMonthData(integers,dto.getField1(),dto.getField2());
+        } else {
+            requisitionInfoList = this.baseMapper.substrateYearData(integers,dto.getField1(),dto.getField2());
+        }
+        return requisitionInfoList;
     }
 
     private String createOrder(MaterialRequisitionDTO materialRequisitionDTO) {
