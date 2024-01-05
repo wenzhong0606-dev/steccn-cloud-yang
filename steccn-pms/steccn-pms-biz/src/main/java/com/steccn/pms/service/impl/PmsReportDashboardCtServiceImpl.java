@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
@@ -418,6 +419,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
      */
     private void countReportDetailRow(List<JpCountReportDetailRowVO> rowList, String category, List<CommonReportDTO> dataRowList, Boolean ctFlag, QtManagerConstant.QtGranularityEnum granularity, List<LocalDate> timeList) {
         if (CollUtil.isNotEmpty(dataRowList)) {
+            Set<String> filterSet = Sets.newHashSet("拉引量", "生产产量", "入库成品率");
             Map<Integer, BigDecimal> ctDataMap = Maps.newLinkedHashMap();
             for (CommonReportDTO ele : dataRowList) {
                 if (Objects.nonNull(ele)) {
@@ -428,6 +430,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                     row.setName(ele.getName());
                     row.setUnitName(ele.getUnit());
                     row.setType(0);
+                    if(filterSet.contains(ele.getName())){
+                        row.setType(2);
+                    }
                     rowList.add(row);
                     for (int i = 1; i < timeList.size(); i++) {
                         LocalDate areaStart = timeList.get(i - 1);
