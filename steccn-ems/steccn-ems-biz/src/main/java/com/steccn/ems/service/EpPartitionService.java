@@ -155,4 +155,10 @@ public interface EpPartitionService extends IService<EpPartition> {
      */
     List<TripleDTO<Long, Integer, String>> jpCountReportGfDefaultNode();
 
+    /**
+     * 基片统计报表-脱硫脱硝
+     *
+     * @return
+     */
+    Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportScDefaultNode();
 }

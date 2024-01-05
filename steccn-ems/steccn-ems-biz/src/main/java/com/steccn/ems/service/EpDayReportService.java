@@ -41,4 +41,14 @@ public interface EpDayReportService {
      * @return
      */
     List<CommonReportDTO> gfPowerList(LocalDate start, LocalDate end, Integer granularityInt);
+
+    /**
+     * 脱硫脱硝
+     *
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    List<CommonReportDTO> scList(LocalDate start, LocalDate end, Integer granularityInt);
 }

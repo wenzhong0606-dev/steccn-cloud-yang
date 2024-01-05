@@ -660,6 +660,20 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList);
     }
 
+    @Override
+    public Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportScDefaultNode() {
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
+        //电
+        Map<String, List<SysConfigurationDTO>> elecConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_ELEC, Sets.newHashSet(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_ELEC_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleOtherConfList = elecConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //水
+        Map<String, List<SysConfigurationDTO>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> waterOtherConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterOtherConfList));
+        return resMap;
+    }
+
     /**
      * 根据officeName获取指定能源类型的节点id和节点名称
      *

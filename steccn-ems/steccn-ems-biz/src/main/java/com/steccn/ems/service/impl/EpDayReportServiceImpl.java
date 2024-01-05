@@ -161,6 +161,54 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         return resList;
     }
 
+    @Override
+    public List<CommonReportDTO> scList(LocalDate start, LocalDate end, Integer granularityInt) {
+        //脱硫脱硝/电：取值与能耗日统计报表中“电/余热发电站（站用电）”相同
+        //脱硫脱硝/水：抄表管理->水表->设备动力部->脱硫脱硝，根据读数差计算每日耗水量
+        //确定粒度存在
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap = epPartitionService.jpCountReportScDefaultNode();
+        List<CommonReportDTO> resList = Lists.newArrayList();
+        //电
+        List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
+        EpEnergyType electricType = epEnergyTypeService.getById(7);
+        Assert.notNull(electricType, "能源类型-电不存在");
+        EpEnergyType waterType = epEnergyTypeService.getById(2);
+        Assert.notNull(waterType, "能源类型-水不存在");
+        if (CollUtil.isNotEmpty(eleConfList)) {
+            List<Integer> hpIdSet = eleConfList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
+            Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(hpIdSet));
+            if (CollUtil.isNotEmpty(accountMap)) {
+                Set<Integer> accoutIdSet = accountMap.values().stream().map(EpInstrumentAccount::getId).collect(Collectors.toSet());
+                List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                        .between(EpMeterRead::getReadDate, start, end)
+                        .in(EpMeterRead::getMeterId, accoutIdSet));
+                if (CollUtil.isNotEmpty(dbList)) {
+                    hpIdSet.forEach(ele -> {
+                        EpInstrumentAccount acc = accountMap.get(ele);
+                        if (Objects.nonNull(acc)) {
+                            List<EpMeterRead> collect = dbList.stream().filter(aa -> acc.getId().equals(aa.getMeterId())).collect(Collectors.toList());
+                            CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, collect);
+                            resList.add(res);
+                        }
+                    });
+                }
+            }
+        }
+        //获取余热发电-水
+        List<TripleDTO<Long, Integer, String>> waterConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_WATER, Lists.newArrayList());
+        if(CollUtil.isNotEmpty(waterConfList)){
+            List<Integer> hpIdSet = waterConfList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
+            Map<Integer, EpInstrumentAccount> waterAccountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_WATER, Sets.newHashSet(hpIdSet));
+            hpIdSet.forEach(ele -> {
+                CommonReportDTO res = jpHeatPowerWaterRow(granularity, start, end, waterType, waterAccountMap.get(ele));
+                resList.add(res);
+            });
+        }
+        return resList;
+    }
+
     /**
      * 基片统计报表-余热发电-水
      *

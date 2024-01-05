@@ -69,4 +69,16 @@ public class EpMeterReadFeignController {
         return R.success(epDayReportService.gfPowerList(dto.getField1(), dto.getField2(), dto.getField3()));
     }
 
+    /**
+     * 脱硫脱硝
+     *
+     * @param dto 日期start，日期end，粒度  3元组
+     * @return
+     */
+    @PostMapping("/sc")
+    R<List<CommonReportDTO>> scList(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto) {
+        Assert.isTrue(LocalDateUtil.le(dto.getField1(), dto.getField2()), "结束时间必须小于等于开始时间");
+        return R.success(epDayReportService.scList(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
+
 }
