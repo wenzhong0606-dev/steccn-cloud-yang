@@ -2,8 +2,10 @@ package com.steccn.pms.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.ReceiptStatusDTO;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
@@ -90,4 +92,9 @@ public class PmsCompleteStorageFeignController {
         return R.success(pmsCompleteStorageInfoService.inStorageMonth(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
 
+    @PostMapping("/substrate")
+    @ApiOperation("基片统计报表")
+    R<List<CommonReportDTO>> substrate(@RequestBody DpPmsOperateDTO dto){
+        return R.success(pmsCompleteStorageInfoService.substrate(dto));
+    }
 }

@@ -163,4 +163,116 @@
         GROUP BY
         s.product_line_id,pbp.material_id,pbp.classes_id
     </select>
+    <select id="substrateDayData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
+        SELECT
+            DATE_FORMAT(pcs.in_storage_time,'%Y-%m-%d') inStorageTime,
+            pcs.in_storage_time time,
+            pcsi.material_id,
+            pcsi.material_name,
+            sum( pcsi.quantity ) AS quantity
+        FROM
+            pms_complete_storage_info pcsi
+                LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
+        <where>
+            pcs.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pcs.product_line_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+                and  pcs.in_storage_time between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+            DATE_FORMAT(pcs.in_storage_time,'%Y-%m-%d'),
+            time,
+            pcsi.material_id,
+            pcsi.material_name
+    </select>
+    <select id="substrateWeekData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
+        SELECT
+        YEARWEEK(pcs.in_storage_time,7) inStorageTime,
+        pcsi.material_id,
+        pcs.in_storage_time time,
+        pcsi.material_name,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage_info pcsi
+        LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
+        <where>
+            pcs.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pcs.product_line_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+                and  pcs.in_storage_time between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        YEARWEEK(pcs.in_storage_time,7),
+        pcsi.material_id,
+        time,
+        pcsi.material_name
+    </select>
+    <select id="substrateMonthData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
+        SELECT
+        DATE_FORMAT(pcs.in_storage_time,'%Y-%m') inStorageTime,
+        pcsi.material_id,
+        pcs.in_storage_time time,
+        pcsi.material_name,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage_info pcsi
+        LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
+        <where>
+            pcs.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pcs.product_line_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+                and  pcs.in_storage_time between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        DATE_FORMAT(pcs.in_storage_time,'%Y-%m'),
+        pcsi.material_id,
+        time,
+        pcsi.material_name
+    </select>
+    <select id="substrateYearData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
+        SELECT
+        DATE_FORMAT(pcs.in_storage_time,'%Y') inStorageTime,
+        pcsi.material_id,
+        pcsi.material_name,
+        pcs.in_storage_time time,
+        sum( pcsi.quantity ) AS quantity
+        FROM
+        pms_complete_storage_info pcsi
+        LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
+        <where>
+            pcs.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pcs.product_line_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+                and  pcs.in_storage_time between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        DATE_FORMAT(pcs.in_storage_time,'%Y'),
+        pcsi.material_id,
+        time,
+        pcsi.material_name
+    </select>
 </mapper>

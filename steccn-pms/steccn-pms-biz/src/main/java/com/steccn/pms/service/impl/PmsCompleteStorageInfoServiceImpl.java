@@ -12,34 +12,41 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.JointUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
-import com.steccn.pms.dto.PmsCompleteStorageDTO;
-import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
-import com.steccn.pms.dto.PmsProduceOrderDTO;
-import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
 import com.steccn.pms.service.PmsProduceOrderService;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +60,8 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsBarcodePrintService barcodePrintService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
 
     @Override
@@ -202,6 +211,75 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     }
 
     @Override
+    public List<CommonReportDTO> substrate(DpPmsOperateDTO dto) {
+        List<CommonReportDTO> resList = Lists.newArrayList();
+        //获取车间下的产线
+        List<Integer> officeIds=  Lists.newArrayList(dto.getOfficeId());
+        Map<Integer, List<Integer>> officeMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> integers = officeMap.get(dto.getOfficeId());
+        //获取转换单位
+        SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO unitTon = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //根据班次处理时间并获取数据
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<CompleteStorageInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        if (CollUtil.isNotEmpty(requisitionInfoList)){
+            Map<String, List<CompleteStorageInfoDTO>> collect = requisitionInfoList.stream().collect(Collectors.groupingBy(CompleteStorageInfoDTO::getMaterialName));
+            Set<Long> materialIdSet = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getMaterialId).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            collect.forEach((k,v)->{
+                CommonReportDTO commonReportDTOTON = new CommonReportDTO();
+                commonReportDTOTON.setName(k);
+                commonReportDTOTON.setUnit(PmManagerConstant.UNIT_T);
+
+                CommonReportDTO commonReportDTOM = new CommonReportDTO();
+                commonReportDTOM.setName(k);
+                commonReportDTOM.setUnit(PmManagerConstant.MEASURE_UNIT_SM);
+
+                CommonReportDTO commonReportDTOSlice = new CommonReportDTO();
+                commonReportDTOSlice.setName(k);
+                commonReportDTOSlice.setUnit(PmManagerConstant.MEASURE_UNIT_PIECE);
+
+                Map<String,BigDecimal> valueMapTON = Maps.newHashMap();
+                Map<String,BigDecimal> valueMapM = Maps.newHashMap();
+                Map<String,BigDecimal> valueMapSplice = Maps.newHashMap();
+                v.forEach(completeStorageInfoDTO -> {
+                    //单位转换
+                    BigDecimal m= UnitConvertUtil.convertMaterial(materialConvertMap.get(completeStorageInfoDTO.getMaterialId()), unitPiece.getId(), unitSm.getId(), completeStorageInfoDTO.getQuantity(), 4);
+                    BigDecimal ton = UnitConvertUtil.convertMaterial(materialConvertMap.get(completeStorageInfoDTO.getMaterialId()), unitPiece.getId(), unitTon.getId(), completeStorageInfoDTO.getQuantity(), 4);
+                    String convert = MysqlDateKeyUtil.convert(granularity,completeStorageInfoDTO.getTime());
+                    MapUtil.add(valueMapM,convert,m,(x,y)->BigDecimalUtil.add(x,y));
+                    MapUtil.add(valueMapTON,convert,ton,(x,y)->BigDecimalUtil.add(x,y));
+                    MapUtil.add(valueMapSplice,convert,completeStorageInfoDTO.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                });
+                commonReportDTOSlice.setValueMap(valueMapSplice);
+                commonReportDTOM.setValueMap(valueMapM);
+                commonReportDTOTON.setValueMap(valueMapTON);
+                resList.add(commonReportDTOSlice);
+                resList.add(commonReportDTOM);
+                resList.add(commonReportDTOTON);
+            });
+        }
+        return resList;
+    }
+
+    public  List<CompleteStorageInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity,List<Integer> integers, TupleDTO<LocalDateTime,LocalDateTime> dto){
+        List<CompleteStorageInfoDTO> infoList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            infoList = this.baseMapper.substrateDayData(integers,dto.getField1(),dto.getField2());
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            infoList = this.baseMapper.substrateWeekData(integers,dto.getField1(),dto.getField2());
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            infoList = this.baseMapper.substrateMonthData(integers,dto.getField1(),dto.getField2());
+        } else {
+            infoList = this.baseMapper.substrateYearData(integers,dto.getField1(),dto.getField2());
+        }
+        return infoList;
+    }
+
+    @Override
     public Map<Long, Map<Long, BigDecimal>> materialByDateMap(Set<Long> materialSet, LocalDate date) {
         Map<Long, Map<Long, BigDecimal>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {
@@ -237,6 +315,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         }
         return resList;
     }
+
 
 }
 
