@@ -161,4 +161,12 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportScDefaultNode();
+
+    /**
+     * 查询paritionIdList的所有孩子节点（包含孩子的孩子，包含自己）
+     * @param energyType 能源类型
+     * @param partitionIdList
+     * @return
+     */
+    List<EpPartition> getLinkedChildren(Integer energyType,List<Long> partitionIdList);
 }

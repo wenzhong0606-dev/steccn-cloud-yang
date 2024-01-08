@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.Partition;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,6 +16,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.MapUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
@@ -672,6 +674,47 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
         resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterOtherConfList));
         return resMap;
+    }
+
+    @Override
+    public List<EpPartition> getLinkedChildren(Integer energyType, List<Long> partitionIdList) {
+        //优化点，如果只有1个节点，则直接查询即可
+        List<EpPartition> sourceList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
+        Assert.notEmpty(sourceList, "能源类型树为空");
+        //构建id-entity实体关系
+        Map<Long,EpPartition> idEntityRefMap = Maps.newHashMap();
+        //构建直接关系的map
+        Map<Long,Set<Long>> directRefMap = Maps.newHashMap();
+        sourceList.forEach(ele -> {
+            MapUtil.computeSet(directRefMap, ele.getParentId(), ele.getId());
+            idEntityRefMap.put(ele.getId(), ele);
+        });
+        //1.先查询树上所有节点
+        //2.递归往下查询孩子节点
+        Set<Long> resIdSet = Sets.newHashSet();
+        for (Long partitionId : partitionIdList) {
+            Set<Long> childrenId = getChildrenId(partitionId, directRefMap);
+            resIdSet.add(partitionId);
+            resIdSet.addAll(childrenId);
+        }
+        //获取能源树节点
+        List<EpPartition> resList = Lists.newArrayList();
+        resIdSet.forEach(ele -> resList.add(idEntityRefMap.get(ele)));
+        return resList;
+    }
+
+    private Set<Long> getChildrenId(Long partitionId, Map<Long, Set<Long>> directRefMap) {
+        Set<Long> resIdSet = Sets.newHashSet();
+        Set<Long> children = directRefMap.get(partitionId);
+        if (CollUtil.isNotEmpty(children)) {
+            //存在孩子
+            resIdSet.addAll(children);
+            //根据孩子查询孩子的孩子
+            children.forEach(ele -> {
+                resIdSet.addAll(getChildrenId(ele, directRefMap));
+            });
+        }
+        return resIdSet;
     }
 
     /**

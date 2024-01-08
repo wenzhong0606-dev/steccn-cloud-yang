@@ -717,10 +717,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Assert.notNull(energyType, "能源类型不能为空");
         Assert.notEmpty(dateSet, "日期筛选不可以为空");
         //获取节点关联仪表
-        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
-        SteccnTableAssertUtil.notEmpty(nodeLinkMeterMap, "该能源下无仪表");
+        //优化点 - 获取节点关联的仪表，从根节点向下查询
+        //根据partitionId查询所有关联的节点
+        List<EpPartition> epPartitions = epPartitionService.getLinkedChildren(energyType, partitionIdList);
+        Assert.notEmpty(epPartitions, "暂无符合条件的组织节点");
         //获取每个节点的office信息
-        Map<Long, EpPartition> epPartitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
+        Map<Long, EpPartition> epPartitionMap = Maps.newHashMap();
+        epPartitions.forEach(ele -> epPartitionMap.put(ele.getId(), ele));
+        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeterFilter(energyType, epPartitionMap.keySet());
+        SteccnTableAssertUtil.notEmpty(nodeLinkMeterMap, "该能源下无仪表");
         List<EpEnergyConsumeDTO> rowList = consumeTable(dateSet, energyType, nodeLinkMeterMap);
         //最后将全量数据表的map转换为有用的list集合 对外输出-根据需要的节点过滤
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, epPartitionMap, rowList, Maps.newHashMap());
