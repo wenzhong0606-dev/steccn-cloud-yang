@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
@@ -464,4 +465,7 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Integer, BigDecimal> getGhQuantity(LocalDate start, LocalDate end, List<Integer> lineIdList);
+
+
+    CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
 }

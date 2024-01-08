@@ -20,6 +20,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
@@ -1633,6 +1634,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             });
         }
         return resMap;
+    }
+
+    @Override
+    public CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
+        return null;
     }
 
     @Override

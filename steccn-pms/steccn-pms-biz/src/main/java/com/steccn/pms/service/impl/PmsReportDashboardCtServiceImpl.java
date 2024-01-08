@@ -380,9 +380,10 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<CommonReportDTO> pullForce = CompletableFuture.supplyAsync(() -> {
             return pmsPullForceService.jpCountReportPf(workShopId, start, end, granularityInt);
         }).exceptionally(ex -> null);
-
         //生产产量
-
+        CompletableFuture<CommonReportDTO> pm = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.jpPmDateGranularity(workShopId, start, end, granularityInt);
+        }).exceptionally(ex -> null);
         //入库成品率
 
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
