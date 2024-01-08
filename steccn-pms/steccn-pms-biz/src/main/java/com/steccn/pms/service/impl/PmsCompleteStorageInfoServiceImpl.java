@@ -23,7 +23,9 @@ import com.steccn.common.util.MapUtil;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
@@ -62,6 +64,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     private final PmsBarcodePrintService barcodePrintService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
 
     @Override
@@ -262,6 +265,57 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 resList.add(commonReportDTOTON);
             });
         }
+        return resList;
+    }
+
+    @Override
+    public List<CommonReportDTO> substrateProduceLine(DpPmsOperateDTO dto) {
+        List<CommonReportDTO> resList = Lists.newArrayList();
+        //获取车间下的产线
+        List<Integer> officeIds=  Lists.newArrayList(dto.getOfficeId());
+        Map<Integer, List<Integer>> officeMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> integers = officeMap.get(dto.getOfficeId());
+        //根据产线获取对应时间的完工入库的记录
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        List<CompleteStorageInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        //根据产线分组
+        Map<Integer, List<CompleteStorageInfoDTO>> lineMap = requisitionInfoList.stream().collect(Collectors.groupingBy(CompleteStorageInfoDTO::getProductLineId));
+        //获取产线名称
+        Set<Integer> lineIdSet = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getProductLineId).collect(Collectors.toSet());
+        Map<Integer, String> lineNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取物料的分类
+        List<Long> materialIds = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getMaterialId).collect(Collectors.toList());
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        lineMap.forEach((k,v)->{
+            //根据物料的类型数据进行分类
+            Map<String, List<CompleteStorageInfoDTO>> typeMap = new HashMap<>();
+            for (Long key : spareMap.keySet()) {
+                EqpSpareVO vo = spareMap.get(key);
+                for (CompleteStorageInfoDTO infoDTO : v) {
+                    if (infoDTO.getMaterialId().equals(key)) {
+                        typeMap.computeIfAbsent(vo.getTypeName(), k1 -> new ArrayList<>()).add(infoDTO);
+                    }
+                }
+            }
+            if (CollUtil.isNotEmpty(typeMap)){
+                typeMap.forEach( (typeMapKey,typeMapValue)->{
+                    CommonReportDTO commonReportDTO = new CommonReportDTO();
+                    //名称为分类的名称
+                    commonReportDTO.setName(typeMapKey);
+                    //单位数据为产线名称
+                    commonReportDTO.setUnit(lineNameMap.get(k));
+                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                    if (CollUtil.isNotEmpty(typeMapValue)){
+                        typeMapValue.forEach( ele->{
+                            String convert = MysqlDateKeyUtil.convert(granularity,ele.getTime());
+                            MapUtil.add(valueMap,convert,ele.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                        });
+                    }
+                    commonReportDTO.setValueMap(valueMap);
+                    resList.add(commonReportDTO);
+                });
+            }
+        });
         return resList;
     }
 

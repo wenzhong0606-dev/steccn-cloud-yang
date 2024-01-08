@@ -92,9 +92,15 @@ public class PmsCompleteStorageFeignController {
         return R.success(pmsCompleteStorageInfoService.inStorageMonth(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
 
-    @PostMapping("/substrate")
-    @ApiOperation("基片统计报表")
-    R<List<CommonReportDTO>> substrate(@RequestBody DpPmsOperateDTO dto){
+    @PostMapping("/substrate/in/storage")
+    @ApiOperation("基片统计报表-入库产量")
+    R<List<CommonReportDTO>> substrateInStorage(@RequestBody DpPmsOperateDTO dto){
         return R.success(pmsCompleteStorageInfoService.substrate(dto));
+    }
+
+    @PostMapping("/substrate/produce/line")
+    @ApiOperation("基片统计报表-产线产量明细")
+    R<List<CommonReportDTO>> substrateProduceLine(@RequestBody DpPmsOperateDTO dto){
+        return R.success(pmsCompleteStorageInfoService.substrateProduceLine(dto));
     }
 }
