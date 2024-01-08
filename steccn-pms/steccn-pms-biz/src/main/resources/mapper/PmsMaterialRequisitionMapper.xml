@@ -58,4 +58,100 @@
         </where>
         Order By create_time DESC
     </select>
+    <select id="substrateDayData" resultType="com.steccn.pms.dto.RequisitionInfoDTO">
+        SELECT
+        pmri.material_id AS materialId,
+        SUM(pmri.receive_quantity) AS receiveQuantity,
+        pmri.require_date AS requireDate
+        FROM
+        pms_material_requisition_info pmri
+        LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
+        <where>
+            pmr.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pmr.department_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+               and pmri.require_date between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        requireDate,
+        materialId
+    </select>
+    <select id="substrateWeekData" resultType="com.steccn.pms.dto.RequisitionInfoDTO">
+        SELECT
+        pmri.material_id AS materialId,
+        SUM(pmri.receive_quantity) AS receiveQuantity,
+        pmri.require_date AS requireDate
+        FROM
+        pms_material_requisition_info pmri
+        LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
+        <where>
+            pmr.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pmr.department_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+               and pmri.require_date between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        requireDate,
+        materialId
+    </select>
+    <select id="substrateMonthData" resultType="com.steccn.pms.dto.RequisitionInfoDTO">
+        SELECT
+        pmri.material_id AS materialId,
+        SUM(pmri.receive_quantity) AS receiveQuantity,
+        pmri.require_date AS requireDate
+        FROM
+        pms_material_requisition_info pmri
+        LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
+        <where>
+            pmr.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pmr.department_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+               and pmri.require_date between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        requireDate,
+        materialId
+    </select>
+    <select id="substrateYearData" resultType="com.steccn.pms.dto.RequisitionInfoDTO">
+        SELECT
+        pmri.material_id AS materialId,
+        SUM(pmri.receive_quantity) AS receiveQuantity,
+        pmri.require_date AS requireDate
+        FROM
+        pms_material_requisition_info pmri
+        LEFT JOIN pms_material_requisition pmr ON pmri.material_requisition_id = pmr.id
+        <where>
+            pmr.del_flag = 0
+            <if test="integers != null and integers != ''">
+                and pmr.department_id in
+                <foreach collection="integers" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="startTime != null and endTime != null">
+              and  pmri.require_date between #{startTime} AND #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        requireDate,
+        materialId
+    </select>
 </mapper>

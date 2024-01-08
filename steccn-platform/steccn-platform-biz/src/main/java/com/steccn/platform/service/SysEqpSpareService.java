@@ -134,4 +134,6 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
      * @return
      */
     Boolean updateSpare(EqpSpareDto eqpSpareDto);
+
+    Map<String, EqpSpareVO> listByName(List<String> materialNames);
 }

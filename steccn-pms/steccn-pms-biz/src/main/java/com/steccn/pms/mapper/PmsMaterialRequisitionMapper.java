@@ -1,12 +1,18 @@
 package com.steccn.pms.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.MaterialRequisitionPageDTO;
+import com.steccn.pms.dto.RequisitionInfoDTO;
+import com.steccn.pms.vo.MaterialRequisitionInfoVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
 * @author yequan
@@ -24,6 +30,14 @@ public interface PmsMaterialRequisitionMapper extends BaseMapper<PmsMaterialRequ
      * @return
      */
     Page<MaterialRequisitionVO> pageList(Page page, @Param("dto") MaterialRequisitionPageDTO dto);
+
+    List<RequisitionInfoDTO> substrateDayData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    List<RequisitionInfoDTO> substrateWeekData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    List<RequisitionInfoDTO> substrateMonthData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    List<RequisitionInfoDTO> substrateYearData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }
 
 

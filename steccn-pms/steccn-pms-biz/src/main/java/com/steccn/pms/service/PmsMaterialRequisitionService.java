@@ -2,7 +2,9 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
@@ -82,4 +84,11 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
     Long getStatusById(Long id);
 
     Boolean scan(ScanDto scanDto);
+
+    /**
+     * 基片统计报表领料数
+     * @param dto
+     * @return
+     */
+    List<CommonReportDTO> substrate(DpPmsOperateDTO dto);
 }

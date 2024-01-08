@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.qms.domain.QtCheckTaskDestoryInfo;
 import com.steccn.qms.dto.QtCheckTaskDestoryInfoDTO;
 import com.steccn.qms.dto.QtDestoryInfoFallDTO;
@@ -86,6 +87,11 @@ public class QtCheckTaskDestoryInfoServiceImpl extends ServiceImpl<QtCheckTaskDe
     @Override
     public List<QtDestoryInfoFallDTO> falling(List<Integer> productLineList, LocalDateTime start, LocalDateTime end) {
         return baseMapper.falling(productLineList, start, end);
+    }
+
+    @Override
+    public CommonReportDTO getRecord() {
+        return null;
     }
 
     /**

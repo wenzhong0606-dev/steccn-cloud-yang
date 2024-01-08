@@ -3,6 +3,7 @@ package com.steccn.pms.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.CompleteStorageInfoDTO;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -91,6 +92,14 @@ public interface PmsCompleteStorageInfoMapper extends BaseMapper<PmsCompleteStor
      * @return
      */
     List<FurtherProduceReportDataVO> materialLineList(@Param("lineIdList") List<Integer> lineIdList, @Param("materialSet") Set<Long> materialSet, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    List<CompleteStorageInfoDTO> substrateDayData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    List<CompleteStorageInfoDTO> substrateWeekData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    List<CompleteStorageInfoDTO> substrateMonthData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    List<CompleteStorageInfoDTO> substrateYearData(@Param("integers") List<Integer> integers, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 }
 
 

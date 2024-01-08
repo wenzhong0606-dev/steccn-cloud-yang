@@ -2,6 +2,8 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
@@ -133,4 +135,12 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return
      */
     PmsProducerOrderInfoDTO getNumberByCaseNo(String caseNo);
+
+
+    /**
+     * 根据该车间对应时间的完工入库记录进行汇总
+     * @param dto
+     * @return
+     */
+    List<CommonReportDTO> substrate(DpPmsOperateDTO dto);
 }
