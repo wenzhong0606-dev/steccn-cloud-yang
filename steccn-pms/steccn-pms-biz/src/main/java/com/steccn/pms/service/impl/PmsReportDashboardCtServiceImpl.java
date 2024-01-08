@@ -414,8 +414,6 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         inStorageRow.setName(inStorage.getName());
         inStorageRow.setUnitName(inStorage.getUnit());
         inStorageRow.setType(2);
-        rowList.add(inStorageRow);
-
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate areaStart = timeList.get(i - 1);
             //用于计算X轴
