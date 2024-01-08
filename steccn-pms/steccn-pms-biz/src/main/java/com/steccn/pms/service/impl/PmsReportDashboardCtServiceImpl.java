@@ -382,7 +382,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         }).exceptionally(ex -> null);
         //生产产量
         CompletableFuture<CommonReportDTO> pm = CompletableFuture.supplyAsync(() -> {
-            return reportWorkService.jpPmDateGranularity(workShopId, start, end, granularityInt);
+            return reportWorkService.jpPmDateGranularity(workShopId, start, end, granularityInt, PmManagerConstant.MEASURE_UNIT_TON);
         }).exceptionally(ex -> null);
         //入库成品率
 
@@ -397,6 +397,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         countReportDetailRow(rowList, "光伏发电", gfList.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "脱硫脱硝", scList.get(), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "拉引量", Lists.newArrayList(pullForce.get()), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "生产产量", Lists.newArrayList(pm.get()), Boolean.FALSE, granularity, timeList);
 
         //获取脱硫脱硝
         for (int i = 1; i < timeList.size(); i++) {

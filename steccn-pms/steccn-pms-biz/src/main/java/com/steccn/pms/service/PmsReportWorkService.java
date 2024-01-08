@@ -467,5 +467,5 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<Integer, BigDecimal> getGhQuantity(LocalDate start, LocalDate end, List<Integer> lineIdList);
 
 
-    CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
+    CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt,String unit);
 }
