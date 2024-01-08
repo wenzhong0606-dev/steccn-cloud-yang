@@ -466,6 +466,26 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      */
     Map<Integer, BigDecimal> getGhQuantity(LocalDate start, LocalDate end, List<Integer> lineIdList);
 
-
+    /**
+     * 基片统计报表 - 生产产量
+     *
+     * @param workShopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @param unit           单位
+     * @return
+     */
     CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt,String unit);
+
+    /**
+     * 基片统计报表 - 入库成品率
+     *
+     * @param workShopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    CommonReportDTO jpInStorageDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
 }

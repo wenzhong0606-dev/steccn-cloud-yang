@@ -384,7 +384,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     }
 
     @Override
-    public CommonReportDTO jpCountReportPf(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
+    public CommonReportDTO jpPfDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
         Assert.notNull(granularity, "粒度不存在");
         CommonReportDTO res = new CommonReportDTO();

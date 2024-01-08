@@ -146,5 +146,5 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @param granularityInt 粒度整数
      * @return
      */
-    CommonReportDTO jpCountReportPf(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
+    CommonReportDTO jpPfDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
 }

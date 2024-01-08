@@ -378,13 +378,16 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         }).exceptionally(ex -> Lists.newArrayList());
         //拉引量
         CompletableFuture<CommonReportDTO> pullForce = CompletableFuture.supplyAsync(() -> {
-            return pmsPullForceService.jpCountReportPf(workShopId, start, end, granularityInt);
+            return pmsPullForceService.jpPfDateGranularity(workShopId, start, end, granularityInt);
         }).exceptionally(ex -> null);
         //生产产量
         CompletableFuture<CommonReportDTO> pm = CompletableFuture.supplyAsync(() -> {
             return reportWorkService.jpPmDateGranularity(workShopId, start, end, granularityInt, PmManagerConstant.MEASURE_UNIT_TON);
         }).exceptionally(ex -> null);
         //入库成品率
+        CompletableFuture<CommonReportDTO> inStorageFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.jpInStorageDateGranularity(workShopId, start, end, granularityInt);
+        }).exceptionally(ex -> null);
 
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
         completableFuture.isDone();
@@ -398,12 +401,37 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         countReportDetailRow(rowList, "脱硫脱硝", scList.get(), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "拉引量", Lists.newArrayList(pullForce.get()), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "生产产量", Lists.newArrayList(pm.get()), Boolean.FALSE, granularity, timeList);
+        //入库成品率
+        CommonReportDTO inStorage = inStorageFuture.get();
+        Map<String, BigDecimal> inStorageValueMap = inStorage.getValueMap();
+        Map<String, BigDecimal> pullForceValueMap = pullForce.get().getValueMap();
+        JpCountReportDetailRowVO inStorageRow = new JpCountReportDetailRowVO();
+        List<BigDecimal> valueList = Lists.newArrayList();
+        List<BigDecimal> value1List = Lists.newArrayList();
+        List<BigDecimal> value2List = Lists.newArrayList();
+        inStorageRow.setValueList(valueList);
+        inStorageRow.setCategory("入库成品率");
+        inStorageRow.setName(inStorage.getName());
+        inStorageRow.setUnitName(inStorage.getUnit());
+        inStorageRow.setType(2);
+        rowList.add(inStorageRow);
 
-        //获取脱硫脱硝
         for (int i = 1; i < timeList.size(); i++) {
             LocalDate areaStart = timeList.get(i - 1);
+            //用于计算X轴
             dateStrList.add(XAxisUtil.convert(granularity, areaStart));
+            String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
+            BigDecimal value1 = inStorageValueMap.get(convert);
+            BigDecimal value2 = pullForceValueMap.get(convert);
+            value1List.add(value1);
+            value2List.add(value2);
+            valueList.add(BigDecimalUtil.percent(value1, value2));
         }
+        BigDecimal value1Sum = BigDecimalUtil.sum(value1List);
+        BigDecimal value2Sum = BigDecimalUtil.sum(value2List);
+        inStorageRow.setRowCount(BigDecimalUtil.percent(value1Sum, value2Sum));
+        rowList.add(inStorageRow);
+
         resVo.setDateStrList(dateStrList);
         resVo.setRowList(rowList);
         return resVo;
