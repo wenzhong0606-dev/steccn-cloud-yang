@@ -36,4 +36,9 @@ public class CompleteStorageInfoDTO {
      * 粒度
      */
     private String inStorageTime;
+
+    /**
+     * 产线id
+     */
+    private Integer productLineId;
 }

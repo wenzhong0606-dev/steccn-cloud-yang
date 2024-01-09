@@ -1161,7 +1161,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                     EqpSpareVO eqpSpareVO = spareMap.getOrDefault(orderBasicInfo.getMaterialId(), new EqpSpareVO());
                     //物料信息
                     List<FurtherValueStrVO> module = new LinkedList<>();
-                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getHighQuantity(), 2))));
+                    module.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getWideQuantity(), 2), BigDecimalUtil.format(eqpSpareVO.getThickQuantity(), 2))));
                     //使用量
                     BigDecimal useCount = useCountMap.get(line + "_" + classDate + "_" + classId + "_" + orderBasicInfo.getProduceOrderCode());
                     BigDecimal useCountConvert = UnitConvertUtil.convert(convertMap, eqpSpareVO.getId(),  dict1.getId(), dict2.getId(), useCount);

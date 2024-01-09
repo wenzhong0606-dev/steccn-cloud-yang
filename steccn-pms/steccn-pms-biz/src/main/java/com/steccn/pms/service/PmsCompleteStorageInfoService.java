@@ -143,4 +143,11 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return
      */
     List<CommonReportDTO> substrate(DpPmsOperateDTO dto);
+
+    /**
+     * 基片统计报表-产线产量明细
+     * @param dto
+     * @return
+     */
+    List<CommonReportDTO> substrateProduceLine(DpPmsOperateDTO dto);
 }

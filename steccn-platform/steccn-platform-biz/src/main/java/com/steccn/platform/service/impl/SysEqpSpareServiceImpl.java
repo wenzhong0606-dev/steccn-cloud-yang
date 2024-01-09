@@ -12,12 +12,14 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.domain.SysClassification;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.mapper.SysEqpSpareMapper;
+import com.steccn.platform.service.SysClassificationService;
 import com.steccn.platform.service.SysDictService;
 import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -38,6 +40,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
 
     private final SysEqpSpareMapper sysEqpSpareMapper;
     private final SysDictService sysDictService;
+    private final SysClassificationService sysClassificationService;
 
 
     @Override
@@ -141,6 +144,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         }
         List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
         Set<Long> dictIds= Sets.newHashSet();
+        Set<Long> typeIds = Sets.newHashSet();
         for (EqpSpareVO eqpSpareVO : eqpSpareVOList) {
             dictIds.add(eqpSpareVO.getHighUnitId());
             dictIds.add(eqpSpareVO.getLengthUnitId());
@@ -149,10 +153,11 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             dictIds.add(eqpSpareVO.getProcurementTypeId());
             dictIds.add(eqpSpareVO.getWeightUnitId());
             dictIds.add(eqpSpareVO.getWideUnitId());
-            dictIds.add(eqpSpareVO.getType());
+            typeIds.add(eqpSpareVO.getType());
             resMap.put(eqpSpareVO.getId(), eqpSpareVO);
         }
         Map<Long, String> map = sysDictService.listByIdCh(dictIds);
+        Map<Long, String> typeMap = sysClassificationService.listByIdCh(typeIds);
         eqpSpareVOList.forEach(vo -> {
             vo.setTypeName(map.get(vo.getType()));
             vo.setHighUnitName(map.get(vo.getHighUnitId()));
@@ -161,6 +166,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             vo.setWeightUnitName(map.get(vo.getWeightUnitId()));
             vo.setWideUnidName(map.get(vo.getWideUnitId()));
             vo.setProcurementTypeName(map.get(vo.getProcurementTypeId()));
+            vo.setTypeName(typeMap.get(vo.getType()));
             vo.setVolumeUnitName(map.get(vo.getVolumeUnitId()));
         });
         return resMap;
