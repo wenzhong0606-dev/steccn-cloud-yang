@@ -89,10 +89,9 @@ public class MapUtil {
      * @param <V>   value泛型
      */
     public static <K, V> void add(Map<K, V> map, K key, V value, BiFunction<V, V, V> function) {
-        map.compute(key, (k, v) -> {
-            v = function.apply(v, value);
-            return v;
-        });
+        V v = map.get(key);
+        V apply = function.apply(v, value);
+        map.put(key, apply);
     }
 
 }
