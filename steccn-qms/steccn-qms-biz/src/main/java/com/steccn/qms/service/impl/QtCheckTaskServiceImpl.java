@@ -38,10 +38,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.BiStackGraphDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.CalculateDateUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
@@ -76,7 +73,6 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.util.DownloadModelUtil;
 import com.steccn.qms.util.DownloadUtil;
-import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.qms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
@@ -2456,10 +2452,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     private TupleDTO<String, BigDecimal> getTupleDTO(List<QtCheckTaskReportVO> tDataList, String key) {
-        int checkSum = tDataList.stream().filter(v -> Objects.nonNull(v.getCheckNum())).mapToInt(QtCheckTaskReportVO::getCheckNum).sum();
-        int goodSum = tDataList.stream().filter(v -> Objects.nonNull(v.getGoodNum())).mapToInt(QtCheckTaskReportVO::getGoodNum).sum();
-        BigDecimal divide = BigDecimalUtil.divide(BigDecimal.valueOf(goodSum), BigDecimal.valueOf(checkSum), BigDecimalUtil.SCALE_4);
-        return new TupleDTO<>(key, BigDecimalUtil.multiply(divide,BigDecimal.valueOf(100)));
+        List<Integer> checkSumList = tDataList.stream().filter(v -> Objects.nonNull(v.getCheckNum())).map(QtCheckTaskReportVO::getCheckNum).collect(Collectors.toList());
+        List<Integer> goodSumList = tDataList.stream().filter(v -> Objects.nonNull(v.getGoodNum())).map(QtCheckTaskReportVO::getGoodNum).collect(Collectors.toList());
+        Integer checkSum = IntegerUtil.sum(checkSumList);
+        Integer goodSum = IntegerUtil.sum(goodSumList);
+        return new TupleDTO<>(key, BigDecimalUtil.percent(BigDecimal.valueOf(goodSum), BigDecimal.valueOf(checkSum)));
     }
 
 
