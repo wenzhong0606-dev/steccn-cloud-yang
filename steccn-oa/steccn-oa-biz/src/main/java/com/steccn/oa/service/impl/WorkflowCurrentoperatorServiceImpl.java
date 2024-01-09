@@ -8,11 +8,16 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.domain.WorkflowCurrentoperator;
+import com.steccn.oa.domain.WorkflowNodebase;
+import com.steccn.oa.domain.WorkflowNownode;
 import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
+import com.steccn.oa.mapper.WorkflowNodebaseMapper;
+import com.steccn.oa.mapper.WorkflowNownodeMapper;
 import com.steccn.oa.service.WorkflowCurrentoperatorService;
 import com.steccn.oa.mapper.WorkflowCurrentoperatorMapper;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +37,8 @@ import java.util.stream.Collectors;
 public class WorkflowCurrentoperatorServiceImpl extends ServiceImpl<WorkflowCurrentoperatorMapper, WorkflowCurrentoperator>
     implements WorkflowCurrentoperatorService{
     private final WorkflowCurrentoperatorMapper workflowCurrentoperMapper;
+    private final WorkflowNodebaseMapper workflowNodebaseMapper;
+    private final WorkflowNownodeMapper workflowNownodeMapper;
 
     @Override
     public OaWorkFlowOperatorDTO getUserIdByRequestId(OaOperatorParamDTO dto) {
@@ -54,10 +61,21 @@ public class WorkflowCurrentoperatorServiceImpl extends ServiceImpl<WorkflowCurr
     @Override
     public Set<Integer> getUserByRequestIdAndNodeId(TupleDTO<String,String> dto) {
         Set<Integer> results = Sets.newHashSet();
+        WorkflowNownode workflowNownode = workflowNownodeMapper.selectOne(
+                new LambdaQueryWrapper<WorkflowNownode>().select(WorkflowNownode::getNownodeid)
+                .eq(WorkflowNownode::getRequestid, dto.getField1()).last("LIMIT 1"));
+        WorkflowNodebase workflowNodebase = workflowNodebaseMapper.selectOne(new LambdaQueryWrapper<WorkflowNodebase>()
+                        .select(WorkflowNodebase::getIsend)
+                        .eq(WorkflowNodebase::getId,workflowNownode.getNownodeid())
+                        .last("LIMIT 1"));
+        if(workflowNodebase.getIsend().equals(OaConstant.NUM_1.toString())){
+            results.add(-1);
+            return results;
+        }
         List<WorkflowCurrentoperator> list = list(new LambdaQueryWrapper<WorkflowCurrentoperator>()
                 .select(WorkflowCurrentoperator::getUserid)
                 .eq(WorkflowCurrentoperator::getRequestid, dto.getField1())
-                .eq(WorkflowCurrentoperator::getRequestid, dto.getField2()));
+                .eq(WorkflowCurrentoperator::getNodeid, workflowNownode.getNownodeid()));
         if(CollUtil.isNotEmpty(list)){
             results = list.stream().map(WorkflowCurrentoperator::getUserid).collect(Collectors.toSet());
         }

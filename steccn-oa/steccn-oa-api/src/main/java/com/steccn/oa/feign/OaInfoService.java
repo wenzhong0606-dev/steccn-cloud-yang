@@ -318,7 +318,7 @@ public interface OaInfoService {
     /**
      * 获取当前节点所有操作人
      * @param dto
-     * @return
+     * @return 若结果中有-1则表示为归档
      */
     @ApiOperation("获取当前节点的所有操作人")
     @PostMapping("/feign/oa/workflow/operator/users")

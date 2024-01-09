@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.WorkflowNodebaseMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.WorkflowNodebase">
+            <result property="id" column="id" jdbcType="INTEGER"/>
+            <result property="nodename" column="NODENAME" jdbcType="VARCHAR"/>
+            <result property="isstart" column="ISSTART" jdbcType="CHAR"/>
+            <result property="isreject" column="ISREJECT" jdbcType="CHAR"/>
+            <result property="isreopen" column="ISREOPEN" jdbcType="CHAR"/>
+            <result property="isend" column="ISEND" jdbcType="CHAR"/>
+            <result property="drawxpos" column="DRAWXPOS" jdbcType="INTEGER"/>
+            <result property="drawypos" column="DRAWYPOS" jdbcType="INTEGER"/>
+            <result property="totalgroups" column="TOTALGROUPS" jdbcType="INTEGER"/>
+            <result property="nodeattribute" column="NODEATTRIBUTE" jdbcType="CHAR"/>
+            <result property="passnum" column="PASSNUM" jdbcType="INTEGER"/>
+            <result property="isfreenode" column="ISFREENODE" jdbcType="CHAR"/>
+            <result property="floworder" column="FLOWORDER" jdbcType="INTEGER"/>
+            <result property="signtype" column="SIGNTYPE" jdbcType="CHAR"/>
+            <result property="operators1" column="OPERATORS_1" jdbcType="VARCHAR"/>
+            <result property="requestid" column="REQUESTID" jdbcType="INTEGER"/>
+            <result property="startnodeid" column="STARTNODEID" jdbcType="INTEGER"/>
+            <result property="operators" column="OPERATORS" jdbcType="VARCHAR"/>
+            <result property="ecologyPinyinSearch" column="ECOLOGY_PINYIN_SEARCH" jdbcType="VARCHAR"/>
+            <result property="drawstyle" column="drawstyle" jdbcType="VARCHAR"/>
+            <result property="uuid" column="uuid" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,NODENAME,ISSTART,
+        ISREJECT,ISREOPEN,ISEND,
+        DRAWXPOS,DRAWYPOS,TOTALGROUPS,
+        NODEATTRIBUTE,PASSNUM,ISFREENODE,
+        FLOWORDER,SIGNTYPE,OPERATORS_1,
+        REQUESTID,STARTNODEID,OPERATORS,
+        ECOLOGY_PINYIN_SEARCH,drawstyle,uuid
+    </sql>
+</mapper>

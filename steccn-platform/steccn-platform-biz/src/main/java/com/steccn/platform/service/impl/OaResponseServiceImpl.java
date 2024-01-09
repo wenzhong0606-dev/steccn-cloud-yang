@@ -189,52 +189,27 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         List<String> bizWorkFlowId = Lists.newArrayList("131","151","152","153","154");
         poolExecutor.execute(()->{
             if(!bizWorkFlowId.contains(dto.getData().getWorkflowId())){
-                //发消息flag
-                Boolean flag = false;
-                //归档flag
-                Boolean guiFlag = false;
-                if(!dto.getData().getNodeType().equals("归档")){
-                    flag = true;
-                }else {
-                    guiFlag = true;
-                }
-                if(dto.getData().getWorkflowId().equals("156")){
-                    flag = true;
-                }
-                if(dto.getData().getNodeType().equals("创建")&&dto.getType().equals("03")){
-                    flag = false;
-                }
                 try {
                     Thread.sleep(1000);
-                    if(flag){
-                        Set<Integer> userIds = FeignOptional.of(() -> oaInfoService.getWorkflowUsers(new TupleDTO<String, String>(dto.getData().getRequestId(), dto.getData().getNodeId())), FeignConstant.OA_SERVICE_NAME).get();
-                        //发消息
-                        if(CollUtil.isNotEmpty(userIds)){
-                            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-                            sysMsgSendDTO.setTitle(dto.getData().getRequestName());
-                            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
-                            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), dto.getData().getCreatorName()));
-                            sysMsgSendDTO.setUserList(userIds.stream().map(Integer::longValue).collect(Collectors.toSet()));
-                            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-                            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
-                            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
-                            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
-                            sysMsgServiceImpl.sendMsg(sysMsgSendDTO);
-                        }
-                    }
-                    if(guiFlag){
+                    Set<Integer> userIds = FeignOptional.of(() -> oaInfoService.getWorkflowUsers(new TupleDTO<String, String>(dto.getData().getRequestId(), dto.getData().getNodeId())), FeignConstant.OA_SERVICE_NAME).get();
+                    //发消息
+                    if(CollUtil.isNotEmpty(userIds)){
                         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-                        sysMsgSendDTO.setTitle(dto.getData().getRequestName()+"已通过");
+                        sysMsgSendDTO.setTitle(dto.getData().getRequestName());
                         sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
                         sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), dto.getData().getCreatorName()));
-                        sysMsgSendDTO.setUserList(Sets.newHashSet(Long.parseLong(dto.getData().getCreatorId())));
+                        sysMsgSendDTO.setUserList(userIds.stream().map(Integer::longValue).collect(Collectors.toSet()));
                         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
                         sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
                         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
                         sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                        //-1表示归档,则通知发起人已通过
+                        if(sysMsgSendDTO.getUserList().contains(-1L)){
+                            sysMsgSendDTO.setTitle(dto.getData().getRequestName()+"已通过");
+                            sysMsgSendDTO.setUserList(Sets.newHashSet(Long.parseLong(dto.getData().getCreatorId())));
+                        }
                         sysMsgServiceImpl.sendMsg(sysMsgSendDTO);
                     }
-
                 }catch (Exception e) {
                     log.error("oaSend",e.getLocalizedMessage());
                 }
