@@ -3,6 +3,7 @@ package com.steccn.oa.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
@@ -267,7 +268,7 @@ public interface OaInfoService {
 
     @ApiOperation("精准获取基片班组")
     @PostMapping("/feign/oa/group/count/jp")
-    R<Map<String,OaGroupCountDTO>> getGroupInfoJp(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO);
+    R<Map<String,OaGroupCountDTO>> getGroupInfoJp(@RequestBody TripleDTO<LocalDate,LocalDate,Integer> tupleDTO);
 
     /**
      * 获取班组长信息
@@ -313,6 +314,15 @@ public interface OaInfoService {
     @ApiOperation("获取当前节点操作人")
     @PostMapping("/feign/oa/workflow/operator")
     R<OaUserIdAndName> getOperator(@RequestBody TupleDTO<Integer,Integer> dto);
+
+    /**
+     * 获取当前节点所有操作人
+     * @param dto
+     * @return
+     */
+    @ApiOperation("获取当前节点的所有操作人")
+    @PostMapping("/feign/oa/workflow/operator/users")
+     R<Set<Integer>> getWorkflowUsers(@RequestBody TupleDTO<String,String> dto);
 
     /**
      * 根据岗位id获取用户id

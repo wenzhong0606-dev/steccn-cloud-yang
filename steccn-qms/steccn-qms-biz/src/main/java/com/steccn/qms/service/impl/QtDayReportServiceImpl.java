@@ -128,7 +128,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         }
         //构建module
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
-        TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO<>(date, date);
+        //根据部门不同选择不同的班组类型 0为基片班组 1为深加工班组
+        int officeType = 0;
+        if(!sysOfficeVOMap.get(productLineId.get(0)).getOfficeName().equals("基片")){
+            officeType = 1;
+        }
+        TripleDTO<LocalDate, LocalDate, Integer> dateDTO = new TripleDTO<>(date, date, officeType);
         //根据时间获取班组
         Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();

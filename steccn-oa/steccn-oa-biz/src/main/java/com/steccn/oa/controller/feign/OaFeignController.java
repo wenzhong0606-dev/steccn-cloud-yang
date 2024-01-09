@@ -2,6 +2,7 @@ package com.steccn.oa.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
@@ -113,7 +114,7 @@ public class OaFeignController {
 
     @ApiOperation("获取班次对应的班组(基片)")
     @PostMapping("/group/count/jp")
-    public R<Map<String, OaGroupCountDTO>> getGroupInfoJp(@RequestBody TupleDTO<LocalDate,LocalDate> dateDTO){
+    public R<Map<String, OaGroupCountDTO>> getGroupInfoJp(@RequestBody TripleDTO<LocalDate,LocalDate,Integer> dateDTO){
         return R.success(oaService.getClassGroupMapJp(dateDTO));
     }
 
@@ -145,6 +146,12 @@ public class OaFeignController {
     @PostMapping("/workflow/operator")
     public R<OaUserIdAndName> getOperator(@RequestBody TupleDTO<Integer,Integer> dto){
         return R.success(workflowRequestlogService.getOperator(dto));
+    }
+
+    @ApiOperation("获取当前节点的所有操作人")
+    @PostMapping("/workflow/operator/users")
+    public R<Set<Integer>> getWorkflowUsers(@RequestBody TupleDTO<String,String> dto){
+        return R.success(workflowCurrentoperatorService.getUserByRequestIdAndNodeId(dto));
     }
 
     @ApiOperation("获取当班信息")

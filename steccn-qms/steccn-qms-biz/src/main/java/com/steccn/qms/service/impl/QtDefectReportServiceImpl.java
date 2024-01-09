@@ -142,8 +142,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         //获取班组-只有粒度为班组，才会查询班组信息
         Map<String, OaGroupCountDTO> classGroupMap = null;
         if (QtManagerConstant.LossReportType.CLASS.getCode().equals(dto.getGranularity())) {
-            TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
-            classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            TripleDTO<LocalDate, LocalDate,Integer> timeTupleDTO = new TripleDTO<>(dto.getStartDate(), dto.getEndDate(),1);
+            classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         }
         Map<String, List<QtCheckTaskDetailReportVO>> sourceMap = sourceDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + v.getClassesDate() + "_" + v.getClassId() + "_" + v.getDefectCode()));
         Map<String, Integer> allValueMap = Maps.newHashMap();
@@ -268,8 +268,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Assert.notNull(granularityEntity, "粒度不存在");
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
 
-        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        TripleDTO<LocalDate, LocalDate, Integer> timeTupleDTO = new TripleDTO<>(dto.getStartDate(), dto.getEndDate(),0);
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //合计（单产线）
         Map<Integer, BigDecimal> countMap = Maps.newHashMap();
 
@@ -669,10 +669,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
         //获取班组的集合
-        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
+        TripleDTO<LocalDate, LocalDate,Integer> timeTupleDTO = new TripleDTO<>(dto.getStartDate(), dto.getEndDate(),0);
         Map<String, OaGroupCountDTO> classGroupMap = Maps.newHashMap();
         if (QtManagerConstant.LossReportType.CLASS.equals(granularityEntity)) {
-            classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         }
         for (Integer line : dto.getProductLineList()) {
             String lineName = lineIdNameMap.get(line);
@@ -1129,8 +1129,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
 
         Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        TripleDTO<LocalDate, LocalDate,Integer> timeTupleDTO = new TripleDTO<>(dto.getStartDate(), dto.getEndDate(),1);
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
 
         //总计
         Map<String, BigDecimal> sumMap = Maps.newHashMap();
@@ -1675,8 +1675,8 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.LossReportType.CLASS.getType(), start, end);
         //获取班组的集合
-        TupleDTO<LocalDate, LocalDate> timeTupleDTO = new TupleDTO<>(dto.getStartDate(), dto.getEndDate());
-        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        TripleDTO<LocalDate, LocalDate, Integer> timeTupleDTO = new TripleDTO<>(dto.getStartDate(), dto.getEndDate(),0);
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(timeTupleDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //获取所有物料
         Set<Long> materialSpecSet = dataMap.values().stream()
                 .flatMap(List::stream).map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
