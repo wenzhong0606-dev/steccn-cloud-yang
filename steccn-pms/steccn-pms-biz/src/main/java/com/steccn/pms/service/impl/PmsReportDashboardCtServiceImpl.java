@@ -2,10 +2,16 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
@@ -28,13 +34,21 @@ import com.steccn.pms.vo.JpCountReportDetailRowVO;
 import com.steccn.pms.vo.JpCountReportDetailVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
+import com.steccn.qms.vo.OriginalDefectRowVO;
+import com.steccn.qms.vo.OriginalDefectVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -433,6 +447,51 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         resVo.setDateStrList(dateStrList);
         resVo.setRowList(rowList);
         return resVo;
+    }
+
+    @Override
+    public void countReportDetailDownload(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, HttpServletResponse response) throws Exception {
+        JpCountReportDetailVO result = countReportDetail(workShopId,start,end,granularity);
+        List<JpCountReportDetailRowVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList(""));
+        list.add(Lists.newArrayList(""));
+        list.add(Lists.newArrayList(""));
+        result.getDateStrList().forEach(ele -> list.add(Lists.newArrayList(ele)));
+        list.add(Lists.newArrayList("小计"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("基片统计报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getCategory());
+            dataEle.add(ele.getName());
+            dataEle.add(ele.getUnitName());
+            ele.getValueList().forEach(aa -> {
+                dataEle.add(Objects.nonNull(aa) ? aa : null);
+            });
+            dataEle.add(Objects.nonNull(ele.getRowCount()) ? ele.getRowCount() : null);
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex2 = {0, 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "基片统计报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**
