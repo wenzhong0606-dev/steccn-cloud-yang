@@ -34,6 +34,7 @@ import com.steccn.pms.vo.JpCountReportDetailRowVO;
 import com.steccn.pms.vo.JpCountReportDetailVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.CustomCellWriteWidthConfig;
 import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
 import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
 import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
@@ -485,8 +486,8 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         WriteSheet writeSheet = EasyExcel.writerSheet(0, "基片统计报表")
                 .head(list)
                 .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
-                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new CustomCellWriteWidthConfig())
                 .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
                 .build();
         excelWriter.write(dataList, writeSheet);
