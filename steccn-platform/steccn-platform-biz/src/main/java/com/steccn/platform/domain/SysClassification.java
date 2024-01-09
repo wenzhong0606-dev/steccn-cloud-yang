@@ -49,7 +49,7 @@ public class SysClassification implements Serializable {
     /**
      * 父级编号
      */
-    private String parentCode;
+    private Long parentCode;
 
     /**
      * 备注

@@ -303,13 +303,17 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         List<SysEqpSpare> list = list(new LambdaQueryWrapper<SysEqpSpare>().in(SysEqpSpare::getName, materialNames));
         if (CollUtil.isNotEmpty(list)){
             Set<Long> dictIdSet = Sets.newHashSet();
+            Set<Long> typeIdSet = Sets.newHashSet();
             list.forEach(sysEqpSpare -> {
                 dictIdSet.add(sysEqpSpare.getUnitId());
+                typeIdSet.add(Long.valueOf(sysEqpSpare.getType()));
             });
             Map<Long, String> dictMap = sysDictService.listByIdCh(dictIdSet);
+            Map<Long, String> typeMap = sysClassificationService.listByIdCh(typeIdSet);
             list.forEach(sysEqpSpare -> {
                 EqpSpareVO eqpSpareVO = BeanUtil.copyProperties(sysEqpSpare, EqpSpareVO.class);
                 eqpSpareVO.setUnit(dictMap.get(eqpSpareVO.getUnitId()));
+                eqpSpareVO.setTypeName(typeMap.get(eqpSpareVO.getType()));
                 map.put(sysEqpSpare.getName(),eqpSpareVO);
             });
         }

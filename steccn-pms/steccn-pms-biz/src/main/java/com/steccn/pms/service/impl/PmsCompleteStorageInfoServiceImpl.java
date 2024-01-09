@@ -264,6 +264,59 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 resList.add(commonReportDTOM);
                 resList.add(commonReportDTOTON);
             });
+
+            if (CollUtil.isNotEmpty(resList)) {
+                //合计
+                List<CommonReportDTO> totalList = Lists.newArrayList();
+                //数据按照单位分类进行合计
+                Map<String, List<CommonReportDTO>> unitMap = resList.stream().collect(Collectors.groupingBy(CommonReportDTO::getUnit));
+                unitMap.forEach((k,v)->{
+                    CommonReportDTO commonReportDTOTON = new CommonReportDTO();
+                    commonReportDTOTON.setName(PmManagerConstant.TOTAL);
+                    commonReportDTOTON.setUnit(k);
+                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                    v.forEach(reportDTO -> {
+                        Map<String, BigDecimal> map = reportDTO.getValueMap();
+                        map.forEach((key,value)->{
+                            MapUtil.add(valueMap,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        });
+                    });
+                    commonReportDTOTON.setValueMap(valueMap);
+                    totalList.add(commonReportDTOTON);
+                });
+                //小计
+                //根据物料名称获取物料信息以及分类
+                List<String> materialNames = resList.stream().map(CommonReportDTO::getName).collect(Collectors.toList());
+                Map<String, EqpSpareVO> spareNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByName(materialNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //根据物料的类型数据进行分类
+                Map<String, List<CommonReportDTO>> typeMap = new HashMap<>();
+                for (String key : spareNameMap.keySet()) {
+                    EqpSpareVO eqpSpareVO = spareNameMap.get(key);
+                    for (CommonReportDTO commonReportDTO : resList) {
+                        if (commonReportDTO.getName().equals(key)){
+                            typeMap.computeIfAbsent(eqpSpareVO.getTypeName(),k-> new ArrayList<>()).add(commonReportDTO);
+                        }
+                    }
+                }
+                typeMap.forEach((k,v)->{
+                    CommonReportDTO commonReportDTOM = new CommonReportDTO();
+                    commonReportDTOM.setName(k+"小计");
+                    commonReportDTOM.setUnit(PmManagerConstant.MEASURE_UNIT_SM);
+                    Map<String,BigDecimal> valueMapM = Maps.newHashMap();
+                    List<CommonReportDTO> filteredList = v.stream()
+                            .filter(reportDTO-> "m²".equals(reportDTO.getUnit()))
+                            .collect(Collectors.toList());
+                    filteredList.forEach( reportDTO->{
+                        Map<String, BigDecimal> valueMap = reportDTO.getValueMap();
+                        valueMap.forEach((key,value)->{
+                            MapUtil.add(valueMapM,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        });
+                    });
+                    commonReportDTOM.setValueMap(valueMapM);
+                    resList.add(commonReportDTOM);
+                });
+            resList.addAll(totalList);
+            }
         }
         return resList;
     }

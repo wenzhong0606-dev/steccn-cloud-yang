@@ -11,6 +11,12 @@ public interface PmManagerConstant {
 
 
     /**
+     * 合计
+     */
+    String TOTAL = "合计";
+
+
+    /**
      * 排序条件-编码
      */
     String PMS_ORDER_CODE = "code";
