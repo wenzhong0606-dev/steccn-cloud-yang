@@ -72,7 +72,7 @@ public class KafkaConsumer {
     @Transactional(rollbackFor = Exception.class)
     public void tpFirst(ConsumerRecord<Object, String> record, Acknowledgment ack) {
         // 消费的哪个topic、partition的消息,打印出消息内容
-        log.info(Thread.currentThread().getId() + ":" + record.topic() + "-" + record.partition() + "-" + record.value());
+//        log.info(Thread.currentThread().getId() + ":" + record.topic() + "-" + record.partition() + "-" + record.value());
         //对消息进行解析
         EqpListenerDTO eqpListenerDTO = JSONObject.parseObject(record.value(), EqpListenerDTO.class);
         //如果是脉冲消息则直接修改redis

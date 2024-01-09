@@ -88,6 +88,7 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
     }
 
     @Override
+    @Cacheable(cacheNames = "ConfigTypeContent")
     public SysConfigurationDTO infoByTypeAndContent(String type, String content) {
         SysConfigurationDTO result = new SysConfigurationDTO();
         SysConfiguration config = getOne(new LambdaQueryWrapper<SysConfiguration>().eq(SysConfiguration::getType, type)
