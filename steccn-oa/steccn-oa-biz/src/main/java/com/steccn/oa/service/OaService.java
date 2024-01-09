@@ -16,6 +16,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.OutSystemOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -50,10 +51,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -754,15 +752,21 @@ public class OaService {
 
     /**
      * 获取班次班组
-     * @param dateDTO filed1为开始时间 filed2为结束时间
+     * @param dateDTO filed1为开始时间 filed2为结束时间 field3 0基片 1深加工
      * @return
      */
-    public Map<String,OaGroupCountDTO> getClassGroupMapJp(TupleDTO<LocalDate,LocalDate> dateDTO){
+    public Map<String,OaGroupCountDTO> getClassGroupMapJp(TripleDTO<LocalDate,LocalDate,Integer> dateDTO){
         Map<String,OaGroupCountDTO> resultMap = MapUtil.newHashMap();
+        Set<Integer> groupIds = Sets.newHashSet();
+        if(dateDTO.getField3().equals(OaConstant.NO)){
+            groupIds.addAll(Sets.newHashSet(47, 48, 49));
+        }else {
+            groupIds.addAll(Sets.newHashSet(50, 51, 52));
+        }
         List<LocalDate> dateRange = LocalDateUtil.getLocalDateByStartEndDate(dateDTO.getField1(), dateDTO.getField2());
         List<KqFormatDetail> kqFormatDetails = kqFormatDetailMapper.selectList(new LambdaQueryWrapper<KqFormatDetail>()
                 .in(KqFormatDetail::getWorkbegindate, dateRange.stream().map(date -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))).collect(Collectors.toList()))
-                .in(KqFormatDetail::getGroupid, Sets.newHashSet(53, 54, 55)));
+                .in(KqFormatDetail::getGroupid, groupIds));
         List<KqGroup> kqGroups = kqGroupService.list(new LambdaQueryWrapper<KqGroup>()
                 .in(KqGroup::getId, kqFormatDetails.stream().map(KqFormatDetail::getGroupid).collect(Collectors.toSet())));
         //分为早班和晚班

@@ -1249,7 +1249,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             return resultList;
         }
 //        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(, );
-        TupleDTO<LocalDate,LocalDate> dateDTO = new TupleDTO<>(LocalDate.parse(resultList.get(0).getWorkOrderTime()), LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime()));
+        TripleDTO<LocalDate,LocalDate,Integer> dateDTO = new TripleDTO<>(LocalDate.parse(resultList.get(0).getWorkOrderTime()), LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime()),0);
         if(dateDTO.getField1().isAfter(dateDTO.getField2())){
             LocalDate tmp = dateDTO.getField1();
             dateDTO.setField1(dateDTO.getField2());

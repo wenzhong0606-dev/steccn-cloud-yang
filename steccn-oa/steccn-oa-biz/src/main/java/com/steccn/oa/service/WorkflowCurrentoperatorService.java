@@ -1,5 +1,6 @@
 package com.steccn.oa.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.WorkflowCurrentoperator;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.oa.dto.OaOperatorParamDTO;
@@ -7,6 +8,7 @@ import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -20,4 +22,12 @@ public interface WorkflowCurrentoperatorService extends IService<WorkflowCurrent
      * @return
      */
     OaWorkFlowOperatorDTO getUserIdByRequestId(OaOperatorParamDTO dto);
+
+    /**
+     * 获取用户id
+     * E1 requestId E2 NodeId
+     * @param dto
+     * @return
+     */
+    Set<Integer> getUserByRequestIdAndNodeId(TupleDTO<String,String> dto);
 }

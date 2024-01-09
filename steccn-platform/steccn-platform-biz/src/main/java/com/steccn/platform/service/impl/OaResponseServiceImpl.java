@@ -9,14 +9,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.constant.OaDataConstant;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.OaResponse;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.*;
@@ -29,6 +33,7 @@ import com.steccn.platform.service.OaResponseService;
 import com.steccn.platform.service.SrmTokenService;
 import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.OaMaterialVO;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
@@ -48,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
 * @author Admin
@@ -70,6 +76,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final OaInfoService oaInfoService;
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
+    private final SysMsgServiceImpl sysMsgServiceImpl;
 
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
@@ -178,6 +185,61 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         } catch (Exception e) {
             log.error("{}", e.getLocalizedMessage());
         }
+        //给oa审批消息发送
+        List<String> bizWorkFlowId = Lists.newArrayList("131","151","152","153","154");
+        poolExecutor.execute(()->{
+            if(!bizWorkFlowId.contains(dto.getData().getWorkflowId())){
+                //发消息flag
+                Boolean flag = false;
+                //归档flag
+                Boolean guiFlag = false;
+                if(!dto.getData().getNodeType().equals("归档")){
+                    flag = true;
+                }else {
+                    guiFlag = true;
+                }
+                if(dto.getData().getWorkflowId().equals("156")){
+                    flag = true;
+                }
+                if(dto.getData().getNodeType().equals("创建")&&dto.getType().equals("03")){
+                    flag = false;
+                }
+                try {
+                    Thread.sleep(1000);
+                    if(flag){
+                        Set<Integer> userIds = FeignOptional.of(() -> oaInfoService.getWorkflowUsers(new TupleDTO<String, String>(dto.getData().getRequestId(), dto.getData().getNodeId())), FeignConstant.OA_SERVICE_NAME).get();
+                        //发消息
+                        if(CollUtil.isNotEmpty(userIds)){
+                            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+                            sysMsgSendDTO.setTitle(dto.getData().getRequestName());
+                            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+                            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), dto.getData().getCreatorName()));
+                            sysMsgSendDTO.setUserList(userIds.stream().map(Integer::longValue).collect(Collectors.toSet()));
+                            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
+                            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+                            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                            sysMsgServiceImpl.sendMsg(sysMsgSendDTO);
+                        }
+                    }
+                    if(guiFlag){
+                        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+                        sysMsgSendDTO.setTitle(dto.getData().getRequestName()+"已通过");
+                        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+                        sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), dto.getData().getCreatorName()));
+                        sysMsgSendDTO.setUserList(Sets.newHashSet(Long.parseLong(dto.getData().getCreatorId())));
+                        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                        sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
+                        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+                        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                        sysMsgServiceImpl.sendMsg(sysMsgSendDTO);
+                    }
+
+                }catch (Exception e) {
+                    log.error("oaSend",e.getLocalizedMessage());
+                }
+            }
+        });
         return save(model);
     }
 
