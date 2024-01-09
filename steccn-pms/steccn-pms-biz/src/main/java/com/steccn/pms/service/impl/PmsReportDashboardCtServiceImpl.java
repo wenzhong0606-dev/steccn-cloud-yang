@@ -528,7 +528,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                         BigDecimal value = ele.getValueMap().get(convert);
                         valueList.add(value);
                         //需要考虑小计
-                        if (ctFlag) {
+                        if (ctFlag && rowList.size() > 1) {
                             MapUtil.add(ctDataMap, i - 1, value, (x, y) -> BigDecimalUtil.add(x, y));
                         }
                     }
@@ -536,7 +536,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
                 }
             }
             //如果有小计
-            if (ctFlag) {
+            if (ctFlag && rowList.size() > 1) {
                 JpCountReportDetailRowVO ctRow = new JpCountReportDetailRowVO();
                 ctRow.setCategory(category);
                 ctRow.setType(1);

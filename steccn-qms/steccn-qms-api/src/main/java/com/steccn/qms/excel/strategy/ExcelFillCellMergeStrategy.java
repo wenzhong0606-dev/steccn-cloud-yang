@@ -12,6 +12,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yequan
@@ -73,10 +74,21 @@ public class ExcelFillCellMergeStrategy implements CellWriteHandler {
         Object curData = cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : cell.getNumericCellValue();
         Cell preCell = cell.getSheet().getRow(curRowIndex - 1).getCell(curColIndex);
         Object preData = preCell.getCellType() == CellType.STRING ? preCell.getStringCellValue() : preCell.getNumericCellValue();
+        //获取当前行前一列数据，上一行前一列数据，判断相等，才可以合并
+        Object curPreColumnData = null, prePreColumnData = null;
+        if (curColIndex > 0) {
+            //获取当前行前一列
+            Cell curPreColumnCell = cell.getSheet().getRow(curRowIndex).getCell(curColIndex - 1);
+            //获取前一行前一列
+            Cell prePreColumnCell = cell.getSheet().getRow(curRowIndex - 1).getCell(curColIndex - 1);
+            curPreColumnData = curPreColumnCell.getCellType() == CellType.STRING ? curPreColumnCell.getStringCellValue() : curPreColumnCell.getNumericCellValue();
+            prePreColumnData = prePreColumnCell.getCellType() == CellType.STRING ? prePreColumnCell.getStringCellValue() : prePreColumnCell.getNumericCellValue();
+        }
+
 
         // 比较当前行的第一列的单元格与上一行是否相同，相同合并当前单元格与上一行
-        //
-        if (curData.equals(preData)) {
+        // 获取当前行前一列数据，上一行前一列数据，判断相等，才可以合并
+        if (curData.equals(preData) && (Objects.isNull(curPreColumnData) || curPreColumnData.equals(prePreColumnData))) {
             Sheet sheet = writeSheetHolder.getSheet();
             //
             List<CellRangeAddress> mergeRegions = sheet.getMergedRegions();
@@ -112,7 +124,6 @@ public class ExcelFillCellMergeStrategy implements CellWriteHandler {
         Object curData = cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : cell.getNumericCellValue();
         Cell preCell = cell.getSheet().getRow(curRowIndex).getCell(curColIndex - 1);
         Object preData = preCell.getCellType() == CellType.STRING ? preCell.getStringCellValue() : preCell.getNumericCellValue();
-
         // 比较当前行当前列与当前行前一列是否相同，相同合并当前单元格与上一行
         if (curData.equals(preData)) {
             Sheet sheet = writeSheetHolder.getSheet();

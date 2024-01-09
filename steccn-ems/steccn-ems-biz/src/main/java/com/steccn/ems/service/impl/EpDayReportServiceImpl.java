@@ -151,10 +151,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                         .between(EpMeterRead::getReadDate, start, end)
                         .in(EpMeterRead::getMeterId, accIdSet));
                 if (CollUtil.isNotEmpty(dbList)) {
-                    hpIdSet.forEach(ele -> {
-                        CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, dbList);
-                        resList.add(res);
-                    });
+                    CommonReportDTO res = jpHeatPowerElecRow(granularity, start, end, electricType, dbList);
+                    resList.add(res);
                 }
             }
         }
