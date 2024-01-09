@@ -2,11 +2,9 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
-import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -27,9 +25,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DashboardNumDTO;
 import com.steccn.pms.dto.QtLineChartBarCountDTO;
-import com.steccn.pms.service.PmsPullForceService;
-import com.steccn.pms.service.PmsReportDashboardCtService;
-import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.service.*;
 import com.steccn.pms.vo.JpCountReportDetailRowVO;
 import com.steccn.pms.vo.JpCountReportDetailVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
@@ -40,14 +36,11 @@ import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
 import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
-import com.steccn.qms.vo.OriginalDefectRowVO;
-import com.steccn.qms.vo.OriginalDefectVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -73,6 +66,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
     private final RemoteDpFeignApi remoteDpFeignApi;
+    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
 
     @Override
     public QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
@@ -354,13 +348,13 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         List<String> dateStrList = Lists.newArrayList();
 
         //并行执行
+        DpPmsOperateDTO  dpPmsOperateDTO = new DpPmsOperateDTO();
+        dpPmsOperateDTO.setStart(start);
+        dpPmsOperateDTO.setEnd(end);
+        dpPmsOperateDTO.setGranularity(granularityInt);
+        dpPmsOperateDTO.setOfficeId(workShopId);
         //获取耗料
         CompletableFuture<List<CommonReportDTO>> hlList = CompletableFuture.supplyAsync(() -> {
-            DpPmsOperateDTO  dpPmsOperateDTO = new DpPmsOperateDTO();
-            dpPmsOperateDTO.setStart(start);
-            dpPmsOperateDTO.setEnd(end);
-            dpPmsOperateDTO.setGranularity(granularityInt);
-            dpPmsOperateDTO.setOfficeId(workShopId);
             return FeignOptional.of(() -> remoteDpFeignApi.consumeMaterial(dpPmsOperateDTO), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> Lists.newArrayList());
         CompletableFuture<CommonReportDTO> gasFuture = CompletableFuture.supplyAsync(() -> {
@@ -403,6 +397,14 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<CommonReportDTO> inStorageFuture = CompletableFuture.supplyAsync(() -> {
             return reportWorkService.jpInStorageDateGranularity(workShopId, start, end, granularityInt);
         }).exceptionally(ex -> null);
+        //入库产量明细
+        CompletableFuture<List<CommonReportDTO>> inStorageDetail = CompletableFuture.supplyAsync(() -> {
+            return pmsCompleteStorageInfoService.substrate(dpPmsOperateDTO);
+        }).exceptionally(ex -> null);
+        //产线产量
+        CompletableFuture<List<CommonReportDTO>> linePm = CompletableFuture.supplyAsync(() -> {
+            return pmsCompleteStorageInfoService.substrateProduceLine(dpPmsOperateDTO);
+        }).exceptionally(ex -> null);
 
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
         completableFuture.isDone();
@@ -414,6 +416,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         countReportDetailRow(rowList, "余热发电", heatPowerList.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "光伏发电", gfList.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "脱硫脱硝", scList.get(), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "入库产量明细", inStorageDetail.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "拉引量", Lists.newArrayList(pullForce.get()), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "生产产量", Lists.newArrayList(pm.get()), Boolean.FALSE, granularity, timeList);
         //入库成品率
@@ -444,6 +447,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         BigDecimal value2Sum = BigDecimalUtil.sum(value2List);
         inStorageRow.setRowCount(BigDecimalUtil.percent(value1Sum, value2Sum));
         rowList.add(inStorageRow);
+        countReportDetailRow(rowList, "产线产量明细", linePm.get(), Boolean.FALSE, granularity, timeList);
 
         resVo.setDateStrList(dateStrList);
         resVo.setRowList(rowList);

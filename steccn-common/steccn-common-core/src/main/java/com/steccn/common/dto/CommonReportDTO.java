@@ -25,4 +25,5 @@ public class CommonReportDTO {
      * 值
      */
     private Map<String, BigDecimal> valueMap;
+
 }
