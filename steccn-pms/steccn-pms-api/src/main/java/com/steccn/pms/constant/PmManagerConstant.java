@@ -11,6 +11,10 @@ public interface PmManagerConstant {
 
 
     /**
+     * 小计
+     */
+    String SUBTOTAL = "小计";
+    /**
      * 合计
      */
     String TOTAL = "合计";
