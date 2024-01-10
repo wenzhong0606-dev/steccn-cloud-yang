@@ -66,6 +66,12 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.produceNumRate(workShopId, date));
     }
 
+    @GetMapping("/produce/num/rate/date/range")
+    @ApiOperation("日期范围产量合格率")
+    public R<BigDecimal> produceNumRateDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.produceNumRateDateRange(partId, start, end));
+    }
+
     @GetMapping("/in/storage/today")
     @ApiOperation("今日入库数（单位/T/片/㎡）")
     public R<List<BigDecimal>> inStorageToday(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {

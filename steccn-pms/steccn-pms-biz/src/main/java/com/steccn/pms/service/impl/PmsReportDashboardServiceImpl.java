@@ -231,6 +231,13 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public BigDecimal produceNumRateDateRange(Integer partId, LocalDate start, LocalDate end) {
+        BigDecimal num = produceNumDateRange(partId, start, end).get(0);
+        BigDecimal pullForce = pullForceDateRange(partId, start, end);
+        return BigDecimalUtil.percent(num, pullForce);
+    }
+
+    @Override
     public List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date) {
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeMap, "车间不能为空");

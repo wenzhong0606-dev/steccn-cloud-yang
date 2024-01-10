@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
@@ -77,6 +78,16 @@ public interface PmsReportDashboardService {
     BigDecimal produceNumRate(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围产量合格率
+     *
+     * @param partId 制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    BigDecimal produceNumRateDateRange(Integer partId, LocalDate start, LocalDate end);
+
+    /**
      * 今日入库数（单位/T/片/㎡）
      * @param workShopId 车间id
      * @param date       班次日期
@@ -138,4 +149,5 @@ public interface PmsReportDashboardService {
      * @return
      */
     PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start,LocalDate end);
+
 }
