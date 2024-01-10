@@ -92,7 +92,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         if (CollUtil.isNotEmpty(dbList)) {
             List<BigDecimal> collect = GetValueUtil.collectionGet(dbList, x -> x.getQuantity());
             resVal = BigDecimalUtil.sum(collect);
-            resVal = BigDecimalUtil.setScale(resVal, 1);
+            resVal = BigDecimalUtil.setScale(resVal, UnitLengthUtil.UNIT_TON_LENGTH);
         }
         return resVal;
     }
@@ -111,7 +111,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         if (CollUtil.isNotEmpty(dbList)) {
             List<BigDecimal> collect = GetValueUtil.collectionGet(dbList, x -> x.getQuantity());
             resVal = BigDecimalUtil.sum(collect);
-            resVal = BigDecimalUtil.setScale(resVal, 1);
+            resVal = BigDecimalUtil.setScale(resVal, UnitLengthUtil.UNIT_TON_LENGTH);
         }
         return resVal;
     }
