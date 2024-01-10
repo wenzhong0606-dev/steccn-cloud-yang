@@ -67,12 +67,13 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    private final PmsOfficeManager pmsOfficeManager;
 
     @Override
     public QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
         Assert.notNull(granularityEnum, "粒度不存在");
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
@@ -221,7 +222,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -246,7 +247,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -271,7 +272,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -294,7 +295,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -318,7 +319,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Assert.notNull(granularity, "日期粒度不存在");
 
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
 
@@ -767,7 +768,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private QtLineChartBarCountDTO num(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function , QtManagerConstant.QtGranularityEnum granularityEnum) {
         List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), numDTO.getStart(), numDTO.getEnd());
         Assert.notEmpty(timeList, "暂无时间窗口");
-        List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(numDTO.getWorkShopId());
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         numDTO.setLineIdList(lineIdList);
@@ -817,7 +818,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private QtLineChartBarCountDTO numClass(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function) {
         List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), numDTO.getStart(), numDTO.getEnd());
         Assert.notEmpty(timeList, "暂无时间窗口");
-        List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(numDTO.getWorkShopId());
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -856,20 +857,5 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
         resDto.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(countValueList),numDTO.getBit()));
         return resDto;
-    }
-
-    /**
-     * 获取车间的产线集合
-     *
-     * @param workShopId 车间
-     * @return
-     */
-    private List<SysOfficeVO> getWsLineList(Integer workShopId) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(workShopId);
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        return lineOfficeList;
     }
 }
