@@ -7,21 +7,22 @@ import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
-import com.steccn.ems.service.EpEnergyTypeService;
-import com.steccn.ems.service.EpMeterReadService;
-import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.service.EpPmsConsumeReportService;
+import com.steccn.ems.service.*;
 import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.ems.vo.PmElectricConsumeVO;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,8 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     private final EpPartitionService epPartitionService;
     private final EpMeterReadService epMeterReadService;
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final EmsOfficeManager emsOfficeManager;
 
     @Override
     public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate start, LocalDate end) {
@@ -75,8 +78,20 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     public EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate start, LocalDate end) {
         EpPmsConsumeVO oil = consumeUseOil(officeId, start, end);
         EpPmsConsumeVO gas = consumeUseGas(officeId, start, end);
+        //获取office的数据
+        SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(officeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysOfficeVO, "组织机构不存在");
+        Set<Integer> workshopIdSet = Sets.newHashSet();
+        if (SysOfficeConstant.DEPARTMENT.equals(sysOfficeVO.getOfficeType())) {
+            List<SysOfficeVO> workshopList = emsOfficeManager.getChildren(sysOfficeVO.getId(), SysOfficeConstant.WORKSHOP);
+            Assert.notEmpty(workshopList, "制造部下暂无车间");
+            List<Integer> wsIdList = GetValueUtil.collectionGet(workshopList, x -> x.getId());
+            workshopIdSet.addAll(wsIdList);
+        } else {
+            workshopIdSet.add(sysOfficeVO.getId());
+        }
         DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
-        dpPullForceDTO.setWorkshopIdSet(Sets.newHashSet(officeId));
+        dpPullForceDTO.setWorkshopIdSet(workshopIdSet);
         dpPullForceDTO.setGranularity(1);
         dpPullForceDTO.setStart(start);
         dpPullForceDTO.setEnd(end);

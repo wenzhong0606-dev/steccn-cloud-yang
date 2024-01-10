@@ -20,10 +20,7 @@ import com.steccn.dp.feign.RemoteDpCompleteStorageFeignApi;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
-import com.steccn.ems.service.EpEnergyTypeService;
-import com.steccn.ems.service.EpMeterReadService;
-import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.service.PmsOperateEnergyService;
+import com.steccn.ems.service.*;
 import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
@@ -69,6 +66,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDpCompleteStorageFeignApi remoteCompleteStorageFeignApi;
     private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
+    private final EmsOfficeManager emsOfficeManager;
 
     @Override
     public PmsOperateEnergyVO gas(DpPmsOperateDTO dto) {
@@ -122,7 +120,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         SjgCountReportVO reportVO = new SjgCountReportVO();
         reportVO.setColumns(setCountReportHead(start, end, preStart, preEnd));
         //先获取产线
-        List<SysOfficeVO> lineList = getWsLineList(workShopId);
+        List<SysOfficeVO> lineList = emsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(lineList, "车间下暂无产线");
         //根据产线获取电能节点
         List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
@@ -195,21 +193,6 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             });
         }
         return resMap;
-    }
-
-    /**
-     * 获取车间的产线集合
-     *
-     * @param workShopId 车间
-     * @return
-     */
-    private List<SysOfficeVO> getWsLineList(Integer workShopId) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(workShopId);
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        return lineOfficeList;
     }
 
     /**
