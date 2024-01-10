@@ -13,6 +13,7 @@ import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -276,6 +277,19 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
                                                @Param("lineIdList") List<Integer> lineIdList,
                                                @Param("start") LocalDateTime start,
                                                @Param("end") LocalDateTime end);
+
+
+    /**
+     * 配料含水率
+     *
+     * @param start    开始时间
+     * @param end      结束时间
+     * @param codeList 检验项集合
+     * @return
+     */
+    List<QtDaySamplingDTO> samplingWaterRate(@Param("start") LocalDateTime start,
+                                             @Param("end") LocalDateTime end,
+                                             @Param("codeList") List<String> codeList);
 }
 
 

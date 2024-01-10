@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.dto.QtReportFirstPatrolDTO;
 import com.steccn.qms.vo.*;
@@ -62,6 +63,15 @@ public interface QtDayReportService {
      * @return 报表
      */
     QtDaySamplingVO sampling(LocalDate date);
+
+    /**
+     * 配料含水率
+     *
+     * @param start 开始日期
+     * @param end   结束日期
+     * @return
+     */
+    QtLineChartBarDTO samplingWaterRate(LocalDate start, LocalDate end);
 
     /**
      * 配料抽检日报表-下载
