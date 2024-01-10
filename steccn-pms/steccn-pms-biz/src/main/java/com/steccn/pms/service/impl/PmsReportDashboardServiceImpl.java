@@ -90,7 +90,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 .eq(PmsPullForce::getWorkshopId, workShopId)
                 .select(PmsPullForce::getQuantity));
         if (CollUtil.isNotEmpty(dbList)) {
-            List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+            List<BigDecimal> collect = GetValueUtil.collectionGet(dbList, x -> x.getQuantity());
             resVal = BigDecimalUtil.sum(collect);
             resVal = BigDecimalUtil.setScale(resVal, 1);
         }
@@ -103,13 +103,13 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         BigDecimal resVal = null;
         List<SysOfficeVO> workshopList = pmsOfficeManager.getChildren(partId, SysOfficeConstant.WORKSHOP);
         Assert.notNull(workshopList, "制造部下暂无车间");
-        List<Integer> workshopIdList = workshopList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        List<Integer> workshopIdList = GetValueUtil.collectionGet(workshopList, x -> x.getId());
         List<PmsPullForce> dbList = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>()
                 .between(PmsPullForce::getPullForceDate, start, end)
                 .in(PmsPullForce::getWorkshopId, workshopIdList)
                 .select(PmsPullForce::getQuantity));
         if (CollUtil.isNotEmpty(dbList)) {
-            List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+            List<BigDecimal> collect = GetValueUtil.collectionGet(dbList, x -> x.getQuantity());
             resVal = BigDecimalUtil.sum(collect);
             resVal = BigDecimalUtil.setScale(resVal, 1);
         }
