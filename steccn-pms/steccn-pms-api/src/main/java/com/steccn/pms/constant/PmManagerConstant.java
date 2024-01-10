@@ -11,6 +11,16 @@ public interface PmManagerConstant {
 
 
     /**
+     * 小计
+     */
+    String SUBTOTAL = "小计";
+    /**
+     * 合计
+     */
+    String TOTAL = "合计";
+
+
+    /**
      * 排序条件-编码
      */
     String PMS_ORDER_CODE = "code";

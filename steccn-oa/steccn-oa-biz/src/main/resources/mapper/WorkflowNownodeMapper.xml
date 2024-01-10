@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.WorkflowNownodeMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.WorkflowNownode">
+            <result property="requestid" column="REQUESTID" jdbcType="INTEGER"/>
+            <result property="nownodeid" column="NOWNODEID" jdbcType="INTEGER"/>
+            <result property="nownodetype" column="NOWNODETYPE" jdbcType="INTEGER"/>
+            <result property="nownodeattribute" column="NOWNODEATTRIBUTE" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        REQUESTID,NOWNODEID,NOWNODETYPE,
+        NOWNODEATTRIBUTE
+    </sql>
+</mapper>
