@@ -96,6 +96,15 @@ public interface PmsReportDashboardService {
     List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围入库数（单位/T/片/㎡）
+     * @param partId 制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    List<BigDecimal> inStorageDateRange(Integer partId, LocalDate start, LocalDate end);
+
+    /**
      * 入库合格率
      *
      * @param workShopId 车间id
@@ -149,5 +158,4 @@ public interface PmsReportDashboardService {
      * @return
      */
     PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start,LocalDate end);
-
 }

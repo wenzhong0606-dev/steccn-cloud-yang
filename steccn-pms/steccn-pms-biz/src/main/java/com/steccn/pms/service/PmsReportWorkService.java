@@ -272,6 +272,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param lineIdList 产线集合
      * @param start      班次时间-开始
      * @param end        班次时间-结束
+     * @return
+     */
+    Map<Long,BigDecimal> getDateRangeInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+
+    /**
+     * 获取日期范围内的入库数量
+     *
+     * @param lineIdList 产线集合
+     * @param start      班次时间-开始
+     * @param end        班次时间-结束
      * @param unit       单位
      * @return
      */

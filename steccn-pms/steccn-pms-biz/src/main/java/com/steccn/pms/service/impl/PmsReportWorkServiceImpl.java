@@ -1277,6 +1277,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<Long, BigDecimal> getDateRangeInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeInStorage(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> collect = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            collect.forEach((k, v) -> {
+                List<BigDecimal> valueList = Lists.newArrayList();
+                v.forEach(ele -> {
+                    valueList.add(ele.getQuantity());
+                });
+
+                resMap.put(k, BigDecimalUtil.sum(valueList));
+            });
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<Integer, BigDecimal> getDateRangeInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
         LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
