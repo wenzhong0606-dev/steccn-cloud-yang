@@ -163,6 +163,46 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
+    @Override
+    public List<BigDecimal> produceNumDateRange(Integer partId, LocalDate start, LocalDate end) {
+        SysOfficeVO partOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(partId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(partOffice, "制造部不能为空");
+        int type = partOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
+        //根据车间区分深加工还是基片
+        //①基片产量：所有报工加工数之和
+        //②深加工产量:磨边工位报工加工数之和
+        List<SysOfficeVO> wsList = pmsOfficeManager.getChildren(partOffice.getId(), SysOfficeConstant.WORKSHOP);
+        Assert.notEmpty(wsList, "制造部下暂无车间");
+        List<Integer> wsIdList = GetValueUtil.collectionGet(wsList, x -> x.getId());
+        //获取产线
+        List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdList, SysOfficeConstant.PRODUCT_LINE);
+        Assert.notEmpty(lineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(lineList, x -> x.getId());
+        Map<Long, BigDecimal> dateRangePmMap = pmsReportWorkService.getDateRangePm(lineIdList, start, end, type);
+        //获取物料转换单位
+        Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(dateRangePmMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取/T/片/㎡
+        SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysDict1, "换算单位1不存在");
+        Assert.notNull(sysDict2, "换算单位2不存在");
+        Assert.notNull(sysDict3, "换算单位3不存在");
+        BigDecimal sum1 = null;
+        BigDecimal sum2 = null;
+        BigDecimal sum3 = null;
+        //先换算后求和
+        for (Map.Entry<Long, BigDecimal> entry : dateRangePmMap.entrySet()) {
+            BigDecimal value = entry.getValue();
+            BigDecimal convert1 = UnitConvertUtil.convert(convertMap, entry.getKey(), sysDict1.getId(), sysDict2.getId(), value);
+            BigDecimal convert2 = UnitConvertUtil.convert(convertMap, entry.getKey(), sysDict1.getId(), sysDict3.getId(), value);
+            sum1 = BigDecimalUtil.add(sum1, value);
+            sum2 = BigDecimalUtil.add(sum2, convert1);
+            sum3 = BigDecimalUtil.add(sum3, convert2);
+        }
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
+    }
+
     /**
      * 获取车间的产线集合
      *

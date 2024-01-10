@@ -58,6 +58,16 @@ public interface PmsReportDashboardService {
     List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围产量（单位/T/片/㎡）
+     *
+     * @param partId 基片制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    List<BigDecimal> produceNumDateRange(Integer partId, LocalDate start, LocalDate end);
+
+    /**
      * 产量合格率
      *
      * @param workShopId 车间id

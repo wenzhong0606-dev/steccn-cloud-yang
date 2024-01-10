@@ -28,4 +28,13 @@ public interface PmsOfficeManager {
      */
     List<SysOfficeVO> getChildren(Integer parentOfficeId, String childOfficeType);
 
+    /**
+     * 获取节点的孩子节点，指定孩子类型
+     *
+     * @param parentOfficeIdList  父亲的officeId
+     * @param childOfficeType 孩子的类型 传空，则默认全部类型
+     * @return
+     */
+    List<SysOfficeVO> getChildren(List<Integer> parentOfficeIdList, String childOfficeType);
+
 }

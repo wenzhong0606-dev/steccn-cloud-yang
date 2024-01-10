@@ -129,8 +129,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
     @Autowired
     private PmsOfficeManager pmsOfficeManager;
-    @Autowired
-    private PmsPullForceService pullForceService;
 
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
@@ -1156,6 +1154,39 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                             lineNumMap.put(ele.getProductLineId(), BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity()));
                         }
                     });
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, BigDecimal> getDateRangePm(List<Integer> lineList, LocalDate start, LocalDate end, Integer type) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangePm(lineList, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> materialMap = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            if (type == 0) {
+                //基片
+                materialMap.forEach((k, v) -> {
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    v.forEach(ele -> {
+                        valueList.add(ele.getQuantity());
+                    });
+                    resMap.put(k, BigDecimalUtil.sum(valueList));
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(lineList);
+
+                materialMap.forEach((k, v) -> {
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    //深加工
+                    v.forEach(ele -> {
+                        if (stationIds.contains(ele.getStationId())) {
+                            valueList.add(BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity()));
+                        }
+                    });
+                    resMap.put(k, BigDecimalUtil.sum(valueList));
                 });
             }
         }

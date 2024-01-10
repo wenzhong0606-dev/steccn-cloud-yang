@@ -235,6 +235,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<Long, Map<Integer, BigDecimal>> getTodayPm(List<Integer> lineList, LocalDate today, Integer type);
 
     /**
+     * 获取产线的当天产量
+     *
+     * @param lineList 产线集合
+     * @param start    开始日期
+     * @param end      结束日期
+     * @param type     类型
+     * @return
+     */
+    Map<Long, BigDecimal> getDateRangePm(List<Integer> lineList, LocalDate start, LocalDate end, Integer type);
+
+    /**
      * 获取日期范围内的产线产量
      *
      * @param lineList 产线集合

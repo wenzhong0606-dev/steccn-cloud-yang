@@ -1,5 +1,6 @@
 package com.steccn.pms.service.impl;
 
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -39,6 +40,14 @@ public class PmsOfficeManagerImpl implements PmsOfficeManager {
         sysOfficeParent.setId(parentOfficeId);
         sysOfficeParent.setOfficeType(childOfficeType);
         return FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+    }
+
+    @Override
+    public List<SysOfficeVO> getChildren(List<Integer> parentOfficeIdList, String childOfficeType) {
+        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
+        sysOfficeParent.setParentIds(Sets.newHashSet(parentOfficeIdList));
+        sysOfficeParent.setOfficeType(childOfficeType);
+        return FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
     }
 
 }
