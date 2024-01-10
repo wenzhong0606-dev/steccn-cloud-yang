@@ -8,6 +8,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.dp.dto.DpPullForceDTO;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
@@ -21,8 +22,10 @@ import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.ems.vo.PmElectricConsumeVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -47,39 +50,39 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
 
     @Override
-    public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate date) {
-        return consumeUse(officeId, date, 1);
+    public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate start, LocalDate end) {
+        return consumeUse(officeId, start, end, 1);
     }
 
     @Override
-    public EpPmsConsumeVO consumeUseWater(Integer officeId, LocalDate date) {
-        return consumeUse(officeId, date, 2);
+    public EpPmsConsumeVO consumeUseWater(Integer officeId, LocalDate start, LocalDate end) {
+        return consumeUse(officeId, start, end, 2);
     }
 
     @Override
-    public EpPmsConsumeVO consumeUseGas(Integer officeId, LocalDate date) {
-        return consumeUse(officeId, date, 3);
+    public EpPmsConsumeVO consumeUseGas(Integer officeId, LocalDate start, LocalDate end) {
+        return consumeUse(officeId, start, end, 3);
     }
 
     @Override
-    public EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate date) {
-        EpPmsConsumeVO epPmsConsumeVO = consumeUse(officeId, date, 4);
+    public EpPmsConsumeVO consumeUseOil(Integer officeId, LocalDate start, LocalDate end) {
+        EpPmsConsumeVO epPmsConsumeVO = consumeUse(officeId, start, end, 4);
         epPmsConsumeVO.setSum(BigDecimalUtil.setScale(epPmsConsumeVO.getSum(), 1));
         return epPmsConsumeVO;
     }
 
     @Override
-    public EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate date) {
-        EpPmsConsumeVO oil = consumeUseOil(officeId, date);
-        EpPmsConsumeVO gas = consumeUseGas(officeId, date);
+    public EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate start, LocalDate end) {
+        EpPmsConsumeVO oil = consumeUseOil(officeId, start, end);
+        EpPmsConsumeVO gas = consumeUseGas(officeId, start, end);
         DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
         dpPullForceDTO.setWorkshopIdSet(Sets.newHashSet(officeId));
         dpPullForceDTO.setGranularity(1);
-        dpPullForceDTO.setStart(date);
-        dpPullForceDTO.setEnd(date);
+        dpPullForceDTO.setStart(start);
+        dpPullForceDTO.setEnd(end);
         Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
-        BigDecimal pullForce = pullForceMap.get(LocalDateUtil.format(date, "yyyy-MM-dd"));
+        BigDecimal pullForce = pullForceMap.get(LocalDateUtil.format(start, "yyyy-MM-dd"));
         BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), pullForce, 1);
         EpPmsConsumeVO res = new EpPmsConsumeVO();
         res.setUnitName("kcal/kg");
@@ -87,12 +90,7 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         return res;
     }
 
-    @Override
-    public List<PmElectricConsumeVO> electricRange(Integer officeId, LocalDate start, LocalDate end) {
-        return null;
-    }
-
-    private EpPmsConsumeVO consumeUse(Integer officeId, LocalDate date, Integer type) {
+    private EpPmsConsumeVO consumeUse(Integer officeId, LocalDate start, LocalDate end, Integer type) {
         //获取单位
         EpEnergyType epEnergyType = epEnergyTypeService.getById(type);
         Assert.notNull(epEnergyType, "能源信息为空");
@@ -101,7 +99,9 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         if (Objects.isNull(nodeInfo)) {
             throw new SteccnChartException("当前节点不存在于能源树");
         }
-        Set<LocalDate> dateSet = Sets.newHashSet(date);
+        List<LocalDate> cutDateList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+        cutDateList.remove(cutDateList.size() - 1);
+        Set<LocalDate> dateSet = Sets.newHashSet(cutDateList);
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, epEnergyType.getId(), Arrays.asList(nodeInfo.getId()));
         List<BigDecimal> collect = classDateAllData.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
         return new EpPmsConsumeVO(BigDecimalUtil.sum(collect), measureUnitMap.get(epEnergyType.getMeasureUnit()));
