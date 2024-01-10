@@ -48,8 +48,11 @@ public class MysqlDateKeyUtil {
             mysqlKey = XAxisUtil.convert(granularityEnum, ldt);
         } else if (QtManagerConstant.QtGranularityEnum.QUARTER.getCode().equals(granularityEnum.getCode())) {
             mysqlKey = JointUtil.joint("-", ldt.getYear(), quater(ldt.getMonthValue()));
-        } else {
+        } else if (QtManagerConstant.QtGranularityEnum.YEAR.getCode().equals(granularityEnum.getCode())) {
             mysqlKey = String.valueOf(ldt.getYear());
+        } else {
+            //无粒度
+            mysqlKey = "NONE_" + XAxisUtil.convert(granularityEnum, ldt);
         }
         return mysqlKey;
     }

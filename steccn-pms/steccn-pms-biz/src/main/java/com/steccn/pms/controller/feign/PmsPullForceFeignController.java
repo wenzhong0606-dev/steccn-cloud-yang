@@ -7,6 +7,7 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.dto.PullForceSumDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.vo.PmsPullForceDataVO;
 import io.swagger.annotations.Api;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -43,4 +46,11 @@ public class PmsPullForceFeignController {
     public R<List<PmsPullForceDataVO>> getDataFromPeriods(@RequestBody PmsPullForceQueryDTO dto) {
         return R.success(pmsPullForceService.getDataFromPeriods(dto));
     }
+
+    @PostMapping("/sum")
+    @ApiOperation(value = "拉引量汇总")
+    R<Map<String, BigDecimal>> pullForceSum(@Valid @RequestBody PullForceSumDTO dto){
+       return R.success(pmsPullForceService.pullForceSum(dto));
+    }
+
 }

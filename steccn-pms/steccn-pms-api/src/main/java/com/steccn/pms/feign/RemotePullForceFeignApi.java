@@ -8,6 +8,7 @@ import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.dto.PullForceSumDTO;
 import com.steccn.pms.vo.PmsPullForceDataVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -47,4 +50,14 @@ public interface RemotePullForceFeignApi {
     @ApiOperation("获取时间段内的拉引量详细值")
     @PostMapping("/feign/pms/pull/force/data")
     R<List<PmsPullForceDataVO>> getDataFromPeriods(@Valid @RequestBody PmsPullForceQueryDTO dto);
+
+    /**
+     * 拉引量
+     *
+     * @param dto dto
+     * @return
+     */
+    @PostMapping("/feign/pms/pull/force/sum")
+    @ApiOperation(value = "拉引量汇总")
+    R<Map<String, BigDecimal>> pullForceSum(@RequestBody PullForceSumDTO dto);
 }

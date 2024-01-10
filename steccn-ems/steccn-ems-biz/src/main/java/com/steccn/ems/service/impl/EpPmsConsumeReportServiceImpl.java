@@ -23,7 +23,10 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.PullForceSumDTO;
+import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jni.Local;
@@ -51,6 +54,7 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final EmsOfficeManager emsOfficeManager;
+    private final RemotePullForceFeignApi remotePullForceFeignApi;
 
     @Override
     public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate start, LocalDate end) {
@@ -90,14 +94,14 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         } else {
             workshopIdSet.add(sysOfficeVO.getId());
         }
-        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
-        dpPullForceDTO.setWorkshopIdSet(workshopIdSet);
-        dpPullForceDTO.setGranularity(1);
-        dpPullForceDTO.setStart(start);
-        dpPullForceDTO.setEnd(end);
-        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
+        pullForceSumDTO.setWorkshopIdSet(workshopIdSet);
+        pullForceSumDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NONE.getCode());
+        pullForceSumDTO.setStart(start);
+        pullForceSumDTO.setEnd(end);
+        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
-        BigDecimal pullForce = pullForceMap.get(LocalDateUtil.format(start, "yyyy-MM-dd"));
+        BigDecimal pullForce = pullForceMap.get(MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start));
         BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), pullForce, 1);
         EpPmsConsumeVO res = new EpPmsConsumeVO();
         res.setUnitName("kcal/kg");

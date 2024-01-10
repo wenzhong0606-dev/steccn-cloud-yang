@@ -56,6 +56,10 @@ public class ShardTimeUtil {
      * @return
      */
     public static List<LocalDateTime> cutDateRangeNew(String dateType, LocalDateTime start, LocalDateTime end) {
+        //考虑是否是无粒度
+        if ("N".equals(dateType)) {
+            return Lists.newArrayList(start, end);
+        }
         boolean contains = Sets.newHashSet("Y", "Q", "M", "W", "D", "C", "H").contains(dateType);
         Assert.isTrue(contains, "粒度类型错误");
         List<LocalDateTime> listDate = new ArrayList<>();
@@ -151,6 +155,10 @@ public class ShardTimeUtil {
      * @return
      */
     public static List<LocalDate> cutDate(String dateType, LocalDate start, LocalDate end) {
+        //考虑是否是无粒度
+        if ("N".equals(dateType)) {
+            return Lists.newArrayList(start, end);
+        }
         List<LocalDate> listDate = new ArrayList<>();
         //需要校验type
         boolean contains = Sets.newHashSet("Y", "Q", "M", "W", "D").contains(dateType);

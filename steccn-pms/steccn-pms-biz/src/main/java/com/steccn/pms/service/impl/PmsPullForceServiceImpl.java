@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -15,6 +16,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -24,6 +26,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.dto.PullForceSumDTO;
 import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.vo.PmsPullForceClassQuantity;
@@ -403,6 +406,31 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         res.setUnit("T");
         res.setValueMap(map);
         return res;
+    }
+
+    @Override
+    public Map<String, BigDecimal> pullForceSum(PullForceSumDTO dto) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        cn.hutool.core.lang.Assert.notNull(granularity, "粒度不存在");
+        List<PmsPullForce> dataList = this.list(new QueryWrapper<PmsPullForce>()
+                .select("pull_force_date, sum(quantity) as quantity").lambda()
+                .in(CollUtil.isNotEmpty(dto.getWorkshopIdSet()), PmsPullForce::getWorkshopId, dto.getWorkshopIdSet())
+                .ge(Objects.nonNull(dto.getStart()), PmsPullForce::getPullForceDate, dto.getStart())
+                .le(Objects.nonNull(dto.getEnd()), PmsPullForce::getPullForceDate, dto.getEnd())
+                .groupBy(PmsPullForce::getPullForceDate));
+        if (CollUtil.isNotEmpty(dataList)) {
+            List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+            Assert.notEmpty(dataList, "日期区间有误");
+            for (int i = 1; i < dateList.size(); i++) {
+                LocalDate left = dateList.get(i - 1);
+                LocalDate right = dateList.get(i);
+                String convert = MysqlDateKeyUtil.convert(granularity, left);
+                List<BigDecimal> valueList = dataList.stream().filter(xx -> LocalDateUtil.isRange(xx.getPullForceDate(), left, right, Boolean.TRUE, Boolean.FALSE)).map(PmsPullForce::getQuantity).collect(Collectors.toList());
+                resMap.put(convert, BigDecimalUtil.sum(valueList));
+            }
+        }
+        return resMap;
     }
 }
 
