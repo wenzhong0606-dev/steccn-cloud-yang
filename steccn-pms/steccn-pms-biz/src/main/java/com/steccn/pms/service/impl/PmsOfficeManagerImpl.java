@@ -9,6 +9,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.service.PmsOfficeManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 /**
@@ -31,4 +32,13 @@ public class PmsOfficeManagerImpl implements PmsOfficeManager {
         List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         return lineOfficeList;
     }
+
+    @Override
+    public List<SysOfficeVO> getChildren(Integer parentOfficeId, String childOfficeType) {
+        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
+        sysOfficeParent.setId(parentOfficeId);
+        sysOfficeParent.setOfficeType(childOfficeType);
+        return FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+    }
+
 }

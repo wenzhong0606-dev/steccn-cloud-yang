@@ -36,6 +36,12 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.pullForceToday(workShopId, date));
     }
 
+    @GetMapping("/pull/force/date/range")
+    @ApiOperation("日期范围拉引量（单位/T）")
+    public R<BigDecimal> pullForceDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.pullForceDateRange(partId, start, end));
+    }
+
     @GetMapping("/pull/melting/today")
     @ApiOperation("熔化率（单位/T）")
     public R<BigDecimal> meltingRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {

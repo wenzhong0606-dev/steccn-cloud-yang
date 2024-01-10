@@ -80,6 +80,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final PmsPullForceMapper pmsPullForceMapper;
+    private final PmsOfficeManager pmsOfficeManager;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -87,6 +88,25 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         List<PmsPullForce> dbList = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>()
                 .eq(PmsPullForce::getPullForceDate, date)
                 .eq(PmsPullForce::getWorkshopId, workShopId)
+                .select(PmsPullForce::getQuantity));
+        if (CollUtil.isNotEmpty(dbList)) {
+            List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+            resVal = BigDecimalUtil.sum(collect);
+            resVal = BigDecimalUtil.setScale(resVal, 1);
+        }
+        return resVal;
+    }
+
+    @Override
+    public BigDecimal pullForceDateRange(Integer partId, LocalDate start, LocalDate end) {
+        //获取部门下的车间
+        BigDecimal resVal = null;
+        List<SysOfficeVO> workshopList = pmsOfficeManager.getChildren(partId, SysOfficeConstant.WORKSHOP);
+        Assert.notNull(workshopList, "制造部下暂无车间");
+        List<Integer> workshopIdList = workshopList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        List<PmsPullForce> dbList = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>()
+                .between(PmsPullForce::getPullForceDate, start, end)
+                .in(PmsPullForce::getWorkshopId, workshopIdList)
                 .select(PmsPullForce::getQuantity));
         if (CollUtil.isNotEmpty(dbList)) {
             List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());

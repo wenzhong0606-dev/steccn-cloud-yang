@@ -14,8 +14,18 @@ public interface PmsOfficeManager {
     /**
      * 获取车间下面的产线
      *
-     * @param workShopId
+     * @param workShopId 车间id
      * @return
      */
     List<SysOfficeVO> getWsLineList(Integer workShopId);
+
+    /**
+     * 获取节点的孩子节点，指定孩子类型
+     *
+     * @param parentOfficeId  父亲的officeId
+     * @param childOfficeType 孩子的类型 传空，则默认全部类型
+     * @return
+     */
+    List<SysOfficeVO> getChildren(Integer parentOfficeId, String childOfficeType);
+
 }

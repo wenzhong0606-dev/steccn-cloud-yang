@@ -29,6 +29,17 @@ public interface PmsReportDashboardService {
     BigDecimal pullForceToday(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围拉引量（单位/T）
+     *
+     * @param partId 部门id
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    BigDecimal pullForceDateRange(Integer partId, LocalDate start, LocalDate end);
+
+
+    /**
      * 熔化率
      *
      * @param workShopId 车间id
