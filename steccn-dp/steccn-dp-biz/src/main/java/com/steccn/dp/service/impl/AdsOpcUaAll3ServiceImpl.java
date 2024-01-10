@@ -451,18 +451,25 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
 
     public List<DpWeightVO> weightCount(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto) {
         List<DpWeightVO> weightCountList = Lists.newArrayList();
-        List<LocalDateTime> days = ShardTimeUtil.cutDateRange("D", dto.getField1(), dto.getField2());
-        for(int i = 0; i < days.size(); i++){
-            Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
-            weightCountList.addAll(mapTransferToResult(mapResult,days.get(i).toLocalDate().toString()));
-        }
-        if(CollUtil.isEmpty(weightCountList)){
-            return weightCountList;
-        }
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            weightCountList = weightCountList;
+            List<LocalDateTime> days = ShardTimeUtil.cutDateRange("D", dto.getField1(), dto.getField2());
+            for(int i = 0; i < days.size(); i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+                weightCountList.addAll(mapTransferToResult(mapResult,days.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(weightCountList)){
+                return weightCountList;
+            }
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsDayAndTag(dto);
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            List<LocalDateTime> weeks = ShardTimeUtil.cutDateRange("W", dto.getField1(), dto.getField2());
+            for(int i = 0; i < weeks.size()-1; i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(weeks.get(i), weeks.get(i+1).withHour(7).withMinute(59).withSecond(59)));
+                weightCountList.addAll(mapTransferToResult(mapResult,weeks.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(weightCountList)){
+                return weightCountList;
+            }
             //转换每个list的值
             weightCountList.forEach(tmp->{
                 tmp.setDateStr(ShardTimeUtil.date2Week(LocalDate.parse(tmp.getDateStr())));
@@ -470,11 +477,27 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             //把DateStr和tagId相同的合并
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsWeekAndTag(dto);
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            List<LocalDateTime> months = ShardTimeUtil.cutDateRange("M", dto.getField1(), dto.getField2());
+            for(int i = 0; i < months.size()-1; i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(months.get(i), months.get(i+1).withHour(7).withMinute(59).withSecond(59)));
+                weightCountList.addAll(mapTransferToResult(mapResult,months.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(weightCountList)){
+                return weightCountList;
+            }
             weightCountList.forEach(tmp->{
                 tmp.setDateStr(LocalDate.parse(tmp.getDateStr()).format(DateTimeFormatter.ofPattern("yyyy-MM")));
             });
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsMonthAndTag(dto);
         } else {
+            List<LocalDateTime> years = ShardTimeUtil.cutDateRange("Y", dto.getField1(), dto.getField2());
+            for(int i = 0; i < years.size()-1; i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(years.get(i), years.get(i+1).withHour(7).withMinute(59).withSecond(59)));
+                weightCountList.addAll(mapTransferToResult(mapResult,years.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(weightCountList)){
+                return weightCountList;
+            }
             weightCountList.forEach(tmp->{
                 tmp.setDateStr(LocalDate.parse(tmp.getDateStr()).format(DateTimeFormatter.ofPattern("yyyy")));
             });
@@ -529,29 +552,67 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     public List<DpValueDateVO> weightCountAsDayTool(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto){
         List<DpValueDateVO> weightCountList = Lists.newArrayList();
         List<DpWeightVO> tagList = Lists.newArrayList();
-        List<LocalDateTime> days = ShardTimeUtil.cutDateRange("D", dto.getField1(), dto.getField2());
-        for(int i = 0; i < days.size(); i++){
-            Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
-            tagList.addAll(mapTransferToResult(mapResult,days.get(i).toLocalDate().toString()));
-        }
-        if(CollUtil.isEmpty(tagList)){
-            return weightCountList;
-        }
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            tagList = tagList;
+            List<LocalDateTime> days = ShardTimeUtil.cutDateRange("D", dto.getField1(), dto.getField2());
+            for(int i = 0; i < days.size(); i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+                tagList.addAll(mapTransferToResult(mapResult,days.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(tagList)){
+                return weightCountList;
+            }
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsDay(dto);
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            List<LocalDateTime> weeks = ShardTimeUtil.cutDateRange("W", dto.getField1(), dto.getField2());
+//            if(weeks.size() == 1){
+//                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(weeks.get(0), weeks.get(0).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+//                tagList.addAll(mapTransferToResult(mapResult,weeks.get(0).toLocalDate().toString()));
+//            }else {
+//            }
+            for(int i = 0; i < weeks.size()-1; i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(weeks.get(i), weeks.get(i+1).withHour(7).withMinute(59).withSecond(59)));
+                tagList.addAll(mapTransferToResult(mapResult,weeks.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(tagList)){
+                return weightCountList;
+            }
             tagList.forEach(tmp->{
                 tmp.setDateStr(ShardTimeUtil.date2Week(LocalDate.parse(tmp.getDateStr())));
             });
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsYear(dto);
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsMonth(dto);
+            List<LocalDateTime> months = ShardTimeUtil.cutDateRange("M", dto.getField1(), dto.getField2());
+//            if(weeks.size() == 1){
+//                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(weeks.get(0), weeks.get(0).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+//                tagList.addAll(mapTransferToResult(mapResult,weeks.get(0).toLocalDate().toString()));
+//            }else {
+//            }
+            for(int i = 0; i < months.size()-1; i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(months.get(i), months.get(i+1).withHour(7).withMinute(59).withSecond(59)));
+                tagList.addAll(mapTransferToResult(mapResult,months.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(tagList)){
+                return weightCountList;
+            }
             tagList.forEach(tmp->{
                 tmp.setDateStr(LocalDate.parse(tmp.getDateStr()).format(DateTimeFormatter.ofPattern("yyyy-MM")));
             });
         } else {
 //            weightCountList = adsOpcUaAll3Mapper.weightCountAsYear(dto);
+            List<LocalDateTime> years = ShardTimeUtil.cutDateRange("Y", dto.getField1(), dto.getField2());
+//            if(weeks.size() == 1){
+//                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(weeks.get(0), weeks.get(0).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+//                tagList.addAll(mapTransferToResult(mapResult,weeks.get(0).toLocalDate().toString()));
+//            }else {
+//            }
+            for(int i = 0; i < years.size()-1; i++){
+                Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(years.get(i), years.get(i+1).withHour(7).withMinute(59).withSecond(59)));
+                tagList.addAll(mapTransferToResult(mapResult,years.get(i).toLocalDate().toString()));
+            }
+            if(CollUtil.isEmpty(tagList)){
+                return weightCountList;
+            }
             tagList.forEach(tmp->{
                 tmp.setDateStr(LocalDate.parse(tmp.getDateStr()).format(DateTimeFormatter.ofPattern("yyyy")));
             });
