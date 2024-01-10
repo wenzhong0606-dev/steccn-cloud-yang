@@ -691,4 +691,29 @@ public interface PmManagerConstant {
             return null;
         }
     }
+
+    enum ChineseNumber {
+        ONE("一", 1), TWO("二", 2), THREE("三", 3), FOUR("四", 4), FIVE("五", 5), SIX("六", 6), SEVEN("七", 7), EIGHT("八", 8), NINE("九", 9), TEN("十", 10);
+
+        private final String chinese;
+        private final int arabic;
+
+        ChineseNumber(String chinese, int arabic) {
+            this.chinese = chinese;
+            this.arabic = arabic;
+        }
+
+        public int getArabic() {
+            return arabic;
+        }
+
+        public static int getArabicByChinese(String chinese) {
+            for (ChineseNumber number : values()) {
+                if (number.chinese.equals(chinese)) {
+                    return number.getArabic();
+                }
+            }
+            return 0;
+        }
+    }
 }

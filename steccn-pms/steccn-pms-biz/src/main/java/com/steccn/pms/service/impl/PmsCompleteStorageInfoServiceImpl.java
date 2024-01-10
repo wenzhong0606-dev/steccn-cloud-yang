@@ -51,6 +51,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -383,8 +385,8 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             List<PmsPullForceDataVO> pmsPullForceDataVOS = pullForceData.get(k);
             CommonReportDTO commonReportDTO = new CommonReportDTO();
             //名称为分类的名称
-            commonReportDTO.setName(lineNameMap.get(k)+"拉引量");
-            commonReportDTO.setUnit(PmManagerConstant.UNIT_T);
+            commonReportDTO.setName(lineNameMap.get(k)+"拉引量(T)");
+            commonReportDTO.setUnit(lineNameMap.get(k));
             Map<String,BigDecimal> valueMap = Maps.newHashMap();
             pmsPullForceDataVOS.forEach( data->{
                 String convert = MysqlDateKeyUtil.convert(granularity,data.getPullForceDate());
@@ -417,6 +419,22 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             });
         }
         resList.addAll(pullForceList);
+        //排序
+        resList.sort(Comparator.comparing(CommonReportDTO::getUnit, new Comparator<String>() {
+                    @Override
+                    public int compare(String o1, String o2) {
+                        // 提取每个产线名称中的数字
+                        Pattern pattern = Pattern.compile("([一二三四五六七八九十])");
+                        Matcher matcher1 = pattern.matcher(o1);
+                        Matcher matcher2 = pattern.matcher(o2);
+                        int num1 = matcher1.find() ? PmManagerConstant.ChineseNumber.getArabicByChinese(matcher1.group(1)) : 0;
+                        int num2 = matcher2.find() ? PmManagerConstant.ChineseNumber.getArabicByChinese(matcher2.group(1)) : 0;
+                        // 比较两个数字
+                        return num1 - num2;
+                    }
+                })
+                .thenComparing(CommonReportDTO::getName, Comparator.nullsLast(String::compareTo)));
+
         return resList;
     }
 
