@@ -37,9 +37,11 @@ import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
 import com.steccn.pms.service.PmsProduceOrderService;
+import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.pms.vo.PmsPullForceDataVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +51,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +69,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final PmsPullForceService pmsPullForceService;
 
 
     @Override
@@ -264,6 +269,59 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 resList.add(commonReportDTOM);
                 resList.add(commonReportDTOTON);
             });
+
+            if (CollUtil.isNotEmpty(resList)) {
+                //合计
+                List<CommonReportDTO> totalList = Lists.newArrayList();
+                //数据按照单位分类进行合计
+                Map<String, List<CommonReportDTO>> unitMap = resList.stream().collect(Collectors.groupingBy(CommonReportDTO::getUnit));
+                unitMap.forEach((k,v)->{
+                    CommonReportDTO commonReportDTOTON = new CommonReportDTO();
+                    commonReportDTOTON.setName(PmManagerConstant.TOTAL);
+                    commonReportDTOTON.setUnit(k);
+                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                    v.forEach(reportDTO -> {
+                        Map<String, BigDecimal> map = reportDTO.getValueMap();
+                        map.forEach((key,value)->{
+                            MapUtil.add(valueMap,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        });
+                    });
+                    commonReportDTOTON.setValueMap(valueMap);
+                    totalList.add(commonReportDTOTON);
+                });
+                //小计
+                //根据物料名称获取物料信息以及分类
+                List<String> materialNames = resList.stream().map(CommonReportDTO::getName).collect(Collectors.toList());
+                Map<String, EqpSpareVO> spareNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByName(materialNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //根据物料的类型数据进行分类
+                Map<String, List<CommonReportDTO>> typeMap = new HashMap<>();
+                for (String key : spareNameMap.keySet()) {
+                    EqpSpareVO eqpSpareVO = spareNameMap.get(key);
+                    for (CommonReportDTO commonReportDTO : resList) {
+                        if (commonReportDTO.getName().equals(key)){
+                            typeMap.computeIfAbsent(eqpSpareVO.getTypeName(),k-> new ArrayList<>()).add(commonReportDTO);
+                        }
+                    }
+                }
+                typeMap.forEach((k,v)->{
+                    CommonReportDTO commonReportDTOM = new CommonReportDTO();
+                    commonReportDTOM.setName(k+PmManagerConstant.SUBTOTAL);
+                    commonReportDTOM.setUnit(PmManagerConstant.MEASURE_UNIT_SM);
+                    Map<String,BigDecimal> valueMapM = Maps.newHashMap();
+                    List<CommonReportDTO> filteredList = v.stream()
+                            .filter(reportDTO-> PmManagerConstant.MEASURE_UNIT_SM.equals(reportDTO.getUnit()))
+                            .collect(Collectors.toList());
+                    filteredList.forEach( reportDTO->{
+                        Map<String, BigDecimal> valueMap = reportDTO.getValueMap();
+                        valueMap.forEach((key,value)->{
+                            MapUtil.add(valueMapM,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        });
+                    });
+                    commonReportDTOM.setValueMap(valueMapM);
+                    resList.add(commonReportDTOM);
+                });
+            resList.addAll(totalList);
+            }
         }
         return resList;
     }
@@ -283,9 +341,17 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         //获取产线名称
         Set<Integer> lineIdSet = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, String> lineNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取拉引量数据
+        PmsPullForceQueryDTO pmsPullForceQueryDTO = new PmsPullForceQueryDTO();
+        pmsPullForceQueryDTO.setStartDate(dto.getStart());
+        pmsPullForceQueryDTO.setEndDate(dto.getEnd());
+        pmsPullForceQueryDTO.setProductLineIds(lineIdSet);
+        List<PmsPullForceDataVO> dataFromPeriods = pmsPullForceService.getDataFromPeriods(pmsPullForceQueryDTO);
+        Map<Integer, List<PmsPullForceDataVO>> pullForceData = dataFromPeriods.stream().collect(Collectors.groupingBy(PmsPullForceDataVO::getProductLineId));
         //获取物料的分类
         List<Long> materialIds = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getMaterialId).collect(Collectors.toList());
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<CommonReportDTO> pullForceList = Lists.newArrayList();
         lineMap.forEach((k,v)->{
             //根据物料的类型数据进行分类
             Map<String, List<CompleteStorageInfoDTO>> typeMap = new HashMap<>();
@@ -315,7 +381,60 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                     resList.add(commonReportDTO);
                 });
             }
+            //获取产线数据
+            List<PmsPullForceDataVO> pmsPullForceDataVOS = pullForceData.get(k);
+            CommonReportDTO commonReportDTO = new CommonReportDTO();
+            //名称为分类的名称
+            commonReportDTO.setName(lineNameMap.get(k)+"拉引量(T)");
+            commonReportDTO.setUnit(lineNameMap.get(k));
+            Map<String,BigDecimal> valueMap = Maps.newHashMap();
+            pmsPullForceDataVOS.forEach( data->{
+                String convert = MysqlDateKeyUtil.convert(granularity,data.getPullForceDate());
+                MapUtil.add(valueMap,convert,data.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+            });
+            commonReportDTO.setValueMap(valueMap);
+            pullForceList.add(commonReportDTO);
         });
+        if (CollUtil.isNotEmpty(resList)){
+            //小计
+            //根据产线将数据分类小计
+            Map<String, List<CommonReportDTO>> unitMap = resList.stream().collect(Collectors.groupingBy(CommonReportDTO::getUnit));
+            unitMap.forEach( (k,v)->{
+                CommonReportDTO commonReportDTO = new CommonReportDTO();
+                //名称为分类的名称
+                commonReportDTO.setName(k+PmManagerConstant.SUBTOTAL);
+                //单位数据为产线名称
+                commonReportDTO.setUnit(k);
+                Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(v)){
+                    v.forEach( ele->{
+                        Map<String, BigDecimal> eleValueMap = ele.getValueMap();
+                        eleValueMap.forEach((key,value)->{
+                            MapUtil.add(valueMap,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        });
+                    });
+                }
+                commonReportDTO.setValueMap(valueMap);
+                resList.add(commonReportDTO);
+            });
+        }
+        resList.addAll(pullForceList);
+        //排序
+        resList.sort(Comparator.comparing(CommonReportDTO::getUnit, new Comparator<String>() {
+                    @Override
+                    public int compare(String o1, String o2) {
+                        // 提取每个产线名称中的数字
+                        Pattern pattern = Pattern.compile("([一二三四五六七八九十])");
+                        Matcher matcher1 = pattern.matcher(o1);
+                        Matcher matcher2 = pattern.matcher(o2);
+                        int num1 = matcher1.find() ? PmManagerConstant.ChineseNumber.getArabicByChinese(matcher1.group(1)) : 0;
+                        int num2 = matcher2.find() ? PmManagerConstant.ChineseNumber.getArabicByChinese(matcher2.group(1)) : 0;
+                        // 比较两个数字
+                        return num1 - num2;
+                    }
+                })
+                .thenComparing(CommonReportDTO::getName, Comparator.nullsLast(String::compareTo)));
+
         return resList;
     }
 

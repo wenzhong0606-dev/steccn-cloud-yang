@@ -28,15 +28,41 @@ public class SysClassificationServiceImpl extends ServiceImpl<SysClassificationM
     @Override
     public Map<Long, String> listByIdCh(Set<Long> typeIds) {
         Map<Long, String> resMap = Maps.newHashMap();
+        List<SysClassification> list = list();
         if (CollUtil.isNotEmpty(typeIds)) {
+            //获取层级分类为mm的数据为所在的分类数据
             List<SysClassification> sysClassifications = list(new LambdaQueryWrapper<SysClassification>().in(SysClassification::getId, typeIds));
             if (CollUtil.isNotEmpty(sysClassifications)) {
                 for (SysClassification sysClassification : sysClassifications) {
-                    resMap.put(sysClassification.getId(), sysClassification.getName());
+                    if (!sysClassification.getName().contains("mm")){
+                        SysClassification classification = getClassification(list,sysClassification.getId());
+                        resMap.put(sysClassification.getId(), classification.getName());
+                    }else {
+                        resMap.put(sysClassification.getId(),sysClassification.getName());
+                    }
+
+
                 }
             }
         }
         return resMap;
+    }
+
+    public SysClassification getClassification(List<SysClassification> list, Long id){
+        SysClassification currentNode = null;
+        for (SysClassification node : list) {
+            if (node.getId().equals(id)) {
+                currentNode = node;
+                break;
+            }
+        }
+        if (currentNode != null && currentNode.getName().contains("mm")) {
+            return currentNode;
+        }
+        if (currentNode != null && currentNode.getParentCode() != null) {
+            return getClassification(list, currentNode.getParentCode());
+        }
+        return null;
     }
 }
 
