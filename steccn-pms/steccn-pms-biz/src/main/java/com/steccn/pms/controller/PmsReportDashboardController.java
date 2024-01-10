@@ -90,6 +90,12 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.inStorageRate(workShopId, date));
     }
 
+    @GetMapping("/in/storage/rate/date/range")
+    @ApiOperation("日期范围入库合格率")
+    public R<BigDecimal> inStorageRateDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.inStorageRateDateRange(partId, start, end));
+    }
+
     @PostMapping("/produce/page")
     @ApiOperation("产线加工信息")
     public R<DashboardProducePageVO> producePage(@RequestBody DashboardProducePageDTO dto) {

@@ -114,6 +114,16 @@ public interface PmsReportDashboardService {
     BigDecimal inStorageRate(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围入库合格率
+     * @param partId 制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    BigDecimal inStorageRateDateRange(Integer partId, LocalDate start, LocalDate end);
+
+
+    /**
      * 产线加工信息
      * @param dto 请求参数
      * @return

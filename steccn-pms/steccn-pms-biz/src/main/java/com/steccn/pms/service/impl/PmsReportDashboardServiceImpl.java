@@ -313,6 +313,13 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public BigDecimal inStorageRateDateRange(Integer partId, LocalDate start, LocalDate end) {
+        BigDecimal num = inStorageDateRange(partId,start,end).get(0);
+        BigDecimal pullForce = pullForceDateRange(partId,start,end);
+        return BigDecimalUtil.percent(num, pullForce);
+    }
+
+    @Override
     public DashboardProducePageVO producePage(DashboardProducePageDTO dto) {
         //获取产线
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
