@@ -25,10 +25,7 @@ import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.mapper.PmsReportWorkHourMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
-import com.steccn.pms.service.PmsCompleteStorageService;
-import com.steccn.pms.service.PmsReportWorkHourService;
-import com.steccn.pms.service.PmsReportWorkService;
-import com.steccn.pms.service.PmsSjgReportDashboardCtService;
+import com.steccn.pms.service.*;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
@@ -55,7 +52,7 @@ import java.util.stream.Collectors;
 public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboardCtService {
 
     private final PmsReportWorkService reportWorkService;
-    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmsOfficeManager pmsOfficeManager;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsReportWorkMapper pmsReportWorkMapper;
     private final PmsReportWorkHourMapper pmsReportWorkHourMapper;
@@ -66,7 +63,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //产量：钢化工序的合格数（加工数-不良数）
         //入库：选择时间端内，该产线入库数量汇总
         //耗用：磨边工序的加工数
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
 
@@ -93,7 +90,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public SjgDashboardLineProduceVO lineProduceDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         SjgDashboardLineProduceVO resVo = new SjgDashboardLineProduceVO();
@@ -121,7 +118,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public QtLineChartBarDTO lineProduceClassGroup(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         Map<String, BigDecimal> pmMap = reportWorkService.lineClassPm(lineIdList, start, end, 1, unit);
@@ -157,7 +154,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public SjgDashboardLineProduceVO lineProduceClassGroupDetail(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         SjgDashboardLineProduceVO resVo = new SjgDashboardLineProduceVO();
@@ -189,7 +186,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取全量数据
@@ -243,7 +240,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public SjgDashboardLineProduceVO linePassRateDetail(Integer workShopId, LocalDate start, LocalDate end) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取全量数据
@@ -315,7 +312,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public QtLineChartBarDTO lineGroupPassRate(Integer workShopId, LocalDate start, LocalDate end) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取全量数据
@@ -381,7 +378,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public SjgDashboardLineProduceVO lineGroupPassRateDetail(Integer workShopId, LocalDate start, LocalDate end) {
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         Set<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         //获取全量数据
@@ -470,7 +467,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         SjgCountReportVO sjgCountReportVO = new SjgCountReportVO();
         sjgCountReportVO.setColumns(columnList1);
         //查询产线
-        List<SysOfficeVO> lineList = getWsLineList(workShopId);
+        List<SysOfficeVO> lineList = pmsOfficeManager.getWsLineList(workShopId);
         SteccnTableAssertUtil.notEmpty(lineList, "车间下暂无产线");
         List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         //类别：按时间区间内，本车间所有产线订单的报工数据（按工序名）进行分组（仅选择产量大于0的数据）
@@ -665,21 +662,6 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         resList.add(new TableHeadColumnDTO("汇总产量增长", "valueDiffSumSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSum"))));
         resList.add(new TableHeadColumnDTO("汇总产量增长率", "valueDiffSumRateSingle", Arrays.asList(new TableHeadColumnDTO("(+/-)", "valueDiffSumRate"))));
         return resList;
-    }
-
-    /**
-     * 获取车间的产线集合
-     *
-     * @param workShopId 车间
-     * @return
-     */
-    private List<SysOfficeVO> getWsLineList(Integer workShopId) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(workShopId);
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        return lineOfficeList;
     }
 
 }
