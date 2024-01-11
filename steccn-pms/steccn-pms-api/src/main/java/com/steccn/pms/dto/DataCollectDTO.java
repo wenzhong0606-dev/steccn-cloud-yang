@@ -1,5 +1,7 @@
 package com.steccn.pms.dto;
 
+import com.alibaba.fastjson2.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
  */
 @Data
 public class DataCollectDTO {
+    @JSONField(format="yyyy.MM.dd HH:mm:ss.SSS")
     private LocalDateTime timestamp;
     private BigDecimal value;
 }

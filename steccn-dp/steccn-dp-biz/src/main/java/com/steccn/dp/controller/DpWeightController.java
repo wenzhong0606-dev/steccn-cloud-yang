@@ -13,9 +13,11 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 类说明
@@ -59,4 +61,5 @@ public class DpWeightController {
     public R<List<CommonReportDTO>> test(@RequestBody DpPmsOperateDTO dto) {
         return R.success(adsOpcUaAll3Service.countDTO(dto));
     }
+
 }

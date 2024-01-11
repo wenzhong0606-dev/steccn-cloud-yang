@@ -12,8 +12,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 类说明
@@ -32,6 +34,15 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/weight/count")
     @ApiOperation(value = "电子秤读数")
     R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 电子秤读数
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/dp/weight/countMap")
+    @ApiOperation(value = "电子秤读数Map")
+    R<Map<String, BigDecimal>> countMap(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
 
     /**
      * 电子秤读数按天

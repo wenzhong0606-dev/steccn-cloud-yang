@@ -81,6 +81,33 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     }
 
     @Override
+    public Map<String, BigDecimal> getWeightCountMap(TupleDTO<LocalDateTime, LocalDateTime> dto) {
+        Map<String,BigDecimal> result = Maps.newHashMap();
+        //合并硅砂和碎玻璃
+        List<DpWeightVO> weighCount = getWeighCount(dto);
+        if(CollUtil.isNotEmpty(weighCount)){
+            weighCount.forEach(tmp->{
+                if(tmp.getTagName().contains("硅砂")){
+                    if(result.containsKey("硅砂")){
+                        result.computeIfPresent("硅砂",(k,v)->BigDecimalUtil.add(v,BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
+                    }else {
+                        result.put("硅砂",BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
+                    }
+                }else if(tmp.getTagName().contains("碎玻璃")){
+                    if(result.containsKey("碎玻璃")){
+                        result.computeIfPresent("碎玻璃",(k,v)->BigDecimalUtil.add(v,BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
+                    }else {
+                        result.put("碎玻璃",BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
+                    }
+                }else {
+                    result.put(tmp.getTagName(),BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
+                }
+            });
+        }
+        return result;
+    }
+
+    @Override
     public List<DpWeightVO> getWeighCountDate(TupleDTO<LocalDate, LocalDate> dto) {
         List<DpWeightVO> weighCount = getWeighCount(new TupleDTO<>(dto.getField1().atTime(8, 0, 0), dto.getField2().plusDays(1).atTime(7, 59, 59)));
         List<DpWeightVO> results = Lists.newArrayList();

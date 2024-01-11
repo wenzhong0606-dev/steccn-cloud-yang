@@ -106,7 +106,7 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         JSONArray jsonArray = resultObj.getJSONArray("datalist");
         for(int i = 0; i < jsonArray.size(); i++){
             JSONObject jsonObjectTmp = jsonArray.getJSONObject(i);
-            if(jsonObjectTmp.getString("errorCode")!=null){
+            if(jsonObjectTmp.getString("errorCode")==null){
                 List<DataCollectDTO> dataTmp = jsonObjectTmp.getJSONArray("datas").toJavaList(DataCollectDTO.class);
                 mapResult.put(jsonObjectTmp.getString("code"),dataTmp);
             }
