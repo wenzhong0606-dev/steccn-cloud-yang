@@ -11,6 +11,7 @@ import com.steccn.pms.service.PmsOfficeManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -43,7 +44,7 @@ public class PmsOfficeManagerImpl implements PmsOfficeManager {
     }
 
     @Override
-    public List<SysOfficeVO> getChildren(List<Integer> parentOfficeIdList, String childOfficeType) {
+    public List<SysOfficeVO> getChildren(Collection<Integer> parentOfficeIdList, String childOfficeType) {
         SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
         sysOfficeParent.setParentIds(Sets.newHashSet(parentOfficeIdList));
         sysOfficeParent.setOfficeType(childOfficeType);

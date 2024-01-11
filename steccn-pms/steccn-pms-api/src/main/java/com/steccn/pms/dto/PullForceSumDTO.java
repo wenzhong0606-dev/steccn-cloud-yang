@@ -29,9 +29,12 @@ public class PullForceSumDTO implements Serializable {
     /**
      * 车间集合
      */
-    @NotNull(message = "车间集合不为空")
     private Set<Integer> workshopIdSet;
 
+    /**
+     * 产线集合
+     */
+    private Set<Integer> lineIdSet;
     /**
      * 粒度
      */

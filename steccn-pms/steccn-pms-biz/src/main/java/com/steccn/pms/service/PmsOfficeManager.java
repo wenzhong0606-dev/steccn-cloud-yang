@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.platform.vo.SysOfficeVO;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,6 +36,6 @@ public interface PmsOfficeManager {
      * @param childOfficeType 孩子的类型 传空，则默认全部类型
      * @return
      */
-    List<SysOfficeVO> getChildren(List<Integer> parentOfficeIdList, String childOfficeType);
+    List<SysOfficeVO> getChildren(Collection<Integer> parentOfficeIdList, String childOfficeType);
 
 }

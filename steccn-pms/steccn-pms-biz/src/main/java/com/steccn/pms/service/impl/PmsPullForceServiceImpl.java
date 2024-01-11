@@ -416,6 +416,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         List<PmsPullForce> dataList = this.list(new QueryWrapper<PmsPullForce>()
                 .select("pull_force_date, sum(quantity) as quantity").lambda()
                 .in(CollUtil.isNotEmpty(dto.getWorkshopIdSet()), PmsPullForce::getWorkshopId, dto.getWorkshopIdSet())
+                .in(CollUtil.isNotEmpty(dto.getLineIdSet()), PmsPullForce::getProductLineId, dto.getLineIdSet())
                 .ge(Objects.nonNull(dto.getStart()), PmsPullForce::getPullForceDate, dto.getStart())
                 .le(Objects.nonNull(dto.getEnd()), PmsPullForce::getPullForceDate, dto.getEnd())
                 .groupBy(PmsPullForce::getPullForceDate));

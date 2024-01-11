@@ -8,6 +8,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -510,4 +511,40 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     CommonReportDTO jpInStorageDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
+
+    /**
+     * 实际使用
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线id集合
+     * @param bit         位数
+     * @return
+     */
+    Map<String, BigDecimal> actualUse(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, Integer bit);
+
+    /**
+     * 基片完工信息
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线集合
+     * @param bit         位数
+     * @return
+     */
+    Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
+
+    /**
+     * 深加工完工信息
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线集合
+     * @param bit         位数
+     * @return
+     */
+    Map<String, BigDecimal> sjgComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
 }
