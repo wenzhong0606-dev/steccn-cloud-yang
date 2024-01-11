@@ -6,6 +6,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
@@ -15,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +36,7 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
         implements WmsStorageReceiptInfoService {
 
     private final  WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
+    private final RemoteDictFeignApi remoteDictFeignApi;
     @Override
     public Map<Long, WmsStorageReceiptInfo> infoMap(List<Long> updateIds) {
         Map<Long, WmsStorageReceiptInfo> map = Maps.newHashMap();
@@ -45,6 +52,20 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
     @Override
     public WmsStorageReceiptInfo getByCaseNo(String caseNo) {
        return wmsStorageReceiptInfoMapper.getByCaseNo(caseNo);
+    }
+
+    @Override
+    public Map<String, BigDecimal> purchaseQuantity(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName) {
+        Map<String,BigDecimal>  resMap = Maps.newHashMap();
+        //获取采购类型
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "warehousing_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<WmsStorageReceiptInfo> infoList = this.baseMapper.purchaseQuantity(sysDictVO.getId(),startTime,endTime,materialName);
+        if (CollUtil.isNotEmpty(infoList)){
+            infoList.forEach( info->{
+                resMap.put(info.getMaterialName(),info.getQuantity());
+            });
+        }
+        return resMap;
     }
 }
 

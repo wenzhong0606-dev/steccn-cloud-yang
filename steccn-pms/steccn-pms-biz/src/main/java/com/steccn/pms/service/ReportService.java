@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.OutputQualityDTO;
@@ -107,4 +108,6 @@ public interface ReportService {
      * @return
      */
     List<SubstrateDataListVO> substrateDataList(SubstrateDataDTO dto);
+
+    EpChartGraphVO<List<String>, BigDecimal> rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate);
 }

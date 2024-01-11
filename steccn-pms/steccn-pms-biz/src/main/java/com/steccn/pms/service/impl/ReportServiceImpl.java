@@ -15,6 +15,7 @@ import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.feign.OaInfoService;
@@ -35,6 +36,7 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.vo.OutputQualityDetailVO;
+import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
@@ -77,6 +79,7 @@ public class ReportServiceImpl implements ReportService {
     private final OaInfoService oaInfoService;
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+    private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -1695,6 +1698,17 @@ public class ReportServiceImpl implements ReportService {
     public List<SubstrateDataListVO> substrateDataList(SubstrateDataDTO dto) {
         List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.qmsSubstrateReport(dto.getProductLineIdList(), dto.getStart(), dto.getEnd());
         return rowDataList;
+    }
+
+    @Override
+    public EpChartGraphVO<List<String>, BigDecimal> rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate) {
+        //获取计划数（等待采购数据）
+        //获取到货数（入库管理 采购入库数据）
+        List<String> materialNames =Arrays.asList("低铁硅砂","纯碱","方解石","白云石","氧化铝","复合澄清剂","碎玻璃");
+//        FeignOptional.of(()->remoteWmsStorageReceiptFeignApi.purchaseQuantity(startDate.atTime(8, 0, 0),endDate.plusDays(1).atTime(7, 59, 59),materialNames)),FeignConstant.STECCN_WMS_SERVICE_NAME))
+        //获取领用数（调拨单源仓库为主要材料库数据）
+        //获取耗用数（电子秤读数）
+        return null;
     }
 
 
