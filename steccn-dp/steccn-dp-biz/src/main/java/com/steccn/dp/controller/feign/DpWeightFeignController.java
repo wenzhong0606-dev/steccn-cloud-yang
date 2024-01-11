@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 类说明
@@ -33,6 +35,12 @@ public class DpWeightFeignController {
     @ApiOperation(value = "电子秤读数")
     public R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(adsOpcUaAll3Service.getWeighCount(dto));
+    }
+
+    @PostMapping("/countMap")
+    @ApiOperation(value = "电子秤读数Map")
+    public R<Map<String, BigDecimal>> countMap(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        return R.success(adsOpcUaAll3Service.getWeightCountMap(dto));
     }
 
     @PostMapping("/countAsDay")

@@ -11,6 +11,7 @@ import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,13 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+    /**
+     * 获取耗料数map
+     * @param dto
+     * @return
+     */
+    Map<String, BigDecimal> getWeightCountMap(TupleDTO<LocalDateTime,LocalDateTime> dto);
 
     /**
      * 获取电子秤读数
