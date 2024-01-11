@@ -166,4 +166,11 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return
      */
     Map<String, BigDecimal> jpInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
+
+    /**
+     * 入库汇总
+     * @param dto
+     * @return
+     */
+    Map<String,BigDecimal> sjgInStorageSum(PmsOperateDriverDTO dto);
 }

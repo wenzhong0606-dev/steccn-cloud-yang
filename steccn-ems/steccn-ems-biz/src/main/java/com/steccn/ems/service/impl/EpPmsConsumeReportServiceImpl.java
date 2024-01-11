@@ -23,7 +23,9 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.PullForceSumDTO;
+import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
@@ -51,10 +53,10 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpPartitionService epPartitionService;
     private final EpMeterReadService epMeterReadService;
-    private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final EmsOfficeManager emsOfficeManager;
     private final RemotePullForceFeignApi remotePullForceFeignApi;
+    private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
 
     @Override
     public EpPmsConsumeVO consumeUseElectric(Integer officeId, LocalDate start, LocalDate end) {
@@ -80,8 +82,6 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
 
     @Override
     public EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate start, LocalDate end) {
-        EpPmsConsumeVO oil = consumeUseOil(officeId, start, end);
-        EpPmsConsumeVO gas = consumeUseGas(officeId, start, end);
         //获取office的数据
         SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(officeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(sysOfficeVO, "组织机构不存在");
@@ -94,19 +94,38 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         } else {
             workshopIdSet.add(sysOfficeVO.getId());
         }
-        PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
-        pullForceSumDTO.setWorkshopIdSet(workshopIdSet);
-        pullForceSumDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NONE.getCode());
-        pullForceSumDTO.setStart(start);
-        pullForceSumDTO.setEnd(end);
-        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-        //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
-        BigDecimal pullForce = pullForceMap.get(MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start));
-        BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), pullForce, 1);
-        EpPmsConsumeVO res = new EpPmsConsumeVO();
-        res.setUnitName("kcal/kg");
-        res.setSum(sum);
-        return res;
+        if(sysOfficeVO.getOfficeName().contains("深加工")){
+            //深加工单耗：电耗/入库产量
+            EpPmsConsumeVO electric = consumeUseElectric(officeId, start, end);
+            PmsOperateDriverDTO pmsOperateDriverDTO = new PmsOperateDriverDTO();
+            pmsOperateDriverDTO.setStart(start);
+            pmsOperateDriverDTO.setEnd(end);
+            pmsOperateDriverDTO.setGranularity(QtManagerConstant.QtGranularityEnum.YEAR.getCode());
+            pmsOperateDriverDTO.setOfficeId(sysOfficeVO.getId());
+            Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(pmsOperateDriverDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            BigDecimal sum = BigDecimalUtil.sum(inStorageMap.values());
+            EpPmsConsumeVO res = new EpPmsConsumeVO();
+            res.setUnitName("kwh/㎡");
+            res.setSum(BigDecimalUtil.divide(electric.getSum(), sum, 1));
+            return res;
+
+        }else{
+            EpPmsConsumeVO oil = consumeUseOil(officeId, start, end);
+            EpPmsConsumeVO gas = consumeUseGas(officeId, start, end);
+            PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
+            pullForceSumDTO.setWorkshopIdSet(workshopIdSet);
+            pullForceSumDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NONE.getCode());
+            pullForceSumDTO.setStart(start);
+            pullForceSumDTO.setEnd(end);
+            Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+            //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+            BigDecimal pullForce = pullForceMap.get(MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start));
+            BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), pullForce, 1);
+            EpPmsConsumeVO res = new EpPmsConsumeVO();
+            res.setUnitName("kcal/kg");
+            res.setSum(sum);
+            return res;
+        }
     }
 
     private EpPmsConsumeVO consumeUse(Integer officeId, LocalDate start, LocalDate end, Integer type) {

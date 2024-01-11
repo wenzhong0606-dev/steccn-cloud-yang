@@ -25,6 +25,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -107,6 +108,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteWmsCustomerBarcodeFeignApi remoteWmsCustomerBarcodeFeignApi;
     @Autowired
     private PmsUnitConvertManager pmsUnitConvertManager;
+    @Autowired
+    private PmsOfficeManager pmsOfficeManager;
 
     @Override
     public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
@@ -733,6 +736,27 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Assert.notNull(pieceSysDict, "片单位不存在");
         Assert.notNull(tonSysDict, "吨单位不存在");
         return operateDriverInStorage(granularity, start, end, lineIdSet, bit, pieceSysDict, tonSysDict);
+    }
+
+    @Override
+    public Map<String, BigDecimal> sjgInStorageSum(PmsOperateDriverDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.info(dto.getOfficeId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysOfficeVO, "组织架构不存在");
+        Set<Integer> wsIdSet;
+        if (SysOfficeConstant.DEPARTMENT.equals(sysOfficeVO.getOfficeType())) {
+            List<SysOfficeVO> sysOfficeVOList = pmsOfficeManager.getChildren(dto.getOfficeId(), SysOfficeConstant.WORKSHOP);
+            Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
+            //车间
+            wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        } else {
+            wsIdSet = Sets.newHashSet(dto.getOfficeId());
+        }
+        List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdSet, SysOfficeConstant.PRODUCT_LINE);
+        Assert.notNull(lineList, "制造部下暂无产线");
+        Set<Integer> lineIdSet = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return sjgInStorage(granularity, dto.getStart(), dto.getEnd(), lineIdSet, 2);
     }
 
     /**

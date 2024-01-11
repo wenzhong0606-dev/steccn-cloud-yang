@@ -95,10 +95,6 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         //考虑是深加工还是基片
         //基片 天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
         //深加工 电耗/入库产量
-//        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
-//        sysOfficeParentDTO.setId(dto.getOfficeId());
-//        sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
-//        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysOfficeVO> sysOfficeVOList = emsOfficeManager.getChildren(dto.getOfficeId(), SysOfficeConstant.WORKSHOP);
         Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
@@ -272,7 +268,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         BigDecimal inStorageSum = BigDecimalUtil.sum(inStorageValueList);
         BigDecimal unitConsumeAvg = BigDecimalUtil.divide(electricSum, inStorageSum);
         res.setTotalQuantity(unitConsumeAvg);
-        res.setUnitName("kcal/kg");
+        res.setUnitName("kwh/㎡");
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         res.setCommonBarLineVO(commonBarLineVO);
         commonBarLineVO.setXAxis(new BaseValueVO(xAisList));

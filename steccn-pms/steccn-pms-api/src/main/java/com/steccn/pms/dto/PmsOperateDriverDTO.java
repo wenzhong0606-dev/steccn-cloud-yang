@@ -17,7 +17,7 @@ public class PmsOperateDriverDTO implements Serializable {
     private final static long serialVersionUID = 1L;
 
     /**
-     * 基片制造部，深加工制造部的组织机构主键
+     * 基片制造部，深加工制造部,车间id的组织机构主键
      */
     @NotNull(message = "组织机构不能为空")
     private Integer officeId;
