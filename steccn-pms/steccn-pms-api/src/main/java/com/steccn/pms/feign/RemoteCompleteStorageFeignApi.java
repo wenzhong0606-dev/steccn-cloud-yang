@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.ReceiptStatusDTO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import io.swagger.annotations.ApiOperation;
@@ -62,4 +63,8 @@ public interface RemoteCompleteStorageFeignApi {
     @PostMapping("/feign/pms/complete/storage/month/num")
     @ApiOperation("查询订单入库量-产线|月")
     R<Map<String, BigDecimal>> inStorageMonth(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> tripleDTO);
+
+    @PostMapping("/feign/pms/complete/storage/sjg/in/storage/sum")
+    @ApiOperation(value = "入库汇总")
+    R<Map<String, BigDecimal>> sjgInStorageSum(@RequestBody PmsOperateDriverDTO dto);
 }

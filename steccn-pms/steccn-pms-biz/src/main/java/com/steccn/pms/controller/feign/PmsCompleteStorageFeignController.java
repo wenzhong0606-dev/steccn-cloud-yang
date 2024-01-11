@@ -1,20 +1,29 @@
 package com.steccn.pms.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.ReceiptStatusDTO;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
+import com.steccn.pms.service.PmsOfficeManager;
+import com.steccn.pms.service.PmsOperateDriverService;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.pms.vo.PmsOperateDriverCompleteStorageVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -22,6 +31,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 类说明
@@ -38,6 +49,7 @@ public class PmsCompleteStorageFeignController {
 
     private final PmsCompleteStorageService pmsCompleteStorageService;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    private final PmsOfficeManager pmsOfficeManager;
 
     @PostMapping("/complete")
     @ApiOperation("根据完成生产订单入库单编码修改状态")
@@ -103,4 +115,19 @@ public class PmsCompleteStorageFeignController {
     R<List<CommonReportDTO>> substrateProduceLine(@RequestBody DpPmsOperateDTO dto){
         return R.success(pmsCompleteStorageInfoService.substrateProduceLine(dto));
     }
+
+    @PostMapping("/sjg/in/storage/sum")
+    @ApiOperation(value = "入库汇总")
+    R<Map<String, BigDecimal>> sjgInStorageSum(@RequestBody PmsOperateDriverDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        List<SysOfficeVO> sysOfficeVOList = pmsOfficeManager.getChildren(dto.getOfficeId(), SysOfficeConstant.WORKSHOP);
+        Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
+        Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdSet, SysOfficeConstant.PRODUCT_LINE);
+        Assert.notNull(lineList, "制造部下暂无产线");
+        Set<Integer> lineIdSet = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return R.success(pmsCompleteStorageService.sjgInStorage(granularity, dto.getStart(), dto.getEnd(), lineIdSet, 2));
+    }
+
 }

@@ -16,7 +16,6 @@ import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.dto.DpPullForceDTO;
-import com.steccn.dp.feign.RemoteDpCompleteStorageFeignApi;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
@@ -25,10 +24,10 @@ import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
 import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
+import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.SjgCountReportRowVO;
 import com.steccn.pms.vo.SjgCountReportVO;
@@ -63,10 +62,9 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private final EpEnergyTypeService epEnergyTypeService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
-    private final RemoteOfficeFeign remoteOfficeFeign;
-    private final RemoteDpCompleteStorageFeignApi remoteCompleteStorageFeignApi;
     private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
     private final EmsOfficeManager emsOfficeManager;
+    private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
 
     @Override
     public PmsOperateEnergyVO gas(DpPmsOperateDTO dto) {
@@ -97,16 +95,19 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         //考虑是深加工还是基片
         //基片 天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
         //深加工 电耗/入库产量
-        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
-        sysOfficeParentDTO.setId(dto.getOfficeId());
-        sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
-        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+//        sysOfficeParentDTO.setId(dto.getOfficeId());
+//        sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
+//        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysOfficeVO> sysOfficeVOList = emsOfficeManager.getChildren(dto.getOfficeId(), SysOfficeConstant.WORKSHOP);
         Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
         Set<Integer> wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         long sjgCount = sysOfficeVOList.stream().filter(ele -> ele.getOfficeName().indexOf("深加工") != -1).count();
         if (sjgCount != 0) {
-            return sjgUnitConsume(dto, bit, granularity, dateList, wsIdSet);
+            //深加工单耗：电耗/入库产量
+            return sjgUnitConsume(dto, bit, granularity, dateList);
         } else {
+            //基片单耗：天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
             return jpUnitConsume(dto, bit, granularity, dateList, wsIdSet);
         }
     }
@@ -230,10 +231,9 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
      * @param bit         位数
      * @param granularity 粒度
      * @param dateList    日期区间
-     * @param wsIdSet     组织结构id集合
      * @return
      */
-    private PmsOperateEnergyVO sjgUnitConsume(DpPmsOperateDTO dto, Integer bit, QtManagerConstant.QtGranularityEnum granularity, List<LocalDate> dateList, Set<Integer> wsIdSet) {
+    private PmsOperateEnergyVO sjgUnitConsume(DpPmsOperateDTO dto, Integer bit, QtManagerConstant.QtGranularityEnum granularity, List<LocalDate> dateList) {
         EpPartition electric = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, 1));
         Assert.notNull(electric, "能源树上不存在此节点");
         List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
@@ -244,12 +244,12 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             String convert = XAxisUtil.convert(granularity, ele.getReadDate());
             MapUtil.add(electricValueMap, convert, ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, bit));
         });
-        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
-        dpPullForceDTO.setStart(dto.getStart());
-        dpPullForceDTO.setEnd(dto.getEnd());
-        dpPullForceDTO.setGranularity(granularity.getCode());
-        dpPullForceDTO.setWorkshopIdSet(wsIdSet);
-        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.inStorageSum(dpPullForceDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        PmsOperateDriverDTO pmsOperateDriverDTO = new PmsOperateDriverDTO();
+        pmsOperateDriverDTO.setStart(dto.getStart());
+        pmsOperateDriverDTO.setEnd(dto.getEnd());
+        pmsOperateDriverDTO.setGranularity(granularity.getCode());
+        pmsOperateDriverDTO.setOfficeId(dto.getOfficeId());
+        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(pmsOperateDriverDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> valueList = Lists.newArrayList();
         List<BigDecimal> electricValueList = Lists.newArrayList();
@@ -258,11 +258,11 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             LocalDate ele = dateList.get(i - 1);
             String convert = XAxisUtil.convert(granularity, ele);
             xAisList.add(convert);
-            //y轴：（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+            //深加工单耗：电耗/入库产量
             BigDecimal electricValue = electricValueMap.get(convert);
             String mysqlKey = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal inStorageValue = inStorageMap.get(mysqlKey);
-            BigDecimal result = BigDecimalUtil.percent(electricValue, inStorageValue);
+            BigDecimal result = BigDecimalUtil.divide(electricValue, inStorageValue);
             valueList.add(result);
             electricValueList.add(electricValue);
             inStorageValueList.add(inStorageValue);
@@ -270,7 +270,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         PmsOperateEnergyVO res = new PmsOperateEnergyVO();
         BigDecimal electricSum = BigDecimalUtil.sum(electricValueList);
         BigDecimal inStorageSum = BigDecimalUtil.sum(inStorageValueList);
-        BigDecimal unitConsumeAvg = BigDecimalUtil.percent(electricSum, inStorageSum);
+        BigDecimal unitConsumeAvg = BigDecimalUtil.divide(electricSum, inStorageSum);
         res.setTotalQuantity(unitConsumeAvg);
         res.setUnitName("kcal/kg");
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
