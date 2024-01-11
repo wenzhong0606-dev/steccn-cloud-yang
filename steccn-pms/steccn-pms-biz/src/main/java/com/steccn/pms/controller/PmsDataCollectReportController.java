@@ -30,4 +30,22 @@ public class PmsDataCollectReportController {
     public R<SteccnTableDataDTO> turbine(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.turbineReport(date));
     }
+
+    @GetMapping("/boiler")
+    @ApiOperation("余热锅炉报表")
+    public R<SteccnTableDataDTO> boiler(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.boilerReport(date));
+    }
+
+    @GetMapping("/thirtyFiveKv")
+    @ApiOperation("35kv总开关报表")
+    public R<SteccnTableDataDTO> thirtyFiveKv(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.thirtyFiveKvReport(date));
+    }
+
+    @GetMapping("/des")
+    @ApiOperation("脱硫脱硝报表")
+    public R<SteccnTableDataDTO> des(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.desReport(date));
+    }
 }

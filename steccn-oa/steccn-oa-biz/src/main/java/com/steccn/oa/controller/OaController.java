@@ -309,6 +309,12 @@ public class OaController {
         return R.success(kqGroupmemberService.getTodayClassInfoSJG(workshopName,date));
     }
 
+    @ApiOperation("获取原料当班信息")
+    @GetMapping("/todayClass/info/yl")
+    public R<List<OaTodayClassVO>> getTodayClassInfoYL(@RequestParam("date") LocalDate date){
+        return R.success(kqGroupmemberService.getTodayClassInfoYL(date));
+    }
+
     @ApiOperation("获取仓库当班信息")
     @PostMapping("/todayClass/info/warehouse")
     public R<List<OaTodayClassVO>> getTodayClassInfoWarehouse(@RequestBody TupleDTO<Set<Integer>, LocalDate> dto){
