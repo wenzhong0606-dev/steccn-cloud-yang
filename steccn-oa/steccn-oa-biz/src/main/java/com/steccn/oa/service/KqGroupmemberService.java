@@ -62,6 +62,14 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
     List<OaTodayClassVO> getTodayClassInfoSJG(String workshopName, LocalDate date);
 
     /**
+     * oa获取原料
+     * @param workshopName 车间id
+     * @param date 日期
+     * @return
+     */
+    List<OaTodayClassVO> getTodayClassInfoYL(LocalDate date);
+
+    /**
      * 获取仓库信息
      * @param dto
      * @return

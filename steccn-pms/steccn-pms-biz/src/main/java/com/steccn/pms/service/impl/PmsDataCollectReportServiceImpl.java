@@ -62,6 +62,7 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
         //2.1、组表头
         List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
         columns.add(new SteccnTableColumn("YR_DPU2_AI02_2_METER3","主蒸汽压力(Mpa)",null));
         columns.add(new SteccnTableColumn("YR_DPU2_TC03_3_METER6","主蒸汽温度(℃)",null));
         columns.add(new SteccnTableColumn("YR_DPU2_RT05_2_METER6","汽轮机前轴承温度",null));
@@ -83,6 +84,251 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         columns.add(new SteccnTableColumn("YR_SH0055_AI_I","2#循环水泵电流",null));
         columns.add(new SteccnTableColumn("YR_SH0057_AI_I","3#循环水泵电流",null));
         columns.add(new SteccnTableColumn("YR_DPU2_AI04_2_METER7","循环水泵出口压力",null));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> boilerReport(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("YR_AI06_2_METER3"
+                , "YR_RT01_3_METER5"
+                , "YR_AI05_2_METER4"
+                , "YR_TC07_2_METER3"
+                , "YR_TC05_3_METER3"
+                , "YR_TC06_3_METER3"
+                , "YR_TC05_3_METER4"
+                , "YR_TC06_3_METER4"
+                , "YR_TC07_2_METER4"
+                , "YR_SH0049_AI_I"
+                , "YR_RT01_3_METER6"
+                , "YR_AI05_2_METER3"
+                , "YR_SH0051_AI_I"
+                , "YR_SH0059_AI_PV"
+                , "YR_SH0059_AI_I"
+                , "YR_RT01_3_METER2"
+                , "YR_RT02_3_METER2"
+                , "YR_RT01_3_METER3"
+                , "YR_SH0061_AI_PV"
+                , "YR_SH0061_AI_I"
+                , "YR_RT03_3_METER2"
+                , "YR_RT04_3_METER2"
+                , "YR_RT03_3_METER3"
+                , "YR_AI10_2_METER1"
+                , "YR_AI10_2_METER2"
+                , "YR_AI10_2_METER3"
+                , "YR_AI10_2_METER4"
+                , "YR_AI10_2_METER5"
+                , "YR_DPU2_AI01_2_METER5"
+                , "YR_DPU2_RT05_4_METER8"));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","除氧器",
+                Lists.newArrayList(new SteccnTableColumn("YR_AI06_2_METER3","压力(MPa)",null)
+                        ,new SteccnTableColumn("YR_RT01_3_METER5","温度(℃)",null))));
+        columns.add(new SteccnTableColumn("head2","汽包",
+                Lists.newArrayList(new SteccnTableColumn("YR_AI05_2_METER4","压力(MPa)",null))));
+        columns.add(new SteccnTableColumn("head3","余热锅炉本体温度",
+                Lists.newArrayList(new SteccnTableColumn("YR_TC07_2_METER3","锅炉烟道进口烟温",null)
+                        ,new SteccnTableColumn("YR_TC05_3_METER3","2级蒸发器烟温",null)
+                        ,new SteccnTableColumn("YR_TC06_3_METER3","3级蒸发器烟温",null)
+                        ,new SteccnTableColumn("YR_TC05_3_METER4","1级省煤器温度",null)
+                        ,new SteccnTableColumn("YR_TC06_3_METER4","2级省煤器温度",null)
+                        ,new SteccnTableColumn("YR_TC07_2_METER4","2级除氧蒸发器温度",null))));
+        columns.add(new SteccnTableColumn("head4","给水泵A",Lists.newArrayList(new SteccnTableColumn("YR_SH0049_AI_I","电流(A)",null)
+                ,new SteccnTableColumn("YR_RT01_3_METER6","给水温度",null)
+                ,new SteccnTableColumn("YR_AI05_2_METER3","给水压力",null))));
+        columns.add(new SteccnTableColumn("head5","给水泵B",Lists.newArrayList(new SteccnTableColumn("YR_SH0051_AI_I","电流(A)",null))));
+        columns.add(new SteccnTableColumn("head6","1#引风机",
+                Lists.newArrayList(new SteccnTableColumn("YR_SH0059_AI_PV","频率(HZ)",null)
+                        ,new SteccnTableColumn("YR_SH0059_AI_I","电流(A)",null)
+                        ,new SteccnTableColumn("YR_RT01_3_METER2","电机轴承温度1#",null)
+                        ,new SteccnTableColumn("YR_RT02_3_METER2","电机轴承温度2#",null)
+                        ,new SteccnTableColumn("YR_RT01_3_METER3","电机温度",null))));
+        columns.add(new SteccnTableColumn("head7","2#引风机",
+                Lists.newArrayList(new SteccnTableColumn("YR_SH0061_AI_PV","频率(HZ)",null)
+                        ,new SteccnTableColumn("YR_SH0061_AI_I","电流(A)",null)
+                        ,new SteccnTableColumn("YR_RT03_3_METER2","电机轴承温度1#",null)
+                        ,new SteccnTableColumn("YR_RT04_3_METER2","电机轴承温度2#",null)
+                        ,new SteccnTableColumn("YR_RT03_3_METER3","电机温度",null))));
+        columns.add(new SteccnTableColumn("head8","炉水/给水",
+                Lists.newArrayList(new SteccnTableColumn("YR_AI10_2_METER1","炉水(PH)",null)
+                        ,new SteccnTableColumn("YR_AI10_2_METER2","炉水电导率",null)
+                        ,new SteccnTableColumn("YR_AI10_2_METER3","炉水磷酸根",null)
+                        ,new SteccnTableColumn("YR_AI10_2_METER4","给水(PH)",null)
+                        ,new SteccnTableColumn("YR_AI10_2_METER5","给水电导率",null))));
+        columns.add(new SteccnTableColumn("head9","分汽缸供气",
+                Lists.newArrayList(new SteccnTableColumn("YR_DPU2_AI01_2_METER5","压力(MPa)",null)
+                        ,new SteccnTableColumn("YR_DPU2_RT05_4_METER8","温度(℃)",null))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> thirtyFiveKvReport(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("35KVHV_2AH1_I"
+                ,"35KVHV_2AH4_I"
+                ,"35KVHV_2AH5_I"
+                ,"35KVHV_2AH6_I"
+                ,"35KVHV_2AH7_I"
+                ,"35KVHV_2AH8_I"
+                ,"35KVHV_2AH9_I"
+                ,"35KVHV_2AH10_I"
+                ,"35KVHV_2AH11_I"
+                ,"35KVHV_2AH12_I"
+                ,"35KVHV_2AH13_I"
+                ,"35KVHV_1AH14_I"
+                ,"35KVHV_1AH13_I"
+                ,"35KVHV_1AH12_I"
+                ,"35KVHV_1AH11_I"
+                ,"35KVHV_1AH10_I"
+                ,"35KVHV_1AH9_I"
+                ,"35KVHV_1AH8_I"
+                ,"35KVHV_1AH7_I"
+                ,"35KVHV_1AH6_I"
+                ,"35KVHV_1AH5_I"
+                ,"35KVHV_1AH4_I"
+                ,"35KVHV_1AH1_I"));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","2AH1进线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH1_I","电流",null))));
+        columns.add(new SteccnTableColumn("head2","2AH4出线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH4_I","电流",null))));
+        columns.add(new SteccnTableColumn("head3","2AH5变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH5_I","电流",null))));
+        columns.add(new SteccnTableColumn("head4","2AH6变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH6_I","电流",null))));
+        columns.add(new SteccnTableColumn("head5","2AH7变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH7_I","电流",null))));
+        columns.add(new SteccnTableColumn("head6","2AH8变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH8_I","电流",null))));
+        columns.add(new SteccnTableColumn("head7","2AH9变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH9_I","电流",null))));
+        columns.add(new SteccnTableColumn("head8","2AH10变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH10_I","电流",null))));
+        columns.add(new SteccnTableColumn("head9","2AH11变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH11_I","电流",null))));
+        columns.add(new SteccnTableColumn("head10","2AH12变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH12_I","电流",null))));
+        columns.add(new SteccnTableColumn("head11","2AH13出线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_2AH13_I","电流",null))));
+        columns.add(new SteccnTableColumn("head12","1AH14母联柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH14_I","电流",null))));
+        columns.add(new SteccnTableColumn("head13","1AH13出线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH13_I","电流",null))));
+        columns.add(new SteccnTableColumn("head14","1AH12变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH12_I","电流",null))));
+        columns.add(new SteccnTableColumn("head15","1AH11变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH11_I","电流",null))));
+        columns.add(new SteccnTableColumn("head16","1AH10变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH10_I","电流",null))));
+        columns.add(new SteccnTableColumn("head17","1AH9变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH9_I","电流",null))));
+        columns.add(new SteccnTableColumn("head18","1AH8变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH8_I","电流",null))));
+        columns.add(new SteccnTableColumn("head19","1AH7变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH7_I","电流",null))));
+        columns.add(new SteccnTableColumn("head20","1AH6变压器",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH6_I","电流",null))));
+        columns.add(new SteccnTableColumn("head21","1AH5出线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH5_I","电流",null))));
+        columns.add(new SteccnTableColumn("head22","1AH4出线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH4_I","电流",null))));
+        columns.add(new SteccnTableColumn("head23","1AH1出线柜",
+                Lists.newArrayList(new SteccnTableColumn("35KVHV_1AH1_I","电流",null))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> desReport(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("1#GYYFJ_PV"
+                ,"1#GYYFJ_I"
+                ,"1#YFJHZ_TI_INPUT"
+                ,"1#YFJQZ_TI_INPUT"
+                ,"1#YFJDJQ_TI_INPUT"
+                ,"2#GYYFJ_PV"
+                ,"2#GYYFJ_I"
+                ,"2#YFJHZ_TI_INPUT"
+                ,"2#YFJQZ_TI_INPUT"
+                ,"2#YFJDJQ_TI_INPUT"
+                ,"AS_FI_INPUT"
+                ,"AS_PI_INPUT"
+                ,"ASYSKQ_PI_INPUT"
+                ,"CFB_A_INPUT"
+                ,"CFB_B_INPUT"
+                ,"CFBJK_TI_INPUT"
+                ,"CFBJK_PI_INPUT"
+                ,"CFBCY_PI_INPUT"
+                ,"CCQJK_PI_INPUT"
+                ,"CCQJK_TI_INPUT"
+                ,"MCQHYS_PI_INPUT"
+                ,"CCQCK_PI_INPUT"
+                ,"CCQCK_TI_INPUT"
+                ,"FLCLD_LI_INPUT"
+                ,"SSHCLD_LI_INPUT"
+                ,"FIQ1_INPUT"
+                ,"1#CFBWQL_PI_INPUT"
+                ,"2#CFBWQL_PI_INPUT"
+                ,"CFBHD_TI_INPUT"
+                ,"YSKQ_PI_INPUT"
+                ,"NOX_INPUT"
+                ,"SO2_INPUT"
+                ,"KLW_INPUT"
+                ,"ATY_INPUT"));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","1#引风机",
+                Lists.newArrayList(new SteccnTableColumn("1#GYYFJ_PV","频率(Hz)",null)
+                        ,new SteccnTableColumn("1#GYYFJ_I","电流(A)",null)
+                        ,new SteccnTableColumn("1#YFJHZ_TI_INPUT","电机轴承温度1#",null)
+                        ,new SteccnTableColumn("1#YFJQZ_TI_INPUT","电机轴承温度2#",null)
+                        ,new SteccnTableColumn("1#YFJDJQ_TI_INPUT","电机温度(℃)",null))));
+        columns.add(new SteccnTableColumn("head2","2#引风机",
+                Lists.newArrayList(new SteccnTableColumn("2#GYYFJ_PV","频率(Hz)",null)
+                        ,new SteccnTableColumn("2#GYYFJ_I","电流(A)",null)
+                        ,new SteccnTableColumn("2#YFJHZ_TI_INPUT","电机轴承温度1#",null)
+                        ,new SteccnTableColumn("2#YFJQZ_TI_INPUT","电机轴承温度2#",null)
+                        ,new SteccnTableColumn("2#YFJDJQ_TI_INPUT","电机温度(℃)",null))));
+        columns.add(new SteccnTableColumn("head3","氨水参数",
+                Lists.newArrayList(new SteccnTableColumn("AS_FI_INPUT","氨水流量(L/H)",null)
+                        ,new SteccnTableColumn("AS_PI_INPUT","氨水压力(Pa)",null)
+                        ,new SteccnTableColumn("ASYSKQ_PI_INPUT","氨水雾化压缩空气压力(Pa)",null)
+                        ,new SteccnTableColumn("CFB_A_INPUT","1#氨水罐液位(m)",null)
+                        ,new SteccnTableColumn("CFB_B_INPUT","2#氨水罐液位(m)",null))));
+        columns.add(new SteccnTableColumn("head4","脱硫脱销一体化",
+                Lists.newArrayList(new SteccnTableColumn("CFBJK_TI_INPUT","脱硫塔进口烟气温度(℃)",null)
+                        ,new SteccnTableColumn("CFBJK_PI_INPUT","脱硫塔入口负压(Pa)",null)
+                        ,new SteccnTableColumn("CFBCY_PI_INPUT","脱硫塔差压(Pa)",null)
+                        ,new SteccnTableColumn("CCQJK_PI_INPUT","除尘器进口烟气差压(Pa)",null)
+                        ,new SteccnTableColumn("CCQJK_TI_INPUT","除尘器进口烟温(℃)",null)
+                        ,new SteccnTableColumn("MCQHYS_PI_INPUT","除尘器压缩空气压力(Pa)",null)
+                        ,new SteccnTableColumn("CCQCK_PI_INPUT","除尘器出口烟气差压(Pa)",null)
+                        ,new SteccnTableColumn("CCQCK_TI_INPUT","除尘器出口烟温(℃)",null)
+                        ,new SteccnTableColumn("FLCLD_LI_INPUT","废料仓料位(mm)",null)
+                        ,new SteccnTableColumn("SSHCLD_LI_INPUT","石灰仓料位(m)",null)
+                        ,new SteccnTableColumn("FIQ1_INPUT","氨水累积量(m³)",null)
+                        ,new SteccnTableColumn("1#CFBWQL_PI_INPUT","脱硫塔1#压力(Pa)",null)
+                        ,new SteccnTableColumn("2#CFBWQL_PI_INPUT","脱硫塔2#压力(Pa)",null)
+                        ,new SteccnTableColumn("CFBHD_TI_INPUT","脱硫塔灰斗温度(℃)",null)
+                        ,new SteccnTableColumn("2#YSKQ_PI_INPUT","厂区压缩空气压力(Pa)",null))));
+        columns.add(new SteccnTableColumn("head5","烟气排放指标",
+                Lists.newArrayList(new SteccnTableColumn("NOX_INPUT","脱硝后氮氧化物(mg/Nm³)",null)
+                        ,new SteccnTableColumn("SO2_INPUT","脱硫后二氧化硫(mg/Nm³)",null)
+                        ,new SteccnTableColumn("KLW_INPUT","除尘后颗粒物(mg/Nm³)",null)
+                        ,new SteccnTableColumn("ATY_INPUT","氨逃逸(ppm)",null))));
         tableData.setColumns(columns);
         tableData.setTableList(data);
         return tableData;

@@ -408,6 +408,53 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
     }
 
     @Override
+    public List<OaTodayClassVO> getTodayClassInfoYL(LocalDate date) {
+        List<OaTodayClassVO> results = Lists.newArrayList();
+        //分为早班和晚班
+        for(int i = 0; i < 2;i++){
+            //过滤当前班次
+            OaTodayClassVO result = new OaTodayClassVO();
+            String classStr = "";
+            if(i==0){
+                result.setClassOrder("早班");
+                classStr = "白班";
+            } else {
+                result.setClassOrder("晚班");
+                classStr = "夜班";
+            }
+            String finalClassStr = classStr;
+            LocalTime time = LocalTime.now();
+            if(i==0){
+                time = LocalTime.of(8,0);
+            }else {
+                time = LocalTime.of(20,0);
+            }
+            //原料班组的id为56, 57, 58
+            KqFormatDetail kqFormatDetail = kqFormatDetailMapper.selectOne(new LambdaQueryWrapper<KqFormatDetail>()
+                    .eq(KqFormatDetail::getWorkbegindate, date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                    .eq(KqFormatDetail::getWorkbegintime, time.toString())
+                    .in(KqFormatDetail::getGroupid, Sets.newHashSet(56, 57, 58))
+                    .last("LIMIT 1"));
+            KqGroup kqGroup = kqGroupService.getOne(new LambdaQueryWrapper<KqGroup>()
+                    .eq(KqGroup::getId, kqFormatDetail.getGroupid()), false);
+            String[] split = kqGroup.getGroupname().split("-");
+            result.setClassGroup(split[1]);
+            KqMesGroupLeader one = kqMesGroupLeaderService.getOne(new LambdaQueryWrapper<KqMesGroupLeader>()
+                    .eq(KqMesGroupLeader::getWorkshopName, "原料车间")
+                    .eq(KqMesGroupLeader::getGroupName, split[1]), false);
+            String leaderName = one.getLeaderName();
+            if(date.getDayOfWeek().getValue()==7){
+                leaderName = leaderName+"/黄哲";
+            }else {
+                leaderName = leaderName+"/从斌";
+            }
+            result.setClassLeader(leaderName);
+            results.add(result);
+        }
+        return results;
+    }
+
+    @Override
     public List<OaTodayClassVO> getTodayClassInfoWarehouse(TupleDTO<Set<Integer>, LocalDate> dto) {
         List<OaTodayClassVO> results = Lists.newArrayList();
         Assert.notEmpty(dto.getField1(),"仓库不能为空");
