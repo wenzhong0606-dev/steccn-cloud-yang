@@ -534,13 +534,12 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     public PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start, LocalDate end) {
         PmsPullForceMeltingNumVO result = new PmsPullForceMeltingNumVO();
         //获取电子秤读数
-//        List<DpValueDateVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.countAsDay(new TupleDTO<LocalDateTime, LocalDateTime>(start.atTime(8, 0, 0), end.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-        List<DpValueDateVO> weightCount = Lists.newArrayList();
+        List<DpWeightVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.count(new TupleDTO<LocalDateTime, LocalDateTime>(start.atTime(8, 0, 0), end.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //拉引量(基片车间)
         List<PmsPullForceDayCountDTO> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(start,end,Sets.newHashSet(75,76));
         if(CollUtil.isNotEmpty(weightCount)){
             BigDecimal sum = weightCount.stream()
-                    .map(DpValueDateVO::getValue)
+                    .map(DpWeightVO::getValue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             result.setWeightCount(BigDecimalUtil.divide(sum,new BigDecimal(1000),2));
         }
