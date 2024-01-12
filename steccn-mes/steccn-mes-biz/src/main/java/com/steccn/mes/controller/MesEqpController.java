@@ -6,6 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.MesDefectChartDTO;
 import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
@@ -14,6 +15,7 @@ import com.steccn.mes.service.MesEqpInsTaskService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.mes.vo.MesItemIdNameVO;
+import com.steccn.mes.vo.YlEqpDashboardVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.ApiOperation;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -83,6 +86,12 @@ public class MesEqpController {
     @ApiOperation(value = "获取温度项图表")
     public R<QtLineChartBarDTO> tempLineChart(@RequestBody @Valid MesInsTaskTmpParamDTO dto) {
         return R.success(mesEqpInsTaskService.tempLineChart(dto));
+    }
+
+    @PostMapping("/dashboard/yl")
+    @ApiOperation(value = "原料图表")
+    public R<YlEqpDashboardVO> ylDashboard(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
+        return R.success(mesEquipmentService.dashBoard(dto));
     }
 
     /**

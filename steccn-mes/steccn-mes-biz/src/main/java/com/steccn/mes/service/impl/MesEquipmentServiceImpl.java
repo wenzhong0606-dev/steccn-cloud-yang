@@ -10,21 +10,33 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.StackGraphUtil;
+import com.steccn.mes.domain.JsSysOffice;
 import com.steccn.mes.domain.MesEqpServicePlan;
 import com.steccn.mes.domain.MesEquipment;
+import com.steccn.mes.dto.MesEqpCountDTO;
+import com.steccn.mes.mapper.JsSysOfficeMapper;
+import com.steccn.mes.mapper.MesEqpInsTaskMapper;
 import com.steccn.mes.service.MesEqpServicePlanService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.mapper.MesEquipmentMapper;
 import com.steccn.mes.vo.MesEqpPartVO;
 import com.steccn.mes.vo.MesEqpVO;
+import com.steccn.mes.vo.YlEqpDashboardVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +54,9 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
     implements MesEquipmentService{
     private final MesEqpServicePlanService mesEqpServicePlanService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final JsSysOfficeMapper jsSysOfficeMapper;
+    private final MesEquipmentMapper mesEquipmentMapper;
+    private final MesEqpInsTaskMapper mesEqpInsTaskMapper;
 
     @Override
     public List<MesEqpVO> getEqpInfo() {
@@ -140,6 +155,64 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
         return update(equipment,new LambdaQueryWrapper<MesEquipment>()
                 .in(MesEquipment::getId,idSet)
                 .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+    }
+
+    @Override
+    public YlEqpDashboardVO dashBoard(TupleDTO<LocalDate, LocalDate> dto) {
+        YlEqpDashboardVO result = new YlEqpDashboardVO();
+        //获取原料车间下的所有节点
+        List<JsSysOffice> sysOffices = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                .like(JsSysOffice::getParentCodes, "STEC001003")
+                .eq(JsSysOffice::getStatus, OaConstant.NO));
+        Set<String> departments = sysOffices.stream().map(JsSysOffice::getOfficeCode).collect(Collectors.toSet());
+        departments.add("STEC001003");
+        //获取设备信息
+        List<MesEqpCountDTO> eqpCount = mesEquipmentMapper.findEqpCount(departments);
+        if(CollUtil.isNotEmpty(eqpCount)){
+            result.setEqpAllNum(eqpCount.stream().mapToInt(MesEqpCountDTO::getNum).sum());
+            Map<Integer, Integer> stateNumMap = eqpCount.stream()
+                    .collect(Collectors.toMap(MesEqpCountDTO::getState, MesEqpCountDTO::getNum, Integer::sum));
+            result.setEqpRunningPercent(BigDecimalUtil.percent(new BigDecimal(stateNumMap.getOrDefault(0,0)+stateNumMap.getOrDefault(2,0)),
+                    new BigDecimal(result.getEqpAllNum()),2));
+            //组图表
+            List<StackGraphDTO<String, Integer>> dataList = Lists.newArrayList();
+            List<TupleDTO<String, Integer>> datList1 = Lists.newArrayList();
+            StackGraphDTO<String, Integer> stackGraphDTO1 = new StackGraphDTO<>();
+            stackGraphDTO1.setXAxis("待机数");
+            datList1.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(2,0)));
+            stackGraphDTO1.setData(datList1);
+            dataList.add(stackGraphDTO1);
+
+            List<TupleDTO<String, Integer>> datList2 = Lists.newArrayList();
+            StackGraphDTO<String, Integer> stackGraphDTO2 = new StackGraphDTO<>();
+            stackGraphDTO2.setXAxis("运行数");
+            datList2.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(0,0)));
+            stackGraphDTO2.setData(datList2);
+            dataList.add(stackGraphDTO2);
+
+            StackGraphDTO<String, Integer> stackGraphDTO3 = new StackGraphDTO<>();
+            stackGraphDTO3.setXAxis("停机数");
+            List<TupleDTO<String, Integer>> datList3 = Lists.newArrayList();
+            datList3.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(3,0)));
+            stackGraphDTO3.setData(datList3);
+            dataList.add(stackGraphDTO3);
+
+            StackGraphDTO<String, Integer> stackGraphDTO4 = new StackGraphDTO<>();
+            stackGraphDTO4.setXAxis("故障数");
+            List<TupleDTO<String, Integer>> datList4 = Lists.newArrayList();
+            datList4.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(1,0)));
+            stackGraphDTO4.setData(datList4);
+            dataList.add(stackGraphDTO4);
+            result.setEqpDashBoard(StackGraphUtil.convertData(dataList, Boolean.TRUE));
+        }
+        //获取点检任务信息
+        List<MesEqpCountDTO> taskCount = mesEqpInsTaskMapper.findTaskCount2(departments,dto.getField1().atTime(8,0,0),dto.getField2().atTime(8,0,0));
+        if(CollUtil.isNotEmpty(taskCount)){
+            result.setInsNum(taskCount.stream().mapToInt(MesEqpCountDTO::getNum).sum());
+            result.setInsFinishedPercent(BigDecimalUtil.percent(new BigDecimal(taskCount.stream().filter(v->v.getState().equals(0)).findFirst().orElse(new MesEqpCountDTO(0,0)).getNum()),
+                    new BigDecimal(result.getInsNum()),2));
+        }
+        return result;
     }
 }
 

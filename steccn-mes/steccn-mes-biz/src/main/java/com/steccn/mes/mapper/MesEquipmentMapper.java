@@ -2,7 +2,12 @@ package com.steccn.mes.mapper;
 
 import com.steccn.mes.domain.MesEquipment;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.mes.dto.MesEqpCountDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -14,6 +19,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface MesEquipmentMapper extends BaseMapper<MesEquipment> {
 
+    /**
+     * 找到各个设备状态的数量
+     * @param departments
+     * @return
+     */
+    List<MesEqpCountDTO> findEqpCount(@Param("departments")Set<String> departments);
 }
 
 
