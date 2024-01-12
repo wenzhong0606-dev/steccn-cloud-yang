@@ -1793,7 +1793,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit) {
+    public Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet,String unit, int bit) {
         List<TripleDTO<String, Long, BigDecimal>> completeList;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
             completeList = baseMapper.jpCompleteMaterialDay(start, end, lineIdSet);
@@ -1806,9 +1806,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         }
         //进行单位转换
         SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(pieceSysDict, "片单位不存在");
-        Assert.notNull(sqSysDict, "平方米单位不存在");
+        Assert.notNull(sqSysDict, "转换单位单位不存在");
         List<TripleDTO<String, Long, BigDecimal>> tripleDTOS = pmsUnitConvertManager.<TripleDTO<String, Long, BigDecimal>>unitConvert(pieceSysDict, sqSysDict, completeList, x -> x.getField2(), y -> y.getField3(), (m, n) -> m.setField3(n), bit);
         //基于班次日期的聚合
         Map<String, BigDecimal> mapRes = Maps.newHashMap();
@@ -1834,7 +1834,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(pieceSysDict, "片单位不存在");
-        Assert.notNull(sqSysDict, "平方米单位不存在");
+        Assert.notNull(sqSysDict, "转换单位不存在");
         List<TripleDTO<String, Long, BigDecimal>> tripleDTOS = pmsUnitConvertManager.<TripleDTO<String, Long, BigDecimal>>unitConvert(pieceSysDict, sqSysDict, completeList, x -> x.getField2(), y -> y.getField3(), (m, n) -> m.setField3(n), bit);
         //基于班次日期的聚合
         Map<String, BigDecimal> mapRes = Maps.newHashMap();

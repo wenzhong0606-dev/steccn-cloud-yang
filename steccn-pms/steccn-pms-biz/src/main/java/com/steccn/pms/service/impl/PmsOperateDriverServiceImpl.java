@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.util.UnitLengthUtil;
@@ -13,6 +14,7 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.PullForceSumDTO;
 import com.steccn.pms.service.*;
@@ -221,8 +223,7 @@ public class PmsOperateDriverServiceImpl implements PmsOperateDriverService {
 
         //根据车间+时间查询入库数
         //根据车间+时间查询拉引量
-        //获取总数
-        Map<String, BigDecimal> completeMap = pmsReportWorkService.jpComplete(granularity, dto.getStart(), dto.getEnd(), lineIdSet, bit);
+        Map<String, BigDecimal> completeMap = pmsReportWorkService.jpComplete(granularity, dto.getStart(), dto.getEnd(), lineIdSet, PmManagerConstant.MEASURE_UNIT_TON ,bit);
         PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
         pullForceSumDTO.setStart(dto.getStart());
         pullForceSumDTO.setEnd(dto.getEnd());

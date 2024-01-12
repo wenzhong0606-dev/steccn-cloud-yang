@@ -534,7 +534,7 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param bit         位数
      * @return
      */
-    Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
+    Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, String unit , int bit);
 
     /**
      * 深加工完工信息
