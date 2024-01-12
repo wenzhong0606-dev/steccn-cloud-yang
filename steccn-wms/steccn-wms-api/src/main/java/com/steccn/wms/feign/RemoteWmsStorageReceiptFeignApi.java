@@ -7,6 +7,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +30,8 @@ public interface RemoteWmsStorageReceiptFeignApi {
     R<Map<Long, String>> rwLinkSupplier(@RequestBody Set<Long> rwIdSet);
 
     @ApiOperation("根据时间获取类型为采购入库的指定物料数量")
-    @PostMapping("/feign/wms/storage/receipt/purchase/quantity")
-    R<Map<String, BigDecimal>> purchaseQuantity(@RequestBody LocalDateTime startTime, LocalDateTime endTime, List<String> materialName);
+    @GetMapping("/feign/wms/storage/receipt/purchase/quantity")
+    R<Map<String, BigDecimal>> purchaseQuantity(@RequestParam("startTime") LocalDateTime startTime,
+                                                @RequestParam("endTime") LocalDateTime endTime,
+                                                @RequestParam("materialName") List<String> materialName);
 }

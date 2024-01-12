@@ -46,8 +46,10 @@ public class WmsStorageReceiptFeignController {
     }
 
     @ApiOperation("根据时间获取类型为采购入库的指定物料数量")
-    @PostMapping("/purchase/quantity")
-    public R<Map<String, BigDecimal>> purchaseQuantity(@RequestBody LocalDateTime startTime,LocalDateTime endTime,List<String> materialName){
+    @GetMapping("/purchase/quantity")
+    public R<Map<String, BigDecimal>> purchaseQuantity(@RequestParam("startTime") LocalDateTime startTime,
+                                                       @RequestParam("endTime") LocalDateTime endTime,
+                                                       @RequestParam("materialName") List<String> materialName){
         return R.success(wmsStorageReceiptInfoService.purchaseQuantity(startTime,endTime,materialName));
     }
 
