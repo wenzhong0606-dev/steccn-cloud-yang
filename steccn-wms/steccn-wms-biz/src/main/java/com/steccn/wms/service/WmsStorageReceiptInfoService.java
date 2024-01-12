@@ -2,6 +2,7 @@ package com.steccn.wms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
@@ -37,10 +38,8 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
 
     /**
      * 获取指定物料在对应时间的数量
-     * @param startTime
-     * @param endTime
-     * @param materialName
+     * @param rawMaterialReportDTO
      * @return
      */
-    Map<String, BigDecimal> purchaseQuantity(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName);
+    Map<String, BigDecimal> purchaseQuantity(RawMaterialReportDTO rawMaterialReportDTO);
 }

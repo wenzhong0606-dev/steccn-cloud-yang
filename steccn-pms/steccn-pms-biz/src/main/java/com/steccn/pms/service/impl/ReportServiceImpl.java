@@ -12,11 +12,13 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtSeriesDataDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysDictDTO;
@@ -36,7 +38,9 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.vo.OutputQualityDetailVO;
+import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
+import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
@@ -80,6 +84,8 @@ public class ReportServiceImpl implements ReportService {
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
+    private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
+    private final RemoteDpFeignApi remoteDpFeignApi;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -1701,15 +1707,97 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public EpChartGraphVO<List<String>, BigDecimal> rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate) {
+    public EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>> > rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate) {
         //获取计划数（等待采购数据）
         //获取到货数（入库管理 采购入库数据）
-        List<String> materialNames =Arrays.asList("低铁硅砂","纯碱","方解石","白云石","氧化铝","复合澄清剂","碎玻璃");
-        Map<String, BigDecimal> storageQuantityMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.purchaseQuantity(startDate.atTime(8, 0, 0), endDate.plusDays(1).atTime(7, 59, 59), materialNames), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        List<String> materialNames =Arrays.asList("石英砂（低铁硅砂）","纯碱","石灰石","白云石（普通白云石）","三氧化二铝","复合澄清剂","小料","碎玻璃（外购）");
+        RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
+        rawMaterialReportDTO.setMaterialName(materialNames);
+        rawMaterialReportDTO.setStartTime(startDate.atTime(8, 0, 0));
+        rawMaterialReportDTO.setEndTime(endDate.plusDays(1).atTime(7, 59, 59));
+        Map<String, BigDecimal> storageQuantityMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.purchaseQuantity(rawMaterialReportDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         //获取领用数（调拨单源仓库为主要材料库数据）
-//        FeignOptional.of(()->remoteWmsStorageReceiptFeignApi)
+        Map<String, BigDecimal> transferSlipMap = FeignOptional.of(() -> remoteWmsTransferSlipFeignApi.materialDepot(rawMaterialReportDTO),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         //获取耗用数（电子秤读数）
-        return null;
+        Map<String, BigDecimal> countMap = FeignOptional.of(() -> remoteDpFeignApi.countMap(new TupleDTO<LocalDateTime, LocalDateTime>(startDate.atTime(8, 0, 0), endDate.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        //表格
+        EpChartGraphVO<List<String>,  List<TripleDTO<String, BigDecimal, String>> > res = new EpChartGraphVO<>();
+        //图例
+        List<String> legend = Arrays.asList("申请数","到货数","消耗数","领用数");
+        res.setLegend(legend);
+        //主数据
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+
+        QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<String,BigDecimal>();
+        qtSeriesDataDTO.setName("申请数");
+        List<BigDecimal> dataQuantityList = Lists.newArrayList();
+
+        QtSeriesDataDTO<String,BigDecimal> storageQuantityDTO = new QtSeriesDataDTO<String,BigDecimal>();
+        storageQuantityDTO.setName("到货数");
+        List<BigDecimal> storageQuantityList = Lists.newArrayList();
+
+        QtSeriesDataDTO<String,BigDecimal>  transferSlipDTO = new QtSeriesDataDTO<String,BigDecimal>();
+        transferSlipDTO.setName("消耗数");
+        List<BigDecimal> transferSlipQuantityList = Lists.newArrayList();
+
+        QtSeriesDataDTO<String,BigDecimal> countDTO = new QtSeriesDataDTO<String,BigDecimal>();
+        countDTO.setName("领用数");
+        List<BigDecimal> countQuantityList = Lists.newArrayList();
+        BigDecimal planTotalQuantity = BigDecimal.ZERO;
+        BigDecimal storageTotalQuantity = BigDecimal.ZERO;
+        BigDecimal transferSlipTotalQuantity = BigDecimal.ZERO;
+        BigDecimal countTotalQuantity = BigDecimal.ZERO;
+
+        for (String material : materialNames) {
+            // 到货数
+            BigDecimal storageQuantity = Optional.ofNullable(storageQuantityMap.get(material)).orElse(BigDecimal.ZERO);
+            storageQuantityList.add(storageQuantity);
+            storageTotalQuantity = storageTotalQuantity.add(storageQuantity);
+
+            // 消耗数
+            BigDecimal transferSlipQuantity = Optional.ofNullable(transferSlipMap.get(material)).orElse(BigDecimal.ZERO);
+            transferSlipQuantityList.add(transferSlipQuantity);
+            transferSlipTotalQuantity = transferSlipTotalQuantity.add(transferSlipQuantity);
+
+            // 领用数
+            BigDecimal countQuantity = Optional.ofNullable(countMap.get(material)).orElse(BigDecimal.ZERO);
+            countQuantityList.add(countQuantity);
+            countTotalQuantity = countTotalQuantity.add(countQuantity);
+        };
+        qtSeriesDataDTO.setData(dataQuantityList);
+        storageQuantityDTO.setData(storageQuantityList);
+        transferSlipDTO.setData(transferSlipQuantityList);
+        countDTO.setData(countQuantityList);
+        seriesDataVO.add(qtSeriesDataDTO);
+        seriesDataVO.add(storageQuantityDTO);
+        seriesDataVO.add(transferSlipDTO);
+        seriesDataVO.add(countDTO);
+        res.setSeriesDataVO(seriesDataVO);
+        //其他数据
+        List<TripleDTO<String, BigDecimal, String>>  list = Lists.newArrayList();
+        TripleDTO<String, BigDecimal, String> planTotalQuantityDTO = new TripleDTO<>();
+        planTotalQuantityDTO.setField1("计划到货总数");
+        planTotalQuantityDTO.setField2(planTotalQuantity);
+        planTotalQuantityDTO.setField3("吨");
+        list.add(planTotalQuantityDTO);
+        TripleDTO<String, BigDecimal, String> storageTotalQuantityDTO = new TripleDTO<>();
+        storageTotalQuantityDTO.setField1("实际收货总数");
+        storageTotalQuantityDTO.setField2(storageTotalQuantity);
+        storageTotalQuantityDTO.setField3("吨");
+        list.add(storageTotalQuantityDTO);
+        TripleDTO<String, BigDecimal, String> transferSlipTotalQuantityDTO = new TripleDTO<>();
+        transferSlipTotalQuantityDTO.setField1("消耗总数");
+        transferSlipTotalQuantityDTO.setField2(transferSlipTotalQuantity);
+        transferSlipTotalQuantityDTO.setField3("吨");
+        list.add(transferSlipTotalQuantityDTO);
+        TripleDTO<String, BigDecimal, String> countTotalQuantityDTO = new TripleDTO<>();
+        countTotalQuantityDTO.setField1("领用总数");
+        countTotalQuantityDTO.setField2(countTotalQuantity);
+        countTotalQuantityDTO.setField3("吨");
+        list.add(countTotalQuantityDTO);
+        res.setOther(list);
+        res.setXData(materialNames);
+        return res;
     }
 
 

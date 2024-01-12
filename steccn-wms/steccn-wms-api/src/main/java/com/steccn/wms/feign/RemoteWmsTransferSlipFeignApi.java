@@ -3,6 +3,7 @@ package com.steccn.wms.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,9 +37,7 @@ public interface RemoteWmsTransferSlipFeignApi {
     R<BigDecimal> slipLineWarehouse(@RequestBody TupleDTO<LocalDate, Set<Integer>> tupleDTO);
 
     @ApiOperation("根据时间获取调拨单源仓库为主要材料库的指定物料数量")
-    @GetMapping("/feign/wms/transfer/slip/material/depot/quantity")
-    R<Map<String, BigDecimal>> materialDepot(@RequestParam("startTime") LocalDateTime startTime,
-                                                @RequestParam("endTime") LocalDateTime endTime,
-                                                @RequestParam("materialName") List<String> materialName);
+    @PostMapping("/feign/wms/transfer/slip/material/depot/quantity")
+    R<Map<String, BigDecimal>> materialDepot(@RequestBody RawMaterialReportDTO dto);
 
 }

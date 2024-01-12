@@ -125,4 +125,19 @@
         and wts.`status` != 5
         group by info.material_id;
     </select>
+    <select id="materialDepot" resultType="com.steccn.wms.domain.WmsTransferSlipInfo">
+        SELECT
+            wtsi.material_name,
+            sum(wtsi.quantity) quantity
+        FROM
+            wms_transfer_slip_info wtsi
+                LEFT JOIN wms_transfer_slip wts ON wts.id = wtsi.transfer_slip_id
+        WHERE
+            wts.del_flag = 0 and wts.source_warehouse = #{id}
+            and wtsi.material_name in
+      <foreach collection="materialName" item="name" open="(" close=")" separator=",">
+            #{name}
+    </foreach>
+        GROUP BY wtsi.material_name
+    </select>
 </mapper>

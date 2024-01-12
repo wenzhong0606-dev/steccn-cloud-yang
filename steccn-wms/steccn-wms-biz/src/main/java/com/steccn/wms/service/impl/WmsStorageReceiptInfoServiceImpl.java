@@ -10,6 +10,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
@@ -55,11 +56,11 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
     }
 
     @Override
-    public Map<String, BigDecimal> purchaseQuantity(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName) {
+    public Map<String, BigDecimal> purchaseQuantity(RawMaterialReportDTO dto) {
         Map<String,BigDecimal>  resMap = Maps.newHashMap();
         //获取采购类型
         SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "warehousing_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<WmsStorageReceiptInfo> infoList = this.baseMapper.purchaseQuantity(sysDictVO.getId(),startTime,endTime,materialName);
+        List<WmsStorageReceiptInfo> infoList = this.baseMapper.purchaseQuantity(sysDictVO.getId(),dto.getStartTime(),dto.getEndTime(),dto.getMaterialName());
         if (CollUtil.isNotEmpty(infoList)){
             infoList.forEach( info->{
                 resMap.put(info.getMaterialName(),info.getQuantity());

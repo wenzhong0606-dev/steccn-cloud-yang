@@ -6,6 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
@@ -109,9 +110,9 @@ public class ReportController {
         return R.success(reportService.outputQualitySjg(outputQualityDTO));
     }
 
-    @PostMapping("/raw/material/workshop/histogram")
+    @GetMapping("/raw/material/workshop/histogram")
     @ApiOperation("原料车间生产驾驶舱-柱状图数据")
-    public R<EpChartGraphVO<List<String>, BigDecimal>> rawMaterialWorkshopHistogram(@RequestBody LocalDate startDate,LocalDate endDate){
+    public R<EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>>>> rawMaterialWorkshopHistogram(@RequestParam("startDate") LocalDate startDate,@RequestParam("endDate") LocalDate endDate){
         return R.success(reportService.rawMaterialWorkshopHistogram(startDate,endDate));
     }
 

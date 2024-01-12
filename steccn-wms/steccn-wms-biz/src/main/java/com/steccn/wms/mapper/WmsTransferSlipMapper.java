@@ -42,16 +42,18 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
      */
     List<WmsTransferSlipInfo> totalQuantity(@Param("warehouseIds") Set<Long> warehouseIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
-//    /**
-//     * 获取主
-//     * @param startTime
-//     * @param endTime
-//     * @param materialName
-//     * @param sysOfficeVO
-//     * @param materialName1
-//     * @return
-//     */
-//    List<WmsTransferSlipInfo> materialDepot(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName, SysOfficeVO sysOfficeVO, List<String> materialName1);
+    /**
+     * 获取主
+     * @param startTime
+     * @param endTime
+     * @param materialName
+     * @param id
+     * @return
+     */
+    List<WmsTransferSlipInfo> materialDepot(@Param("startTime") LocalDateTime startTime,
+                                            @Param("endTime") LocalDateTime endTime,
+                                            @Param("materialName") List<String> materialName,
+                                            @Param("id") Integer id);
 }
 
 

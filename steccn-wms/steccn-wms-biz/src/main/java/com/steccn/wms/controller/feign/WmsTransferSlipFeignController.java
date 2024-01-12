@@ -2,6 +2,7 @@ package com.steccn.wms.controller.feign;
 
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.service.WmsTransferSlipService;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -36,10 +37,8 @@ public class WmsTransferSlipFeignController {
     }
 
     @ApiOperation("根据时间获取调拨单源仓库为主要材料库的指定物料数量")
-    @GetMapping("/material/depot/quantity")
-    R<Map<String, BigDecimal>> materialDepot(@RequestParam("startTime") LocalDateTime startTime,
-                                             @RequestParam("endTime") LocalDateTime endTime,
-                                             @RequestParam("materialName") List<String> materialName){
-        return R.success(wmsTransferSlipService.materialDepot(startTime,endTime,materialName));
+    @PostMapping("/material/depot/quantity")
+    R<Map<String, BigDecimal>> materialDepot(@RequestBody RawMaterialReportDTO dto){
+        return R.success(wmsTransferSlipService.materialDepot(dto.getStartTime(),dto.getEndTime(),dto.getMaterialName()));
     };
 }

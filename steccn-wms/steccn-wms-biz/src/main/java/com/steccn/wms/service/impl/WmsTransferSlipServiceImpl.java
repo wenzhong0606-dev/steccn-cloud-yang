@@ -695,8 +695,13 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         Map<String,BigDecimal>  resMap = Maps.newHashMap();
         //获取主要材料库
         Map<String, SysOfficeVO> warehouseMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(Sets.newHashSet(WmsManagerConstant.MATERIAL_DEPOT)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-//       List<WmsTransferSlipInfo> infos =  this.baseMapper.materialDepot(startTime,endTime,materialName,warehouseMap.get(WmsManagerConstant.MATERIAL_DEPOT),materialName);
-        return null;
+       List<WmsTransferSlipInfo> infos =  this.baseMapper.materialDepot(startTime,endTime,materialName,warehouseMap.get(WmsManagerConstant.MATERIAL_DEPOT).getId());
+       if (CollUtil.isNotEmpty(infos)){
+           infos.forEach(info->{
+               resMap.put(info.getMaterialName(),info.getQuantity());
+           });
+       }
+        return resMap;
     }
 
     /**
