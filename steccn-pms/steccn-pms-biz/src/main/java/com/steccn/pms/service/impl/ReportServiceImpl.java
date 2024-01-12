@@ -1705,8 +1705,9 @@ public class ReportServiceImpl implements ReportService {
         //获取计划数（等待采购数据）
         //获取到货数（入库管理 采购入库数据）
         List<String> materialNames =Arrays.asList("低铁硅砂","纯碱","方解石","白云石","氧化铝","复合澄清剂","碎玻璃");
-//        FeignOptional.of(()->remoteWmsStorageReceiptFeignApi.purchaseQuantity(startDate.atTime(8, 0, 0),endDate.plusDays(1).atTime(7, 59, 59),materialNames)),FeignConstant.STECCN_WMS_SERVICE_NAME))
+        Map<String, BigDecimal> storageQuantityMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.purchaseQuantity(startDate.atTime(8, 0, 0), endDate.plusDays(1).atTime(7, 59, 59), materialNames), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         //获取领用数（调拨单源仓库为主要材料库数据）
+//        FeignOptional.of(()->remoteWmsStorageReceiptFeignApi)
         //获取耗用数（电子秤读数）
         return null;
     }

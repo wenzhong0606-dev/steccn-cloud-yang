@@ -8,8 +8,13 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,5 +34,11 @@ public interface RemoteWmsTransferSlipFeignApi {
     @PostMapping(value = "/feign/wms/transfer/slip/line/warehouse")
     @ApiOperation("根据线边仓获取领用量")
     R<BigDecimal> slipLineWarehouse(@RequestBody TupleDTO<LocalDate, Set<Integer>> tupleDTO);
+
+    @ApiOperation("根据时间获取调拨单源仓库为主要材料库的指定物料数量")
+    @GetMapping("/feign/wms/transfer/slip/material/depot/quantity")
+    R<Map<String, BigDecimal>> materialDepot(@RequestParam("startTime") LocalDateTime startTime,
+                                                @RequestParam("endTime") LocalDateTime endTime,
+                                                @RequestParam("materialName") List<String> materialName);
 
 }
