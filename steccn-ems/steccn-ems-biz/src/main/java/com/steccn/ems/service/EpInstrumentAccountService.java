@@ -85,4 +85,11 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      */
     Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeter(Integer energyType);
 
+    /**
+     * 查询节点关联仪表
+     * @param energyType 能源类型
+     * @return
+     */
+    Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeterFilter(Integer energyType,Set<Long> partitionIdSet);
+
 }

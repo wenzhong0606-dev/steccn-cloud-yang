@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -18,6 +19,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -246,4 +248,14 @@ public class SysOfficeFeignController {
     public R<Map<Integer,List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet){
         return R.success(sysOfficeService.childWorkshop(officeIdSet));
     }
+
+    @ApiOperation("获取组织结构信息")
+    @GetMapping("/info/{id}")
+    R<SysOfficeVO> info(@PathVariable("id") Integer id){
+        SysOfficeVO sysOfficeVO = new SysOfficeVO();
+        SysOffice sysOffice =  sysOfficeService.getById(id);
+        BeanUtils.copyProperties(sysOffice,sysOfficeVO);
+        return R.success(sysOfficeVO);
+    }
+
 }

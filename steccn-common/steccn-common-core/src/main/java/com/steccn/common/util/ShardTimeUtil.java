@@ -56,6 +56,10 @@ public class ShardTimeUtil {
      * @return
      */
     public static List<LocalDateTime> cutDateRangeNew(String dateType, LocalDateTime start, LocalDateTime end) {
+        //考虑是否是无粒度
+        if ("N".equals(dateType)) {
+            return Lists.newArrayList(start, end);
+        }
         boolean contains = Sets.newHashSet("Y", "Q", "M", "W", "D", "C", "H").contains(dateType);
         Assert.isTrue(contains, "粒度类型错误");
         List<LocalDateTime> listDate = new ArrayList<>();
@@ -151,6 +155,10 @@ public class ShardTimeUtil {
      * @return
      */
     public static List<LocalDate> cutDate(String dateType, LocalDate start, LocalDate end) {
+        //考虑是否是无粒度
+        if ("N".equals(dateType)) {
+            return Lists.newArrayList(start, end);
+        }
         List<LocalDate> listDate = new ArrayList<>();
         //需要校验type
         boolean contains = Sets.newHashSet("Y", "Q", "M", "W", "D").contains(dateType);
@@ -216,24 +224,24 @@ public class ShardTimeUtil {
         }
         return listDate;
     }
-
-    public static void main(String[] args) {
-//    * eg. start-> 2023-12-10 08:00:00  end-> 2023-12-11 08:00:00 收官点为 end
-//    * H 2023-12-10 08:00:00,2023-12-10 09:00:00,2023-12-10 10:00:00 ... 2023-12-11 07:00:00,2023-12-11 08:00:00 共计24个时间区间
-//    * C 2023-12-10 08:00:00,2023-12-10 20:00:00,2023-12-11 08:00:00 显示为2023-12-10的班次日期
-//    * D 2023-12-10 08:00:00 2023-12-11 08:00:00
-//    * W 2023-12-04 08:00:00 2023-12-11 08:00:00
-//    * M 2023-12-01 08:00:00 2024-01-01 08:00:00
-//    * Q 2023-10-01 08:00:00 2024-01-01 08:00:00
-//    * Y 2023-01-01 08:00:00 2024-01-01 08:00:00
-
-        List<LocalDateTime> dateList = cutDateRange("D", LocalDateTime.of(2023, 12, 8,7,0,0), LocalDateTime.of(2023, 12, 11,8,0,0));
-//        System.out.print(dateList);
-        dateList.forEach(ele ->{
-            System.out.println(ele);
-
-        });
-    }
+//
+//    public static void main(String[] args) {
+////    * eg. start-> 2023-12-10 08:00:00  end-> 2023-12-11 08:00:00 收官点为 end
+////    * H 2023-12-10 08:00:00,2023-12-10 09:00:00,2023-12-10 10:00:00 ... 2023-12-11 07:00:00,2023-12-11 08:00:00 共计24个时间区间
+////    * C 2023-12-10 08:00:00,2023-12-10 20:00:00,2023-12-11 08:00:00 显示为2023-12-10的班次日期
+////    * D 2023-12-10 08:00:00 2023-12-11 08:00:00
+////    * W 2023-12-04 08:00:00 2023-12-11 08:00:00
+////    * M 2023-12-01 08:00:00 2024-01-01 08:00:00
+////    * Q 2023-10-01 08:00:00 2024-01-01 08:00:00
+////    * Y 2023-01-01 08:00:00 2024-01-01 08:00:00
+//
+//        List<LocalDateTime> dateList = cutDateRange("D", LocalDateTime.of(2023, 12, 8,7,0,0), LocalDateTime.of(2023, 12, 11,8,0,0));
+////        System.out.print(dateList);
+//        dateList.forEach(ele ->{
+//            System.out.println(ele);
+//
+//        });
+//    }
 
 
     /**

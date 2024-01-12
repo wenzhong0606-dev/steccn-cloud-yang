@@ -1,11 +1,16 @@
 package com.steccn.wms.service;
 
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author W10
@@ -28,4 +33,14 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
      * @return
      */
     WmsStorageReceiptInfo getByCaseNo(String caseNo);
+
+
+    /**
+     * 获取指定物料在对应时间的数量
+     * @param startTime
+     * @param endTime
+     * @param materialName
+     * @return
+     */
+    Map<String, BigDecimal> purchaseQuantity(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName);
 }

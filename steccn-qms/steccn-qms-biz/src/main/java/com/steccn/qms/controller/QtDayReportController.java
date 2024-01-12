@@ -2,6 +2,7 @@ package com.steccn.qms.controller;
 
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtDayReportOnlineDTO;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -95,6 +97,12 @@ public class QtDayReportController {
     @ApiOperation("配料抽检日报表")
     public R<QtDaySamplingVO> sampling(@RequestParam("date") LocalDate date) {
         return R.success(qtDayReportService.sampling(date));
+    }
+
+    @GetMapping("/sampling/water/rate")
+    @ApiOperation("配料含水率")
+    public R<QtLineChartBarDTO> samplingWaterRate(@RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(qtDayReportService.samplingWaterRate(start, end));
     }
 
     @GetMapping("/sampling/download")

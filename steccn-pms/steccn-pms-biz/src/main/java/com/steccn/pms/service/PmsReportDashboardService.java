@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
@@ -29,6 +30,17 @@ public interface PmsReportDashboardService {
     BigDecimal pullForceToday(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围拉引量（单位/T）
+     *
+     * @param partId 部门id
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    BigDecimal pullForceDateRange(Integer partId, LocalDate start, LocalDate end);
+
+
+    /**
      * 熔化率
      *
      * @param workShopId 车间id
@@ -47,6 +59,16 @@ public interface PmsReportDashboardService {
     List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围产量（单位/T/片/㎡）
+     *
+     * @param partId 基片制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    List<BigDecimal> produceNumDateRange(Integer partId, LocalDate start, LocalDate end);
+
+    /**
      * 产量合格率
      *
      * @param workShopId 车间id
@@ -54,6 +76,16 @@ public interface PmsReportDashboardService {
      * @return
      */
     BigDecimal produceNumRate(Integer workShopId, LocalDate date);
+
+    /**
+     * 日期范围产量合格率
+     *
+     * @param partId 制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    BigDecimal produceNumRateDateRange(Integer partId, LocalDate start, LocalDate end);
 
     /**
      * 今日入库数（单位/T/片/㎡）
@@ -64,6 +96,15 @@ public interface PmsReportDashboardService {
     List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date);
 
     /**
+     * 日期范围入库数（单位/T/片/㎡）
+     * @param partId 制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    List<BigDecimal> inStorageDateRange(Integer partId, LocalDate start, LocalDate end);
+
+    /**
      * 入库合格率
      *
      * @param workShopId 车间id
@@ -71,6 +112,16 @@ public interface PmsReportDashboardService {
      * @return
      */
     BigDecimal inStorageRate(Integer workShopId, LocalDate date);
+
+    /**
+     * 日期范围入库合格率
+     * @param partId 制造部主键
+     * @param start  开始日期
+     * @param end    结束日期
+     * @return
+     */
+    BigDecimal inStorageRateDateRange(Integer partId, LocalDate start, LocalDate end);
+
 
     /**
      * 产线加工信息

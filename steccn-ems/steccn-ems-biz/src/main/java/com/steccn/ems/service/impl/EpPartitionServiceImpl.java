@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.Partition;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,6 +16,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.MapUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
@@ -633,11 +635,93 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportHeatPowerDefaultNode() {
+        //站外电
+        Map<String, List<SysConfigurationDTO>> eleOtherConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC_OTHER, EpManagerConstant.ELECOtherConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleOtherConfList = Lists.newArrayList();
+        for (EpManagerConstant.ELECOtherConfContentEnum elecOtherConfContentEnum : EpManagerConstant.ELECOtherConfContentEnum.values()) {
+            List<SysConfigurationDTO> tmpList = eleOtherConfMap.get(elecOtherConfContentEnum.toString());
+            if (CollUtil.isNotEmpty(tmpList)) {
+                eleOtherConfList.addAll(tmpList);
+            }
+        }
+        //水
+        Map<String, List<SysConfigurationDTO>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> waterConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
+        resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterConfList));
+        return resMap;
+    }
+
+    @Override
+    public List<TripleDTO<Long, Integer, String>> jpCountReportGfDefaultNode() {
+        Map<String, List<SysConfigurationDTO>> elecConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_ELEC, Sets.newHashSet(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_ELEC_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleOtherConfList = elecConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        return queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList);
+    }
+
+    @Override
+    public Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportScDefaultNode() {
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
+        //电
+        Map<String, List<SysConfigurationDTO>> elecConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_ELEC, Sets.newHashSet(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_ELEC_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> eleOtherConfList = elecConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //水
+        Map<String, List<SysConfigurationDTO>> waterConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_WATER, Sets.newHashSet(EpManagerConstant.CONF_EMS_JP_COUNT_REPORT_SC_WATER_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> waterOtherConfList = waterConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterOtherConfList));
+        return resMap;
+    }
+
+    @Override
+    public List<EpPartition> getLinkedChildren(Integer energyType, List<Long> partitionIdList) {
+        //优化点，如果只有1个节点，则直接查询即可
+        List<EpPartition> sourceList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
+        Assert.notEmpty(sourceList, "能源类型树为空");
+        //构建id-entity实体关系
+        Map<Long,EpPartition> idEntityRefMap = Maps.newHashMap();
+        //构建直接关系的map
+        Map<Long,Set<Long>> directRefMap = Maps.newHashMap();
+        sourceList.forEach(ele -> {
+            MapUtil.computeSet(directRefMap, ele.getParentId(), ele.getId());
+            idEntityRefMap.put(ele.getId(), ele);
+        });
+        //1.先查询树上所有节点
+        //2.递归往下查询孩子节点
+        Set<Long> resIdSet = Sets.newHashSet();
+        for (Long partitionId : partitionIdList) {
+            Set<Long> childrenId = getChildrenId(partitionId, directRefMap);
+            resIdSet.add(partitionId);
+            resIdSet.addAll(childrenId);
+        }
+        //获取能源树节点
+        List<EpPartition> resList = Lists.newArrayList();
+        resIdSet.forEach(ele -> resList.add(idEntityRefMap.get(ele)));
+        return resList;
+    }
+
+    private Set<Long> getChildrenId(Long partitionId, Map<Long, Set<Long>> directRefMap) {
+        Set<Long> resIdSet = Sets.newHashSet();
+        Set<Long> children = directRefMap.get(partitionId);
+        if (CollUtil.isNotEmpty(children)) {
+            //存在孩子
+            resIdSet.addAll(children);
+            //根据孩子查询孩子的孩子
+            children.forEach(ele -> {
+                resIdSet.addAll(getChildrenId(ele, directRefMap));
+            });
+        }
+        return resIdSet;
+    }
+
     /**
      * 根据officeName获取指定能源类型的节点id和节点名称
      *
-     * @param energyType     能源类型
-     * @param officeNameList 组织结构名称集合
+     * @param energyType           能源类型
+     * @param configurationDTOList 组织结构名称集合
      * @return
      */
     private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<SysConfigurationDTO> configurationDTOList) {

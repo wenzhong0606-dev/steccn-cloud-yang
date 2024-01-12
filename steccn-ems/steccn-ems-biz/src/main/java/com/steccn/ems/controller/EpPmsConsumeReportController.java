@@ -32,39 +32,60 @@ public class EpPmsConsumeReportController {
     @GetMapping("/consume/use/electric")
     @ApiOperation(value = "获取今日用电量")
     public R<EpPmsConsumeVO> consumeUseElectric(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-        return R.success(consumeReportService.consumeUseElectric(officeId, date));
+        return R.success(consumeReportService.consumeUseElectric(officeId, date, date));
+    }
+
+    @GetMapping("/consume/use/electric/date/range")
+    @ApiOperation(value = "获取日期范围用电量")
+    public R<EpPmsConsumeVO> consumeUseElectricDataRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.consumeUseElectric(officeId, start, end));
     }
 
     @GetMapping("/consume/use/water")
     @ApiOperation(value = "获取今日用水量")
     public R<EpPmsConsumeVO> consumeUseWater(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-        return R.success(consumeReportService.consumeUseWater(officeId, date));
+        return R.success(consumeReportService.consumeUseWater(officeId, date, date));
+    }
+
+    @GetMapping("/consume/use/water/date/range")
+    @ApiOperation(value = "获取日期范围用水量")
+    public R<EpPmsConsumeVO> consumeUseWaterDateRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.consumeUseWater(officeId, start, end));
     }
 
     @GetMapping("/consume/use/gas")
     @ApiOperation(value = "获取今日天然气使用量")
     public R<EpPmsConsumeVO> consumeUseGas(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-        return R.success(consumeReportService.consumeUseGas(officeId, date));
+        return R.success(consumeReportService.consumeUseGas(officeId, date, date));
+    }
+
+    @GetMapping("/consume/use/gas/date/range")
+    @ApiOperation(value = "获取日期范围天然气使用量")
+    public R<EpPmsConsumeVO> consumeUseGasDateRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.consumeUseGas(officeId, start, end));
     }
 
     @GetMapping("/consume/use/oil")
     @ApiOperation(value = "获取今日重油使用量")
     public R<EpPmsConsumeVO> consumeUseOil(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-        return R.success(consumeReportService.consumeUseOil(officeId, date));
+        return R.success(consumeReportService.consumeUseOil(officeId, date, date));
+    }
+
+    @GetMapping("/consume/use/oil/date/range")
+    @ApiOperation(value = "获取日期范围重油使用量")
+    public R<EpPmsConsumeVO> consumeUseOilDateRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.consumeUseOil(officeId, start, end));
     }
 
     @GetMapping("/consume/use/unit/consume")
     @ApiOperation(value = "获取今日能源单耗")
     public R<EpPmsConsumeVO> consumeUseUnitConsume(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
-        return R.success(consumeReportService.consumeUseUnitConsume(officeId, date));
+        return R.success(consumeReportService.consumeUseUnitConsume(officeId, date, date));
     }
 
-    @GetMapping("/consume/electric")
-    @ApiOperation(value = "能耗信息-电耗")
-    public R<List<EpPmsConsumeVO>> electricRange(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate end, @RequestParam("timeCode") Integer timeCode) {
-       LocalDate start = LocalDate.now();
-       List<PmElectricConsumeVO> resList= consumeReportService.electricRange(officeId, start, end);
-        return R.success();
+    @GetMapping("/consume/use/unit/consume/date/range")
+    @ApiOperation(value = "获取日期范围能源单耗")
+    public R<EpPmsConsumeVO> consumeUseUnitConsumeDateRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.consumeUseUnitConsume(officeId, start, end));
     }
-
 }

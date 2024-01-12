@@ -20,17 +20,17 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.CalculateDateUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.MapUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaClassVO;
@@ -44,7 +44,9 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +128,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     @Autowired
     private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    @Autowired
+    private PmsOfficeManager pmsOfficeManager;
+    @Autowired
+    private PmsUnitConvertManager pmsUnitConvertManager;
+
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
@@ -1157,6 +1164,39 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<Long, BigDecimal> getDateRangePm(List<Integer> lineList, LocalDate start, LocalDate end, Integer type) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangePm(lineList, start, end);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> materialMap = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            if (type == 0) {
+                //基片
+                materialMap.forEach((k, v) -> {
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    v.forEach(ele -> {
+                        valueList.add(ele.getQuantity());
+                    });
+                    resMap.put(k, BigDecimalUtil.sum(valueList));
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(lineList);
+
+                materialMap.forEach((k, v) -> {
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    //深加工
+                    v.forEach(ele -> {
+                        if (stationIds.contains(ele.getStationId())) {
+                            valueList.add(BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity()));
+                        }
+                    });
+                    resMap.put(k, BigDecimalUtil.sum(valueList));
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<Integer, BigDecimal> getDateRangePmUnit(List<Integer> lineList, LocalDate start, LocalDate end, int type, String unit) {
         List<PmsUseCountDTO> dbList = baseMapper.getDateRangePm(lineList, start, end);
         return linePmUnit(dbList, lineList, type, unit);
@@ -1234,6 +1274,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     lineNumMap.put(ele.getProductLineId(), ele.getQuantity());
                 });
 
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, BigDecimal> getDateRangeInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeInStorage(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<Long, List<PmsUseCountDTO>> collect = dbList.stream().collect(Collectors.groupingBy(PmsUseCountDTO::getMaterialId));
+            collect.forEach((k, v) -> {
+                List<BigDecimal> valueList = Lists.newArrayList();
+                v.forEach(ele -> {
+                    valueList.add(ele.getQuantity());
+                });
+
+                resMap.put(k, BigDecimalUtil.sum(valueList));
             });
         }
         return resMap;
@@ -1633,6 +1693,155 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             });
         }
         return resMap;
+    }
+
+    @Override
+    public CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt, String unit) {
+        //粒度存在
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        CommonReportDTO commonReportDTO = new CommonReportDTO();
+        commonReportDTO.setName("生产产量");
+        commonReportDTO.setUnit("T");
+        Map<String, BigDecimal> valueMap = Maps.newHashMap();
+        commonReportDTO.setValueMap(valueMap);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getDatePmUnit(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            dbList.forEach(ele ->{
+                BigDecimal quantity = ele.getQuantity();
+                if (!sysDict1.equals(sysDict2)) {
+                    quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                }
+                String convert = MysqlDateKeyUtil.convert(granularity, ele.getClassDate());
+                MapUtil.add(valueMap, convert, quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        return commonReportDTO;
+    }
+
+    @Override
+    public CommonReportDTO jpInStorageDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        CommonReportDTO commonReportDTO = new CommonReportDTO();
+        commonReportDTO.setName("入库成品率");
+        commonReportDTO.setUnit("%");
+        Map<String, BigDecimal> valueMap = Maps.newHashMap();
+        commonReportDTO.setValueMap(valueMap);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getDateInStorageUnit(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //考虑物料的单位转换
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            dbList.forEach(ele ->{
+                BigDecimal quantity = ele.getQuantity();
+                if (!sysDict1.equals(sysDict2)) {
+                    quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                }
+                String convert = MysqlDateKeyUtil.convert(granularity, ele.getClassDate());
+                MapUtil.add(valueMap, convert, quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        return commonReportDTO;
+    }
+
+    @Override
+    public Map<String, BigDecimal> actualUse(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, Integer bit) {
+        List<TripleDTO<String, Long, BigDecimal>> actualList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            actualList = baseMapper.actualUseMaterialDay(start, end, lineIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            actualList = baseMapper.actualUseMaterialWeek(start, end, lineIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            actualList = baseMapper.actualUseMaterialMonth(start, end, lineIdSet);
+        } else {
+            actualList = baseMapper.actualUseMaterialYear(start, end, lineIdSet);
+        }
+        //进行单位转换
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(sqSysDict, "平方米单位不存在");
+        List<TripleDTO<String, Long, BigDecimal>> tripleDTOS = pmsUnitConvertManager.<TripleDTO<String, Long, BigDecimal>>unitConvert(pieceSysDict, sqSysDict, actualList, x -> x.getField2(), y -> y.getField3(), (m, n) -> m.setField3(n), bit);
+        //基于班次日期的聚合
+        Map<String, BigDecimal> mapRes = Maps.newHashMap();
+        tripleDTOS.forEach(ele -> {
+            MapUtil.add(mapRes, String.valueOf(ele.getField1()), ele.getField3(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
+        return mapRes;
+    }
+
+    @Override
+    public Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit) {
+        List<TripleDTO<String, Long, BigDecimal>> completeList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            completeList = baseMapper.jpCompleteMaterialDay(start, end, lineIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            completeList = baseMapper.jpCompleteMaterialWeek(start, end, lineIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            completeList = baseMapper.jpCompleteMaterialMonth(start, end, lineIdSet);
+        } else {
+            completeList = baseMapper.jpCompleteMaterialYear(start, end, lineIdSet);
+        }
+        //进行单位转换
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(sqSysDict, "平方米单位不存在");
+        List<TripleDTO<String, Long, BigDecimal>> tripleDTOS = pmsUnitConvertManager.<TripleDTO<String, Long, BigDecimal>>unitConvert(pieceSysDict, sqSysDict, completeList, x -> x.getField2(), y -> y.getField3(), (m, n) -> m.setField3(n), bit);
+        //基于班次日期的聚合
+        Map<String, BigDecimal> mapRes = Maps.newHashMap();
+        tripleDTOS.forEach(ele -> {
+            MapUtil.add(mapRes, String.valueOf(ele.getField1()), ele.getField3(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
+        return mapRes;
+    }
+
+    @Override
+    public Map<String, BigDecimal> sjgComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit) {
+        List<TripleDTO<String, Long, BigDecimal>> completeList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            completeList = baseMapper.sjgCompleteMaterialDay(start, end, lineIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            completeList = baseMapper.sjgCompleteMaterialWeek(start, end, lineIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            completeList = baseMapper.sjgCompleteMaterialMonth(start, end, lineIdSet);
+        } else {
+            completeList = baseMapper.sjgCompleteMaterialYear(start, end, lineIdSet);
+        }
+        //进行单位转换
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(sqSysDict, "平方米单位不存在");
+        List<TripleDTO<String, Long, BigDecimal>> tripleDTOS = pmsUnitConvertManager.<TripleDTO<String, Long, BigDecimal>>unitConvert(pieceSysDict, sqSysDict, completeList, x -> x.getField2(), y -> y.getField3(), (m, n) -> m.setField3(n), bit);
+        //基于班次日期的聚合
+        Map<String, BigDecimal> mapRes = Maps.newHashMap();
+        tripleDTOS.forEach(ele -> {
+            MapUtil.add(mapRes, String.valueOf(ele.getField1()), ele.getField3(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
+        return mapRes;
     }
 
     @Override

@@ -12,8 +12,11 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -139,4 +142,35 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return
      */
     Boolean changeReceiptState(ReceiptStatusDTO dto);
+
+    /**
+     * 运营驾驶舱 - 深加工入库
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线主键集合
+     * @param bit         保留位数
+     * @return
+     */
+    Map<String, BigDecimal> sjgInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, Integer bit);
+
+    /**
+     * 运营驾驶舱 - 基片入库
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线主键集合
+     * @param bit         保留位数
+     * @return
+     */
+    Map<String, BigDecimal> jpInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
+
+    /**
+     * 入库汇总
+     * @param dto
+     * @return
+     */
+    Map<String,BigDecimal> sjgInStorageSum(PmsOperateDriverDTO dto);
 }

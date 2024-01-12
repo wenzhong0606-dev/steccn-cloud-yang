@@ -1,13 +1,18 @@
 package com.steccn.pms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.UnitLengthUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.QtLineChartBarCountDTO;
 import com.steccn.pms.service.PmsReportDashboardCtService;
 import com.steccn.pms.util.PmsUnitUtil;
+import com.steccn.pms.vo.JpCountReportDetailVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +21,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author yequan
@@ -92,4 +102,26 @@ public class PmsReportDashboardCtController {
         return R.success(pmsReportDashboardCtService.lineDatePf(workShopId, start, end, granularity));
     }
 
+    @GetMapping("/count/report/detail")
+    @ApiOperation("基片统计报表")
+    public R<JpCountReportDetailVO> countReportDetail(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity) throws ExecutionException, InterruptedException {
+        return R.success(pmsReportDashboardCtService.countReportDetail(workShopId, start, end, granularity));
+    }
+
+    @GetMapping("/count/report/detail/download")
+    @ApiOperation("基片统计报表-下载")
+    public void countReportDetailDownload(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end, @RequestParam("granularity") Integer granularity, HttpServletResponse response) throws Exception {
+        try {
+            pmsReportDashboardCtService.countReportDetailDownload(workShopId, start, end, granularity,response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
 }

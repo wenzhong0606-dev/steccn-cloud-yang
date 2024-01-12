@@ -20,11 +20,12 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.exception.SteccnRuntimeException;
-import com.steccn.common.util.ClassUtil;
-import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -42,6 +43,7 @@ import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStorageMaterialVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
@@ -104,6 +106,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
     @Autowired
     private RemoteWmsCustomerBarcodeFeignApi remoteWmsCustomerBarcodeFeignApi;
+    @Autowired
+    private PmsUnitConvertManager pmsUnitConvertManager;
+    @Autowired
+    private PmsOfficeManager pmsOfficeManager;
 
     @Override
     public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
@@ -172,6 +178,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
     /**
      * 生成入库单
+     *
      * @param dtoList
      * @return
      */
@@ -215,14 +222,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
             Map<String, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysDictVO classIdSysDict = dictMap.get(sysDictDTO.getCode());
-            Assert.notNull(classIdSysDict,"班次不存在");
+            Assert.notNull(classIdSysDict, "班次不存在");
 
             PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
             Assert.notNull(pmsProduceOrder, "生产订单不存在");
             pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
             List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
 
-           List<WmsCustomerBarcodeDTO> wmsCustomerBarcodeDTOList = Lists.newArrayList();
+            List<WmsCustomerBarcodeDTO> wmsCustomerBarcodeDTOList = Lists.newArrayList();
 
             Set<Integer> storageSet = Sets.newHashSet();
             for (CompleteStorageScanDTO caseInfo : dtoList) {
@@ -279,7 +286,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             pmsCompleteStorage.setEnterTime(enterTime);
 
 
-
             //生成入库单
             wmsStorageReceiptDTO.setType(sysDictVO.getId());
             //仓库id
@@ -291,7 +297,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
                 //批量更新客户条码
                 Boolean aBoolean = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.batchUpdate(wmsCustomerBarcodeDTOList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-                if (!aBoolean){
+                if (!aBoolean) {
                     log.info("更新客户条码—>失败");
                 }
                 String code = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
@@ -308,7 +314,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             }
             //箱状态修改成待入库
             pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet), PmManagerConstant.CaseStateEnum.PREPARE.getCode());
-        }catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             throw new BusinessException(e.getLocalizedMessage());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
@@ -678,7 +684,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     public Boolean getCompleteStorageByCode(String code) {
         List<PmsCompleteStorage> list = list(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getInStorageVoucher, code));
-        if (CollUtil.isNotEmpty(list)){
+        if (CollUtil.isNotEmpty(list)) {
             return true;
         }
         return false;
@@ -688,7 +694,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     public PmsCompleteStorageVO getCompleteStorage(String code) {
         PmsCompleteStorageVO result = new PmsCompleteStorageVO();
         PmsCompleteStorage one = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getInStorageVoucher, code).last("LIMIT 1"));
-        if(Objects.nonNull(one)){
+        if (Objects.nonNull(one)) {
             BeanUtils.copyProperties(one, result);
         }
         return result;
@@ -702,7 +708,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         //创建对应的出库单
         PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
         pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
-        return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
+        return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery, wmsDeliveryReceiptDTO);
     }
 
     @Override
@@ -712,6 +718,79 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsCompleteStorage.setState(dto.getState());
         return update(new LambdaQueryWrapper<PmsCompleteStorage>()
                 .in(PmsCompleteStorage::getInStorageVoucher, dto.getInStorageVoucherList()));
+    }
+
+    @Override
+    public Map<String, BigDecimal> sjgInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> wsIdSet, Integer bit) {
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(sqSysDict, "平方米单位不存在");
+        return operateDriverInStorage(granularity, start, end, wsIdSet, bit, pieceSysDict, sqSysDict);
+    }
+
+    @Override
+    public Map<String, BigDecimal> jpInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit) {
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO tonSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(tonSysDict, "吨单位不存在");
+        return operateDriverInStorage(granularity, start, end, lineIdSet, bit, pieceSysDict, tonSysDict);
+    }
+
+    @Override
+    public Map<String, BigDecimal> sjgInStorageSum(PmsOperateDriverDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.info(dto.getOfficeId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysOfficeVO, "组织架构不存在");
+        Set<Integer> wsIdSet;
+        if (SysOfficeConstant.DEPARTMENT.equals(sysOfficeVO.getOfficeType())) {
+            List<SysOfficeVO> sysOfficeVOList = pmsOfficeManager.getChildren(dto.getOfficeId(), SysOfficeConstant.WORKSHOP);
+            Assert.notEmpty(sysOfficeVOList, "不存在车间节点");
+            //车间
+            wsIdSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        } else {
+            wsIdSet = Sets.newHashSet(dto.getOfficeId());
+        }
+        List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdSet, SysOfficeConstant.PRODUCT_LINE);
+        Assert.notNull(lineList, "制造部下暂无产线");
+        Set<Integer> lineIdSet = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return sjgInStorage(granularity, dto.getStart(), dto.getEnd(), lineIdSet, 2);
+    }
+
+    /**
+     * 入库
+     *
+     * @param granularity 粒度
+     * @param startLd     开始日期
+     * @param endLd       结束日期
+     * @param wsIdSet     车间id集合
+     * @param bit         位数
+     * @param source      源头
+     * @param target      目标
+     * @return
+     */
+    public Map<String, BigDecimal> operateDriverInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate startLd, LocalDate endLd, Set<Integer> wsIdSet, Integer bit, SysDictVO source, SysDictVO target) {
+        LocalDateTime start = LocalDateUtil.getMorning(startLd);
+        LocalDateTime end = LocalDateUtil.getMorning(endLd).plusDays(1);
+        List<TripleDTO<String, Long, BigDecimal>> inStorageList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            inStorageList = baseMapper.inStorageMaterialDay(start, end, wsIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+            inStorageList = baseMapper.inStorageMaterialWeek(start, end, wsIdSet);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            inStorageList = baseMapper.inStorageMaterialMonth(start, end, wsIdSet);
+        } else {
+            inStorageList = baseMapper.inStorageMaterialYear(start, end, wsIdSet);
+        }
+        List<TripleDTO<String, Long, BigDecimal>> tripleDTOS = pmsUnitConvertManager.<TripleDTO<String, Long, BigDecimal>>unitConvert(source, target, inStorageList, x -> x.getField2(), y -> y.getField3(), (m, n) -> m.setField3(n), bit);
+        //基于班次日期的聚合
+        Map<String, BigDecimal> mapRes = Maps.newHashMap();
+        tripleDTOS.forEach(ele -> {
+            MapUtil.add(mapRes, String.valueOf(ele.getField1()), ele.getField3(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
+        return mapRes;
     }
 
     /**

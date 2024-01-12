@@ -6,6 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -106,6 +108,13 @@ public class ReportController {
         validRequestHeader(request);
         return R.success(reportService.outputQualitySjg(outputQualityDTO));
     }
+
+    @PostMapping("/raw/material/workshop/histogram")
+    @ApiOperation("原料车间生产驾驶舱-柱状图数据")
+    public R<EpChartGraphVO<List<String>, BigDecimal>> rawMaterialWorkshopHistogram(@RequestBody LocalDate startDate,LocalDate endDate){
+        return R.success(reportService.rawMaterialWorkshopHistogram(startDate,endDate));
+    }
+
 
     /**
      * 校验请求头信息

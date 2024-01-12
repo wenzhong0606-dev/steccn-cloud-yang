@@ -140,4 +140,33 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode();
+
+    /**
+     * 基片统计报表-余热发电
+     *
+     * @return
+     */
+    Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportHeatPowerDefaultNode();
+
+    /**
+     * 基片统计报表-光伏发电
+     *
+     * @return
+     */
+    List<TripleDTO<Long, Integer, String>> jpCountReportGfDefaultNode();
+
+    /**
+     * 基片统计报表-脱硫脱硝
+     *
+     * @return
+     */
+    Map<Integer, List<TripleDTO<Long, Integer, String>>> jpCountReportScDefaultNode();
+
+    /**
+     * 查询paritionIdList的所有孩子节点（包含孩子的孩子，包含自己）
+     * @param energyType 能源类型
+     * @param partitionIdList
+     * @return
+     */
+    List<EpPartition> getLinkedChildren(Integer energyType,List<Long> partitionIdList);
 }

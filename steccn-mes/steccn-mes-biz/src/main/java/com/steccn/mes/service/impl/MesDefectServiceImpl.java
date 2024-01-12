@@ -106,7 +106,7 @@ public class MesDefectServiceImpl extends ServiceImpl<MesDefectMapper, MesDefect
             BigDecimal finished = finishedCountMap.getOrDefault(key, BigDecimal.ZERO);
             datList.add(new TupleDTO<>("缺陷总数", all.setScale(0)));
             datList.add(new TupleDTO<>("缺陷完成数", finished.setScale(0)));
-            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
+            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all)));
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);
         }

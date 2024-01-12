@@ -760,4 +760,29 @@
         tmp.class_time ,
         defect.category_id
     </select>
+    <select id="samplingWaterRate" resultType="com.steccn.qms.dto.QtDaySamplingDTO">
+        SELECT
+        task.id as task_id,
+        detail.check_result ,
+        item.`code` as note,
+        copy.sampling_time,
+        copy.copy
+        FROM
+        qt_check_task task
+        JOIN qt_check_task_copy copy ON task.id = copy.task_id and copy.del_flag = 0
+        JOIN qt_check_task_detail detail ON task.id = detail.task_id and detail.del_flag = 0 and copy.copy = detail.copy
+        JOIN qt_check_item item on item.id = detail.item_id and item.del_flag = 0
+        WHERE
+        task.del_flag = 0
+        AND task.task_type = 7
+        AND task.status = 2
+        AND detail.check_result is not null and    detail.check_result != ''
+        AND item.code  IN
+        <foreach collection="codeList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <if test="start != null and end != null">
+            AND copy.sampling_time between #{start} and #{end}
+        </if>
+    </select>
 </mapper>

@@ -26,6 +26,7 @@ import com.steccn.platform.vo.SysStationWarehouseVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.service.PmsOfficeManager;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
 import com.steccn.pms.util.UnitConvertUtil;
@@ -58,6 +59,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     private final PmsReportWorkService pmsReportWorkService;
     private final RemoteSpareUnitConvertFeignApi spareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final PmsOfficeManager pmsOfficeManager;
 
     @Override
     public BigDecimal slip(Integer workShopId, LocalDate date) {
@@ -95,7 +97,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     @Override
     public BigDecimal consume(Integer workShopId, LocalDate date, String unit, Integer unitLength) {
         //获取产线id
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         SteccnTableAssertUtil.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         Map<Integer, BigDecimal> consumeMap = pmsReportWorkService.getDateRangeUseCountUnit(lineIdList, date, date, unit);
@@ -105,14 +107,15 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
 
     @Override
     public List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date) {
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(sysOfficeMap, "车间不能为空");
-        SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
+        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(wsOffice, "车间不能为空");
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(wsOffice.getId());
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(wsLineList, x -> x.getId());
         int type = wsOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
         //根据车间区分深加工还是基片
         //①基片产量：所有报工加工数之和
         //②深加工产量:磨边工位报工加工数之和
-        List<Integer> lineIdList = getWsLineList(wsOffice);
         Map<Long, Map<Integer, BigDecimal>> todayPm = pmsReportWorkService.getTodayPm(lineIdList, date, type);
         //获取物料转换单位
         Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(todayPm.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -147,10 +150,11 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
 
     @Override
     public List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date) {
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(sysOfficeMap, "车间不能为空");
-        SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
-        List<Integer> lineIdList = getWsLineList(wsOffice);
+        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(wsOffice, "车间不能为空");
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(wsOffice.getId());
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(wsLineList, x -> x.getId());
         Map<Long, Map<Integer, BigDecimal>> inStorageMap = pmsReportWorkService.getTodayInStorage(lineIdList, date);
         //获取物料转换单位
         Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(inStorageMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -324,38 +328,6 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             dataList.add(stackGraphDTO);
         });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
-    }
-
-    /**
-     * 获取车间的产线集合
-     *
-     * @param workShopId 车间
-     * @return
-     */
-    private List<SysOfficeVO> getWsLineList(Integer workShopId) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(workShopId);
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        return lineOfficeList;
-    }
-
-    /**
-     * 获取车间的产线集合
-     *
-     * @param wsOffice 车间
-     * @return
-     */
-    private List<Integer> getWsLineList(SysOfficeVO wsOffice) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(wsOffice.getId());
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(lineOfficeList, "车间下暂无产线");
-        List<Integer> lineIdList = lineOfficeList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
-        return lineIdList;
     }
 
     /**

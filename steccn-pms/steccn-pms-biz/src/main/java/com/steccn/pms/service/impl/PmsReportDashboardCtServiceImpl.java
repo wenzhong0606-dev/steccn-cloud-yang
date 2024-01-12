@@ -1,13 +1,21 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
+import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -17,23 +25,28 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DashboardNumDTO;
 import com.steccn.pms.dto.QtLineChartBarCountDTO;
-import com.steccn.pms.service.PmsPullForceService;
-import com.steccn.pms.service.PmsReportDashboardCtService;
-import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.service.*;
+import com.steccn.pms.vo.JpCountReportDetailRowVO;
+import com.steccn.pms.vo.JpCountReportDetailVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.CustomCellWriteWidthConfig;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -51,12 +64,16 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmsPullForceService pmsPullForceService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
+    private final RemoteDpFeignApi remoteDpFeignApi;
+    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    private final PmsOfficeManager pmsOfficeManager;
 
     @Override
     public QtLineChartBarCountDTO yieldRateDate(Integer workShopId, LocalDate start, LocalDate end, Integer granularity) {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
         Assert.notNull(granularityEnum, "粒度不存在");
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
@@ -205,7 +222,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -230,7 +247,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -255,7 +272,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -278,7 +295,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dateType);
         Assert.notNull(granularity, "日期粒度不存在");
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)) {
@@ -302,7 +319,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         Assert.notNull(granularity, "日期粒度不存在");
 
         //根据车间获取产线
-        List<SysOfficeVO> wsLineList = getWsLineList(workShopId);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(workShopId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
 
@@ -318,6 +335,223 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             //根据日期区间获取日期+产线的产量
             Map<String, BigDecimal> numMap = pmsPullForceService.dateLinePmUnit(lineIdList, start, end);
             return dateQuantity(wsLineList, timeList, numMap, "拉引量总数", granularity);
+        }
+    }
+
+    @Override
+    public JpCountReportDetailVO countReportDetail(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt) throws ExecutionException, InterruptedException {
+        //确定粒度存在
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), start, end);
+        Assert.notEmpty(timeList, "时间区间不存在");
+        JpCountReportDetailVO resVo = new JpCountReportDetailVO();
+        List<String> dateStrList = Lists.newArrayList();
+
+        //并行执行
+        DpPmsOperateDTO  dpPmsOperateDTO = new DpPmsOperateDTO();
+        dpPmsOperateDTO.setStart(start);
+        dpPmsOperateDTO.setEnd(end);
+        dpPmsOperateDTO.setGranularity(granularityInt);
+        dpPmsOperateDTO.setOfficeId(workShopId);
+        //获取耗料
+        CompletableFuture<List<CommonReportDTO>> hlList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteDpFeignApi.consumeMaterial(dpPmsOperateDTO), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+        CompletableFuture<CommonReportDTO> gasFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(3, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> oilFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(4, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> kcalFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(5, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> electricFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(1, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> waterFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(2, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
+        //获取光伏发电
+        CompletableFuture<List<CommonReportDTO>> gfList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.gfPowerList(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+        //获取余热发电
+        CompletableFuture<List<CommonReportDTO>> heatPowerList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.heatPower(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+        //脱硫脱硝/电：取值与能耗日统计报表中“电/余热发电站（站用电）”相同
+        //脱硫脱硝/水：抄表管理->水表->设备动力部->脱硫脱硝，根据读数差计算每日耗水量
+        CompletableFuture<List<CommonReportDTO>> scList = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.scList(new TripleDTO<>(start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> Lists.newArrayList());
+        //拉引量
+        CompletableFuture<CommonReportDTO> pullForce = CompletableFuture.supplyAsync(() -> {
+            return pmsPullForceService.jpPfDateGranularity(workShopId, start, end, granularityInt);
+        }).exceptionally(ex -> null);
+        //生产产量
+        CompletableFuture<CommonReportDTO> pm = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.jpPmDateGranularity(workShopId, start, end, granularityInt, PmManagerConstant.MEASURE_UNIT_TON);
+        }).exceptionally(ex -> null);
+        //入库成品率
+        CompletableFuture<CommonReportDTO> inStorageFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.jpInStorageDateGranularity(workShopId, start, end, granularityInt);
+        }).exceptionally(ex -> null);
+        //入库产量明细
+        CompletableFuture<List<CommonReportDTO>> inStorageDetail = CompletableFuture.supplyAsync(() -> {
+            return pmsCompleteStorageInfoService.substrate(dpPmsOperateDTO);
+        }).exceptionally(ex -> null);
+        //产线产量
+        CompletableFuture<List<CommonReportDTO>> linePm = CompletableFuture.supplyAsync(() -> {
+            return pmsCompleteStorageInfoService.substrateProduceLine(dpPmsOperateDTO);
+        }).exceptionally(ex -> null);
+
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
+        completableFuture.isDone();
+        List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
+
+        countReportDetailRow(rowList, "耗料", hlList.get(), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "水电", Lists.newArrayList(electricFuture.get(), waterFuture.get()), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "余热发电", heatPowerList.get(), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "光伏发电", gfList.get(), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "脱硫脱硝", scList.get(), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "入库产量明细", inStorageDetail.get(), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "拉引量", Lists.newArrayList(pullForce.get()), Boolean.FALSE, granularity, timeList);
+        countReportDetailRow(rowList, "生产产量", Lists.newArrayList(pm.get()), Boolean.FALSE, granularity, timeList);
+        //入库成品率
+        CommonReportDTO inStorage = inStorageFuture.get();
+        Map<String, BigDecimal> inStorageValueMap = inStorage.getValueMap();
+        Map<String, BigDecimal> pullForceValueMap = pullForce.get().getValueMap();
+        JpCountReportDetailRowVO inStorageRow = new JpCountReportDetailRowVO();
+        List<BigDecimal> valueList = Lists.newArrayList();
+        List<BigDecimal> value1List = Lists.newArrayList();
+        List<BigDecimal> value2List = Lists.newArrayList();
+        inStorageRow.setValueList(valueList);
+        inStorageRow.setCategory("入库成品率");
+        inStorageRow.setName(inStorage.getName());
+        inStorageRow.setUnitName(inStorage.getUnit());
+        inStorageRow.setType(2);
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate areaStart = timeList.get(i - 1);
+            //用于计算X轴
+            dateStrList.add(XAxisUtil.convert(granularity, areaStart));
+            String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
+            BigDecimal value1 = inStorageValueMap.get(convert);
+            BigDecimal value2 = pullForceValueMap.get(convert);
+            value1List.add(value1);
+            value2List.add(value2);
+            valueList.add(BigDecimalUtil.percent(value1, value2));
+        }
+        BigDecimal value1Sum = BigDecimalUtil.sum(value1List);
+        BigDecimal value2Sum = BigDecimalUtil.sum(value2List);
+        inStorageRow.setRowCount(BigDecimalUtil.percent(value1Sum, value2Sum));
+        rowList.add(inStorageRow);
+        countReportDetailRow(rowList, "产线产量明细", linePm.get(), Boolean.FALSE, granularity, timeList);
+
+        resVo.setDateStrList(dateStrList);
+        resVo.setRowList(rowList);
+        return resVo;
+    }
+
+    @Override
+    public void countReportDetailDownload(Integer workShopId, LocalDate start, LocalDate end, Integer granularity, HttpServletResponse response) throws Exception {
+        JpCountReportDetailVO result = countReportDetail(workShopId,start,end,granularity);
+        List<JpCountReportDetailRowVO> rowList = result.getRowList();
+        SteccnTableAssertUtil.notEmpty(rowList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        list.add(Lists.newArrayList(""));
+        list.add(Lists.newArrayList(""));
+        list.add(Lists.newArrayList(""));
+        result.getDateStrList().forEach(ele -> list.add(Lists.newArrayList(ele)));
+        list.add(Lists.newArrayList("小计"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("基片统计报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        rowList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getCategory());
+            dataEle.add(ele.getName());
+            dataEle.add(ele.getUnitName());
+            ele.getValueList().forEach(aa -> {
+                dataEle.add(Objects.nonNull(aa) ? aa : null);
+            });
+            dataEle.add(Objects.nonNull(ele.getRowCount()) ? ele.getRowCount() : null);
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex2 = {0, 1};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "基片统计报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new CustomCellWriteWidthConfig())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    /**
+     * 获取类别数据
+     *
+     * @param rowList     返回结果
+     * @param category    类型
+     * @param dataRowList 数据行
+     * @param ctFlag      是否需要合计行
+     * @param granularity 粒度
+     * @param timeList    时间区间
+     */
+    private void countReportDetailRow(List<JpCountReportDetailRowVO> rowList, String category, List<CommonReportDTO> dataRowList, Boolean ctFlag, QtManagerConstant.QtGranularityEnum granularity, List<LocalDate> timeList) {
+        if (CollUtil.isNotEmpty(dataRowList)) {
+            Set<String> filterSet = Sets.newHashSet("拉引量", "生产产量", "入库成品率");
+            Map<Integer, BigDecimal> ctDataMap = Maps.newLinkedHashMap();
+            for (CommonReportDTO ele : dataRowList) {
+                if (Objects.nonNull(ele)) {
+                    JpCountReportDetailRowVO row = new JpCountReportDetailRowVO();
+                    List<BigDecimal> valueList = Lists.newArrayList();
+                    row.setValueList(valueList);
+                    row.setCategory(category);
+                    row.setName(ele.getName());
+                    row.setUnitName(ele.getUnit());
+                    row.setType(0);
+                    if(filterSet.contains(ele.getName())){
+                        row.setType(2);
+                    }
+                    rowList.add(row);
+                    for (int i = 1; i < timeList.size(); i++) {
+                        LocalDate areaStart = timeList.get(i - 1);
+                        String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
+                        BigDecimal value = ele.getValueMap().get(convert);
+                        valueList.add(value);
+                        //需要考虑小计
+                        if (ctFlag && rowList.size() > 1) {
+                            MapUtil.add(ctDataMap, i - 1, value, (x, y) -> BigDecimalUtil.add(x, y));
+                        }
+                    }
+                    row.setRowCount(BigDecimalUtil.sum(valueList));
+                }
+            }
+            //如果有小计
+            if (ctFlag && rowList.size() > 1) {
+                JpCountReportDetailRowVO ctRow = new JpCountReportDetailRowVO();
+                ctRow.setCategory(category);
+                ctRow.setType(1);
+                ctRow.setName("小计");
+                //计算合计
+                Collection<BigDecimal> values = ctDataMap.values();
+                ctRow.setValueList(values.stream().collect(Collectors.toList()));
+                ctRow.setRowCount(BigDecimalUtil.sum(values));
+                rowList.add(ctRow);
+            }
         }
     }
 
@@ -534,7 +768,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private QtLineChartBarCountDTO num(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function , QtManagerConstant.QtGranularityEnum granularityEnum) {
         List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), numDTO.getStart(), numDTO.getEnd());
         Assert.notEmpty(timeList, "暂无时间窗口");
-        List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(numDTO.getWorkShopId());
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         numDTO.setLineIdList(lineIdList);
@@ -584,7 +818,7 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
     private QtLineChartBarCountDTO numClass(String hint, DashboardNumDTO numDTO, Function<DashboardNumDTO, Map<String, BigDecimal>> function) {
         List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), numDTO.getStart(), numDTO.getEnd());
         Assert.notEmpty(timeList, "暂无时间窗口");
-        List<SysOfficeVO> wsLineList = getWsLineList(numDTO.getWorkShopId());
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(numDTO.getWorkShopId());
         Assert.notNull(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -623,20 +857,5 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         resDto.setQtLineChartBarDTO(qtLineChartBarDTO);
         resDto.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(countValueList),numDTO.getBit()));
         return resDto;
-    }
-
-    /**
-     * 获取车间的产线集合
-     *
-     * @param workShopId 车间
-     * @return
-     */
-    private List<SysOfficeVO> getWsLineList(Integer workShopId) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(workShopId);
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        return lineOfficeList;
     }
 }

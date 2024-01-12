@@ -1,10 +1,13 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.PmsPullForceQueryDTO;
+import com.steccn.pms.dto.PullForceSumDTO;
 import com.steccn.pms.vo.PmsPullForceDataVO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
@@ -135,4 +138,22 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
+    /**
+     * 基片统计报表 - 获取车间的拉引量
+     *
+     * @param workShopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度整数
+     * @return
+     */
+    CommonReportDTO jpPfDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
+
+    /**
+     * 拉引量汇总
+     * @param dto
+     * @return
+     */
+    Map<String, BigDecimal> pullForceSum(PullForceSumDTO dto);
 }

@@ -1,20 +1,33 @@
 package com.steccn.pms.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.ReceiptStatusDTO;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
+import com.steccn.pms.service.PmsOfficeManager;
+import com.steccn.pms.service.PmsOperateDriverService;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.pms.vo.PmsOperateDriverCompleteStorageVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -22,6 +35,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 类说明
@@ -103,4 +118,11 @@ public class PmsCompleteStorageFeignController {
     R<List<CommonReportDTO>> substrateProduceLine(@RequestBody DpPmsOperateDTO dto){
         return R.success(pmsCompleteStorageInfoService.substrateProduceLine(dto));
     }
+
+    @PostMapping("/sjg/in/storage/sum")
+    @ApiOperation(value = "入库汇总")
+    R<Map<String, BigDecimal>> sjgInStorageSum(@RequestBody PmsOperateDriverDTO dto) {
+        return R.success(pmsCompleteStorageService.sjgInStorageSum(dto));
+    }
+
 }

@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.RandomUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -22,12 +21,10 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.MapUtil;
-import com.steccn.common.util.UnitLengthUtil;
+import com.steccn.common.util.*;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.*;
@@ -44,17 +41,16 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
-import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
-import com.steccn.pms.util.UnitConvertUtil;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.wms.dto.BatchChargeAgainstDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 import com.steccn.wms.dto.WmsStockInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,8 +64,6 @@ import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.apache.ibatis.ognl.DynamicSubscript.last;
 
 /**
  * @author yequan
@@ -385,6 +379,38 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         return eqMeterReadVO;
     }
 
+    @Override
+    public CommonReportDTO energyConsume(Integer energyType, Integer workshopId, LocalDate start, LocalDate end, Integer granularityInt) {
+        //确定能源存在
+        EpEnergyType epEnergyType = epEnergyTypeService.getById(energyType);
+        Assert.notNull(epEnergyType, "能源类型不存在");
+        //日期区间划分
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
+        Assert.notNull(granularity, "粒度不存在");
+        //根据组织架构id查询能源树上id
+        Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(energyType, Sets.newHashSet(workshopId));
+        Assert.notEmpty(accountMap, "能源数据不存在此组织架构节点");
+        CommonReportDTO resVo = new CommonReportDTO();
+        resVo.setName(epEnergyType.getName());
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(epEnergyType.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        resVo.setUnit(GetValueUtil.get(sysDictVO, (x) -> x.getName()));
+        List<LocalDate> dayTimeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+        List<Long> partitionIdList = accountMap.values().stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
+        List<EpMeterReadAllDataVO> consumeList = classDateAllData(Sets.newHashSet(dayTimeList), energyType, partitionIdList);
+        //考虑时间分片
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), start, end);
+        Map<String,BigDecimal> valueMap = Maps.newHashMap();
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate areaStart = timeList.get(i - 1);
+            LocalDate areaEnd = timeList.get(i);
+            String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
+            List<BigDecimal> valueList = consumeList.stream().filter(ele -> LocalDateUtil.isRange(ele.getReadDate(), areaStart, areaEnd)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            valueMap.put(convert, BigDecimalUtil.sum(valueList));
+        }
+        resVo.setValueMap(valueMap);
+        return resVo;
+    }
+
     /**
      * 排序
      *
@@ -691,10 +717,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Assert.notNull(energyType, "能源类型不能为空");
         Assert.notEmpty(dateSet, "日期筛选不可以为空");
         //获取节点关联仪表
-        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
-        SteccnTableAssertUtil.notEmpty(nodeLinkMeterMap, "该能源下无仪表");
+        //优化点 - 获取节点关联的仪表，从根节点向下查询
+        //根据partitionId查询所有关联的节点
+        List<EpPartition> epPartitions = epPartitionService.getLinkedChildren(energyType, partitionIdList);
+        Assert.notEmpty(epPartitions, "暂无符合条件的组织节点");
         //获取每个节点的office信息
-        Map<Long, EpPartition> epPartitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
+        Map<Long, EpPartition> epPartitionMap = Maps.newHashMap();
+        epPartitions.forEach(ele -> epPartitionMap.put(ele.getId(), ele));
+        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeterFilter(energyType, epPartitionMap.keySet());
+        SteccnTableAssertUtil.notEmpty(nodeLinkMeterMap, "该能源下无仪表");
         List<EpEnergyConsumeDTO> rowList = consumeTable(dateSet, energyType, nodeLinkMeterMap);
         //最后将全量数据表的map转换为有用的list集合 对外输出-根据需要的节点过滤
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, epPartitionMap, rowList, Maps.newHashMap());

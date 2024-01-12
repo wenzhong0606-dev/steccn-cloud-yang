@@ -36,6 +36,12 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.pullForceToday(workShopId, date));
     }
 
+    @GetMapping("/pull/force/date/range")
+    @ApiOperation("日期范围拉引量（单位/T）")
+    public R<BigDecimal> pullForceDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.pullForceDateRange(partId, start, end));
+    }
+
     @GetMapping("/pull/melting/today")
     @ApiOperation("熔化率（单位/T）")
     public R<BigDecimal> meltingRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
@@ -48,10 +54,22 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.produceNumToday(workShopId, date));
     }
 
+    @GetMapping("/produce/num/date/range")
+    @ApiOperation("日期范围产量（单位/T/片/㎡）")
+    public R<List<BigDecimal>> produceNumDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.produceNumDateRange(partId, start, end));
+    }
+
     @GetMapping("/produce/num/rate")
     @ApiOperation("产量合格率")
     public R<BigDecimal> produceNumRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
         return R.success(pmsReportDashboardService.produceNumRate(workShopId, date));
+    }
+
+    @GetMapping("/produce/num/rate/date/range")
+    @ApiOperation("日期范围产量合格率")
+    public R<BigDecimal> produceNumRateDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.produceNumRateDateRange(partId, start, end));
     }
 
     @GetMapping("/in/storage/today")
@@ -60,10 +78,22 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.inStorageToday(workShopId, date));
     }
 
+    @GetMapping("/in/storage/date/range")
+    @ApiOperation("日期范围入库数（单位/T/片/㎡）")
+    public R<List<BigDecimal>> inStorageDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.inStorageDateRange(partId, start, end));
+    }
+
     @GetMapping("/in/storage/rate")
     @ApiOperation("入库合格率")
     public R<BigDecimal> inStorageRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
         return R.success(pmsReportDashboardService.inStorageRate(workShopId, date));
+    }
+
+    @GetMapping("/in/storage/rate/date/range")
+    @ApiOperation("日期范围入库合格率")
+    public R<BigDecimal> inStorageRateDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsReportDashboardService.inStorageRateDateRange(partId, start, end));
     }
 
     @PostMapping("/produce/page")

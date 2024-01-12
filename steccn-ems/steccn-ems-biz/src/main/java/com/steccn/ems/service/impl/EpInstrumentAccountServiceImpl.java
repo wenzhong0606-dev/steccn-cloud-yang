@@ -461,6 +461,24 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return resMap;
     }
 
+    @Override
+    public Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeterFilter(Integer energyType,Set<Long> partitionIdSet) {
+        List<EpInstrumentAccount> accountList = list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                .eq(EpInstrumentAccount::getMeterType, energyType)
+                .in(EpInstrumentAccount::getPartitionNode, partitionIdSet));
+        //获取仪表id集合
+        Map<Long, EpInstrumentAccountDTO> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(accountList)) {
+            accountList.forEach(ele -> {
+                EpInstrumentAccountDTO accountDTO = new EpInstrumentAccountDTO();
+                BeanUtils.copyProperties(ele, accountDTO);
+                resMap.put(ele.getPartitionNode(), accountDTO);
+            });
+        }
+        return resMap;
+    }
+
     /**
      * 根据条件判断是否抛出异常
      *

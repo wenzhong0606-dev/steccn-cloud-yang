@@ -48,4 +48,22 @@
         WHERE wsr.del_flag = 0 and wsr.`status`!= 5 and wsri.case_no = #{caseNo}
         order by wsri.valid_time desc limit 1
     </select>
+    <select id="purchaseQuantity" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
+        SELECT
+            sum(wsri.quantity) quantity,
+            wsri.material_name
+        FROM
+            wms_storage_receipt_info wsri
+                LEFT JOIN wms_storage_receipt wsr ON wsr.id = wsri.storage_receipt_id
+        WHERE
+            wsr.del_flag = 0
+            AND wsr.`status` != 5
+            AND wsr.type = #{typeId}
+            AND  wsr.affirm_time BETWEEN #{startTime} AND #{endTime}
+            AND wsri.material_name in
+            <foreach collection="materialName" item="name" open="(" close=")" separator=",">
+                 #{name}
+            </foreach>
+        GROUP BY material_name
+    </select>
 </mapper>

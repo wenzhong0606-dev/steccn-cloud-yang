@@ -3,10 +3,12 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -234,6 +236,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
     Map<Long, Map<Integer, BigDecimal>> getTodayPm(List<Integer> lineList, LocalDate today, Integer type);
 
     /**
+     * 获取产线的当天产量
+     *
+     * @param lineList 产线集合
+     * @param start    开始日期
+     * @param end      结束日期
+     * @param type     类型
+     * @return
+     */
+    Map<Long, BigDecimal> getDateRangePm(List<Integer> lineList, LocalDate start, LocalDate end, Integer type);
+
+    /**
      * 获取日期范围内的产线产量
      *
      * @param lineList 产线集合
@@ -253,6 +266,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Long, Map<Integer, BigDecimal>> getTodayInStorage(List<Integer> lineIdList, LocalDate date);
+
+    /**
+     * 获取日期范围内的入库数量
+     *
+     * @param lineIdList 产线集合
+     * @param start      班次时间-开始
+     * @param end        班次时间-结束
+     * @return
+     */
+    Map<Long,BigDecimal> getDateRangeInStorage(List<Integer> lineIdList, LocalDate start, LocalDate end);
+
 
     /**
      * 获取日期范围内的入库数量
@@ -464,4 +488,63 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Integer, BigDecimal> getGhQuantity(LocalDate start, LocalDate end, List<Integer> lineIdList);
+
+    /**
+     * 基片统计报表 - 生产产量
+     *
+     * @param workShopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @param unit           单位
+     * @return
+     */
+    CommonReportDTO jpPmDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt,String unit);
+
+    /**
+     * 基片统计报表 - 入库成品率
+     *
+     * @param workShopId     车间主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    CommonReportDTO jpInStorageDateGranularity(Integer workShopId, LocalDate start, LocalDate end, Integer granularityInt);
+
+    /**
+     * 实际使用
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线id集合
+     * @param bit         位数
+     * @return
+     */
+    Map<String, BigDecimal> actualUse(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, Integer bit);
+
+    /**
+     * 基片完工信息
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线集合
+     * @param bit         位数
+     * @return
+     */
+    Map<String, BigDecimal> jpComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
+
+    /**
+     * 深加工完工信息
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线集合
+     * @param bit         位数
+     * @return
+     */
+    Map<String, BigDecimal> sjgComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
 }

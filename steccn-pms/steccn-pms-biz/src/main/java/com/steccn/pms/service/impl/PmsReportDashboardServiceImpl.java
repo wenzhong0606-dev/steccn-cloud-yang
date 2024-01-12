@@ -80,6 +80,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final PmsPullForceMapper pmsPullForceMapper;
+    private final PmsOfficeManager pmsOfficeManager;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -89,9 +90,28 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 .eq(PmsPullForce::getWorkshopId, workShopId)
                 .select(PmsPullForce::getQuantity));
         if (CollUtil.isNotEmpty(dbList)) {
-            List<BigDecimal> collect = dbList.stream().map(PmsPullForce::getQuantity).collect(Collectors.toList());
+            List<BigDecimal> collect = GetValueUtil.collectionGet(dbList, x -> x.getQuantity());
             resVal = BigDecimalUtil.sum(collect);
-            resVal = BigDecimalUtil.setScale(resVal, 1);
+            resVal = BigDecimalUtil.setScale(resVal, UnitLengthUtil.UNIT_TON_LENGTH);
+        }
+        return resVal;
+    }
+
+    @Override
+    public BigDecimal pullForceDateRange(Integer partId, LocalDate start, LocalDate end) {
+        //获取部门下的车间
+        BigDecimal resVal = null;
+        List<SysOfficeVO> workshopList = pmsOfficeManager.getChildren(partId, SysOfficeConstant.WORKSHOP);
+        Assert.notNull(workshopList, "制造部下暂无车间");
+        List<Integer> workshopIdList = GetValueUtil.collectionGet(workshopList, x -> x.getId());
+        List<PmsPullForce> dbList = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>()
+                .between(PmsPullForce::getPullForceDate, start, end)
+                .in(PmsPullForce::getWorkshopId, workshopIdList)
+                .select(PmsPullForce::getQuantity));
+        if (CollUtil.isNotEmpty(dbList)) {
+            List<BigDecimal> collect = GetValueUtil.collectionGet(dbList, x -> x.getQuantity());
+            resVal = BigDecimalUtil.sum(collect);
+            resVal = BigDecimalUtil.setScale(resVal, UnitLengthUtil.UNIT_TON_LENGTH);
         }
         return resVal;
     }
@@ -109,14 +129,15 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     @Override
     public List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date) {
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(sysOfficeMap, "车间不能为空");
-        SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
+        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(wsOffice, "车间不能为空");
         int type = wsOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
         //根据车间区分深加工还是基片
         //①基片产量：所有报工加工数之和
         //②深加工产量:磨边工位报工加工数之和
-        List<Integer> lineIdList = getWsLineList(wsOffice);
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(wsOffice.getId());
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(wsLineList, x -> x.getId());
         Map<Long, Map<Integer, BigDecimal>> todayPm = pmsReportWorkService.getTodayPm(lineIdList, date, type);
         //获取物料转换单位
         Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(todayPm.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -142,21 +163,44 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
-    /**
-     * 获取车间的产线集合
-     *
-     * @param wsOffice 车间
-     * @return
-     */
-    private List<Integer> getWsLineList(SysOfficeVO wsOffice) {
-        //根据车间获取产线集合
-        SysOfficeParentDTO sysOfficeParent = new SysOfficeParentDTO();
-        sysOfficeParent.setId(wsOffice.getId());
-        sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
-        List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(lineOfficeList, "车间下暂无产线");
-        List<Integer> lineIdList = lineOfficeList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
-        return lineIdList;
+    @Override
+    public List<BigDecimal> produceNumDateRange(Integer partId, LocalDate start, LocalDate end) {
+        SysOfficeVO partOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(partId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(partOffice, "制造部不能为空");
+        int type = partOffice.getOfficeName().indexOf("基片") != -1 ? 0 : 1;
+        //根据车间区分深加工还是基片
+        //①基片产量：所有报工加工数之和
+        //②深加工产量:磨边工位报工加工数之和
+        List<SysOfficeVO> wsList = pmsOfficeManager.getChildren(partOffice.getId(), SysOfficeConstant.WORKSHOP);
+        Assert.notEmpty(wsList, "制造部下暂无车间");
+        List<Integer> wsIdList = GetValueUtil.collectionGet(wsList, x -> x.getId());
+        //获取产线
+        List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdList, SysOfficeConstant.PRODUCT_LINE);
+        Assert.notEmpty(lineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(lineList, x -> x.getId());
+        Map<Long, BigDecimal> dateRangePmMap = pmsReportWorkService.getDateRangePm(lineIdList, start, end, type);
+        //获取物料转换单位
+        Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(dateRangePmMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取/T/片/㎡
+        SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysDict1, "换算单位1不存在");
+        Assert.notNull(sysDict2, "换算单位2不存在");
+        Assert.notNull(sysDict3, "换算单位3不存在");
+        BigDecimal sum1 = null;
+        BigDecimal sum2 = null;
+        BigDecimal sum3 = null;
+        //先换算后求和
+        for (Map.Entry<Long, BigDecimal> entry : dateRangePmMap.entrySet()) {
+            BigDecimal value = entry.getValue();
+            BigDecimal convert1 = UnitConvertUtil.convert(convertMap, entry.getKey(), sysDict1.getId(), sysDict2.getId(), value);
+            BigDecimal convert2 = UnitConvertUtil.convert(convertMap, entry.getKey(), sysDict1.getId(), sysDict3.getId(), value);
+            sum1 = BigDecimalUtil.add(sum1, value);
+            sum2 = BigDecimalUtil.add(sum2, convert1);
+            sum3 = BigDecimalUtil.add(sum3, convert2);
+        }
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
     }
 
     /**
@@ -171,7 +215,6 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         sysOfficeParent.setId(wsOffice.getId());
         sysOfficeParent.setOfficeType(SysOfficeConstant.PRODUCT_LINE);
         List<SysOfficeVO> lineOfficeList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(lineOfficeList, "车间下暂无产线");
         Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
         lineOfficeList.forEach(ele -> {
             resMap.put(ele.getId(), ele);
@@ -188,11 +231,19 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public BigDecimal produceNumRateDateRange(Integer partId, LocalDate start, LocalDate end) {
+        BigDecimal num = produceNumDateRange(partId, start, end).get(0);
+        BigDecimal pullForce = pullForceDateRange(partId, start, end);
+        return BigDecimalUtil.percent(num, pullForce);
+    }
+
+    @Override
     public List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date) {
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notEmpty(sysOfficeMap, "车间不能为空");
-        SysOfficeVO wsOffice = sysOfficeMap.get(workShopId);
-        List<Integer> lineIdList = getWsLineList(wsOffice);
+        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(wsOffice, "车间不能为空");
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(wsOffice.getId());
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(wsLineList, x -> x.getId());
         Map<Long, Map<Integer, BigDecimal>> inStorageMap = pmsReportWorkService.getTodayInStorage(lineIdList, date);
         //获取物料转换单位
         Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(inStorageMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -219,10 +270,53 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public List<BigDecimal> inStorageDateRange(Integer partId, LocalDate start, LocalDate end) {
+        SysOfficeVO partOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(partId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(partOffice, "制造部不能为空");
+        List<SysOfficeVO> workshopList = pmsOfficeManager.getChildren(partOffice.getId(), SysOfficeConstant.WORKSHOP);
+        Assert.notEmpty(workshopList, "制造部下暂无车间");
+        List<Integer> wsIdList = GetValueUtil.collectionGet(workshopList, x -> x.getId());
+        //获取产线
+        List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdList, SysOfficeConstant.PRODUCT_LINE);
+        Assert.notEmpty(lineList, "车间下暂无产线");
+        List<Integer> lineIdList = GetValueUtil.collectionGet(lineList, x -> x.getId());
+        Map<Long, BigDecimal> inStorageMap = pmsReportWorkService.getDateRangeInStorage(lineIdList, start, end);
+        //获取物料转换单位
+        Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(inStorageMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取/T/片/㎡
+        SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDict3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysDict1, "换算单位1不存在");
+        Assert.notNull(sysDict2, "换算单位2不存在");
+        Assert.notNull(sysDict3, "换算单位3不存在");
+        BigDecimal sum1 = null;
+        BigDecimal sum2 = null;
+        BigDecimal sum3 = null;
+        //先换算后求和
+        for (Map.Entry<Long, BigDecimal> entry : inStorageMap.entrySet()) {
+            BigDecimal value = entry.getValue();
+            BigDecimal convert1 = UnitConvertUtil.convert(convertMap, entry.getKey(), sysDict1.getId(), sysDict2.getId(), value);
+            BigDecimal convert2 = UnitConvertUtil.convert(convertMap, entry.getKey(), sysDict1.getId(), sysDict3.getId(), value);
+            sum1 = BigDecimalUtil.add(sum1, value);
+            sum2 = BigDecimalUtil.add(sum2, convert1);
+            sum3 = BigDecimalUtil.add(sum3, convert2);
+        }
+        return Arrays.asList(BigDecimalUtil.setScale(sum2, UnitLengthUtil.UNIT_TON_LENGTH), BigDecimalUtil.setScale(sum1, UnitLengthUtil.UNIT_PIECE_LENGTH), BigDecimalUtil.setScale(sum3, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
+    }
+
+    @Override
     public BigDecimal inStorageRate(Integer workShopId, LocalDate date) {
         BigDecimal num = inStorageToday(workShopId, date).get(0);
         BigDecimal pullForce = pullForceToday(workShopId, date);
         return BigDecimalUtil.percent(num, pullForce, 2);
+    }
+
+    @Override
+    public BigDecimal inStorageRateDateRange(Integer partId, LocalDate start, LocalDate end) {
+        BigDecimal num = inStorageDateRange(partId,start,end).get(0);
+        BigDecimal pullForce = pullForceDateRange(partId,start,end);
+        return BigDecimalUtil.percent(num, pullForce);
     }
 
     @Override
