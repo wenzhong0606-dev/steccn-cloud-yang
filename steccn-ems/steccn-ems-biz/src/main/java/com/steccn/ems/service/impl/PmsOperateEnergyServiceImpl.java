@@ -390,7 +390,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             valueList.add(BigDecimalUtil.setScale(valueMap.get(convert), bit));
         }
         PmsOperateEnergyVO res = new PmsOperateEnergyVO();
-        res.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(valueMap.values()), bit));
+        res.setTotalQuantity(BigDecimalUtil.setScale(BigDecimalUtil.sum(valueList), bit));
         res.setUnitName(measureUnitMap.getOrDefault(energy.getMeasureUnit(), Strings.EMPTY));
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         res.setCommonBarLineVO(commonBarLineVO);
