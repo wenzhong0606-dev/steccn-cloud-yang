@@ -100,4 +100,20 @@
                 #{ids}
             </foreach>
     </select>
+
+    <select id="findTaskCount2" resultType="com.steccn.mes.dto.MesEqpCountDTO">
+        SELECT count(*) AS num,status As state
+        FROM mes_eqp_ins_task
+        WHERE
+        status != 1
+        AND plan_time &gt;= #{startTime}
+        AND plan_time &lt; #{endTime}
+        <if test="departments != null and departments.size() > 0">
+            AND office_code IN
+            <foreach item="item" collection="departments" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY state
+    </select>
 </mapper>

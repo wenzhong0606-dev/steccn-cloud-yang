@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -36,7 +37,11 @@ public class SysClassificationServiceImpl extends ServiceImpl<SysClassificationM
                 for (SysClassification sysClassification : sysClassifications) {
                     if (!sysClassification.getName().contains("mm")){
                         SysClassification classification = getClassification(list,sysClassification.getId());
-                        resMap.put(sysClassification.getId(), classification.getName());
+                        if (Objects.isNull(classification)) {
+                            resMap.put(sysClassification.getId(),sysClassification.getName());
+                        }else {
+                            resMap.put(sysClassification.getId(), classification.getName());
+                        }
                     }else {
                         resMap.put(sysClassification.getId(),sysClassification.getName());
                     }

@@ -4,7 +4,10 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.MesEquipment;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.mes.vo.MesEqpVO;
+import com.steccn.mes.vo.YlEqpDashboardVO;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -29,4 +32,11 @@ public interface MesEquipmentService extends IService<MesEquipment> {
      * @return
      */
     Boolean changeEqpState(TupleDTO<String,String> dto);
+
+    /**
+     * 原料图表
+     * @param dto f1开始时间 f2结束时间
+     * @return
+     */
+    YlEqpDashboardVO dashBoard(TupleDTO<LocalDate,LocalDate> dto);
 }

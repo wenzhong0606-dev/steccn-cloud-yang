@@ -2,14 +2,13 @@ package com.steccn.mes.mapper;
 
 import com.steccn.mes.domain.MesEqpInsTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.steccn.mes.dto.MesInsTaskCountDTO;
-import com.steccn.mes.dto.MesInsTaskParamDTO;
-import com.steccn.mes.dto.MesInsTaskTmpDTO;
-import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
+import com.steccn.mes.dto.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -39,6 +38,13 @@ public interface MesEqpInsTaskMapper extends BaseMapper<MesEqpInsTask> {
      * @return
      */
     List<MesInsTaskTmpDTO> findTmpValue(@Param("dto") MesInsTaskTmpParamDTO dto);
+
+    /**
+     * 根据部门获取各个状态的任务
+     * @param departments
+     * @return
+     */
+    List<MesEqpCountDTO> findTaskCount2(@Param("departments") Set<String> departments, @Param("startTime")LocalDateTime startTime,@Param("endTime")LocalDateTime endTime);
 }
 
 

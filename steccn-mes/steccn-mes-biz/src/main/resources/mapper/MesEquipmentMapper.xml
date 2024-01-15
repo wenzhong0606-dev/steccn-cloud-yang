@@ -45,4 +45,19 @@
         model,property_code,is_eqp,
         bit_number,state,is_skip
     </sql>
+
+    <select id="findEqpCount" resultType="com.steccn.mes.dto.MesEqpCountDTO">
+        SELECT count(*) AS num,state As state
+        FROM mes_equipment
+        WHERE
+        status = 0
+        AND is_eqp = 0
+        <if test="departments != null and departments.size() > 0">
+            AND department IN
+            <foreach item="item" collection="departments" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY state
+    </select>
 </mapper>
