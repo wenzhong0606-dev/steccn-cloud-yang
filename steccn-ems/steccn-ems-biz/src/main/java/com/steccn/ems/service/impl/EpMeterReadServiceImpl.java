@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -896,6 +897,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Map<String, BigDecimal> resMap = Maps.newHashMap();
 
         //获取当前日期最小日期的前一天，用于求差值
+        //获取当前日期前的最大值 作为参考值
         List<LocalDate> sortedDateList = CollectionUtil.sort(dateSet, Comparator.comparing(x -> x));
         LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
         sortedDateList.add(minLocalDate);
@@ -907,7 +909,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     .in(EpMeterRead::getReadDate, sortedDateList));
             if (CollUtil.isNotEmpty(dataList)) {
                 Map<Integer, BigDecimal> lastValueMap = Maps.newHashMap();
-                List<EpMeterRead> lastValueList = this.baseMapper.selectLastValueMax(meterIdSet, minLocalDate);
+                LocalDate minLocalDatePrev = minLocalDate.minusDays(10);
+                List<EpMeterRead> lastValueList = this.baseMapper.selectLastValueMax(meterIdSet, minLocalDate, minLocalDatePrev);
                 if (CollUtil.isNotEmpty(lastValueList)) {
                     lastValueList.forEach(ele -> lastValueMap.put(ele.getMeterId(), ele.getAdminValue()));
                 }
@@ -928,6 +931,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
                         //手动抄表 一天一条,去取最后一条
                         BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
+                        //判断最大是否已经超过了最大读数，最大值是N个9,此处可能会存在些许误差
+                        preValue = possibleBigDecimal(preValue, curValue);
                         if (energyType == 3 && !dateEntry.getKey().isEqual(minLocalDate)) {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), curValue);
                         } else if (energyType == 4 && !dateEntry.getKey().isEqual(minLocalDate)) {
@@ -944,6 +949,34 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             }
         }
         return resMap;
+    }
+
+    /**
+     * 可能表溢出的值
+     * @param preValue
+     * @param curValue
+     * @return
+     */
+    private BigDecimal possibleBigDecimal(BigDecimal preValue, BigDecimal curValue) {
+        int p1 = curValue.precision() - curValue.scale();
+        int p2 = preValue.precision() - preValue.scale();
+        if (Objects.nonNull(preValue) && Objects.nonNull(curValue) && BigDecimalUtil.gt(preValue, curValue) && p1 > p2) {
+            //对前一个值进行调整，负向减值
+            int n = preValue.scale();
+            int m = preValue.precision() - n;
+            String overflowStr = "";
+            for (int cnt = 0; cnt < m; cnt++) {
+                overflowStr += "9";
+            }
+            if (n > 0) {
+                overflowStr += ".";
+            }
+            for (int cnt = 0; cnt < n; cnt++) {
+                overflowStr += "9";
+            }
+            preValue = BigDecimalUtil.subtract(preValue, new BigDecimal(overflowStr));
+        }
+        return preValue;
     }
 
     /**

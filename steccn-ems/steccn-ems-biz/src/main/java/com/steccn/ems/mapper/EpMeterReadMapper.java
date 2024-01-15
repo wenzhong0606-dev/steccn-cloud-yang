@@ -70,7 +70,7 @@ public interface EpMeterReadMapper extends BaseMapper<EpMeterRead> {
      * @param lastDate 日期
      * @return
      */
-    List<EpMeterRead> selectLastValueMax(@Param("meterIdSet") Set<Integer> meterIdSet, @Param("lastDate") LocalDate lastDate);
+    List<EpMeterRead> selectLastValueMax(@Param("meterIdSet") Set<Integer> meterIdSet, @Param("lastDate") LocalDate lastDate , @Param("minDate") LocalDate minDate);
 
 }
 
