@@ -2,6 +2,7 @@ package com.steccn.wms.controller.feign;
 
 
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
@@ -46,11 +47,9 @@ public class WmsStorageReceiptFeignController {
     }
 
     @ApiOperation("根据时间获取类型为采购入库的指定物料数量")
-    @GetMapping("/purchase/quantity")
-    public R<Map<String, BigDecimal>> purchaseQuantity(@RequestParam("startTime") LocalDateTime startTime,
-                                                       @RequestParam("endTime") LocalDateTime endTime,
-                                                       @RequestParam("materialName") List<String> materialName){
-        return R.success(wmsStorageReceiptInfoService.purchaseQuantity(startTime,endTime,materialName));
+    @PostMapping("/purchase/quantity")
+    public R<Map<String, BigDecimal>> purchaseQuantity(@RequestBody RawMaterialReportDTO dto){
+        return R.success(wmsStorageReceiptInfoService.purchaseQuantity(dto));
     }
 
 }

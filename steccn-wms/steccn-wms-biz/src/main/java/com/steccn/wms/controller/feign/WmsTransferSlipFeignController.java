@@ -2,6 +2,7 @@ package com.steccn.wms.controller.feign;
 
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.service.WmsTransferSlipService;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,4 +35,10 @@ public class WmsTransferSlipFeignController {
     R<BigDecimal> slipLineWarehouse(@RequestBody TupleDTO<LocalDate, Set<Integer>> tupleDTO) {
         return R.success(wmsTransferSlipService.slipLineWarehouse(tupleDTO.getField1(), tupleDTO.getField2()));
     }
+
+    @ApiOperation("根据时间获取调拨单源仓库为主要材料库的指定物料数量")
+    @PostMapping("/material/depot/quantity")
+    R<Map<String, BigDecimal>> materialDepot(@RequestBody RawMaterialReportDTO dto){
+        return R.success(wmsTransferSlipService.materialDepot(dto.getStartTime(),dto.getEndTime(),dto.getMaterialName()));
+    };
 }

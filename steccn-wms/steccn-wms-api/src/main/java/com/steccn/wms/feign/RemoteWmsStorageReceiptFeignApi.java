@@ -3,6 +3,7 @@ package com.steccn.wms.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -30,8 +31,6 @@ public interface RemoteWmsStorageReceiptFeignApi {
     R<Map<Long, String>> rwLinkSupplier(@RequestBody Set<Long> rwIdSet);
 
     @ApiOperation("根据时间获取类型为采购入库的指定物料数量")
-    @GetMapping("/feign/wms/storage/receipt/purchase/quantity")
-    R<Map<String, BigDecimal>> purchaseQuantity(@RequestParam("startTime") LocalDateTime startTime,
-                                                @RequestParam("endTime") LocalDateTime endTime,
-                                                @RequestParam("materialName") List<String> materialName);
+    @PostMapping("/feign/wms/storage/receipt/purchase/quantity")
+    R<Map<String, BigDecimal>> purchaseQuantity(@RequestBody RawMaterialReportDTO dto);
 }

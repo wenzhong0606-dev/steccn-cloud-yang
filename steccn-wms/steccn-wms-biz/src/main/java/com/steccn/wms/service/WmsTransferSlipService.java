@@ -14,7 +14,9 @@ import com.steccn.wms.vo.WmsTransferSlipVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -103,4 +105,13 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
+
+    /**
+     * 根据时间获取调拨单源仓库为主要材料库的指定物料数量
+     * @param startTime
+     * @param endTime
+     * @param materialName
+     * @return
+     */
+    Map<String, BigDecimal> materialDepot(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName);
 }

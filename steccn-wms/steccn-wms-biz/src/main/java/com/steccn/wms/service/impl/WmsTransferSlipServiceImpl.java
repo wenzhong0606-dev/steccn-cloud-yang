@@ -29,6 +29,7 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.wms.constant.WmsManagerConstant;
@@ -687,6 +688,20 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             quantity = infos.stream().map(WmsTransferSlipInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add);
         }
         return quantity;
+    }
+
+    @Override
+    public Map<String, BigDecimal> materialDepot(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName) {
+        Map<String,BigDecimal>  resMap = Maps.newHashMap();
+        //获取主要材料库
+        Map<String, SysOfficeVO> warehouseMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(Sets.newHashSet(WmsManagerConstant.MATERIAL_DEPOT)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+       List<WmsTransferSlipInfo> infos =  this.baseMapper.materialDepot(startTime,endTime,materialName,warehouseMap.get(WmsManagerConstant.MATERIAL_DEPOT).getId());
+       if (CollUtil.isNotEmpty(infos)){
+           infos.forEach(info->{
+               resMap.put(info.getMaterialName(),info.getQuantity());
+           });
+       }
+        return resMap;
     }
 
     /**

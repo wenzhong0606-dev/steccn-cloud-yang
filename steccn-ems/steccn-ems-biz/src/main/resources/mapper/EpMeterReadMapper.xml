@@ -130,7 +130,8 @@
         <foreach collection="meterIdSet" item="meterId" open="(" close=")" separator=",">
             #{meterId}
         </foreach>
-        and read_date &lt; #{lastDate}
+        and read_date &lt;= #{lastDate}
+        and read_date &gt;= #{minDate}
         group by meter_id
     </select>
 </mapper>
