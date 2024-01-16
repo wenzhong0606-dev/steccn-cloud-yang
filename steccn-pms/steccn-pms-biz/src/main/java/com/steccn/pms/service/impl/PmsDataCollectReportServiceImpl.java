@@ -334,6 +334,112 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         return tableData;
     }
 
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> melting1(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("RY_FIC1_PV"
+                ,"RY_FIC2_PV"
+                ,"RY_FIC3_PV"
+                ,"RY_FIC4_PV"
+                ,"RY_FIC5_PV"
+                ,"RY_FIC6_PV"
+                ,"RY_FIC7_PV"
+                ,"RY_FIC8_PV"
+                ,"RY_FIC9_PV"
+                ,"RY_FIC101_PV"
+                ,"RY_FIC102_PV"
+                ,"RY_FIC103_PV"
+                ,"RY_FIC104_PV"
+                ,"RY_FIC105_PV"
+                ,"RY_FIC106_PV"
+                ,"RY_FIC107_PV"
+                ,"RY_FIC108_PV"
+                ,"RY_FIC109_PV"
+                ,"RY_TEL1_PV"
+                ,"RY_TEL2_PV"
+                ,"RY_TEL3_PV"
+                ,"RY_TEL4_PV"
+                ,"RY_TEL5_PV"
+                ,"RY_TEL6_PV"
+                ,"RY_TEL7_PV"
+                ,"RY_TEL8_PV"
+                ,"RY_TEL9_PV"
+                ,"RY_PT511_PV"
+                ,"RY_TE501_PV"
+                ,"RY_TE503_PV"
+                ,"RY_TE505_PV"
+                ,"RY_TE506_PV"
+                ,"RY_TE507_PV"
+                ,"RY_TE508_PV"
+                ,"RY_PIC81_PV_OUT"
+                ,"RY_PIC81_MV"
+                ,"RY_LIC92_PV_OUT"
+                ,"RY_LIC92_MV"
+                ,"RY_PIC303_PV_OUT"
+                ,"RY_PIC10_PV_OUT"
+                ,"RY_PIC308_PV_OUT"
+                ,"RY_TE61_PV"
+                ,"RY_TE63_PV"
+        ));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","分支小炉流量(kg/h)天然气流量(m³/h)",
+                Lists.newArrayList(new SteccnTableColumn("RY_FIC1_PV","1#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC2_PV","2#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC3_PV","3#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC4_PV","4#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC5_PV","5#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC6_PV","6#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC7_PV","7#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC8_PV","8#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC9_PV","9#小炉",null))));
+        columns.add(new SteccnTableColumn("head2","分支小炉助燃风流量(m³/h)",
+                Lists.newArrayList(new SteccnTableColumn("RY_FIC101_PV","1#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC102_PV","2#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC103_PV","3#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC104_PV","4#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC105_PV","5#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC106_PV","6#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC107_PV","7#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC108_PV","8#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC109_PV","9#小炉",null))));
+        columns.add(new SteccnTableColumn("head3","蓄热室碹顶温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("RY_TEL1_PV","1#",null)
+                        ,new SteccnTableColumn("RY_TEL2_PV","2#",null)
+                        ,new SteccnTableColumn("RY_TEL3_PV","3#",null)
+                        ,new SteccnTableColumn("RY_TEL4_PV","4#",null)
+                        ,new SteccnTableColumn("RY_TEL5_PV","5#",null)
+                        ,new SteccnTableColumn("RY_TEL6_PV","6#",null)
+                        ,new SteccnTableColumn("RY_TEL7_PV","7#",null)
+                        ,new SteccnTableColumn("RY_TEL8_PV","8#",null)
+                        ,new SteccnTableColumn("RY_TEL9_PV","9#",null))));
+        columns.add(new SteccnTableColumn("head4","吊墙风压(pa)/温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("RY_PT511_PV","吊墙风压",null)
+                        ,new SteccnTableColumn("steelTemp","钢温度",
+                                Lists.newArrayList(new SteccnTableColumn("RY_TE501_PV","左",null),new SteccnTableColumn("RY_TE503_PV","中",null),new SteccnTableColumn("RY_TE505_PV","右",null)))
+                        ,new SteccnTableColumn("turnTemp","砖温度",
+                                Lists.newArrayList(new SteccnTableColumn("RY_TE506_PV","左",null),new SteccnTableColumn("RY_TE507_PV","中",null),new SteccnTableColumn("RY_TE508_PV","右",null))))));
+        columns.add(new SteccnTableColumn("RY_PIC81_PV_OUT","窑压(Pa)",null));
+        columns.add(new SteccnTableColumn("RY_PIC81_MV","旋转闸板(%)",null));
+        columns.add(new SteccnTableColumn("RY_LIC92_PV_OUT","液面(mm)",null));
+        columns.add(new SteccnTableColumn("RY_LIC92_MV","投料频率(Hz)",null));
+        columns.add(new SteccnTableColumn("RY_PIC303_PV_OUT","油压(mpa)",null));
+        columns.add(new SteccnTableColumn("RY_PIC10_PV_OUT","天然气压(mpa)",null));
+        columns.add(new SteccnTableColumn("RY_PIC308_PV_OUT","雾化气压(mpa)",null));
+        columns.add(new SteccnTableColumn("RY_TE61_PV","烟道温度(℃)",null));
+        columns.add(new SteccnTableColumn("RY_TE63_PV","烟根温度(℃)",null));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> melting2(LocalDate date) {
+        return null;
+    }
+
     protected List<Map<String,String>> postDataCollect(LocalDate date, List<String> points){
         List<Map<String, String>> result = Lists.newArrayList();
         JSONObject jsonObject = new JSONObject();
