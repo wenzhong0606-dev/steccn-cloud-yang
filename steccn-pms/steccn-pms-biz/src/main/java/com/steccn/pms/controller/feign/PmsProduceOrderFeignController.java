@@ -22,8 +22,10 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.tomcat.jni.Local;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -156,5 +158,11 @@ public class PmsProduceOrderFeignController {
         }
 
         return R.success(pmsProducerOrderInfoDTO);
+    }
+
+    @ApiOperation("获取其他能源类型的订单")
+    @PostMapping("/other/energy/order")
+    R<Map<String, BigDecimal>> orderDetailOtherEnergy(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO) {
+        return R.success(pmsProduceOrderService.orderDetailOtherEnergy(tupleDTO.getField1(),tupleDTO.getField2(), tupleDTO.getField3()));
     }
 }

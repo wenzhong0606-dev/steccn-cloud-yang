@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
@@ -515,6 +516,73 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         }
         return resMap;
     }
+
+    @Override
+    public Map<Integer, List<Integer>> childType(Set<Integer> officeIdSet, String type) {
+        //定义返回集合
+        Map<Integer, List<Integer>> resMap = Maps.newHashMap();
+        //如果组织机构id为空，则直接返回空map
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            //查询出所有的组织机构数据
+            List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>()
+                    .notIn(SysOffice::getOfficeType, Lists.newArrayList(SysOfficeConstant.SUPPLIER, SysOfficeConstant.CUSTOMER))
+                    .eq(SysOffice::getStatus, SysOfficeConstant.normal));
+            //定义组织机构的idMap
+            Map<Integer, SysOffice> idMap = Maps.newHashMap();
+            //定义组织机构的codeMap
+            Map<String, SysOffice> codeMap = Maps.newHashMap();
+            Map<String, Set<String>> directChildMap = Maps.newHashMap();
+            dbList.forEach(ele -> {
+                MapUtil.computeSet(directChildMap, ele.getParentCode(), ele.getOfficeCode());
+                //往idMap和codeMap里面插入数据
+                codeMap.put(ele.getOfficeCode(), ele);
+                idMap.put(ele.getId(), ele);
+            });
+
+            //逐个遍历，查询每个officeId产线父节点
+            for (Integer officeId : officeIdSet) {
+                //获取当前officeId的节点数据
+                SysOffice sysOffice = idMap.get(officeId);
+                //如果节点数据不为空
+                Set<String> allChildSet = getAllChild(sysOffice, directChildMap, codeMap);
+                if (CollUtil.isNotEmpty(allChildSet)) {
+                    allChildSet.forEach(ele -> {
+                        SysOffice childOffice = codeMap.get(ele);
+                        if (Objects.nonNull(childOffice) && type.equals(childOffice.getOfficeType())) {
+                            MapUtil.compute(resMap, sysOffice.getId(), childOffice.getId());
+                        }
+                    });
+                }
+            }
+        }
+        return resMap;
+    }
+
+
+    /**
+     * 获取节点的所有孩子
+     *
+     * @param sysOffice      当前节点
+     * @param directChildMap 直接孩子
+     * @param codeMap        所有节点的数据
+     * @return list
+     */
+    private Set<String> getAllChild(SysOffice sysOffice, Map<String, Set<String>> directChildMap, Map<String, SysOffice> codeMap) {
+        Set<String> resCodeSet = Sets.newHashSet();
+        //如果是产线节点，则直接返回
+        if (Objects.nonNull(sysOffice)) {
+            Set<String> childCodeSet = directChildMap.get(sysOffice.getOfficeCode());
+            if (CollUtil.isNotEmpty(childCodeSet)) {
+                resCodeSet.addAll(childCodeSet);
+                childCodeSet.forEach(ele -> {
+                    Set<String> allChild = getAllChild(codeMap.get(ele), directChildMap, codeMap);
+                    resCodeSet.addAll(allChild);
+                });
+            }
+        }
+        return resCodeSet;
+    }
+
 
     /**
      * 获取产线父节点

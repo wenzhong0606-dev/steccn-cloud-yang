@@ -15,6 +15,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -178,4 +179,8 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据日期获取原料配料数据")
     @PostMapping("/feign/pms/raw/material/listByDate")
     R<List<PmRawMaterialVO>> listByDate(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO);
+
+    @ApiOperation("获取其他能源类型的订单")
+    @PostMapping("/feign/pms/produce/order/other/energy/order")
+    R<Map<String, BigDecimal>> orderDetailOtherEnergy(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO);
 }

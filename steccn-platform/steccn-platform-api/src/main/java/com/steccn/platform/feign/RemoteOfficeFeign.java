@@ -294,6 +294,16 @@ public interface RemoteOfficeFeign {
     @ApiOperation("查询一个节点指定类型的父节点")
     R<Map<Integer, Integer>> parentType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO);
 
+    /**
+     * 查询一个节点指定类型的孩子节点
+     *
+     * @param tupleDTO 指定类型 父节点节点集合
+     * @return list
+     */
+    @PostMapping("/feign/platform/sys/office/child/type")
+    @ApiOperation("查询一个节点指定类型的父节点")
+    R<Map<Integer, List<Integer>>> childType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO);
+
     @PostMapping("/feign/platform/sys/office/child/workshop")
     @ApiOperation("查询节点的子节点-车间")
     R<Map<Integer, List<Integer>>> childWorkshop(@RequestBody List<Integer> officeIdSet);

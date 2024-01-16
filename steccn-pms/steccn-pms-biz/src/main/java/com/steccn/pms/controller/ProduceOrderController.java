@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
@@ -21,12 +22,14 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Update;
+import org.apache.tomcat.jni.Local;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -254,6 +257,12 @@ public class ProduceOrderController {
     @PostMapping("/outsourcing")
     public R<OutsourcingDayReportVO> outsourcing(@Valid @RequestBody DayReportCommonDTO dto) {
         return R.success(pmsProduceOrderService.outsourcing(dto));
+    }
+
+    @ApiOperation("获取其他能源类型的订单")
+    @PostMapping("/other/energy/order/test")
+    R<Map<String, BigDecimal>> orderDetailOtherEnergy(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO) {
+        return R.success(pmsProduceOrderService.orderDetailOtherEnergy(tupleDTO.getField1(), tupleDTO.getField2(), tupleDTO.getField3()));
     }
 
 }

@@ -22,6 +22,7 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.*;
@@ -41,6 +42,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
@@ -52,6 +54,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 import com.steccn.wms.dto.WmsStockInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -98,6 +101,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -1061,6 +1066,37 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         Map<String, Long> classGroup = getClassGroup(dateSet, partitionIdList, partitionMap);
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable, classGroup);
+    }
+
+    @Override
+    public List<EpMeterReadAllDataVO> classDateAllDataUnitOther(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
+        SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
+        Assert.notNull(energyType, "能源类型不能为空");
+        Assert.notEmpty(dateSet, "日期筛选不可以为空");
+        //获取节点关联仪表
+        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
+        SteccnTableAssertUtil.notEmpty(nodeLinkMeterMap, "该能源下无仪表");
+        //获取每个节点的office信息
+        Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
+        List<EpEnergyConsumeDTO> consumeTable = unitTableOther(dateSet, energyType,nodeLinkMeterMap, partitionMap.values());
+
+
+        //结合排班表结合报工时填报的班组，在【单耗全量数据表】中加入班组维度，右侧增加三列，每格代表本行的班次是本列的车间的哪个班组（本列的车间所有工位在本行的班次报工时填报的班组中，取填报次数最多的一个班组）
+        //获取所有的工位节点
+        return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable, Maps.newHashMap());
+    }
+
+    private List<EpEnergyConsumeDTO> unitTableOther(Set<LocalDate> dateSet, Integer energyType, Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap, Collection<EpPartition> epPartitionList) {
+        Map<Integer, Long> meterNodeMap = Maps.newHashMap();
+        nodeLinkMeterMap.forEach((k, v) -> meterNodeMap.put(v.getId(), k));
+        //查询能耗的全量数据表
+        List<EpEnergyConsumeDTO> consumeTable = consumeTable(dateSet, energyType, nodeLinkMeterMap);
+        //构建出当前日期下节点的所有产量，需要考虑递归形势
+        LocalDate min = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
+        LocalDate max = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
+        List<Integer> officeIdList = epPartitionList.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
+        Map<String, BigDecimal> pm = FeignOptional.of(() -> remotePmsFeignApi.orderDetailOtherEnergy(new TripleDTO<>(min, max, officeIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        return null;
     }
 
     /**

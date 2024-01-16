@@ -11,6 +11,7 @@ import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +69,7 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
     List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList);
 
     /**
-     * 班次日期和组织机构筛选条件下的全量数据表-单耗
+     * 班次日期和组织机构筛选条件下的全量数据表-电能单耗
      *
      * @param dateList      日期集合
      * @param energyType    能源类型id
@@ -76,6 +77,16 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @return 全量数据表-单耗
      */
     List<EpMeterReadAllDataVO> classDateAllDataUnit(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList);
+
+    /**
+     * 班次日期和组织机构筛选条件下的全量数据表-其余能源单耗
+     *
+     * @param dateSet           日期集合
+     * @param energyType      能源类型id
+     * @param partitionIdList 机构id集合
+     * @return 全量数据表-单耗
+     */
+    List<EpMeterReadAllDataVO> classDateAllDataUnitOther(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList);
 
     /**
      * 燃料(气+油)的单耗
