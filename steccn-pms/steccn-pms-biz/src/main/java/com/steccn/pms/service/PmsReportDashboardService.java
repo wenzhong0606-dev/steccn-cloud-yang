@@ -168,4 +168,12 @@ public interface PmsReportDashboardService {
      * @return
      */
     PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start,LocalDate end);
+
+    /**
+     * 深加工制造部-领用总数/耗用总数/使用总数
+     * @param start
+     * @param end
+     * @return
+     */
+    PmsPullForceMeltingNumVO deepProcessingNum(LocalDate start, LocalDate end);
 }

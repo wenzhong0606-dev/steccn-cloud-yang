@@ -646,4 +646,15 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         result.setPercent(BigDecimalUtil.percent(result.getPullForce(),result.getWeightCount(),2));
         return result;
     }
+
+    @Override
+    public PmsPullForceMeltingNumVO deepProcessingNum(LocalDate start, LocalDate end) {
+        //领用总数
+        //获取深加工车间下的工位绑定的线边仓
+//        FeignOptional.of(remoteOfficeFeign.)
+        //耗用总数
+
+        //使用总数
+        return null;
+    }
 }

@@ -131,4 +131,10 @@ public class PmsReportDashboardController {
     public R<PmsPullForceMeltingNumVO> pullForceMeltingNum(@RequestParam("start") LocalDate start,@RequestParam("end")LocalDate end) {
         return R.success(pmsReportDashboardService.pullForceMeltingNum(start,end));
     }
+
+    @GetMapping("/deep/processing/num")
+    @ApiOperation("深加工制造部-领用总数/耗用总数/使用总数")
+    public R<PmsPullForceMeltingNumVO> deepProcessingNum(@RequestParam("start") LocalDate start,@RequestParam("end")LocalDate end) {
+        return R.success(pmsReportDashboardService.deepProcessingNum(start,end));
+    }
 }
