@@ -1091,12 +1091,30 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         nodeLinkMeterMap.forEach((k, v) -> meterNodeMap.put(v.getId(), k));
         //查询能耗的全量数据表
         List<EpEnergyConsumeDTO> consumeTable = consumeTable(dateSet, energyType, nodeLinkMeterMap);
+        Map<Integer, Long> epIdMap = Maps.newHashMap();
+        epPartitionList.forEach(ele ->{
+            epIdMap.put(ele.getOfficeId(),ele.getId());
+        });
         //构建出当前日期下节点的所有产量，需要考虑递归形势
         LocalDate min = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
-        LocalDate max = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
+        LocalDate max = dateSet.stream().max((x, y) -> x.compareTo(y)).get();
         List<Integer> officeIdList = epPartitionList.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
         Map<String, BigDecimal> pm = FeignOptional.of(() -> remotePmsFeignApi.orderDetailOtherEnergy(new TripleDTO<>(min, max, officeIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-        return null;
+        //获取到所有的产量
+        consumeTable.forEach(ele ->{
+            if (noThickAndClass(ele.getClassId(), ele.getThick())) {
+                Map<Long, BigDecimal> yieldMap = Maps.newHashMap();
+                ele.setYieldMap(yieldMap);
+                for (Integer officeId : officeIdList) {
+                    BigDecimal yield = pm.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, officeId, ele.getReadDate()));
+                    Long partitionId = epIdMap.get(officeId);
+                    if (Objects.nonNull(yield) && Objects.nonNull(partitionId)) {
+                        yieldMap.put(partitionId, yield);
+                    }
+                }
+            }
+        });
+        return consumeTable;
     }
 
     /**

@@ -1811,7 +1811,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     allLineIdList.addAll(parentLineMap.values());
                 }
                 //查询类型为产线父节点的
-                List<Integer> lineParentIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.DEPARTMENT.equals(ele.getOfficeType()) || SysOfficeConstant.PROVINCIAL_COMPANY.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                List<Integer> lineParentIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.WORKSHOP.equals(ele.getOfficeType()) || SysOfficeConstant.DEPARTMENT.equals(ele.getOfficeType()) || SysOfficeConstant.PROVINCIAL_COMPANY.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
                 Map<Integer, List<Integer>> childLineMap = Maps.newHashMap();
                 if (CollUtil.isNotEmpty(lineParentIdList)) {
                     childLineMap = FeignOptional.of(() -> remoteOfficeFeign.childType(new TupleDTO<>(SysOfficeConstant.PRODUCT_LINE, Sets.newHashSet(lineParentIdList))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1823,8 +1823,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 List<Integer> sjgLineIdList = lineIdMap.values().stream().filter(ele -> ele.getOfficeName().contains("深加工")).map(SysOfficeVO::getId).collect(Collectors.toList());
                 Map<String, BigDecimal> valueMap1 = pmsReportWorkService.dateLinePmUnit(jpLineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
                 Map<String, BigDecimal> valueMap2 = pmsReportWorkService.dateLinePmUnit(sjgLineIdList, start, end, 1, PmManagerConstant.MEASURE_UNIT_SM);
-                log.info("=== {}", valueMap1);
-                log.info("=== {}", valueMap2);
                 List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
                 //考虑返回数据
                 for (int i = 1; i < timeList.size(); i++) {
@@ -1837,17 +1835,26 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 BigDecimal bigDecimal1 = valueMap1.get(joint);
                                 BigDecimal bigDecimal2 = valueMap2.get(joint);
                                 resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
+                            } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
+                                Integer lineId = parentLineMap.get(officeId);
+                                if(Objects.nonNull(lineId)){
+                                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate);
+                                    BigDecimal bigDecimal1 = valueMap1.get(joint);
+                                    BigDecimal bigDecimal2 = valueMap2.get(joint);
+                                    resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
+                                }
+                            } else {
+                                List<Integer> childLineIdList = childLineMap.get(officeId);
+                                if (CollUtil.isNotEmpty(childLineIdList)) {
+                                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, officeId, classDate);
+                                    childLineIdList.forEach(ele -> {
+                                        String tmpJoint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, ele, classDate);
+                                        BigDecimal bigDecimal1 = valueMap1.get(tmpJoint);
+                                        BigDecimal bigDecimal2 = valueMap2.get(tmpJoint);
+                                        MapUtil.add(resMap, joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2), (x, y) -> BigDecimalUtil.add(x, y));
+                                    });
+                                }
                             }
-                        }else if(SysOfficeConstant.STATION.equals(currentNode.getOfficeType())){
-                            Integer lineId = parentLineMap.get(officeId);
-                            String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate);
-                            BigDecimal bigDecimal1 = valueMap1.get(joint);
-                            BigDecimal bigDecimal2 = valueMap2.get(joint);
-                            resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
-                        }else {
-                            List<Integer> childLineIdList = childLineMap.get(officeId);
-
-
                         }
                     }
                 }

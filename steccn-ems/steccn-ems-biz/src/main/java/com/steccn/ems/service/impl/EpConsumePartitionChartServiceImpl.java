@@ -19,10 +19,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.ClassUtil;
-import com.steccn.common.util.EpChartGraphUtil;
-import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
@@ -1038,7 +1035,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         } else if (dto.getEnergyType() != 5) {
             classDateAllData = epMeterReadService.classDateAllDataUnitOther(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
-        } else {
+        }
+        else {
             //燃料(气+油)的单耗
             classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
         }
@@ -1095,16 +1093,14 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 dataList.add(epChartGraphxAxisDTO);
             }
         } else {
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
             //其他类型分组
-            for (int i = 1; i < shardDateTime.size(); i++) {
-                LocalDateTime dataStart = shardDateTime.get(i - 1);
-                LocalDateTime dataEnd = shardDateTime.get(i);
+            for (int i = 1; i < timeList.size(); i++) {
+                LocalDate dataStart = timeList.get(i - 1);
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
                     epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                    classDateFilterData = classDateAllData.stream()
-                            .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
-                                    && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd)).collect(Collectors.toList());
+                    classDateFilterData = classDateAllData.stream().filter(v -> v.getReadDate().equals(dataStart)).collect(Collectors.toList());
                 }
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto, classDateFilterData, consumeStandardList);
                 epChartGraphxAxisDTO.setData(data);
@@ -1413,8 +1409,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             //根据厚度遍历
             for (BigDecimal thick : dto.getThick()) {
                 List<EpMeterReadAllDataVO> thickData;
-                if (Objects.isNull(thick) || thick.compareTo(BigDecimalUtil.MINUS_ONE) == 0) {
-                    thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                if (noThick(thick)) {
+                    thickData = dataSet.stream().filter(v -> noThick(v.getThick())).collect(Collectors.toList());
                 } else {
                     thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
                 }
@@ -1442,6 +1438,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
 
         return data;
+    }
+
+    private boolean noThick(BigDecimal thick){
+        return Objects.isNull(thick) || thick.compareTo(BigDecimalUtil.MINUS_ONE) == 0;
     }
 
     /**
