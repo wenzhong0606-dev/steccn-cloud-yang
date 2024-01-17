@@ -301,4 +301,14 @@ public interface RemoteOfficeFeign {
     @GetMapping("/feign/platform/sys/office/erp/code")
     @ApiOperation("根据id获取erp中的code")
     R<SysErpOfficeVO> getErpCodeByOfficeId(@RequestParam("officeId") Integer officeId);
+
+
+    /**
+     * 0基片 1 深加工
+     * @param type
+     * @return
+     */
+    @GetMapping("/feign/platform/sys/office/workshop/children/list")
+    @ApiOperation("根据类型获取基片或者深加工的车间和产线以及工位（平铺数据）")
+    R<List<SysOfficeVO>> listWorkshop(@RequestParam("type") Integer type);
 }

@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
+import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
 
 import java.math.BigDecimal;
@@ -114,4 +116,11 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     Map<String, BigDecimal> materialDepot(LocalDateTime startTime, LocalDateTime endTime, List<String> materialName);
+
+    /**
+     * 根据时间获取调拨单目标仓库为指定仓库的指定物料数量
+     * @param dto
+     * @return
+     */
+    Map<Long, WmsTransferSlipInfoVO> materialQuantityByDateAndWarehouse(RawMaterialReportDTO dto);
 }

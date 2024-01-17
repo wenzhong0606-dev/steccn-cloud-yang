@@ -30,6 +30,7 @@ import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.wms.constant.WmsManagerConstant;
@@ -701,6 +702,18 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                resMap.put(info.getMaterialName(),info.getQuantity());
            });
        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, WmsTransferSlipInfoVO> materialQuantityByDateAndWarehouse(RawMaterialReportDTO dto) {
+        Map<Long,WmsTransferSlipInfoVO>  resMap = Maps.newHashMap();
+        List<WmsTransferSlipInfo> infos =  this.baseMapper.materialQuantityByDateAndWarehouse(dto);
+        if (CollUtil.isNotEmpty(infos)){
+            infos.forEach(info->{
+                resMap.put(info.getMaterialId(),BeanUtil.copyProperties(info,WmsTransferSlipInfoVO.class));
+            });
+        }
         return resMap;
     }
 

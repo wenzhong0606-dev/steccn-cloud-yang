@@ -4,6 +4,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.service.WmsTransferSlipService;
+import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,5 +41,12 @@ public class WmsTransferSlipFeignController {
     @PostMapping("/material/depot/quantity")
     R<Map<String, BigDecimal>> materialDepot(@RequestBody RawMaterialReportDTO dto){
         return R.success(wmsTransferSlipService.materialDepot(dto.getStartTime(),dto.getEndTime(),dto.getMaterialName()));
+    };
+
+
+    @ApiOperation("根据时间获取调拨单目标仓库为指定仓库的指定物料数量")
+    @PostMapping("/material/date/warehouse/quantity")
+    R<Map<Long,WmsTransferSlipInfoVO>> materialQuantityByDateAndWarehouse(@RequestBody RawMaterialReportDTO dto){
+        return R.success(wmsTransferSlipService.materialQuantityByDateAndWarehouse(dto));
     };
 }

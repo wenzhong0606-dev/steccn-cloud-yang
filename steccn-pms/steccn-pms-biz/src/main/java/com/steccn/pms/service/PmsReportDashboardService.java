@@ -6,7 +6,9 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 
 import java.math.BigDecimal;
@@ -171,9 +173,8 @@ public interface PmsReportDashboardService {
 
     /**
      * 深加工制造部-领用总数/耗用总数/使用总数
-     * @param start
-     * @param end
+     * @param dto
      * @return
      */
-    PmsPullForceMeltingNumVO deepProcessingNum(LocalDate start, LocalDate end);
+    PmsDeepProcessingNumVO deepProcessingNum(PmsOperateDriverDTO dto);
 }

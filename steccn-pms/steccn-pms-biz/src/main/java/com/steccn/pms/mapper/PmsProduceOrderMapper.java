@@ -11,6 +11,7 @@ import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -104,6 +105,15 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
                                               @Param("start") LocalDateTime start,
                                               @Param("end") LocalDateTime end,
                                               @Param("typeId") Long typeId);
+
+    /**
+     * 获取生产订单生产的物料所使用的主物料
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Long> listOrderMaterialIdByDate(@Param("start")LocalDate start,
+                                         @Param("end") LocalDate end);
 }
 
 

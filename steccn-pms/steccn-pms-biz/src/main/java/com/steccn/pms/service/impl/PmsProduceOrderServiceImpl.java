@@ -1789,6 +1789,20 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return resVo;
     }
 
+
+    /**
+     * 获取生产订单生产的物料所使用的主物料
+     * @param start
+     * @param end
+     * @return
+     */
+    @Override
+    public List<Long> listOrderMaterialIdByDate(LocalDate start, LocalDate end) {
+        //自定义sql获取生产订单生产的物料所使用的主物料
+        List<Long>  materialIds =  this.baseMapper.listOrderMaterialIdByDate(start,end);
+        return materialIds;
+    }
+
     /**
      * 外购原片不良日报表插入小计行
      * @param type 类型

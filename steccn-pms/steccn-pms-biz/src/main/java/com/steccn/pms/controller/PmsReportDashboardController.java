@@ -4,8 +4,10 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -132,9 +134,9 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.pullForceMeltingNum(start,end));
     }
 
-    @GetMapping("/deep/processing/num")
+    @PostMapping("/deep/processing/num")
     @ApiOperation("深加工制造部-领用总数/耗用总数/使用总数")
-    public R<PmsPullForceMeltingNumVO> deepProcessingNum(@RequestParam("start") LocalDate start,@RequestParam("end")LocalDate end) {
-        return R.success(pmsReportDashboardService.deepProcessingNum(start,end));
+    public R<PmsDeepProcessingNumVO> deepProcessingNum(@Valid @RequestBody PmsOperateDriverDTO dto) {
+        return R.success(pmsReportDashboardService.deepProcessingNum(dto));
     }
 }

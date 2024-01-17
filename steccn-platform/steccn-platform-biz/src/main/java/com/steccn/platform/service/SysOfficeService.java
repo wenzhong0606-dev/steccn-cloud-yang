@@ -267,4 +267,12 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> multiTree(SysOfficeMultiTreeDTO dto);
+
+
+    /**
+     * 根据类型获取基片或者深加工的车间和产线以及工位（平铺数据)
+     * @param type
+     * @return
+     */
+    List<SysOfficeVO>  listWorkshop(Integer type);
 }

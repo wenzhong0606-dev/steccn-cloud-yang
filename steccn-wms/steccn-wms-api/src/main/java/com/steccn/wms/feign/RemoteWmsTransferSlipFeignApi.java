@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
+import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,5 +40,9 @@ public interface RemoteWmsTransferSlipFeignApi {
     @ApiOperation("根据时间获取调拨单源仓库为主要材料库的指定物料数量")
     @PostMapping("/feign/wms/transfer/slip/material/depot/quantity")
     R<Map<String, BigDecimal>> materialDepot(@RequestBody RawMaterialReportDTO dto);
+
+    @ApiOperation("根据时间获取调拨单目标仓库为指定仓库的指定物料数量")
+    @PostMapping("/feign/wms/transfer/slip/material/date/warehouse/quantity")
+    R<Map<Long,WmsTransferSlipInfoVO>> materialQuantityByDateAndWarehouse(@RequestBody RawMaterialReportDTO dto);
 
 }

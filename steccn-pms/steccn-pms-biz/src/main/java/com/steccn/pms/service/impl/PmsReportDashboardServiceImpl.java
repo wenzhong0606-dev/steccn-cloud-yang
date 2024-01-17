@@ -24,27 +24,27 @@ import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.platform.feign.*;
+import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.controller.ProduceOrderController;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.PmsPullForceDayCountDTO;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.DashboardProducePageListVO;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
+import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
+import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +81,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final PmsPullForceMapper pmsPullForceMapper;
     private final PmsOfficeManager pmsOfficeManager;
+    private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+    private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -648,13 +651,41 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
-    public PmsPullForceMeltingNumVO deepProcessingNum(LocalDate start, LocalDate end) {
+    public PmsDeepProcessingNumVO deepProcessingNum(PmsOperateDriverDTO dto) {
+        PmsDeepProcessingNumVO resVO = new PmsDeepProcessingNumVO();
         //领用总数
         //获取深加工车间下的工位绑定的线边仓
-//        FeignOptional.of(remoteOfficeFeign.)
+//        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+//        sysOfficeParentDTO.setId(dto.getOfficeId());
+//        sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
+//        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listWorkshop(1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> stationIds = sysOfficeVOList.stream().filter(v -> v.getOfficeType().equals("13")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取工位绑定的线边仓数据
+        Map<Integer, List<SysStationWarehouseVO>> stationMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> warehouseIds = stationMap.values().stream().flatMap(List::stream).map(SysStationWarehouseVO::getWarehouseId).collect(Collectors.toList());
+        //获取生产订单的执行时间为当前时间段的生产订单生产物料的主物料
+        List<Long> materialIds =  pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(),dto.getEnd());
+        //获取调拨单目标货架为线边仓的指定物料数
+        RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
+        rawMaterialReportDTO.setStartDate(dto.getStart());
+        rawMaterialReportDTO.setEndDate(dto.getEnd());
+        rawMaterialReportDTO.setMaterialIds(materialIds);
+        rawMaterialReportDTO.setWarehouseIds(warehouseIds);
+        Map<Long, WmsTransferSlipInfoVO> receiveMap = FeignOptional.of(() -> remoteWmsTransferSlipFeignApi.materialQuantityByDateAndWarehouse(rawMaterialReportDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        Set<Long> materialIdSet = receiveMap.keySet();
+        //进行单位转换
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        BigDecimal receiveQuantity = BigDecimal.ZERO;
+        for (WmsTransferSlipInfoVO value : receiveMap.values()) {
+            BigDecimal m= UnitConvertUtil.convertMaterial(materialConvertMap.get(value.getMaterialId()), value.getUnit(), sqSysDict.getId(), value.getQuantity(), 4);
+            receiveQuantity = BigDecimalUtil.add(receiveQuantity,m);
+        }
+        resVO.setReceiveQuantity(receiveQuantity);
         //耗用总数
 
         //使用总数
-        return null;
+        return resVO;
     }
 }

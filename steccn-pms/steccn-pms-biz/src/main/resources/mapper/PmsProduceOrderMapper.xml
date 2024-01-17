@@ -326,4 +326,14 @@
             </foreach>
         </if>
     </select>
+    <select id="listOrderMaterialIdByDate" resultType="java.lang.Long">
+        SELECT DISTINCT
+            b.module_id
+        FROM
+            pms_work_order_batch a
+                LEFT JOIN pms_work_order_bom b ON b.work_produce_id = a.produce_order_id
+        WHERE
+            b.main_material_flag =1
+            AND (a.start_time &gt;= #{start} OR a.end_time &lt;= #{end})
+    </select>
 </mapper>

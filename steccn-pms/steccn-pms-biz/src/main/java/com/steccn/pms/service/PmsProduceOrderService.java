@@ -303,4 +303,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto);
+
+
+    /**
+     * 根据日期获取生产订单生产所使用的主物料
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Long> listOrderMaterialIdByDate(LocalDate start, LocalDate end);
 }

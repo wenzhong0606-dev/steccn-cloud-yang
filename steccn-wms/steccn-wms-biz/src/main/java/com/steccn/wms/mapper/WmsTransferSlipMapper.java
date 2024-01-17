@@ -2,6 +2,7 @@ package com.steccn.wms.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -54,6 +55,8 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
                                             @Param("endTime") LocalDateTime endTime,
                                             @Param("materialName") List<String> materialName,
                                             @Param("id") Integer id);
+
+    List<WmsTransferSlipInfo> materialQuantityByDateAndWarehouse(@Param("dto") RawMaterialReportDTO dto);
 }
 
 
