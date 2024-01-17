@@ -9,7 +9,10 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.ShardTimeUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.pms.dto.DataCollectDTO;
 import com.steccn.pms.service.PmsDataCollectReportService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -437,7 +441,372 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
 
     @Override
     public SteccnTableDataDTO<Map<String, String>> melting2(LocalDate date) {
-        return null;
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("RY_TE2_PV"
+                ,"RY_TE4_PV"
+                ,"RY_TE5_PV"
+                ,"RY_TE6_PV"
+                ,"RY_TE7_PV"
+                ,"RY_TE8_PV"
+                ,"RY_TE10_PV"
+                ,"RY_TE12_PV"
+                ,"RY_TE13_PV"
+                ,"RY_TE14_PV"
+                ,"RY_TE15_PV"
+                ,"RY_TE16_PV"
+                ,"RY_TE32_PV"
+                ,"RY_TE34_PV"
+                ,"RY_TE35_PV"
+                ,"RY_TE36_PV"
+                ,"RY_TE37_PV"
+                ,"RY_TE38_PV"
+                ,"RY_TE40_PV"
+                ,"RY_TE42_PV"
+                ,"RY_TE43_PV"
+                ,"RY_TE44_PV"
+                ,"RY_TE45_PV"
+                ,"RY_TE47_PV"
+                ,"RY_TER10_PV"
+                ,"RY_TE17_PV"
+                ,"RY_TEL10_PV"
+                ,"RY_TER11_PV"
+                ,"RY_TER12_PV"
+                ,"RY_TER13_PV"
+                ,"RY_TER14_PV"
+                ,"RY_TER15_PV"
+                ,"RY_TER19_PV"
+                ,"RY_TER20_PV"
+                ,"RY_TER18_PV"
+                ,"RY_TER35_PV"
+                ,"RY_TER39_PV"
+                ,"RY_TER40_PV"
+                ,"RY_TER38_PV"
+                ,"RY_TEL11_PV"
+                ,"RY_TEL12_PV"
+                ,"RY_TEL13_PV"
+                ,"RY_TEL14_PV"
+                ,"RY_TEL15_PV"
+                ,"RY_TEL19_PV"
+                ,"RY_TEL20_PV"
+                ,"RY_TEL18_PV"
+                ,"RY_TEL35_PV"
+                ,"RY_TEL39_PV"
+                ,"RY_TEL40_PV"
+                ,"RY_TEL38_PV"
+
+        ));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","熔化部温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("head11","碹顶温度",
+                                Lists.newArrayList(new SteccnTableColumn("RY_TE2_PV","投料池T2",null)
+                                        ,new SteccnTableColumn("RY_TE4_PV","1#T4",null)
+                                        ,new SteccnTableColumn("RY_TE5_PV","2#T5",null)
+                                        ,new SteccnTableColumn("RY_TE6_PV","3#T6",null)
+                                        ,new SteccnTableColumn("RY_TE7_PV","4#T7",null)
+                                        ,new SteccnTableColumn("RY_TE8_PV","5#T8",null)
+                                        ,new SteccnTableColumn("RY_TE10_PV","6#T10",null)
+                                        ,new SteccnTableColumn("RY_TE12_PV","7#T12",null)
+                                        ,new SteccnTableColumn("RY_TE13_PV","8#T13",null)
+                                        ,new SteccnTableColumn("RY_TE14_PV","9#T14",null)
+                                        ,new SteccnTableColumn("RY_TE15_PV","澄清1#T15",null)
+                                        ,new SteccnTableColumn("RY_TE16_PV","澄清2#T16",null)
+                                        ,new SteccnTableColumn("RY_TE32_PV","投料池T32",null)))
+                        ,new SteccnTableColumn("head12","池底温度",Lists.newArrayList(new SteccnTableColumn("RY_TE34_PV","1#T34",null)
+                                ,new SteccnTableColumn("RY_TE34_PV","1#T34",null)
+                                ,new SteccnTableColumn("RY_TE35_PV","2#T35",null)
+                                ,new SteccnTableColumn("RY_TE36_PV","3#T36",null)
+                                ,new SteccnTableColumn("RY_TE37_PV","4#T37",null)
+                                ,new SteccnTableColumn("RY_TE38_PV","5#T38",null)
+                                ,new SteccnTableColumn("RY_TE40_PV","6#T40",null)
+                                ,new SteccnTableColumn("RY_TE42_PV","7#T42",null)
+                                ,new SteccnTableColumn("RY_TE43_PV","8#T43",null)
+                                ,new SteccnTableColumn("RY_TE44_PV","9#T44",null)
+                                ,new SteccnTableColumn("RY_TE45_PV","澄清1#T45",null)
+                                ,new SteccnTableColumn("RY_TE47_PV","澄清2#T47",null))))));
+        columns.add(new SteccnTableColumn("head2","横通路碹顶温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("RY_TER10_PV","1#R10",null)
+                        ,new SteccnTableColumn("RY_TE17_PV","2#T17",null)
+                        ,new SteccnTableColumn("RY_TEL10_PV","3#L10",null))));
+        columns.add(new SteccnTableColumn("head3","东纵通路碹顶温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("RY_TER11_PV","1#R11",null)
+                        ,new SteccnTableColumn("RY_TER12_PV","2#R12",null)
+                        ,new SteccnTableColumn("RY_TER13_PV","3#R13",null)
+                        ,new SteccnTableColumn("RY_TER14_PV","4#R14",null))));
+        columns.add(new SteccnTableColumn("head4","东支通路温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("head41","碹顶温度",
+                                Lists.newArrayList(new SteccnTableColumn("RY_TER15_PV","1#R15",null)
+                                        ,new SteccnTableColumn("RY_TER19_PV","2#R19",null)
+                                        ,new SteccnTableColumn("RY_TER20_PV","3#R20",null)
+                                        ,new SteccnTableColumn("RY_TER18_PV","4#R18",null)))
+                        ,new SteccnTableColumn("head42","池底温度",Lists.newArrayList(new SteccnTableColumn("RY_TER35_PV","1#R35",null)
+                                ,new SteccnTableColumn("RY_TER39_PV","2#R39",null)
+                                ,new SteccnTableColumn("RY_TER40_PV","3#R40",null)
+                                ,new SteccnTableColumn("RY_TER38_PV","4#R38",null))))));
+        columns.add(new SteccnTableColumn("head5","西纵通路碹顶温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("RY_TEL11_PV","1#L11",null)
+                        ,new SteccnTableColumn("RY_TEL12_PV","2#L12",null)
+                        ,new SteccnTableColumn("RY_TEL13_PV","3#L13",null)
+                        ,new SteccnTableColumn("RY_TEL14_PV","4#L14",null))));
+        columns.add(new SteccnTableColumn("head6","西支通路温度(℃)",
+                Lists.newArrayList(new SteccnTableColumn("head61","碹顶温度",
+                                Lists.newArrayList(new SteccnTableColumn("RY_TEL15_PV","1#L15",null)
+                                        ,new SteccnTableColumn("RY_TEL19_PV","2#L19",null)
+                                        ,new SteccnTableColumn("RY_TEL20_PV","3#L20",null)
+                                        ,new SteccnTableColumn("RY_TEL18_PV","4#L18",null)))
+                        ,new SteccnTableColumn("head62","池底温度",Lists.newArrayList(new SteccnTableColumn("RY_TEL35_PV","1#L35",null)
+                                ,new SteccnTableColumn("RY_TEL39_PV","2#L39",null)
+                                ,new SteccnTableColumn("RY_TEL40_PV","3#L40",null)
+                                ,new SteccnTableColumn("RY_TEL38_PV","4#L38",null))))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> annealing(LocalDate date,Integer type) {
+        List<String> params = Lists.newArrayList("RY_TIC1101_PV"
+                ,"RY_TIC"+type+"103_PV"
+                ,"RY_TIC"+type+"105_PV"
+                ,"RY_TIC"+type+"111_PV"
+                ,"RY_TIC"+type+"112_PV"
+                ,"RY_TIC"+type+"113_PV"
+                ,"RY_TIC"+type+"201_PV"
+                ,"RY_TIC"+type+"203_PV"
+                ,"RY_TIC"+type+"205_PV"
+                ,"RY_TIC"+type+"211_PV"
+                ,"RY_TIC"+type+"212_PV"
+                ,"RY_TIC"+type+"213_PV"
+                ,"RY_TIC"+type+"301_PV"
+                ,"RY_TIC"+type+"303_PV"
+                ,"RY_TIC"+type+"305_PV"
+                ,"RY_TIC"+type+"311_PV"
+                ,"RY_TIC"+type+"312_PV"
+                ,"RY_TIC"+type+"313_PV"
+                ,"RY_TIC"+type+"401_PV"
+                ,"RY_TIC"+type+"403_PV"
+                ,"RY_TIC"+type+"405_PV"
+                ,"RY_TIC"+type+"411_PV"
+                ,"RY_TIC"+type+"412_PV"
+                ,"RY_TIC"+type+"413_PV"
+                ,"RY_TIC"+type+"501_PV");
+        List<Map<String, String>> data = postDataCollect(date, params);
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        //计算班次
+        data.forEach(tmp->{
+            QtTaskClassCalculate time = CalculateDateUtil.calculateClassTime(date.atTime(LocalTime.parse(tmp.get("time"), DateTimeFormatter.ofPattern("HH:mm"))));
+            if(time.getClassType().equals(OaConstant.NO)){
+                tmp.put("classOrder","早班");
+            }else {
+                tmp.put("classOrder","晚班");
+            }
+        });
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("classOrder","班次",null));
+        columns.add(new SteccnTableColumn("head1","退火窑空间温度",
+                Lists.newArrayList(new SteccnTableColumn("head11","A1区板上",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(0),"南",null)
+                                        ,new SteccnTableColumn(params.get(1),"中",null)
+                                        ,new SteccnTableColumn(params.get(2),"北",null)))
+                        ,new SteccnTableColumn("head12","A1区板下",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(3),"南",null)
+                                ,new SteccnTableColumn(params.get(4),"中",null)
+                                ,new SteccnTableColumn(params.get(5),"北",null)))
+                        ,new SteccnTableColumn("head13","A2区板上",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(6),"南",null)
+                                        ,new SteccnTableColumn(params.get(7),"中",null)
+                                        ,new SteccnTableColumn(params.get(8),"北",null)))
+                        ,new SteccnTableColumn("head14","A2区板下",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(9),"南",null)
+                                        ,new SteccnTableColumn(params.get(10),"中",null)
+                                        ,new SteccnTableColumn(params.get(11),"北",null)))
+                        ,new SteccnTableColumn("head15","B区板上",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(12),"南",null)
+                                        ,new SteccnTableColumn(params.get(13),"中",null)
+                                        ,new SteccnTableColumn(params.get(14),"北",null)))
+                        ,new SteccnTableColumn("head16","B区板下",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(15),"南",null)
+                                        ,new SteccnTableColumn(params.get(16),"中",null)
+                                        ,new SteccnTableColumn(params.get(17),"北",null)))
+                        ,new SteccnTableColumn("head17","C区板上",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(18),"南",null)
+                                        ,new SteccnTableColumn(params.get(19),"中",null)
+                                        ,new SteccnTableColumn(params.get(20),"北",null)))
+                        ,new SteccnTableColumn("head18","C区板下",
+                                Lists.newArrayList(new SteccnTableColumn(params.get(21),"南",null)
+                                        ,new SteccnTableColumn(params.get(22),"中",null)
+                                        ,new SteccnTableColumn(params.get(23),"北",null)))
+                        ,new SteccnTableColumn(params.get(24),"R区",null))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> molding1(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("YY_TR_S_1"
+                ,"YY_CR_S_1"
+                ,"YY_UP_S_1"
+                ,"YY_DR_S_1"
+                ,"YY_TR_A_1"
+                ,"YY_CR_A_1"
+                ,"YY_UP_A_1"
+                ,"YY_DR_A_1"
+                ,"YY_TR_S_2"
+                ,"YY_CR_S_2"
+                ,"YY_UP_S_2"
+                ,"YY_DR_S_2"
+                ,"YY_TR_A_2"
+                ,"YY_CR_A_2"
+                ,"YY_UP_A_2"
+                ,"YY_DR_A_2"
+                ,"YY_TR_S_3"
+                ,"YY_CR_S_3"
+                ,"YY_UP_S_3"
+                ,"YY_DR_S_3"
+                ,"YY_TR_A_3"
+                ,"YY_CR_A_3"
+                ,"YY_UP_A_3"
+                ,"YY_DR_A_3"
+                ,"YY_TR_S_4"
+                ,"YY_CR_S_4"
+                ,"YY_UP_S_4"
+                ,"YY_DR_S_4"
+                ,"YY_TR_A_4"
+                ,"YY_CR_A_4"
+                ,"YY_UP_A_4"
+                ,"YY_DR_A_4"
+        ));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","一线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_1","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_1","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_1","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_1","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_1","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_1","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_1","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_1","下辊电流",null))));
+        columns.add(new SteccnTableColumn("head2","二线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_2","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_2","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_2","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_2","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_2","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_2","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_2","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_2","下辊电流",null))));
+        columns.add(new SteccnTableColumn("head3","三线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_3","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_3","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_3","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_3","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_3","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_3","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_3","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_3","下辊电流",null))));
+        columns.add(new SteccnTableColumn("head4","四线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_4","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_4","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_4","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_4","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_4","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_4","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_4","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_4","下辊电流",null))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> molding2(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("YY_TR_S_5"
+                ,"YY_CR_S_5"
+                ,"YY_UP_S_5"
+                ,"YY_DR_S_5"
+                ,"YY_TR_A_5"
+                ,"YY_CR_A_5"
+                ,"YY_UP_A_5"
+                ,"YY_DR_A_5"
+                ,"YY_TR_S_6"
+                ,"YY_CR_S_6"
+                ,"YY_UP_S_6"
+                ,"YY_DR_S_6"
+                ,"YY_TR_A_6"
+                ,"YY_CR_A_6"
+                ,"YY_UP_A_6"
+                ,"YY_DR_A_6"
+                ,"YY_TR_S_7"
+                ,"YY_CR_S_7"
+                ,"YY_UP_S_7"
+                ,"YY_DR_S_7"
+                ,"YY_TR_A_7"
+                ,"YY_CR_A_7"
+                ,"YY_UP_A_7"
+                ,"YY_DR_A_7"
+                ,"YY_TR_S_8"
+                ,"YY_CR_S_8"
+                ,"YY_UP_S_8"
+                ,"YY_DR_S_8"
+                ,"YY_TR_A_8"
+                ,"YY_CR_A_8"
+                ,"YY_UP_A_8"
+                ,"YY_DR_A_8"
+        ));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("head1","五线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_5","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_5","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_5","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_5","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_5","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_5","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_5","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_5","下辊电流",null))));
+        columns.add(new SteccnTableColumn("head2","六线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_6","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_6","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_6","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_6","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_6","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_6","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_6","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_6","下辊电流",null))));
+        columns.add(new SteccnTableColumn("head3","七线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_7","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_7","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_7","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_7","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_7","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_7","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_7","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_7","下辊电流",null))));
+        columns.add(new SteccnTableColumn("head4","八线",
+                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_8","过度辊速度",null)
+                        ,new SteccnTableColumn("YY_CR_S_8","副辊速度",null)
+                        ,new SteccnTableColumn("YY_UP_S_8","上辊速度",null)
+                        ,new SteccnTableColumn("YY_DR_S_8","下辊速度",null)
+                        ,new SteccnTableColumn("YY_TR_A_8","过度辊电流",null)
+                        ,new SteccnTableColumn("YY_CR_A_8","副辊电流",null)
+                        ,new SteccnTableColumn("YY_UP_A_8","上辊电流",null)
+                        ,new SteccnTableColumn("YY_DR_A_8","下辊电流",null))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
     }
 
     protected List<Map<String,String>> postDataCollect(LocalDate date, List<String> points){
@@ -458,7 +827,7 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         JSONArray jsonArray = resultObj.getJSONArray("datalist");
         for(int i = 0; i < jsonArray.size(); i++){
             JSONObject jsonObjectTmp = jsonArray.getJSONObject(i);
-            if(jsonObjectTmp.getString("errorCode")==null){
+            if(jsonObjectTmp.getString("errCode")==null){
                 List<DataCollectDTO> dataTmp = jsonObjectTmp.getJSONArray("datas").toJavaList(DataCollectDTO.class);
                 mapResult.put(jsonObjectTmp.getString("code"),dataTmp);
             }

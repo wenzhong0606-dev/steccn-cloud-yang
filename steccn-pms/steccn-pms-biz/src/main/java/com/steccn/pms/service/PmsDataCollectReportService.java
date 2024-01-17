@@ -53,4 +53,25 @@ public interface PmsDataCollectReportService {
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> melting2(LocalDate date);
+
+    /**
+     * 退火窑日志
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> annealing(LocalDate date,Integer type);
+
+    /**
+     * 成型作业日志(1-4)线
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> molding1(LocalDate date);
+
+    /**
+     * 成型作业日志(5-8)线
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> molding2(LocalDate date);
 }
