@@ -499,7 +499,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
         LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
         Set<BigDecimal> thickSet = thickSelect(start, end, dto.getEnergyType(), dto.getPartitionIdList());
-        if (Objects.nonNull(dto.getHistoryStart()) && Objects.nonNull(dto.getHistoryStart())) {
+        if (Objects.nonNull(dto.getHistoryStart()) && Objects.nonNull(dto.getHistoryEnd())) {
             LocalDateTime historyStart = LocalDateTime.of(dto.getHistoryStart(), ClassUtil.MORNING_START_TIME);
             LocalDateTime historyEnd = LocalDateTime.of(dto.getHistoryEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
             thickSet.addAll(thickSelect(historyStart, historyEnd, dto.getEnergyType(), dto.getPartitionIdList()));
@@ -1460,7 +1460,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
+        List<EpMeterReadAllDataVO> classDateAllData ;
+        if(energyType ==5){
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, partitionIdList);
+        }else {
+            classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
+        }
         return classDateAllData.stream().map(v -> v.getThick()).collect(Collectors.toSet());
     }
 }

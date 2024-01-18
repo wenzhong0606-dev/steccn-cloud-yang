@@ -721,6 +721,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Override
     public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
         SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
+        //判断节点是否属于这棵树
+        long count = epPartitionService.count(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getId, partitionIdList));
+        Assert.isTrue(count != 0, "此能源类型节点为空");
         Assert.notNull(energyType, "能源类型不能为空");
         Assert.notEmpty(dateSet, "日期筛选不可以为空");
         //获取节点关联仪表
