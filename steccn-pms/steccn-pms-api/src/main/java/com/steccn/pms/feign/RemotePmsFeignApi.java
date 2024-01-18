@@ -180,7 +180,11 @@ public interface RemotePmsFeignApi {
     @PostMapping("/feign/pms/raw/material/listByDate")
     R<List<PmRawMaterialVO>> listByDate(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO);
 
-    @ApiOperation("获取其他能源类型的订单")
+    @ApiOperation("获取其他能源类型的产量")
     @PostMapping("/feign/pms/produce/order/other/energy/order")
     R<Map<String, BigDecimal>> orderDetailOtherEnergy(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO);
+
+    @ApiOperation("获取其他能源类型的拉引量")
+    @PostMapping("/feign/pms/produce/order/other/energy/pf")
+    R<Map<String, BigDecimal>> orderDetailOtherEnergyPf(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO);
 }
