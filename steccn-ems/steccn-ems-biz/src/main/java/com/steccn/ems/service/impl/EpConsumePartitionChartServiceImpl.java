@@ -1035,8 +1035,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         } else if (dto.getEnergyType() != 5) {
             classDateAllData = epMeterReadService.classDateAllDataUnitOther(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
-        }
-        else {
+        } else {
             //燃料(气+油)的单耗
             classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
         }
@@ -1146,7 +1145,15 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        List<EpMeterReadAllDataVO> classDateAllData = null;
+        if (dto.getEnergyType() == 1) {
+            classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else if (dto.getEnergyType() != 5) {
+            classDateAllData = epMeterReadService.classDateAllDataUnitOther(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else {
+            //燃料(气+油)的单耗
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+        }
         classDateAllData = classDateAllData.stream().filter(v -> BigDecimalUtil.equals(dto.getThick().get(0), v.getThick())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //时间排序
@@ -1171,9 +1178,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 EpConsumeDetailRowVO rowVO = new EpConsumeDetailRowVO();
                 rowVO.setClassDate(classDateEntry.getKey());
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
-                if (!"null".equals(s[1])) {
-                    rowVO.setThick(new BigDecimal(s[1]).setScale(1));
+                BigDecimal thick = BigDecimalUtil.valueOf(s[1]);
+                if (!noThick(thick)) {
+                    rowVO.setThick(thick);
                     rowVO.setThickStr(String.valueOf(rowVO.getThick()));
+                } else {
+                    rowVO.setThick(new BigDecimal("-1"));
+                    rowVO.setThickStr("无");
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));
