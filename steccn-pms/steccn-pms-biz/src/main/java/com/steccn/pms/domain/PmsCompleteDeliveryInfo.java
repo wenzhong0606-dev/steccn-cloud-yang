@@ -64,6 +64,12 @@ public class PmsCompleteDeliveryInfo implements Serializable {
      */
     private BigDecimal avaQuantity;
 
+
+    /**
+     * 不良数量
+     */
+    private BigDecimal badnessQuantity;
+
     /**
      * 单位id
      */
