@@ -11,6 +11,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
@@ -19,6 +20,7 @@ import com.steccn.common.util.*;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
@@ -687,9 +689,16 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             receiveQuantity = BigDecimalUtil.add(receiveQuantity,m);
         }
         resVO.setReceiveQuantity(receiveQuantity);
-        //耗用总数
-
+//        //耗用总数
+//        List<DpOnOffCountVO> dpOnOffCountVOS = FeignOptional.of(() -> remoteDpFeignApi.onOffList(new TupleDTO<>(dto.getStart(), dto.getEnd())), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+//        //根据时间和产线确定订单的主物料
+//        Map<Long,DpOnOffCountVO> mainMaterialMap = pmsProduceOrderService.mainMaterial(dpOnOffCountVOS);
         //使用总数
         return resVO;
+    }
+
+    @Override
+    public ResultCode deepProcessingHistogram(PmsOperateDriverDTO dto) {
+        return null;
     }
 }

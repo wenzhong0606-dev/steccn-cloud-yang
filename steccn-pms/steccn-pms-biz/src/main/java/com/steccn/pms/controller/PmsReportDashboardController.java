@@ -139,4 +139,10 @@ public class PmsReportDashboardController {
     public R<PmsDeepProcessingNumVO> deepProcessingNum(@Valid @RequestBody PmsOperateDriverDTO dto) {
         return R.success(pmsReportDashboardService.deepProcessingNum(dto));
     }
+
+    @PostMapping("/deep/processing/histogram")
+    @ApiOperation("深加工制造部-基片数柱状图")
+    public R<PmsDeepProcessingNumVO> deepProcessingHistogram(@Valid @RequestBody PmsOperateDriverDTO dto) {
+        return R.success(pmsReportDashboardService.deepProcessingHistogram(dto));
+    }
 }

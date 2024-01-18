@@ -31,6 +31,7 @@ import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
@@ -1939,6 +1940,27 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //自定义sql获取生产订单生产的物料所使用的主物料
         List<Long>  materialIds =  this.baseMapper.listOrderMaterialIdByDate(start,end);
         return materialIds;
+    }
+
+    @Override
+    public Map<Long, DpOnOffCountVO> mainMaterial(List<DpOnOffCountVO> dpOnOffCountVOS) {
+        if (CollUtil.isNotEmpty(dpOnOffCountVOS)) {
+            //获取深加工的八条产线的id
+            Set<String> lineNames = Sets.newHashSet();
+            lineNames.add(PmManagerConstant.DeepProcessingLine.ONE.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.TWO.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.THREE.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.FOUR.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.FIVE.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.SIX.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.SEVEN.getName());
+            lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
+            Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            dpOnOffCountVOS.forEach( dpOnOffCountVO -> dpOnOffCountVO.setProductLineId(sysOfficeVOMap.get(dpOnOffCountVO.getProductLineNum()).getId()));
+//            //根据产线id和时间确定生产订单的主物料
+//            lineNames.
+        }
+        return null;
     }
 
     /**

@@ -692,6 +692,32 @@ public interface PmManagerConstant {
         }
     }
 
+    /**
+     * 深加工产线
+     */
+    @Getter
+    @AllArgsConstructor
+    enum DeepProcessingLine{
+        ONE("深加工一产线", "1"),
+        TWO("深加工二产线", "2"),
+        THREE("深加工三产线", "3"),
+        FOUR("深加工四产线", "4"),
+        FIVE("深加工五产线", "5"),
+        SIX("深加工六产线", "6"),
+        SEVEN("深加工七产线", "7"),
+        EIGHT("深加工八产线", "8");
+        private final String name;
+        private final String num;
+        public static String getNameByNum(String num) {
+            for (DeepProcessingLine value : DeepProcessingLine.values()) {
+                if (value.getNum().equals(num)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
+
     enum ChineseNumber {
         ONE("一", 1), TWO("二", 2), THREE("三", 3), FOUR("四", 4), FIVE("五", 5), SIX("六", 6), SEVEN("七", 7), EIGHT("八", 8), NINE("九", 9), TEN("十", 10);
 

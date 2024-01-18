@@ -177,4 +177,6 @@ public interface PmsReportDashboardService {
      * @return
      */
     PmsDeepProcessingNumVO deepProcessingNum(PmsOperateDriverDTO dto);
+
+    ResultCode deepProcessingHistogram(PmsOperateDriverDTO dto);
 }
