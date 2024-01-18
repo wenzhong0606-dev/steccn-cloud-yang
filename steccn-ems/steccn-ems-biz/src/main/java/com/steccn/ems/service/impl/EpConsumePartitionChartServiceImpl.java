@@ -1422,7 +1422,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 List<BigDecimal> sumProductNumList = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
                 BigDecimal sumProductNum = BigDecimalUtil.sum(sumProductNumList);
                 //获取单耗值
-                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum));
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum, 1));
                 poleList.add(stack);
                 //获取部门标准
                 BigDecimal standard = null;
