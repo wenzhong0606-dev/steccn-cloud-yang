@@ -1516,6 +1516,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Override
     public Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isEmpty(lineIdList)) {
+            return resMap;
+        }
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
         LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
         List<PmsUseCountDTO> dbList = baseMapper.dateLinePmUnit(lineIdList, startLdt, endLdt);

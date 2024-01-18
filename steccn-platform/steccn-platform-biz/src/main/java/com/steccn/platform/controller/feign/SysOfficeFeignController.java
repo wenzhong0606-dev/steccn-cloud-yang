@@ -238,10 +238,16 @@ public class SysOfficeFeignController {
     @PostMapping("/parent/type")
     @ApiOperation("查询一个节点指定类型的父节点-指定类型")
     public R<Map<Integer, Integer>> parentType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
-        Assert.notNull(tupleDTO.getField1(), "指定类型不能为空");
+        Assert.notEmpty(tupleDTO.getField1(), "指定类型不能为空");
         return R.success(sysOfficeService.parentType(tupleDTO.getField2(), tupleDTO.getField1()));
     }
 
+    @PostMapping("/child/type")
+    @ApiOperation("查询一个节点指定类型的孩子节点-指定类型")
+    public R<Map<Integer, List<Integer>>> childType(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
+        Assert.notEmpty(tupleDTO.getField1(), "指定类型不能为空");
+        return R.success(sysOfficeService.childType(tupleDTO.getField2(), tupleDTO.getField1()));
+    }
 
     @PostMapping("/child/workshop")
     @ApiOperation("查询节点的子节点-车间")

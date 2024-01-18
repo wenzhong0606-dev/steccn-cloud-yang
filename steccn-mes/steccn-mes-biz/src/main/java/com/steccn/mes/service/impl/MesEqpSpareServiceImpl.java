@@ -74,11 +74,41 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
             erpMaterial.forEach(tmp->{
                 //先查看是否有该物料
                 MesEqpSpare one = lists.stream().filter(v->v.getCode().equals(tmp.getFnumber())).findFirst().orElse(null);
-                if(Objects.nonNull(one)&&!one.getName().equals(tmp.getFname())){
+                //&&!one.getName().equals(tmp.getFname())
+                if(Objects.nonNull(one)){
                     MesEqpSpare model = new MesEqpSpare();
                     model.setId(one.getId());
                     model.setName(tmp.getFname());
                     model.setSpecifications(tmp.getFspecification());
+                    //以下为定时任务时使用
+                    model.setUpdateBy("erp");
+                    model.setUpdateDate(LocalDateTime.now());
+                    //操作长宽厚
+                    JsSysDictData measureUnit1 = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                            .eq(JsSysDictData::getDictLabel, tmp.getFvolumename())
+                            .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    model.setLengthQuantity(tmp.getFlength());
+                    model.setLengthUnitId(Long.parseLong(measureUnit1.getDictCode()));
+                    model.setWideQuantity(tmp.getFwidth());
+                    model.setWideUnitId(Long.parseLong(measureUnit1.getDictCode()));
+                    model.setThickQuantity(tmp.getFland());
+                    model.setThickUnitId(Long.parseLong(measureUnit1.getDictCode()));
+                    MesEqpClassification mesEqpClassification = mesEqpClassificationMapper.selectOne(new LambdaQueryWrapper<MesEqpClassification>()
+                            .eq(MesEqpClassification::getClassificationCode, tmp.getFmaterialgroupno()));
+                    if(Objects.isNull(mesEqpClassification)&&!tmp.getFmaterialgroupid().equals(OaConstant.NO.toString())){
+                        System.out.println(tmp.getFmaterialgroupno());
+                        throw new BusinessException("没有分类类型");
+                    }
+                    if(!tmp.getFmaterialgroupid().equals(OaConstant.NO.toString())){
+                        model.setType(mesEqpClassification.getId());
+                    }
+                    //单位
+                    JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                            .eq(JsSysDictData::getDictLabel, tmp.getFbaseunitname())
+                            .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    model.setUnit(measureUnit.getDictLabel());
+                    model.setUnitId(Long.parseLong(measureUnit.getDictCode()));
+                    //以上为定时任务时使用
                     updateById(model);
                 }else if(Objects.isNull(one)){
                     MesEqpSpare model = new MesEqpSpare();
@@ -92,6 +122,16 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     model.setCreateDate(LocalDateTime.now());
                     model.setUpdateBy("erp");
                     model.setUpdateDate(LocalDateTime.now());
+                    //操作长宽厚
+                    JsSysDictData measureUnit1 = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                            .eq(JsSysDictData::getDictLabel, tmp.getFvolumename())
+                            .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    model.setLengthQuantity(tmp.getFlength());
+                    model.setLengthUnitId(Long.parseLong(measureUnit1.getDictCode()));
+                    model.setWideQuantity(tmp.getFwidth());
+                    model.setWideUnitId(Long.parseLong(measureUnit1.getDictCode()));
+                    model.setThickQuantity(tmp.getFland());
+                    model.setThickUnitId(Long.parseLong(measureUnit1.getDictCode()));
                     MesEqpClassification mesEqpClassification = mesEqpClassificationMapper.selectOne(new LambdaQueryWrapper<MesEqpClassification>()
                             .eq(MesEqpClassification::getClassificationCode, tmp.getFmaterialgroupno()));
                     if(Objects.isNull(mesEqpClassification)&&!tmp.getFmaterialgroupid().equals(OaConstant.NO.toString())){

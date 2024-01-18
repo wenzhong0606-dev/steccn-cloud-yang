@@ -34,6 +34,7 @@ import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -122,6 +123,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteItemFeignApi remoteItemFeignApi;
     private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
     private final PmsWorkOrderBatchMapper pmsWorkOrderBatchMapper;
+    private final PmsPullForceService pullForceService;
 
     @Autowired
     @Lazy
@@ -1787,6 +1789,142 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         dataList.add(outSourcingCountRow(3, "总计", Strings.EMPTY, defectItemList, totalCountBdMap, totalCountIntMap));
 
         return resVo;
+    }
+
+
+    @Override
+    public Map<String, BigDecimal> orderDetailOtherEnergy(LocalDate start ,LocalDate end, List<Integer> officeIdList) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (Objects.nonNull(start) && Objects.nonNull(end) && CollUtil.isNotEmpty(officeIdList)) {
+            //考虑日期范围
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(officeIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<Integer> allLineIdList = Lists.newArrayList();
+            if (CollUtil.isNotEmpty(officeMap)) {
+                Collection<SysOfficeVO> sysOfficeVOList = officeMap.values();
+                //查询类型为产线
+                List<Integer> lineIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.PRODUCT_LINE.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                allLineIdList.addAll(lineIdList);
+                //查询类型为产线孩子的
+                List<Integer> lineChildIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.STATION.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                Map<Integer, Integer> parentLineMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(lineChildIdList)) {
+                    parentLineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(Sets.newHashSet(lineChildIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    allLineIdList.addAll(parentLineMap.values());
+                }
+                //查询类型为产线父节点的
+                List<Integer> lineParentIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.WORKSHOP.equals(ele.getOfficeType()) || SysOfficeConstant.DEPARTMENT.equals(ele.getOfficeType()) || SysOfficeConstant.PROVINCIAL_COMPANY.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                Map<Integer, List<Integer>> childLineMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(lineParentIdList)) {
+                    childLineMap = FeignOptional.of(() -> remoteOfficeFeign.childType(new TupleDTO<>(SysOfficeConstant.PRODUCT_LINE, Sets.newHashSet(lineParentIdList))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    List<Integer> childLineIdList = childLineMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                    allLineIdList.addAll(childLineIdList);
+                }
+                Map<Integer, SysOfficeVO> lineIdMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(allLineIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                List<Integer> jpLineIdList = lineIdMap.values().stream().filter(ele -> ele.getOfficeName().contains("基片")).map(SysOfficeVO::getId).collect(Collectors.toList());
+                List<Integer> sjgLineIdList = lineIdMap.values().stream().filter(ele -> ele.getOfficeName().contains("深加工")).map(SysOfficeVO::getId).collect(Collectors.toList());
+                Map<String, BigDecimal> valueMap1 = pmsReportWorkService.dateLinePmUnit(jpLineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+                Map<String, BigDecimal> valueMap2 = pmsReportWorkService.dateLinePmUnit(sjgLineIdList, start, end, 1, PmManagerConstant.MEASURE_UNIT_SM);
+                List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+                //考虑返回数据
+                for (int i = 1; i < timeList.size(); i++) {
+                    LocalDate classDate = timeList.get(i - 1);
+                    for (Integer officeId : officeIdList) {
+                        SysOfficeVO currentNode = officeMap.get(officeId);
+                        if (Objects.nonNull(currentNode)) {
+                            if (SysOfficeConstant.PRODUCT_LINE.equals(currentNode.getOfficeType())) {
+                                String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, currentNode.getId(), classDate);
+                                BigDecimal bigDecimal1 = valueMap1.get(joint);
+                                BigDecimal bigDecimal2 = valueMap2.get(joint);
+                                resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
+                            } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
+                                Integer lineId = parentLineMap.get(officeId);
+                                if(Objects.nonNull(lineId)){
+                                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate);
+                                    BigDecimal bigDecimal1 = valueMap1.get(joint);
+                                    BigDecimal bigDecimal2 = valueMap2.get(joint);
+                                    resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
+                                }
+                            } else {
+                                List<Integer> childLineIdList = childLineMap.get(officeId);
+                                if (CollUtil.isNotEmpty(childLineIdList)) {
+                                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, officeId, classDate);
+                                    childLineIdList.forEach(ele -> {
+                                        String tmpJoint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, ele, classDate);
+                                        BigDecimal bigDecimal1 = valueMap1.get(tmpJoint);
+                                        BigDecimal bigDecimal2 = valueMap2.get(tmpJoint);
+                                        MapUtil.add(resMap, joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2), (x, y) -> BigDecimalUtil.add(x, y));
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> orderDetailOtherEnergyPf(LocalDate start ,LocalDate end, List<Integer> officeIdList) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (Objects.nonNull(start) && Objects.nonNull(end) && CollUtil.isNotEmpty(officeIdList)) {
+            //考虑日期范围
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(officeIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<Integer> allLineIdList = Lists.newArrayList();
+            if (CollUtil.isNotEmpty(officeMap)) {
+                Collection<SysOfficeVO> sysOfficeVOList = officeMap.values();
+                //查询类型为产线
+                List<Integer> lineIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.PRODUCT_LINE.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                allLineIdList.addAll(lineIdList);
+                //查询类型为产线孩子的
+                List<Integer> lineChildIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.STATION.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                Map<Integer, Integer> parentLineMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(lineChildIdList)) {
+                    parentLineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(Sets.newHashSet(lineChildIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    allLineIdList.addAll(parentLineMap.values());
+                }
+                //查询类型为产线父节点的
+                List<Integer> lineParentIdList = sysOfficeVOList.stream().filter(ele -> SysOfficeConstant.WORKSHOP.equals(ele.getOfficeType()) || SysOfficeConstant.DEPARTMENT.equals(ele.getOfficeType()) || SysOfficeConstant.PROVINCIAL_COMPANY.equals(ele.getOfficeType())).map(SysOfficeVO::getId).collect(Collectors.toList());
+                Map<Integer, List<Integer>> childLineMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(lineParentIdList)) {
+                    childLineMap = FeignOptional.of(() -> remoteOfficeFeign.childType(new TupleDTO<>(SysOfficeConstant.PRODUCT_LINE, Sets.newHashSet(lineParentIdList))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    List<Integer> childLineIdList = childLineMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                    allLineIdList.addAll(childLineIdList);
+                }
+                Map<String, BigDecimal> valueMap = pullForceService.dateLinePmUnit(allLineIdList, start, end);
+
+                List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+                //考虑返回数据
+                for (int i = 1; i < timeList.size(); i++) {
+                    LocalDate classDate = timeList.get(i - 1);
+                    for (Integer officeId : officeIdList) {
+                        SysOfficeVO currentNode = officeMap.get(officeId);
+                        if (Objects.nonNull(currentNode)) {
+                            if (SysOfficeConstant.PRODUCT_LINE.equals(currentNode.getOfficeType())) {
+                                String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, currentNode.getId(), classDate);
+                                resMap.put(joint, valueMap.get(joint));
+                            } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
+                                Integer lineId = parentLineMap.get(officeId);
+                                if(Objects.nonNull(lineId)){
+                                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate);
+                                    resMap.put(joint, valueMap.get(joint));
+                                }
+                            } else {
+                                List<Integer> childLineIdList = childLineMap.get(officeId);
+                                if (CollUtil.isNotEmpty(childLineIdList)) {
+                                    String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, officeId, classDate);
+                                    childLineIdList.forEach(ele -> {
+                                        String tmpJoint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, ele, classDate);
+                                        MapUtil.add(resMap, joint, valueMap.get(tmpJoint), (x, y) -> BigDecimalUtil.add(x, y));
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return resMap;
     }
 
 

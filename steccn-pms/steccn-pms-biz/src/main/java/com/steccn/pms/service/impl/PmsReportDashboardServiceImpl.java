@@ -579,6 +579,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 //        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
 //            dateList.add(dto.getStart());
 //        }
+        //投料量接口问题,算总数
+        Map<Integer,BigDecimal> weightCountMap = Maps.newHashMap();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate start = dateList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
@@ -591,6 +593,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 DpValueDateVO valueDateVO = weightCount.stream().filter(v -> v.getDateStr().equals(key)).findFirst().orElse(null);
                 if(Objects.nonNull(valueDateVO)){
                     weightCountTmp = BigDecimalUtil.divide(valueDateVO.getValue(),new BigDecimal(1000),2) ;
+                    BigDecimalUtil.accumulate(weightCountMap,1,weightCountTmp);
                 }
             }
             //拉引总量
@@ -610,10 +613,11 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //算总和
         PmsPullForceMeltingNumVO allNum = new PmsPullForceMeltingNumVO();
         if(CollUtil.isNotEmpty(weightCount)){
-            BigDecimal sum = weightCount.stream()
-                    .map(DpValueDateVO::getValue)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            allNum.setWeightCount(BigDecimalUtil.divide(sum,new BigDecimal(1000),2));
+//            BigDecimal sum = weightCount.stream()
+//                    .map(DpValueDateVO::getValue)
+//                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+//            allNum.setWeightCount(BigDecimalUtil.divide(sum,new BigDecimal(1000),2));
+            allNum.setWeightCount(weightCountMap.get(1));
         }
         if(CollUtil.isNotEmpty(pullAmountCount)){
             BigDecimal sum = pullAmountCount.stream()

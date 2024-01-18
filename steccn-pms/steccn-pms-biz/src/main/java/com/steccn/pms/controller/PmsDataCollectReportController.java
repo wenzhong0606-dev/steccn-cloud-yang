@@ -48,4 +48,35 @@ public class PmsDataCollectReportController {
     public R<SteccnTableDataDTO> des(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.desReport(date));
     }
+
+    @GetMapping("/melting1")
+    @ApiOperation("1200t/d熔化日志1")
+    public R<SteccnTableDataDTO> melting1(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.melting1(date));
+    }
+
+    @GetMapping("/melting2")
+    @ApiOperation("1200t/d熔化日志2")
+    public R<SteccnTableDataDTO> melting2(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.melting2(date));
+    }
+
+    @GetMapping("/annealing")
+    @ApiOperation("退火窑日志")
+    public R<SteccnTableDataDTO> annealing(@RequestParam("date") LocalDate date,@RequestParam("type") Integer type) {
+        return R.success(pmsDataCollectReportService.annealing(date,type));
+    }
+
+    @GetMapping("/molding1")
+    @ApiOperation("1200t/d成型作业日志(1-4)")
+    public R<SteccnTableDataDTO> molding1(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.molding1(date));
+    }
+
+    @GetMapping("/molding2")
+    @ApiOperation("1200t/d成型作业日志(5-8)")
+    public R<SteccnTableDataDTO> molding2(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.molding2(date));
+    }
+
 }

@@ -232,6 +232,15 @@ public interface SysOfficeService extends IService<SysOffice> {
     Map<Integer, Integer> parentType(Set<Integer> officeIdSet, String type);
 
     /**
+     * 查询一个节点指定类型的孩子节点
+     *
+     * @param officeIdSet 节点集合
+     * @param type        指定类型
+     * @return
+     */
+    Map<Integer, List<Integer>> childType(Set<Integer> officeIdSet, String type);
+
+    /**
      * 模糊查询客户
      * @param name
      * @return

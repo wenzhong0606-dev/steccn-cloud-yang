@@ -11,6 +11,7 @@ import com.steccn.qms.dto.QtDefectReportDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -303,6 +304,26 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     OutsourcingDayReportVO outsourcing(DayReportCommonDTO dto);
+
+    /**
+     * 其余能源类型的产量
+     *
+     * @param start        开始日期
+     * @param end          结束日期
+     * @param officeIdList officeId集合
+     * @return
+     */
+    Map<String, BigDecimal> orderDetailOtherEnergy(LocalDate start, LocalDate end, List<Integer> officeIdList);
+
+    /**
+     * 其余能源类型的订单
+     *
+     * @param start        开始日期
+     * @param end          结束日期
+     * @param officeIdList officeId集合
+     * @return
+     */
+    Map<String, BigDecimal> orderDetailOtherEnergyPf(LocalDate start, LocalDate end, List<Integer> officeIdList);
 
 
     /**

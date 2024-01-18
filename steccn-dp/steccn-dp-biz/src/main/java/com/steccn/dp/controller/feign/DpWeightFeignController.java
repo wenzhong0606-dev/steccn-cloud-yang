@@ -4,7 +4,9 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.dp.service.AdsOnOffCountService;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,31 +30,38 @@ import java.util.Map;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/feign/dp/weight")
+@RequestMapping("/feign/dp")
 public class DpWeightFeignController {
     private final AdsOpcUaAll3Service adsOpcUaAll3Service;
+    private final AdsOnOffCountService adsOnOffCountService;
 
-    @PostMapping("/count")
+    @PostMapping("/weight/count")
     @ApiOperation(value = "电子秤读数")
     public R<List<DpWeightVO>> count(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(adsOpcUaAll3Service.getWeighCount(dto));
     }
 
-    @PostMapping("/countMap")
+    @PostMapping("/weight/countMap")
     @ApiOperation(value = "电子秤读数Map")
     public R<Map<String, BigDecimal>> countMap(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(adsOpcUaAll3Service.getWeightCountMap(dto));
     }
 
-    @PostMapping("/countAsDay")
+    @PostMapping("/weight/countAsDay")
     @ApiOperation(value = "电子秤读数按天")
     public R<List<DpValueDateVO>> countAsDay(@RequestBody DpPmsOperateDTO dto) {
         return R.success(adsOpcUaAll3Service.weightCountAsDay(dto));
     }
 
-    @PostMapping("/consume")
+    @PostMapping("/weight/consume")
     @ApiOperation(value = "耗料数")
     public R<List<CommonReportDTO>> consumeMaterial(@RequestBody DpPmsOperateDTO dto) {
         return R.success(adsOpcUaAll3Service.countDTO(dto));
+    }
+
+    @PostMapping("/onOff/list")
+    @ApiOperation(value = "玻璃片数光电信号")
+    public R<List<DpOnOffCountVO>> onOffList(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
+        return R.success(adsOnOffCountService.onOffList(dto));
     }
 }

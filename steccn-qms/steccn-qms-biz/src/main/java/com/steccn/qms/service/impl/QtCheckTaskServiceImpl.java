@@ -2456,7 +2456,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<Integer> goodSumList = tDataList.stream().filter(v -> Objects.nonNull(v.getGoodNum())).map(QtCheckTaskReportVO::getGoodNum).collect(Collectors.toList());
         Integer checkSum = IntegerUtil.sum(checkSumList);
         Integer goodSum = IntegerUtil.sum(goodSumList);
-        return new TupleDTO<>(key, BigDecimalUtil.percent(BigDecimal.valueOf(goodSum), BigDecimal.valueOf(checkSum)));
+        return new TupleDTO<>(key, BigDecimalUtil.percent(BigDecimalUtil.valueOf(goodSum), BigDecimalUtil.valueOf(checkSum)));
     }
 
 

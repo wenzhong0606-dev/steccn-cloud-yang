@@ -22,6 +22,7 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.*;
@@ -31,6 +32,7 @@ import com.steccn.ems.dto.*;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.*;
+import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -41,6 +43,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
@@ -52,6 +55,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 import com.steccn.wms.dto.WmsStockInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -98,6 +102,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -867,7 +873,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 resVo.setThick(row.getThick());
                 resVo.setEnergyType(energyType);
                 if (partitionIdList.contains(key) && Objects.nonNull(value) && BigDecimalUtil.gt(value, BigDecimal.ZERO)) {
-                    EpInstrumentAccountDTO accountDTO = nodeLinkMeterMap.get(key);
+                    EpInstrumentAccountDTO accountDTO = nodeLinkMeterMap.getOrDefault(key,new EpInstrumentAccountDTO());
                     resVo.setMeterId(accountDTO.getId());
                     resVo.setConsume(value);
                     resVo.setOfficeId(key);
@@ -1061,6 +1067,55 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         Map<String, Long> classGroup = getClassGroup(dateSet, partitionIdList, partitionMap);
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable, classGroup);
+    }
+
+    @Override
+    public List<EpMeterReadAllDataVO> classDateAllDataUnitOther(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
+        SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
+        Assert.notNull(energyType, "能源类型不能为空");
+        Assert.notEmpty(dateSet, "日期筛选不可以为空");
+        //获取节点关联仪表
+        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
+        SteccnTableAssertUtil.notEmpty(nodeLinkMeterMap, "该能源下无仪表");
+        //获取每个节点的office信息
+        Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
+        List<EpEnergyConsumeDTO> consumeTable = unitTableOther(dateSet, energyType,nodeLinkMeterMap, partitionMap.values());
+
+
+        //结合排班表结合报工时填报的班组，在【单耗全量数据表】中加入班组维度，右侧增加三列，每格代表本行的班次是本列的车间的哪个班组（本列的车间所有工位在本行的班次报工时填报的班组中，取填报次数最多的一个班组）
+        //获取所有的工位节点
+        return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable, Maps.newHashMap());
+    }
+
+    private List<EpEnergyConsumeDTO> unitTableOther(Set<LocalDate> dateSet, Integer energyType, Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap, Collection<EpPartition> epPartitionList) {
+        Map<Integer, Long> meterNodeMap = Maps.newHashMap();
+        nodeLinkMeterMap.forEach((k, v) -> meterNodeMap.put(v.getId(), k));
+        //查询能耗的全量数据表
+        List<EpEnergyConsumeDTO> consumeTable = consumeTable(dateSet, energyType, nodeLinkMeterMap);
+        Map<Integer, Long> epIdMap = Maps.newHashMap();
+        epPartitionList.forEach(ele ->{
+            epIdMap.put(ele.getOfficeId(),ele.getId());
+        });
+        //构建出当前日期下节点的所有产量，需要考虑递归形势
+        LocalDate min = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
+        LocalDate max = dateSet.stream().max((x, y) -> x.compareTo(y)).get();
+        List<Integer> officeIdList = epPartitionList.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
+        Map<String, BigDecimal> pm = FeignOptional.of(() -> remotePmsFeignApi.orderDetailOtherEnergy(new TripleDTO<>(min, max, officeIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        //获取到所有的产量
+        consumeTable.forEach(ele ->{
+            if (noThickAndClass(ele.getClassId(), ele.getThick())) {
+                Map<Long, BigDecimal> yieldMap = Maps.newHashMap();
+                ele.setYieldMap(yieldMap);
+                for (Integer officeId : officeIdList) {
+                    BigDecimal yield = pm.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, officeId, ele.getReadDate()));
+                    Long partitionId = epIdMap.get(officeId);
+                    if (Objects.nonNull(yield) && Objects.nonNull(partitionId)) {
+                        yieldMap.put(partitionId, yield);
+                    }
+                }
+            }
+        });
+        return consumeTable;
     }
 
     /**
@@ -1385,19 +1440,25 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         //第三步获取【产量全量数据表】
         Integer gasOilEnergyType = 5;
-        Map<Long, EpInstrumentAccountDTO> gasOilNodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(gasOilEnergyType);
-        List<EpEnergyConsumeDTO> unitTable = unitTable(dateSet, gasOilEnergyType, gasOilNodeLinkMeterMap);
-
-        Map<Long, EpPartition> gasOilPartitionMap = epPartitionService.listById(gasOilNodeLinkMeterMap.keySet());
+        Map<Long, EpPartition> gasOilPartitionMap = epPartitionService.listById(Sets.newHashSet(partitionIdList));
         Map<Long, Integer> gasOilPoMap = Maps.newHashMap();
+        Map<Integer, Long> gasOilOpMap = Maps.newHashMap();
+        List<Integer> officeIdList = Lists.newArrayList();
         gasOilPartitionMap.forEach((k, v) -> {
             gasOilPoMap.put(k, v.getOfficeId());
+            gasOilOpMap.put(v.getOfficeId(), k);
+            officeIdList.add(v.getOfficeId());
         });
+        //考虑产量
+        LocalDate min = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
+        LocalDate max = dateSet.stream().max((x, y) -> x.compareTo(y)).get();
+        Map<String, BigDecimal> officeYieldMap = FeignOptional.of(() -> remotePmsFeignApi.orderDetailOtherEnergyPf(new TripleDTO<>(min, max, officeIdList)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
         //任意单元格K的值= (天然气能耗 * 7800 + 燃料油能耗 * 1000 * 9300) / (拉引量 * 1000)
-        for (EpEnergyConsumeDTO ele : unitTable) {
+        for (EpEnergyConsumeDTO ele : oilRowList) {
             Map<Long, BigDecimal> consumeMap = ele.getConsumeMap();
-            Map<Long, BigDecimal> yieldMap = ele.getYieldMap();
+            Map<Long, BigDecimal> convertConsumeMap = Maps.newHashMap();
+            Map<Long, BigDecimal> convertYieldMap = Maps.newHashMap();
             //注意单耗和能耗都是依赖ep_partition中的主键，需要转换成officeId来计算
             EpEnergyConsumeDTO oilConsumeDTO = oilRowMap.getOrDefault(ele.getReadDate() + "_" + ele.getClassId() + "_" + ele.getThick(), defaultConsumeDTO);
             Map<Long, BigDecimal> oilConsumeMap = oilConsumeDTO.getConsumeMap();
@@ -1405,20 +1466,24 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             Map<Long, BigDecimal> gasConsumeMap = gasConsumeDTO.getConsumeMap();
 
             for (Map.Entry<Long, BigDecimal> entry : consumeMap.entrySet()) {
-                BigDecimal yield = yieldMap.get(entry.getKey());
+                Integer gasOilOfficeId = oilPoMap.get(entry.getKey());
+                BigDecimal yield = officeYieldMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, gasOilOfficeId, ele.getReadDate()));
                 BigDecimal yieldMu = BigDecimalUtil.multiply(yield, new BigDecimal("1000"));
-                yieldMap.put(entry.getKey(), yieldMu);
-                Integer gasOilOfficeId = gasOilPoMap.get(entry.getKey());
                 Long gasId = gasOpMap.get(gasOilOfficeId);
                 Long oilId = oilOpMap.get(gasOilOfficeId);
                 BigDecimal gasValue = gasConsumeMap.get(gasId);
                 BigDecimal oilValue = oilConsumeMap.get(oilId);
                 BigDecimal gasMu = BigDecimalUtil.multiply(gasValue, new BigDecimal("7800"));
-                BigDecimal oilMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300"));
+                BigDecimal oilMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300000"));
                 entry.setValue(BigDecimalUtil.add(gasMu, oilMu));
+                Long convertPartitionId = gasOilOpMap.get(gasOilOfficeId);
+                convertConsumeMap.put(convertPartitionId, entry.getValue());
+                convertYieldMap.put(convertPartitionId, yieldMu);
             }
+            ele.setConsumeMap(convertConsumeMap);
+            ele.setYieldMap(convertYieldMap);
         }
-        return row2List(gasOilEnergyType, Sets.newHashSet(partitionIdList), gasOilNodeLinkMeterMap, gasOilPartitionMap, unitTable, Maps.newHashMap());
+        return row2List(gasOilEnergyType, Sets.newHashSet(partitionIdList), oilNodeLinkMeterMap, gasOilPartitionMap, oilRowList, Maps.newHashMap());
     }
 
     private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {
