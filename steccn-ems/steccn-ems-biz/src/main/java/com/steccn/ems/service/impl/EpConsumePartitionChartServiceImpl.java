@@ -499,7 +499,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
         LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
         Set<BigDecimal> thickSet = thickSelect(start, end, dto.getEnergyType(), dto.getPartitionIdList());
-        if (Objects.nonNull(dto.getHistoryStart()) && Objects.nonNull(dto.getHistoryStart())) {
+        if (Objects.nonNull(dto.getHistoryStart()) && Objects.nonNull(dto.getHistoryEnd())) {
             LocalDateTime historyStart = LocalDateTime.of(dto.getHistoryStart(), ClassUtil.MORNING_START_TIME);
             LocalDateTime historyEnd = LocalDateTime.of(dto.getHistoryEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
             thickSet.addAll(thickSelect(historyStart, historyEnd, dto.getEnergyType(), dto.getPartitionIdList()));
@@ -1035,8 +1035,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         } else if (dto.getEnergyType() != 5) {
             classDateAllData = epMeterReadService.classDateAllDataUnitOther(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
-        }
-        else {
+        } else {
             //燃料(气+油)的单耗
             classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
         }
@@ -1146,7 +1145,15 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        List<EpMeterReadAllDataVO> classDateAllData = null;
+        if (dto.getEnergyType() == 1) {
+            classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else if (dto.getEnergyType() != 5) {
+            classDateAllData = epMeterReadService.classDateAllDataUnitOther(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else {
+            //燃料(气+油)的单耗
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+        }
         classDateAllData = classDateAllData.stream().filter(v -> BigDecimalUtil.equals(dto.getThick().get(0), v.getThick())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //时间排序
@@ -1171,9 +1178,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 EpConsumeDetailRowVO rowVO = new EpConsumeDetailRowVO();
                 rowVO.setClassDate(classDateEntry.getKey());
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
-                if (!"null".equals(s[1])) {
-                    rowVO.setThick(new BigDecimal(s[1]).setScale(1));
+                BigDecimal thick = BigDecimalUtil.valueOf(s[1]);
+                if (!noThick(thick)) {
+                    rowVO.setThick(thick);
                     rowVO.setThickStr(String.valueOf(rowVO.getThick()));
+                } else {
+                    rowVO.setThick(new BigDecimal("-1"));
+                    rowVO.setThickStr("无");
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));
@@ -1411,7 +1422,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 List<BigDecimal> sumProductNumList = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
                 BigDecimal sumProductNum = BigDecimalUtil.sum(sumProductNumList);
                 //获取单耗值
-                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum));
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum, 1));
                 poleList.add(stack);
                 //获取部门标准
                 BigDecimal standard = null;
@@ -1449,7 +1460,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
+        List<EpMeterReadAllDataVO> classDateAllData ;
+        if(energyType ==5){
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, partitionIdList);
+        }else {
+            classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
+        }
         return classDateAllData.stream().map(v -> v.getThick()).collect(Collectors.toSet());
     }
 }

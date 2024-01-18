@@ -165,4 +165,10 @@ public class PmsProduceOrderFeignController {
     R<Map<String, BigDecimal>> orderDetailOtherEnergy(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO) {
         return R.success(pmsProduceOrderService.orderDetailOtherEnergy(tupleDTO.getField1(),tupleDTO.getField2(), tupleDTO.getField3()));
     }
+
+    @ApiOperation("获取其他能源类型的订单")
+    @PostMapping("/other/energy/pf")
+    R<Map<String, BigDecimal>> orderDetailOtherEnergyPf(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO) {
+        return R.success(pmsProduceOrderService.orderDetailOtherEnergyPf(tupleDTO.getField1(),tupleDTO.getField2(), tupleDTO.getField3()));
+    }
 }
