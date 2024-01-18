@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -61,4 +63,13 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/weight/consume")
     @ApiOperation(value = "耗料数")
     R<List<CommonReportDTO>> consumeMaterial(@RequestBody DpPmsOperateDTO dto);
+
+    /**
+     * 玻璃片数光电信号
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/dp/onOff/list")
+    @ApiOperation(value = "玻璃片数光电信号")
+    R<List<DpOnOffCountVO>> onOffList(@RequestBody TupleDTO<LocalDate,LocalDate> dto);
 }

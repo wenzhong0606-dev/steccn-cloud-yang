@@ -6,7 +6,9 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.dp.service.AdsOnOffCountService;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +33,7 @@ import java.util.Map;
 @RequestMapping("/dp/weight")
 public class DpWeightController {
     private final AdsOpcUaAll3Service adsOpcUaAll3Service;
+    private final AdsOnOffCountService adsOnOffCountService;
 
     @PostMapping("/count")
     @ApiOperation(value = "电子秤读数")
@@ -60,6 +63,12 @@ public class DpWeightController {
     @ApiOperation(value = "电子秤读数图表")
     public R<List<CommonReportDTO>> test(@RequestBody DpPmsOperateDTO dto) {
         return R.success(adsOpcUaAll3Service.countDTO(dto));
+    }
+
+    @PostMapping("/test2")
+    @ApiOperation(value = "玻璃片数光电信号")
+    public R<List<DpOnOffCountVO>> onOffList(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
+        return R.success(adsOnOffCountService.onOffList(dto));
     }
 
 }
