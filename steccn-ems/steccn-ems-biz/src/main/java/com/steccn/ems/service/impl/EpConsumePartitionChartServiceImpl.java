@@ -1064,16 +1064,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
         EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
         List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
-
-        List<LocalDateTime> shardDateTime = Lists.newArrayList();
         //时间粒度
         QtManagerConstant.QtGranularityEnum byCode = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        if (Objects.nonNull(byCode) && !QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
-            shardDateTime = ClassUtil.cutDateRange(byCode.getType(), start, end);
-            Assert.notEmpty(shardDateTime, "时间分片为空");
-        } else if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
-            shardDateTime = Lists.newArrayList(LocalDateTime.now(), LocalDateTime.now());
-        }
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
 
