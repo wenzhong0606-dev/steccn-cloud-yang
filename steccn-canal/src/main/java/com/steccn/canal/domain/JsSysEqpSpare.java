@@ -110,6 +110,7 @@ public class JsSysEqpSpare implements Serializable {
     @Column(name = "STATUS")
     private String status;
 
-
+    @Column(name = "product_property")
+    private Integer productProperty;
 
 }

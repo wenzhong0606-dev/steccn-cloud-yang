@@ -147,4 +147,6 @@ public class QtMaterial implements Serializable {
      * 批次类型
      */
     private String batchType;
+
+    private Integer productProperty;
 }
