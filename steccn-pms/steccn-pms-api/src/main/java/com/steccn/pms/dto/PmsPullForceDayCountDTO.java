@@ -20,4 +20,6 @@ public class PmsPullForceDayCountDTO {
     private LocalDate pullForceDate;
     private BigDecimal quantity;
     private String pullForceDateStr;
+    private Integer productLineId;
+    private Long classId;
 }

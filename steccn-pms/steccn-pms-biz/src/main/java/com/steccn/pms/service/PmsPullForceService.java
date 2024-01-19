@@ -3,8 +3,10 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsPullForce;
+import com.steccn.pms.dto.PmsPullForceDashboardDTO;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.PmsPullForceQueryDTO;
 import com.steccn.pms.dto.PullForceSumDTO;
@@ -156,4 +158,11 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Map<String, BigDecimal> pullForceSum(PullForceSumDTO dto);
+
+    /**
+     * 拉引量报表
+     * @param dto
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> pullForceReport(PmsPullForceDashboardDTO dto);
 }
