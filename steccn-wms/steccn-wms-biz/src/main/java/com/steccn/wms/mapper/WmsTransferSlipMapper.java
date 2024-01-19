@@ -1,6 +1,8 @@
 package com.steccn.wms.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
@@ -12,6 +14,7 @@ import com.steccn.wms.vo.WmsTransferSlipVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +60,21 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
                                             @Param("id") Integer id);
 
     List<WmsTransferSlipInfo> materialQuantityByDateAndWarehouse(@Param("dto") RawMaterialReportDTO dto);
+
+    List<Tuple4DTO<String, Long, BigDecimal,Long>> materialQuantityDay(@Param("start") LocalDateTime start,
+                                                                       @Param("end") LocalDateTime end,
+                                                                       @Param("warehouseIds") List<Integer> wsIdSet,
+                                                                       @Param("materialIds") List<Long> materialIds);
+
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> materialQuantityMonth(@Param("start") LocalDateTime start,
+                                                                          @Param("end") LocalDateTime end,
+                                                                          @Param("warehouseIds") List<Integer> wsIdSet,
+                                                                          @Param("materialIds") List<Long> materialIds);
+
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> materialQuantityYear(@Param("start") LocalDateTime start,
+                                                                         @Param("end") LocalDateTime end,
+                                                                         @Param("warehouseIds") List<Integer> wsIdSet,
+                                                                         @Param("materialIds") List<Long> materialIds);
 }
 
 

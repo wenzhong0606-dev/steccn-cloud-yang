@@ -1,6 +1,8 @@
 package com.steccn.pms.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
@@ -142,7 +144,7 @@ public class PmsReportDashboardController {
 
     @PostMapping("/deep/processing/histogram")
     @ApiOperation("深加工制造部-基片数柱状图")
-    public R<PmsDeepProcessingNumVO> deepProcessingHistogram(@Valid @RequestBody PmsOperateDriverDTO dto) {
+    public R<EpChartGraphVO<List<String>, TripleDTO<BigDecimal,BigDecimal,BigDecimal>>> deepProcessingHistogram(@Valid @RequestBody PmsOperateDriverDTO dto) {
         return R.success(pmsReportDashboardService.deepProcessingHistogram(dto));
     }
 }

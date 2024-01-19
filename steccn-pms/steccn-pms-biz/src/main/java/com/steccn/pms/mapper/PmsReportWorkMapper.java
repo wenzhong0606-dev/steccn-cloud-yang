@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.IdNameDTO;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
@@ -552,6 +553,86 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                                                       @Param("end") LocalDate end,
                                                                       @Param("lineIdList") Set<Integer> lineIdList);
 
+
+    /**
+     * 产线时间耗用数 day
+     * @param start
+     * @param end
+     * @param lineIdList
+     * @return
+     */
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> consumptionDay(@Param("start") LocalDate start,
+                                                                   @Param("end") LocalDate end,
+                                                                   @Param("lineIdList") Set<Integer> lineIdList,
+                                                                   @Param("stationIds") Set<Integer> stationIds);
+
+
+
+    /**
+     * 产线时间耗用数 月
+     * @param start
+     * @param end
+     * @param lineIdList
+     * @param stationIds
+     * @return
+     */
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> consumptionMonth(@Param("start") LocalDate start,
+                                                                     @Param("end") LocalDate end,
+                                                                     @Param("lineIdList") Set<Integer> lineIdList,
+                                                                     @Param("stationIds") Set<Integer> stationIds);
+
+    /**
+     * 产线时间耗用数 年
+     * @param start
+     * @param end
+     * @param lineIdList
+     * @param stationIds
+     * @return
+     */
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> consumptionYear(@Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end,
+                                                                    @Param("lineIdList") Set<Integer> lineIdList,
+                                                                    @Param("stationIds") Set<Integer> stationIds);
+
+    /**
+     * 不良数 天
+     * @param start
+     * @param end
+     * @param lineIdList
+     * @param stationIds
+     * @return
+     */
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> badnessDay(@Param("start") LocalDate start,
+                                                               @Param("end") LocalDate end,
+                                                               @Param("lineIdList") Set<Integer> lineIdList,
+                                                               @Param("stationIds") Set<Integer> stationIds);
+
+    /**
+     * 不良数 月
+     * @param start
+     * @param end
+     * @param lineIdList
+     * @param stationIds
+     * @return
+     */
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> badnessMonth(@Param("start") LocalDate start,
+                                                                 @Param("end") LocalDate end,
+                                                                 @Param("lineIdList") Set<Integer> lineIdList,
+                                                                 @Param("stationIds") Set<Integer> stationIds);
+
+
+    /**
+     * 不良数 年
+     * @param start
+     * @param end
+     * @param lineIdList
+     * @param stationIds
+     * @return
+     */
+    List<Tuple4DTO<String, Long, BigDecimal, Long>> badnessYear(@Param("start") LocalDate start,
+                                                                @Param("end") LocalDate end,
+                                                                @Param("lineIdList") Set<Integer> lineIdList,
+                                                                @Param("stationIds") Set<Integer> stationIds);
 }
 
 

@@ -3,7 +3,9 @@ package com.steccn.pms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
@@ -178,5 +180,11 @@ public interface PmsReportDashboardService {
      */
     PmsDeepProcessingNumVO deepProcessingNum(PmsOperateDriverDTO dto);
 
-    ResultCode deepProcessingHistogram(PmsOperateDriverDTO dto);
+
+    /**
+     * 深加工制造部-基片数柱状图
+     * @param dto
+     * @return
+     */
+    EpChartGraphVO<List<String>, TripleDTO<BigDecimal,BigDecimal,BigDecimal>> deepProcessingHistogram(PmsOperateDriverDTO dto);
 }

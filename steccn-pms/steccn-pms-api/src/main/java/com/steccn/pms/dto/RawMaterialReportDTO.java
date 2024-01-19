@@ -1,6 +1,7 @@
 package com.steccn.pms.dto;
 
 
+import com.steccn.pms.constant.PmManagerConstant;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -51,5 +52,7 @@ public class RawMaterialReportDTO implements Serializable {
      * 物料id
      */
     private List<Long> materialIds;
+
+    private PmManagerConstant.QtGranularityEnum granularity;
 
 }

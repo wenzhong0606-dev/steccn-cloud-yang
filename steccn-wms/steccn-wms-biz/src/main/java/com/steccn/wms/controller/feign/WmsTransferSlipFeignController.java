@@ -49,4 +49,11 @@ public class WmsTransferSlipFeignController {
     R<Map<Long,WmsTransferSlipInfoVO>> materialQuantityByDateAndWarehouse(@RequestBody RawMaterialReportDTO dto){
         return R.success(wmsTransferSlipService.materialQuantityByDateAndWarehouse(dto));
     };
+
+
+    @ApiOperation("根据时间获取调拨单目标仓库为指定仓库的指定物料数量")
+    @PostMapping("/material/date/warehouse/quantity/map")
+    R<Map<String,BigDecimal>> materialQuantityByDateAndWarehouseQuantity(@RequestBody RawMaterialReportDTO dto){
+        return R.success(wmsTransferSlipService.materialQuantityByDateAndWarehouseQuantity(dto));
+    };
 }

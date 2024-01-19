@@ -45,4 +45,9 @@ public interface RemoteWmsTransferSlipFeignApi {
     @PostMapping("/feign/wms/transfer/slip/material/date/warehouse/quantity")
     R<Map<Long,WmsTransferSlipInfoVO>> materialQuantityByDateAndWarehouse(@RequestBody RawMaterialReportDTO dto);
 
+
+    @ApiOperation("根据时间获取调拨单目标仓库为指定仓库的指定物料数量")
+    @PostMapping("/feign/wms/transfer/slip/material/date/warehouse/quantity")
+    R<Map<String,BigDecimal>> materialQuantityByDateAndWarehouseQuantity(@RequestBody RawMaterialReportDTO dto);
+
 }

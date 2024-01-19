@@ -123,4 +123,12 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     Map<Long, WmsTransferSlipInfoVO> materialQuantityByDateAndWarehouse(RawMaterialReportDTO dto);
+
+
+    /**
+     * 根据时间获取调拨单目标仓库为指定仓库的指定物料数量
+     * @param dto
+     * @return
+     */
+    Map<String,BigDecimal> materialQuantityByDateAndWarehouseQuantity(RawMaterialReportDTO dto);
 }
