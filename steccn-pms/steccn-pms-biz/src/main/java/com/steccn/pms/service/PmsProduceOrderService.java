@@ -324,4 +324,15 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Map<String, BigDecimal> orderDetailOtherEnergyPf(LocalDate start, LocalDate end, List<Integer> officeIdList);
+
+    /**
+     * 电能源类型的产量
+     *
+     * @param start        开始日期
+     * @param end          结束日期
+     * @param officeIdList officeId集合
+     * @param thickList    厚度集合
+     * @return
+     */
+    Map<String, BigDecimal> orderDetailElectricEnergy(LocalDate start, LocalDate end, List<Integer> officeIdList,List<BigDecimal> thickList);
 }

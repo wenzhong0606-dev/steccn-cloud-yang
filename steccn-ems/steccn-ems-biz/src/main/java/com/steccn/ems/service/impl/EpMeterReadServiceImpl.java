@@ -21,10 +21,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.CommonReportDTO;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.dto.ValidList;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
@@ -54,6 +51,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 import com.steccn.wms.dto.WmsStockInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
@@ -1169,123 +1167,30 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         //查询能耗的全量数据表
         List<EpEnergyConsumeDTO> consumeTable = consumeTable(dateSet, energyType, nodeLinkMeterMap);
+        Set<BigDecimal> thickSet = consumeTable.stream().map(EpEnergyConsumeDTO::getThick).collect(Collectors.toSet());
+
         //获取生产明细样例表
         List<EpMeterReadDistantDTO> orderList = orderDetail(dateSet, nodeLinkMeterMap.values());
 
         //获取所有节点的具体信息
         Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
-        EpPartition defaultPartition = new EpPartition();
-        //获取深加工产线和基片产线
-        Set<Integer> jpLineSet = getLine(PmManagerConstant.UROPATAGIA);
-        Set<Integer> sjgLineSet = getLine(PmManagerConstant.DEEP_PROCESSING);
-        //获取深加工产线和基片产线的每一行对应的产量
-        List<QtEmsPullAmountDTO> jpDataList = Lists.newArrayList();
-        List<EpMeterReadRowDTO> sjgDataList = Lists.newArrayList();
-        //获取产量-区分深加工和基片车间
-        Map<Long, EpMeterReadRowDTO> orderMap = Maps.newHashMap();
-        //因为同一时间 一条产线上 生产订单只会存在一个
-        List<EpMeterReadRowDTO> orderRowList = Lists.newArrayList();
         //查询所有节点的产线父节点
         Set<Integer> nodeOfficeIdSet = partitionMap.values().stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
-        Map<Integer, Integer> parentLineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(nodeOfficeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
-        orderList.forEach(ele -> {
-            EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
-            rowDTO.setUuid(IdWorker.getId());
-            BeanUtils.copyProperties(ele, rowDTO);
-            Long nodeId = meterNodeMap.get(ele.getMeterId());
-            EpPartition epPartition = partitionMap.getOrDefault(nodeId, defaultPartition);
-            //获取当前节点产线父节点
-            Integer lineId = parentLineMap.get(epPartition.getOfficeId());
-            rowDTO.setProductLineId(lineId);
-            if (sjgLineSet.contains(lineId)) {
-                //深加工产线节点
-                rowDTO.setProductLineId(lineId);
-                sjgDataList.add(rowDTO);
-            } else if (jpLineSet.contains(lineId)) {
-                //基片产线节点
-                rowDTO.setProductLineId(lineId);
-                jpDataList.add(convertToJpDto(rowDTO, lineId));
-            }
-            orderMap.put(rowDTO.getUuid(), rowDTO);
-            orderRowList.add(rowDTO);
-        });
-        //获取基片和深加工的产量
-        List<QtEmsPullAmountDTO> jpNumList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.getEmsPullAmount(new ValidList<>(jpDataList)), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-        jpNumList.forEach(ele -> {
-            EpMeterReadRowDTO jpRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
-            jpRowDTO.setYield(ele.getPullAmount());
-        });
-        List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-        sjgNumList.forEach(ele -> {
-            EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
-            sjgRowDTO.setYield(ele.getYield());
-        });
-
-        //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
-        Map<Long, EpChildTypeDTO> childTypeMap = epPartitionService.childTypeMap(energyType);
-        childTypeMap.forEach((k, v) -> v.setAccount(nodeLinkMeterMap.get(k)));
-
-        //考虑性能优化
-        Map<Long, List<EpPartitionVO>> allChildren = epPartitionService.getAllChildren(nodeLinkMeterMap.keySet());
-
-        //获取所有产线的父节点-不包含父节点
-        Map<Long, Set<Long>> lineParentMap = getLineParentMap(partitionMap.values(), jpLineSet, sjgLineSet);
-        EpPartition root = root(partitionMap.values());
-        //根节点为空，则直接返回
-        if (Objects.isNull(root)) {
-            return Lists.newArrayList();
-        }
-        //获取父节点的产线孩子节点-不含有根节点
-        Map<Long, Set<Long>> lineChildrenMap = getLineChildrenMap(lineParentMap);
-        lineChildrenMap.remove(root.getId());
-
-        //保存所有的unitMap
-        Map<String, Map<Long, BigDecimal>> unitMapCol = Maps.newHashMap();
-        //构建产量的全量数据表
-        for (EpEnergyConsumeDTO consumeDTO : consumeTable) {
-            //构建单耗map
-            Map<Long, BigDecimal> unitMap = Maps.newLinkedHashMap();
-            consumeDTO.setYieldMap(unitMap);
-            unitMapCol.put(consumeDTO.getReadDate() + "_" + consumeDTO.getClassId() + "_" + consumeDTO.getThick(), unitMap);
-            //遍历应该考虑从下向上遍历--参考能耗全量数据表
-            childTypeMap.forEach((k, v) -> {
-                EpInstrumentAccountDTO account = v.getAccount();
-                //保证当前节点
-                if (Objects.nonNull(account) && Objects.nonNull(account.getEntityTable())) {
-                    EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
-                    Integer lineId = parentLineMap.get(epPartition.getOfficeId());
-                    if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && (sjgLineSet.contains(lineId) || jpLineSet.contains(lineId))) {
-                        //若空格所在列的节点是产线节点L或L的下级节点，则查询条件为“产线 = L”
-                        //过滤出相同的班次日期，相同班次，相同厚度的订单
-                        List<BigDecimal> yieldSumList = orderRowList.stream().filter(ele -> ele.getReadDate().equals(consumeDTO.getReadDate()) &&
-                                Objects.equals(ele.getClassId(), consumeDTO.getClassId()) &&
-                                Objects.equals(ele.getThick(), consumeDTO.getThick()) &&
-                                Objects.equals(ele.getMeterId(), account.getId())
-                        ).filter(ele -> lineId.equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
-                        BigDecimal yieldSum = BigDecimalUtil.sum(yieldSumList);
-                        unitMap.put(epPartition.getId(), yieldSum);
-                        //获取当前节点的所有孩子节点
-                        Set<Long> childrenIdSet = allChildren.getOrDefault(epPartition.getId(), Lists.newArrayList()).stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
-                        childrenIdSet.forEach(ele -> unitMap.put(ele, BigDecimalUtil.add(unitMap.get(ele), yieldSum)));
-                    } else if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && lineChildrenMap.containsKey(account.getPartitionNode())) {
-                        //若空格所在列的节点是产线节点的上级节点，则查询条件为“产线 = 该上级节点以下所有产线节点”
-                        Set<Long> lineIdSet = lineChildrenMap.get(account.getPartitionNode());
-                        Set<Integer> officeIdSet = Sets.newHashSet();
-                        lineIdSet.forEach(ele -> {
-                            officeIdSet.add(partitionMap.get(ele).getOfficeId());
-                        });
-                        List<BigDecimal> workShopYieldSumList = orderRowList.stream().filter(ele -> officeIdSet.contains(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
-                        BigDecimal workShopYieldSum = BigDecimalUtil.sum(workShopYieldSumList);
-                        unitMap.put(epPartition.getId(), workShopYieldSum);
-                    } else if (noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && !unitMap.containsKey(epPartition.getId())) {
-                        //对于班次、产品厚度均为“无”的行，值为“-”的单元格K填入日产量t：
-                        BigDecimal tempSum = null;
-                        for (Map.Entry<String, Map<Long, BigDecimal>> entry : unitMapCol.entrySet()) {
-                            tempSum = BigDecimalUtil.add(tempSum, entry.getValue().get(epPartition.getId()));
-                        }
-                        unitMap.put(epPartition.getId(), tempSum);
-                    }
+        //日期排序
+        LocalDate min = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
+        LocalDate max = dateSet.stream().max((x, y) -> x.compareTo(y)).get();
+        //获取所有产线的产量
+        Map<String, BigDecimal> numMap = FeignOptional.of(() -> remotePmsFeignApi.orderDetailElectricEnergy(new Tuple4DTO<>(min, max, Lists.newArrayList(nodeOfficeIdSet), Lists.newArrayList(thickSet))), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        for (EpEnergyConsumeDTO consume : consumeTable) {
+            consume.setYieldMap(Maps.newHashMap());
+            Map<Long, BigDecimal> consumeMap = consume.getConsumeMap();
+            Map<Long, BigDecimal> yieldMap = consume.getYieldMap();
+            consumeMap.forEach((k,v) ->{
+                EpPartition epPartition = partitionMap.getOrDefault(k,new EpPartition());
+                String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, epPartition.getOfficeId(), consume.getReadDate(), consume.getClassId(), consume.getThick());
+                BigDecimal bigDecimal = numMap.get(joint);
+                if(Objects.nonNull(bigDecimal)){
+                    yieldMap.put(k, bigDecimal);
                 }
             });
         }
