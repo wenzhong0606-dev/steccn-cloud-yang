@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -738,23 +739,17 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 Set<Long> materialIdSet = Sets.newHashSet();
                 //key-生产订单主键 value-物料主键
                 Map<Long, Long> orderMaterialMap = Maps.newHashMap();
-                //工序id集合
-                Set<Long> processIdSet = dbList.stream().map(PmsReportWork::getProcessId).collect(Collectors.toSet());
-                //查询工序的信息
-                List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
-                Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
-                List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
-                SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList, "工序信息不可为空");
-                //工序信息转换
-                Map<Long, Long> craftProcessIdMap = Maps.newHashMap();
-                pmsProduceOrderCraftList.forEach(ele -> craftProcessIdMap.put(ele.getId(), ele.getProcessId()));
-                dbList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
-
-                if (CollUtil.isNotEmpty(pmProcessList)) {
-                    PmProcess pmProcess = pmProcessList.get(pmProcessList.size() - 1);
-                    //过滤工位
-                    dbList = dbList.stream().filter(ele -> ele.getProcessId().equals(pmProcess.getId())).collect(Collectors.toList());
-                }
+                //获取工位id
+                Set<Integer> stationIdSet = dbList.stream().map(PmsReportWork::getStationId).collect(Collectors.toSet());
+                Map<Integer, SysOfficeVO> stationIdMap = FeignOptional.of(() -> remoteOfficeFeign.listById(stationIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //过滤工位
+                dbList = dbList.stream().filter(ele -> {
+                    SysOfficeVO stationOffice = stationIdMap.getOrDefault(ele.getStationId(), new SysOfficeVO());
+                    if (StrUtil.isNotEmpty(stationOffice.getOfficeName()) && stationOffice.getOfficeName().contains("磨边")) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).collect(Collectors.toList());
                 Map<Long, List<PmsReportWork>> orderMap = dbList.stream().collect(Collectors.groupingBy(PmsReportWork::getProduceOrderId));
                 orderList.forEach(order -> {
                     materialIdSet.add(order.getMaterialId());
@@ -795,6 +790,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     Long materialId = orderMaterialMap.get(ele.getProduceOrderId());
                     //根据物料获取单位转换
                     List<SysSpareUnitConversionVO> convertList = convertMap.getOrDefault(materialId, Lists.newArrayList());
+
+
                     if (CollUtil.isNotEmpty(convertList) && Objects.nonNull(sysDictVO)) {
                         Optional<SysSpareUnitConversionVO> first = convertList.stream().filter(v -> v.getConversionUnitId().equals(sysDictVO.getId())).findFirst();
                         if (first.isPresent()) {
@@ -1573,6 +1570,69 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return resMap;
     }
 
+
+    @Override
+    public Map<String, BigDecimal> dateLineClassThickPmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isEmpty(lineIdList)) {
+            return resMap;
+        }
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.dateClassLinePmUnit(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取班次的数据字典
+            SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(morningDict, "早班数据字典不存在");
+            Assert.notNull(nightDict, "晚班数据字典不存在");
+
+            //考虑物料的单位转换
+            //考虑物料的单位转换
+            Set<Long> materialIdSet = dbList.stream().map(PmsUseCountDTO::getMaterialId).collect(Collectors.toSet());
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (type == 0) {
+                //基片
+                //所有工位报工汇总
+                dbList.forEach(ele -> {
+                    Integer classId = 0;
+                    if (nightDict.getId().equals(ele.getClassId())) {
+                        classId = 1;
+                    }
+                    BigDecimal quantity = ele.getQuantity();
+                    if (!sysDict1.equals(sysDict2)) {
+                        quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
+                    }
+                    EqpSpareVO material = materialMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
+
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + classId + "_" + material.getThickQuantity(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                });
+            } else {
+                Set<Integer> stationIds = getEdgStation(lineIdList);
+                dbList.forEach(ele -> {
+                    Integer classId = 0;
+                    if (nightDict.getId().equals(ele.getClassId())) {
+                        classId = 1;
+                    }
+                    if (stationIds.contains(ele.getStationId())) {
+                        BigDecimal quantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity());
+                        if (!sysDict1.equals(sysDict2)) {
+                            quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.SCALE_2);
+                        }
+                        EqpSpareVO material = materialMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
+                        MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + classId + "_" + material.getThickQuantity(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
 
     @Override
     public Map<String, BigDecimal> dateClassLineInStorageUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {

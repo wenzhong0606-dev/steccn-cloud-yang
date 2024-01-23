@@ -439,6 +439,16 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      */
     Map<String, BigDecimal> dateLinePmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
 
+    /**
+     * 获取班次日期，班次，产线的产量 key => line_date_thick
+     * @param lineIdList 产线
+     * @param start      班次日期-开始
+     * @param end        班次日期-结束
+     * @param type       0基片 1深加工
+     * @param unit       单位
+     * @return
+     */
+    Map<String, BigDecimal> dateLineClassThickPmUnit(List<Integer> lineIdList, LocalDate start, LocalDate end, int type, String unit);
 
     /**
      * 获取班次日期，班次，产线的入库量 key => line_date_classId

@@ -9,14 +9,20 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.dto.CommonReportDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.common.util.ShardTimeUtil;
+import com.steccn.dp.vo.DpWeightVO;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.dto.OaGroupCountDTO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -24,9 +30,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
-import com.steccn.pms.dto.PmsPullForceEditDTO;
-import com.steccn.pms.dto.PmsPullForceQueryDTO;
-import com.steccn.pms.dto.PullForceSumDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.vo.PmsPullForceClassQuantity;
@@ -45,6 +49,7 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,6 +67,8 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RedissonClient redissonClient;
+    private final PmsPullForceMapper pmsPullForceMapper;
+    private final OaInfoService oaInfoService;
 
     @Override
     public List<PmsPullForceVO> list(Integer workshopId, String monthDate) {
@@ -432,6 +439,142 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             }
         }
         return resMap;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> pullForceReport(PmsPullForceDashboardDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        List<PmsPullForceDayCountDTO> data = Lists.newArrayList();
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            data = pmsPullForceMapper.selectPullForceByDay2(dto.getStart(), dto.getEnd(), dto.getProductLineId().stream().collect(Collectors.toSet()));
+        }else if(QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)){
+            data = pmsPullForceMapper.selectPullForceByClass(dto.getStart(), dto.getEnd(), dto.getProductLineId().stream().collect(Collectors.toSet()));
+        }else if(QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)){
+            data = pmsPullForceMapper.selectPullForceByMonth2(dto.getStart(), dto.getEnd(), dto.getProductLineId().stream().collect(Collectors.toSet()));
+        }
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> result = new SteccnTableDataDTO<>();
+        //组表头
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        if(QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)){
+            List<SteccnTableColumn> columns = Lists.newArrayList();
+            columns.add(new SteccnTableColumn("productLine","产线",null));
+            for (int i = 1; i < dateList.size(); i++) {
+                LocalDate start = dateList.get(i - 1);
+                columns.add(new SteccnTableColumn(start.toString(),start.getMonthValue()+"月"+start.getDayOfMonth()+"日",null));
+            }
+            columns.add(new SteccnTableColumn("count","小计",null));
+            result.setColumns(columns);
+        }else if(QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)){
+            List<SteccnTableColumn> columns = Lists.newArrayList();
+            columns.add(new SteccnTableColumn("productLine","产线",null));
+            columns.add(new SteccnTableColumn("classOrder","班次",null));
+            columns.add(new SteccnTableColumn("classGroup","班组",null));
+            for (int i = 1; i < dateList.size(); i++) {
+                LocalDate start = dateList.get(i - 1);
+                columns.add(new SteccnTableColumn("head"+i,start.getMonthValue()+"月"+start.getDayOfMonth()+"日",
+                        Lists.newArrayList(new SteccnTableColumn("classGroup","班组",null),new SteccnTableColumn(start.toString(),"拉引量(吨)",null))));
+            }
+            columns.add(new SteccnTableColumn("count","小计",null));
+            result.setColumns(columns);
+        }else if(QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)){
+            List<SteccnTableColumn> columns = Lists.newArrayList();
+            columns.add(new SteccnTableColumn("productLine","产线",null));
+            for (int i = 1; i < dateList.size(); i++) {
+                LocalDate start = dateList.get(i - 1);
+                columns.add(new SteccnTableColumn(start.toString(),start.getYear()+"年"+start.getMonthValue()+"月",null));
+            }
+            columns.add(new SteccnTableColumn("count","小计",null));
+            result.setColumns(columns);
+        }
+        //组数据
+        List<Map<String,String>> tableLists = Lists.newArrayList();
+        Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(dto.getProductLineId().stream().collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysOfficeVO> officeList = officeMap.values().stream().sorted(Comparator.comparingInt(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        //循环list循环
+        Map<String,BigDecimal> countMap = Maps.newHashMap();
+        //班次
+        if(QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)){
+            //获取班组班次关系
+            Map<String, OaGroupCountDTO> groupMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(new TripleDTO<>(dto.getStart(), dto.getEnd(), OaConstant.NO)), FeignConstant.OA_SERVICE_NAME).get();
+            for(SysOfficeVO officeTmp:officeList){
+                //产线合计
+                Map<String,BigDecimal> productLineCountMap = Maps.newHashMap();
+                for(int i = 0; i < 2; i++){
+                    Map<String,String> line = Maps.newHashMap();
+                    line.put("productLine",officeTmp.getOfficeName());
+                    line.put("type","0");
+                    String classOrder;
+                    if(i==0){
+                        classOrder = "早班";
+                    }else {
+                        classOrder = "晚班";
+                    }
+                    line.put("classOrder",classOrder);
+                    //小计
+                    BigDecimal count = BigDecimal.ZERO;
+                    for (int j = 1; j < dateList.size(); j++) {
+                        LocalDate date = dateList.get(j - 1);
+                        line.put("classGroup",groupMap.getOrDefault(date.toString()+"-"+ classOrder,new OaGroupCountDTO()).getGroupName());
+                        int finalI = i;
+                        PmsPullForceDayCountDTO dataTmp = data.stream().filter(v -> v.getProductLineId().equals(officeTmp.getId())
+                                && v.getPullForceDateStr().equals(date.toString())
+                                && v.getClassId().equals(finalI ==0 ? 1587279237069422592L: 1587279280585326592L))
+                                .findFirst().orElse(new PmsPullForceDayCountDTO());
+                        line.put(date.toString(),Objects.isNull(dataTmp.getQuantity()) ? null : dataTmp.getQuantity().toString());
+                        //小计
+                        count = BigDecimalUtil.add(count,dataTmp.getQuantity());
+                        BigDecimalUtil.accumulate(productLineCountMap,date.toString(),dataTmp.getQuantity());
+                        BigDecimalUtil.accumulate(countMap,date.toString(),dataTmp.getQuantity());
+                        productLineCountMap.put("count",dataTmp.getQuantity());
+                    }
+                    line.put("count",Objects.isNull(count) ? null : count.toString());
+                    BigDecimalUtil.accumulate(productLineCountMap,"count",count);
+                    BigDecimalUtil.accumulate(countMap,"count",count);
+                    tableLists.add(line);
+                }
+                //产线合计
+                Map<String,String> countLine = Maps.newHashMap();
+                countLine.put("type","1");
+                for(int i = 1; i < dateList.size(); i++){
+                    LocalDate date = dateList.get(i - 1);
+                    countLine.put(date.toString(),Objects.isNull(productLineCountMap.get(date.toString())) ? null : productLineCountMap.get(date.toString()).toString());
+                }
+                countLine.put("count",Objects.isNull(productLineCountMap.get("count")) ? null : countMap.get("count").toString());
+                tableLists.add(countLine);
+            }
+        }else {
+            for(SysOfficeVO officeTmp:officeList){
+                Map<String,String> line = Maps.newHashMap();
+                line.put("productLine",officeTmp.getOfficeName());
+                line.put("type","0");
+                for (int i = 1; i < dateList.size(); i++) {
+                    LocalDate date = dateList.get(i - 1);
+                    PmsPullForceDayCountDTO dataTmp = data.stream().filter(v -> v.getProductLineId().equals(officeTmp.getId())
+                            && v.getPullForceDateStr().equals(QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity) ? date.format(DateTimeFormatter.ofPattern("yyyy-MM")) : date.toString())).findFirst().orElse(new PmsPullForceDayCountDTO());
+                    line.put(date.toString(),Objects.isNull(dataTmp.getQuantity()) ? null : dataTmp.getQuantity().toString());
+                    //累加日期和产线
+                    BigDecimalUtil.accumulate(countMap,date.toString(),dataTmp.getQuantity());
+                    BigDecimalUtil.accumulate(countMap,officeTmp.getId().toString(),dataTmp.getQuantity());
+                }
+                //累加小计
+                BigDecimalUtil.accumulate(countMap,"count",countMap.get(officeTmp.getId().toString()));
+                line.put("count",Objects.isNull(countMap.get(officeTmp.getId().toString())) ? null : countMap.get(officeTmp.getId().toString()).toString());
+                tableLists.add(line);
+            }
+        }
+        //合计
+        Map<String,String> countLine = Maps.newHashMap();
+        countLine.put("type","2");
+        for(int i = 1; i < dateList.size(); i++){
+            LocalDate date = dateList.get(i - 1);
+            countLine.put(date.toString(),Objects.isNull(countMap.get(date.toString())) ? null : countMap.get(date.toString()).toString());
+        }
+        countLine.put("count",Objects.isNull(countMap.get("count")) ? null : countMap.get("count").toString());
+        tableLists.add(countLine);
+        result.setTableList(tableLists);
+        return result;
     }
 }
 

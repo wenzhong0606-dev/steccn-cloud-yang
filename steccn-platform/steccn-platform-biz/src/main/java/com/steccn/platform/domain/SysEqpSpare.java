@@ -163,4 +163,6 @@ public class SysEqpSpare implements Serializable {
      * 单位
      */
     private Long unitId;
+
+    private Integer productProperty;
 }

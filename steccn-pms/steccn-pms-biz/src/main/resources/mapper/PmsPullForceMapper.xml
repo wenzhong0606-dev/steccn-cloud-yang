@@ -81,4 +81,46 @@
         GROUP BY  pullForceDateStr
     </select>
 
+    <select id="selectPullForceByDay2" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
+        SELECT SUM(quantity) AS quantity,
+        DATE_FORMAT(pull_force_date,'%Y-%m-%d') pullForceDateStr,
+        product_line_id AS productLineId
+        FROM pms_pull_force
+        WHERE del_flag = 0
+        AND pull_force_date between #{start} AND #{end}
+        AND product_line_id IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+        GROUP BY  pullForceDateStr,productLineId
+    </select>
+
+    <select id="selectPullForceByMonth2" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
+        SELECT SUM(quantity) AS quantity,
+        DATE_FORMAT(pull_force_date,'%Y-%m') pullForceDateStr,
+        product_line_id AS productLineId
+        FROM pms_pull_force
+        WHERE del_flag = 0
+        AND pull_force_date between #{start} AND #{end}
+        AND product_line_id IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+        GROUP BY  pullForceDateStr,productLineId
+    </select>
+
+    <select id="selectPullForceByClass" resultType="com.steccn.pms.dto.PmsPullForceDayCountDTO">
+        SELECT SUM(quantity) AS quantity,
+        DATE_FORMAT(pull_force_date,'%Y-%m-%d') pullForceDateStr,
+        product_line_id AS productLineId,
+        classes_id AS classId
+        FROM pms_pull_force
+        WHERE del_flag = 0
+        AND pull_force_date between #{start} AND #{end}
+        AND product_line_id IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+        GROUP BY  pullForceDateStr,productLineId,classId
+    </select>
 </mapper>

@@ -1,10 +1,12 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 
+import com.steccn.pms.dto.PmsPullForceDashboardDTO;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
@@ -51,5 +53,11 @@ public class PmsPullForceController {
     @PostMapping
     public R<Boolean> edit(@Validated(UpdateGroup.class)@Valid @RequestBody ValidList<PmsPullForceEditDTO> dtoList) {
         return R.success(pmsPullForceService.edit(dtoList.getList()));
+    }
+
+    @ApiOperation("拉引量报表")
+    @PostMapping("/report")
+    public R<SteccnTableDataDTO> report(@Valid @RequestBody PmsPullForceDashboardDTO dto){
+        return R.success(pmsPullForceService.pullForceReport(dto));
     }
 }

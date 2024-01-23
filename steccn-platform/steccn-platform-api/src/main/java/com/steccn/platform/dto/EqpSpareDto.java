@@ -159,4 +159,9 @@ public class EqpSpareDto {
      * 单位
      */
     private Long unitId;
+
+    /**
+     * 产品属性
+     */
+    private Integer productProperty;
 }

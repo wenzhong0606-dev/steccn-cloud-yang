@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 /**
  * @author yequan
@@ -92,6 +93,21 @@ public class MapUtil {
         V v = map.get(key);
         V apply = function.apply(v, value);
         map.put(key, apply);
+    }
+
+    /**
+     * 单层map 相同key存放到list中
+     *
+     * @param map   map集合
+     * @param key   键
+     * @param value 值
+     * @param <K>   key泛型
+     * @param <V>   value泛型
+     */
+    public static <K, V> void putIfNotNull(Map<K, V> map, K key, V value) {
+        if (Objects.nonNull(value)) {
+            map.put(key, value);
+        }
     }
 
 }

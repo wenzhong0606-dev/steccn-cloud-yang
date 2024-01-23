@@ -3,6 +3,7 @@ package com.steccn.pms.feign;
 import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
@@ -187,4 +188,9 @@ public interface RemotePmsFeignApi {
     @ApiOperation("获取其他能源类型的拉引量")
     @PostMapping("/feign/pms/produce/order/other/energy/pf")
     R<Map<String, BigDecimal>> orderDetailOtherEnergyPf(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO);
+
+    @ApiOperation("获取电能源类型的产量")
+    @PostMapping("/feign/pms/produce/order/electric/energy/order")
+    R<Map<String, BigDecimal>> orderDetailElectricEnergy(@RequestBody Tuple4DTO<LocalDate, LocalDate, List<Integer>, List<BigDecimal>> tupleDTO);
+
 }

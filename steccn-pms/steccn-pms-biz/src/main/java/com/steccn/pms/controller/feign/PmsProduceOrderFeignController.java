@@ -3,6 +3,7 @@ package com.steccn.pms.controller.feign;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsCompleteStorage;
@@ -171,4 +172,11 @@ public class PmsProduceOrderFeignController {
     R<Map<String, BigDecimal>> orderDetailOtherEnergyPf(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tupleDTO) {
         return R.success(pmsProduceOrderService.orderDetailOtherEnergyPf(tupleDTO.getField1(),tupleDTO.getField2(), tupleDTO.getField3()));
     }
+
+    @ApiOperation("获取电能源类型的产量")
+    @PostMapping("/electric/energy/order")
+    R<Map<String, BigDecimal>> orderDetailElectricEnergy(@RequestBody Tuple4DTO<LocalDate, LocalDate, List<Integer>,List<BigDecimal>> tupleDTO){
+        return R.success(pmsProduceOrderService.orderDetailElectricEnergy(tupleDTO.getField1(),tupleDTO.getField2(), tupleDTO.getField3(),tupleDTO.getField4()));
+    }
+
 }
