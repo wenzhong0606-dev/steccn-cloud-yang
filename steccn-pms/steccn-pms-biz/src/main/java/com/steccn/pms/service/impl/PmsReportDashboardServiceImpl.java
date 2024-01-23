@@ -11,40 +11,41 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.StackGraphDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.platform.feign.*;
+import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.controller.ProduceOrderController;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.PmsPullForceDayCountDTO;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.DashboardProducePageListVO;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
+import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
+import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +82,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final PmsPullForceMapper pmsPullForceMapper;
     private final PmsOfficeManager pmsOfficeManager;
+    private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+    private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -649,5 +653,168 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         }
         result.setPercent(BigDecimalUtil.percent(result.getPullForce(),result.getWeightCount(),2));
         return result;
+    }
+
+    @Override
+    public PmsDeepProcessingNumVO deepProcessingNum(PmsOperateDriverDTO dto) {
+        PmsDeepProcessingNumVO resVO = new PmsDeepProcessingNumVO();
+        //领用总数
+        //获取深加工车间下的工位绑定的线边仓
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listWorkshop(1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> stationIds = sysOfficeVOList.stream().filter(v -> v.getOfficeType().equals("13")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取工位绑定的线边仓数据
+        Map<Integer, List<SysStationWarehouseVO>> stationMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> warehouseIds = stationMap.values().stream().flatMap(List::stream).map(SysStationWarehouseVO::getWarehouseId).collect(Collectors.toList());
+        //获取生产订单的执行时间为当前时间段的生产订单生产物料的主物料
+        List<Long> materialIds =  pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(),dto.getEnd());
+        //获取调拨单目标货架为线边仓的指定物料数
+        RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
+        rawMaterialReportDTO.setStartDate(dto.getStart());
+        rawMaterialReportDTO.setEndDate(dto.getEnd());
+        rawMaterialReportDTO.setMaterialIds(materialIds);
+        rawMaterialReportDTO.setWarehouseIds(warehouseIds);
+        Map<Long, WmsTransferSlipInfoVO> receiveMap = FeignOptional.of(() -> remoteWmsTransferSlipFeignApi.materialQuantityByDateAndWarehouse(rawMaterialReportDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        Set<Long> materialIdSet = receiveMap.keySet();
+        //进行单位转换
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        BigDecimal receiveQuantity = BigDecimal.ZERO;
+        for (WmsTransferSlipInfoVO value : receiveMap.values()) {
+            BigDecimal m= UnitConvertUtil.convertMaterial(materialConvertMap.get(value.getMaterialId()), value.getUnit(), sqSysDict.getId(), value.getQuantity(), 4);
+            receiveQuantity = BigDecimalUtil.add(receiveQuantity,m);
+        }
+        resVO.setReceiveQuantity(receiveQuantity);
+        //耗用总数（取报工物料耗用总数）
+        //获取深加工的八条产线的id
+        Set<String> lineNames = Sets.newHashSet();
+        lineNames.add(PmManagerConstant.DeepProcessingLine.ONE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.TWO.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.THREE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.FOUR.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.FIVE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.SIX.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.SEVEN.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
+        Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> lineIdList = Lists.newArrayList();
+        sysOfficeVOMap.values().forEach(e->lineIdList.add(e.getId()));
+        Map<Integer, BigDecimal> consumptionMap  = pmsReportWorkService.getDateRangeUseCountUnit(lineIdList, dto.getStart(), dto.getEnd(), PmManagerConstant.MEASURE_UNIT_SM);
+        BigDecimal consumptionQuantity = BigDecimal.ZERO;
+        for (BigDecimal value : consumptionMap.values()) {
+            BigDecimalUtil.add(consumptionQuantity,value);
+        }
+        resVO.setConsumptionQuantity(consumptionQuantity);
+        resVO.setUseQuantity(BigDecimalUtil.subtract(receiveQuantity,consumptionQuantity));
+        return resVO;
+    }
+
+    @Override
+    public EpChartGraphVO<List<String>,TripleDTO<BigDecimal,BigDecimal,BigDecimal>> deepProcessingHistogram(PmsOperateDriverDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularity, "粒度不存在");
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(),dto.getEnd());
+        //领用总数
+        //获取深加工车间下的工位绑定的线边仓
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listWorkshop(1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> stationIds = sysOfficeVOList.stream().filter(v -> v.getOfficeType().equals("13")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取工位绑定的线边仓数据
+        Map<Integer, List<SysStationWarehouseVO>> stationMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> warehouseIds = stationMap.values().stream().flatMap(List::stream).map(SysStationWarehouseVO::getWarehouseId).collect(Collectors.toList());
+        //获取生产订单的执行时间为当前时间段的生产订单生产物料的主物料
+        List<Long> materialIds =  pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(),dto.getEnd());
+        //获取调拨单目标货架为线边仓的指定物料数
+        RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
+        rawMaterialReportDTO.setStartDate(dto.getStart());
+        rawMaterialReportDTO.setEndDate(dto.getEnd());
+        rawMaterialReportDTO.setMaterialIds(materialIds);
+        rawMaterialReportDTO.setWarehouseIds(warehouseIds);
+        Map<String, BigDecimal> receiveMap = FeignOptional.of(() -> remoteWmsTransferSlipFeignApi.materialQuantityByDateAndWarehouseQuantity(rawMaterialReportDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        //耗用数（磨边工位报工物料消耗数）
+        //磨边工位
+        Set<Integer> edgingStationIds = sysOfficeVOList.stream().filter(v -> v.getOfficeType().equals("13") && v.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取深加工的八条产线的id
+        Set<String> lineNames = Sets.newHashSet();
+        lineNames.add(PmManagerConstant.DeepProcessingLine.ONE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.TWO.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.THREE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.FOUR.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.FIVE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.SIX.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.SEVEN.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
+        Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> lineIdSet = Sets.newHashSet();
+        sysOfficeVOMap.values().forEach(e->lineIdSet.add(e.getId()));
+        Map<String, BigDecimal> consumptionMap = pmsReportWorkService.lineUseCount(lineIdSet, edgingStationIds, dto.getStart(), dto.getEnd(), granularity);
+        //不良数
+        Map<String, BigDecimal> badnessQuantityMap = pmsReportWorkService.badnessQuantity(lineIdSet, edgingStationIds, dto.getStart(), dto.getEnd(), granularity);
+        //组数据
+        EpChartGraphVO<List<String>,TripleDTO<BigDecimal,BigDecimal,BigDecimal>> res = new EpChartGraphVO<>();
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        List<String> xAisList = Lists.newArrayList();
+        List<BigDecimal> receiveQuantityList = Lists.newArrayList();
+        List<BigDecimal> consumptionQuantityList = Lists.newArrayList();
+        List<BigDecimal> badnessQuantityList = Lists.newArrayList();
+        List<BigDecimal> useQuantityList = Lists.newArrayList();
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate ele = timeList.get(i - 1);
+            xAisList.add(XAxisUtil.convert(granularity, ele));
+            //获取值的方式必须统一
+            String key = MysqlDateKeyUtil.convert(granularity, ele);
+            //领用数
+            BigDecimal receive = receiveMap.get(key) == null ? BigDecimal.ZERO : receiveMap.get(key);
+            //耗用数
+            BigDecimal consumption = consumptionMap.get(key) == null ? BigDecimal.ZERO : consumptionMap.get(key);
+            //不良数
+            BigDecimal badness = badnessQuantityMap.get(key)== null ? BigDecimal.ZERO : badnessQuantityMap.get(key);
+            //实际使用数（耗用数-不良数）
+            BigDecimal use = BigDecimalUtil.subtract(consumption, badness, 3);
+            receiveQuantityList.add(receive);
+            consumptionQuantityList.add(consumption);
+            badnessQuantityList.add(badness);
+            useQuantityList.add(use);
+        }
+        QtSeriesDataDTO<String,BigDecimal> receiveDataVO = new QtSeriesDataDTO<String,BigDecimal>();
+        receiveDataVO.setName("领用数量"+PmManagerConstant.MEASURE_UNIT_SM);
+        receiveDataVO.setData(receiveQuantityList);
+        QtSeriesDataDTO<String,BigDecimal> consumptionDataVO = new QtSeriesDataDTO<String,BigDecimal>();
+        consumptionDataVO.setName("耗用数"+PmManagerConstant.MEASURE_UNIT_SM);
+        consumptionDataVO.setData(consumptionQuantityList);
+        QtSeriesDataDTO<String,BigDecimal> badnessDataVO = new QtSeriesDataDTO<String,BigDecimal>();
+        badnessDataVO.setName("原片不良"+PmManagerConstant.MEASURE_UNIT_SM);
+        badnessDataVO.setData(badnessQuantityList);
+        QtSeriesDataDTO<String,BigDecimal> useDataVO = new QtSeriesDataDTO<String,BigDecimal>();
+        useDataVO.setName("实际使用数"+PmManagerConstant.MEASURE_UNIT_SM);
+        useDataVO.setData(useQuantityList);
+        seriesDataVO.add(receiveDataVO);
+        seriesDataVO.add(consumptionDataVO);
+        seriesDataVO.add(badnessDataVO);
+        seriesDataVO.add(useDataVO);
+        res.setSeriesDataVO(seriesDataVO);
+        res.setXData(xAisList);
+        List<String> legends =   Arrays.asList( "领用数量"+PmManagerConstant.MEASURE_UNIT_SM,"原片不良"+PmManagerConstant.MEASURE_UNIT_SM,"耗用数"+PmManagerConstant.MEASURE_UNIT_SM,"实际使用数"+PmManagerConstant.MEASURE_UNIT_SM);
+        res.setLegend(legends);
+        //数据合计
+        //领用总数
+        BigDecimal receiveQuantity = BigDecimal.ZERO;
+        for (BigDecimal value : receiveMap.values()) {
+            receiveQuantity = BigDecimalUtil.add(receiveQuantity,value);
+        }
+        //耗用总数
+        BigDecimal consumptionQuantity = BigDecimal.ZERO;
+        for (BigDecimal value : consumptionMap.values()) {
+            consumptionQuantity = BigDecimalUtil.add(consumptionQuantity,value);
+        }
+        //不良数
+        BigDecimal badnessQuantity = BigDecimal.ZERO;
+        for (BigDecimal value : badnessQuantityMap.values()) {
+            badnessQuantity =  BigDecimalUtil.add(badnessQuantity,value);
+        }
+        TripleDTO<BigDecimal, BigDecimal, BigDecimal> tripleDTO = new TripleDTO<>();
+        tripleDTO.setField1(receiveQuantity);
+        tripleDTO.setField2(consumptionQuantity);
+        tripleDTO.setField3(BigDecimalUtil.subtract(consumptionQuantity,badnessQuantity));
+        res.setOther(tripleDTO);
+        return res;
     }
 }

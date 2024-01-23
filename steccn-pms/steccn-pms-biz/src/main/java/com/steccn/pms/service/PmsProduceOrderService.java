@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
@@ -324,6 +325,22 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Map<String, BigDecimal> orderDetailOtherEnergyPf(LocalDate start, LocalDate end, List<Integer> officeIdList);
+
+
+    /**
+     * 根据日期获取生产订单生产所使用的主物料
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Long> listOrderMaterialIdByDate(LocalDate start, LocalDate end);
+
+    /**
+     * 根据日期和订单确定生产订单的主物料
+     * @param dpOnOffCountVOS
+     * @return
+     */
+    Map<Long, DpOnOffCountVO> mainMaterial(List<DpOnOffCountVO> dpOnOffCountVOS);
 
     /**
      * 电能源类型的产量

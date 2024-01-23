@@ -128,7 +128,6 @@ public interface PmManagerConstant {
     String PROPYLENE_CLASS = "车间倒班-丙班";
 
 
-
     /**
      * 测量单位
      */
@@ -534,6 +533,7 @@ public interface PmManagerConstant {
      * 甘特图id前缀
      */
     String GANTT_PREFIX = "gstcid-";
+
     /**
      * 入库出库凭证状态
      */
@@ -616,7 +616,7 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum PmRequisitionWorkFlow {
-        PRODUCT(0, "生产领料"), DEPARTMENT(1, "部门领料"), OTHER(2, "其他领料"), FIX(3, "维修领料"),UPKEEP(4, "保养领料");
+        PRODUCT(0, "生产领料"), DEPARTMENT(1, "部门领料"), OTHER(2, "其他领料"), FIX(3, "维修领料"), UPKEEP(4, "保养领料");
 
         private Integer code;
         private String name;
@@ -647,9 +647,9 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum classesType {
-        A(1,"早班"),
+        A(1, "早班"),
 
-        B(2,"晚班");
+        B(2, "晚班");
 
         private Integer code;
         private String name;
@@ -671,21 +671,47 @@ public interface PmManagerConstant {
     @AllArgsConstructor
     enum classGroupType {
 
-        A("A","甲班"),
+        A("A", "甲班"),
 
-        B("B","乙班"),
+        B("B", "乙班"),
 
-        C("C","丙班");
+        C("C", "丙班");
 
         private String code;
         private String name;
-
 
 
         public static String getCodeByName(String name) {
             for (classGroupType value : classGroupType.values()) {
                 if (value.getName().equals(name)) {
                     return value.getCode();
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 深加工产线
+     */
+    @Getter
+    @AllArgsConstructor
+    enum DeepProcessingLine {
+        ONE("深加工一产线", "1"),
+        TWO("深加工二产线", "2"),
+        THREE("深加工三产线", "3"),
+        FOUR("深加工四产线", "4"),
+        FIVE("深加工五产线", "5"),
+        SIX("深加工六产线", "6"),
+        SEVEN("深加工七产线", "7"),
+        EIGHT("深加工八产线", "8");
+        private final String name;
+        private final String num;
+
+        public static String getNameByNum(String num) {
+            for (DeepProcessingLine value : DeepProcessingLine.values()) {
+                if (value.getNum().equals(num)) {
+                    return value.getName();
                 }
             }
             return null;
@@ -715,5 +741,36 @@ public interface PmManagerConstant {
             }
             return 0;
         }
+    }
+
+    /**
+     * 粒度
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtGranularityEnum {
+        //粒度 小时 天 周 月 季度 年
+        HOUR(0, "小时", "H"),
+        DAY(1, "天", "D"),
+        WEEK(2, "周", "W"),
+        MONTH(3, "月", "M"),
+        QUARTER(4, "季度", "Q"),
+        YEAR(5, "年", "Y"),
+        NONE(6, "无粒度", "N"),
+        CLASS(7, "班次", "C");
+
+        private Integer code;
+        private String name;
+        private String type;
+
+        public static QtGranularityEnum getByName(String name) {
+            for (QtGranularityEnum value : QtGranularityEnum.values()) {
+                if (value.getName().equals(name)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
     }
 }

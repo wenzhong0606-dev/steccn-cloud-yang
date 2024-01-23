@@ -728,6 +728,39 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return collect;
     }
 
+    @Override
+    public List<SysOfficeVO> listWorkshop(Integer type) {
+        List<SysOfficeVO> resList = Lists.newArrayList();
+        //0表示基片
+        String workshop = "";
+        if(type.equals(0)){
+            workshop = "基片";
+        }else {
+            workshop = "深加工";
+        }
+        List<SysOffice> workShopList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.WORKSHOP)
+                //状态（0正常 1删除 2停用）
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .like(SysOffice::getOfficeName, workshop));
+        List<String> parentCodes = workShopList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+        List<SysOffice> productList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.PRODUCT_LINE)
+                //状态（0正常 1删除 2停用）
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getParentCode,parentCodes));
+        List<String> stationParentCodes = productList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+        //工位
+        List<SysOffice> stationList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.STATION)
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getParentCode, stationParentCodes));
+      resList.addAll(BeanUtil.copyToList(workShopList,SysOfficeVO.class));
+      resList.addAll(BeanUtil.copyToList(productList,SysOfficeVO.class));
+      resList.addAll(BeanUtil.copyToList(stationList,SysOfficeVO.class));
+      return resList;
+    }
+
 
     /**
      * 根据组织机构类型获取数据

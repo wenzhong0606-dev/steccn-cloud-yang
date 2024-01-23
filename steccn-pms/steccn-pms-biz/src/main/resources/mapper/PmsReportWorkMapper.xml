@@ -1198,5 +1198,185 @@
         DATE_FORMAT(rw.class_date,'%Y')  ,
         po.material_id
     </select>
+    <select id="consumptionDay" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        rw.class_date field1,
+        pcdi.material_id field2,
+        sum( pcdi.quantity ) AS field3,
+        pcdi.unit_id field4
+        FROM
+        pms_report_work rw
+        JOIN pms_produce_order po ON po.id = rw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = rw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        AND rw.product_line_id in
+        <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.station_id in
+        <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+            #{stationId}
+        </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        WHERE
+        rw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND po.del_flag = 0
+        GROUP BY
+        field1,
+        pcdi.material_id,
+        pcdi.unit_id
+    </select>
+    <select id="consumptionMonth" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT(rw.class_date,'%Y-%m')  field1,
+        pcdi.material_id field2,
+        sum( pcdi.quantity ) AS field3,
+        pcdi.unit_id field4
+        FROM
+        pms_report_work rw
+        JOIN pms_produce_order po ON po.id = rw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = rw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        AND rw.product_line_id in
+        <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.station_id in
+        <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+            #{stationId}
+        </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        WHERE
+        rw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND po.del_flag = 0
+        GROUP BY
+        field1,
+        pcdi.material_id,
+        pcdi.unit_id
+    </select>
+    <select id="consumptionYear" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT(rw.class_date,'%Y')  field1,
+        pcdi.material_id field2,
+        sum( pcdi.quantity ) AS field3,
+        pcdi.unit_id field4
+        FROM
+        pms_report_work rw
+        JOIN pms_produce_order po ON po.id = rw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = rw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        AND rw.product_line_id in
+        <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.station_id in
+        <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+            #{stationId}
+        </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        WHERE
+        rw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND po.del_flag = 0
+        GROUP BY
+        field1,
+        pcdi.material_id,
+        pcdi.unit_id
+    </select>
+    <select id="badnessDay" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        rw.class_date field1,
+        pcdi.material_id field2,
+        sum( pcdi.badness_quantity ) AS field3,
+        pcdi.unit_id field4
+        FROM
+        pms_report_work rw
+        JOIN pms_produce_order po ON po.id = rw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = rw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        AND rw.product_line_id in
+        <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.station_id in
+        <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+            #{stationId}
+        </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        WHERE
+        rw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND po.del_flag = 0
+        GROUP BY
+        field1,
+        pcdi.material_id,
+        pcdi.unit_id
+    </select>
+    <select id="badnessMonth" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT(rw.class_date,'%Y-%m')  field1,
+        pcdi.material_id field2,
+        sum( pcdi.badness_quantity ) AS field3,
+        pcdi.unit_id field4
+        FROM
+        pms_report_work rw
+        JOIN pms_produce_order po ON po.id = rw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = rw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        AND rw.product_line_id in
+        <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.station_id in
+        <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+            #{stationId}
+        </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        WHERE
+        rw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND po.del_flag = 0
+        GROUP BY
+        field1,
+        pcdi.material_id,
+        pcdi.unit_id
+    </select>
+    <select id="badnessYear" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT(rw.class_date,'%Y')  field1,
+        pcdi.material_id field2,
+        sum( pcdi.badness_quantity ) AS field3,
+        pcdi.unit_id field4
+        FROM
+        pms_report_work rw
+        JOIN pms_produce_order po ON po.id = rw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = rw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        AND rw.product_line_id in
+        <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+            #{productLineId}
+        </foreach>
+        AND rw.station_id in
+        <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+            #{stationId}
+        </foreach>
+        AND rw.class_date BETWEEN #{start} and #{end}
+        WHERE
+        rw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND po.del_flag = 0
+        GROUP BY
+        field1,
+        pcdi.material_id,
+        pcdi.unit_id
+    </select>
 
 </mapper>

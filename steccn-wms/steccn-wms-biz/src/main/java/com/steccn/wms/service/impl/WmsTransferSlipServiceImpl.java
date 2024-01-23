@@ -15,9 +15,13 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtSeriesDataDTO;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.mes.dto.ErpCommonSaveDTO;
 import com.steccn.mes.dto.ErpTransferSaveDetailDTO;
@@ -26,11 +30,16 @@ import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
@@ -88,6 +97,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     private final RemoteMessFeignApi remoteMessFeignApi;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
 
     /**
@@ -704,6 +715,51 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         return resMap;
     }
 
+    @Override
+    public Map<Long, WmsTransferSlipInfoVO> materialQuantityByDateAndWarehouse(RawMaterialReportDTO dto) {
+        Map<Long,WmsTransferSlipInfoVO>  resMap = Maps.newHashMap();
+        List<WmsTransferSlipInfo> infos =  this.baseMapper.materialQuantityByDateAndWarehouse(dto);
+        if (CollUtil.isNotEmpty(infos)){
+            infos.forEach(info->{
+                resMap.put(info.getMaterialId(),BeanUtil.copyProperties(info,WmsTransferSlipInfoVO.class));
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> materialQuantityByDateAndWarehouseQuantity(RawMaterialReportDTO dto) {
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        PmManagerConstant.QtGranularityEnum granularity = dto.getGranularity();
+        return materialQuantity(granularity, dto.getStartDate(), dto.getEndDate(), dto.getWarehouseIds(), dto.getMaterialIds(), 3, sqSysDict);
+    }
+
+
+    /**
+     *
+     *
+     * @param granularity 粒度
+     * @param startLd     开始日期
+     * @param endLd       结束日期
+     * @param wsIdSet     仓库id
+     * @param bit         位数
+     * @param target      目标
+     * @return
+     */
+    public Map<String, BigDecimal> materialQuantity(PmManagerConstant.QtGranularityEnum granularity, LocalDate startLd, LocalDate endLd, List<Integer> wsIdSet,List<Long> materialIds, Integer bit, SysDictVO target) {
+        LocalDateTime start = LocalDateUtil.getMorning(startLd);
+        LocalDateTime end = LocalDateUtil.getMorning(endLd).plusDays(1);
+        List<Tuple4DTO<String, Long, BigDecimal,Long>> inStorageList;
+        if (PmManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            inStorageList = baseMapper.materialQuantityDay(start, end, wsIdSet,materialIds);
+        } else if (PmManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            inStorageList = baseMapper.materialQuantityMonth(start, end, wsIdSet,materialIds);
+        } else {
+            inStorageList = baseMapper.materialQuantityYear(start, end, wsIdSet,materialIds);
+        }
+        return unitConvert( target, inStorageList, bit);
+    }
+
     /**
      * 当前最大的code值
      *
@@ -749,6 +805,27 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         }
         return currentMax;
     }
+
+    /**
+     * 单位转换
+     * @param targetSysDict 目标单位
+     * @param dataList      数据集合
+     * @return map
+     */
+    private Map<String, BigDecimal> unitConvert( SysDictVO targetSysDict, List<Tuple4DTO<String, Long, BigDecimal,Long>> dataList, Integer bit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dataList)) {
+            Set<Long> materialIdSet = dataList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            dataList.forEach(ele -> {
+                List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
+                BigDecimal convertQuantity = UnitConvertUtil.convertMaterial(convertList, ele.getField4(), targetSysDict.getId(), ele.getField3(), bit);
+                MapUtil.add(resMap, String.valueOf(ele.getField1()), convertQuantity, (x, y) -> BigDecimalUtil.add(x, y, bit));
+            });
+        }
+        return resMap;
+    }
+
 
 }
 

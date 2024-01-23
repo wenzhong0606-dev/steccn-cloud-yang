@@ -351,6 +351,18 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      */
     Map<String, BigDecimal> lineClassUseCount(Set<Integer> lineIdSet, LocalDate start, LocalDate end, String unit);
 
+
+    /**
+     * 获取产线耗用数量 单位为unit
+     *
+     * @param lineIdSet 产线
+     * @param stationIds 工位
+     * @param start     班次日期-开始
+     * @param end       班次日期-结束
+     * @return
+     */
+    Map<String, BigDecimal> lineUseCount(Set<Integer> lineIdSet, Set<Integer> stationIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity);
+
     /**
      * 获取班次日期产量 单位为unit
      *
@@ -557,4 +569,16 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> sjgComplete(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit);
+
+
+    /**
+     * 不良数
+     * @param lineIdList
+     * @param edgingStationIds
+     * @param start
+     * @param end
+     * @param granularity
+     * @return
+     */
+    Map<String, BigDecimal> badnessQuantity(Set<Integer> lineIdList, Set<Integer> edgingStationIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity);
 }

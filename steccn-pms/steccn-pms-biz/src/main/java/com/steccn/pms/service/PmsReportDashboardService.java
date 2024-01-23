@@ -3,10 +3,14 @@ package com.steccn.pms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 
 import java.math.BigDecimal;
@@ -168,4 +172,19 @@ public interface PmsReportDashboardService {
      * @return
      */
     PmsPullForceMeltingNumVO pullForceMeltingNum(LocalDate start,LocalDate end);
+
+    /**
+     * 深加工制造部-领用总数/耗用总数/使用总数
+     * @param dto
+     * @return
+     */
+    PmsDeepProcessingNumVO deepProcessingNum(PmsOperateDriverDTO dto);
+
+
+    /**
+     * 深加工制造部-基片数柱状图
+     * @param dto
+     * @return
+     */
+    EpChartGraphVO<List<String>, TripleDTO<BigDecimal,BigDecimal,BigDecimal>> deepProcessingHistogram(PmsOperateDriverDTO dto);
 }

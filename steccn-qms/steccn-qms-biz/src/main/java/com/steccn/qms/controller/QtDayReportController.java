@@ -105,6 +105,18 @@ public class QtDayReportController {
         return R.success(qtDayReportService.samplingWaterRate(start, end));
     }
 
+    @GetMapping("/sampling/water/rate/si")
+    @ApiOperation("配料含水率-")
+    public R<QtLineChartBarDTO> samplingWaterRateSi(@RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(qtDayReportService.samplingWaterRateSi(start, end));
+    }
+
+    @GetMapping("/sampling/water/rate/batch")
+    @ApiOperation("配料含水率-")
+    public R<QtLineChartBarDTO> samplingWaterRateBatch(@RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(qtDayReportService.samplingWaterRateBatch(start, end));
+    }
+
     @GetMapping("/sampling/download")
     @ApiOperation("配料抽检日报表")
     public void samplingDownload(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {

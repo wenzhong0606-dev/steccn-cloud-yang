@@ -140,4 +140,102 @@
     </foreach>
         GROUP BY wtsi.material_name
     </select>
+    <select id="materialQuantityByDateAndWarehouse" resultType="com.steccn.wms.domain.WmsTransferSlipInfo">
+        SELECT
+        wtsi.material_id,
+        wtsi.unit,
+        wts.create_time,
+        sum(wtsi.quantity) quantity
+        FROM
+        wms_transfer_slip_info wtsi
+        LEFT JOIN wms_transfer_slip wts ON wts.id = wtsi.transfer_slip_id
+        WHERE
+        wts.del_flag = 0 and wtsi.target_shelf in
+        <foreach collection="dto.warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+                             #{warehouseId}
+        </foreach>
+        and wtsi.material_id in
+        <foreach collection="dto.materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        GROUP BY
+        wtsi.unit,
+        wts.create_time,
+        wtsi.material_id
+    </select>
+    <select id="materialQuantityDay" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+            DATE_FORMAT( wts.create_time, '%Y-%m-%d' ) field1,
+            wtsi.material_id field2,
+            sum( wtsi.quantity ) field3,
+            wtsi.unit field4
+        FROM
+            wms_transfer_slip_info wtsi
+                LEFT JOIN wms_transfer_slip wts ON wts.id = wtsi.transfer_slip_id
+        WHERE
+            wts.del_flag = 0
+        and wtsi.target_shelf in
+        <foreach collection="dto.warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        and wtsi.material_id in
+        <foreach collection="dto.materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        and wts.create_time BETWEEN #{start} and #{end}
+        GROUP BY
+            wtsi.unit,
+            field1,
+            wtsi.material_id
+    </select>
+    <select id="materialQuantityMonth" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT( wts.create_time, '%Y-%m' ) field1,
+        wtsi.material_id field2,
+        sum( wtsi.quantity ) field3,
+        wtsi.unit field4
+        FROM
+        wms_transfer_slip_info wtsi
+        LEFT JOIN wms_transfer_slip wts ON wts.id = wtsi.transfer_slip_id
+        WHERE
+        wts.del_flag = 0
+        and wtsi.target_shelf in
+        <foreach collection="dto.warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        and wtsi.material_id in
+        <foreach collection="dto.materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        and wts.create_time BETWEEN #{start} and #{end}
+        GROUP BY
+        wtsi.unit,
+        field1,
+        wtsi.material_id
+    </select>
+    <select id="materialQuantityYear" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT( wts.create_time, '%Y' ) field1,
+        wtsi.material_id field2,
+        sum( wtsi.quantity ) field3,
+        wtsi.unit field4
+        FROM
+        wms_transfer_slip_info wtsi
+        LEFT JOIN wms_transfer_slip wts ON wts.id = wtsi.transfer_slip_id
+        WHERE
+        wts.del_flag = 0
+        and wtsi.target_shelf in
+        <foreach collection="dto.warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        and wtsi.material_id in
+        <foreach collection="dto.materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        and wts.create_time BETWEEN #{start} and #{end}
+        GROUP BY
+        wtsi.unit,
+        field1,
+        wtsi.material_id
+    </select>
 </mapper>

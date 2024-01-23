@@ -17,6 +17,11 @@ public class DpOnOffCountVO {
      * 1 2 3 4 代表8条线
      */
     private String productLineNum;
+
+    /**
+     * 产线id
+     */
+    private Integer productLineId;
     /**
      * 班次日期
      */

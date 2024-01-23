@@ -23,6 +23,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
@@ -1459,6 +1460,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<String, BigDecimal> lineUseCount(Set<Integer> lineIdSet, Set<Integer> stationIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity) {
+        List<Tuple4DTO<String, Long, BigDecimal,Long>> consumptionList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            consumptionList = baseMapper.consumptionDay(start, end, lineIdSet,stationIds);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            consumptionList = baseMapper.consumptionMonth(start, end, lineIdSet,stationIds);
+        } else {
+            consumptionList = baseMapper.consumptionYear(start, end, lineIdSet,stationIds);
+        }
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+       return unitConvert(sqSysDict,consumptionList,3);
+    }
+
+    @Override
     public List<ProcessReportWorkHourVO> getReportWorkHour(ProcessReportWorkHourQmsDTO dto) {
         List<ProcessReportWorkHourVO> result = Lists.newArrayList();
         List<ProcessReportWorkHourVO> processWorkHour = this.baseMapper.getProcessWorkHour(dto);
@@ -1596,7 +1611,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     }
                     EqpSpareVO material = materialMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
 
-                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + classId + "_" + material.getThickQuantity() + "_", quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + classId + "_" + material.getThickQuantity(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                 });
             } else {
                 Set<Integer> stationIds = getEdgStation(lineIdList);
@@ -1907,6 +1922,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             MapUtil.add(mapRes, String.valueOf(ele.getField1()), ele.getField3(), (x, y) -> BigDecimalUtil.add(x, y, bit));
         });
         return mapRes;
+    }
+
+    @Override
+    public Map<String, BigDecimal> badnessQuantity(Set<Integer> lineIdSet, Set<Integer> stationIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity) {
+        List<Tuple4DTO<String, Long, BigDecimal,Long>> consumptionList;
+        if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            consumptionList = baseMapper.badnessDay(start, end, lineIdSet,stationIds);
+        } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            consumptionList = baseMapper.badnessMonth(start, end, lineIdSet,stationIds);
+        } else {
+            consumptionList = baseMapper.badnessYear(start, end, lineIdSet,stationIds);
+        }
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        return unitConvert(sqSysDict,consumptionList,3);
     }
 
     @Override
@@ -2232,5 +2261,27 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         taskDTO.setField1(now);
         taskDTO.setField2(date);
         FeignOptional.of(()->remoteCheckTaskDetailFeignApi.calculatePullAmountTask(taskDTO),FeignConstant.STECCN_QMS_SERVICE_NAME);
+    }
+
+
+
+    /**
+     * 单位转换
+     * @param targetSysDict 目标单位
+     * @param dataList      数据集合
+     * @return map
+     */
+    private Map<String, BigDecimal> unitConvert( SysDictVO targetSysDict, List<Tuple4DTO<String, Long, BigDecimal,Long>> dataList, Integer bit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dataList)) {
+            Set<Long> materialIdSet = dataList.stream().map(TripleDTO::getField2).collect(Collectors.toSet());
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            dataList.forEach(ele -> {
+                List<SysSpareUnitConversionVO> convertList = materialConvertMap.get(ele.getField2());
+                BigDecimal convertQuantity = UnitConvertUtil.convertMaterial(convertList, ele.getField4(), targetSysDict.getId(), ele.getField3(), bit);
+                MapUtil.add(resMap, String.valueOf(ele.getField1()), convertQuantity, (x, y) -> BigDecimalUtil.add(x, y, bit));
+            });
+        }
+        return resMap;
     }
 }
