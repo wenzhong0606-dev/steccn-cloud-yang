@@ -1973,11 +1973,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                     } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
                                         Integer lineId = parentLineMap.get(officeId);
                                         if (Objects.nonNull(lineId)) {
-                                            String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate, classEnum.getCode(), thick);
-                                            BigDecimal bigDecimal1 = valueMap1.get(joint);
-                                            BigDecimal bigDecimal2 = valueMap2.get(joint);
+                                            String tmpJoint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate, classEnum.getCode(), thick);
+                                            BigDecimal bigDecimal1 = valueMap1.get(tmpJoint);
+                                            BigDecimal bigDecimal2 = valueMap2.get(tmpJoint);
                                             BigDecimal add = BigDecimalUtil.add(bigDecimal1, bigDecimal2);
                                             if(Objects.nonNull(add)){
+                                                String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, currentNode.getId(), classDate, classEnum.getCode(), thick);
                                                 resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
                                             }
                                         }

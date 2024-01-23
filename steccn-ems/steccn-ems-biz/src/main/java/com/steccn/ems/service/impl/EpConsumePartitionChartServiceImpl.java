@@ -1050,7 +1050,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             if (BigDecimalUtil.equals(dto.getThick().get(0),BigDecimal.valueOf(2)) || BigDecimalUtil.equals(dto.getThick().get(0),BigDecimal.valueOf(4))) {
                 thick = dto.getThick().get(0) + ".0mm";
             }
-            SysDictVO sysDictVO = remoteDictFeignApi.getByCode(thick, "product_thickness_range").getData();
+            String finalThick = thick;
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(finalThick, "product_thickness_range"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             //获取部门标准
             consumeStandardList = getDepartmentStandardList(dto, sysDictVO);
@@ -1422,7 +1423,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 List<BigDecimal> sumProductNumList = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
                 BigDecimal sumProductNum = BigDecimalUtil.sum(sumProductNumList);
                 //获取单耗值
-                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum, 1));
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum, 3));
                 poleList.add(stack);
                 //获取部门标准
                 BigDecimal standard = null;
