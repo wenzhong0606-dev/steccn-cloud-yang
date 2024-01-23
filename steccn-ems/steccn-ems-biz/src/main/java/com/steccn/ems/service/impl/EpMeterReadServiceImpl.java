@@ -801,10 +801,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         if (Objects.nonNull(account) && Objects.nonNull(account.getEntityTable())) {
                             if (account.getEntityTable() == 0) {
                                 //远传仪表
-                                consumeMap.put(k, remoteDataMap.get(account.getId() + "_" + date + "_" + classes + "_" + thick));
+                                MapUtil.putIfNotNull(consumeMap, k, remoteDataMap.get(account.getId() + "_" + date + "_" + classes + "_" + thick));
                             } else if (account.getEntityTable() == 1 && noThickAndClass(classes, thick)) {
                                 //表读数来自人工抄表，每天抄一次）：仅统计每日能耗（类型II）
-                                consumeMap.put(k, handReadDataMap.get(account.getId() + "_" + date));
+                                MapUtil.putIfNotNull(consumeMap, k, handReadDataMap.get(account.getId() + "_" + date));
                             } else if (account.getEntityTable() == 2) {
                                 //虚拟仪表
                                 if (Integer.valueOf(0).equals(v.getType())) {
@@ -813,14 +813,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                     for (Long child : v.getChildren()) {
                                         value = BigDecimalUtil.add(value, consumeMap.get(child));
                                     }
-                                    consumeMap.put(k, value);
+                                    MapUtil.putIfNotNull(consumeMap, k, value);
                                 } else if (Integer.valueOf(1).equals(v.getType()) && noThickAndClass(classes, thick)) {
                                     //都是实体非远传仪表
                                     BigDecimal value = BigDecimal.ZERO;
                                     for (Long child : v.getChildren()) {
                                         value = BigDecimalUtil.add(value, consumeMap.get(child));
                                     }
-                                    consumeMap.put(k, value);
+                                    MapUtil.putIfNotNull(consumeMap, k, value);
                                 } else if (Integer.valueOf(2).equals(v.getType()) && noThickAndClass(classes, thick)) {
                                     //既有实体远传仪表，又有虚拟仪表，还有非实体远传仪表
                                     BigDecimal value = BigDecimal.ZERO;
@@ -839,7 +839,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                             }
                                         }
                                     }
-                                    consumeMap.put(k, value);
+                                    MapUtil.putIfNotNull(consumeMap, k, value);
                                 }
                             }
                         }
@@ -1168,10 +1168,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //查询能耗的全量数据表
         List<EpEnergyConsumeDTO> consumeTable = consumeTable(dateSet, energyType, nodeLinkMeterMap);
         Set<BigDecimal> thickSet = consumeTable.stream().map(EpEnergyConsumeDTO::getThick).collect(Collectors.toSet());
-
-        //获取生产明细样例表
-        List<EpMeterReadDistantDTO> orderList = orderDetail(dateSet, nodeLinkMeterMap.values());
-
         //获取所有节点的具体信息
         Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
         //查询所有节点的产线父节点
