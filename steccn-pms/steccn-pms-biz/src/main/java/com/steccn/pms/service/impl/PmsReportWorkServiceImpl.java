@@ -1596,7 +1596,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     }
                     EqpSpareVO material = materialMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO());
 
-                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + classId + "_" + material.getThickQuantity() + "_", quantity, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(resMap, ele.getProductLineId() + "_" + ele.getClassDate() + "_" + classId + "_" + material.getThickQuantity(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
                 });
             } else {
                 Set<Integer> stationIds = getEdgStation(lineIdList);
