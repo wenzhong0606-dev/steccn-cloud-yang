@@ -504,7 +504,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             LocalDateTime historyEnd = LocalDateTime.of(dto.getHistoryEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
             thickSet.addAll(thickSelect(historyStart, historyEnd, dto.getEnergyType(), dto.getPartitionIdList()));
         }
-        List<BigDecimal> sort = CollUtil.sort(thickSet, Comparator.nullsLast(Comparator.comparing(v -> v)));
+        //排序问题 厚度为空，放最后
+        List<BigDecimal> sort = CollUtil.sort(thickSet, (o1, o2) -> {
+            if (Objects.isNull(o1) || BigDecimalUtil.equals(o1, BigDecimalUtil.MINUS_ONE)) {
+                return Integer.MAX_VALUE;
+            }
+            return o1.compareTo(o2);
+        });
 
         List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
         for (BigDecimal thick : sort) {
