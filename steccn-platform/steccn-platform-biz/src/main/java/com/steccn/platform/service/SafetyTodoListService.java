@@ -16,4 +16,10 @@ public interface SafetyTodoListService {
      * @return
      */
     List<SafetyTodoListVO> getTodoList();
+
+    /**
+     * 发送消息到代办人员
+     * @return
+     */
+    Boolean sendMsg();
 }

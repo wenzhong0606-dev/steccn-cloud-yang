@@ -5,10 +5,7 @@ import com.steccn.platform.dto.SafetyUserNameDTO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 安环接口
@@ -38,4 +35,14 @@ public interface RemoteSafetyFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String getSafetyTodoList(@RequestHeader MultiValueMap<String,String> headers,@RequestBody TupleDTO dto);
+
+    /**
+     * 获取代办人
+     * @param headers obj空对象
+     * @return
+     */
+    @GetMapping(value = "/srp-app/md/mdMainPageStatistic/findAppThirdSystemTodo")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String getAllMsg(@RequestHeader MultiValueMap<String,String> headers);
 }

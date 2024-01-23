@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -49,7 +50,7 @@ public class SafetyTokenServiceImpl implements SafetyTokenService {
         SafetyTokenVO result = new SafetyTokenVO();
         SafetyUserNameDTO dto = new SafetyUserNameDTO();
         //获取登录用户的用户名
-        String userName = SecurityUtils.getUser().getUsername();
+        String userName = Objects.isNull(SecurityUtils.getUser()) ? "yangwenzhong" : SecurityUtils.getUser().getUsername();
         dto.setNicaicai(userName+"1234");
         //请求首自信
         String json = remoteSafetyTokenService.getSafetyToken(dto);
