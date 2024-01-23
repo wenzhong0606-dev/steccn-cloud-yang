@@ -1509,6 +1509,109 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         return StackGraphUtil.convertData(stackGraphList);
     }
 
+    @Override
+    public QtLineChartBarDTO samplingWaterRateSi(LocalDate start, LocalDate end) {
+        //当前页面（原料驾驶舱）顶部已选中时间范围为D1~D2，查询“取样时间”在区间[D1 8:00, D2+1 8:00]内的所有已检验的配料抽检任务，汇总成如下表格（一条检验任务对应一行）
+        //1.获取早班和晚班时间
+        LocalDateTime morning = LocalDateUtil.getMorning(start);
+        LocalDateTime night = LocalDateUtil.getMorning(end).plusDays(1);
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night,Lists.newArrayList("JYX000147","JYX000152"));
+        //3.如果原始数据集合不为空，则继续执行
+        SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
+        List<SamplingWaterRateDTO> dataList = Lists.newArrayList();
+        //根据检验任务区分
+        Map<Long, List<QtDaySamplingDTO>> sourceMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
+        sourceMap.forEach((k,v) ->{
+            //②考虑是硅砂水分
+            QtDaySamplingDTO common = v.get(0);
+            Map<Integer, List<QtDaySamplingDTO>> copyMap = v.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getCopy));
+            SamplingWaterRateDTO rateDTO = new SamplingWaterRateDTO();
+            rateDTO.setSamplingTime(common.getSamplingTime());
+            rateDTO.setTaskId(k);
+            dataList.add(rateDTO);
+            //对copy进行遍历
+            copyMap.forEach((m, n) -> {
+                Optional<QtDaySamplingDTO> copyCwOp = n.stream().filter(aa -> "JYX000147".equals(aa.getNote())).findFirst();
+                Optional<QtDaySamplingDTO> copySfOp = n.stream().filter(aa -> "JYX000152".equals(aa.getNote())).findFirst();
+                if (copyCwOp.isPresent() && copySfOp.isPresent()) {
+                    QtDaySamplingDTO copyCw = copyCwOp.get();
+                    QtDaySamplingDTO copySf = copySfOp.get();
+                    if ("1#".equals(copyCw.getCheckResult())) {
+                        rateDTO.setValue1(new BigDecimal(copySf.getCheckResult()));
+                    } else {
+                        rateDTO.setValue2(new BigDecimal(copySf.getCheckResult()));
+                    }
+                }
+            });
+
+        });
+        //按照抽样时间排序
+        Collections.sort(dataList, Comparator.comparing(SamplingWaterRateDTO::getSamplingTime));
+        //生成图表
+        //存放数据的map
+        List<StackGraphDTO<String, Integer>> stackGraphList = Lists.newArrayList();
+        Map<LocalDateTime, SamplingWaterRateDTO> map = Maps.newLinkedHashMap();
+        dataList.forEach(ele -> {
+            map.put(ele.getSamplingTime(), ele);
+        });
+        //根据x轴分组
+        for (Map.Entry<LocalDateTime, SamplingWaterRateDTO> entry : map.entrySet()) {
+            StackGraphDTO stackGraphDTO = new StackGraphDTO();
+            SamplingWaterRateDTO value = entry.getValue();
+            List<TupleDTO<String, BigDecimal>> data = Lists.newArrayList(
+                    new TupleDTO<>("1#料仓硅砂", value.getValue1()),
+                    new TupleDTO<>("2#料仓硅砂", value.getValue2())
+            );
+            stackGraphDTO.setData(data);
+            stackGraphDTO.setXAxis(LocalDateUtil.format(entry.getKey(), "yyyy-MM-dd HH:mm"));
+            stackGraphList.add(stackGraphDTO);
+        }
+        return StackGraphUtil.convertData(stackGraphList);
+    }
+
+    @Override
+    public QtLineChartBarDTO samplingWaterRateBatch(LocalDate start, LocalDate end) {
+        //当前页面（原料驾驶舱）顶部已选中时间范围为D1~D2，查询“取样时间”在区间[D1 8:00, D2+1 8:00]内的所有已检验的配料抽检任务，汇总成如下表格（一条检验任务对应一行）
+        //1.获取早班和晚班时间
+        LocalDateTime morning = LocalDateUtil.getMorning(start);
+        LocalDateTime night = LocalDateUtil.getMorning(end).plusDays(1);
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night,Lists.newArrayList("JYX000153"));
+        //3.如果原始数据集合不为空，则继续执行
+        SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
+        List<SamplingWaterRateDTO> dataList = Lists.newArrayList();
+        //根据检验任务区分
+        Map<Long, List<QtDaySamplingDTO>> sourceMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
+        sourceMap.forEach((k,v) ->{
+            //①考虑是配合料
+            QtDaySamplingDTO qtDaySamplingDTO = v.get(0);
+            SamplingWaterRateDTO rateDTO = new SamplingWaterRateDTO();
+            rateDTO.setValue3(new BigDecimal(qtDaySamplingDTO.getCheckResult()));
+            rateDTO.setSamplingTime(qtDaySamplingDTO.getSamplingTime());
+            rateDTO.setTaskId(k);
+            dataList.add(rateDTO);
+        });
+        //按照抽样时间排序
+        Collections.sort(dataList, Comparator.comparing(SamplingWaterRateDTO::getSamplingTime));
+        //生成图表
+        //存放数据的map
+        List<StackGraphDTO<String, Integer>> stackGraphList = Lists.newArrayList();
+        Map<LocalDateTime, SamplingWaterRateDTO> map = Maps.newLinkedHashMap();
+        dataList.forEach(ele -> {
+            map.put(ele.getSamplingTime(), ele);
+        });
+        //根据x轴分组
+        for (Map.Entry<LocalDateTime, SamplingWaterRateDTO> entry : map.entrySet()) {
+            StackGraphDTO stackGraphDTO = new StackGraphDTO();
+            SamplingWaterRateDTO value = entry.getValue();
+            List<TupleDTO<String, BigDecimal>> data = Lists.newArrayList(
+                    new TupleDTO<>("配合料", value.getValue3())
+            );
+            stackGraphDTO.setData(data);
+            stackGraphDTO.setXAxis(LocalDateUtil.format(entry.getKey(), "yyyy-MM-dd HH:mm"));
+            stackGraphList.add(stackGraphDTO);
+        }
+        return StackGraphUtil.convertData(stackGraphList);
+    }
 
     @Override
     public void samplingDownload(LocalDate date, HttpServletResponse response) throws IOException {

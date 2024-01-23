@@ -74,6 +74,24 @@ public interface QtDayReportService {
     QtLineChartBarDTO samplingWaterRate(LocalDate start, LocalDate end);
 
     /**
+     * 配料含水率-硅砂
+     *
+     * @param start 开始日期
+     * @param end   结束日期
+     * @return
+     */
+    QtLineChartBarDTO samplingWaterRateSi(LocalDate start, LocalDate end);
+
+    /**
+     * 配料含水率-配合料
+     *
+     * @param start 开始日期
+     * @param end   结束日期
+     * @return
+     */
+    QtLineChartBarDTO samplingWaterRateBatch(LocalDate start, LocalDate end);
+
+    /**
      * 配料抽检日报表-下载
      * @param date 日期
      * @return 报表
