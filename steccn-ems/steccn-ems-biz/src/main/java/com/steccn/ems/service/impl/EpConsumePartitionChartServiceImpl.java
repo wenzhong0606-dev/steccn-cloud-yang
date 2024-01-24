@@ -20,10 +20,7 @@ import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
-import com.steccn.common.vo.BaseSelectVO;
-import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.EpChartGraphXAxisVO;
-import com.steccn.common.vo.StandardVO;
+import com.steccn.common.vo.*;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -44,6 +41,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -151,6 +149,111 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
+    }
+
+    @Override
+    public ConsumePartitionContrastTableVO consumePartitionContrastTable(EpTableDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
+        //1.列出在区间 [起始日期8:00:00, 终止日期+1 8:00:00) 内的所有班次集合A
+        //①区间 [起始日期8:00:00, 终止日期+1 8:00:00)
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd()).plusDays(1);
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        ConsumePartitionContrastTableVO resVo = new ConsumePartitionContrastTableVO();
+        List<String> dateStrList = Lists.newArrayList();
+        resVo.setDateStrList(dateStrList);
+
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), dto.getStart(), dto.getEnd());
+        Assert.notEmpty(timeList, "时间参数异常");
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate startArea = timeList.get(i - 1);
+            LocalDate endArea = timeList.get(i);
+            if (QtManagerConstant.QtGranularityEnum.NONE.equals(granularityEnum)) {
+                dateStrList.add(LocalDateUtil.format(startArea, "yyyy-MM-dd") + "~" + LocalDateUtil.format(endArea, "yyyy-MM-dd"));
+            } else {
+                dateStrList.add(XAxisUtil.convert(granularityEnum, startArea));
+            }
+        }
+        List<ConsumePartitionContrastTableRowVO> rowList = Lists.newArrayList();
+        resVo.setRowList(rowList);
+        //获取能耗节点
+        Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
+        for (Long partitionId : dto.getPartitionIdList()) {
+            //节点存在
+            String partitionName = partitionIdNameMap.get(partitionId);
+            for (BigDecimal thick : dto.getThick()) {
+                ConsumePartitionContrastTableRowVO row = new ConsumePartitionContrastTableRowVO();
+                row.setPartitionName(partitionName);
+                //厚度转换
+                if (noThick(thick)) {
+                    row.setThickName("无");
+                } else {
+                    row.setThickName(thick.setScale(1) + "mm");
+                }
+                List<BigDecimal> valueList = Lists.newArrayList();
+                row.setValueList(valueList);
+                List<EpMeterReadAllDataVO> tmpDataList = classDateAllData.stream().filter(ele ->
+                        LocalDateUtil.isRange(ele.getReadDate(), dto.getStart(), dto.getEnd(), true, true) &&
+                                BigDecimalUtil.equals(ele.getThick(), thick) && Objects.equals(partitionId, ele.getOfficeId())).collect(Collectors.toList());
+                //如果数据集为空，考虑跳过
+                if (CollUtil.isEmpty(tmpDataList)) {
+                    continue;
+                }
+                List<BigDecimal> collect = tmpDataList.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                row.setSumValue(BigDecimalUtil.sum(collect));
+                row.setAvgValue(BigDecimalUtil.divide(row.getSumValue(), new BigDecimal(timeList.size() - 1)));
+                rowList.add(row);
+                BigDecimal maxTmp = null;
+                String maxTmpOccur = null;
+                BigDecimal minTmp = null;
+                String minTmpOccur = null;
+                for (int i = 1; i < timeList.size(); i++) {
+                    LocalDate startArea = timeList.get(i - 1);
+                    LocalDate endArea = timeList.get(i);
+                    //获取平均值，最大值，区间粒度
+                    //根据班次日期和厚度筛选出数据
+                    List<EpMeterReadAllDataVO> dataList = tmpDataList.stream().filter(ele -> LocalDateUtil.isRange(ele.getReadDate(), startArea, endArea, true, false)).collect(Collectors.toList());
+                    List<BigDecimal> valueTmpList = dataList.stream().map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                    BigDecimal sumArea = BigDecimalUtil.sum(valueTmpList);
+                    valueList.add(sumArea);
+                    String tmpStr ;
+                    if (QtManagerConstant.QtGranularityEnum.NONE.equals(granularityEnum)) {
+                        tmpStr = LocalDateUtil.format(startArea, "yyyy-MM-dd") + "~" + LocalDateUtil.format(endArea, "yyyy-MM-dd");
+                    } else {
+                        tmpStr = XAxisUtil.convert(granularityEnum, startArea);
+                    }
+                    if (Objects.nonNull(sumArea) && (Objects.isNull(maxTmp) || BigDecimalUtil.lt(maxTmp, sumArea))) {
+                        //如果相等，得追加
+                        if (BigDecimalUtil.equals(sumArea, maxTmp)) {
+                            maxTmpOccur = maxTmpOccur + "," + tmpStr;
+                        } else {
+                            maxTmpOccur = tmpStr;
+                        }
+                        maxTmp = sumArea;
+                    }
+                    if (Objects.nonNull(sumArea) && (Objects.isNull(minTmp) || BigDecimalUtil.gt(minTmp, sumArea))) {
+                        //如果相等，得追加
+                        if (BigDecimalUtil.equals(sumArea, minTmp)) {
+                            minTmpOccur = minTmpOccur + "," + tmpStr;
+                        } else {
+                            minTmpOccur = tmpStr;
+                        }
+                        minTmp = sumArea;
+                    }
+                }
+                row.setMaxValue(maxTmp);
+                row.setMaxValueOccur(maxTmpOccur);
+                row.setMinValue(minTmp);
+                row.setMinValueOccur(minTmpOccur);
+            }
+        }
+        return resVo;
     }
 
     @Override

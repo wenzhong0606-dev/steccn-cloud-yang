@@ -1,15 +1,13 @@
 package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpTotalConsumeDTO;
-import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
-import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
-import com.steccn.ems.vo.EpConsumeDetailVO;
-import com.steccn.ems.vo.EpEnergyChartPieValueVO;
+import com.steccn.ems.vo.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -30,6 +28,13 @@ public interface EpConsumePartitionChartService {
      * @return 柱状图
      */
     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto);
+
+    /**
+     * 能耗分区对比 -均值，最值统计表格
+     * @param dto
+     * @return
+     */
+    ConsumePartitionContrastTableVO consumePartitionContrastTable(EpTableDTO dto);
 
     /**
      * 能耗分区对比-明细
