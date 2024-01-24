@@ -1079,12 +1079,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
         List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
         //时间粒度
-        QtManagerConstant.QtGranularityEnum byCode = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
 
         // 班次分组
-        if (QtManagerConstant.QtGranularityEnum.CLASS.getCode().equals(byCode.getCode())) {
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
             for (int i = 0; i < 2; i++) {
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 if (i == 0) {
@@ -1099,15 +1100,14 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 dataList.add(epChartGraphxAxisDTO);
             }
         } else {
-            List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), dto.getStart(), dto.getEnd());
             //其他类型分组
             for (int i = 1; i < timeList.size(); i++) {
-                LocalDate dataStart = timeList.get(i - 1);
+                LocalDate dateStart = timeList.get(i - 1);
+                LocalDate dateEnd = timeList.get(i);
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-                if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
-                    epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                    classDateFilterData = classDateAllData.stream().filter(v -> v.getReadDate().equals(dataStart)).collect(Collectors.toList());
-                }
+                epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(granularityEnum, dateStart));
+                classDateFilterData = classDateAllData.stream().filter(v -> LocalDateUtil.isRange(v.getReadDate(), dateStart, dateEnd, true, false)).collect(Collectors.toList());
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto, classDateFilterData, consumeStandardList);
                 epChartGraphxAxisDTO.setData(data);
                 dataList.add(epChartGraphxAxisDTO);
@@ -1120,7 +1120,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setCheckStandardMap(getDpStandardList(dto.getEnergyType(), consumeStandardList));
         epChartGraphDTO.setEnergyType(dto.getEnergyType());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
-        if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
+        if (QtManagerConstant.QtGranularityEnum.NONE.equals(granularityEnum)) {
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
