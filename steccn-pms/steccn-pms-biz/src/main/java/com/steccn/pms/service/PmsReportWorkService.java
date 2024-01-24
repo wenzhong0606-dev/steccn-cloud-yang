@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
@@ -581,4 +583,14 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> badnessQuantity(Set<Integer> lineIdList, Set<Integer> edgingStationIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity);
+
+    /**
+     * 物料的消耗
+     * @param lineIds
+     * @param start
+     * @param end
+     * @param granularity
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity);
 }

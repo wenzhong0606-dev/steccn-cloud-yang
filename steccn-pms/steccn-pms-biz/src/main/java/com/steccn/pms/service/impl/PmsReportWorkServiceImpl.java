@@ -1939,6 +1939,21 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity) {
+        //根据产线和时间获取生产订单的物料消耗（不为主物料的物料消耗）
+       Set<Long> materialIds =  baseMapper.materialConsumeNoMain(lineIds,start,end);
+       List<Tuple4DTO<String, String, BigDecimal,Long>>  consumptionList;
+       if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+            consumptionList = baseMapper.materialConsumeDay(lineIds,materialIds,start,end);
+       } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+            consumptionList = baseMapper.materialConsumeMonth(lineIds,materialIds,start,end);
+       } else {
+            consumptionList = baseMapper.materialConsumeYear(lineIds,materialIds,start,end);
+       }
+        return consumptionList;
+    }
+
+    @Override
     public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
