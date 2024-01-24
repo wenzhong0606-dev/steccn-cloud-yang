@@ -498,15 +498,23 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     public List<BaseSelectVO<BigDecimal>> thick(EpTableDTO dto) {
         LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
         LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
-        Set<BigDecimal> thickSet = thickSelect(start, end, dto.getEnergyType(), dto.getPartitionIdList());
+        if (Objects.isNull(dto.getConsumeType())) {
+            dto.setConsumeType(0);
+        }
+        Set<BigDecimal> thickSet = thickSelect(start, end, dto.getEnergyType(), dto.getPartitionIdList(), dto.getConsumeType());
         if (Objects.nonNull(dto.getHistoryStart()) && Objects.nonNull(dto.getHistoryEnd())) {
             LocalDateTime historyStart = LocalDateTime.of(dto.getHistoryStart(), ClassUtil.MORNING_START_TIME);
             LocalDateTime historyEnd = LocalDateTime.of(dto.getHistoryEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
-            thickSet.addAll(thickSelect(historyStart, historyEnd, dto.getEnergyType(), dto.getPartitionIdList()));
+            thickSet.addAll(thickSelect(historyStart, historyEnd, dto.getEnergyType(), dto.getPartitionIdList(), dto.getConsumeType()));
         }
+        //如果是电单耗 则删除无选项
+        if(dto.getEnergyType() == 1 && dto.getConsumeType() ==1){
+            thickSet.remove(new BigDecimal("-1"));
+        }
+
         //排序问题 厚度为空，放最后
         List<BigDecimal> sort = CollUtil.sort(thickSet, (o1, o2) -> {
-            if (Objects.isNull(o1) || BigDecimalUtil.equals(o1, BigDecimalUtil.MINUS_ONE)) {
+            if (noThick(o1)) {
                 return Integer.MAX_VALUE;
             }
             return o1.compareTo(o2);
@@ -515,7 +523,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
         for (BigDecimal thick : sort) {
             String name;
-            if (Objects.isNull(thick) || BigDecimalUtil.equals(thick, BigDecimalUtil.MINUS_ONE)) {
+            if (noThick(thick)) {
                 thick = BigDecimalUtil.MINUS_ONE;
                 name = "无";
             } else {
@@ -1071,12 +1079,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
         List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
         //时间粒度
-        QtManagerConstant.QtGranularityEnum byCode = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
 
         // 班次分组
-        if (QtManagerConstant.QtGranularityEnum.CLASS.getCode().equals(byCode.getCode())) {
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
             for (int i = 0; i < 2; i++) {
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 if (i == 0) {
@@ -1091,15 +1100,14 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 dataList.add(epChartGraphxAxisDTO);
             }
         } else {
-            List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
+            List<LocalDate> timeList = ShardTimeUtil.cutDate(granularityEnum.getType(), dto.getStart(), dto.getEnd());
             //其他类型分组
             for (int i = 1; i < timeList.size(); i++) {
-                LocalDate dataStart = timeList.get(i - 1);
+                LocalDate dateStart = timeList.get(i - 1);
+                LocalDate dateEnd = timeList.get(i);
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-                if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
-                    epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                    classDateFilterData = classDateAllData.stream().filter(v -> v.getReadDate().equals(dataStart)).collect(Collectors.toList());
-                }
+                epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(granularityEnum, dateStart));
+                classDateFilterData = classDateAllData.stream().filter(v -> LocalDateUtil.isRange(v.getReadDate(), dateStart, dateEnd, true, false)).collect(Collectors.toList());
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto, classDateFilterData, consumeStandardList);
                 epChartGraphxAxisDTO.setData(data);
                 dataList.add(epChartGraphxAxisDTO);
@@ -1112,7 +1120,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setCheckStandardMap(getDpStandardList(dto.getEnergyType(), consumeStandardList));
         epChartGraphDTO.setEnergyType(dto.getEnergyType());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
-        if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
+        if (QtManagerConstant.QtGranularityEnum.NONE.equals(granularityEnum)) {
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
@@ -1461,16 +1469,25 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
      * @param end             结束时间
      * @param energyType      能源类型id
      * @param partitionIdList 分区节点id集合
+     * @param consumeType     0能耗 1单耗
      */
-    private Set<BigDecimal> thickSelect(LocalDateTime start, LocalDateTime end, Integer energyType, List<Long> partitionIdList) {
+    private Set<BigDecimal> thickSelect(LocalDateTime start, LocalDateTime end, Integer energyType, List<Long> partitionIdList, Integer consumeType) {
         //时间区间内所有班次集合
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData ;
-        if(energyType ==5){
+        if (energyType == 5) {
+            //燃料油+气单耗
             classDateAllData = epMeterReadService.kcalDataUnit(dateSet, partitionIdList);
-        }else {
+        } else if (energyType == 1 && consumeType == 2) {
+            //电单耗
+            classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, energyType, partitionIdList);
+        } else if (energyType != 1 && consumeType == 2) {
+            //其他能源的单耗
+            classDateAllData = epMeterReadService.classDateAllDataUnitOther(dateSet, energyType, partitionIdList);
+        } else {
+            //所有能源能耗
             classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
         }
         return classDateAllData.stream().map(v -> v.getThick()).collect(Collectors.toSet());
