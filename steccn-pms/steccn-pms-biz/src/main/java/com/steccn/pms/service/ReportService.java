@@ -6,12 +6,11 @@ import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.pms.dto.EnergyCountDTO;
-import com.steccn.pms.dto.OutputQualityDTO;
-import com.steccn.pms.dto.PmsDayReportDTO;
-import com.steccn.pms.dto.SubstrateDataDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -110,5 +109,12 @@ public interface ReportService {
      */
     List<SubstrateDataListVO> substrateDataList(SubstrateDataDTO dto);
 
-    EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>> > rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate);
+    EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>>> rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 运营驾驶舱-深加工制造部-物料消耗
+     * @param dto
+     * @return
+     */
+    EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>>> materialConsumeSjg(PmsOperateDriverDTO dto);
 }

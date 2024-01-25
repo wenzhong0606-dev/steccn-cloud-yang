@@ -14,6 +14,7 @@ import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.OutputQualityDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
+import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
@@ -116,6 +117,12 @@ public class ReportController {
         return R.success(reportService.rawMaterialWorkshopHistogram(startDate,endDate));
     }
 
+
+    @PostMapping("/output/material/quality/sjg")
+    @ApiOperation("运营驾驶舱-深加工-物料消耗")
+    public R<EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>>>> materialConsumeSjg(@Valid @RequestBody PmsOperateDriverDTO dto){
+        return R.success(reportService.materialConsumeSjg(dto));
+    }
 
     /**
      * 校验请求头信息
