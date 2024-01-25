@@ -1380,7 +1380,7 @@
     </select>
     <select id="materialConsumeDay" resultType="com.steccn.common.dto.Tuple4DTO">
         SELECT
-            prw.class_date field1,
+        DATE_FORMAT( prw.class_date,'%Y-%m-%d') field1,
             sum(pcdi.quantity) field3,
             pcdi.material_name field2,
             pcdi.unit_id field4
@@ -1402,7 +1402,7 @@
         </foreach>
         AND prw.class_date BETWEEN #{start} and #{end}
         GROUP BY
-            prw.class_date,
+            field1,
             pcdi.material_name,
             pcdi.unit_id
     </select>
@@ -1424,7 +1424,7 @@
     </select>
     <select id="materialConsumeMonth" resultType="com.steccn.common.dto.Tuple4DTO">
         SELECT
-        DATE_FORMAT(prw.class_date,'%Y-%m')  field1,
+        DATE_FORMAT( prw.class_date,'%Y-%m') field1,
         sum(pcdi.quantity) field3,
         pcdi.material_name field2,
         pcdi.unit_id field4
@@ -1436,9 +1436,9 @@
         prw.del_flag = 0
         AND pcd.del_flag = 0
         AND pcdi.del_flag = 0
-        and prw.product_line_id in
+        AND prw.product_line_id in
         <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
-            #{lineIds}
+            #{lineId}
         </foreach>
         AND pcdi.material_id in
         <foreach collection="materialIds" item="materialId" open="(" close=")" separator=",">
@@ -1452,7 +1452,7 @@
     </select>
     <select id="materialConsumeYear" resultType="com.steccn.common.dto.Tuple4DTO">
         SELECT
-        DATE_FORMAT(prw.class_date,'%Y')  field1,
+        DATE_FORMAT( prw.class_date,'%Y') field1,
         sum(pcdi.quantity) field3,
         pcdi.material_name field2,
         pcdi.unit_id field4
@@ -1464,7 +1464,7 @@
         prw.del_flag = 0
         AND pcd.del_flag = 0
         AND pcdi.del_flag = 0
-        and prw.product_line_id in
+        AND prw.product_line_id in
         <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
             #{lineId}
         </foreach>
