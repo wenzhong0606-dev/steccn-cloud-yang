@@ -18,6 +18,7 @@ import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -189,7 +190,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 lineResMap.put(mapKey(line.getField2(), ele), Lists.newArrayList(timeValue));
             }
             lineRow.setConsumeList(lineValueList);
-            lineRow.setUnit(epEnergy.getMeasureUnitName());
+            lineRow.setUnit("kWh/㎡");
             lineRow.setEnergyType(epEnergy.getName());
             lineRow.setDepartmentName(line.getField3());
             lineRow.setOfficeId(line.getField2());
@@ -219,7 +220,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
 
         //重新计算基片行和产线行
-        ftJpRow(jpRow, timeList, jpResMap);
         ftLineRow(lineRowList, timeList, lineResMap);
         //构造深加工产线产量的数据
         //深加工1-4车间需要小计
@@ -262,6 +262,37 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         lineRowList.add(lineRowList.size(), count2);
         EpDayReportCountRowVO count3 = countSum(timeList, lineRowList.get(0), valueMap1, "合计");
         lineRowList.add(lineRowList.size(), count3);
+
+        //需要天然气和燃料油
+        EpDayReportCountRowVO gasOil = new EpDayReportCountRowVO();
+        gasOil.setUnit("kcal/kg");
+        gasOil.setDepartmentName("基片");
+        //基片二车间
+        Integer officeId = 76;
+        EpPartition gasOilEp = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeId), false);
+        Assert.notNull(gasOilEp, "燃料油单耗");
+        List<EpMeterReadAllDataVO> gasOilValueList = epMeterReadService.kcalDataUnit(Sets.newHashSet(timeList), Lists.newArrayList(gasOilEp.getId()));
+        Map<String,BigDecimal> gasOilValueMap = Maps.newHashMap();
+        gasOilValueList.forEach(ele -> {
+            gasOilValueMap.put(ele.getReadDate() + "_0", ele.getConsume());
+            gasOilValueMap.put(ele.getReadDate() + "_1", ele.getProductNum());
+        });
+        List<BigDecimal> gasOilUnitConsumeList = Lists.newArrayList();
+        List<BigDecimal> gasOilConsumeList = Lists.newArrayList();
+        List<BigDecimal> gasOilPmList = Lists.newArrayList();
+        for (int j = 1; j < timeList.size(); j++) {
+            LocalDate time = timeList.get(j);
+            BigDecimal consume = gasOilValueMap.get(time + "_0");
+            BigDecimal pm = gasOilValueMap.get(time + "_1");
+            BigDecimal unitConsume = BigDecimalUtil.divide(consume, pm, 1);
+            gasOilUnitConsumeList.add(unitConsume);
+            gasOilConsumeList.add(consume);
+            gasOilPmList.add(pm);
+        }
+        gasOil.setSumStr(BigDecimalUtil.divide(BigDecimalUtil.sum(gasOilConsumeList), BigDecimalUtil.sum(gasOilPmList)));
+        gasOil.setEnergyType("天然气+燃料油");
+        gasOil.setConsumeList(gasOilUnitConsumeList);
+        lineRowList.add(gasOil);
 
         //提示产线
         Map<String, List<String>> hintConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, Sets.newHashSet(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString()), 3)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -843,7 +874,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 consumeList.add(i, format);
                 rowSum = BigDecimalUtil.add(format, rowSum);
             }
-            row.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
         }
     }
 
