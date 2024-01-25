@@ -10,10 +10,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.dto.QtSeriesDataDTO;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -37,6 +34,8 @@ import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.OutputQualityDetailDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.qms.util.MysqlDateKeyUtil;
+import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.OutputQualityDetailVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
@@ -1797,6 +1796,91 @@ public class ReportServiceImpl implements ReportService {
         list.add(countTotalQuantityDTO);
         res.setOther(list);
         res.setXData(materialNames);
+        return res;
+    }
+
+    @Override
+    public EpChartGraphVO<List<String>, List<TripleDTO<String, BigDecimal, String>>> materialConsumeSjg(PmsOperateDriverDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
+        cn.hutool.core.lang.Assert.notNull(granularity, "粒度不存在");
+        //获取深加工的八条产线的id
+        Set<String> lineNames = Sets.newHashSet();
+        lineNames.add(PmManagerConstant.DeepProcessingLine.ONE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.TWO.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.THREE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.FOUR.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.FIVE.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.SIX.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.SEVEN.getName());
+        lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
+        Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> lineIds = Sets.newHashSet();
+        sysOfficeVOMap.values().forEach(e->lineIds.add(e.getId()));
+        //获取报工的物料消耗
+        List<Tuple4DTO<String, String, BigDecimal,Long>> dataList = pmsReportWorkService.materialConsumeNoMain(lineIds, dto.getStart(), dto.getEnd(), granularity);
+        Map<String,Map<String,BigDecimal>> map = Maps.newHashMap();
+        Map<String,String> materialUnitMap = Maps.newHashMap();
+        Set<Long> unitIds = dataList.stream().collect(Collectors.groupingBy(Tuple4DTO::getField4)).keySet();
+        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String,BigDecimal> valueTotalMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dataList)){
+            //数据根据物料名称分组
+            Map<String, List<Tuple4DTO<String, String, BigDecimal,Long>>> dataByDateMap = dataList.stream().collect(Collectors.groupingBy(Tuple4DTO::getField2));
+            dataByDateMap.forEach((k,v)->{
+                Map<String, BigDecimal> dataMap = Maps.newHashMap();
+                v.forEach(ele->{
+                    MapUtil.add(dataMap,String.valueOf(ele.getField1()),ele.getField3(),(x,y)->BigDecimalUtil.add(x,y,3));
+                    MapUtil.add(valueTotalMap,k,ele.getField3(),(x,y)->BigDecimalUtil.add(x,y,3));
+                });
+                map.put(k,dataMap);
+                materialUnitMap.put(k,unitMap.get(v.get(0).getField4()));
+            });
+        }
+        //组数据
+        EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>>> res = new EpChartGraphVO<>();
+        //图例
+        List<String> legends = new ArrayList<>(dataList.stream().collect(Collectors.groupingBy(Tuple4DTO::getField2)).keySet());
+        res.setLegend(legends);
+        List<String> xAisList = Lists.newArrayList();
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        //x主数据
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(),dto.getEnd());
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate ele = timeList.get(i - 1);
+            xAisList.add(XAxisUtil.convert(granularity, ele));
+        }
+        res.setXData(xAisList);
+        //冗余数据
+        List<TripleDTO<String,BigDecimal,String>> otherList = Lists.newArrayList();
+        TripleDTO<String,BigDecimal,String> totalOther = new TripleDTO<>();
+        totalOther.setField1("耗料总量");
+        totalOther.setField2(valueTotalMap.values().stream().reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+        otherList.add(totalOther);
+        if (CollUtil.isNotEmpty(legends)){
+            legends.forEach( legend->{
+                //主数据明细
+                QtSeriesDataDTO<String,BigDecimal> dataVO = new QtSeriesDataDTO<>();
+                dataVO.setName(legend);
+                List<BigDecimal> dataVOList = Lists.newArrayList();
+                Map<String, BigDecimal> bigDecimalMap = map.get(legend);
+                for (int i = 1; i < timeList.size(); i++) {
+                    LocalDate ele = timeList.get(i - 1);
+                    String key = MysqlDateKeyUtil.convert(granularity, ele);
+                    BigDecimal bigDecimal = bigDecimalMap.get(key) == null ? BigDecimal.ZERO : bigDecimalMap.get(key);
+                    dataVOList.add(bigDecimal);
+                }
+                dataVO.setData(dataVOList);
+                seriesDataVO.add(dataVO);
+                //冗余明细数据
+                TripleDTO<String,BigDecimal,String> other = new TripleDTO<>();
+                other.setField1(legend);
+                other.setField2(valueTotalMap.get(legend));
+                other.setField3(materialUnitMap.get(legend));
+                otherList.add(other);
+            });
+        }
+        res.setSeriesDataVO(seriesDataVO);
+        res.setOther(otherList);
         return res;
     }
 

@@ -60,7 +60,6 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private BigDecimal availableQuantity;
 
     @ApiModelProperty("不良数量")
-    @NotNull(message = "不良数量不能为空")
     @DecimalMin(value="0",message="不良数量应大于0")
     @DecimalMax(value="99999999.999",message="不良数量大小应小于99999999.999")
     @Digits(integer = 8,fraction = 3,message = "不良不良数量整数位上限为8位，小数位上限位3位")

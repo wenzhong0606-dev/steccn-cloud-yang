@@ -633,6 +633,58 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                                                 @Param("end") LocalDate end,
                                                                 @Param("lineIdList") Set<Integer> lineIdList,
                                                                 @Param("stationIds") Set<Integer> stationIds);
+
+
+    /**
+     * 报工的物料消耗 天
+     * @param lineIds
+     * @param materialIds
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeDay(@Param("lineIds")Set<Integer> lineIds,
+                                                                 @Param("materialIds")Set<Long> materialIds,
+                                                                 @Param("start") LocalDate start,
+                                                                 @Param("end") LocalDate end);
+
+    /**
+     * 获取报工的物料消耗的物料id
+     * @param lineIds
+     * @param start
+     * @param end
+     * @return
+     */
+    Set<Long> materialConsumeNoMain(@Param("lineIds")Set<Integer> lineIds,
+                                    @Param("start") LocalDate start,
+                                    @Param("end") LocalDate end);
+
+
+    /**
+     * 报工的物料消耗 月
+     * @param lineIds
+     * @param materialIds
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeMonth(@Param("lineIds")Set<Integer> lineIds,
+                                                                   @Param("materialIds")Set<Long> materialIds,
+                                                                   @Param("start") LocalDate start,
+                                                                   @Param("end") LocalDate end);
+
+    /**
+     * 报工的物料消耗
+     * @param lineIds
+     * @param materialIds
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeYear(@Param("lineIds")Set<Integer> lineIds,
+                                                                    @Param("materialIds")Set<Long> materialIds,
+                                                                    @Param("start") LocalDate start,
+                                                                    @Param("end") LocalDate end);
 }
 
 
