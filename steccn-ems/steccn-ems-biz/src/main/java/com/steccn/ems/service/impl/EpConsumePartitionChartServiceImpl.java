@@ -36,10 +36,12 @@ import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.XAxisUtil;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.bouncycastle.asn1.cmc.PendInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
@@ -1201,15 +1203,15 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         // 班次分组
         if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
-            for (int i = 0; i < 2; i++) {
+            List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(granularityEnum.getType(), start, end);
+            for (int i = 1; i < timeList.size(); i++) {
+                LocalDateTime startTmp = timeList.get(i - 1);
+                LocalDateTime endTmp = timeList.get(i);
+                Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
+                QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classId);
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-                if (i == 0) {
-                    epChartGraphxAxisDTO.setXAxis("早班");
-                } else {
-                    epChartGraphxAxisDTO.setXAxis("晚班");
-                }
-                int finalI = i;
-                classDateFilterData = classDateAllData.stream().filter(data -> data.getClassId().equals(finalI)).collect(Collectors.toList());
+                epChartGraphxAxisDTO.setXAxis(classesEnum.getName());
+                classDateFilterData = classDateAllData.stream().filter(data -> LocalDateUtil.isRange(data.getReadDate(), startTmp.toLocalDate(), endTmp.toLocalDate(), Boolean.TRUE, Boolean.TRUE) && data.getClassId().equals(classId)).collect(Collectors.toList());
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> tupleDTOList = getTupleDTOList(dto, classDateFilterData, consumeStandardList);
                 epChartGraphxAxisDTO.setData(tupleDTOList);
                 dataList.add(epChartGraphxAxisDTO);
