@@ -26,6 +26,8 @@ public class CompleteStorageInfoDTO {
      */
     private BigDecimal quantity;
 
+    private LocalDateTime enterTime;
+
 
     /**
      * 入库时间

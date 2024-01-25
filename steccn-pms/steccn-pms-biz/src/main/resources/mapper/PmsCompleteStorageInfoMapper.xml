@@ -165,7 +165,11 @@
     </select>
     <select id="substrateDayData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
         SELECT
-        inStorageTime,
+        CASE
+        WHEN HOUR(enter_time) &lt;8 THEN DATE_SUB(inStorageTime, INTERVAL 1 DAY)
+        ELSE inStorageTime
+        END as inStorageTime,
+        enter_time,
         time,
         material_id,
         material_name,
@@ -176,6 +180,7 @@
         SELECT
         DATE_FORMAT(pcs.in_storage_time,'%Y-%m-%d') inStorageTime,
         pcs.in_storage_time time,
+        pcs.enter_time,
         pcsi.material_id,
         pcs.product_line_id,
         pcsi.material_name,
@@ -184,19 +189,19 @@
         pms_complete_storage_info pcsi
         LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
         <where>
-            pcs.del_flag = 0
+            pcsi.del_flag = 0
             <if test="integers != null and integers != ''">
                 and pcs.product_line_id in
                 <foreach collection="integers" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="startTime != null and endTime != null">
-                and pcs.in_storage_time between #{startTime} AND #{endTime}
-            </if>
+            AND pcs.enter_time &gt;= #{startTime}
+            AND pcs.enter_time &lt;= #{endTime}
         </where>
         GROUP BY
         DATE_FORMAT(pcs.in_storage_time,'%Y-%m-%d'),
+        pcs.enter_time,
         time,
         pcs.product_line_id,
         pcsi.material_id,
@@ -205,7 +210,11 @@
     </select>
     <select id="substrateWeekData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
         SELECT
-        inStorageTime,
+        CASE
+        WHEN HOUR(enter_time) &lt;8 THEN DATE_SUB(inStorageTime, INTERVAL 1 DAY)
+        ELSE inStorageTime
+        END as inStorageTime,
+        enter_time,
         time,
         material_id,
         material_name,
@@ -216,6 +225,7 @@
         SELECT
         YEARWEEK(pcs.in_storage_time,7) inStorageTime,
         pcsi.material_id,
+        pcs.enter_time,
         pcs.in_storage_time time,
         pcsi.material_name,
         pcs.product_line_id,
@@ -224,28 +234,32 @@
         pms_complete_storage_info pcsi
         LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
         <where>
-            pcs.del_flag = 0
+            pcsi.del_flag = 0
             <if test="integers != null and integers != ''">
                 and pcs.product_line_id in
                 <foreach collection="integers" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="startTime != null and endTime != null">
-                and pcs.in_storage_time between #{startTime} AND #{endTime}
-            </if>
+            AND pcs.enter_time &gt;= #{startTime}
+            AND pcs.enter_time &lt;= #{endTime}
         </where>
         GROUP BY
         YEARWEEK(pcs.in_storage_time,7),
         pcsi.material_id,
         pcs.product_line_id,
         time,
+        pcs.enter_time,
         pcsi.material_name
         )AS a
     </select>
     <select id="substrateMonthData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
         SELECT
-        inStorageTime,
+        CASE
+        WHEN HOUR(enter_time) &lt;8 THEN DATE_SUB(inStorageTime, INTERVAL 1 DAY)
+        ELSE inStorageTime
+        END as inStorageTime,
+        enter_time,
         time,
         material_id,
         material_name,
@@ -257,6 +271,7 @@
         DATE_FORMAT(pcs.in_storage_time,'%Y-%m') inStorageTime,
         pcsi.material_id,
         pcs.in_storage_time time,
+        pcs.enter_time,
         pcsi.material_name,
         pcs.product_line_id,
         sum( pcsi.quantity ) AS quantity
@@ -264,28 +279,32 @@
         pms_complete_storage_info pcsi
         LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
         <where>
-            pcs.del_flag = 0
+            pcsi.del_flag = 0
             <if test="integers != null and integers != ''">
                 and pcs.product_line_id in
                 <foreach collection="integers" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="startTime != null and endTime != null">
-                and pcs.in_storage_time between #{startTime} AND #{endTime}
-            </if>
+            AND pcs.enter_time &gt;= #{startTime}
+            AND pcs.enter_time &lt;= #{endTime}
         </where>
         GROUP BY
         DATE_FORMAT(pcs.in_storage_time,'%Y-%m'),
         pcsi.material_id,
         pcs.product_line_id,
+        pcs.enter_time,
         time,
         pcsi.material_name
         )AS a
     </select>
     <select id="substrateYearData" resultType="com.steccn.pms.dto.CompleteStorageInfoDTO">
         SELECT
-        inStorageTime,
+        CASE
+        WHEN HOUR(enter_time) &lt;8 THEN DATE_SUB(inStorageTime, INTERVAL 1 DAY)
+        ELSE inStorageTime
+        END as inStorageTime,
+        enter_time,
         time,
         material_id,
         material_name,
@@ -298,26 +317,27 @@
         pcs.in_storage_time time,
         pcsi.material_id,
         pcsi.material_name,
+        pcs.enter_time,
         pcs.product_line_id,
         sum( pcsi.quantity ) AS quantity
         FROM
         pms_complete_storage_info pcsi
         LEFT JOIN pms_complete_storage pcs ON pcs.id = pcsi.complete_storage_id
         <where>
-            pcs.del_flag = 0
+            pcsi.del_flag = 0
             <if test="integers != null and integers != ''">
                 and pcs.product_line_id in
                 <foreach collection="integers" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="startTime != null and endTime != null">
-                and  pcs.in_storage_time between #{startTime} AND #{endTime}
-            </if>
+            AND pcs.enter_time &gt;= #{startTime}
+            AND pcs.enter_time &lt;= #{endTime}
         </where>
         GROUP BY
         DATE_FORMAT( pcs.in_storage_time, '%Y' ),
         pcsi.material_id,
+        pcs.enter_time,
         pcs.product_line_id,
         time,
         pcsi.material_name

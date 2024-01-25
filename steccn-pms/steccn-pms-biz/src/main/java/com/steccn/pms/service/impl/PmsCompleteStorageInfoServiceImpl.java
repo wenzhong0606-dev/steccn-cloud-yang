@@ -373,8 +373,8 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                     Map<String,BigDecimal> valueMap = Maps.newHashMap();
                     if (CollUtil.isNotEmpty(typeMapValue)){
                         typeMapValue.forEach( ele->{
-                            String convert = MysqlDateKeyUtil.convert(granularity,ele.getTime());
-                            MapUtil.add(valueMap,convert,ele.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+//                            String convert = MysqlDateKeyUtil.convert(granularity,ele.getInStorageTime());
+                            MapUtil.add(valueMap,ele.getInStorageTime(),ele.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
                         });
                     }
                     commonReportDTO.setValueMap(valueMap);
