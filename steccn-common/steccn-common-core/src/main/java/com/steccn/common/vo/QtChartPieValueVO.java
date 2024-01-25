@@ -22,4 +22,9 @@ public class QtChartPieValueVO<T> implements Serializable {
      * 名字
      */
     private String name;
+
+    /**
+     * 占比
+     */
+    private BigDecimal percent;
 }

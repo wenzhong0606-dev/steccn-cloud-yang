@@ -14,10 +14,7 @@ import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
-import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
-import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
-import com.steccn.ems.vo.EpConsumeDetailVO;
-import com.steccn.ems.vo.EpEnergyChartPieValueVO;
+import com.steccn.ems.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -53,6 +50,13 @@ public class EpConsumePartitionChartController {
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionContrastChart(@Valid @RequestBody EpTableDTO dto) {
         Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
         return R.success(epConsumePartitionChartService.consumePartitionContrast(dto));
+    }
+
+    @PostMapping("/contrast/table")
+    @ApiOperation(value = "能耗分区对比-最值，平均值表格")
+    public R<ConsumePartitionContrastTableVO> consumePartitionContrastTable(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
+        return R.success(epConsumePartitionChartService.consumePartitionContrastTable(dto));
     }
 
     @PostMapping("/contrast/detail")

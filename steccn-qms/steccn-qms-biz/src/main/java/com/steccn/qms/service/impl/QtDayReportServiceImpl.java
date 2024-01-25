@@ -2030,11 +2030,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 if (Objects.nonNull(amountDay)) {
                                     if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
                                         //特殊处理,与拉引量一致
-                                        if(Objects.nonNull(pullAmountDay)&&Objects.nonNull(pullAmountDay.getClassGroupName())){
-                                            lineDataTmp.add(pullAmountDay.getClassGroupName());
-                                        }else{
-                                            lineDataTmp.add(amountDay.getClassGroupName());
-                                        }
+//                                        if(Objects.nonNull(pullAmountDay)&&Objects.nonNull(pullAmountDay.getClassGroupName())){
+//                                            lineDataTmp.add(pullAmountDay.getClassGroupName());
+//                                        }else{
+//                                            lineDataTmp.add(amountDay.getClassGroupName());
+//                                        }
+                                        lineDataTmp.add(amountDay.getClassGroupName());
                                     }
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
                                     //找到当天的拉引量,同一天取相同的拉引量
@@ -2042,6 +2043,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                         pullAmount = BigDecimalUtil.add(pullAmount, pullAmountDay.getPullAmount());
                                     }else {
                                         pullAmount = BigDecimalUtil.add(pullAmount, amountDay.getPullAmount());
+                                    }
+                                }else {
+                                    //没有数据需要加入班组数据
+                                    if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
+                                        lineDataTmp.add(dayData.stream().filter(v -> v.getWorkOrder().equals(className)).findFirst().orElse(null).getClassGroupName());
                                     }
                                 }
                                 //加入班组

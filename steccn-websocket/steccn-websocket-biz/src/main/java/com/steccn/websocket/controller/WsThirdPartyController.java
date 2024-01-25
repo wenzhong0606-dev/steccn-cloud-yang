@@ -4,20 +4,31 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.feign.RemoteSafetyBizFeignApi;
+import com.steccn.platform.feign.RemoteSafetyFeignApi;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
+import com.steccn.platform.vo.SafetyTokenVO;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.service.WebSocketManager;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 第三方webSocket
@@ -32,6 +43,9 @@ public class WsThirdPartyController {
 
     private final ObjectMapper objectMapper;
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+    private final RemoteSafetyBizFeignApi remoteSafetyBizFeignApi;
+    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
     /**
      * 第三方推oa刷新消息
      * @return
@@ -44,6 +58,10 @@ public class WsThirdPartyController {
         msgPushDTO.setType(OaConstant.NO);
         String msg = objectMapper.writeValueAsString(msgPushDTO);
         WebSocketManager.sendMessageToOnlineUser(msg);
+        //发送消息
+        poolExecutor.execute(()->{
+            FeignOptional.of(()->remoteSafetyBizFeignApi.sendMsg(),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        });
         return R.success(true);
     }
 

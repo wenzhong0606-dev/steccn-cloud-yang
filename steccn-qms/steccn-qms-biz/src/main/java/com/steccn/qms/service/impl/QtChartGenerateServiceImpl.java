@@ -2113,10 +2113,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             BigDecimal sunAmount = BigDecimal.ZERO;
             //算所有的拉引量 对所有损耗数据原因进行加总分析
             Map<String, BigDecimal> reasonData = Maps.newHashMap();
+            //拉引量加总
+            Map<String, BigDecimal> laData = Maps.newHashMap();
             for (QtChartSubDetailDTO tmp : data) {
                 laAmount = BigDecimalUtil.add(laAmount, tmp.getPullAmount());
                 sunAmount = BigDecimalUtil.add(sunAmount, tmp.getLossWeight());
                 BigDecimalUtil.accumulate(reasonData,tmp.getReason(),tmp.getLossWeight());
+                BigDecimalUtil.accumulate(laData,tmp.getReason(),tmp.getPullAmount());
             }
             //若拉引量为0，饼状图显示为暂无数据图片
             if (laAmount.compareTo(BigDecimal.ZERO) == 0) {
@@ -2134,6 +2137,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
             onePie.setName("成品");
             onePie.setValue(chengWeight.abs());
+            onePie.setPercent(BigDecimalUtil.percent(chengWeight,laAmount,2));
 
             //遍历损耗原因分组
             for (Map.Entry<String, BigDecimal> reasonEntry : orderByReason.entrySet()) {
@@ -2147,6 +2151,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 if (value.compareTo(BigDecimal.ZERO) != 0) {
                     tmp.setName(reasonEntry.getKey());
                     tmp.setValue(reasonEntry.getValue());
+                    tmp.setPercent(BigDecimalUtil.percent(tmp.getValue(),laData.get(reasonEntry.getKey()),2));
                     pieList.add(tmp);
                 }
             }

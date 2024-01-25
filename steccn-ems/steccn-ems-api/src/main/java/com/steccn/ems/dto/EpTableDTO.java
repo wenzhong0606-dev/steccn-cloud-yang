@@ -19,6 +19,9 @@ import java.util.List;
 @Data
 public class EpTableDTO extends BasePageDTO implements Serializable {
 
+    @ApiModelProperty("单耗类型")
+    private Integer consumeType;
+
     @ApiModelProperty("能源类型id")
 //    @NotNull(message = "能源类型不能为空")
     private Integer energyType;
