@@ -102,7 +102,6 @@ public class SafetyTodoListServiceImpl implements SafetyTodoListService {
                 sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.SAFETY_NOTICE.getCode());
                 sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.SAFETY_NOTICE.getTitle());
                 sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.SAFETY_NOTICE.getWarnFlag());
-                //发给深加工车间当班主任
                 sysMsgDTO.setUserList(userIds.stream().map(Integer::longValue).collect(Collectors.toSet()));
                 sysMsgDTO.setPushType(OaConstant.NUM_1);
                 sysMsgDTO.setContent(SysMsgConstant.MsgTypeEnum.SAFETY_NOTICE.getTemplate());

@@ -82,6 +82,10 @@
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-xxljob</artifactId>
+        </dependency>
 
         <!-- steccn-platform-api-->
         <dependency>

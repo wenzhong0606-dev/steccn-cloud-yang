@@ -59,9 +59,9 @@ public class WsThirdPartyController {
         String msg = objectMapper.writeValueAsString(msgPushDTO);
         WebSocketManager.sendMessageToOnlineUser(msg);
         //发送消息
-        poolExecutor.execute(()->{
-            FeignOptional.of(()->remoteSafetyBizFeignApi.sendMsg(),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        });
+//        poolExecutor.execute(()->{
+//            FeignOptional.of(()->remoteSafetyBizFeignApi.sendMsg(),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//        });
         return R.success(true);
     }
 
