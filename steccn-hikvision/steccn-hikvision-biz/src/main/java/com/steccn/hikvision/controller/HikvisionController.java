@@ -48,4 +48,12 @@ public class HikvisionController {
         return hikvisionService.previewUrl(cameraIndexCode, protocol);
     }
 
+    /**
+     * 获取单点登录token
+     * @return
+     */
+    @GetMapping("/sso/login")
+    public R<String> ssoLogin() {
+        return R.success(hikvisionService.ssoToken());
+    }
 }

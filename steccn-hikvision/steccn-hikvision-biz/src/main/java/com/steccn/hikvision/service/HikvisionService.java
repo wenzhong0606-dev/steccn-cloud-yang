@@ -29,4 +29,10 @@ public interface HikvisionService {
      * @return
      */
     String previewUrl(String cameraIndexCode, String protocol);
+
+    /**
+     * 获取海康威视单点登录token
+     * @return
+     */
+    String ssoToken();
 }

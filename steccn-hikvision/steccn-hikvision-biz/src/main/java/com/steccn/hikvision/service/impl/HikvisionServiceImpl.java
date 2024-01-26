@@ -2,6 +2,8 @@ package com.steccn.hikvision.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Maps;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.hikvision.api.VideoApi;
 import com.steccn.hikvision.entity.Cameras;
 import com.steccn.hikvision.entity.HikvisionR;
@@ -70,6 +72,19 @@ public class HikvisionServiceImpl implements HikvisionService {
         previewURLs.setStreamform("ps");
         String url = videoApi.P(previewURLs);
         return JSONObject.parseObject(url).toJSONString();
+    }
+
+    @Override
+    public String ssoToken() {
+        VideoApi videoApi = new VideoApi();
+        Map<String,String> querys = Maps.newHashMap();
+        querys.put("language", "zh_CN");
+        querys.put("service", "http://192.168.200.100/portal/ui/index");
+        querys.put("userCode", SecurityUtils.getUser().getUsername());
+        String result = videoApi.ssoLogin(querys);
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        String token = jsonObject.getJSONObject("data").getString("token");
+        return token;
     }
 
     /**

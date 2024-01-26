@@ -102,4 +102,20 @@ public class VideoApi {
         String result = ArtemisHttpUtil.doPostStringArtemis(path, body, null, null, "application/json");
         return result;
     }
+
+    /**
+     * 单点登录
+     * @param querys
+     * @return
+     */
+    public String ssoLogin(Map<String,String> querys) {
+        String getDataApi = ARTEMIS_PATH + "/api/cas/v1/tgt/login";
+        Map<String, String> path = new HashMap<String, String>(2) {
+            {
+                put("https://", getDataApi);
+            }
+        };
+        String result = ArtemisHttpUtil.doGetArtemis(path,querys,null,"application/json");
+        return result;
+    }
 }
