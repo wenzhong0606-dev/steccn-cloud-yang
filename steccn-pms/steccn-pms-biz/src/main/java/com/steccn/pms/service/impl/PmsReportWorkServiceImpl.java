@@ -811,59 +811,21 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Override
     public Map<String, BigDecimal> classDateProductNum(Set<Integer> lineSet, LocalDate startLd, LocalDate endLd) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(lineSet) && Objects.nonNull(startLd) && Objects.nonNull(endLd)) {
-            LocalDateTime start = LocalDateUtil.getMorning(startLd);
-            LocalDateTime end = LocalDateUtil.getMorning(endLd.plusDays(1));
-            List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineSet)
-                    .ge(PmsReportWork::getStartTime, start)
-                    .le(PmsReportWork::getEndTime, end));
-            if (CollUtil.isNotEmpty(dbList)) {
-                //获取产量-最后一道工序的合格数【最后一道工序报工集合 加工数 - 不合格数】
-                //获取所有订单的最后一道工序的工位
-                Set<Long> orderIdSet = Sets.newHashSet();
-                Set<Long> processIdSet = Sets.newHashSet();
-                dbList.forEach(ele -> {
-                    orderIdSet.add(ele.getProduceOrderId());
-                    processIdSet.add(ele.getProcessId());
-                });
-                Set<Long> lastProcessIdSet = getLastProcessStationMap(orderIdSet, processIdSet);
-                Map<String, List<PmsReportWork>> dbMap = dbList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + LocalDateUtil.getClassDate(v.getStartTime(), Boolean.FALSE)));
-                for (Map.Entry<String, List<PmsReportWork>> entry : dbMap.entrySet()) {
-                    //根据钢化工序，查询所有的订单工序id集合
-                    List<BigDecimal> sumNumList = entry.getValue().stream()
-                            .filter(v -> lastProcessIdSet.contains(v.getProcessId()))
-                            .filter(v -> Objects.nonNull(v.getProcessQuantity()) && Objects.nonNull(v.getBadnessQuantity()))
-                            .map(v -> BigDecimalUtil.subtract(v.getProcessQuantity(), v.getBadnessQuantity())).collect(Collectors.toList());
-                    BigDecimal sumNum = BigDecimalUtil.sum(sumNumList);
-                    resMap.put(entry.getKey(), sumNum);
-                }
+        Map<Integer, String> lineIdMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(lineSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Integer> jpLineIdList = Lists.newArrayList();
+        List<Integer> sjgLineIdList = Lists.newArrayList();
+        lineIdMap.forEach((k, v) -> {
+            if (v.contains("基片")) {
+                jpLineIdList.add(k);
+            } else {
+                sjgLineIdList.add(k);
             }
-        }
+        });
+        Map<String, BigDecimal> valueMap1 = dateLinePmUnit(jpLineIdList, startLd, endLd, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> valueMap2 = dateLinePmUnit(sjgLineIdList, startLd, endLd, 1, PmManagerConstant.MEASURE_UNIT_SM);
+        resMap.putAll(valueMap1);
+        resMap.putAll(valueMap2);
         return resMap;
-    }
-
-    /**
-     * 获取每一个订单的最后一道工序
-     *
-     * @param orderIdSet   订单id集合
-     * @param processIdSet 工序id集合
-     * @return map
-     */
-    private Set<Long> getLastProcessStationMap(Set<Long> orderIdSet, Set<Long> processIdSet) {
-        //查询工序的信息
-        List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
-        if (CollUtil.isNotEmpty(pmsProduceOrderCraftList)) {
-            Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
-            List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
-            if (CollUtil.isNotEmpty(pmProcessList)) {
-                //排序，取最后一条
-                pmProcessList.sort(Comparator.comparing(PmProcess::getId));
-                Long processId = pmProcessList.get(pmProcessList.size() - 1).getId();
-                Set<Long> collect = pmsProduceOrderCraftList.stream().filter(v -> processId.equals(v.getProcessId())).map(PmsProduceOrderCraft::getId).collect(Collectors.toSet());
-                return collect;
-            }
-        }
-        return Sets.newHashSet();
     }
 
     @Override

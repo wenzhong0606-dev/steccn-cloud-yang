@@ -42,4 +42,22 @@ public class EpDayReportController {
         }
         return R.success(epDayReportService.count(parse, flag));
     }
+
+    @GetMapping("/unit/consume")
+    @ApiOperation(value = "单耗日统计报表")
+    public R<EpDayReportCountVO> unitConsumeCount(@RequestParam("date") String date) {
+        //校验日期格式是否正确
+        LocalDate parse;
+        try {
+            date = date + "-01";
+            parse = LocalDate.parse(date);
+        } catch (Exception e) {
+            throw new BusinessException("日期格式异常");
+        }
+        boolean flag = Boolean.FALSE;
+        if (LocalDate.now().getMonthValue() > parse.getMonthValue()) {
+            flag = Boolean.TRUE;
+        }
+        return R.success(epDayReportService.unitConsumeCount(parse, flag));
+    }
 }

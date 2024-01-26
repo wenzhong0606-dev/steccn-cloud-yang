@@ -18,6 +18,7 @@ import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -28,6 +29,8 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -59,7 +62,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
-//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
@@ -84,6 +87,249 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         hintList1.addAll(hintList2);
         resVo.setHintLineList(hintList1);
         return resVo;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+    public EpDayReportCountVO unitConsumeCount(LocalDate start, boolean flag) {
+        EpDayReportCountVO resVo = new EpDayReportCountVO();
+        //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
+        LocalDate end = getEndDate(start);
+        //获取表头
+        resVo.setHead(countHead(start, end));
+        //获取所有的能源类型
+        List<EpEnergyTypeVO> energyTypeList = epEnergyTypeService.getEpEnergyTypeVOList();
+        Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
+        EpEnergyTypeVO epEnergy = eleOp.get();
+        //获取指定的组织结构名称和主键
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap = epPartitionService.dayReportCountDefaultNode();
+        List<TripleDTO<Long, Integer, String>> partitionList = defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC);
+        //获取配置map
+        Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //基片制造部
+        List<Integer> jpzzbList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JPZZB_LIST.toString(), Lists.newArrayList());
+        //深加工四条产线【一二三四】
+        List<Integer> sjgLine14List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
+        //深加工四条产线【五六七八】
+        List<Integer> sjgLine58List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
+        //员工餐厅和宿舍】
+        List<Integer> diningList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DINING_AND_ROOM_LIST.toString(), Lists.newArrayList());
+        //公用电【深加工二车间（东线）->公用电,深加工二车间（西线）->公用电】
+        List<Integer> gydList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.GYD_LIST.toString(), Lists.newArrayList());
+        //风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
+        List<Integer> fl610List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.FL610_LIST.toString(), Lists.newArrayList());
+        //风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
+        List<Integer> fl15List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.FL15_LIST.toString(), Lists.newArrayList());
+        //大数据控制中心
+        List<Integer> dsjList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DSJ_LIST.toString(), Lists.newArrayList());
+        //深加工8条产线
+        List<Integer> sjgLineList = Lists.newArrayList();
+        sjgLine14List.forEach(ele -> sjgLineList.add(ele));
+        sjgLine58List.forEach(ele -> sjgLineList.add(ele));
+
+        LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
+        LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集
+        List<TupleDTO<LocalDate, Integer>> classRangeList = ClassUtil.classRange(startLdt, endLdt);
+        Set<LocalDate> dateSet = classRangeList.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
+        //获取全量数据表
+        List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
+        //每个节点，每天的数据
+        //基片制造部=b1+b2+b3
+        List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> jpzzbList.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
+        //构建基片制造部
+        EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();
+        List<BigDecimal> jpValueList = Lists.newArrayList();
+
+        Map<LocalDate, List<BigDecimal>> jpResMap = Maps.newHashMap();
+        for (LocalDate ele : timeList) {
+            List<BigDecimal> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
+            jpResMap.put(ele, Lists.newArrayList(reduce));
+        }
+        jpRow.setConsumeList(jpValueList);
+        jpRow.setUnit(epEnergy.getMeasureUnitName());
+        jpRow.setEnergyType(epEnergy.getName());
+        jpRow.setDepartmentName("基片");
+
+        //构建生活用电 = 员工餐厅 + 员工宿舍
+        EpDayReportCountRowVO shRow = new EpDayReportCountRowVO();
+        List<EpMeterReadAllDataVO> shList = classDateAllData.stream().filter(v -> diningList.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        List<BigDecimal> shValueList = Lists.newArrayList();
+        for (LocalDate ele : timeList) {
+            List<BigDecimal> timeDataList = shList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
+            shValueList.add(BigDecimalUtil.setScale(reduce, 0));
+        }
+        BigDecimal shSum = BigDecimalUtil.sum(shValueList);
+        shRow.setSumStr(BigDecimalUtil.setScale(shSum, 0));
+        shRow.setConsumeList(shValueList);
+        shRow.setUnit(epEnergy.getMeasureUnitName());
+        shRow.setEnergyType(epEnergy.getName());
+        shRow.setDepartmentName("生活用电");
+
+        //深加工一~八产线
+        List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2()) || sjgLine58List.contains(v.getField2())).collect(Collectors.toList());
+        Set<Integer> lineOfficeIdSet = Sets.newHashSet();
+        Map<String, List<BigDecimal>> lineResMap = Maps.newHashMap();
+
+        List<EpDayReportCountRowVO> lineRowList = Lists.newArrayList();
+        for (TripleDTO<Long, Integer, String> line : linePartitionList) {
+            //获取产线id集合
+            lineOfficeIdSet.add(line.getField2());
+            List<EpMeterReadAllDataVO> lineList = classDateAllData.stream().filter(v -> line.getField1().equals(v.getOfficeId())).collect(Collectors.toList());
+            //构建基片制造部
+            EpDayReportCountRowVO lineRow = new EpDayReportCountRowVO();
+            List<BigDecimal> lineValueList = Lists.newArrayList();
+            for (LocalDate ele : timeList) {
+                List<BigDecimal> timeDataList = lineList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal timeValue = BigDecimalUtil.sum(timeDataList);
+                //a1.1 a2.1 a3.1 a4.1 a5.1 a6.1 a7.1 a8.1
+                lineResMap.put(mapKey(line.getField2(), ele), Lists.newArrayList(timeValue));
+            }
+            lineRow.setConsumeList(lineValueList);
+            lineRow.setUnit("kWh/㎡");
+            lineRow.setEnergyType(epEnergy.getName());
+            lineRow.setDepartmentName(line.getField3());
+            lineRow.setOfficeId(line.getField2());
+            lineRowList.add(lineRow);
+        }
+
+        //获取几条产线的产量及对应比例，用于分摊公用电
+        Map<String, BigDecimal> productNumMap = FeignOptional.of(() -> reportWorkFeignApi.classDateProductNum(new TripleDTO<>(lineOfficeIdSet, start, end)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> tupleDTO = getProductNumRateMap(sjgLine14List, sjgLine58List, timeList, productNumMap);
+        Map<String, BigDecimal> productNumLineRateMap = tupleDTO.getField1();
+        Map<String, BigDecimal> productNumRateMap = tupleDTO.getField2();
+
+        //获取公用电
+        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumLineRateMap, lineResMap);
+
+        //获取风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
+        //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
+        fl610(classDateAllData, fl610List, sjgLineList, timeList, productNumRateMap, lineResMap);
+
+        //获取风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
+        //获取b2
+        fl15(classDateAllData, fl15List, timeList, jpResMap);
+
+        //获取总能耗N 按b1、a1.1 + a1.2 + a1.3、a2.1 + a2.2 + a2.3、... 、a8.1 + a8.2 + a8.3按照比例分摊
+        //N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
+        Map<String, BigDecimal> nRateMap = getNRateMap(sjgLineList, timeList, jpResMap, lineResMap);
+        dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
+
+        //重新计算基片行和产线行
+        ftLineRow(lineRowList, timeList, lineResMap);
+        //构造深加工产线产量的数据
+        //深加工1-4车间需要小计
+        //深加工5-8车间需要小计
+        Map<String,BigDecimal> valueMap = Maps.newHashMap();
+        Map<String,BigDecimal> valueMap1 = Maps.newHashMap();
+        Map<String,BigDecimal> valueMap2 = Maps.newHashMap();
+
+        for (int i = 0; i < lineRowList.size(); i++) {
+            EpDayReportCountRowVO row = lineRowList.get(i);
+            List<BigDecimal> valueList = Lists.newArrayList();
+            BigDecimal rowConsume = null;
+            BigDecimal rowPm = null;
+            for (int j = 1; j < timeList.size(); j++) {
+                BigDecimal consume = row.getConsumeList().get(j - 1);
+                LocalDate time = timeList.get(j);
+                BigDecimal pm = productNumMap.get(row.getOfficeId() + "_" + time);
+                BigDecimal divide = BigDecimalUtil.divide(consume, pm, 1);
+                MapUtil.add(valueMap, time + "_0", consume, (x, y) -> BigDecimalUtil.add(x, y));
+                MapUtil.add(valueMap, time + "_1", pm, (x, y) -> BigDecimalUtil.add(x, y));
+                rowConsume = BigDecimalUtil.add(rowConsume, consume);
+                rowPm = BigDecimalUtil.add(rowPm, pm);
+                if (i < 4) {
+                    MapUtil.add(valueMap1, time + "_0", consume, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(valueMap1, time + "_1", pm, (x, y) -> BigDecimalUtil.add(x, y));
+                } else {
+                    MapUtil.add(valueMap2, time + "_0", consume, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(valueMap2, time + "_1", pm, (x, y) -> BigDecimalUtil.add(x, y));
+                }
+                valueList.add(divide);
+            }
+            row.setSumStr(BigDecimalUtil.divide(rowConsume, rowPm, 1));
+            row.setConsumeList(valueList);
+        }
+
+        //添加合计和总计
+        EpDayReportCountRowVO count1 = countSum(timeList, lineRowList.get(0), valueMap1, "小计（深加工二车间）");
+        lineRowList.add(4, count1);
+        EpDayReportCountRowVO count2 = countSum(timeList, lineRowList.get(0), valueMap1, "小计（深加工三车间）");
+        lineRowList.add(lineRowList.size(), count2);
+        EpDayReportCountRowVO count3 = countSum(timeList, lineRowList.get(0), valueMap1, "合计");
+        lineRowList.add(lineRowList.size(), count3);
+
+        //需要天然气和燃料油
+        EpDayReportCountRowVO gasOil = new EpDayReportCountRowVO();
+        gasOil.setUnit("kcal/kg");
+        gasOil.setDepartmentName("基片");
+        //基片二车间
+        Integer officeId = 76;
+        EpPartition gasOilEp = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeId), false);
+        Assert.notNull(gasOilEp, "燃料油单耗");
+        List<EpMeterReadAllDataVO> gasOilValueList = epMeterReadService.kcalDataUnit(Sets.newHashSet(timeList), Lists.newArrayList(gasOilEp.getId()));
+        Map<String,BigDecimal> gasOilValueMap = Maps.newHashMap();
+        gasOilValueList.forEach(ele -> {
+            gasOilValueMap.put(ele.getReadDate() + "_0", ele.getConsume());
+            gasOilValueMap.put(ele.getReadDate() + "_1", ele.getProductNum());
+        });
+        List<BigDecimal> gasOilUnitConsumeList = Lists.newArrayList();
+        List<BigDecimal> gasOilConsumeList = Lists.newArrayList();
+        List<BigDecimal> gasOilPmList = Lists.newArrayList();
+        for (int j = 1; j < timeList.size(); j++) {
+            LocalDate time = timeList.get(j);
+            BigDecimal consume = gasOilValueMap.get(time + "_0");
+            BigDecimal pm = gasOilValueMap.get(time + "_1");
+            BigDecimal unitConsume = BigDecimalUtil.divide(consume, pm, 1);
+            gasOilUnitConsumeList.add(unitConsume);
+            gasOilConsumeList.add(consume);
+            gasOilPmList.add(pm);
+        }
+        gasOil.setSumStr(BigDecimalUtil.divide(BigDecimalUtil.sum(gasOilConsumeList), BigDecimalUtil.sum(gasOilPmList)));
+        gasOil.setEnergyType("天然气+燃料油");
+        gasOil.setConsumeList(gasOilUnitConsumeList);
+        lineRowList.add(gasOil);
+
+        //提示产线
+        Map<String, List<String>> hintConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, Sets.newHashSet(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString()), 3)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<String> hintList1 = hintConfMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
+        List<String> hintList2 = hintConfMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
+        hintList1.addAll(hintList2);
+        resVo.setHintLineList(hintList1);
+        resVo.setDataList(lineRowList);
+        return resVo;
+    }
+
+    /**
+     * 合计和小计
+     * @param timeList
+     * @param row
+     * @param valueMap
+     * @param department
+     * @return
+     */
+    private EpDayReportCountRowVO countSum(List<LocalDate> timeList, EpDayReportCountRowVO row, Map<String, BigDecimal> valueMap, String department) {
+        EpDayReportCountRowVO count = new EpDayReportCountRowVO();
+        BeanUtils.copyProperties(row, count);
+        List<BigDecimal> valueCount1List = Lists.newArrayList();
+        count.setDepartmentName(department);
+        BigDecimal rowConsume = null;
+        BigDecimal rowPm = null;
+        for (int i = 1; i < timeList.size(); i++) {
+            LocalDate time = timeList.get(i);
+            BigDecimal consume = valueMap.get(time + "_0");
+            BigDecimal pm = valueMap.get(time + "_1");
+            valueCount1List.add(BigDecimalUtil.divide(consume, pm, 1));
+            rowConsume = BigDecimalUtil.add(rowConsume,consume);
+            rowPm = BigDecimalUtil.add(rowPm,pm);
+        }
+        count.setConsumeList(valueCount1List);
+        count.setSumStr(BigDecimalUtil.divide(rowConsume, rowPm, 1));
+        return count;
     }
 
     @Override
@@ -628,7 +874,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 consumeList.add(i, format);
                 rowSum = BigDecimalUtil.add(format, rowSum);
             }
-            row.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
         }
     }
 
