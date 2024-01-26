@@ -281,7 +281,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<BigDecimal> gasOilConsumeList = Lists.newArrayList();
         List<BigDecimal> gasOilPmList = Lists.newArrayList();
         for (int j = 1; j < timeList.size(); j++) {
-            LocalDate time = timeList.get(j);
+            LocalDate time = timeList.get(j - 1);
             BigDecimal consume = gasOilValueMap.get(time + "_0");
             BigDecimal pm = gasOilValueMap.get(time + "_1");
             BigDecimal unitConsume = BigDecimalUtil.divide(consume, pm, 1);
