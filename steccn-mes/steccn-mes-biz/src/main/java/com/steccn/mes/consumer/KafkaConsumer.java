@@ -12,6 +12,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.mes.constant.MesManagerConstant;
 import com.steccn.mes.domain.JsSysEmployee;
 import com.steccn.mes.domain.JsSysOffice;
 import com.steccn.mes.domain.MesEquipment;
@@ -117,16 +118,36 @@ public class KafkaConsumer {
                 //给设备所属部门的人发送消息
                 if(Objects.nonNull(one)&&StrUtil.isNotBlank(one.getDepartment())){
                     poolExecutor.execute(()->{
+                        //若部门的上级包含(设备动力部、深加工制造部、基片制造部)则发给下面的所有人
+                        JsSysOffice officeOne = jsSysOfficeService.getOne(new LambdaQueryWrapper<JsSysOffice>()
+                                .eq(JsSysOffice::getOfficeCode, one.getDepartment())
+                                .eq(JsSysOffice::getStatus, OaConstant.NO)
+                                .last("LIMIT 1"));
+                        String departmentStr = "";
+                        if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER)||
+                        officeOne.getParentCodes().contains(MesManagerConstant.PLANT_POWER+",")){
+                            departmentStr = MesManagerConstant.PLANT_POWER+",";
+                        }else if (officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING)||
+                                officeOne.getParentCodes().contains(MesManagerConstant.DEEP_PROCESSING+",")){
+                            departmentStr = MesManagerConstant.DEEP_PROCESSING+",";
+                        }else if (officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC)||
+                                officeOne.getParentCodes().contains(MesManagerConstant.SUB_MANU_FAC+",")){
+                            departmentStr = MesManagerConstant.SUB_MANU_FAC+",";
+                        }
                         //获取部门及部门下的岗位
-                        List<JsSysOffice> sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
-                                .select(JsSysOffice::getOfficeCode)
-                                .like(JsSysOffice::getParentCodes, one.getDepartment() + ",")
-                                .eq(JsSysOffice::getStatus,OaConstant.NO));
+                        List<JsSysOffice> sysOffices = Lists.newArrayList();
+                        if(StrUtil.isNotBlank(departmentStr)){
+                            sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                    .select(JsSysOffice::getOfficeCode)
+                                    .like(JsSysOffice::getParentCodes, departmentStr)
+                                    .eq(JsSysOffice::getStatus,OaConstant.NO));
+                        }
                         Set<String> officeCodes = Sets.newHashSet();
                         if(CollUtil.isNotEmpty(sysOffices)){
                             officeCodes = sysOffices.stream().map(JsSysOffice::getOfficeCode).collect(Collectors.toSet());
                         }
                         officeCodes.add(one.getDepartment());
+                        //若部门的上级包含(设备动力部、深加工制造部、基片制造部)则发给下面的所有人
                         //获取人
                         List<JsSysEmployee> employees = jsSysEmployeeService.list(new LambdaQueryWrapper<JsSysEmployee>()
                                 .select(JsSysEmployee::getEmpCode)

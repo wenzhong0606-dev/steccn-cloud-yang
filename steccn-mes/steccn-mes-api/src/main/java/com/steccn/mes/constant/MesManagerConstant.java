@@ -48,6 +48,21 @@ public interface MesManagerConstant {
     String STOCK_TYPE = "12";
 
     /**
+     * 设备动力部
+     */
+    String PLANT_POWER = "CUCC007";
+
+    /**
+     * 深加工制造部
+     */
+    String DEEP_PROCESSING = "STEC005";
+
+    /**
+     * 基片制造部
+     */
+    String SUB_MANU_FAC = "STEC001";
+
+    /**
      * 温度点检项
      */
     @Getter
