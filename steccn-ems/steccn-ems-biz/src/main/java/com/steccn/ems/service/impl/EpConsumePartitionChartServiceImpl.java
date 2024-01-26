@@ -1207,10 +1207,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             for (int i = 1; i < timeList.size(); i++) {
                 LocalDateTime startTmp = timeList.get(i - 1);
                 LocalDateTime endTmp = timeList.get(i);
+                LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
                 Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
                 QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classId);
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-                epChartGraphxAxisDTO.setXAxis(classesEnum.getName());
+                epChartGraphxAxisDTO.setXAxis(classDate + classesEnum.getName());
                 classDateFilterData = classDateAllData.stream().filter(data -> LocalDateUtil.isRange(data.getReadDate(), startTmp.toLocalDate(), endTmp.toLocalDate(), Boolean.TRUE, Boolean.TRUE) && data.getClassId().equals(classId)).collect(Collectors.toList());
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> tupleDTOList = getTupleDTOList(dto, classDateFilterData, consumeStandardList);
                 epChartGraphxAxisDTO.setData(tupleDTOList);

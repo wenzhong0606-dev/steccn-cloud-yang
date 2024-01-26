@@ -874,6 +874,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 consumeList.add(i, format);
                 rowSum = BigDecimalUtil.add(format, rowSum);
             }
+            row.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
         }
     }
 
