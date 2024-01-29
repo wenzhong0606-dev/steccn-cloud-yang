@@ -53,6 +53,12 @@ public class EpMeterReadFeignController {
         return R.success(epMeterReadService.energyConsumeOffice(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
     }
 
+    @PostMapping("/unit/consume/office")
+    R<Map<String, BigDecimal>> unitConsumeOffice(@RequestBody Tuple5DTO<Integer, List<Integer>, LocalDate, LocalDate, Integer> dto){
+        Assert.isTrue(LocalDateUtil.le(dto.getField3(), dto.getField4()), "结束时间必须小于等于开始时间");
+        return R.success(epMeterReadService.unitConsumeOffice(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
+    }
+
     /**
      * 余热发电
      *

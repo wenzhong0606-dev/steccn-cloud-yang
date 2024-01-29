@@ -603,6 +603,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     public SjgMonthCountReportVO monthReport(Integer type, Integer officeId, LocalDate start, LocalDate end) {
         SjgMonthCountReportVO vo = new SjgMonthCountReportVO();
         //获取车间的孩子节点-产线
+        //如何统一化 产线和车间
         List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(officeId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = Lists.newArrayList();
@@ -683,11 +684,13 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //获取右边的数据
         Map<String, BigDecimal> electric = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         Map<String, BigDecimal> water = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> unitConsume = FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
 
         List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
         String convert = MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start);
 
         rightList.add(monthRow("电量/kWh", electric, wsLineList, convert));
+        rightList.add(monthRow("电单耗/kWh/㎡", unitConsume, wsLineList, convert));
         rightList.add(monthRow("水量/t", water, wsLineList, convert));
         vo.setRightList(rightList);
         return vo;
