@@ -592,7 +592,7 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param granularity
      * @return
      */
-    List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity);
+    List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDateTime start, LocalDateTime end, QtManagerConstant.QtGranularityEnum granularity);
 
     /**
      * 根据产线获取领用数,区分分类-单位要转换成平方米

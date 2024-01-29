@@ -1816,8 +1816,10 @@ public class ReportServiceImpl implements ReportService {
         Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Integer> lineIds = Sets.newHashSet();
         sysOfficeVOMap.values().forEach(e->lineIds.add(e.getId()));
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd()).plusDays(1);
         //获取报工的物料消耗
-        List<Tuple4DTO<String, String, BigDecimal,Long>> dataList = pmsReportWorkService.materialConsumeNoMain(lineIds, dto.getStart(), dto.getEnd(), granularity);
+        List<Tuple4DTO<String, String, BigDecimal,Long>> dataList = pmsReportWorkService.materialConsumeNoMain(lineIds,start,end, granularity);
         Map<String,Map<String,BigDecimal>> map = Maps.newHashMap();
         Map<String,String> materialUnitMap = Maps.newHashMap();
         Set<Long> unitIds = dataList.stream().collect(Collectors.groupingBy(Tuple4DTO::getField4)).keySet();

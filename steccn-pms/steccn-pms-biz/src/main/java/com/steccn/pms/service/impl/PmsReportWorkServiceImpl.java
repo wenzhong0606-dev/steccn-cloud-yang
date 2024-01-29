@@ -1901,7 +1901,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity) {
+    public List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDateTime start, LocalDateTime end, QtManagerConstant.QtGranularityEnum granularity) {
         //根据产线和时间获取生产订单的物料消耗（不为主物料的物料消耗）
         Set<Long> materialIds = baseMapper.materialConsumeNoMain(lineIds, start, end);
         List<Tuple4DTO<String, String, BigDecimal, Long>> consumptionList = Lists.newArrayList();

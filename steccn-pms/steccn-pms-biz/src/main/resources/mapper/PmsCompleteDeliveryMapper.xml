@@ -115,4 +115,88 @@
         GROUP BY
             info.material_id
     </select>
+    <select id="materialConsumptionWeekValue" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        YEARWEEK( prw.class_date,7) field1,
+        sum(pcdi.quantity) field3,
+        pcdi.material_name field2,
+        prw.product_line_id field4
+        FROM
+        pms_report_work prw
+        LEFT JOIN pms_complete_delivery pcd ON pcd.report_work_id = prw.id
+        LEFT JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        WHERE
+        prw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND prw.product_line_id in
+        <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        AND pcdi.material_id in
+        <foreach collection="materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        AND prw.class_date BETWEEN #{start} and #{end}
+        GROUP BY
+        field1,
+        pcdi.material_name,
+        prw.product_line_id
+    </select>
+    <select id="materialConsumptionMonthValue" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT( prw.class_date,'%Y-%m') field1,
+        sum(pcdi.quantity) field3,
+        pcdi.material_name field2,
+        prw.product_line_id field4
+        FROM
+        pms_report_work prw
+        LEFT JOIN pms_complete_delivery pcd ON pcd.report_work_id = prw.id
+        LEFT JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        WHERE
+        prw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND prw.product_line_id in
+        <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        AND pcdi.material_id in
+        <foreach collection="materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        AND prw.class_date BETWEEN #{start} and #{end}
+        GROUP BY
+        field1,
+        pcdi.material_name,
+        prw.product_line_id
+    </select>
+    <select id="materialConsumptionYearValue" resultType="com.steccn.common.dto.Tuple4DTO">
+        SELECT
+        DATE_FORMAT( prw.class_date,'%Y') field1,
+        sum(pcdi.quantity) field3,
+        pcdi.material_name field2,
+        prw.product_line_id field4
+        FROM
+        pms_report_work prw
+        LEFT JOIN pms_complete_delivery pcd ON pcd.report_work_id = prw.id
+        LEFT JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        WHERE
+        prw.del_flag = 0
+        AND pcd.del_flag = 0
+        AND pcdi.del_flag = 0
+        AND prw.product_line_id in
+        <foreach collection="lineIds" item="lineId" open="(" close=")" separator=",">
+            #{lineId}
+        </foreach>
+        AND pcdi.material_id in
+        <foreach collection="materialIds" item="materialId" open="(" close=")" separator=",">
+            #{materialId}
+        </foreach>
+        AND prw.class_date BETWEEN #{start} and #{end}
+        GROUP BY
+        field1,
+        pcdi.material_name,
+        prw.product_line_id
+    </select>
 </mapper>
