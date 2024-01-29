@@ -8,6 +8,7 @@ import com.steccn.pms.util.PmsUnitUtil;
 import com.steccn.pms.vo.SjgCountReportStopVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+import com.steccn.pms.vo.SjgMonthCountReportVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,4 +97,11 @@ public class PmsSjgReportDashboardCtController {
     public R<List<SjgCountReportStopVO>> countReportStop(@RequestParam("lineId") Integer lineId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(pmsSjgReportDashboardService.countReportStop(lineId, start, end));
     }
+
+    @GetMapping("/month/count/report")
+    @ApiOperation("深加工月度统计报表")
+    public R<SjgMonthCountReportVO> monthReport(@RequestParam("type") Integer type, @RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.monthReport(type, officeId, start, end));
+    }
+
 }

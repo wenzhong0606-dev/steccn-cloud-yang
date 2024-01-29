@@ -1918,6 +1918,66 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<String, BigDecimal> useCountCategory(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getUseCountClassDate(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料主键集合
+            List<Long> materialIdList = dbList.stream().map(PmsUseCountDTO::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //根据单位查询转换关系
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(pieceSysDict, "片单位不存在");
+            Assert.notNull(sqSysDict, "转换单位不存在");
+            for (PmsUseCountDTO ele : dbList) {
+                EqpSpareVO material = materialMap.get(ele.getMaterialId());
+                List<SysSpareUnitConversionVO> relationList = convertMap.get(ele.getMaterialId());
+                BigDecimal quantity = ele.getQuantity();
+                if (!pieceSysDict.equals(sqSysDict)) {
+                    quantity = UnitConvertUtil.convertMaterial(relationList, pieceSysDict.getId(), sqSysDict.getId(), quantity, 3);
+                }
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + material.getThickQuantity() + "_" + material.getProductProperty(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> inStorageCategory(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeInStorage(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料主键集合
+            List<Long> materialIdList = dbList.stream().map(PmsUseCountDTO::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //根据单位查询转换关系
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(pieceSysDict, "片单位不存在");
+            Assert.notNull(sqSysDict, "转换单位不存在");
+            for (PmsUseCountDTO ele : dbList) {
+                EqpSpareVO material = materialMap.get(ele.getMaterialId());
+                List<SysSpareUnitConversionVO> relationList = convertMap.get(ele.getMaterialId());
+                BigDecimal quantity = ele.getQuantity();
+                if (!pieceSysDict.equals(sqSysDict)) {
+                    quantity = UnitConvertUtil.convertMaterial(relationList, pieceSysDict.getId(), sqSysDict.getId(), quantity, 3);
+                }
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + material.getThickQuantity() + "_" + material.getProductProperty(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);

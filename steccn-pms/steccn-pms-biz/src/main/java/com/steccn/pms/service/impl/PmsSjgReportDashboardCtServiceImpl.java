@@ -1,9 +1,8 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -11,29 +10,22 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
-import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysProductionCapacityFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysProductionCapacityDetailVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
-import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.mapper.PmsReportWorkHourMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
-import com.steccn.pms.service.*;
+import com.steccn.pms.service.PmsOfficeManager;
+import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.vo.*;
-import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -600,6 +592,103 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                 resList.add(table);
             });
         }
+        return resList;
+    }
+
+    @Override
+    public SjgMonthCountReportVO monthReport(Integer type, Integer officeId, LocalDate start, LocalDate end) {
+        SjgMonthCountReportVO vo = new SjgMonthCountReportVO();
+        //获取车间的孩子节点-产线
+        List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(officeId);
+        Assert.notEmpty(wsLineList, "车间下暂无产线");
+        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //根据产线获取领用数,区分分类-单位要转换成平方米
+        Map<String, BigDecimal> useCountMap = reportWorkService.useCountCategory(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
+        //入库数：显示平方米，取自完工入库数据，汇总数据累加
+        Map<String, BigDecimal> inStorageMap = reportWorkService.inStorageCategory(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
+        //考虑产线，类别
+        Set<String> specSet = Sets.newHashSet(useCountMap.keySet());
+        specSet.addAll(inStorageMap.keySet());
+        List<String> thickList = getProperty(specSet,1);
+        List<String> productPropertyList = getProperty(specSet, 2);
+        List<SjgMonthCountReportTransverseVO> leftList = Lists.newArrayList();
+        Map<String,BigDecimal> sumMap1 = Maps.newLinkedHashMap();
+        Map<String,BigDecimal> sumMap2 = Maps.newLinkedHashMap();
+        for (SysOfficeVO office : wsLineList) {
+            boolean flagSum = Boolean.FALSE;
+            //组织机构级别的合计
+            BigDecimal useCountOfficeSum = null;
+            BigDecimal inStorageOfficeSum = null;
+            for (String thick : thickList) {
+                for (String productProperty : productPropertyList) {
+                    BigDecimal useCountSource = useCountMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, office.getId(), thick, productProperty));
+                    BigDecimal inStorageSource = inStorageMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, office.getId(), thick, productProperty));
+                    BigDecimal useCount = BigDecimalUtil.setScale(useCountSource, 2);
+                    BigDecimal inStorage = BigDecimalUtil.setScale(inStorageSource, 2);
+                    if (Objects.nonNull(useCount) || Objects.nonNull(inStorage)) {
+                        flagSum = Boolean.TRUE;
+                        SjgMonthCountReportTransverseVO row = new SjgMonthCountReportTransverseVO();
+                        if(!"null".equals(productProperty)){
+                            int productPropertyInt = Integer.parseInt(productProperty);
+                            String propertyName = ProductPropertyEnum.property(productPropertyInt).getName();
+                            row.setCategoryName(thick + propertyName);
+                        }else{
+                            row.setCategoryName(thick);
+                        }
+                        row.setOfficeName(office.getOfficeName());
+                        row.setInStorageCount(inStorage);
+                        row.setUseCount(useCount);
+                        row.setYieldRate(BigDecimalUtil.percent(inStorage, useCount));
+                        useCountOfficeSum = BigDecimalUtil.add(useCountOfficeSum, row.getUseCount());
+                        inStorageOfficeSum = BigDecimalUtil.add(inStorageOfficeSum, row.getInStorageCount());
+                        MapUtil.add(sumMap1, row.getCategoryName(), row.getUseCount(), (x, y) -> BigDecimalUtil.add(x, y,2));
+                        MapUtil.add(sumMap2, row.getCategoryName(), row.getInStorageCount(), (x, y) -> BigDecimalUtil.add(x, y, 2));
+                        leftList.add(row);
+                    }
+                }
+            }
+            if(flagSum){
+                //添加组织机构级别的合计
+                SjgMonthCountReportTransverseVO officeSum = new SjgMonthCountReportTransverseVO();
+                officeSum.setOfficeName(office.getOfficeName());
+                officeSum.setCategoryName("合计");
+                officeSum.setUseCount(useCountOfficeSum);
+                officeSum.setInStorageCount(inStorageOfficeSum);
+                officeSum.setYieldRate(BigDecimalUtil.percent(inStorageOfficeSum, useCountOfficeSum));
+                leftList.add(officeSum);
+            }
+        }
+        //合计
+        sumMap1.forEach((k,v) ->{
+            SjgMonthCountReportTransverseVO officeTotal = new SjgMonthCountReportTransverseVO();
+            officeTotal.setOfficeName("合计");
+            officeTotal.setCategoryName(k);
+            officeTotal.setUseCount(v);
+            officeTotal.setInStorageCount(sumMap2.get(k));
+            officeTotal.setYieldRate(BigDecimalUtil.percent(officeTotal.getInStorageCount(), officeTotal.getUseCount()));
+            leftList.add(officeTotal);
+        });
+        vo.setLeftList(leftList);
+        return vo;
+    }
+
+    /**
+     * 从规格字符串中获取厚度||产品属性
+     *
+     * @param specSet 规格字符串
+     * @param idx     索引
+     * @return
+     */
+    private List<String> getProperty(Set<String> specSet, Integer idx) {
+        Set<String> propertySet = Sets.newHashSet();
+        if (CollUtil.isNotEmpty(specSet)) {
+            specSet.forEach(ele -> {
+                String[] split = ele.split("_");
+                propertySet.add(split[idx]);
+            });
+        }
+        List<String> resList = Lists.newArrayList(propertySet);
+        Collections.sort(resList);
         return resList;
     }
 

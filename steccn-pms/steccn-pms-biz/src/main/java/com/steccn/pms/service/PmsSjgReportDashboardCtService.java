@@ -7,6 +7,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.pms.vo.SjgCountReportStopVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+import com.steccn.pms.vo.SjgMonthCountReportVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -121,4 +122,15 @@ public interface PmsSjgReportDashboardCtService {
      * @return
      */
     List<SjgCountReportStopVO> countReportStop(Integer lineId, LocalDate start, LocalDate end);
+
+    /**
+     * 深加工月度统计报表
+     *
+     * @param type     类型 0表示产线 1表示车间
+     * @param officeId 组织结构主键
+     * @param start    开始时间
+     * @param end      结束时间
+     * @return
+     */
+    SjgMonthCountReportVO monthReport(Integer type, Integer officeId, LocalDate start, LocalDate end);
 }

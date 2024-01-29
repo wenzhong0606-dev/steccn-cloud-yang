@@ -593,4 +593,26 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity);
+
+    /**
+     * 根据产线获取领用数,区分分类-单位要转换成平方米
+     *
+     * @param lineIdList 产线主键
+     * @param start      班次日期开始
+     * @param end        班次日期结束
+     * @param unit       转换单位
+     * @return
+     */
+    Map<String, BigDecimal> useCountCategory(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
+
+    /**
+     * 根据产线获取入库数,区分分类-单位要转换成平方米
+     *
+     * @param lineIdList 产线主键
+     * @param start      班次日期开始
+     * @param end        班次日期结束
+     * @param unit       转换单位
+     * @return
+     */
+    Map<String, BigDecimal> inStorageCategory(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit);
 }
