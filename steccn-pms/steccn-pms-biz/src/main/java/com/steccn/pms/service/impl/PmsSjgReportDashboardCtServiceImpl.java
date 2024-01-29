@@ -10,6 +10,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
+import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSysProductionCapacityFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -23,6 +24,8 @@ import com.steccn.pms.service.PmsOfficeManager;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     private final PmsReportWorkMapper pmsReportWorkMapper;
     private final PmsReportWorkHourMapper pmsReportWorkHourMapper;
     private final RemoteSysProductionCapacityFeignApi sysProductionCapacityFeignApi;
+    private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
 
     @Override
     public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
@@ -601,7 +605,13 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //获取车间的孩子节点-产线
         List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(officeId);
         Assert.notEmpty(wsLineList, "车间下暂无产线");
-        List<Integer> lineIdList = wsLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        List<Integer> lineIdList = Lists.newArrayList();
+        List<String> lineNameList = Lists.newArrayList();
+        wsLineList.forEach(ele ->{
+            lineIdList.add(ele.getId());
+            lineNameList.add(ele.getOfficeName());
+        });
+        lineNameList.add("合计");
         //根据产线获取领用数,区分分类-单位要转换成平方米
         Map<String, BigDecimal> useCountMap = reportWorkService.useCountCategory(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
         //入库数：显示平方米，取自完工入库数据，汇总数据累加
@@ -669,8 +679,49 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             leftList.add(officeTotal);
         });
         vo.setLeftList(leftList);
+        vo.setRightHeadList(lineNameList);
+        //获取右边的数据
+        Map<String, BigDecimal> electric = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> water = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+
+        List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
+        String convert = MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start);
+
+        rightList.add(monthRow("电量/kWh", electric, wsLineList, convert));
+        rightList.add(monthRow("水量/t", water, wsLineList, convert));
+        vo.setRightList(rightList);
         return vo;
     }
+
+
+    /**
+     * 深加工月度统计报表-转换
+     *
+     * @param category   类别
+     * @param valueMap   值map
+     * @param wsLineList 产线主键集合
+     * @param convert    粒度转换
+     * @return
+     */
+    private SteccnRow<String, List<BigDecimal>> monthRow(String category, Map<String, BigDecimal> valueMap, List<SysOfficeVO> wsLineList, String convert) {
+        SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
+        row.setFixRow(category);
+        //避免空指针异常
+        if(Objects.isNull(valueMap)){
+            valueMap = Maps.newHashMap();
+        }
+        List<BigDecimal> valueList = Lists.newArrayList();
+        BigDecimal columnSum = null;
+        for (SysOfficeVO office : wsLineList) {
+            BigDecimal value = valueMap.get(office.getId() + "_" + convert);
+            valueList.add(value);
+            columnSum = BigDecimalUtil.add(columnSum, value);
+        }
+        valueList.add(columnSum);
+        row.setDynamicRow(valueList);
+        return row;
+    }
+
 
     /**
      * 从规格字符串中获取厚度||产品属性

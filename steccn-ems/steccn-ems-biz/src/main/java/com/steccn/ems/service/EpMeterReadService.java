@@ -10,6 +10,7 @@ import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -115,4 +116,17 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @return
      */
     CommonReportDTO energyConsume(Integer energyType, Integer workshopId, LocalDate start, LocalDate end, Integer granularityInt);
+
+
+    /**
+     * 获取指定能源的耗用数
+     *
+     * @param energyType     能源类型
+     * @param officeIdList   组织架构主键
+     * @param start          开始日期
+     * @param end            结束日期
+     * @param granularityInt 粒度
+     * @return
+     */
+    Map<String, BigDecimal> energyConsumeOffice(Integer energyType, List<Integer> officeIdList, LocalDate start, LocalDate end, Integer granularityInt);
 }

@@ -8,8 +8,11 @@ import com.steccn.common.vo.R;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -27,6 +30,16 @@ public interface RemoteMeterReadFeignApi {
      */
     @PostMapping("/feign/ems/meter/read/energy/consume")
     R<CommonReportDTO> energyConsume(@RequestBody Tuple5DTO<Integer, Integer, LocalDate, LocalDate, Integer> dto);
+
+
+    /**
+     * 获取指定能源的消耗
+     *
+     * @param dto 能源类型，车间，日期start，日期end，粒度  5元组
+     * @return
+     */
+    @PostMapping("/feign/ems/meter/read/energy/consume/office")
+    R<Map<String, BigDecimal>> energyConsumeOffice(@RequestBody Tuple5DTO<Integer, List<Integer>, LocalDate, LocalDate, Integer> dto);
 
 
     /**
