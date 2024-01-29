@@ -670,15 +670,29 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             }
         }
         //合计
-        sumMap1.forEach((k,v) ->{
+        BigDecimal useCountOfficeTotalSum = null;
+        BigDecimal inStorageOfficeTotalSum = null;
+        for (Map.Entry<String, BigDecimal> entry : sumMap1.entrySet()) {
             SjgMonthCountReportTransverseVO officeTotal = new SjgMonthCountReportTransverseVO();
             officeTotal.setOfficeName("合计");
-            officeTotal.setCategoryName(k);
-            officeTotal.setUseCount(v);
-            officeTotal.setInStorageCount(sumMap2.get(k));
+            officeTotal.setCategoryName(entry.getKey());
+            officeTotal.setUseCount(entry.getValue());
+            officeTotal.setInStorageCount(sumMap2.get(entry.getKey()));
             officeTotal.setYieldRate(BigDecimalUtil.percent(officeTotal.getInStorageCount(), officeTotal.getUseCount()));
+            useCountOfficeTotalSum = BigDecimalUtil.add(useCountOfficeTotalSum,officeTotal.getUseCount());
+            inStorageOfficeTotalSum = BigDecimalUtil.add(inStorageOfficeTotalSum,officeTotal.getInStorageCount());
             leftList.add(officeTotal);
-        });
+        }
+        //添加合计的合计
+        //添加组织机构级别的合计
+        SjgMonthCountReportTransverseVO officeTotalSum = new SjgMonthCountReportTransverseVO();
+        officeTotalSum.setOfficeName("合计");
+        officeTotalSum.setCategoryName("合计");
+        officeTotalSum.setUseCount(useCountOfficeTotalSum);
+        officeTotalSum.setInStorageCount(inStorageOfficeTotalSum);
+        officeTotalSum.setYieldRate(BigDecimalUtil.percent(officeTotalSum.getInStorageCount(), officeTotalSum.getUseCount()));
+        leftList.add(officeTotalSum);
+
         vo.setLeftList(leftList);
         vo.setRightHeadList(lineNameList);
         //获取右边的数据
