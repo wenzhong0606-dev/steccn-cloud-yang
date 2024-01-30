@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.io.Serializable;
 
 /**
@@ -53,6 +55,9 @@ public class PmCraftRouteModuleVO implements Serializable {
 
     @ApiModelProperty("是否是反冲：1是0否")
     private Integer isBackCalculation;
+
+    @ApiModelProperty("是否是主物料：1是0否")
+    private Integer isMainMaterial;
 
     @ApiModelProperty("工序报废百分比")
     private Float processScrapingPercent;

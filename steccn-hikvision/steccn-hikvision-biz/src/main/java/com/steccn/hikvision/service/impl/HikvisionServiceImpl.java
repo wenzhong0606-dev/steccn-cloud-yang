@@ -79,8 +79,8 @@ public class HikvisionServiceImpl implements HikvisionService {
         VideoApi videoApi = new VideoApi();
         Map<String,String> querys = Maps.newHashMap();
         querys.put("language", "zh_CN");
-        querys.put("service", "http://192.168.200.100/portal/ui/index");
-        querys.put("userCode", SecurityUtils.getUser().getUsername());
+        querys.put("service", "http://192.168.200.100/portal");
+        querys.put("userCode", "admin");
         String result = videoApi.ssoLogin(querys);
         JSONObject jsonObject = JSONObject.parseObject(result);
         String token = jsonObject.getJSONObject("data").getString("token");

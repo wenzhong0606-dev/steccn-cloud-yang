@@ -72,6 +72,11 @@ public class PmCraftRouteModule implements Serializable {
     private Integer isBackCalculation;
 
     /**
+     * 是否主物料
+     */
+    private Integer isMainMaterial;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

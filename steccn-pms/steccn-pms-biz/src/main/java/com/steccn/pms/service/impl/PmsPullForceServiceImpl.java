@@ -456,7 +456,12 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         SteccnTableAssertUtil.notEmpty(data, "暂无数据");
         SteccnTableDataDTO<Map<String, String>> result = new SteccnTableDataDTO<>();
         //组表头
-        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        List<LocalDate> dateList;
+        if(QtManagerConstant.QtGranularityEnum.CLASS.equals(granularity)){
+            dateList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
+        }else {
+            dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+        }
         if(QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)){
             List<SteccnTableColumn> columns = Lists.newArrayList();
             columns.add(new SteccnTableColumn("productLine","产线",null));
