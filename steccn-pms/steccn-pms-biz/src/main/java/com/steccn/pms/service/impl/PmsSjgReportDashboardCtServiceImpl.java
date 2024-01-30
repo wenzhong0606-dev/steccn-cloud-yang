@@ -717,16 +717,16 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
         });
         CompletableFuture<Map<Integer, BigDecimal>> dkMapFuture = CompletableFuture.supplyAsync(() -> {
-            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+            return reportWorkService.processYieldLine(lineIdList, start, end, "DKGX");
         });
         CompletableFuture<Map<Integer, BigDecimal>> syMapFuture = CompletableFuture.supplyAsync(() -> {
-            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+            return reportWorkService.processYieldLine(lineIdList, start, end, "SYGX");
         });
         CompletableFuture<Map<Integer, BigDecimal>> dmMapFuture = CompletableFuture.supplyAsync(() -> {
-            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+            return reportWorkService.processYieldLine(lineIdList, start, end, "DMGX");
         });
         CompletableFuture<Map<Integer, BigDecimal>> ghMapFuture = CompletableFuture.supplyAsync(() -> {
-            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+            return reportWorkService.processYieldLine(lineIdList, start, end, "GHGX");
         });
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, waterFuture, unitConsumeFuture, materialConsumeListFuture,
                 waterFuture, mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
