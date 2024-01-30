@@ -78,6 +78,11 @@ public class PmCraftRouteModuleDTO implements Serializable {
     @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer isBackCalculation;
 
+    @ApiModelProperty("是否是主物料：1是0否")
+    @Max(value = 1, message = "状态只能是 0否  1是")
+    @Min(value = 0, message = "状态只能是 0否  1是")
+    private Integer isMainMaterial;
+
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "工序报废百分比不能为空")
     @ApiModelProperty("工序报废百分比")
     @Max(value = 100, message = "百分比不能大于100")
