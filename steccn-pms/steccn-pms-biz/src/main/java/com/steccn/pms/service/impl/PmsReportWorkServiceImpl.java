@@ -1978,6 +1978,24 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<Integer, BigDecimal> processYieldLine(List<Integer> lineIdList, LocalDate start, LocalDate end, String processCode) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.processYieldLine(lineIdList, start, end, processCode);
+        if (CollUtil.isNotEmpty(dbList)) {
+            BigDecimal passQuantitySum = null, processQuantitySum = null;
+            for (PmsUseCountDTO ele : dbList) {
+                Integer productLineId = ele.getProductLineId();
+                BigDecimal passQuantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity(), 0);
+                resMap.put(productLineId, BigDecimalUtil.percent(passQuantity, ele.getQuantity()));
+                passQuantitySum = BigDecimalUtil.add(passQuantitySum, passQuantity);
+                processQuantitySum = BigDecimalUtil.add(processQuantitySum, ele.getQuantity());
+            }
+            resMap.put(-1, BigDecimalUtil.percent(passQuantitySum, processQuantitySum));
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);

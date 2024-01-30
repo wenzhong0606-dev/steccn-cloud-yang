@@ -11,6 +11,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
+import com.steccn.ems.vo.EpDayReportCountRowVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSysProductionCapacityFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -20,6 +21,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkHourMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
+import com.steccn.pms.service.PmsCompleteDeliveryService;
 import com.steccn.pms.service.PmsOfficeManager;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
@@ -33,6 +35,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,6 +56,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     private final PmsReportWorkHourMapper pmsReportWorkHourMapper;
     private final RemoteSysProductionCapacityFeignApi sysProductionCapacityFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
+    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
     @Override
     public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
@@ -696,18 +700,67 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         vo.setLeftList(leftList);
         vo.setRightHeadList(lineNameList);
         //获取右边的数据
-        Map<String, BigDecimal> electric = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        Map<String, BigDecimal> water = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        Map<String, BigDecimal> unitConsume = FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        CompletableFuture<Map<String, BigDecimal>> elecFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        });
+        CompletableFuture<Map<String, BigDecimal>> waterFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        });
+        CompletableFuture<Map<String, BigDecimal>> unitConsumeFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        });
+        CompletableFuture<List<TupleDTO<String, Map<Integer, BigDecimal>>>> materialConsumeListFuture = CompletableFuture.supplyAsync(() -> {
+             return pmsCompleteDeliveryService.materialConsumption(new Tuple5DTO<>(officeId, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode(), 1));
+        });
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, waterFuture, unitConsumeFuture, materialConsumeListFuture, waterFuture);
+        completableFuture.isDone();
 
         List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
         String convert = MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start);
-
-        rightList.add(monthRow("电量/kWh", electric, wsLineList, convert));
-        rightList.add(monthRow("电单耗/kWh/㎡", unitConsume, wsLineList, convert));
-        rightList.add(monthRow("水量/t", water, wsLineList, convert));
+        rightList.add(monthRow("电量/kWh", elecFuture.join(), wsLineList, convert));
+        rightList.add(monthRow("电单耗/kWh/㎡", unitConsumeFuture.join(), wsLineList, convert));
+        rightList.add(monthRow("水量/t", waterFuture.join(), wsLineList, convert));
+        //集成物料消耗
+        List<TupleDTO<String, Map<Integer, BigDecimal>>> materialConsumeList = materialConsumeListFuture.join();
+        if (CollUtil.isNotEmpty(materialConsumeList)) {
+            materialConsumeList.forEach(ele -> {
+                rightList.add(monthConsumeRow(ele.getField1(), ele.getField2(), wsLineList));
+            });
+        }
+        //工序成品率： 磨边成品率，打孔成品率，丝印成品率，镀膜成品率，钢化成品率
+        //合格数/加工数，以百分比展示
+        Map<Integer, BigDecimal> mbMap = reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+        Map<Integer, BigDecimal> dkMap = reportWorkService.processYieldLine(lineIdList, start, end, "DKGX");
+        Map<Integer, BigDecimal> syMap = reportWorkService.processYieldLine(lineIdList, start, end, "SYGX");
+        Map<Integer, BigDecimal> dmMap = reportWorkService.processYieldLine(lineIdList, start, end, "DMGX");
+        Map<Integer, BigDecimal> ghMap = reportWorkService.processYieldLine(lineIdList, start, end, "GHGX");
+        rightList.add(monthConsumeRow("磨边成品率/%", mbMap, wsLineList));
+        rightList.add(monthConsumeRow("打孔成品率/%", dkMap, wsLineList));
+        rightList.add(monthConsumeRow("丝印成品率/%", syMap, wsLineList));
+        rightList.add(monthConsumeRow("镀膜成品率/%", dmMap, wsLineList));
+        rightList.add(monthConsumeRow("钢化成品率/%", ghMap, wsLineList));
         vo.setRightList(rightList);
         return vo;
+    }
+
+    /**
+     * 异丙醇/镀膜液/油墨
+     *
+     * @param info       信息对象
+     * @param map        数据对象
+     * @param wsLineList 产线集合
+     * @return
+     */
+    private SteccnRow<String, List<BigDecimal>> monthConsumeRow(String info, Map<Integer, BigDecimal> map, List<SysOfficeVO> wsLineList) {
+        SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
+        row.setFixRow(info);
+        List<BigDecimal> valueList = Lists.newArrayList();
+        wsLineList.forEach(ele -> {
+            valueList.add(map.get(ele.getId()));
+        });
+        valueList.add(map.get(-1));
+        row.setDynamicRow(valueList);
+        return row;
     }
 
 

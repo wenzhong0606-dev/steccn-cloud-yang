@@ -1478,5 +1478,29 @@
         pcdi.material_name,
         pcdi.unit_id
     </select>
+    <select id="processYieldLine" resultType="com.steccn.pms.dto.PmsUseCountDTO">
+
+        SELECT
+        prw.product_line_id,
+        sum( prw.process_quantity ) as quantity,
+        sum( prw.badness_quantity ) as badQuantity
+        FROM
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        JOIN pms_produce_order_craft craft on prw.process_id = craft.id
+        WHERE
+        prw.del_flag = 0 AND ppo.del_flag = 0 AND craft.del_flag = 0
+        <if test="lineIdList != null and lineIdList.size  != ''">
+            AND prw.product_line_id in
+            <foreach collection="lineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+        AND craft.code = #{processCode}
+        AND prw.class_date &gt;= #{start}
+        AND prw.class_date &lt;= #{end}
+        GROUP BY
+        prw.product_line_id
+    </select>
 
 </mapper>

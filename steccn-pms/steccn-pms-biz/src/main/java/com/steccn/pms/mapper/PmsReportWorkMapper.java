@@ -685,6 +685,20 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                                                     @Param("materialIds")Set<Long> materialIds,
                                                                     @Param("start") LocalDateTime start,
                                                                     @Param("end") LocalDateTime end);
+
+    /**
+     * 产线粒度的工序合格率
+     *
+     * @param lineIdList  产线主键集合
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param processCode 工序code
+     * @return
+     */
+    List<PmsUseCountDTO> processYieldLine(@Param("lineIdList") List<Integer> lineIdList,
+                                          @Param("start") LocalDate start,
+                                          @Param("end") LocalDate end,
+                                          @Param("processCode") String processCode);
 }
 
 
