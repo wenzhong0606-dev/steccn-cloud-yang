@@ -531,7 +531,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         BigDecimal valueDiffSumRate = BigDecimalUtil.percent(valueDiffSum, curWeekInStorage);
         for (SysOfficeVO line : lineList) {
             SjgCountReportRowVO row = new SjgCountReportRowVO();
-            row.setCategoryName("产线产量");
+            row.setCategoryName("产线入库产量");
             row.setLineId(line.getId());
             row.setLineName(line.getOfficeName());
             row.setCurrentValue(currentInStorageMap.get(line.getId()));
