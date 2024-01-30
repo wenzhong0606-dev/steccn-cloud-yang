@@ -712,7 +712,24 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         CompletableFuture<List<TupleDTO<String, Map<Integer, BigDecimal>>>> materialConsumeListFuture = CompletableFuture.supplyAsync(() -> {
              return pmsCompleteDeliveryService.materialConsumption(new Tuple5DTO<>(officeId, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode(), 1));
         });
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, waterFuture, unitConsumeFuture, materialConsumeListFuture, waterFuture);
+
+        CompletableFuture<Map<Integer, BigDecimal>> mbMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> dkMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> syMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> dmMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> ghMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
+        });
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, waterFuture, unitConsumeFuture, materialConsumeListFuture,
+                waterFuture, mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
         completableFuture.isDone();
 
         List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
@@ -729,16 +746,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         }
         //工序成品率： 磨边成品率，打孔成品率，丝印成品率，镀膜成品率，钢化成品率
         //合格数/加工数，以百分比展示
-        Map<Integer, BigDecimal> mbMap = reportWorkService.processYieldLine(lineIdList, start, end, "MBGX");
-        Map<Integer, BigDecimal> dkMap = reportWorkService.processYieldLine(lineIdList, start, end, "DKGX");
-        Map<Integer, BigDecimal> syMap = reportWorkService.processYieldLine(lineIdList, start, end, "SYGX");
-        Map<Integer, BigDecimal> dmMap = reportWorkService.processYieldLine(lineIdList, start, end, "DMGX");
-        Map<Integer, BigDecimal> ghMap = reportWorkService.processYieldLine(lineIdList, start, end, "GHGX");
-        rightList.add(monthConsumeRow("磨边成品率/%", mbMap, wsLineList));
-        rightList.add(monthConsumeRow("打孔成品率/%", dkMap, wsLineList));
-        rightList.add(monthConsumeRow("丝印成品率/%", syMap, wsLineList));
-        rightList.add(monthConsumeRow("镀膜成品率/%", dmMap, wsLineList));
-        rightList.add(monthConsumeRow("钢化成品率/%", ghMap, wsLineList));
+        rightList.add(monthConsumeRow("磨边成品率/%", mbMapFuture.join(), wsLineList));
+        rightList.add(monthConsumeRow("打孔成品率/%", dkMapFuture.join(), wsLineList));
+        rightList.add(monthConsumeRow("丝印成品率/%", syMapFuture.join(), wsLineList));
+        rightList.add(monthConsumeRow("镀膜成品率/%", dmMapFuture.join(), wsLineList));
+        rightList.add(monthConsumeRow("钢化成品率/%", ghMapFuture.join(), wsLineList));
         vo.setRightList(rightList);
         return vo;
     }
