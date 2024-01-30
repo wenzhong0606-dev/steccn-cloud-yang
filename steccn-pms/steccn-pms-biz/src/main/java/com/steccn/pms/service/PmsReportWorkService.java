@@ -626,4 +626,17 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<Integer, BigDecimal> processYieldLine(List<Integer> lineIdList, LocalDate start, LocalDate end, String processCode);
+
+
+    /**
+     * 车间粒度的工序合格率
+     *
+     * @param workshopIdList  产线主键集合
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param processCode 工序code
+     * @return
+     */
+    Map<Integer, BigDecimal> processYieldWorkshop(List<Integer> workshopIdList, LocalDate start, LocalDate end, String processCode);
+
 }

@@ -12,6 +12,7 @@ import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.ems.vo.EpDayReportCountRowVO;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSysProductionCapacityFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -605,6 +606,192 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public SjgMonthCountReportVO monthReport(Integer type, Integer officeId, LocalDate start, LocalDate end) {
+        if(type == 1) {
+            return monthReportWorkshop(officeId, start, end);
+        }
+        return monthReportLine(officeId, start, end);
+    }
+
+    /**
+     * 深加工月度统计报表 - 产线粒度
+     * @param officeId 组织机构主键
+     * @param start    开始日期
+     * @param end      结束日期
+     * @return
+     */
+    private SjgMonthCountReportVO monthReportWorkshop(Integer officeId, LocalDate start, LocalDate end) {
+        SjgMonthCountReportVO vo = new SjgMonthCountReportVO();
+        //获取车间的孩子节点-产线
+        //如何统一化 产线和车间
+        //根据制造部获取车间
+        List<SysOfficeVO> workshopList = pmsOfficeManager.getChildren(officeId, SysOfficeConstant.WORKSHOP);
+        Assert.notEmpty(workshopList, "制造部下暂无车间");
+        List<Integer> workshopIdList = workshopList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        Map<Integer, List<Integer>> wsLinkLineMap = pmsOfficeManager.childType(workshopIdList, SysOfficeConstant.PRODUCT_LINE);
+        //获取车间下的所有产线
+        List<Integer> lineIdList = wsLinkLineMap.values().stream().flatMap(Collection::stream).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+        Assert.notEmpty(lineIdList,"制造部下暂无产线");
+        List<Integer> wsIdList = Lists.newArrayList();
+        List<String> workshopNameList = Lists.newArrayList();
+        workshopList.forEach(ele -> {
+            wsIdList.add(ele.getId());
+            workshopNameList.add(ele.getOfficeName());
+        });
+        workshopNameList.add("合计");
+        //根据产线获取领用数,区分分类-单位要转换成平方米
+        Map<String, BigDecimal> useCountMap = reportWorkService.useCountCategory(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
+        //入库数：显示平方米，取自完工入库数据，汇总数据累加
+        Map<String, BigDecimal> inStorageMap = reportWorkService.inStorageCategory(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
+        //考虑产线，类别
+        Set<String> specSet = Sets.newHashSet(useCountMap.keySet());
+        specSet.addAll(inStorageMap.keySet());
+        List<String> thickList = getProperty(specSet,1);
+        List<String> productPropertyList = getProperty(specSet, 2);
+        List<SjgMonthCountReportTransverseVO> leftList = Lists.newArrayList();
+        Map<String,BigDecimal> sumMap1 = Maps.newLinkedHashMap();
+        Map<String,BigDecimal> sumMap2 = Maps.newLinkedHashMap();
+        for (SysOfficeVO office : workshopList) {
+            //根据车间获取产线集合
+            List<Integer> lineIdListTmp = wsLinkLineMap.get(office.getId());
+            if(Objects.isNull(lineIdListTmp)){
+                lineIdListTmp = Lists.newArrayList();
+            }
+            boolean flagSum = Boolean.FALSE;
+            //组织机构级别的合计
+            BigDecimal useCountOfficeSum = null;
+            BigDecimal inStorageOfficeSum = null;
+            for (String thick : thickList) {
+                for (String productProperty : productPropertyList) {
+                    BigDecimal useCountSource = null,inStorageSource = null;
+                    for (Integer lineId : lineIdListTmp) {
+                        useCountSource = BigDecimalUtil.add(useCountSource,useCountMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, thick, productProperty)));
+                        inStorageSource = BigDecimalUtil.add(inStorageSource, inStorageMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, thick, productProperty)));
+                    }
+                    BigDecimal useCount = BigDecimalUtil.setScale(useCountSource, 2);
+                    BigDecimal inStorage = BigDecimalUtil.setScale(inStorageSource, 2);
+                    if (Objects.nonNull(useCount) || Objects.nonNull(inStorage)) {
+                        flagSum = Boolean.TRUE;
+                        SjgMonthCountReportTransverseVO row = new SjgMonthCountReportTransverseVO();
+                        if(!"null".equals(productProperty)){
+                            int productPropertyInt = Integer.parseInt(productProperty);
+                            String propertyName = ProductPropertyEnum.property(productPropertyInt).getName();
+                            row.setCategoryName(thick + propertyName);
+                        }else{
+                            row.setCategoryName(thick);
+                        }
+                        row.setOfficeName(office.getOfficeName());
+                        row.setInStorageCount(inStorage);
+                        row.setUseCount(useCount);
+                        row.setYieldRate(BigDecimalUtil.percent(inStorage, useCount));
+                        useCountOfficeSum = BigDecimalUtil.add(useCountOfficeSum, row.getUseCount());
+                        inStorageOfficeSum = BigDecimalUtil.add(inStorageOfficeSum, row.getInStorageCount());
+                        MapUtil.add(sumMap1, row.getCategoryName(), row.getUseCount(), (x, y) -> BigDecimalUtil.add(x, y,2));
+                        MapUtil.add(sumMap2, row.getCategoryName(), row.getInStorageCount(), (x, y) -> BigDecimalUtil.add(x, y, 2));
+                        leftList.add(row);
+                    }
+                }
+            }
+            if(flagSum){
+                //添加组织机构级别的合计
+                SjgMonthCountReportTransverseVO officeSum = new SjgMonthCountReportTransverseVO();
+                officeSum.setOfficeName(office.getOfficeName());
+                officeSum.setCategoryName("合计");
+                officeSum.setUseCount(useCountOfficeSum);
+                officeSum.setInStorageCount(inStorageOfficeSum);
+                officeSum.setYieldRate(BigDecimalUtil.percent(inStorageOfficeSum, useCountOfficeSum));
+                leftList.add(officeSum);
+            }
+        }
+        //合计
+        BigDecimal useCountOfficeTotalSum = null;
+        BigDecimal inStorageOfficeTotalSum = null;
+        for (Map.Entry<String, BigDecimal> entry : sumMap1.entrySet()) {
+            SjgMonthCountReportTransverseVO officeTotal = new SjgMonthCountReportTransverseVO();
+            officeTotal.setOfficeName("合计");
+            officeTotal.setCategoryName(entry.getKey());
+            officeTotal.setUseCount(entry.getValue());
+            officeTotal.setInStorageCount(sumMap2.get(entry.getKey()));
+            officeTotal.setYieldRate(BigDecimalUtil.percent(officeTotal.getInStorageCount(), officeTotal.getUseCount()));
+            useCountOfficeTotalSum = BigDecimalUtil.add(useCountOfficeTotalSum,officeTotal.getUseCount());
+            inStorageOfficeTotalSum = BigDecimalUtil.add(inStorageOfficeTotalSum,officeTotal.getInStorageCount());
+            leftList.add(officeTotal);
+        }
+        //添加合计的合计
+        //添加组织机构级别的合计
+        SjgMonthCountReportTransverseVO officeTotalSum = new SjgMonthCountReportTransverseVO();
+        officeTotalSum.setOfficeName("合计");
+        officeTotalSum.setCategoryName("合计");
+        officeTotalSum.setUseCount(useCountOfficeTotalSum);
+        officeTotalSum.setInStorageCount(inStorageOfficeTotalSum);
+        officeTotalSum.setYieldRate(BigDecimalUtil.percent(officeTotalSum.getInStorageCount(), officeTotalSum.getUseCount()));
+        leftList.add(officeTotalSum);
+
+        vo.setLeftList(leftList);
+        vo.setRightHeadList(workshopNameList);
+        //获取右边的数据
+        CompletableFuture<Map<String, BigDecimal>> elecFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, wsIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        });
+        CompletableFuture<Map<String, BigDecimal>> waterFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, wsIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        });
+        CompletableFuture<Map<String, BigDecimal>> unitConsumeFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(1, wsIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        });
+        CompletableFuture<List<TupleDTO<String, Map<Integer, BigDecimal>>>> materialConsumeListFuture = CompletableFuture.supplyAsync(() -> {
+            return pmsCompleteDeliveryService.materialConsumption(new Tuple5DTO<>(officeId, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode(), 0));
+        });
+
+        CompletableFuture<Map<Integer, BigDecimal>> mbMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldWorkshop(wsIdList, start, end, "MBGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> dkMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldWorkshop(wsIdList, start, end, "DKGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> syMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldWorkshop(wsIdList, start, end, "SYGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> dmMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldWorkshop(wsIdList, start, end, "DMGX");
+        });
+        CompletableFuture<Map<Integer, BigDecimal>> ghMapFuture = CompletableFuture.supplyAsync(() -> {
+            return reportWorkService.processYieldWorkshop(wsIdList, start, end, "GHGX");
+        });
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, waterFuture, unitConsumeFuture, materialConsumeListFuture,
+                mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
+        completableFuture.isDone();
+
+        List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
+        String convert = MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start);
+        rightList.add(monthRow("电量/kWh", elecFuture.join(), workshopList, convert));
+        rightList.add(monthRow("电单耗/kWh/㎡", unitConsumeFuture.join(), workshopList, convert));
+        rightList.add(monthRow("水量/t", waterFuture.join(), workshopList, convert));
+        //集成物料消耗
+        List<TupleDTO<String, Map<Integer, BigDecimal>>> materialConsumeList = materialConsumeListFuture.join();
+        if (CollUtil.isNotEmpty(materialConsumeList)) {
+            materialConsumeList.forEach(ele -> {
+                rightList.add(monthConsumeRow(ele.getField1(), ele.getField2(), workshopList));
+            });
+        }
+        //工序成品率： 磨边成品率，打孔成品率，丝印成品率，镀膜成品率，钢化成品率
+        //合格数/加工数，以百分比展示
+        rightList.add(monthConsumeRow("磨边成品率/%", mbMapFuture.join(), workshopList));
+        rightList.add(monthConsumeRow("打孔成品率/%", dkMapFuture.join(), workshopList));
+        rightList.add(monthConsumeRow("丝印成品率/%", syMapFuture.join(), workshopList));
+        rightList.add(monthConsumeRow("镀膜成品率/%", dmMapFuture.join(), workshopList));
+        rightList.add(monthConsumeRow("钢化成品率/%", ghMapFuture.join(), workshopList));
+        vo.setRightList(rightList);
+        return vo;
+    }
+
+    /**
+     * 深加工月度统计报表 - 产线粒度
+     * @param officeId 组织机构主键
+     * @param start    开始日期
+     * @param end      结束日期
+     * @return
+     */
+    private SjgMonthCountReportVO monthReportLine(Integer officeId, LocalDate start, LocalDate end) {
         SjgMonthCountReportVO vo = new SjgMonthCountReportVO();
         //获取车间的孩子节点-产线
         //如何统一化 产线和车间
@@ -703,14 +890,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         CompletableFuture<Map<String, BigDecimal>> elecFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         });
-        CompletableFuture<Map<String, BigDecimal>> waterFuture = CompletableFuture.supplyAsync(() -> {
-            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        });
         CompletableFuture<Map<String, BigDecimal>> unitConsumeFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(1, lineIdList, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         });
         CompletableFuture<List<TupleDTO<String, Map<Integer, BigDecimal>>>> materialConsumeListFuture = CompletableFuture.supplyAsync(() -> {
-             return pmsCompleteDeliveryService.materialConsumption(new Tuple5DTO<>(officeId, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode(), 1));
+            return pmsCompleteDeliveryService.materialConsumption(new Tuple5DTO<>(officeId, start, end, QtManagerConstant.QtGranularityEnum.NONE.getCode(), 1));
         });
 
         CompletableFuture<Map<Integer, BigDecimal>> mbMapFuture = CompletableFuture.supplyAsync(() -> {
@@ -728,15 +912,14 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         CompletableFuture<Map<Integer, BigDecimal>> ghMapFuture = CompletableFuture.supplyAsync(() -> {
             return reportWorkService.processYieldLine(lineIdList, start, end, "GHGX");
         });
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, waterFuture, unitConsumeFuture, materialConsumeListFuture,
-                waterFuture, mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, unitConsumeFuture, materialConsumeListFuture,
+                 mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
         completableFuture.isDone();
 
         List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
         String convert = MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start);
         rightList.add(monthRow("电量/kWh", elecFuture.join(), wsLineList, convert));
         rightList.add(monthRow("电单耗/kWh/㎡", unitConsumeFuture.join(), wsLineList, convert));
-        rightList.add(monthRow("水量/t", waterFuture.join(), wsLineList, convert));
         //集成物料消耗
         List<TupleDTO<String, Map<Integer, BigDecimal>>> materialConsumeList = materialConsumeListFuture.join();
         if (CollUtil.isNotEmpty(materialConsumeList)) {

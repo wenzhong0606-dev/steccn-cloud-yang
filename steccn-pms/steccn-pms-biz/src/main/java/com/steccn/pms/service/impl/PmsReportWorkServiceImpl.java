@@ -1996,6 +1996,37 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    public Map<Integer, BigDecimal> processYieldWorkshop(List<Integer> workshopIdList, LocalDate start, LocalDate end, String processCode) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        Map<Integer, List<Integer>> wsLinkLineMap = pmsOfficeManager.childType(workshopIdList, SysOfficeConstant.PRODUCT_LINE);
+        //获取车间下的所有产线
+        List<Integer> lineIdList = wsLinkLineMap.values().stream().flatMap(Collection::stream).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(lineIdList)) {
+            List<PmsUseCountDTO> dbList = baseMapper.processYieldLine(lineIdList, start, end, processCode);
+            if (CollUtil.isNotEmpty(dbList)) {
+                Map<Integer, BigDecimal> valueMap1 = Maps.newHashMap();
+                Map<Integer, BigDecimal> valueMap2 = Maps.newHashMap();
+                for (PmsUseCountDTO ele : dbList) {
+                    valueMap1.put(ele.getProductLineId(), BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity(), 0));
+                    valueMap2.put(ele.getProductLineId(), ele.getQuantity());
+                }
+                wsLinkLineMap.forEach((k, v) -> {
+                    if (CollUtil.isNotEmpty(v)) {
+                        BigDecimal tmpValue1 = null;
+                        BigDecimal tmpValue2 = null;
+                        for (Integer line : v) {
+                            tmpValue1 = BigDecimalUtil.add(tmpValue1, valueMap1.get(line));
+                            tmpValue2 = BigDecimalUtil.add(tmpValue2, valueMap2.get(line));
+                        }
+                        resMap.put(k, BigDecimalUtil.percent(tmpValue1, tmpValue2));
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, BigDecimal> datePmUnit(List<Integer> lineIdSet, LocalDate start, LocalDate end, int type, String unit) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
