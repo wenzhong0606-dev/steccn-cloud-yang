@@ -2004,23 +2004,27 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         if (CollUtil.isNotEmpty(lineIdList)) {
             List<PmsUseCountDTO> dbList = baseMapper.processYieldLine(lineIdList, start, end, processCode);
             if (CollUtil.isNotEmpty(dbList)) {
+                BigDecimal passQuantitySum = null, processQuantitySum = null;
                 Map<Integer, BigDecimal> valueMap1 = Maps.newHashMap();
                 Map<Integer, BigDecimal> valueMap2 = Maps.newHashMap();
                 for (PmsUseCountDTO ele : dbList) {
                     valueMap1.put(ele.getProductLineId(), BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity(), 0));
                     valueMap2.put(ele.getProductLineId(), ele.getQuantity());
                 }
-                wsLinkLineMap.forEach((k, v) -> {
-                    if (CollUtil.isNotEmpty(v)) {
+                for (Map.Entry<Integer, List<Integer>> entry : wsLinkLineMap.entrySet()) {
+                    if (CollUtil.isNotEmpty(entry.getValue())) {
                         BigDecimal tmpValue1 = null;
                         BigDecimal tmpValue2 = null;
-                        for (Integer line : v) {
+                        for (Integer line : entry.getValue()) {
                             tmpValue1 = BigDecimalUtil.add(tmpValue1, valueMap1.get(line));
                             tmpValue2 = BigDecimalUtil.add(tmpValue2, valueMap2.get(line));
+                            passQuantitySum = BigDecimalUtil.add(passQuantitySum, tmpValue1);
+                            processQuantitySum = BigDecimalUtil.add(processQuantitySum, tmpValue2);
                         }
-                        resMap.put(k, BigDecimalUtil.percent(tmpValue1, tmpValue2));
+                        resMap.put(entry.getKey(), BigDecimalUtil.percent(tmpValue1, tmpValue2));
                     }
-                });
+                }
+                resMap.put(-1, BigDecimalUtil.percent(passQuantitySum, processQuantitySum));
             }
         }
         return resMap;
