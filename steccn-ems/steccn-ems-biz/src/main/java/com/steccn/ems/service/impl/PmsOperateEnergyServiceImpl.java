@@ -142,19 +142,19 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             row.setLineName(line.getOfficeName());
             row.setCurrentValue(currentConsumeMap.get(line.getId()));
             //单耗：电量 / 该产线钢化产量
-            row.setCurrentValueRate(BigDecimalUtil.percent(row.getCurrentValue(), curGhQuantityMap.get(line.getId())));
+            row.setCurrentValueRate(BigDecimalUtil.divide(row.getCurrentValue(), curGhQuantityMap.get(line.getId()), 2));
             row.setPreValue(preConsumeMap.get(line.getId()));
-            row.setPreValueRate(BigDecimalUtil.percent(row.getPreValue(), preGhQuantityMap.get(line.getId())));
+            row.setPreValueRate(BigDecimalUtil.divide(row.getPreValue(), preGhQuantityMap.get(line.getId()),2));
             row.setValueDiff(BigDecimalUtil.subtract(row.getCurrentValue(), row.getPreValue(), BigDecimalUtil.SCALE_0));
-            row.setValueDiffRate(BigDecimalUtil.percent(row.getValueDiff(), row.getCurrentValue()));
+            row.setValueDiffRate(BigDecimalUtil.subtract(row.getCurrentValueRate(), row.getPreValueRate(),2));
             //本周合计，上周合计，电量，单耗
             row.setCurrentValueSum(curSum);
-            row.setCurrentValueSumRate(BigDecimalUtil.percent(curSum, curGhSum));
+            row.setCurrentValueSumRate(BigDecimalUtil.divide(curSum, curGhSum,2));
             row.setPreValueSum(preSum);
-            row.setPreValueSumRate(BigDecimalUtil.percent(preSum, preGhSum));
+            row.setPreValueSumRate(BigDecimalUtil.divide(preSum, preGhSum,2));
             //电量，单耗
             row.setValueDiffSum(BigDecimalUtil.subtract(curSum, preSum, BigDecimalUtil.SCALE_0));
-            row.setValueDiffSumRate(BigDecimalUtil.percent(row.getValueDiffSum(), curSum));
+            row.setValueDiffSumRate(BigDecimalUtil.subtract(row.getCurrentValueSumRate(), row.getPreValueSumRate(),2));
             rowList.add(row);
         }
         reportVO.setRowList(rowList);

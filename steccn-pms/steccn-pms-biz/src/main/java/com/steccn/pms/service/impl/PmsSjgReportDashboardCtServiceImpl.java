@@ -507,7 +507,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             BigDecimal currentValueSumRate = BigDecimalUtil.percent(curWeekProcess, curWeekSum);
             BigDecimal preValueSumRate = BigDecimalUtil.percent(preWeekProcess, preWeekSum);
             BigDecimal valueDiffSum = BigDecimalUtil.subtract(curWeekProcess, preWeekProcess, BigDecimalUtil.SCALE_2);
-            BigDecimal valueDiffSumRate = BigDecimalUtil.percent(valueDiffSum, curWeekProcess);
+            BigDecimal valueDiffSumRate = BigDecimalUtil.subtract(currentValueSumRate, preValueSumRate,2);
             for (SysOfficeVO line : lineList) {
                 SjgCountReportRowVO row = new SjgCountReportRowVO();
                 row.setLineId(line.getId());
@@ -521,7 +521,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                 row.setPreValueRate(BigDecimalUtil.percent(row.getPreValue(), preProcessQuantity));
                 row.setValueDiff(BigDecimalUtil.subtract(row.getCurrentValue(), row.getPreValue(), 2));
                 //产量增长 / 区间产量；保留两位小数；负数则显示为红色，正数为绿色
-                row.setValueDiffRate(BigDecimalUtil.percent(row.getValueDiff(), row.getCurrentValue()));
+                row.setValueDiffRate(BigDecimalUtil.subtract(row.getCurrentValueRate(), row.getPreValueRate(), 2));
                 row.setCurrentValueSum(curWeekProcess);
                 row.setCurrentValueSumRate(currentValueSumRate);
                 row.setPreValueSum(preWeekProcess);
@@ -545,10 +545,10 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         BigDecimal currentValueSumRate = BigDecimalUtil.percent(curWeekInStorage, curWeekMbQuantity);
         BigDecimal preValueSumRate = BigDecimalUtil.percent(preWeekInStorage, preWeekMbQuantity);
         BigDecimal valueDiffSum = BigDecimalUtil.subtract(curWeekInStorage, preWeekInStorage, BigDecimalUtil.SCALE_2);
-        BigDecimal valueDiffSumRate = BigDecimalUtil.percent(valueDiffSum, curWeekInStorage);
+        BigDecimal valueDiffSumRate = BigDecimalUtil.subtract(currentValueSumRate, preValueSumRate,2);
         for (SysOfficeVO line : lineList) {
             SjgCountReportRowVO row = new SjgCountReportRowVO();
-            row.setCategoryName("产线产量");
+            row.setCategoryName("产线入库产量");
             row.setLineId(line.getId());
             row.setLineName(line.getOfficeName());
             row.setCurrentValue(currentInStorageMap.get(line.getId()));
