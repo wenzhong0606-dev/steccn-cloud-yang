@@ -2,6 +2,12 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.handler.WriteHandler;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -28,11 +34,21 @@ import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
+import com.steccn.qms.vo.QtDaySamplingDataVO;
+import com.steccn.qms.vo.QtDaySamplingVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -610,6 +626,70 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             return monthReportWorkshop(officeId, start, end);
         }
         return monthReportLine(officeId, start, end);
+    }
+
+    @Override
+    public void monthReportDownload(Integer type, Integer officeId, LocalDate start, LocalDate end, HttpServletResponse response) throws IOException {
+        SjgMonthCountReportVO monthReport = monthReport(type, officeId, start, end);
+        List<SjgMonthCountReportTransverseVO> leftList = monthReport.getLeftList();
+        List<SteccnRow<String, List<BigDecimal>>> rightList = monthReport.getRightList();
+        List<String> rightHeadList = monthReport.getRightHeadList();
+        //写表头
+        List<List<String>> rightHead = new ArrayList<>();
+        Arrays.asList("").forEach(ele -> rightHead.add(Lists.newArrayList(ele)));
+        rightHeadList.forEach(ele -> rightHead.add(Lists.newArrayList(ele)));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("深加工月度统计报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        List<List<Object>> leftOutDataList = Lists.newArrayList();
+        //左边的数据
+        List<List<String>> leftHead = new ArrayList<>();
+        Arrays.asList("线别", "产品类别", "领用/㎡", "入库/㎡", "成品率/%").forEach(ele -> leftHead.add(Lists.newArrayList(ele)));
+        leftList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getOfficeName());
+            dataEle.add(ele.getCategoryName());
+            dataEle.add(ele.getUseCount());
+            dataEle.add(ele.getInStorageCount());
+            dataEle.add(ele.getYieldRate());
+            leftOutDataList.add(dataEle);
+        });
+
+        //右边数据
+        List<List<Object>> rightOutDataList = Lists.newArrayList();
+        rightList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getFixRow());
+            for (BigDecimal item : ele.getDynamicRow()) {
+                dataEle.add(item);
+            }
+            rightOutDataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream())
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "深加工月度统计报表").build();
+
+        WriteTable tableOne = EasyExcel.writerTable(0).needHead(Boolean.TRUE).build();
+        tableOne.setHead(leftHead);
+
+        WriteTable tableTwo = EasyExcel.writerTable(1).needHead(Boolean.TRUE).build();
+        tableTwo.setHead(rightHead);
+
+        excelWriter.write(leftOutDataList, writeSheet, tableOne);
+        excelWriter.write(rightOutDataList, writeSheet, tableTwo);
+
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     /**

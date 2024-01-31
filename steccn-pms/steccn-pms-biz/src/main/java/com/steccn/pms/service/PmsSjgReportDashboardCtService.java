@@ -9,6 +9,9 @@ import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import com.steccn.pms.vo.SjgMonthCountReportVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -133,4 +136,15 @@ public interface PmsSjgReportDashboardCtService {
      * @return
      */
     SjgMonthCountReportVO monthReport(Integer type, Integer officeId, LocalDate start, LocalDate end);
+
+    /**
+     * 深加工月度统计报表 - 下载
+     *
+     * @param type     类型 0表示产线 1表示车间
+     * @param officeId 组织结构主键
+     * @param start    开始时间
+     * @param end      结束时间
+     * @param response 响应流
+     */
+    void monthReportDownload(Integer type, Integer officeId, LocalDate start, LocalDate end, HttpServletResponse response) throws UnsupportedEncodingException, IOException;
 }
