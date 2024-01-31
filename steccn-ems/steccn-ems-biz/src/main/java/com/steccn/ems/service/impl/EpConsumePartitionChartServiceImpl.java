@@ -1186,7 +1186,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
             //获取部门标准
             consumeStandardList = getDepartmentStandardList(dto, sysDictVO);
-            //企业行业标准
+            //企业标准
             standardVOList = getStandardVOList(dto, sysDictVO);
         }
 
@@ -1469,10 +1469,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<Long> standardList = new ArrayList<>();
         //标准类型：企业标准
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("company_standard", "product_unit_consumption_standard").getData();
-        //标准类型：行业标准
-        SysDictVO industrialSysDictVO = remoteDictFeignApi.getByCode("industrial_standard", "product_unit_consumption_standard").getData();
         standardList.add(sysDictVO.getId());
-        standardList.add(industrialSysDictVO.getId());
         List<Long> productTypeList = new ArrayList<>();
         if (subFlag) {
             productTypeList.add(EpManagerConstant.EpProductTypes.SUBSTRATE.getId());
