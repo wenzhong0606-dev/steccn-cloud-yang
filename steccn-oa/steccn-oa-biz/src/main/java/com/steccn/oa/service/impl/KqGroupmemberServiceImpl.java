@@ -444,9 +444,9 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
                     .eq(KqMesGroupLeader::getGroupName, split[1]), false);
             String leaderName = one.getLeaderName();
             if(date.getDayOfWeek().getValue()==7){
-                leaderName = leaderName+"/黄哲";
-            }else {
                 leaderName = leaderName+"/从斌";
+            }else {
+                leaderName = leaderName+"/黄哲";
             }
             result.setClassLeader(leaderName);
             results.add(result);
