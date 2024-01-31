@@ -159,7 +159,7 @@ public class EpChartGraphUtil {
         //部门标准
         if (CollUtil.isNotEmpty(epChartGraphDTO.getCheckStandardMap())) {
             TupleDTO<Integer, BigDecimal> tupleDTO = epChartGraphDTO.getCheckStandardMap().get(officeId);
-            if (Objects.nonNull(tupleDTO.getField2()) && Objects.nonNull(value) && tupleDTO.getField2().compareTo(value) < 0) {
+            if (Objects.nonNull(tupleDTO) && Objects.nonNull(tupleDTO.getField2()) && Objects.nonNull(value) && tupleDTO.getField2().compareTo(value) < 0) {
                 EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, tupleDTO.getField2(), 2);
                 vo.setStandardId(tupleDTO.getField1());
                 alarmList.add(vo);
