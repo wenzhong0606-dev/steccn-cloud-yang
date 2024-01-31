@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -49,6 +52,14 @@ public class PmsOfficeManagerImpl implements PmsOfficeManager {
         sysOfficeParent.setParentIds(Sets.newHashSet(parentOfficeIdList));
         sysOfficeParent.setOfficeType(childOfficeType);
         return FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(sysOfficeParent), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+    }
+
+    @Override
+    public Map<Integer, List<Integer>> childType(List<Integer> parentIdList, String childOfficeType) {
+        TupleDTO<String, Set<Integer>> tupleDTO = new TupleDTO<>();
+        tupleDTO.setField1(childOfficeType);
+        tupleDTO.setField2(Sets.newHashSet(parentIdList));
+        return FeignOptional.of(() -> remoteOfficeFeign.childType(tupleDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
     }
 
 }

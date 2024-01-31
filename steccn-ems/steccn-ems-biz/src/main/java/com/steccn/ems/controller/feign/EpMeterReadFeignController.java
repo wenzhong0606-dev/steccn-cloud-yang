@@ -18,8 +18,10 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -43,6 +45,18 @@ public class EpMeterReadFeignController {
     public R<CommonReportDTO> energyConsume(@RequestBody Tuple5DTO<Integer, Integer, LocalDate, LocalDate, Integer> dto) {
         Assert.isTrue(LocalDateUtil.le(dto.getField3(), dto.getField4()), "结束时间必须小于等于开始时间");
         return R.success(epMeterReadService.energyConsume(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
+    }
+
+    @PostMapping("/energy/consume/office")
+    R<Map<String, BigDecimal>> energyConsumeOffice(@RequestBody Tuple5DTO<Integer, List<Integer>, LocalDate, LocalDate, Integer> dto){
+        Assert.isTrue(LocalDateUtil.le(dto.getField3(), dto.getField4()), "结束时间必须小于等于开始时间");
+        return R.success(epMeterReadService.energyConsumeOffice(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
+    }
+
+    @PostMapping("/unit/consume/office")
+    R<Map<String, BigDecimal>> unitConsumeOffice(@RequestBody Tuple5DTO<Integer, List<Integer>, LocalDate, LocalDate, Integer> dto){
+        Assert.isTrue(LocalDateUtil.le(dto.getField3(), dto.getField4()), "结束时间必须小于等于开始时间");
+        return R.success(epMeterReadService.unitConsumeOffice(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
     }
 
     /**

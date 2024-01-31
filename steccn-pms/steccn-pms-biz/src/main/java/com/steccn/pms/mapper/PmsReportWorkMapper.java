@@ -645,8 +645,8 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      */
     List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeDay(@Param("lineIds")Set<Integer> lineIds,
                                                                  @Param("materialIds")Set<Long> materialIds,
-                                                                 @Param("start") LocalDate start,
-                                                                 @Param("end") LocalDate end);
+                                                                 @Param("start") LocalDateTime start,
+                                                                 @Param("end") LocalDateTime end);
 
     /**
      * 获取报工的物料消耗的物料id
@@ -656,8 +656,8 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return
      */
     Set<Long> materialConsumeNoMain(@Param("lineIds")Set<Integer> lineIds,
-                                    @Param("start") LocalDate start,
-                                    @Param("end") LocalDate end);
+                                    @Param("start") LocalDateTime start,
+                                    @Param("end") LocalDateTime end);
 
 
     /**
@@ -670,8 +670,8 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      */
     List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeMonth(@Param("lineIds")Set<Integer> lineIds,
                                                                    @Param("materialIds")Set<Long> materialIds,
-                                                                   @Param("start") LocalDate start,
-                                                                   @Param("end") LocalDate end);
+                                                                   @Param("start") LocalDateTime start,
+                                                                   @Param("end") LocalDateTime end);
 
     /**
      * 报工的物料消耗
@@ -683,8 +683,22 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      */
     List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeYear(@Param("lineIds")Set<Integer> lineIds,
                                                                     @Param("materialIds")Set<Long> materialIds,
-                                                                    @Param("start") LocalDate start,
-                                                                    @Param("end") LocalDate end);
+                                                                    @Param("start") LocalDateTime start,
+                                                                    @Param("end") LocalDateTime end);
+
+    /**
+     * 产线粒度的工序合格率
+     *
+     * @param lineIdList  产线主键集合
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param processCode 工序code
+     * @return
+     */
+    List<PmsUseCountDTO> processYieldLine(@Param("lineIdList") List<Integer> lineIdList,
+                                          @Param("start") LocalDate start,
+                                          @Param("end") LocalDate end,
+                                          @Param("processCode") String processCode);
 }
 
 

@@ -106,4 +106,7 @@ public class EqpSpareVO implements Serializable {
 
     @ApiModelProperty("重量单位id")
     private Long weightUnitId;
+
+    @ApiModelProperty("产品属性(0镀膜无印,1双膜无印,2无膜无印,3无膜丝印)")
+    private Integer productProperty;
 }

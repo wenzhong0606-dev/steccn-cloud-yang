@@ -1901,7 +1901,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    public List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDate start, LocalDate end, QtManagerConstant.QtGranularityEnum granularity) {
+    public List<Tuple4DTO<String, String, BigDecimal,Long>>  materialConsumeNoMain(Set<Integer> lineIds, LocalDateTime start, LocalDateTime end, QtManagerConstant.QtGranularityEnum granularity) {
         //根据产线和时间获取生产订单的物料消耗（不为主物料的物料消耗）
         Set<Long> materialIds = baseMapper.materialConsumeNoMain(lineIds, start, end);
         List<Tuple4DTO<String, String, BigDecimal, Long>> consumptionList = Lists.newArrayList();
@@ -1915,6 +1915,119 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return  consumptionList;
+    }
+
+    @Override
+    public Map<String, BigDecimal> useCountCategory(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getUseCountClassDate(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料主键集合
+            List<Long> materialIdList = dbList.stream().map(PmsUseCountDTO::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //根据单位查询转换关系
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(pieceSysDict, "片单位不存在");
+            Assert.notNull(sqSysDict, "转换单位不存在");
+            for (PmsUseCountDTO ele : dbList) {
+                EqpSpareVO material = materialMap.get(ele.getMaterialId());
+                List<SysSpareUnitConversionVO> relationList = convertMap.get(ele.getMaterialId());
+                BigDecimal quantity = ele.getQuantity();
+                if (!pieceSysDict.equals(sqSysDict)) {
+                    quantity = UnitConvertUtil.convertMaterial(relationList, pieceSysDict.getId(), sqSysDict.getId(), quantity, 3);
+                }
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + material.getThickQuantity() + "_" + material.getProductProperty(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> inStorageCategory(List<Integer> lineIdList, LocalDate start, LocalDate end, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<PmsUseCountDTO> dbList = baseMapper.getDateRangeInStorage(lineIdList, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料主键集合
+            List<Long> materialIdList = dbList.stream().map(PmsUseCountDTO::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //根据单位查询转换关系
+            Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialMap.keySet()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(pieceSysDict, "片单位不存在");
+            Assert.notNull(sqSysDict, "转换单位不存在");
+            for (PmsUseCountDTO ele : dbList) {
+                EqpSpareVO material = materialMap.get(ele.getMaterialId());
+                List<SysSpareUnitConversionVO> relationList = convertMap.get(ele.getMaterialId());
+                BigDecimal quantity = ele.getQuantity();
+                if (!pieceSysDict.equals(sqSysDict)) {
+                    quantity = UnitConvertUtil.convertMaterial(relationList, pieceSysDict.getId(), sqSysDict.getId(), quantity, 3);
+                }
+                MapUtil.add(resMap, ele.getProductLineId() + "_" + material.getThickQuantity() + "_" + material.getProductProperty(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Integer, BigDecimal> processYieldLine(List<Integer> lineIdList, LocalDate start, LocalDate end, String processCode) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        List<PmsUseCountDTO> dbList = baseMapper.processYieldLine(lineIdList, start, end, processCode);
+        if (CollUtil.isNotEmpty(dbList)) {
+            BigDecimal passQuantitySum = null, processQuantitySum = null;
+            for (PmsUseCountDTO ele : dbList) {
+                Integer productLineId = ele.getProductLineId();
+                BigDecimal passQuantity = BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity(), 0);
+                resMap.put(productLineId, BigDecimalUtil.percent(passQuantity, ele.getQuantity()));
+                passQuantitySum = BigDecimalUtil.add(passQuantitySum, passQuantity);
+                processQuantitySum = BigDecimalUtil.add(processQuantitySum, ele.getQuantity());
+            }
+            resMap.put(-1, BigDecimalUtil.percent(passQuantitySum, processQuantitySum));
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Integer, BigDecimal> processYieldWorkshop(List<Integer> workshopIdList, LocalDate start, LocalDate end, String processCode) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        Map<Integer, List<Integer>> wsLinkLineMap = pmsOfficeManager.childType(workshopIdList, SysOfficeConstant.PRODUCT_LINE);
+        //获取车间下的所有产线
+        List<Integer> lineIdList = wsLinkLineMap.values().stream().flatMap(Collection::stream).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(lineIdList)) {
+            List<PmsUseCountDTO> dbList = baseMapper.processYieldLine(lineIdList, start, end, processCode);
+            if (CollUtil.isNotEmpty(dbList)) {
+                BigDecimal passQuantitySum = null, processQuantitySum = null;
+                Map<Integer, BigDecimal> valueMap1 = Maps.newHashMap();
+                Map<Integer, BigDecimal> valueMap2 = Maps.newHashMap();
+                for (PmsUseCountDTO ele : dbList) {
+                    valueMap1.put(ele.getProductLineId(), BigDecimalUtil.subtract(ele.getQuantity(), ele.getBadQuantity(), 0));
+                    valueMap2.put(ele.getProductLineId(), ele.getQuantity());
+                }
+                for (Map.Entry<Integer, List<Integer>> entry : wsLinkLineMap.entrySet()) {
+                    if (CollUtil.isNotEmpty(entry.getValue())) {
+                        BigDecimal tmpValue1 = null;
+                        BigDecimal tmpValue2 = null;
+                        for (Integer line : entry.getValue()) {
+                            tmpValue1 = BigDecimalUtil.add(tmpValue1, valueMap1.get(line));
+                            tmpValue2 = BigDecimalUtil.add(tmpValue2, valueMap2.get(line));
+                            passQuantitySum = BigDecimalUtil.add(passQuantitySum, tmpValue1);
+                            processQuantitySum = BigDecimalUtil.add(processQuantitySum, tmpValue2);
+                        }
+                        resMap.put(entry.getKey(), BigDecimalUtil.percent(tmpValue1, tmpValue2));
+                    }
+                }
+                resMap.put(-1, BigDecimalUtil.percent(passQuantitySum, processQuantitySum));
+            }
+        }
+        return resMap;
     }
 
     @Override

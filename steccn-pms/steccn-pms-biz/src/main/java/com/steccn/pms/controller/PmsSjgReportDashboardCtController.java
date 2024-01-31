@@ -1,5 +1,7 @@
 package com.steccn.pms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
@@ -8,6 +10,8 @@ import com.steccn.pms.util.PmsUnitUtil;
 import com.steccn.pms.vo.SjgCountReportStopVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
+import com.steccn.pms.vo.SjgMonthCountReportVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -95,5 +102,32 @@ public class PmsSjgReportDashboardCtController {
     @ApiOperation("深加工统计报表-停机信息")
     public R<List<SjgCountReportStopVO>> countReportStop(@RequestParam("lineId") Integer lineId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(pmsSjgReportDashboardService.countReportStop(lineId, start, end));
+    }
+
+    @GetMapping("/month/count/report")
+    @ApiOperation("深加工月度统计报表")
+    public R<SjgMonthCountReportVO> monthReport(@RequestParam("type") Integer type, @RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(pmsSjgReportDashboardService.monthReport(type, officeId, start, end));
+    }
+
+    @GetMapping("/month/count/report/download")
+    @ApiOperation("深加工月度统计报表-下载")
+    public void monthReportDownload(@RequestParam("type") Integer type,
+                                    @RequestParam("officeId") Integer officeId,
+                                    @RequestParam("start") LocalDate start,
+                                    @RequestParam("end") LocalDate end,
+                                    HttpServletResponse response) throws IOException {
+        try {
+            pmsSjgReportDashboardService.monthReportDownload(type, officeId, start, end, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -14,10 +15,15 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.Tuple4DTO;
+import com.steccn.common.dto.Tuple5DTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
@@ -25,15 +31,18 @@ import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsCompleteDeliveryInfoDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
+import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsCompleteDeliveryMapper;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.util.function.Tuple5;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -62,6 +71,8 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
     private RemoteSpareFeignApi remoteSpareFeignApi;
     @Autowired
     private PmsWorkOrderBomService pmsWorkOrderBomService;
+    @Autowired
+    private PmsReportWorkMapper  pmsReportWorkMapper;
 
 
     @Override
@@ -287,6 +298,108 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             }
         }
         return res;
+    }
+    /**
+     * 获取报工物料消耗（异丙醇/镀膜液/油墨）
+     * @param dto 车间/部门id，开始日期，结束日期，粒度类型,类型 部门：0/车间：1
+     * @return key为-1表示合计，key为产线车间主键表示对应的产线车间的值，list[0]:异丙醇，list[1]:镀膜液，list[2]:油墨
+     */
+    @Override
+    public List<TupleDTO<String,Map<Integer,BigDecimal>>> materialConsumption(Tuple5DTO<Integer, LocalDate, LocalDate, Integer,Integer> dto) {
+        //获取车间/部门下对应的产线
+        TupleDTO<String, Set<Integer>> tupleDTO = new TupleDTO<>();
+        tupleDTO.setField1("9");
+        tupleDTO.setField2(Sets.newHashSet(dto.getField1()));
+        Map<Integer, List<Integer>> officeMap = FeignOptional.of(() -> remoteOfficeFeign.childType(tupleDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取对应时间段内报工的物料消耗id
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getField2());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getField3()).plusDays(1);
+        Set<Long> materialIds = pmsReportWorkMapper.materialConsumeNoMain(Sets.newHashSet(officeMap.get(dto.getField1())), start, end);
+        //获取物料的消耗数据
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getField4());
+        List<Tuple4DTO<String, String, BigDecimal, Integer>> list = materialConsumptionValue(officeMap.get(dto.getField1()), materialIds, start, end, granularity);
+        //根据物料名称分类
+        Map<String, List<Tuple4DTO<String, String, BigDecimal, Integer>>> dataMap = list.stream().collect(Collectors.groupingBy(Tuple4DTO::getField2));
+        List<TupleDTO<String,Map<Integer,BigDecimal>>> resList = Lists.newArrayList();
+        dataMap.forEach((k,v)->{
+            Map<Integer,BigDecimal> map = Maps.newHashMap();
+            Map<Integer, List<Tuple4DTO<String, String, BigDecimal, Integer>>> valueMap;
+            //数据根据产线分类
+            Map<Integer, List<Tuple4DTO<String, String, BigDecimal, Integer>>> lineValueMap = v.stream().collect(Collectors.groupingBy(Tuple4DTO::getField4));
+            if (dto.getField5().equals(0)){
+                //获取产线的上级车间
+                Map<Integer, Integer> lineParentMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(Sets.newHashSet(officeMap.get(dto.getField1()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                valueMap = parentMap(lineValueMap, lineParentMap);
+            }else {
+                valueMap = lineValueMap;
+            }
+            valueMap.forEach((line,value)->{
+                    BigDecimal reduce = value.stream()
+                            .map(Tuple4DTO::getField3)
+                            .reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+                    map.put(line,reduce);
+                });
+                map.put(-1,valueMap.values().stream()
+                        .flatMap(List::stream)
+                        .map(Tuple4DTO::getField3)
+                        .reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+            resList.add(new TupleDTO<>(k,map));
+        });
+        return resList;
+    }
+
+    /**
+     * 根据车间分类
+     * @param lineValueMap
+     * @param lineParentMap
+     * @return
+     */
+    public  Map<Integer, List<Tuple4DTO<String, String, BigDecimal, Integer>>> parentMap(Map<Integer, List<Tuple4DTO<String, String, BigDecimal, Integer>>> lineValueMap,  Map<Integer, Integer> lineParentMap){
+        Map<Integer, List<Tuple4DTO<String, String, BigDecimal, Integer>>> newMap = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry : lineParentMap.entrySet()) {
+            Integer parent = entry.getValue();
+            List<Tuple4DTO<String, String, BigDecimal, Integer>> value = lineValueMap.get(parent);
+            if (value != null) {
+                newMap.put(parent, value);
+            }
+        }
+        return newMap;
+    }
+
+    public  List<Tuple4DTO<String, String, BigDecimal,Integer>> materialConsumptionValue(List<Integer> lineIds,Set<Long> materialIds,LocalDateTime start,LocalDateTime end,QtManagerConstant.QtGranularityEnum granularity){
+        Assert.notNull(granularity,"粒度不能为空");
+        List<Tuple4DTO<String, String, BigDecimal,Integer>> list = Lists.newArrayList();
+            if (CollUtil.isNotEmpty(materialIds)) {
+                if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+                    list = baseMapper.materialConsumptionWeekValue(lineIds, materialIds, start, end);
+                } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+                    list = baseMapper.materialConsumptionMonthValue(lineIds, materialIds, start, end);
+                } else {
+                    list = baseMapper.materialConsumptionYearValue(lineIds, materialIds, start, end);
+                }
+            }
+        return list;
+    }
+
+    /**
+     * 排序
+     * @param dataMap
+     * @param materialNames
+     * @return
+     */
+    private  Map<String, List<Tuple4DTO<String, String, BigDecimal, Integer>>>  sort( Map<String, List<Tuple4DTO<String, String, BigDecimal, Integer>>> dataMap,  List<String> materialNames ){
+        Comparator<String> customComparator = (o1, o2) -> {
+            int index1 = materialNames.indexOf(o1);
+            int index2 = materialNames.indexOf(o2);
+            if (index1 == -1 && index2 != -1) {
+                return 1;
+            } else if (index1 != -1 && index2 == -1) {
+                return -1;
+            } else {
+                return Integer.compare(index1, index2);
+            }
+        };
+      return dataMap.entrySet().stream().sorted(Map.Entry.comparingByKey(customComparator)).collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
 

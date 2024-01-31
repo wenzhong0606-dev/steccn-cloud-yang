@@ -1,6 +1,10 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.Tuple4DTO;
+import com.steccn.common.dto.Tuple5DTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
@@ -16,6 +20,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -88,4 +93,12 @@ public interface PmsCompleteDeliveryService extends IService<PmsCompleteDelivery
      * @return
      */
     Map<Long,List<PmsCompleteDeliveryInfoDTO>> reportWorkMaterial(Set<Long> reportIds);
+
+
+    /**
+     * 获取报工物料消耗（异丙醇/镀膜液/油墨）
+     * @param  dto 车间/部门id，开始日期，结束日期，粒度类型,部门：0/车间类型：1
+     * @return key为-1表示合计，key为产线车间主键表示对应的产线车间的值，list[0]:异丙醇，list[1]:镀膜液，list[2]:油墨
+     */
+    List<TupleDTO<String,Map<Integer,BigDecimal>>> materialConsumption(Tuple5DTO<Integer, LocalDate, LocalDate, Integer,Integer> dto);
 }

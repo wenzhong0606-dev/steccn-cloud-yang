@@ -1,6 +1,7 @@
 package com.steccn.pms.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
@@ -13,7 +14,9 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +56,46 @@ public interface PmsCompleteDeliveryMapper extends BaseMapper<PmsCompleteDeliver
      * @return
      */
     List<SubstrateIngredientConsumeVO> subIngredientReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
+
+
+    /**
+     * 物料消耗 周
+     * @param lineIds
+     * @param materialIds
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal, Integer>> materialConsumptionWeekValue(@Param("lineIds")List<Integer> lineIds,
+                                                                                   @Param("materialIds")Set<Long> materialIds,
+                                                                                   @Param("start") LocalDateTime start,
+                                                                                   @Param("end") LocalDateTime end);
+
+    /**
+     * 物料消耗 月
+     * @param lineIds
+     * @param materialIds
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal, Integer>> materialConsumptionMonthValue(@Param("lineIds")List<Integer> lineIds,
+                                                                                    @Param("materialIds")Set<Long> materialIds,
+                                                                                    @Param("start") LocalDateTime start,
+                                                                                    @Param("end") LocalDateTime end);
+
+    /**
+     * 物料消耗 年
+     * @param lineIds
+     * @param materialIds
+     * @param start
+     * @param end
+     * @return
+     */
+    List<Tuple4DTO<String, String, BigDecimal, Integer>> materialConsumptionYearValue(@Param("lineIds")List<Integer> lineIds,
+                                                                                   @Param("materialIds")Set<Long> materialIds,
+                                                                                   @Param("start") LocalDateTime start,
+                                                                                   @Param("end") LocalDateTime end);
 }
 
 

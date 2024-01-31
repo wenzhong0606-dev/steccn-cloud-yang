@@ -15,7 +15,7 @@ public class CompleteStorageInfoDTO {
      */
     private Long materialId;
 
-    /**
+    /* *
      * 物料名称
      */
     private String materialName;
