@@ -130,7 +130,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
         //根据部门不同选择不同的班组类型 0为基片班组 1为深加工班组
         int officeType = 0;
-        if(!sysOfficeVOMap.get(productLineId.get(0)).getOfficeName().equals("基片")){
+        if(!sysOfficeVOMap.get(productLineId.get(0)).getOfficeName().contains("基片")){
             officeType = 1;
         }
         TripleDTO<LocalDate, LocalDate, Integer> dateDTO = new TripleDTO<>(date, date, officeType);
