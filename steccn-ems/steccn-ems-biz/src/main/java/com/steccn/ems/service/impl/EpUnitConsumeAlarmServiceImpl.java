@@ -1,22 +1,43 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.lang.Assert;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.RegularUtil;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.common.vo.EpChartUnitConsumeAlarmVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.domain.EpPartition;
-import com.steccn.ems.domain.EpUnitConsumeAlarm;
+import com.steccn.ems.domain.*;
+import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpUnitConsumeAlarmDTO;
 import com.steccn.ems.mapper.EpUnitConsumeAlarmMapper;
-import com.steccn.ems.service.EpEnergyTypeService;
-import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.service.EpUnitConsumeAlarmService;
+import com.steccn.ems.service.*;
 import com.steccn.ems.vo.EpUnitConsumeAlarmVO;
+import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,12 +48,17 @@ import java.util.stream.Collectors;
 */
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlarmMapper, EpUnitConsumeAlarm>
     implements EpUnitConsumeAlarmService{
 
     private final EpEnergyTypeService epEnergyTypeService;
-
     private final EpPartitionService epPartitionService;
+    private final EpConsumePartitionChartService epConsumePartitionChartService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
+    private final EpProductUnitConsumeStandardUserService epProductUnitConsumeStandardUserService;
+    private final EpProductUnitConsumeStandardService epProductUnitConsumeStandardService;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Override
     public Page<EpUnitConsumeAlarmVO> page(EpUnitConsumeAlarmDTO dto) {
@@ -100,6 +126,98 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
         BeanUtils.copyProperties(page,voPage);
         voPage.setRecords(epUnitConsumeAlarmVOList);
         return voPage;
+    }
+
+    @Override
+    public Boolean trigger(LocalDate classDate) {
+        List<EpChartUnitConsumeAlarmVO> consumeAlarmVOList = new ArrayList<>();
+        List<SysDictVO> thickList = FeignOptional.of(() -> remoteDictFeignApi.listByType("product_thickness_range"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(thickList, "厚度列表为空");
+        Map<Long, BigDecimal> thickMap = Maps.newHashMap();
+        for (SysDictVO sysDictVO : thickList) {
+            thickMap.put(sysDictVO.getId(), RegularUtil.extractValue(sysDictVO.getCode(), null, (x) -> new BigDecimal(x)));
+        }
+        //获取单签有效的部门标准，提取涉及部门，能源类型和厚度
+        List<EpProductUnitConsumeStandard> standardList = epProductUnitConsumeStandardService.getValidDepartmentStandardList(classDate);
+        for (EpProductUnitConsumeStandard standard : standardList) {
+            //厚度必须存在
+            BigDecimal thisThick = thickMap.get(standard.getProductThick());
+            Set<Integer> applyOffice = standard.getApplyOffice();
+            if (Objects.nonNull(thisThick) && CollUtil.isNotEmpty(applyOffice)) {
+                //根据能源获取节点
+                Map<Integer, EpInstrumentAccount> accoutMap = epPartitionService.listByOfficeId(standard.getEnergyType(), applyOffice);
+                if (CollUtil.isNotEmpty(accoutMap)) {
+                    List<Long> partitionNodeList = accoutMap.values().stream().map(ele -> ele.getPartitionNode()).collect(Collectors.toList());
+                    EpTableDTO epTableDTO = new EpTableDTO();
+                    epTableDTO.setStart(classDate);
+                    epTableDTO.setEnd(classDate);
+                    epTableDTO.setPartitionIdList(partitionNodeList);
+                    epTableDTO.setEnergyType(standard.getEnergyType());
+                    epTableDTO.setThick(Lists.newArrayList(thisThick));
+                    epTableDTO.setGranularity(1);
+                    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> table = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDTO);
+                    consumeAlarmVOList.addAll(table.getAlarmList());
+                }
+            }
+        }
+
+        List<EpUnitConsumeAlarm> epUnitConsumeAlarmList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(consumeAlarmVOList)) {
+            for (EpChartUnitConsumeAlarmVO consumeAlarmVO : consumeAlarmVOList) {
+                EpUnitConsumeAlarm epUnitConsumeAlarm = new EpUnitConsumeAlarm();
+                BeanUtils.copyProperties(consumeAlarmVO, epUnitConsumeAlarm);
+                epUnitConsumeAlarm.setAlarmDate(consumeAlarmVO.getAlarmDateTime());
+                epUnitConsumeAlarm.setAlarmType(0);
+                epUnitConsumeAlarm.setEnergyType(consumeAlarmVO.getEnergyType());
+                String dateString = LocalDateUtil.localDateFormat(consumeAlarmVO.getAlarmDateTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
+                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过内部标准" + consumeAlarmVO.getStandardValue();
+                epUnitConsumeAlarm.setContent(content);
+                epUnitConsumeAlarmList.add(epUnitConsumeAlarm);
+                //拿到消息发送人
+                if (consumeAlarmVO.getStandardId() != null) {
+                    List<EpProductUnitConsumeStandardUser> userList = epProductUnitConsumeStandardUserService.list(new LambdaQueryWrapper<EpProductUnitConsumeStandardUser>()
+                            .select(EpProductUnitConsumeStandardUser::getUserId)
+                            .eq(EpProductUnitConsumeStandardUser::getStandardId, consumeAlarmVO.getStandardId()));
+                    if (CollUtil.isNotEmpty(userList)) {
+                        Set<Long> userIds = Sets.newHashSet();
+                        userList.forEach(tmp -> {
+                            userIds.add(tmp.getUserId().longValue());
+                        });
+                        //发送消息
+                        SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                        sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getCode());
+                        sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getTitle());
+                        sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getWarnFlag());
+                        sysMsgDTO.setUserList(userIds);
+                        String msgContent = SysMsgConstant.MsgTypeEnum.UNIT_CONSUME_ALARM.getTemplate();
+                        //拿到单位和标准类型
+                        EpProductUnitConsumeStandard epProductUnitConsumeStandard = epProductUnitConsumeStandardService.getById(consumeAlarmVO.getStandardId());
+                        Set<Long> dictSet = Sets.newHashSet();
+                        Collections.addAll(dictSet, epProductUnitConsumeStandard.getMeasureUnit(), epProductUnitConsumeStandard.getStandardType());
+                        String unitStr = "";
+                        String standardStr = "";
+                        if (CollUtil.isNotEmpty(dictSet)) {
+                            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                            if (CollUtil.isNotEmpty(dictMap)) {
+                                unitStr = dictMap.get(epProductUnitConsumeStandard.getMeasureUnit());
+                                standardStr = dictMap.get(epProductUnitConsumeStandard.getStandardType());
+                            }
+                        }
+                        epProductUnitConsumeStandard.getMeasureUnit();
+                        sysMsgDTO.setContent(String.format(msgContent, dateString, consumeAlarmVO.getCurrentValue() + unitStr, standardStr + "(" + consumeAlarmVO.getStandardValue() + unitStr + ")"));
+                        sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                        FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    }
+                } else {
+                    log.info("发送失败,消息发送人为空");
+                }
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(epUnitConsumeAlarmList)) {
+            saveBatch(epUnitConsumeAlarmList);
+        }
+        return Boolean.TRUE;
     }
 
     private EpPartition recursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {

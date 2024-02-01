@@ -8,10 +8,9 @@ import com.steccn.ems.vo.EpUnitConsumeAlarmVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /**
  * @author chenhuan
@@ -30,4 +29,13 @@ public class EpUnitConsumeAlarmController {
     public R<Page<EpUnitConsumeAlarmVO>> list(@RequestBody EpUnitConsumeAlarmDTO dto) {
         return R.success(epUnitConsumeAlarmService.page(dto));
     }
+
+    @GetMapping("/trigger")
+    @ApiOperation(value = "单耗告警-触发")
+    public R<Boolean> trigger(@RequestParam("classDate") LocalDate classDate){
+        return R.success(epUnitConsumeAlarmService.trigger(classDate));
+    }
+
+
+
 }

@@ -11,6 +11,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
@@ -373,6 +374,14 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             }
         }
         return resList;
+    }
+
+    @Override
+    public List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate) {
+        List<EpProductUnitConsumeStandard> dbList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                .le(EpProductUnitConsumeStandard::getValidStart, classDate)
+                .ge(EpProductUnitConsumeStandard::getValidEnd, classDate));
+        return Objects.isNull(dbList) ? Lists.newArrayList() : dbList;
     }
 
     public String deleteCharString0(String sourceString, char chElemData) {
