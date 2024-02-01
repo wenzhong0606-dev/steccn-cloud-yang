@@ -74,4 +74,18 @@ public interface PmsDataCollectReportService {
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> molding2(LocalDate date);
+
+    /**
+     * 空压站
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> acStation(LocalDate date);
+
+    /**
+     * 水泵房
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> waterPump(LocalDate date);
 }

@@ -288,7 +288,12 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 ,"NOX_INPUT"
                 ,"SO2_INPUT"
                 ,"KLW_INPUT"
-                ,"ATY_INPUT"));
+                ,"ATY_INPUT"
+                ,"TLTX_O2_INPUT"
+                ,"TLTX_YQ_SD_INPUT"
+                ,"TLTX_YQ_TI_INPUT"
+                ,"TLTX_YQ_PI_INPUT"
+                ,"TLTX_YQ_LS_INPUT"));
         SteccnTableAssertUtil.notEmpty(data, "暂无数据");
         SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
         //2.1、组表头
@@ -332,7 +337,12 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 Lists.newArrayList(new SteccnTableColumn("NOX_INPUT","脱硝后氮氧化物(mg/Nm³)",null)
                         ,new SteccnTableColumn("SO2_INPUT","脱硫后二氧化硫(mg/Nm³)",null)
                         ,new SteccnTableColumn("KLW_INPUT","除尘后颗粒物(mg/Nm³)",null)
-                        ,new SteccnTableColumn("ATY_INPUT","氨逃逸(ppm)",null))));
+                        ,new SteccnTableColumn("ATY_INPUT","氨逃逸(ppm)",null)
+                        ,new SteccnTableColumn("TLTX_O2_INPUT","氧含量",null)
+                        ,new SteccnTableColumn("TLTX_YQ_SD_INPUT","烟气湿度",null)
+                        ,new SteccnTableColumn("TLTX_YQ_TI_INPUT","烟气温度",null)
+                        ,new SteccnTableColumn("TLTX_YQ_PI_INPUT","烟气压力",null)
+                        ,new SteccnTableColumn("TLTX_YQ_LS_INPUT","烟气流速",null))));
         tableData.setColumns(columns);
         tableData.setTableList(data);
         return tableData;
@@ -804,6 +814,180 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_CR_A_8","副辊电流",null)
                         ,new SteccnTableColumn("YY_UP_A_8","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_8","下辊电流",null))));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> acStation(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("KYZ_FE5001_INPUT"
+                ,"KYZ_FE5002_INPUT"
+                ,"KYZ_FE5003_INPUT"
+                ,"KYZ_FE5004_INPUT"
+                ,"KYZ_FE5005_INPUT"
+                ,"KYZ_FE5006_INPUT"
+                ,"KYZ_FE5001_LJ_INPUT"
+                ,"KYZ_FE5002_LJ_INPUT"
+                ,"KYZ_FE5003_LJ_INPUT"
+                ,"KYZ_FE5004_LJ_INPUT"
+                ,"KYZ_FE5005_LJ_INPUT"
+                ,"KYZ_FE5006_LJ_INPUT"
+                ,"KYZ_KYJ01_003_JZPQ_P"
+                ,"KYZ_KYJ01_007_ZJ_T"
+                ,"KYZ_KYJ01_010_JZ_T"
+                ,"KYZ_CM5_6AN4_1_I1"
+                ,"KYZ_KYJ02_003_JZPQ_P"
+                ,"KYZ_KYJ02_007_ZJ_T"
+                ,"KYZ_KYJ02_010_JZ_T"
+                ,"KYZ_CM5_6AN4_2_I1"
+                ,"KYZ_KYJ03_003_JZPQ_P"
+                ,"KYZ_KYJ03_007_ZJ_T"
+                ,"KYZ_KYJ03_010_JZ_T"
+                ,"KYZ_CM5_6AN5_1_I1"
+                ,"KYZ_KYJ04_003_JZPQ_P"
+                ,"KYZ_KYJ04_007_ZJ_T"
+                ,"KYZ_KYJ04_010_JZ_T"
+                ,"KYZ_CM5_6AN5_2_I1"
+                ,"KYZ_KYJ05_003_JZPQ_P"
+                ,"KYZ_KYJ05_007_ZJ_T"
+                ,"KYZ_KYJ05_010_JZ_T"
+                ,"KYZ_CM5_6AN6_1_I1"
+                ,"KYZ_KYJ06_003_JZPQ_P"
+                ,"KYZ_KYJ06_007_ZJ_T"
+                ,"KYZ_KYJ06_010_JZ_T"
+                ,"KYZ_CM5_7AN6_1_I1"
+                ,"KYZ_KYJ07_003_JZPQ_P"
+                ,"KYZ_KYJ07_007_ZJ_T"
+                ,"KYZ_KYJ07_010_JZ_T"
+                ,"KYZ_CM5_7AN6_2_I1"
+                ,"KYZ_KYJ08_003_JZPQ_P"
+                ,"KYZ_KYJ08_007_ZJ_T"
+                ,"KYZ_KYJ08_010_JZ_T"
+                ,"KYZ_CM5_7AN5_1_I1"
+                ,"KYZ_KYJ09_003_JZPQ_P"
+                ,"KYZ_KYJ09_007_ZJ_T"
+                ,"KYZ_KYJ09_010_JZ_T"
+                ,"KYZ_CM5_7AN5_2_I1"
+                ,"KYZ_KYJ10_003_JZPQ_P"
+                ,"KYZ_KYJ10_007_ZJ_T"
+                ,"KYZ_KYJ10_010_JZ_T"
+                ,"KYZ_CM5_7AN4_1_I1"
+                ,"KYZ_GZJ1_JRTTZ_T"
+                ,"KYZ_CM5_6AN6_2_I1"
+                ,"KYZ_GZJ2_JRTTZ_T"
+                ,"KYZ_CM5_6AN6_3_I1"
+                ,"KYZ_GZJ3_JRTTZ_T"
+                ,"KYZ_CM5_7AN4_2_I1"));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5001_INPUT","雾化气流量",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5002_INPUT","退火切裁用气流量",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5003_INPUT","深加工用气流量",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5004_INPUT","熔化用气流量",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5005_INPUT","深加工用气流量",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5006_INPUT","余热、原料用气流量",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5001_LJ_INPUT","雾化气流量累计",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5002_LJ_INPUT","退火切裁用气流量累计",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5003_LJ_INPUT","深加工用气流量累计",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5004_LJ_INPUT","熔化用气流量累计",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5005_LJ_INPUT","深加工用气流量累计",null));
+        columns.add(new SteccnTableColumn("KYZ_FE5006_LJ_INPUT","余热、原料用气流量累计",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ01_003_JZPQ_P","1号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ01_007_ZJ_T","1号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ01_010_JZ_T","1号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN4_1_I1","1号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ02_003_JZPQ_P","2号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ02_007_ZJ_T","2号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ02_010_JZ_T","2号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN4_2_I1","2号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ03_003_JZPQ_P","3号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ03_007_ZJ_T","3号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ03_010_JZ_T","3号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN5_1_I1","3号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ04_003_JZPQ_P","4号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ04_007_ZJ_T","4号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ04_010_JZ_T","4号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN5_2_I1","4号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ05_003_JZPQ_P","5号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ05_007_ZJ_T","5号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ05_010_JZ_T","5号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN6_1_I1","5号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ06_003_JZPQ_P","6号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ06_007_ZJ_T","6号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ06_010_JZ_T","6号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_7AN6_1_I1","6号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ07_003_JZPQ_P","7号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ07_007_ZJ_T","7号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ07_010_JZ_T","7号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_7AN6_2_I1","7号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ08_003_JZPQ_P","8号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ08_007_ZJ_T","8号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ08_010_JZ_T","8号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_7AN5_1_I1","8号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ09_003_JZPQ_P","9号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ09_007_ZJ_T","9号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ09_010_JZ_T","9号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_7AN5_2_I1","9号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ10_003_JZPQ_P","10号空压机排气压力",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ10_007_ZJ_T","10号空压机主机温度",null));
+        columns.add(new SteccnTableColumn("KYZ_KYJ10_010_JZ_T","10号空压机机组温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_7AN4_1_I1","10号空压机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_GZJ1_JRTTZ_T","1号干燥机塔中温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN6_2_I1","1号干燥机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_GZJ2_JRTTZ_T","2号干燥机塔中温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_6AN6_3_I1","2号干燥机电流",null));
+        columns.add(new SteccnTableColumn("KYZ_GZJ3_JRTTZ_T","3号干燥机塔中温度",null));
+        columns.add(new SteccnTableColumn("KYZ_CM5_7AN4_2_I1","3号干燥机电流",null));
+        tableData.setColumns(columns);
+        tableData.setTableList(data);
+        return tableData;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> waterPump(LocalDate date) {
+        List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("SBF_RSC_LIT_INPUT"
+                ,"SBF_XFSC_LIT_INPUT"
+                ,"SBF_XHSC_LIT_INPUT"
+                ,"SBF_RSG_PIT_INPUT"
+                ,"SBF_XHSG_OUT_PIT_INPUT"
+                ,"SBF_XHSCK_TEMP_INPUT"
+                ,"SBF_LQT_OUT_TEMP_INPUT"
+                ,"SBF_LQT_IN_TEMP_INPUT"
+                ,"SBF_AODOOR_TEMP_INPUT"
+                ,"SBF_ST_LIT_INPUT"
+                ,"SBF_ZXSB_1_HZ_PV"
+                ,"SBF_ZXSB_2_HZ_PV"
+                ,"SBF_ZXSB_3_HZ_PV"
+                ,"SBF_ZXSB_4_HZ_PV"
+                ,"SBF_RSB_1_HZ_PV"
+                ,"SBF_RSB_2_HZ_PV"
+                ,"SBF_RSB_3_HZ_PV"));
+        SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("SBF_RSC_LIT_INPUT","热水池液位",null));
+        columns.add(new SteccnTableColumn("SBF_XFSC_LIT_INPUT","消防水液位",null));
+        columns.add(new SteccnTableColumn("SBF_XHSC_LIT_INPUT","冷水池液位",null));
+        columns.add(new SteccnTableColumn("SBF_RSG_PIT_INPUT","热水管出口压力",null));
+        columns.add(new SteccnTableColumn("SBF_XHSG_OUT_PIT_INPUT","循环水管出口压力",null));
+        columns.add(new SteccnTableColumn("SBF_XHSCK_TEMP_INPUT","循环水管出口温度",null));
+        columns.add(new SteccnTableColumn("SBF_LQT_OUT_TEMP_INPUT","冷却塔进口温度",null));
+        columns.add(new SteccnTableColumn("SBF_LQT_IN_TEMP_INPUT","冷却塔出口温度",null));
+        columns.add(new SteccnTableColumn("SBF_AODOOR_TEMP_INPUT","室外温度",null));
+        columns.add(new SteccnTableColumn("SBF_ST_LIT_INPUT","水塔水位",null));
+        columns.add(new SteccnTableColumn("SBF_ZXSB_1_HZ_PV","循环水泵1频率",null));
+        columns.add(new SteccnTableColumn("SBF_ZXSB_2_HZ_PV","循环水泵2频率",null));
+        columns.add(new SteccnTableColumn("SBF_ZXSB_3_HZ_PV","循环水泵3频率",null));
+        columns.add(new SteccnTableColumn("SBF_ZXSB_4_HZ_PV","循环水泵4频率",null));
+        columns.add(new SteccnTableColumn("SBF_RSB_1_HZ_PV","热水泵1频率",null));
+        columns.add(new SteccnTableColumn("SBF_RSB_2_HZ_PV","热水泵2频率",null));
+        columns.add(new SteccnTableColumn("SBF_RSB_3_HZ_PV","热水泵3频率",null));
         tableData.setColumns(columns);
         tableData.setTableList(data);
         return tableData;
