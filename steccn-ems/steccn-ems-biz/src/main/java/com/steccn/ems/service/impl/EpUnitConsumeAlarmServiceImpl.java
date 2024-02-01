@@ -92,6 +92,8 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
             condition.orderBy(true,!dto.getAscFlag(),EpUnitConsumeAlarm::getOfficeId);
         } else if (EpManagerConstant.EP_UNIT_CONSUME_ALARM_SORT_ALARM_TYPE.equals(dto.getSortField())) {
             condition.orderBy(true,!dto.getAscFlag(),EpUnitConsumeAlarm::getAlarmType);
+        }else{
+            condition.orderBy(true, dto.getAscFlag(), EpUnitConsumeAlarm::getAlarmDate);
         }
 
         Page<EpUnitConsumeAlarmVO> voPage = new Page<>();
