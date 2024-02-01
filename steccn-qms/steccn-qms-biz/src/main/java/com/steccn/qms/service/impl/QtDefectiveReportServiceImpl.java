@@ -1471,14 +1471,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 }).collect(Collectors.toList());
             } else {
                 //其他时间粒度
-                conditionDataList = flatDataList.stream().filter(v -> {
-                    //数据范围应该是大于等于开始时间  小于结束时间
-                    LocalDate classDate = LocalDateUtil.getClassDate(start, false);
-                    if (classDate.isEqual(v.getClassTime())) {
-                        return Boolean.TRUE;
-                    }
-                    return Boolean.FALSE;
-                }).collect(Collectors.toList());
+                LocalDate begin = LocalDateUtil.getClassDate(start, false);
+                LocalDate over = LocalDateUtil.getClassDate(end, false);
+                conditionDataList = flatDataList.stream().filter(v -> LocalDateUtil.isRange(v.getClassTime(), begin, over, true, false)).collect(Collectors.toList());
             }
             StackGraphDTO<String, Integer> stackGraphDTO = new StackGraphDTO<>();
             stackGraphDTO.setXAxis(XAxisUtil.convert(granularityEnum, start));
