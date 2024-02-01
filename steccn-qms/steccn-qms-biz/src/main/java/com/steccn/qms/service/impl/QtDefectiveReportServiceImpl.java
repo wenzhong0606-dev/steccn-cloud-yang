@@ -1380,9 +1380,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
         Assert.notNull(granularityEnum, "粒度不存在");
         //将时间范围根据粒度分片
-        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRangeNew(granularityEnum.getType()
-                , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
-                , LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.MIN));
+        LocalDateTime startTmp = LocalDateUtil.getMorning(dto.getDateStart());
+        LocalDateTime endTmp = LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1));
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRangeNew(granularityEnum.getType(), startTmp, endTmp);
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
