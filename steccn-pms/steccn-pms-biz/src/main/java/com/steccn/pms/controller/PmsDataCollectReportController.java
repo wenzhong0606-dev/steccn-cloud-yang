@@ -79,4 +79,16 @@ public class PmsDataCollectReportController {
         return R.success(pmsDataCollectReportService.molding2(date));
     }
 
+    @GetMapping("/acStation")
+    @ApiOperation("空压站")
+    public R<SteccnTableDataDTO> acStation(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.acStation(date));
+    }
+
+    @GetMapping("/waterPump")
+    @ApiOperation("水泵房")
+    public R<SteccnTableDataDTO> waterPump(@RequestParam("date") LocalDate date) {
+        return R.success(pmsDataCollectReportService.waterPump(date));
+    }
+
 }
