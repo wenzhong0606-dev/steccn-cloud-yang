@@ -169,4 +169,13 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     List<EpPartition> getLinkedChildren(Integer energyType,List<Long> partitionIdList);
+
+    /**
+     * 根据类型和组织架构主键获取能源节点
+     *
+     * @param energyType  能源类型
+     * @param officeIdSet 组织机构主键
+     * @return
+     */
+    Map<Integer, EpPartition> getByOfficeId(Integer energyType, Set<Integer> officeIdSet);
 }

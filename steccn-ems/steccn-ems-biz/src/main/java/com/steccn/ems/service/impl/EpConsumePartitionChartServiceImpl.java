@@ -1237,6 +1237,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setStandardList(standardVOList);
         epChartGraphDTO.setCheckStandardMap(getDpStandardList(dto.getEnergyType(), consumeStandardList));
         epChartGraphDTO.setEnergyType(dto.getEnergyType());
+        epChartGraphDTO.setConditionDate(dto.getStart());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         if (QtManagerConstant.QtGranularityEnum.NONE.equals(granularityEnum)) {
             convert.getXData().setData(Lists.newArrayList());
@@ -1255,12 +1256,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         if (CollUtil.isNotEmpty(consumeStandardList)) {
             //获取整个树结构
             Set<Integer> officeIdSet = consumeStandardList.stream().map(v -> v.getApplyOffice()).flatMap(Collection::stream).collect(Collectors.toSet());
-            Map<Integer, EpInstrumentAccount> partitionMap = epPartitionService.listByOfficeId(energyType, officeIdSet);
+            Map<Integer, EpPartition> partitionMap = epPartitionService.getByOfficeId(energyType, officeIdSet);
             for (EpProductUnitConsumeStandard consumeStandard : consumeStandardList) {
                 consumeStandard.getApplyOffice().forEach(ele -> {
-                    EpInstrumentAccount account = partitionMap.get(ele);
-                    if (Objects.nonNull(account)) {
-                        dpStandardMap.put(account.getPartitionNode(), new TupleDTO<>(consumeStandard.getId(), consumeStandard.getUnitValue()));
+                    EpPartition epPartition = partitionMap.get(ele);
+                    if (Objects.nonNull(epPartition)) {
+                        dpStandardMap.put(epPartition.getId(), new TupleDTO<>(consumeStandard.getId(), consumeStandard.getUnitValue()));
                     }
                 });
             }

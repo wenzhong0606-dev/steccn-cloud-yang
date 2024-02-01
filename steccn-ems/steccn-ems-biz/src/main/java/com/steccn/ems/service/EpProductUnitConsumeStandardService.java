@@ -55,4 +55,11 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
      * @return list
      */
     List<StandardVO<BigDecimal>> validStandardList(Integer energyType, LocalDate start, LocalDate end);
+
+    /**
+     * 获取当前班次日期下有效的部门标准
+     * @param classDate 当前班次日期
+     * @return
+     */
+    List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate);
 }

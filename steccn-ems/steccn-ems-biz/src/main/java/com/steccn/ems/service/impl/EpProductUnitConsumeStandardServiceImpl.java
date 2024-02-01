@@ -11,6 +11,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
@@ -28,6 +29,7 @@ import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -373,6 +375,16 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             }
         }
         return resList;
+    }
+
+    @Override
+    public List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate) {
+        SysDictVO departmentSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<EpProductUnitConsumeStandard> dbList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                .le(EpProductUnitConsumeStandard::getValidStart, classDate)
+                .ge(EpProductUnitConsumeStandard::getValidEnd, classDate)
+                .eq(Objects.nonNull(departmentSysDict), EpProductUnitConsumeStandard::getStandardType, departmentSysDict.getId()));
+        return Objects.isNull(dbList) ? Lists.newArrayList() : dbList;
     }
 
     public String deleteCharString0(String sourceString, char chElemData) {

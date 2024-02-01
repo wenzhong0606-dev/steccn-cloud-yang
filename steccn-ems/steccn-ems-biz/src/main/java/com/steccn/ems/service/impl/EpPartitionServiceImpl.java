@@ -703,6 +703,21 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resList;
     }
 
+    @Override
+    public Map<Integer, EpPartition> getByOfficeId(Integer energyType, Set<Integer> officeIdSet) {
+        Map<Integer, EpPartition> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType)
+                    .in(EpPartition::getOfficeId, officeIdSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    resMap.put(ele.getOfficeId(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
+
     private Set<Long> getChildrenId(Long partitionId, Map<Long, Set<Long>> directRefMap) {
         Set<Long> resIdSet = Sets.newHashSet();
         Set<Long> children = directRefMap.get(partitionId);
