@@ -35,7 +35,4 @@ public class EpUnitConsumeAlarmController {
     public R<Boolean> trigger(@RequestParam("classDate") LocalDate classDate){
         return R.success(epUnitConsumeAlarmService.trigger(classDate));
     }
-
-
-
 }
