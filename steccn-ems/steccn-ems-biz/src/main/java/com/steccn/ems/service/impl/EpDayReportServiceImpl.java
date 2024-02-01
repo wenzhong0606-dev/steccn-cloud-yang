@@ -595,6 +595,19 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             }
         }).exceptionally(ex -> Lists.newArrayList());
 
+        CompletableFuture<List<EpDayReportCountRowVO>> airFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                RequestContextHolder.setRequestAttributes(attributes);
+                //获取用水量
+                Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_AIR.equals(v.getId())).findFirst();
+                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_AIR));
+            } catch (Exception e) {
+                log.error("water -> {}", e.getLocalizedMessage());
+                throw new BusinessException("业务执行异常");
+            }
+        }).exceptionally(ex -> Lists.newArrayList());
+
+
         CompletableFuture<List<EpDayReportCountRowVO>> elecOtherFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 RequestContextHolder.setRequestAttributes(attributes);
@@ -627,12 +640,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         }).exceptionally(ex -> Lists.newArrayList());
 
         //5个都执行完毕，才来执行继续
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture);
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture, airFuture);
         completableFuture.isDone();
         dataList.addAll(elecFuture.get());
         dataList.addAll(waterFuture.get());
         dataList.addAll(gasFuture.get());
         dataList.addAll(oilFuture.get());
+        //添加压缩空气
+        dataList.addAll(airFuture.get());
         dataList.addAll(elecOtherFuture.get());
         return dataList;
     }

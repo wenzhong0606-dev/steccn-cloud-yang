@@ -296,6 +296,7 @@ public interface EpManagerConstant {
     Integer ENERGY_GAS = 3;
     Integer ENERGY_OIL = 4;
     Integer ENERGY_GAS_OIL = 5;
+    Integer ENERGY_AIR = 6;
     Integer ENERGY_ELECTRIC_OTHER = 7;
 
 
@@ -306,6 +307,7 @@ public interface EpManagerConstant {
     String CONF_EMS_DAY_COUNT_WATER = "EMS_DAY_COUNT_WATER";
     String CONF_EMS_DAY_COUNT_GAS = "EMS_DAY_COUNT_GAS";
     String CONF_EMS_DAY_COUNT_OIL = "EMS_DAY_COUNT_OIL";
+    String CONF_EMS_DAY_COUNT_AIR = "EMS_DAY_COUNT_AIR";
     String CONF_EMS_DAY_COUNT_ELEC_OTHER = "EMS_DAY_COUNT_ELEC_OTHER";
 
 
@@ -315,6 +317,7 @@ public interface EpManagerConstant {
     String CONF_EMS_WATER_CONTENT = "EMS_WATER_CONTENT";
     String CONF_EMS_GAS_CONTENT = "EMS_GAS_CONTENT";
     String CONF_EMS_OIL_CONTENT = "EMS_OIL_CONTENT";
+    String CONF_EMS_AIR_CONTENT = "EMS_AIR_CONTENT";
 
     /**
      * 基片统计报表-能耗配置
