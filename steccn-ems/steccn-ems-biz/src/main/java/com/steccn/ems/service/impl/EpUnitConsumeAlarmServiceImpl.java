@@ -179,6 +179,7 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                 epUnitConsumeAlarm.setAlarmType(0);
                 epUnitConsumeAlarm.setEnergyType(consumeAlarmVO.getEnergyType());
                 String dateString = LocalDateUtil.localDateFormat(consumeAlarmVO.getAlarmDateTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
+                dateString += "【" + epUnitConsumeAlarm.getOfficeName() + "】";
                 Integer standardId = consumeAlarmVO.getStandardId();
                 EpProductUnitConsumeStandard standard = epProductUnitConsumeStandardService.getById(standardId);
                 String standardShowName = GetValueUtil.get(standard, x -> x.getName(), "内部标准");
@@ -187,7 +188,7 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                     SysDictVO unitSysDict = FeignOptional.of(() -> remoteDictFeignApi.get(standard.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     unitSysDictStr = GetValueUtil.get(unitSysDict, x -> x.getName(), Strings.EMPTY);
                 }
-                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() +unitSysDictStr + "," + "超过" +standardShowName + consumeAlarmVO.getStandardValue() + unitSysDictStr;
+                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + unitSysDictStr + "，" + "超过" + standardShowName + "(" + consumeAlarmVO.getStandardValue() + unitSysDictStr + ")";
                 epUnitConsumeAlarm.setContent(content);
                 epUnitConsumeAlarmList.add(epUnitConsumeAlarm);
                 //拿到消息发送人
