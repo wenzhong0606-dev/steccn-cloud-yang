@@ -1237,6 +1237,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setStandardList(standardVOList);
         epChartGraphDTO.setCheckStandardMap(getDpStandardList(dto.getEnergyType(), consumeStandardList));
         epChartGraphDTO.setEnergyType(dto.getEnergyType());
+        epChartGraphDTO.setConditionDate(dto.getStart());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         if (QtManagerConstant.QtGranularityEnum.NONE.equals(granularityEnum)) {
             convert.getXData().setData(Lists.newArrayList());

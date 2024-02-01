@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -136,28 +137,6 @@ public class EpChartGraphUtil {
      * @param alarmList       预警集合
      */
     private static void checkStandard(Long officeId, BigDecimal value, EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO, List<EpChartUnitConsumeAlarmVO> alarmList) {
-//        //行业标准和企业标准
-//        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardList())) {
-//            for (StandardVO<BigDecimal> standardVO : epChartGraphDTO.getStandardList()) {
-//                if (Objects.nonNull(standardVO.getValue()) && Objects.nonNull(value) && standardVO.getValue().compareTo(value) < 0) {
-//                    int type = 1;
-//                    if (standardVO.getStandardTypeName().indexOf("行业") != -1) {
-//                        type = 0;
-//                    }
-//                    EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), type);
-//                    alarmList.add(vo);
-//                }
-//            }
-//        }
-
-        //部门标准
-//        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardMap())) {
-//            BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
-//            if (Objects.nonNull(officeStandardValue) && Objects.nonNull(value) && officeStandardValue.compareTo(value) < 0) {
-//                EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
-//                alarmList.add(vo);
-//            }
-//        }
         //部门标准
         if (CollUtil.isNotEmpty(epChartGraphDTO.getCheckStandardMap())) {
             TupleDTO<Integer, BigDecimal> tupleDTO = epChartGraphDTO.getCheckStandardMap().get(officeId);
@@ -187,7 +166,7 @@ public class EpChartGraphUtil {
         vo.setStandardValue(standardValue);
         vo.setStandardType(standardType);
         vo.setCurrentValue(value);
-        vo.setAlarmDateTime(LocalDateTime.now());
+        vo.setAlarmDateTime(LocalDateTime.of(epChartGraphDTO.getConditionDate(), LocalTime.now()));
         vo.setConditionDate(epChartGraphDTO.getConditionDate());
         return vo;
     }
