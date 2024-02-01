@@ -37,9 +37,17 @@ public interface RemoteDataPlatformFeignApi {
     @ApiOperation("能源绩效系统-抄表归档")
     R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto);
 
+    @PostMapping("/feign/data/warehouse/station/collect/read")
+    @ApiOperation("能源绩效系统-抄表归档")
+    R<DwEpMeterCollectVO> pmStationRead(@RequestBody DwMeterReadDTO dto);
+
     @PostMapping("/feign/data/warehouse/meter/read/diff")
     @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
     R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto);
+
+    @PostMapping("/feign/data/warehouse/station/collect/diff")
+    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值-用于压缩空气")
+    R<BigDecimal> pmStationDiff(DwMeterReadDiffDTO readDTO);
 
     @PostMapping("/feign/data/warehouse/meter/read/seValue")
     @ApiOperation("能源绩效系统-抄表归档-同一个code的2个值")
@@ -118,5 +126,4 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/warehouse/station/info")
     @ApiOperation("生产管理-进出站计数信息")
     R<List<DwStationCollectVO>> stationInfo(@RequestBody DwStationInfoDTO dto);
-
 }

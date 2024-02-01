@@ -134,7 +134,12 @@ public class EpDwServiceImpl implements EpDwService {
         readDTO.setCode(task.getCode());
         readDTO.setStart(task.getStart());
         readDTO.setEnd(task.getEnd());
-        BigDecimal diffValue = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterReadDiff(readDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        BigDecimal diffValue = null;
+        if(task.getEnergyType() ==6){
+            diffValue = FeignOptional.of(() -> remoteDataPlatformFeignApi.pmStationDiff(readDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        }else {
+            diffValue = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterReadDiff(readDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        }
         if (Objects.nonNull(diffValue)) {
             EpMeterReadDistant epMeterRead = new EpMeterReadDistant();
             BeanUtils.copyProperties(task, epMeterRead);
@@ -171,6 +176,7 @@ public class EpDwServiceImpl implements EpDwService {
             //仅统计每日能耗（类型II）的节点
             if (otherNodeSet.contains(meter.getPartitionId())) {
                 DwConditionDTO dwConditionDTO = new DwConditionDTO();
+                dwConditionDTO.setEnergyType(meter.getEnergyType());
                 dwConditionDTO.setCode(meter.getDistantMapCode());
                 dwConditionDTO.setMeterId(meter.getMeterId());
                 dwConditionDTO.setReadDate(date);
@@ -408,7 +414,12 @@ public class EpDwServiceImpl implements EpDwService {
         DwMeterReadDTO end = new DwMeterReadDTO();
         end.setCode(meter.getDistantMapCode());
         end.setRecordTime(LocalDateUtil.getMorning(date.plusDays(1)));
-        DwEpMeterCollectVO endVo = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(end), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        DwEpMeterCollectVO endVo ;
+        if (meter.getEnergyType() == 6) {
+            endVo = FeignOptional.of(() -> remoteDataPlatformFeignApi.pmStationRead(end), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        } else {
+            endVo = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(end), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        }
 
         if (Objects.nonNull(endVo)) {
             EpMeterRead ele = new EpMeterRead();
@@ -511,6 +522,7 @@ public class EpDwServiceImpl implements EpDwService {
      */
     private DwConditionDTO getDefaultDwConditionDTO(EpDwMeterPartitionDTO meter, LocalDateTime start, LocalDateTime end, LocalDate readDate, Integer classId) {
         DwConditionDTO dwConditionDTO = new DwConditionDTO();
+        dwConditionDTO.setEnergyType(meter.getEnergyType());
         dwConditionDTO.setMeterId(meter.getMeterId());
         dwConditionDTO.setCode(meter.getDistantMapCode());
         dwConditionDTO.setReadDate(readDate);
@@ -530,6 +542,7 @@ public class EpDwServiceImpl implements EpDwService {
      */
     private DwConditionDTO getDwConditionDTO(EpDwMeterPartitionDTO meter, DwProduceOrderDTO data) {
         DwConditionDTO dwConditionDTO = new DwConditionDTO();
+        dwConditionDTO.setEnergyType(meter.getEnergyType());
         dwConditionDTO.setMeterId(meter.getMeterId());
         dwConditionDTO.setCode(meter.getDistantMapCode());
         dwConditionDTO.setReadDate(data.getClassDate());

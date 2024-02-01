@@ -3,9 +3,8 @@ package com.steccn.data.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.data.domain.PmStationCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.data.dto.DwStationCollectDTO;
-import com.steccn.data.dto.DwStationInfoDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.dto.*;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.vo.DwStationCollectVO;
 
 import java.math.BigDecimal;
@@ -39,4 +38,18 @@ public interface PmStationCollectService extends IService<PmStationCollect> {
      * @return
      */
     List<DwStationCollectVO> stationInfo(DwStationInfoDTO dto);
+
+    /**
+     * 一个仪表 2个时间差值-用于压缩空气
+     * @param dto
+     * @return
+     */
+    BigDecimal pmStationDiff(DwMeterReadDiffDTO dto);
+
+    /**
+     * 一个仪表
+     * @param dto
+     * @return
+     */
+    DwEpMeterCollectVO pmStationRead(DwMeterReadDTO dto);
 }
