@@ -1,5 +1,6 @@
 package com.steccn.data.dto;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -16,6 +17,9 @@ import java.time.LocalDateTime;
 @Data
 @ApiModel("数仓条件dto")
 public class DwConditionDTO implements Serializable {
+
+    @ApiModelProperty("能源类型")
+    private Integer energyType;
 
     @ApiModelProperty("仪表id")
     private Integer meterId;
