@@ -83,7 +83,9 @@ public class EpChartGraphUtil {
                     xDataMap.get(xPostIdx).add(stack.getField2());
                 }
                 //如果单耗超过标准，则添加信息
-                checkStandard(x2.getField1(), sum, epChartGraphDTO, alarmList);
+                if(CollUtil.isNotEmpty(stackList)){
+                    checkStandard(x2.getField1(), stackList.get(0).getField2(), epChartGraphDTO, alarmList);
+                }
 
                 //如果不是堆叠图，则图例为x轴所有的点
                 onlyStack = Boolean.FALSE;
@@ -134,28 +136,28 @@ public class EpChartGraphUtil {
      * @param alarmList       预警集合
      */
     private static void checkStandard(Long officeId, BigDecimal value, EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO, List<EpChartUnitConsumeAlarmVO> alarmList) {
-        //行业标准和企业标准
-        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardList())) {
-            for (StandardVO<BigDecimal> standardVO : epChartGraphDTO.getStandardList()) {
-                if (Objects.nonNull(standardVO.getValue()) && Objects.nonNull(value) && standardVO.getValue().compareTo(value) < 0) {
-                    int type = 1;
-                    if (standardVO.getStandardTypeName().indexOf("行业") != -1) {
-                        type = 0;
-                    }
-                    EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), type);
-                    alarmList.add(vo);
-                }
-            }
-        }
+//        //行业标准和企业标准
+//        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardList())) {
+//            for (StandardVO<BigDecimal> standardVO : epChartGraphDTO.getStandardList()) {
+//                if (Objects.nonNull(standardVO.getValue()) && Objects.nonNull(value) && standardVO.getValue().compareTo(value) < 0) {
+//                    int type = 1;
+//                    if (standardVO.getStandardTypeName().indexOf("行业") != -1) {
+//                        type = 0;
+//                    }
+//                    EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), type);
+//                    alarmList.add(vo);
+//                }
+//            }
+//        }
 
         //部门标准
-        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardMap())) {
-            BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
-            if (Objects.nonNull(officeStandardValue) && Objects.nonNull(value) && officeStandardValue.compareTo(value) < 0) {
-                EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
-                alarmList.add(vo);
-            }
-        }
+//        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardMap())) {
+//            BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
+//            if (Objects.nonNull(officeStandardValue) && Objects.nonNull(value) && officeStandardValue.compareTo(value) < 0) {
+//                EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
+//                alarmList.add(vo);
+//            }
+//        }
         //部门标准
         if (CollUtil.isNotEmpty(epChartGraphDTO.getCheckStandardMap())) {
             TupleDTO<Integer, BigDecimal> tupleDTO = epChartGraphDTO.getCheckStandardMap().get(officeId);
