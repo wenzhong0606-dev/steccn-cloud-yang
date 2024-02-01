@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -34,11 +35,13 @@ import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -172,14 +175,19 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
             for (EpChartUnitConsumeAlarmVO consumeAlarmVO : consumeAlarmVOList) {
                 EpUnitConsumeAlarm epUnitConsumeAlarm = new EpUnitConsumeAlarm();
                 BeanUtils.copyProperties(consumeAlarmVO, epUnitConsumeAlarm);
-                epUnitConsumeAlarm.setAlarmDate(consumeAlarmVO.getAlarmDateTime());
+                epUnitConsumeAlarm.setAlarmDate(LocalDateTime.now());
                 epUnitConsumeAlarm.setAlarmType(0);
                 epUnitConsumeAlarm.setEnergyType(consumeAlarmVO.getEnergyType());
                 String dateString = LocalDateUtil.localDateFormat(consumeAlarmVO.getAlarmDateTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
                 Integer standardId = consumeAlarmVO.getStandardId();
                 EpProductUnitConsumeStandard standard = epProductUnitConsumeStandardService.getById(standardId);
-                String standardShowName = Objects.nonNull(standard) ? standard.getName() : "内部标准" ;
-                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过" +standardShowName + consumeAlarmVO.getStandardValue();
+                String standardShowName = GetValueUtil.get(standard, x -> x.getName(), "内部标准");
+                String unitSysDictStr = Strings.EMPTY;
+                if(Objects.nonNull(standard)){
+                    SysDictVO unitSysDict = FeignOptional.of(() -> remoteDictFeignApi.get(standard.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    unitSysDictStr = GetValueUtil.get(unitSysDict, x -> x.getName(), Strings.EMPTY);
+                }
+                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() +unitSysDictStr + "," + "超过" +standardShowName + consumeAlarmVO.getStandardValue() + unitSysDictStr;
                 epUnitConsumeAlarm.setContent(content);
                 epUnitConsumeAlarmList.add(epUnitConsumeAlarm);
                 //拿到消息发送人
