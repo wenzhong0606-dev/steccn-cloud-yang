@@ -522,6 +522,7 @@ public class EpDwServiceImpl implements EpDwService {
      */
     private DwConditionDTO getDefaultDwConditionDTO(EpDwMeterPartitionDTO meter, LocalDateTime start, LocalDateTime end, LocalDate readDate, Integer classId) {
         DwConditionDTO dwConditionDTO = new DwConditionDTO();
+        dwConditionDTO.setEnergyType(meter.getEnergyType());
         dwConditionDTO.setMeterId(meter.getMeterId());
         dwConditionDTO.setCode(meter.getDistantMapCode());
         dwConditionDTO.setReadDate(readDate);
@@ -541,6 +542,7 @@ public class EpDwServiceImpl implements EpDwService {
      */
     private DwConditionDTO getDwConditionDTO(EpDwMeterPartitionDTO meter, DwProduceOrderDTO data) {
         DwConditionDTO dwConditionDTO = new DwConditionDTO();
+        dwConditionDTO.setEnergyType(meter.getEnergyType());
         dwConditionDTO.setMeterId(meter.getMeterId());
         dwConditionDTO.setCode(meter.getDistantMapCode());
         dwConditionDTO.setReadDate(data.getClassDate());
