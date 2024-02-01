@@ -48,6 +48,12 @@ public class DataPlatformFeignController {
         return R.success(epMeterCollectService.meterRead(dto));
     }
 
+    @PostMapping("/station/collect/read")
+    @ApiOperation("能源绩效系统-抄表归档")
+    R<DwEpMeterCollectVO> pmStationRead(@RequestBody DwMeterReadDTO dto) {
+        return R.success(pmStationCollectService.pmStationRead(dto));
+    }
+
     @PostMapping("/meter/read/seValue")
     @ApiOperation("能源绩效系统-抄表归档-差值")
     R<List<BigDecimal>> seValue(@RequestBody TripleDTO<String, LocalDateTime, LocalDateTime> tripleDTO) {
@@ -58,6 +64,12 @@ public class DataPlatformFeignController {
     @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
     public R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto) {
         return R.success(epMeterCollectService.meterReadDiff(dto));
+    }
+
+    @PostMapping("/station/collect/diff")
+    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值-用于压缩空气")
+    public R<BigDecimal> pmStationDiff(@RequestBody DwMeterReadDiffDTO dto) {
+        return R.success(pmStationCollectService.pmStationDiff(dto));
     }
 
     @PostMapping("/meter/last/read/time")

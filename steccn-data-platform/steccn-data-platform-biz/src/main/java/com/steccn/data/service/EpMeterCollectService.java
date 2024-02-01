@@ -37,7 +37,6 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     BigDecimal meterReadDiff(DwMeterReadDiffDTO dto) ;
-
     /**
      * 最近抄表时间
      *
@@ -74,4 +73,6 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     BigDecimal heatPower(LocalDate date);
+
+
 }

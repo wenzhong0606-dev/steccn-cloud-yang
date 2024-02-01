@@ -11,11 +11,10 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
-import com.steccn.data.dto.DwStationCollectDTO;
-import com.steccn.data.dto.DwStationInfoDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.dto.*;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.mapper.PmStationCollectMapper;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.vo.DwStationCollectVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +110,42 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
             resList.add(dwStationCollectVO);
         });
         return resList;
+    }
+
+    @Override
+    public BigDecimal pmStationDiff(DwMeterReadDiffDTO dto) {
+        //根据条件获取出站采集点的采集数据
+        PmStationCollect start = getOne(new LambdaQueryWrapper<PmStationCollect>()
+                .eq(PmStationCollect::getCode, dto.getCode())
+                .between(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getStart().toLocalDate(), LocalTime.MIN), dto.getStart())
+                .orderByDesc(PmStationCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        PmStationCollect end = getOne(new LambdaQueryWrapper<PmStationCollect>()
+                .eq(PmStationCollect::getCode, dto.getCode())
+                .between(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getEnd().toLocalDate(), LocalTime.MIN), dto.getEnd())
+                .orderByDesc(PmStationCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(start) && Objects.nonNull(end)) {
+            //考虑当前数据断传了， 前一天未断传，则会出现负数
+            BigDecimal subtract = BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            return Objects.nonNull(subtract) && BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
+        }
+        return null;
+    }
+
+    @Override
+    public DwEpMeterCollectVO pmStationRead(DwMeterReadDTO dto) {
+        DwEpMeterCollectVO resVo = null;
+        PmStationCollect one = getOne(new LambdaQueryWrapper<PmStationCollect>()
+                .eq(PmStationCollect::getCode, dto.getCode())
+                .between(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getRecordTime().toLocalDate(), LocalTime.MIN), dto.getRecordTime())
+                .orderByDesc(PmStationCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)) {
+            resVo = new DwEpMeterCollectVO();
+            BeanUtils.copyProperties(one, resVo);
+        }
+        return resVo;
     }
 
     /**
