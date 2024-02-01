@@ -12,6 +12,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -142,12 +143,15 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
         for (EpProductUnitConsumeStandard standard : standardList) {
             //厚度必须存在
             BigDecimal thisThick = thickMap.get(standard.getProductThick());
+            if(Objects.isNull(thisThick)){
+                thisThick = BigDecimalUtil.MINUS_ONE;
+            }
             Set<Integer> applyOffice = standard.getApplyOffice();
-            if (Objects.nonNull(thisThick) && CollUtil.isNotEmpty(applyOffice)) {
+            if (CollUtil.isNotEmpty(applyOffice)) {
                 //根据能源获取节点
-                Map<Integer, EpInstrumentAccount> accoutMap = epPartitionService.listByOfficeId(standard.getEnergyType(), applyOffice);
-                if (CollUtil.isNotEmpty(accoutMap)) {
-                    List<Long> partitionNodeList = accoutMap.values().stream().map(ele -> ele.getPartitionNode()).collect(Collectors.toList());
+                Map<Integer, EpPartition> epPartitionMap = epPartitionService.getByOfficeId(standard.getEnergyType(), applyOffice);
+                if (CollUtil.isNotEmpty(epPartitionMap)) {
+                    List<Long> partitionNodeList = epPartitionMap.values().stream().map(ele -> ele.getId()).collect(Collectors.toList());
                     EpTableDTO epTableDTO = new EpTableDTO();
                     epTableDTO.setStart(classDate);
                     epTableDTO.setEnd(classDate);
@@ -170,7 +174,10 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                 epUnitConsumeAlarm.setAlarmType(0);
                 epUnitConsumeAlarm.setEnergyType(consumeAlarmVO.getEnergyType());
                 String dateString = LocalDateUtil.localDateFormat(consumeAlarmVO.getAlarmDateTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
-                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过内部标准" + consumeAlarmVO.getStandardValue();
+                Integer standardId = consumeAlarmVO.getStandardId();
+                EpProductUnitConsumeStandard standard = epProductUnitConsumeStandardService.getById(standardId);
+                String standardShowName = Objects.nonNull(standard) ? standard.getName() : "内部标准" ;
+                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过" +standardShowName + consumeAlarmVO.getStandardValue();
                 epUnitConsumeAlarm.setContent(content);
                 epUnitConsumeAlarmList.add(epUnitConsumeAlarm);
                 //拿到消息发送人
@@ -200,7 +207,7 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                             if (CollUtil.isNotEmpty(dictMap)) {
                                 unitStr = dictMap.get(epProductUnitConsumeStandard.getMeasureUnit());
-                                standardStr = dictMap.get(epProductUnitConsumeStandard.getStandardType());
+                                standardStr = standardShowName;
                             }
                         }
                         epProductUnitConsumeStandard.getMeasureUnit();
