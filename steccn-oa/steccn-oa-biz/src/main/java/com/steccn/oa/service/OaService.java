@@ -790,12 +790,25 @@ public class OaService {
                 }else {
                     time = LocalTime.of(20,0);
                 }
-                //基片班组的id为53,54,55
                 LocalTime finalTime = time;
-                KqFormatDetail kqFormatDetail = kqFormatDetails.stream().filter(v->
-                        Objects.nonNull(v.getWorkbegindate())&&v.getWorkbegindate().equals(dateStr)
-                                &&Objects.nonNull(v.getWorkbegintime())&&v.getWorkbegintime().equals(finalTime.toString())).findFirst().orElse(new KqFormatDetail());
-                KqGroup kqGroup = kqGroups.stream().filter(v -> v.getId().equals(kqFormatDetail.getGroupid())).findFirst().orElse(new KqGroup());
+                //获取班组信息
+                KqFormatDetail kqFormatDetail = new KqFormatDetail();
+                //找到对应符合时间的班组
+                List<KqFormatDetail> kqFormatDetailsTmp = kqFormatDetails.stream().filter(v ->
+                        Objects.nonNull(v.getWorkbegindate()) && v.getWorkbegindate().equals(dateStr)
+                                && Objects.nonNull(v.getWorkbegintime()) && v.getWorkbegintime().equals(finalTime.toString())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(kqFormatDetailsTmp)) {
+                    //找到出现次数最多的groupId
+                    Integer mostFrequentGroupId = kqFormatDetailsTmp.stream()
+                            .collect(Collectors.groupingBy(KqFormatDetail::getGroupid, Collectors.counting()))
+                            .entrySet().stream()
+                            .max(Map.Entry.comparingByValue())
+                            .map(Map.Entry::getKey)
+                            .orElse(null);
+                    kqFormatDetail = kqFormatDetailsTmp.stream().filter(v -> v.getGroupid().equals(mostFrequentGroupId)).findFirst().orElse(new KqFormatDetail());
+                }
+                KqFormatDetail finalKqFormatDetail = kqFormatDetail;
+                KqGroup kqGroup = kqGroups.stream().filter(v -> v.getId().equals(finalKqFormatDetail.getGroupid())).findFirst().orElse(new KqGroup());
                 String[] split = kqGroup.getGroupname().split("-");
                 OaGroupCountDTO oaGroupCountDTO =  new OaGroupCountDTO();
                 oaGroupCountDTO.setGroupId(kqGroup.getId());
