@@ -102,21 +102,23 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Set<Long> dictSet = Sets.newHashSet();
         Set<Integer> energyTypeSet = Sets.newHashSet();
         Set<Integer> officeSet = Sets.newHashSet();
-        standardVOS.stream().filter(v ->Objects.nonNull(v)&& Objects.nonNull(v.getStandardType())
-                        && Objects.nonNull(v.getMeasureUnit())
-                        && Objects.nonNull(v.getEnergyType()))
-                .forEach(s -> {
-                    Collections.addAll(dictSet, s.getStandardType(), s.getMeasureUnit());
-                    if (Objects.nonNull(s.getProductThick())){
-                        dictSet.add(s.getProductThick());
-                    }
-                    if (CollUtil.isNotEmpty(s.getApplyOffice())){
-                        s.getApplyOffice().forEach(q->{
-                            officeSet.add(q);
-                        });
-                    }
-                    energyTypeSet.add(s.getEnergyType());
+        standardVOS.stream().forEach(s -> {
+            if (Objects.nonNull(s.getStandardType())) {
+                dictSet.add(s.getStandardType());
+            }
+            if (Objects.nonNull(s.getMeasureUnit())) {
+                dictSet.add(s.getMeasureUnit());
+            }
+            if (Objects.nonNull(s.getProductThick())) {
+                dictSet.add(s.getProductThick());
+            }
+            if (CollUtil.isNotEmpty(s.getApplyOffice())) {
+                s.getApplyOffice().forEach(q -> {
+                    officeSet.add(q);
                 });
+            }
+            energyTypeSet.add(s.getEnergyType());
+        });
         Map<Integer, String> energyTypeMap= epEnergyTypeService.getBySetIds(energyTypeSet);
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -371,23 +373,14 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     }
 
     @Override
-    public List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate) {
+    public List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate, Integer type) {
         SysDictVO departmentSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<EpProductUnitConsumeStandard> dbList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .le(EpProductUnitConsumeStandard::getValidStart, classDate)
                 .ge(EpProductUnitConsumeStandard::getValidEnd, classDate)
-                .eq(Objects.nonNull(departmentSysDict), EpProductUnitConsumeStandard::getStandardType, departmentSysDict.getId()));
+                .eq(EpProductUnitConsumeStandard::getType, type)
+                .eq(type == 1 && Objects.nonNull(departmentSysDict), EpProductUnitConsumeStandard::getStandardType, departmentSysDict.getId()));
         return Objects.isNull(dbList) ? Lists.newArrayList() : dbList;
-    }
-
-    public String deleteCharString0(String sourceString, char chElemData) {
-        String deleteString = "";
-        for (int i = 0; i < sourceString.length(); i++) {
-            if (sourceString.charAt(i) != chElemData) {
-                deleteString += sourceString.charAt(i);
-            }
-        }
-        return deleteString;
     }
 
     /**
@@ -452,52 +445,6 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         //创建返回数据集合
         List<EpProductUnitConsumeStandardVO> voList = new ArrayList<>();
         if (CollUtil.isNotEmpty(haveDataList)){
-//            for (int i = 0; i < list.size(); i++) {
-//                if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
-//                    names.add(list.get(i).getName());
-//                    map.put(list.get(i).getName(), list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
-//                    names.add(list.get(i).getEnergyTypeName()+i);
-//                    map.put(list.get(i).getEnergyTypeName()+i,list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
-//                    names.add(list.get(i).getStandardTypeName()+i);
-//                    map.put(list.get(i).getStandardTypeName()+i,list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
-//                    names.add(list.get(i).getProductTypeName()+i);
-//                    map.put(list.get(i).getProductTypeName()+i,list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
-//                    names.add(list.get(i).getProductThickName()+i);
-//                    map.put(list.get(i).getProductThickName()+i,list.get(i));
-//                }
-//            }
-//            if (isOrder){
-//                Collections.sort(names, new Comparator<String>() {
-//                    Collator collator = Collator.getInstance(Locale.CHINA);
-//
-//                    @Override
-//                    public int compare(String o1, String o2) {
-//                        CollationKey key1 = collator.getCollationKey(o1);
-//                        CollationKey key2 = collator.getCollationKey(o2);
-//                        return key1.compareTo(key2);
-//                    }
-//                });
-//            }else {
-//                Collections.sort(names, new Comparator<String>() {
-//                    Collator collator = Collator.getInstance(Locale.CHINA);
-//
-//                    @Override
-//                    public int compare(String o1, String o2) {
-//                        CollationKey key1 = collator.getCollationKey(o1);
-//                        CollationKey key2 = collator.getCollationKey(o2);
-//                        return key2.compareTo(key1);
-//                    }
-//                });
-//            }
-//            for (String name : names) {
-//                if (map.containsKey(name)) {
-//                    voList.add(map.get(name));
-//                }
-//            }
             getSort(haveDataList,isOrder,sort);
             haveDataList.forEach(s->{
                 voList.add(s);

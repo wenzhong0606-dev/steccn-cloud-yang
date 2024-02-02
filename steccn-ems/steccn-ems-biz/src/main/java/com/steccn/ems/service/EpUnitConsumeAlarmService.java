@@ -27,8 +27,17 @@ public interface EpUnitConsumeAlarmService extends IService<EpUnitConsumeAlarm> 
     /**
      * 单耗告警 - 触发
      *
-     * @param classDate
+     * @param classDate 班次日期
      * @return
      */
     Boolean trigger(LocalDate classDate);
+
+    /**
+     * 能耗告警 - 触发
+     *
+     * @param classDate   班次日期
+     * @param granularity 粒度
+     * @return
+     */
+    Boolean consumeTrigger(LocalDate classDate, Integer granularity);
 }

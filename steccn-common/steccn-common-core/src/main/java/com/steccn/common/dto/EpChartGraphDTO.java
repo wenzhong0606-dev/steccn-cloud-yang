@@ -19,6 +19,11 @@ import java.util.Map;
 @Data
 public class EpChartGraphDTO<E1, E2, E3> implements Serializable {
 
+    /**
+     * 0能耗 1单耗
+     */
+    private Integer type;
+
     @ApiModelProperty("数据集合")
     private List<EpChartGraphxAxisDTO<E1, E2, E3>> dataList;
 

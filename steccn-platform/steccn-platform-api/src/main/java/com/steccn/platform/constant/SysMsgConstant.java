@@ -59,7 +59,9 @@ public interface SysMsgConstant {
         RISK_NOTICE(22,"缺陷通知",MsgCategoryEnum.SYS_REMIND.code,"设备%s的%s部位发生%s的隐患",0),
         INS_NOTICE(23,"点检通知",MsgCategoryEnum.SYS_REMIND.code,"点检任务:%s未完成",0),
         EQP_NOTICE(24,"设备故障报警",MsgCategoryEnum.SYS_REMIND.code,"设备:%s故障报警",0),
-        SAFETY_NOTICE(25,"安环代办提醒",MsgCategoryEnum.SYS_REMIND.code,"您有一个未完成的安环代办任务",0),;
+        SAFETY_NOTICE(25,"安环代办提醒",MsgCategoryEnum.SYS_REMIND.code,"您有一个未完成的安环代办任务",0),
+        EP_CONSUME_ALARM(26,"能耗超标",MsgCategoryEnum.SYS_REMIND.code,"%s能耗%s，超过%s",0)
+        ;
 
 
         private Integer code;

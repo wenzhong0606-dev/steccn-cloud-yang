@@ -38,15 +38,10 @@ public class EpProductUnitConsumeStandardController {
 
     @PostMapping("/select")
     @ApiOperation(value = "查询产品单耗标准分页列表")
-    public R<Page<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody EpProductUnitStandardPageDTO dto){
-        dto.setType(1);
-        return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList(dto));
-    }
-
-    @PostMapping("/select/consume")
-    @ApiOperation(value = "查询产品单耗标准分页列表")
-    public R<Page<EpProductUnitConsumeStandardVO>> getEpProductConsumeStandardList(@Valid @RequestBody EpProductUnitStandardPageDTO dto) {
-        dto.setType(0);
+    public R<Page<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody EpProductUnitStandardPageDTO dto) {
+        if (Objects.isNull(dto.getType())) {
+            dto.setType(1);
+        }
         return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList(dto));
     }
 

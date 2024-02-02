@@ -224,6 +224,44 @@ public class ShardTimeUtil {
         }
         return listDate;
     }
+
+    /**
+     * 根据类型和时间 获取结束时间
+     *
+     * @param dateType 类型
+     * @param start    开始日期
+     * @return
+     */
+    public static LocalDate getStart(String dateType, LocalDate start) {
+        //考虑是否是无粒度
+        if ("N".equals(dateType)) {
+            return start;
+        }
+        //需要校验type
+        boolean contains = Sets.newHashSet("Y", "Q", "M", "W", "D").contains(dateType);
+        Assert.isTrue(contains, "粒度类型错误");
+        LocalDate end = null;
+        switch (dateType) {
+            case "Y":
+                end = start.minusYears(1);
+                break;
+            case "Q":
+                end = start.minusMonths(3);
+                break;
+            case "M":
+                end = start.minusMonths(1);
+                break;
+            case "W":
+                end = start.minusWeeks(1);
+                break;
+            case "D":
+                end = start.minusDays(1);
+                break;
+        }
+        return end;
+    }
+
+
 //
 //    public static void main(String[] args) {
 ////    * eg. start-> 2023-12-10 08:00:00  end-> 2023-12-11 08:00:00 收官点为 end

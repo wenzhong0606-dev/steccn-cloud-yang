@@ -39,4 +39,10 @@ public class EpUnitConsumeAlarmController {
     public R<Boolean> trigger(@RequestParam("classDate") LocalDate classDate){
         return R.success(epUnitConsumeAlarmService.trigger(classDate));
     }
+
+    @GetMapping("/consume/trigger")
+    @ApiOperation(value = "能耗告警-触发")
+    public R<Boolean> consumeTrigger(@RequestParam("classDate") LocalDate classDate, @RequestParam("granularity") Integer granularity) {
+        return R.success(epUnitConsumeAlarmService.consumeTrigger(classDate, granularity));
+    }
 }
