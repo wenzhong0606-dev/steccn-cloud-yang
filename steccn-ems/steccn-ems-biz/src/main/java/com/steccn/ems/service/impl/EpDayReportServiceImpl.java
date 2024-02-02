@@ -630,8 +630,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                     }
                 }
                 //插入合计行
-                EpDayReportCountRowVO sumRow = countRow(resList, elecEnergy);
-                resList.add(sumRow);
+//                EpDayReportCountRowVO sumRow = countRow(resList, elecEnergy);
+//                resList.add(sumRow);
                 return resList;
             } catch (Exception e) {
                 log.error("elecOther -> {}", e.getLocalizedMessage());
