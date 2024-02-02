@@ -212,36 +212,34 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             unitConsumeStandard.setCode(code);
         }
         //检测有效期是否有重叠部分,如果有提示“与现有标准【#现有标准的名称#】有效期有重叠”，无法保存
-        if (Objects.nonNull(dto.getStandardType()) && Objects.nonNull(dto.getEnergyType()) && Objects.nonNull(dto.getProductType()) && Objects.nonNull(dto.getProductThick())) {
-            List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
-                    .eq(EpProductUnitConsumeStandard::getType, dto.getType())
-                    .eq(EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
-                    .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
-                    .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
-                    .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
-                  //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
-                    //输入的结束时间小于等于dto的有效期开始时间,表明时间有重叠
-                    .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
-                    //输入的开始时间大于等于dto的有效结束时间,表明时间有重叠
-                    .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
-                    //可展示的
-                    .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
-            if (Objects.nonNull(dto.getId())) {
-                EpProductUnitConsumeStandard ep = getById(dto.getId());
-                //编辑的时候移除对自身的判断
-                dataList.remove(ep);
+        List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                .eq(EpProductUnitConsumeStandard::getType, dto.getType())
+                .eq(Objects.nonNull(dto.getStandardType()), EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
+                .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
+                .eq(Objects.nonNull(dto.getProductType()), EpProductUnitConsumeStandard::getProductType, dto.getProductType())
+                .eq(Objects.nonNull(dto.getProductThick()), EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
+                //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
+                //输入的结束时间小于等于dto的有效期开始时间,表明时间有重叠
+                .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
+                //输入的开始时间大于等于dto的有效结束时间,表明时间有重叠
+                .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
+                //可展示的
+                .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
+        if (Objects.nonNull(dto.getId())) {
+            EpProductUnitConsumeStandard ep = getById(dto.getId());
+            //编辑的时候移除对自身的判断
+            dataList.remove(ep);
+        }
+        String names = new String();
+        if (CollUtil.isNotEmpty(dataList)) {
+            for (int i = 0; i < dataList.size(); i++) {
+                if (i == (dataList.size() - 1)) {
+                    names += dataList.get(i).getName();
+                } else {
+                    names += dataList.get(i).getName() + ",";
+                }
             }
-            String names = new String();
-            if (CollUtil.isNotEmpty(dataList)){
-                    for (int i = 0; i < dataList.size(); i++) {
-                        if (i==(dataList.size()-1)){
-                            names+=dataList.get(i).getName();
-                        }else {
-                            names += dataList.get(i).getName()+",";
-                        }
-                    }
-                throw new BusinessException("与现有标准"+names+"有效期有重叠");
-            }
+            throw new BusinessException("与现有标准" + names + "有效期有重叠");
         }
 
         if (Objects.isNull(dto.getId())){
