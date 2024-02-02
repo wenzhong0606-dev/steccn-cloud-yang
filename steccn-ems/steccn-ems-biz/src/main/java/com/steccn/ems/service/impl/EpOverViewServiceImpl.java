@@ -4,6 +4,7 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
@@ -13,6 +14,7 @@ import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -312,12 +314,13 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
 
         Set<LocalDate> localDateSet = new HashSet<>();
-        localDateSet.add(startLocalDate);
-        localDateSet.add(selectDate);
+        List<LocalDate> cutDateList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), startLocalDate, selectDate);
+          localDateSet.addAll(cutDateList);
 
         List<EpMeterReadAllDataVO> meterReadAllDataVOList = new ArrayList<>();
         if (Objects.nonNull(partition)) {
-             meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
+            //需要考虑写一个代理
+             meterReadAllDataVOList = epMeterReadService.unitConsumeFacade(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
         }
         if (Objects.nonNull(thick)) {
             meterReadAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> BigDecimalUtil.equals(thick,epMeterReadAllDataVO.getThick())).collect(Collectors.toList());

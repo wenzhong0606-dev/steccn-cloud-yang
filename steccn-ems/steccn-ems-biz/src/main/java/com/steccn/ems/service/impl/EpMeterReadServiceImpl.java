@@ -824,6 +824,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, epPartitionMap, rowList, Maps.newHashMap());
     }
 
+    @Override
+    public List<EpMeterReadAllDataVO> unitConsumeFacade(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
+        if (energyType == 5) {
+            return kcalDataUnit(dateSet, partitionIdList);
+        } else if (energyType == 1) {
+            return classDateAllDataUnit(dateSet, energyType, partitionIdList);
+        }
+        return classDateAllDataUnitOther(dateSet, energyType, partitionIdList);
+    }
+
     /**
      * 获取能耗的二维表格
      *
