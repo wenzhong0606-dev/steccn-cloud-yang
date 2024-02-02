@@ -32,7 +32,7 @@ public class ErpSynchronousTask {
         XxlJobHelper.log("同步客户-任务开始");
         LocalDateTime now = LocalDateTime.now();
         ErpCustomerDTO dto = new ErpCustomerDTO();
-        dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
+        dto.setStartfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
         dto.setPageindex(1);
         dto.setPagesize(1000);
@@ -49,7 +49,7 @@ public class ErpSynchronousTask {
         XxlJobHelper.log("同步物料-任务开始");
         LocalDateTime now = LocalDateTime.now();
         ErpCustomerDTO dto = new ErpCustomerDTO();
-        dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
+        dto.setStartfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
         dto.setPageindex(1);
         dto.setPagesize(1000);
@@ -66,7 +66,7 @@ public class ErpSynchronousTask {
         XxlJobHelper.log("同步供应商-任务开始");
         LocalDateTime now = LocalDateTime.now();
         ErpCustomerDTO dto = new ErpCustomerDTO();
-        dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
+        dto.setStartfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
         dto.setPageindex(1);
         dto.setPagesize(1000);
@@ -83,7 +83,7 @@ public class ErpSynchronousTask {
         XxlJobHelper.log("同步仓库-任务开始");
         LocalDateTime now = LocalDateTime.now();
         ErpCustomerDTO dto = new ErpCustomerDTO();
-        dto.setStopfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
+        dto.setStartfmodifydate(now.minusDays(1).withHour(0).withMinute(0).withSecond(0));
         dto.setStopfmodifydate(now.minusDays(1).withHour(23).withMinute(59).withSecond(59));
         dto.setPageindex(1);
         dto.setPagesize(1000);

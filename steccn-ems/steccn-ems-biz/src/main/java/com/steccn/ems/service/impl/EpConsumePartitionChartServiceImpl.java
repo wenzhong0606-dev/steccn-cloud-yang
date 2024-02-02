@@ -43,6 +43,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.bouncycastle.asn1.cmc.PendInfo;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +71,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     private final EpPartitionService epPartitionService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpEnergyTypeService epEnergyTypeService;
+    @Autowired
+    @Lazy
+    private EpConsumePartitionChartService epConsumePartitionChartService;
     private final EpProductUnitConsumeStandardService epProductUnitConsumeStandardService;
 
     @Override
@@ -392,7 +397,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         String excelName = "能耗分区对比(" + energyType.getName() + ")_"
                 + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
                 + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
-        DownloadUtil.downloadEnergyTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_NHFQDB, excelName, map, detail, dto.getBase64());
+        //组成第二组数据
+        ConsumePartitionContrastTableVO consumePartitionContrastTableVO = epConsumePartitionChartService.consumePartitionContrastTable(dto);
+        DownloadUtil.downloadEnergyTemplate2(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_NHFQDB, excelName, map, detail, dto.getBase64(),consumePartitionContrastTableVO);
     }
 
 

@@ -28,14 +28,29 @@ public class ConsumePartitionContrastTableRowVO implements Serializable {
     private BigDecimal avgValue;
 
     /**
+     * 平均值STR
+     */
+    private String avgValueStr;
+
+    /**
      * 累计值
      */
     private BigDecimal sumValue;
 
     /**
+     * 累计值str
+     */
+    private String sumValueStr;
+
+    /**
      * 最大值
      */
     private BigDecimal maxValue;
+
+    /**
+     * 最大值str
+     */
+    private String maxValueStr;
 
     /**
      * 最大值发生时间
@@ -46,6 +61,11 @@ public class ConsumePartitionContrastTableRowVO implements Serializable {
      * 最小值
      */
     private BigDecimal minValue;
+
+    /**
+     * 最小值字符串
+     */
+    private String minValueStr;
 
     /**
      * 最小值发生时间
