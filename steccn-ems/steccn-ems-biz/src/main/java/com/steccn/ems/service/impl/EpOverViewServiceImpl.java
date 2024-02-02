@@ -4,6 +4,7 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
@@ -13,6 +14,7 @@ import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -118,14 +120,15 @@ public class EpOverViewServiceImpl implements EpOverViewService {
     public EpSubConsumeContrastVO getSubConsumeContrast(LocalDate selectDate) {
         LocalDate startDate = selectDate.minusDays(6);
         Set<LocalDate> localDateSet = new HashSet<>();
-        localDateSet.add(startDate);
-        localDateSet.add(selectDate);
+        List<LocalDate> cutDateList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), startDate, selectDate);
+        cutDateList.remove(cutDateList.size() - 1);
+        localDateSet.addAll(cutDateList);
         List<Integer> officeIdList = new ArrayList<>();
         officeIdList.add(75);
         officeIdList.add(76);
         List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, officeIdList).eq(EpPartition::getType,5));
         List<Long> partitionIdList = partitionList.stream().map(EpPartition::getId).collect(Collectors.toList());
-        List<EpMeterReadAllDataVO> meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, 5, partitionIdList);
+        List<EpMeterReadAllDataVO> meterReadAllDataVOList = epMeterReadService.unitConsumeFacade(localDateSet, 5, partitionIdList);
         List<EpMeterReadAllDataVO> readAllDataVOList = meterReadAllDataVOList.stream()
                 .filter(epMeterReadAllDataVO -> partitionIdList.contains(epMeterReadAllDataVO.getOfficeId()))
                 .sorted(Comparator.comparing(EpMeterReadAllDataVO::getOfficeId)).collect(Collectors.toList());
@@ -166,10 +169,11 @@ public class EpOverViewServiceImpl implements EpOverViewService {
                     //获取部门单耗标准
                     LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                             .eq(EpProductUnitConsumeStandard::getEnergyType, 5)
-                            .gt(EpProductUnitConsumeStandard::getValidStart, startDate).lt(EpProductUnitConsumeStandard::getValidEnd, selectDate)
+                            .le(EpProductUnitConsumeStandard::getValidStart, startDate)
+                            .ge(EpProductUnitConsumeStandard::getValidEnd, selectDate)
                             .eq(EpProductUnitConsumeStandard::getStandardType, sysDictVO.getId())
                             .eq(EpProductUnitConsumeStandard::getProductType, 0)
-                            .like(EpProductUnitConsumeStandard::getApplyOffice,epPartition.getId());
+                            .apply("JSON_CONTAINS(apply_office, JSON_ARRAY({0}))", epPartition.getOfficeId());
                     //部门单耗标准
                     EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
                     if (Objects.nonNull(productUnitConsumeStandard)) {
@@ -312,12 +316,13 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
 
         Set<LocalDate> localDateSet = new HashSet<>();
-        localDateSet.add(startLocalDate);
-        localDateSet.add(selectDate);
+        List<LocalDate> cutDateList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), startLocalDate, selectDate);
+          localDateSet.addAll(cutDateList);
 
         List<EpMeterReadAllDataVO> meterReadAllDataVOList = new ArrayList<>();
         if (Objects.nonNull(partition)) {
-             meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
+            //需要考虑写一个代理
+             meterReadAllDataVOList = epMeterReadService.unitConsumeFacade(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
         }
         if (Objects.nonNull(thick)) {
             meterReadAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> BigDecimalUtil.equals(thick,epMeterReadAllDataVO.getThick())).collect(Collectors.toList());
