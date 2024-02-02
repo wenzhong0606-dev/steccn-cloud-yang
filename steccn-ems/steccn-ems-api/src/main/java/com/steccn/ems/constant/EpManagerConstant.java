@@ -15,6 +15,7 @@ public interface EpManagerConstant {
     String EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS = "productThickName";
     String EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
     String EP_ENERGY_TYPE_SORT_FIELD_INDATE = "validStart";
+    String EP_ENERGY_TYPE_SORT_FIELD_GRANULARITY = "granularity";
     //仪表名称排序字段
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE = "distantMapCode";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME = "meterName";
