@@ -67,7 +67,8 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
     @Override
     public Page<EpUnitConsumeAlarmVO> page(EpUnitConsumeAlarmDTO dto) {
         LambdaQueryWrapper<EpUnitConsumeAlarm> condition = new LambdaQueryWrapper<EpUnitConsumeAlarm>();
-
+        //能耗还是单耗
+        condition.eq(EpUnitConsumeAlarm::getType,dto.getType());
         if (Objects.nonNull(dto.getEnergyType())) {
             condition.eq(EpUnitConsumeAlarm::getEnergyType,dto.getEnergyType());
         }

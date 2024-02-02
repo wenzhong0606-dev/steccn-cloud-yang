@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * @author chenhuan
@@ -27,6 +28,9 @@ public class EpUnitConsumeAlarmController {
     @PostMapping("/page")
     @ApiOperation(value = "单耗告警列表")
     public R<Page<EpUnitConsumeAlarmVO>> list(@RequestBody EpUnitConsumeAlarmDTO dto) {
+        if (Objects.isNull(dto.getType())) {
+            dto.setType(1);
+        }
         return R.success(epUnitConsumeAlarmService.page(dto));
     }
 
