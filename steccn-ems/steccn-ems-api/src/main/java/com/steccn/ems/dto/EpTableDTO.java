@@ -48,6 +48,9 @@ public class EpTableDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("时间-天、周、月、无粒度")
     private Integer granularity;
 
+    @ApiModelProperty("标准-时间-天、周、月、无粒度")
+    private Integer standardGranularity;
+
     @ApiModelProperty("分区-组织机构id")
     @NotNull(message = "组织机构不能为空")
     @Size(min = 1, message = "组织机构不能为空")

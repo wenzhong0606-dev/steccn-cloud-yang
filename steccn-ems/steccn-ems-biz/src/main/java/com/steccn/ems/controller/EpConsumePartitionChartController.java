@@ -50,6 +50,7 @@ public class EpConsumePartitionChartController {
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionContrastChart(@Valid @RequestBody EpTableDTO dto) {
         Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
         dto.setConsumeType(0);
+//        dto.setStandardGranularity(QtManagerConstant.QtGranularityEnum.WEEK.getCode());
         return R.success(epConsumePartitionChartService.consumePartitionContrast(dto));
     }
 

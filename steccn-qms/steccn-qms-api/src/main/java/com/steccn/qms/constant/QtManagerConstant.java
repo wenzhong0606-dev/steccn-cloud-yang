@@ -993,8 +993,11 @@ public interface QtManagerConstant {
         MONTH(3, "月", "M"),
         QUARTER(4, "季度", "Q"),
         YEAR(5, "年", "Y"),
+        //无粒度，对比的是厚度
         NONE(6, "无粒度", "N"),
-        CLASS(7, "班次", "C");
+        CLASS(7, "班次", "C"),
+        //无粒度，不对比任何属性
+        NOTHING(8, "无粒度", "N");
 
         private Integer code;
         private String name;

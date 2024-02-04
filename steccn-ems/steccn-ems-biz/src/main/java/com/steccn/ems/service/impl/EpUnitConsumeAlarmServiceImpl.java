@@ -278,7 +278,8 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                         epTableDTO.setPartitionIdList(partitonIdList);
                         epTableDTO.setEnergyType(standard.getEnergyType());
                         epTableDTO.setThick(thickList);
-                        epTableDTO.setGranularity(granularity);
+                        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NONE.getCode());
+                        epTableDTO.setStandardGranularity(granularity);
                         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> table = epConsumePartitionChartService.consumePartitionContrast(epTableDTO);
                         consumeAlarmVOList.addAll(table.getAlarmList());
                     }
