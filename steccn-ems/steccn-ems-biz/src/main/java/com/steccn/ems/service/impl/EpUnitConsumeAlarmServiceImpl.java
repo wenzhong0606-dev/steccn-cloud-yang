@@ -261,7 +261,7 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                 EpTableDTO thickDto = new EpTableDTO();
                 thickDto.setConsumeType(0);
                 thickDto.setEnergyType(standard.getEnergyType());
-                thickDto.setStart(start.plusDays(1));
+                thickDto.setStart(start);
                 thickDto.setEnd(classDate);
                 Map<Integer, EpPartition> epPartitionMap = epPartitionService.getByOfficeId(standard.getEnergyType(), standard.getApplyOffice());
                 if (CollUtil.isNotEmpty(epPartitionMap)) {
@@ -278,7 +278,7 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                         epTableDTO.setPartitionIdList(partitonIdList);
                         epTableDTO.setEnergyType(standard.getEnergyType());
                         epTableDTO.setThick(thickList);
-                        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NONE.getCode());
+                        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NOTHING.getCode());
                         epTableDTO.setStandardGranularity(granularity);
                         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> table = epConsumePartitionChartService.consumePartitionContrast(epTableDTO);
                         consumeAlarmVOList.addAll(table.getAlarmList());

@@ -25,6 +25,7 @@ import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
@@ -54,5 +55,23 @@ public class UnitConsumeAlarmScheduledTask {
     public void execute() {
         LocalDate prevClassDate = LocalDate.now().minusDays(1);
         epUnitConsumeAlarmService.trigger(prevClassDate);
+    }
+
+    @XxlJob("dayConsumeAlarm")
+    public void dayConsumeAlarm() {
+        LocalDate prevClassDate = LocalDate.now().minusDays(1);
+        epUnitConsumeAlarmService.consumeTrigger(prevClassDate, QtManagerConstant.QtGranularityEnum.DAY.getCode());
+    }
+
+    @XxlJob("weekConsumeAlarm")
+    public void weekConsumeAlarm() {
+        LocalDate prevClassDate = LocalDate.now().minusDays(1);
+        epUnitConsumeAlarmService.consumeTrigger(prevClassDate, QtManagerConstant.QtGranularityEnum.WEEK.getCode());
+    }
+
+    @XxlJob("monthConsumeAlarm")
+    public void monthConsumeAlarm() {
+        LocalDate prevClassDate = LocalDate.now().minusDays(1);
+        epUnitConsumeAlarmService.consumeTrigger(prevClassDate, QtManagerConstant.QtGranularityEnum.MONTH.getCode());
     }
 }
