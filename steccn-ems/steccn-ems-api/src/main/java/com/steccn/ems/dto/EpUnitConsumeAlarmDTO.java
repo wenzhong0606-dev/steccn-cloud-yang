@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
  */
 @Data
 public class EpUnitConsumeAlarmDTO extends BasePageDTO {
+    /**
+     * 告警类型 0能耗 1单耗
+     */
+    private Integer type;
     private LocalDateTime endDate;
     private Integer energyType;
     private Long partitionId;

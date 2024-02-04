@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 @Api("产品单耗标准")
 @RestController
@@ -29,13 +30,18 @@ public class EpProductUnitConsumeStandardController {
     @ApiOperation(value = "新增或编辑产品单耗标准")
     @SysLog("新增或编辑产品单耗标准")
     public R<Boolean> addOrEdit(@Valid @RequestBody EpProductUnitStandardDTO dto) {
+        if (Objects.isNull(dto.getType())) {
+            dto.setType(1);
+        }
         return R.success(unitConsumeStandardService.addOrEdit(dto));
     }
 
     @PostMapping("/select")
     @ApiOperation(value = "查询产品单耗标准分页列表")
-    public R<Page<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody
-                                                                                       EpProductUnitStandardPageDTO dto){
+    public R<Page<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody EpProductUnitStandardPageDTO dto) {
+        if (Objects.isNull(dto.getType())) {
+            dto.setType(1);
+        }
         return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList(dto));
     }
 

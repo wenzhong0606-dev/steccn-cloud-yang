@@ -22,6 +22,16 @@ public class EpProductUnitConsumeStandardVO implements Serializable {
     private Integer id;
 
     /**
+     * 类型 0能耗 1单耗
+     */
+    private Integer type;
+
+    /**
+     * 粒度 1天 2周 3月
+     */
+    private Integer granularity;
+
+    /**
      * 标准编码
      */
     private String code;

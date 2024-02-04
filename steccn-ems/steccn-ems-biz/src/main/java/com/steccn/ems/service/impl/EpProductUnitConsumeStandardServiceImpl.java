@@ -15,6 +15,7 @@ import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.domain.EpProductUnitConsumeStandardUser;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
@@ -72,6 +73,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     public Page<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList(EpProductUnitStandardPageDTO dto) {
         //自定义查询条件
         LambdaQueryWrapper<EpProductUnitConsumeStandard> condition = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                //类型 0能耗 1单耗
+                .eq(EpProductUnitConsumeStandard::getType, dto.getType())
+                .eq(Objects.nonNull(dto.getGranularity()), EpProductUnitConsumeStandard::getGranularity, dto.getGranularity())
                 //能源类型
                 .eq(Objects.nonNull(dto.getEnergyType()), EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
                 //标准类型
@@ -98,21 +102,23 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Set<Long> dictSet = Sets.newHashSet();
         Set<Integer> energyTypeSet = Sets.newHashSet();
         Set<Integer> officeSet = Sets.newHashSet();
-        standardVOS.stream().filter(v ->Objects.nonNull(v)&& Objects.nonNull(v.getStandardType())
-                        && Objects.nonNull(v.getMeasureUnit())
-                        && Objects.nonNull(v.getEnergyType()))
-                .forEach(s -> {
-                    Collections.addAll(dictSet, s.getStandardType(), s.getMeasureUnit());
-                    if (Objects.nonNull(s.getProductThick())){
-                        dictSet.add(s.getProductThick());
-                    }
-                    if (CollUtil.isNotEmpty(s.getApplyOffice())){
-                        s.getApplyOffice().forEach(q->{
-                            officeSet.add(q);
-                        });
-                    }
-                    energyTypeSet.add(s.getEnergyType());
+        standardVOS.stream().forEach(s -> {
+            if (Objects.nonNull(s.getStandardType())) {
+                dictSet.add(s.getStandardType());
+            }
+            if (Objects.nonNull(s.getMeasureUnit())) {
+                dictSet.add(s.getMeasureUnit());
+            }
+            if (Objects.nonNull(s.getProductThick())) {
+                dictSet.add(s.getProductThick());
+            }
+            if (CollUtil.isNotEmpty(s.getApplyOffice())) {
+                s.getApplyOffice().forEach(q -> {
+                    officeSet.add(q);
                 });
+            }
+            energyTypeSet.add(s.getEnergyType());
+        });
         Map<Integer, String> energyTypeMap= epEnergyTypeService.getBySetIds(energyTypeSet);
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -160,7 +166,13 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             }else {
                 standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed()).collect(Collectors.toList());
             }
-        }else {
+        }else if(EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_GRANULARITY.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getGranularity)).collect(Collectors.toList());
+            }else {
+                standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getGranularity).reversed()).collect(Collectors.toList());
+            }
+        } else {
             standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime).reversed()).collect(Collectors.toList());
         }
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
@@ -179,25 +191,17 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addOrEdit(EpProductUnitStandardDTO dto) {
-        if (StringUtils.isNotBlank(dto.getUnitValue().toString())){
-            String unit = dto.getUnitValue().toString();
-            String lastUnit = deleteCharString0(unit, '.');
-            if (lastUnit.length()>16){
-               throw new BusinessException("单耗标准值的长度不能超过16位");
-           }
+        SysDictVO departmentSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(departmentSysDict, "部门标准数据字典不存在");
+        if (departmentSysDict.equals(dto.getStandardType())) {
+            Assert.notEmpty(dto.getApplyOffice(), "应用部门不能为空");
         }
-        if (dto.getStandardType()==1597504911367864320L){
-            if (CollUtil.isEmpty(dto.getApplyOffice())){
-                throw new BusinessException("应用部门不能为空");
-            }
-        }
-
         //去数据库中根据名称查询产品单耗标准个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName())
-                .eq(EpProductUnitConsumeStandard::getShowFlag,MpConstant.YES)
-                .ne(Objects.nonNull(dto.getId()),EpProductUnitConsumeStandard::getId,dto.getId()));
-            Assert.isTrue(size ==0, "产品单耗标准的名称不能重复");
+                .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES)
+                .ne(Objects.nonNull(dto.getId()), EpProductUnitConsumeStandard::getId, dto.getId()));
+        Assert.isTrue(size == 0, "产品单耗标准的名称不能重复");
 
         //创建domain实体类对象
         EpProductUnitConsumeStandard unitConsumeStandard = new EpProductUnitConsumeStandard();
@@ -210,38 +214,34 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             unitConsumeStandard.setCode(code);
         }
         //检测有效期是否有重叠部分,如果有提示“与现有标准【#现有标准的名称#】有效期有重叠”，无法保存
-        if (Objects.nonNull(dto.getStandardType())
-                &&Objects.nonNull(dto.getEnergyType())
-                &&Objects.nonNull(dto.getProductType())
-                &&Objects.nonNull(dto.getProductThick())){
-            List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
-                    .eq(EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
-                    .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
-                    .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
-                    .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
-                  //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
-                    //输入的结束时间小于等于dto的有效期开始时间,表明时间有重叠
-                    .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
-                    //输入的开始时间大于等于dto的有效结束时间,表明时间有重叠
-                    .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
-                    //可展示的
-                    .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
-            if (Objects.nonNull(dto.getId())) {
-                EpProductUnitConsumeStandard ep = getById(dto.getId());
-                //编辑的时候移除对自身的判断
-                dataList.remove(ep);
+        List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                .eq(EpProductUnitConsumeStandard::getType, dto.getType())
+                .eq(Objects.nonNull(dto.getStandardType()), EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
+                .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
+                .eq(Objects.nonNull(dto.getProductType()), EpProductUnitConsumeStandard::getProductType, dto.getProductType())
+                .eq(Objects.nonNull(dto.getProductThick()), EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
+                //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
+                //输入的结束时间小于等于dto的有效期开始时间,表明时间有重叠
+                .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
+                //输入的开始时间大于等于dto的有效结束时间,表明时间有重叠
+                .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
+                //可展示的
+                .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
+        if (Objects.nonNull(dto.getId())) {
+            EpProductUnitConsumeStandard ep = getById(dto.getId());
+            //编辑的时候移除对自身的判断
+            dataList.remove(ep);
+        }
+        String names = new String();
+        if (CollUtil.isNotEmpty(dataList)) {
+            for (int i = 0; i < dataList.size(); i++) {
+                if (i == (dataList.size() - 1)) {
+                    names += dataList.get(i).getName();
+                } else {
+                    names += dataList.get(i).getName() + ",";
+                }
             }
-            String names = new String();
-            if (CollUtil.isNotEmpty(dataList)){
-                    for (int i = 0; i < dataList.size(); i++) {
-                        if (i==(dataList.size()-1)){
-                            names+=dataList.get(i).getName();
-                        }else {
-                            names += dataList.get(i).getName()+",";
-                        }
-                    }
-                throw new BusinessException("与现有标准"+names+"有效期有重叠");
-            }
+            throw new BusinessException("与现有标准" + names + "有效期有重叠");
         }
 
         if (Objects.isNull(dto.getId())){
@@ -249,7 +249,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         }else {
             EpProductUnitConsumeStandard standard = getById(dto.getId());
             Assert.notNull(standard,"编辑的产品单耗标准不存在");
-            if (MpConstant.NO==unitConsumeStandard.getShowFlag()){
+            if (MpConstant.NO.equals(unitConsumeStandard.getShowFlag())){
                 throw new BusinessException("该产品单耗标准已删除无法编辑");
             }
             updateById(unitConsumeStandard);
@@ -274,21 +274,17 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
 
     @Override
     public EpProductUnitConsumeStandardVO getProductUnitStandardVO(Integer id) {
-        Assert.notNull(id,"id不能为空");
         //根据id查询单耗标准
         EpProductUnitConsumeStandard standard = getById(id);
-        if (Objects.isNull(standard)) {
-            return null;
-        }
-        if (MpConstant.NO == standard.getShowFlag()) {
-            throw new BusinessException("该产品单耗标准已删除");
-        }
+        Assert.notNull(standard,"标准不存在");
+        Assert.isTrue(MpConstant.YES.equals(standard.getShowFlag()), "标准已删除");
         //设置返回实体类对象
         EpProductUnitConsumeStandardVO vo = new EpProductUnitConsumeStandardVO();
         BeanUtils.copyProperties(standard,vo);
-        EpEnergyTypeVO epAddEnergyTypeVO = epEnergyTypeService.getEpAddEnergyTypeVO(standard.getEnergyType());
+        EpEnergyType epEnergyType = epEnergyTypeService.getById(standard.getEnergyType());
+        Assert.notNull(epEnergyType,"能源类型不存在");
         //设置能源类型名称
-        vo.setEnergyTypeName(epAddEnergyTypeVO.getName());
+        vo.setEnergyTypeName(epEnergyType.getName());
         //如果应用部门不为空,设置应用部门
         if (CollUtil.isNotEmpty(standard.getApplyOffice())){
             Map<Integer, SysOfficeVO> voMap = FeignOptional.of(() -> remoteOfficeFeign.listById(standard.getApplyOffice()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -300,8 +296,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             vo.setApplyOfficeVO(sysOfficeVOS);
         }
         Set<Long> dictSet = Sets.newHashSet();
-        Collections.addAll(dictSet,standard.getStandardType()
-                ,standard.getProductThick(),standard.getMeasureUnit());
+        Collections.addAll(dictSet,standard.getStandardType(),standard.getProductThick(),standard.getMeasureUnit());
         if (CollUtil.isNotEmpty(dictSet)){
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             vo.setStandardTypeName(dictMap.get(vo.getStandardType()));
@@ -378,23 +373,14 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     }
 
     @Override
-    public List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate) {
+    public List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate, Integer type) {
         SysDictVO departmentSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<EpProductUnitConsumeStandard> dbList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .le(EpProductUnitConsumeStandard::getValidStart, classDate)
                 .ge(EpProductUnitConsumeStandard::getValidEnd, classDate)
-                .eq(Objects.nonNull(departmentSysDict), EpProductUnitConsumeStandard::getStandardType, departmentSysDict.getId()));
+                .eq(EpProductUnitConsumeStandard::getType, type)
+                .eq(type == 1 && Objects.nonNull(departmentSysDict), EpProductUnitConsumeStandard::getStandardType, departmentSysDict.getId()));
         return Objects.isNull(dbList) ? Lists.newArrayList() : dbList;
-    }
-
-    public String deleteCharString0(String sourceString, char chElemData) {
-        String deleteString = "";
-        for (int i = 0; i < sourceString.length(); i++) {
-            if (sourceString.charAt(i) != chElemData) {
-                deleteString += sourceString.charAt(i);
-            }
-        }
-        return deleteString;
     }
 
     /**
@@ -459,52 +445,6 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         //创建返回数据集合
         List<EpProductUnitConsumeStandardVO> voList = new ArrayList<>();
         if (CollUtil.isNotEmpty(haveDataList)){
-//            for (int i = 0; i < list.size(); i++) {
-//                if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
-//                    names.add(list.get(i).getName());
-//                    map.put(list.get(i).getName(), list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
-//                    names.add(list.get(i).getEnergyTypeName()+i);
-//                    map.put(list.get(i).getEnergyTypeName()+i,list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
-//                    names.add(list.get(i).getStandardTypeName()+i);
-//                    map.put(list.get(i).getStandardTypeName()+i,list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
-//                    names.add(list.get(i).getProductTypeName()+i);
-//                    map.put(list.get(i).getProductTypeName()+i,list.get(i));
-//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
-//                    names.add(list.get(i).getProductThickName()+i);
-//                    map.put(list.get(i).getProductThickName()+i,list.get(i));
-//                }
-//            }
-//            if (isOrder){
-//                Collections.sort(names, new Comparator<String>() {
-//                    Collator collator = Collator.getInstance(Locale.CHINA);
-//
-//                    @Override
-//                    public int compare(String o1, String o2) {
-//                        CollationKey key1 = collator.getCollationKey(o1);
-//                        CollationKey key2 = collator.getCollationKey(o2);
-//                        return key1.compareTo(key2);
-//                    }
-//                });
-//            }else {
-//                Collections.sort(names, new Comparator<String>() {
-//                    Collator collator = Collator.getInstance(Locale.CHINA);
-//
-//                    @Override
-//                    public int compare(String o1, String o2) {
-//                        CollationKey key1 = collator.getCollationKey(o1);
-//                        CollationKey key2 = collator.getCollationKey(o2);
-//                        return key2.compareTo(key1);
-//                    }
-//                });
-//            }
-//            for (String name : names) {
-//                if (map.containsKey(name)) {
-//                    voList.add(map.get(name));
-//                }
-//            }
             getSort(haveDataList,isOrder,sort);
             haveDataList.forEach(s->{
                 voList.add(s);

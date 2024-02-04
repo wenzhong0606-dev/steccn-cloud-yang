@@ -20,6 +20,11 @@ public class EpUnitConsumeAlarm implements Serializable {
     private Long id;
 
     /**
+     * 告警类型 0能耗 1单耗
+     */
+    private Integer type;
+
+    /**
      * 能源类型id
      */
     private Integer energyType;

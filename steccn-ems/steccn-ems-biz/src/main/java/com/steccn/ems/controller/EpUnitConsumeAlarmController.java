@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * @author chenhuan
@@ -27,6 +28,9 @@ public class EpUnitConsumeAlarmController {
     @PostMapping("/page")
     @ApiOperation(value = "单耗告警列表")
     public R<Page<EpUnitConsumeAlarmVO>> list(@RequestBody EpUnitConsumeAlarmDTO dto) {
+        if (Objects.isNull(dto.getType())) {
+            dto.setType(1);
+        }
         return R.success(epUnitConsumeAlarmService.page(dto));
     }
 
@@ -34,5 +38,11 @@ public class EpUnitConsumeAlarmController {
     @ApiOperation(value = "单耗告警-触发")
     public R<Boolean> trigger(@RequestParam("classDate") LocalDate classDate){
         return R.success(epUnitConsumeAlarmService.trigger(classDate));
+    }
+
+    @GetMapping("/consume/trigger")
+    @ApiOperation(value = "能耗告警-触发")
+    public R<Boolean> consumeTrigger(@RequestParam("classDate") LocalDate classDate, @RequestParam("granularity") Integer granularity) {
+        return R.success(epUnitConsumeAlarmService.consumeTrigger(classDate, granularity));
     }
 }

@@ -26,6 +26,17 @@ public class EpProductUnitStandardDTO implements Serializable {
      */
     private Integer id;
 
+
+    /**
+     * 类型 0能耗 1单耗
+     */
+    private Integer type;
+
+    /**
+     * 粒度 1天 2周 3月
+     */
+    private Integer granularity;
+
     /**
      * 标准名称
      */
@@ -42,9 +53,7 @@ public class EpProductUnitStandardDTO implements Serializable {
     /**
      * 标准类型【企业标准、行业标准、部门标准】
      */
-    @NotNull(message = "标准类型不能为空")
     private Long standardType;
-
 
     /**
      * 应用部门
@@ -59,7 +68,6 @@ public class EpProductUnitStandardDTO implements Serializable {
     /**
      * 产品类型【基片、深加工】
      */
-    @NotNull(message = "产品类型不能为空")
     private Long productType;
 
     /**

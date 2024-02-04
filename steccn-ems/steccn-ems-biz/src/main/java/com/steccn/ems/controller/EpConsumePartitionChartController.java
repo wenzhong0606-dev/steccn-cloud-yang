@@ -49,6 +49,8 @@ public class EpConsumePartitionChartController {
     @ApiOperation(value = "能耗分区对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionContrastChart(@Valid @RequestBody EpTableDTO dto) {
         Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
+        dto.setConsumeType(0);
+//        dto.setStandardGranularity(QtManagerConstant.QtGranularityEnum.WEEK.getCode());
         return R.success(epConsumePartitionChartService.consumePartitionContrast(dto));
     }
 
@@ -210,6 +212,7 @@ public class EpConsumePartitionChartController {
     @ApiOperation(value = "单耗分区对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> unitConsumePartitionContrastChart(@Valid @RequestBody EpTableDTO dto) {
         Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
+        dto.setConsumeType(1);
         return R.success(epConsumePartitionChartService.unitConsumePartitionContrastChart(dto));
     }
 

@@ -10,6 +10,12 @@ import java.io.Serializable;
  */
 @Data
 public class EpProductUnitStandardPageDTO extends BasePageDTO implements Serializable {
+
+    /**
+     * 类型 0能耗 1单耗
+     */
+    private Integer type;
+
     /**
      * 能源类型id
      */
@@ -29,6 +35,11 @@ public class EpProductUnitStandardPageDTO extends BasePageDTO implements Seriali
      * 产品厚度
      */
     private Long productThick;
+
+    /**
+     * 粒度 1天 2周 3月
+     */
+    private Integer granularity;
 
     /**
      * 标准名称

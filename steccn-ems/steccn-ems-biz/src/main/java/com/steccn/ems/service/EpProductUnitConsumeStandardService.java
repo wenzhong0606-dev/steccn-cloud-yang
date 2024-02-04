@@ -58,8 +58,10 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
 
     /**
      * 获取当前班次日期下有效的部门标准
+     *
      * @param classDate 当前班次日期
+     * @param type      0能耗 1单耗
      * @return
      */
-    List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate);
+    List<EpProductUnitConsumeStandard> getValidDepartmentStandardList(LocalDate classDate,Integer type);
 }
