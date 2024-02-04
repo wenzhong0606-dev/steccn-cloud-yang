@@ -699,6 +699,12 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
                                           @Param("start") LocalDate start,
                                           @Param("end") LocalDate end,
                                           @Param("processCode") String processCode);
+
+    List<FurtherProduceReportBadnessVO> badness(@Param("productLineIdList") List<Integer> productLineIdList,
+                                                @Param("classGroupIdList") List<Long> classGroupIdList,
+                                                @Param(("stationIds")) Set<Integer> stationIds,
+                                                @Param("start") LocalDateTime start,
+                                                @Param("end") LocalDateTime end);
 }
 
 

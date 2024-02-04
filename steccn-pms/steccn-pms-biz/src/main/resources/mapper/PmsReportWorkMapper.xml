@@ -1502,5 +1502,62 @@
         GROUP BY
         prw.product_line_id
     </select>
+    <select id="badness" resultType="com.steccn.pms.vo.FurtherProduceReportBadnessVO">
+        SELECT
+        product_line_id,
+        classes_id,
+        process_id,
+        material_id,
+        produce_order_id,
+        product_id,
+        SUM( badness_quantity ) AS badness_quantity,
+        SUM( process_quantity ) AS consumptionQuantity
+        FROM
+        (SELECT DISTINCT
+        prw.product_line_id,
+        prw.classes_id,
+        prw.process_id,
+        pcdi.material_id,
+        prw.produce_order_id,
+        ppo.material_id AS product_id,
+        pcdi.badness_quantity,
+        prw.process_quantity
+        FROM
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        JOIN pms_work_order_bom pwob ON pwob.work_produce_id = prw.produce_order_id
+        JOIN pms_complete_delivery pcd ON pcd.report_work_id = prw.id
+        JOIN pms_complete_delivery_info pcdi ON pcdi.complete_delivery_id = pcd.id
+        WHERE
+        prw.del_flag = 0 AND pwob.del_flag = 0 AND  pcd.del_flag = 0 and ppo.del_flag =0
+        AND pwob.main_material_flag = 1
+        <if test="classGroupIdList != null and classGroupIdList.size  != ''">
+            AND prw.classes_id in
+            <foreach collection="classGroupIdList" item="classesId" open="(" close=")" separator=",">
+                #{classesId}
+            </foreach>
+        </if>
+        <if test="productLineIdList != null and productLineIdList.size  != ''">
+            AND prw.product_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+        <if test="stationIds != null and stationIds.size  != ''">
+            AND prw.station_id in
+            <foreach collection="stationIds" item="stationId" open="(" close=")" separator=",">
+                #{stationId}
+            </foreach>
+        </if>
+        AND prw.start_time &gt;= #{start}
+        AND prw.end_time &lt;= #{end}) as a
+        GROUP BY
+        produce_order_id,
+        product_line_id,
+        classes_id,
+        process_id,
+        product_id,
+        material_id
+    </select>
 
 </mapper>

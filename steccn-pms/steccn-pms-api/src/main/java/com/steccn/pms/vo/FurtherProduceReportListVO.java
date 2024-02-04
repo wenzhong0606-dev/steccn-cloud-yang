@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -25,6 +26,12 @@ public class FurtherProduceReportListVO implements Serializable {
 
     @ApiModelProperty("班次名称")
     private String className;
+
+    @ApiModelProperty("不良数")
+    private BigDecimal badnessQuantity;
+
+    @ApiModelProperty("耗用数")
+    private BigDecimal consumptionQuantity;
 
     @ApiModelProperty("规格")
     private List<String> specList;

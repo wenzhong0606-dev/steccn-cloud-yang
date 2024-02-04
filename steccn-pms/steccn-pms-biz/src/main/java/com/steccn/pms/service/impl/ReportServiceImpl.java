@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import reactor.util.function.Tuple5;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -622,6 +623,13 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), start, end);
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无报表信息");
 
+        //根据产线去查询所有订单的主物料的不良数
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listWorkshop(1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //磨边工位
+        Set<Integer> edgingStationIds = sysOfficeVOList.stream().filter(v -> v.getOfficeType().equals("13") && v.getOfficeName().contains("磨边工位")).map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<FurtherProduceReportBadnessVO> badnessList = pmsReportWorkMapper.badness(dto.getProductLineIdList(),dto.getClassGroupIdList(),edgingStationIds,start,end);
+        Map<Integer, List<FurtherProduceReportBadnessVO>> badnessLineMap = badnessList.stream().collect(Collectors.groupingBy(FurtherProduceReportBadnessVO::getProductLineId));
+
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
@@ -648,6 +656,8 @@ public class ReportServiceImpl implements ReportService {
         dataList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
 
         List<BaseReportHeaderVO> module = Lists.newArrayList();
+        module.add(new BaseReportHeaderVO("不良数",null));
+        module.add(new BaseReportHeaderVO("耗用数",null));
         pmProcessList.forEach(ele -> {
             module.add(new BaseReportHeaderVO(ele.getName(), Arrays.asList("加工(片)", "加工(㎡)", "合格(片)", "合格(㎡)", "不良(片)", "不良(㎡)", "合格率")));
         });
@@ -666,6 +676,7 @@ public class ReportServiceImpl implements ReportService {
         Map<Long, SysDictVO> classMap = Maps.newHashMap();
         classList.forEach(ele -> classMap.put(ele.getId(), ele));
 
+        List<FurtherProduceReportBadnessVO> furtherProduceReportBadnessVOList = Lists.newArrayList();
         //汇总数据
         FurtherProduceReportDataVO defaultFurtherProduceReportDataVO = new FurtherProduceReportDataVO();
         List<FurtherProduceReportListVO> tableData = Lists.newArrayList();
@@ -677,10 +688,17 @@ public class ReportServiceImpl implements ReportService {
         workShopMap.forEach((workshop, productLineList) -> {
             //车间统计
             Map<Long, Map<Integer, BigDecimal>> workshopCountMap = Maps.newHashMap();
+            //车间不良数统计
+            BigDecimal workshopBadnessQuantity = null;
+            //耗用数
+            BigDecimal workshopConsumptionQuantity = null;
             //根据产线遍历
             for (SysOfficeVO productLine : productLineList) {
                 //产线的合计 key-产线 value【key为数量类别，value为数量】
                 Map<Long, Map<Integer, BigDecimal>> lineCountMap = Maps.newHashMap();
+                //不良数
+                List<FurtherProduceReportBadnessVO> badnessLineList = badnessLineMap.getOrDefault(productLine.getId(),furtherProduceReportBadnessVOList);
+                Map<Long, List<FurtherProduceReportBadnessVO>> badnessClassMap = badnessLineList.stream().collect(Collectors.groupingBy(FurtherProduceReportBadnessVO::getClassesId));
                 //过滤出产线数据并将产线数据分成不同班次
                 Map<Long, List<FurtherProduceReportDataVO>> lineDataMap = dataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.groupingBy(FurtherProduceReportDataVO::getClassesId));
                 //遍历不同的班次
@@ -689,10 +707,26 @@ public class ReportServiceImpl implements ReportService {
                     Map<Long, Map<Integer, BigDecimal>> classCountMap = Maps.newHashMap();
                     //获取班次的数据
                     SysDictVO sysDictVO = classMap.get(classEntry.getKey());
+                    //不良数
+                    List<FurtherProduceReportBadnessVO> badnessClassList = badnessClassMap.getOrDefault(sysDictVO.getId(),furtherProduceReportBadnessVOList);
+                    Map<Long, List<FurtherProduceReportBadnessVO>> badnessMaterialMap = badnessClassList.stream().collect(Collectors.groupingBy(FurtherProduceReportBadnessVO::getProductId));
                     Map<Long, List<FurtherProduceReportDataVO>> materialMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherProduceReportDataVO::getProduceOrderId));
                     //遍历物料分组
                     for (Map.Entry<Long, List<FurtherProduceReportDataVO>> materialEntry : materialMap.entrySet()) {
                         Long materialId = materialEntry.getValue().get(0).getMaterialId();
+                        //不良数
+                        List<FurtherProduceReportBadnessVO> badnessMaterialList = badnessMaterialMap.getOrDefault(materialId,furtherProduceReportBadnessVOList);
+                        BigDecimal badnessQuantity = badnessMaterialList.stream()
+                                .filter(Objects::nonNull)
+                                .map(FurtherProduceReportBadnessVO::getBadnessQuantity)
+                                .filter(Objects::nonNull)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        BigDecimal consumptionQuantity = badnessMaterialList.stream()
+                                .filter(Objects::nonNull)
+                                .map(FurtherProduceReportBadnessVO::getConsumptionQuantity)
+                                .filter(Objects::nonNull)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
                         //记录行合计
                         Map<Integer, BigDecimal> rowCountMap = Maps.newHashMap();
                         //将同一条物料数据，根据工序分组
@@ -766,21 +800,31 @@ public class ReportServiceImpl implements ReportService {
                         countIn(classEntry.getKey(), workshopCountMap, completeNum, completeConvert);
                         EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialId, defaultEqpSpareVO);
                         List<String> specDataList = Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity()));
-                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, specDataList);
+                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, specDataList,badnessQuantity,consumptionQuantity);
                         tableData.add(rowData);
                     }
                     //班次的合计
-                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, Arrays.asList("合计", "合计", "合计"));
+                    BigDecimal reduce = badnessClassList.stream().filter(Objects::nonNull).map(FurtherProduceReportBadnessVO::getBadnessQuantity).filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal reduceConsumptionQuantity = badnessClassList.stream().filter(Objects::nonNull).map(FurtherProduceReportBadnessVO::getConsumptionQuantity).filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, Arrays.asList("合计", "合计", "合计"),reduce,reduceConsumptionQuantity);
                     tableData.add(classCountRow);
                 }
+                BigDecimal reduce = badnessLineList.stream().filter(Objects::nonNull).map(FurtherProduceReportBadnessVO::getBadnessQuantity)
+                        .filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+                workshopBadnessQuantity = BigDecimalUtil.add(workshopBadnessQuantity,reduce);
+                BigDecimal reduceConsumptionQuantity = badnessLineList.stream().filter(Objects::nonNull).map(FurtherProduceReportBadnessVO::getConsumptionQuantity)
+                        .filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+                workshopConsumptionQuantity = BigDecimalUtil.add(reduceConsumptionQuantity,reduce);
                 //产线的合计
-                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"));
+                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"),reduce,reduceConsumptionQuantity);
                 lineCountRow.setClassName("合计");
                 lineCountRow.setType(PmReportConstant.TYPE_2);
                 tableData.add(lineCountRow);
             }
             //车间的合计
-            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"));
+            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"),workshopBadnessQuantity,workshopConsumptionQuantity);
             workshopCountRow.setClassName("合计");
             workshopCountRow.setProductLineName("合计");
             workshopCountRow.setType(PmReportConstant.TYPE_3);
@@ -2652,7 +2696,7 @@ public class ReportServiceImpl implements ReportService {
      * @param sysDictVO     班次信息
      * @return 合计
      */
-    private FurtherProduceReportListVO getFurtherProduceReportListVO(List<PmProcess> pmProcessList, SysOfficeVO productLine, Map<Long, Map<Integer, BigDecimal>> classCountMap, SysDictVO sysDictVO, List<String> defaultSpecList) {
+    private FurtherProduceReportListVO getFurtherProduceReportListVO(List<PmProcess> pmProcessList, SysOfficeVO productLine, Map<Long, Map<Integer, BigDecimal>> classCountMap, SysDictVO sysDictVO, List<String> defaultSpecList,BigDecimal badnessQuantity,BigDecimal reduceConsumptionQuantity) {
         List<FurtherValueStrVO> classCountModuleList = Lists.newArrayList();
         BigDecimal firstTotal = null;
         for (int i = 0; i < pmProcessList.size(); i++) {
@@ -2693,7 +2737,7 @@ public class ReportServiceImpl implements ReportService {
         classCountModuleList.add(new FurtherValueStrVO(classCountChildList));
         //完工
         classCountModuleList.add(new FurtherValueStrVO(classInChildList));
-        return createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList, defaultSpecList);
+        return createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList, defaultSpecList,badnessQuantity,reduceConsumptionQuantity);
     }
 
     /**
@@ -2743,9 +2787,11 @@ public class ReportServiceImpl implements ReportService {
      * @param module   工序数据
      * @return vo
      */
-    private FurtherProduceReportListVO createFurtherProduceReportListVO(List<String> nameList, Integer type, List<FurtherValueStrVO> module, List<String> specList) {
+    private FurtherProduceReportListVO createFurtherProduceReportListVO(List<String> nameList, Integer type, List<FurtherValueStrVO> module, List<String> specList,BigDecimal badnessQuantity,BigDecimal consumptionQuantity) {
         FurtherProduceReportListVO row = new FurtherProduceReportListVO();
         row.setSpecList(specList);
+        row.setBadnessQuantity(badnessQuantity);
+        row.setConsumptionQuantity(BigDecimalUtil.add(badnessQuantity,consumptionQuantity));
         row.setType(type);
         row.setWorkshopName(nameList.get(0));
         row.setProductLineName(nameList.get(1));
