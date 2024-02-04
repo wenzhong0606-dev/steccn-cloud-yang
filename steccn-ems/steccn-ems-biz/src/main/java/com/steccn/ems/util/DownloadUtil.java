@@ -215,6 +215,7 @@ public class DownloadUtil {
             // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
             // 如果数据量大 list不是最后一行 参照下一个
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+            FillConfig fillConfig2 = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
             FillConfig fillConfigHORIZONTAL = FillConfig.builder().direction(WriteDirectionEnum.HORIZONTAL).build();
             //第一个表格数据填充
             List<EpConsumeDetailRowVO> records = res.getDataList().getRecords();
@@ -233,10 +234,10 @@ public class DownloadUtil {
                     EpDownloadStrDTO strTmp = new EpDownloadStrDTO(records.get(j).getConsumeList().get(i));
                     data.add(strTmp);
                 }
-                excelWriter.fill(new FillWrapper("data" + i,data),fillConfig,writeSheet);
+                excelWriter.fill(new FillWrapper("data" + i,data),fillConfig2,writeSheet);
             }
             //第二个表格数据填充
-            FillConfig fillConfig2 = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
+
             data2.getRowList().forEach(tmp->{
                 if(Objects.nonNull(tmp.getSumValue())){
                     tmp.setSumValueStr(tmp.getSumValue().toString());
