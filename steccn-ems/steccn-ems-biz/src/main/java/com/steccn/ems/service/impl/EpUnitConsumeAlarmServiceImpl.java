@@ -121,14 +121,11 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
                 epUnitConsumeAlarmVO.setPartitionName(epUnitConsumeAlarm.getOfficeName());
                 epUnitConsumeAlarmVO.setPartitionNameAll(sb.toString());
                 epUnitConsumeAlarmVO.setAlarmDetail(epUnitConsumeAlarm.getContent());
-                if (epUnitConsumeAlarm.getAlarmType().equals(0)){
-                    epUnitConsumeAlarmVO.setAlarmType("日单耗超标");
-                }
+                EpManagerConstant.AlarmTypeEnum alarmTypeEnum = EpManagerConstant.AlarmTypeEnum.code(epUnitConsumeAlarm.getAlarmType());
+                epUnitConsumeAlarmVO.setAlarmType(GetValueUtil.get(alarmTypeEnum, x -> x.getName()));
                 epUnitConsumeAlarmVOList.add(epUnitConsumeAlarmVO);
             }
-
         }
-
         BeanUtils.copyProperties(page,voPage);
         voPage.setRecords(epUnitConsumeAlarmVOList);
         return voPage;

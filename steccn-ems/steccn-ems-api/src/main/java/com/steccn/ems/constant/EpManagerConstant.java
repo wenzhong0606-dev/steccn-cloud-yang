@@ -289,6 +289,37 @@ public interface EpManagerConstant {
     }
 
 
+
+    /**
+     * 告警类别枚举 0 日单耗超标 1 日能耗超标 2 周能耗超标 3 月能耗超标
+     */
+    @Getter
+    @AllArgsConstructor
+    enum AlarmTypeEnum {
+        UNIT_CONSUME_OVER(0, "日单耗超标"),
+        DAY_CONSUME_OVER(1, "日能耗超标"),
+        WEEK_CONSUME_OVER(2, "周能耗超标"),
+        MONTH_CONSUME_OVER(3, "月能耗超标");
+        private final Integer code;
+        private final String name;
+
+        /**
+         * 根据code获取枚举类型
+         *
+         * @param code
+         * @return
+         */
+        public static AlarmTypeEnum code(Integer code) {
+            for (AlarmTypeEnum value : AlarmTypeEnum.values()) {
+                if (value.getCode().equals(code)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
+
+
     /**
      * 默认能源 电，水，天燃气，燃料油，燃料(气+油)
      */
