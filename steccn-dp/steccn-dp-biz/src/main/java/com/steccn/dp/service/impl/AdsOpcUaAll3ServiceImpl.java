@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
@@ -359,73 +360,117 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
 
     @Override
     public SteccnTableDataDTO<Map<String, String>> weightDetail(LocalDate date) {
-        List<LocalDateTime> times = ShardTimeUtil.cutDateRangeNew("H", date.atTime(8, 0, 0), date.plusDays(1).atTime(7, 59, 59));
-        //去除最后一个元素
-        times.remove(times.size() - 1);
-        List<DpWeightVO> weightCountList = Lists.newArrayList();
-        for(LocalDateTime tmp:times){
-            Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(tmp,tmp.plusMinutes(59).plusSeconds(59)));
-            weightCountList.addAll(mapTransferToResult(mapResult,tmp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        }
-        Assert.notEmpty(weightCountList,"数据为空");
-//        List<AdsOpcUaAll3> adsOpcUaAll3s = adsOpcUaAll3Mapper.selectList(new LambdaQueryWrapper<AdsOpcUaAll3>()
-//                .select(AdsOpcUaAll3::getTagId,AdsOpcUaAll3::getServertime,AdsOpcUaAll3::getValue)
-//                .ge(AdsOpcUaAll3::getServertime, date.atTime(8, 0, 0))
-//                .lt(AdsOpcUaAll3::getServertime, date.plusDays(1).atTime(7, 59, 59)));
-//        Assert.notEmpty(adsOpcUaAll3s,"数据为空");
+        List<RawMaterialDetailDTO> rawMaterialDetailDTOS = postRawDetail(new TupleDTO<>(date.atTime(8, 0, 0), date.plusDays(1).atTime(7, 59, 59)));
+        Assert.notEmpty(rawMaterialDetailDTOS,"数据为空");
         List<AdsOpcUaAll3> adsOpcUaAll3s = Lists.newArrayList();
-        weightCountList.forEach(tmp->{
-            AdsOpcUaAll3 adsOpcUaAll3 = new AdsOpcUaAll3();
-            adsOpcUaAll3.setTagId(tmp.getTagId());
-            adsOpcUaAll3.setValue(tmp.getValue());
-            adsOpcUaAll3.setServertime(LocalDateTime.parse(tmp.getDateStr(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            adsOpcUaAll3s.add(adsOpcUaAll3);
-        });
+//        weightCountList.forEach(tmp->{
+//            AdsOpcUaAll3 adsOpcUaAll3 = new AdsOpcUaAll3();
+//            adsOpcUaAll3.setTagId(tmp.getTagId());
+//            adsOpcUaAll3.setValue(tmp.getValue());
+//            adsOpcUaAll3.setServertime(LocalDateTime.parse(tmp.getDateStr(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//            adsOpcUaAll3s.add(adsOpcUaAll3);
+//        });
         //按照时间升序排列
-        List<LocalDateTime> serverTimeList = adsOpcUaAll3s.stream()
-                .map(AdsOpcUaAll3::getServertime)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList());
+//        List<LocalDateTime> serverTimeList = adsOpcUaAll3s.stream()
+//                .map(AdsOpcUaAll3::getServertime)
+//                .distinct()
+//                .sorted()
+//                .collect(Collectors.toList());
         //按照时间组成map
-        Map<LocalDateTime, List<AdsOpcUaAll3>> serverTimeMap = adsOpcUaAll3s.stream()
-                .collect(Collectors.groupingBy(AdsOpcUaAll3::getServertime));
+//        Map<LocalDateTime, List<AdsOpcUaAll3>> serverTimeMap = adsOpcUaAll3s.stream()
+//                .collect(Collectors.groupingBy(AdsOpcUaAll3::getServertime));
         //生成报表数据
         SteccnTableDataDTO<Map<String,String>> result = new SteccnTableDataDTO();
         //2.1、组表头
         List<SteccnTableColumn> columns = Lists.newArrayList();
         columns.add(new SteccnTableColumn("time","时间",null));
+        columns.add(new SteccnTableColumn("ENo","工序",null));
         columns.add(new SteccnTableColumn("num","序号",null));
         //获取名称
-        Set<String> refSet = adsOpcUaAll3s.stream().map(AdsOpcUaAll3::getTagId).collect(Collectors.toSet());
+        List<String> tagNameList = Lists.newArrayList(DpConstant.DP_WEIGHT_GUISHA_1_TAGID
+                ,DpConstant.DP_WEIGHT_GUISHA_2_TAGID
+                ,DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID
+                ,DpConstant.DP_WEIGHT_CHUNJIAN_TAGID
+                ,DpConstant.DP_WEIGHT_SHIHUI_TAGID
+                ,DpConstant.DP_WEIGHT_FUHE_TAGID
+                ,DpConstant.DP_WEIGHT_LVFEN_TAGID
+                ,DpConstant.DP_WEIGHT_XIAOLIAO_TAGID
+                ,DpConstant.DP_WEIGHT_GLASS_1_TAGID
+                ,DpConstant.DP_WEIGHT_GLASS_2_TAGID);
+        Set<String> refSet = Sets.newHashSet(tagNameList);
         Map<String, List<SysConfigurationDTO>> dpWeight = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("DP_WEIGHT", refSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //组第一层表格
-        List<String> tagNameList = new ArrayList<>(refSet);
-        Collections.sort(tagNameList);
-        tagNameList.add(tagNameList.remove(0));
         for(String tagName:tagNameList){
             columns.add(new SteccnTableColumn(tagName+"_name",dpWeight.get(tagName).get(0).getRefContent(),
-                    Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null))));
+                    Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null)
+                            ,new SteccnTableColumn(tagName+"_error","误差值",null))));
         }
         columns.add(new SteccnTableColumn("total","总计",null));
         //开始组数据
         List<Map<String,String>> tableList = Lists.newArrayList();
         //总计数据
         Map<String,BigDecimal> count = Maps.newHashMap();
-        for(int i = 0; i < serverTimeList.size(); i++){
+        for(RawMaterialDetailDTO tmp:rawMaterialDetailDTOS){
             Map<String,String> oneLine = Maps.newHashMap();
-            LocalDateTime dateTime = serverTimeList.get(i);
-            List<AdsOpcUaAll3> dataColumn = serverTimeMap.get(dateTime);
-            oneLine.put("time",dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            oneLine.put("num",String.valueOf(i+1));
+            oneLine.put("time",tmp.getStrTime());
+            oneLine.put("num",tmp.getIndex().toString());
             oneLine.put("type","0");
-            for(AdsOpcUaAll3 tmp:dataColumn){
-                oneLine.put(tmp.getTagId(),tmp.getValue().toString());
-                //合计
-                BigDecimalUtil.accumulate(count,tmp.getTagId(),tmp.getValue());
-            }
+            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID,Objects.isNull(tmp.getFact1()) ? null:tmp.getFact1().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID+"_error",Objects.isNull(tmp.getDiff1()) ? null:tmp.getDiff1().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_GUISHA_1_TAGID,tmp.getFact1());
+
+            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_2_TAGID,Objects.isNull(tmp.getFact2()) ? null:tmp.getFact2().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_2_TAGID+"_error",Objects.isNull(tmp.getDiff2()) ? null:tmp.getDiff2().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_GUISHA_2_TAGID,tmp.getFact2());
+
+            oneLine.put(DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID,Objects.isNull(tmp.getFact3()) ? null:tmp.getFact3().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID+"_error",Objects.isNull(tmp.getDiff3()) ? null:tmp.getDiff3().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID,tmp.getFact3());
+
+            oneLine.put(DpConstant.DP_WEIGHT_CHUNJIAN_TAGID,Objects.isNull(tmp.getFact4()) ? null:tmp.getFact4().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_CHUNJIAN_TAGID+"_error",Objects.isNull(tmp.getDiff4()) ? null:tmp.getDiff4().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_CHUNJIAN_TAGID,tmp.getFact4());
+
+            oneLine.put(DpConstant.DP_WEIGHT_SHIHUI_TAGID,Objects.isNull(tmp.getFact5()) ? null:tmp.getFact5().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_SHIHUI_TAGID+"_error",Objects.isNull(tmp.getDiff5()) ? null:tmp.getDiff5().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_SHIHUI_TAGID,tmp.getFact5());
+
+            oneLine.put(DpConstant.DP_WEIGHT_FUHE_TAGID,Objects.isNull(tmp.getFact6()) ? null:tmp.getFact6().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_FUHE_TAGID+"_error",Objects.isNull(tmp.getDiff6()) ? null:tmp.getDiff6().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_FUHE_TAGID,tmp.getFact6());
+
+            oneLine.put(DpConstant.DP_WEIGHT_LVFEN_TAGID,Objects.isNull(tmp.getFact7()) ? null:tmp.getFact7().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_LVFEN_TAGID+"_error",Objects.isNull(tmp.getDiff7()) ? null:tmp.getDiff7().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_LVFEN_TAGID,tmp.getFact7());
+
+            oneLine.put(DpConstant.DP_WEIGHT_XIAOLIAO_TAGID,Objects.isNull(tmp.getFact8()) ? null:tmp.getFact8().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_XIAOLIAO_TAGID+"_error",Objects.isNull(tmp.getDiff8()) ? null:tmp.getDiff8().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_XIAOLIAO_TAGID,tmp.getFact8());
+
+            oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID,Objects.isNull(tmp.getFact9()) ? null:tmp.getFact9().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID+"_error",Objects.isNull(tmp.getDiff9()) ? null:tmp.getDiff9().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_GLASS_1_TAGID,tmp.getFact9());
+
+            oneLine.put(DpConstant.DP_WEIGHT_GLASS_2_TAGID,Objects.isNull(tmp.getFact10()) ? null:tmp.getFact10().toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GLASS_2_TAGID+"_error",Objects.isNull(tmp.getDiff10()) ? null:tmp.getDiff10().toString());
+            BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_GLASS_2_TAGID,tmp.getFact10());
+            //合计
             tableList.add(oneLine);
         }
+//        for(int i = 0; i < serverTimeList.size(); i++){
+//            Map<String,String> oneLine = Maps.newHashMap();
+//            LocalDateTime dateTime = serverTimeList.get(i);
+//            List<AdsOpcUaAll3> dataColumn = serverTimeMap.get(dateTime);
+//            oneLine.put("time",dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//            oneLine.put("num",String.valueOf(i+1));
+//            oneLine.put("type","0");
+//            for(AdsOpcUaAll3 tmp:dataColumn){
+//                oneLine.put(tmp.getTagId(),tmp.getValue().toString());
+//                //合计
+//                BigDecimalUtil.accumulate(count,tmp.getTagId(),tmp.getValue());
+//            }
+//            tableList.add(oneLine);
+//        }
         //总计行
         Map<String,String> oneLine = Maps.newHashMap();
         oneLine.put("time","统计报表");
@@ -689,6 +734,29 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             String tmp = "data"+j;
             result.put(tmp,jsonArray.getJSONObject(i).getBigDecimal(tmp));
         }
+        return result;
+    }
+
+    /**
+     * 请求数据获取原料详情
+     * @return
+     */
+    public List<RawMaterialDetailDTO> postRawDetail(TupleDTO<LocalDateTime,LocalDateTime> dto){
+        List<RawMaterialDetailDTO> result = Lists.newArrayList();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("start",dto.getField1().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")));
+        jsonObject.put("stop",dto.getField2().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")));
+        String res = HttpUtil.post("http://192.168.18.241:9001/getMaterial", jsonObject.toJSONString());
+        JSONObject resultObj = JSONObject.parseObject(res);
+        if(Objects.isNull(resultObj)){
+            return result;
+        }
+        if(!resultObj.getInteger("errCode").equals(0)){
+            log.error(resultObj.getString("errMsg"));
+            return result;
+        }
+        JSONArray jsonArray = resultObj.getJSONArray("data");
+        result = jsonArray.toJavaList(RawMaterialDetailDTO.class);
         return result;
     }
 
