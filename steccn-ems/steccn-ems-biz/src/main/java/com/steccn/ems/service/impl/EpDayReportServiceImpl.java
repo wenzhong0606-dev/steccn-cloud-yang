@@ -127,18 +127,18 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         sjgLine14List.forEach(ele -> sjgLineList.add(ele));
         sjgLine58List.forEach(ele -> sjgLineList.add(ele));
 
-        LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
-        LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+//        LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
+//        LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
         //②时间区间内所有班次集
-        List<TupleDTO<LocalDate, Integer>> classRangeList = ClassUtil.classRange(startLdt, endLdt);
-        Set<LocalDate> dateSet = classRangeList.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
+//        List<TupleDTO<LocalDate, Integer>> classRangeList = ClassUtil.classRange(startLdt, endLdt);
+//        Set<LocalDate> dateSet = classRangeList.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
         //获取全量数据表
-        List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
+        List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(Sets.newHashSet(timeList), epEnergy.getId(), partitionIdList);
         //每个节点，每天的数据
         //基片制造部=b1+b2+b3
         List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> jpzzbList.contains(v.getSysOfficeId())).collect(Collectors.toList());
-        List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
         //构建基片制造部
         EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();
         List<BigDecimal> jpValueList = Lists.newArrayList();
@@ -320,7 +320,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         BigDecimal rowConsume = null;
         BigDecimal rowPm = null;
         for (int i = 1; i < timeList.size(); i++) {
-            LocalDate time = timeList.get(i);
+            LocalDate time = timeList.get(i - 1);
             BigDecimal consume = valueMap.get(time + "_0");
             BigDecimal pm = valueMap.get(time + "_1");
             valueCount1List.add(BigDecimalUtil.divide(consume, pm, 1));
