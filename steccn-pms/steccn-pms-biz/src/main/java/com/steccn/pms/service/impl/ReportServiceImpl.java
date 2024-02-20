@@ -1270,7 +1270,7 @@ public class ReportServiceImpl implements ReportService {
                     List<SysSpareUnitConversionVO> unitConvertList = unitConvertMap.get(eqpSpareVO.getId());
                     BigDecimal value1 = UnitConvertUtil.convertMaterial(unitConvertList, sysDict1.getId(), sysDict2.getId(), quantity, BigDecimalUtil.DEFAULT_SCALE);
                     BigDecimal value2 = UnitConvertUtil.convertMaterial(unitConvertList, sysDict1.getId(), sysDict3.getId(), quantity, BigDecimalUtil.DEFAULT_SCALE);
-                    outputQualityDataVO.setOutputTon(BigDecimalUtil.setScale(value1, UnitLengthUtil.UNIT_TON_LENGTH));
+                    outputQualityDataVO.setOutputTon(BigDecimalUtil.setScale(value1, UnitLengthUtil.UNIT_TON_LENGTH_TWO));
                     outputQualityDataVO.setOutputSq(BigDecimalUtil.setScale(value2, UnitLengthUtil.UNIT_SQUARE_METER_LENGTH));
                     //产线
                     outputQualityDataVO.setProductionLine(lineNameMap.get(reportWork.getProductLineId()).getOfficeName());
@@ -1395,15 +1395,15 @@ public class ReportServiceImpl implements ReportService {
                 for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
                     quantity = Objects.isNull(quantity) ? BigDecimal.ZERO : quantity;
                     quantitySq = Objects.isNull(quantitySq) ? BigDecimal.ZERO : quantitySq;
-                    String quantity1 = BigDecimalUtil.format(quantity, UnitLengthUtil.UNIT_TON_LENGTH);
+                    String quantity1 = BigDecimalUtil.format(quantity, UnitLengthUtil.UNIT_TON_LENGTH_TWO);
                     String quantity2 = BigDecimalUtil.format(quantitySq, UnitLengthUtil.UNIT_TON_LENGTH);
                     outputQualityDataVO.setTotalOutput(quantity1 + "/" + quantity2);
                     if (PmManagerConstant.FORE_SHIFT.equals(outputQualityDataVO.getClasses())) {
-                        BigDecimal lastBd = BigDecimalUtil.subtract(quantity, nightQuantity, UnitLengthUtil.UNIT_TON_LENGTH);
+                        BigDecimal lastBd = BigDecimalUtil.subtract(quantity, nightQuantity, UnitLengthUtil.UNIT_TON_LENGTH_TWO);
                         BigDecimal lastBdSq = BigDecimalUtil.subtract(quantitySq, nightQuantitySq, UnitLengthUtil.UNIT_TON_LENGTH);
                         lastBd = Objects.isNull(lastBd) ? BigDecimal.ZERO : lastBd;
                         lastBdSq = Objects.isNull(lastBdSq) ? BigDecimal.ZERO : lastBdSq;
-                        String lastBd1 = BigDecimalUtil.format(lastBd, UnitLengthUtil.UNIT_TON_LENGTH);
+                        String lastBd1 = BigDecimalUtil.format(lastBd, UnitLengthUtil.UNIT_TON_LENGTH_TWO);
                         String lastBdSq2 = BigDecimalUtil.format(lastBdSq, UnitLengthUtil.UNIT_TON_LENGTH);
                         outputQualityDataVO.setTotalOutput(lastBd1 + "/" + lastBdSq2);
                     }

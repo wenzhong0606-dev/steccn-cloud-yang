@@ -13,6 +13,11 @@ public interface UnitLengthUtil {
     int UNIT_TON_LENGTH = 1;
 
     /**
+     * 吨保留两位小数
+     */
+    int UNIT_TON_LENGTH_TWO = 2;
+
+    /**
      * 平方米保留整数
      */
     int UNIT_SQUARE_METER_LENGTH = 0;
