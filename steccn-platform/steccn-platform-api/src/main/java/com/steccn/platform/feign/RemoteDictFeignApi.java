@@ -195,4 +195,13 @@ public interface RemoteDictFeignApi {
     @ApiOperation("删除数据")
     @DeleteMapping("/feign/platform/sys/dict/type/delete")
     R<Boolean> deleteType(@RequestParam("id") Long id);
+
+    /**
+     * 根据测点code获取名字
+     * @param code
+     * @return
+     */
+    @GetMapping("/feign/platform/sys/dict/checkPoint/name")
+    @ApiOperation("根据测点code获取名字")
+    R<Map<String, String>> getCheckPointName(@RequestParam("code") Set<String> code);
 }

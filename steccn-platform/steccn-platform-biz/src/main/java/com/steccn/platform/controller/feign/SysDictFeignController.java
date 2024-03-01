@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysDictTypeDTO;
+import com.steccn.platform.service.CheckPointComparisonService;
 import com.steccn.platform.service.SysDictService;
 import com.steccn.platform.service.SysDictTypeService;
 import com.steccn.platform.vo.SysDictVO;
@@ -30,6 +31,8 @@ public class SysDictFeignController {
     private final SysDictService sysDictService;
 
     private final SysDictTypeService sysDictTypeService;
+
+    private final CheckPointComparisonService checkPointComparisonService;
 
     @PostMapping("/ids")
     @ApiOperation("根据主键id查询数据字典的值")
@@ -144,5 +147,11 @@ public class SysDictFeignController {
         return R.success(sysDictTypeService.removeById(id));
     }
 
+
+    @GetMapping("/checkPoint/name")
+    @ApiOperation("根据测点code获取名字")
+    public R<Map<String, String>> getCheckPointName(@RequestParam("code") Set<String> code) {
+        return R.success(checkPointComparisonService.getCodeNameMap(code));
+    }
 
 }
