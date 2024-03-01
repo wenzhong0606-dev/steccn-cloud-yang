@@ -824,6 +824,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, epPartitionMap, rowList, Maps.newHashMap());
     }
 
+
+    @Override
+    public List<EpMeterReadAllDataVO> classDateAllDataShare(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
+        List<EpMeterReadAllDataVO> sourceDataList = classDateAllData(dateSet, energyType, partitionIdList);
+        //分摊逻辑
+
+        return sourceDataList;
+    }
+
+
     @Override
     public List<EpMeterReadAllDataVO> unitConsumeFacade(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
         if (energyType == 5) {
@@ -1060,23 +1070,25 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @return
      */
     private BigDecimal possibleBigDecimal(BigDecimal preValue, BigDecimal curValue) {
-        int p1 = curValue.precision() - curValue.scale();
-        int p2 = preValue.precision() - preValue.scale();
-        if (Objects.nonNull(preValue) && Objects.nonNull(curValue) && BigDecimalUtil.gt(preValue, curValue) && p1 > p2) {
-            //对前一个值进行调整，负向减值
-            int n = preValue.scale();
-            int m = preValue.precision() - n;
-            String overflowStr = "";
-            for (int cnt = 0; cnt < m; cnt++) {
-                overflowStr += "9";
+        if (Objects.nonNull(preValue) && Objects.nonNull(curValue)) {
+            int p1 = curValue.precision() - curValue.scale();
+            int p2 = preValue.precision() - preValue.scale();
+            if (BigDecimalUtil.gt(preValue, curValue) && p1 > p2) {
+                //对前一个值进行调整，负向减值
+                int n = preValue.scale();
+                int m = preValue.precision() - n;
+                String overflowStr = "";
+                for (int cnt = 0; cnt < m; cnt++) {
+                    overflowStr += "9";
+                }
+                if (n > 0) {
+                    overflowStr += ".";
+                }
+                for (int cnt = 0; cnt < n; cnt++) {
+                    overflowStr += "9";
+                }
+                preValue = BigDecimalUtil.subtract(preValue, new BigDecimal(overflowStr));
             }
-            if (n > 0) {
-                overflowStr += ".";
-            }
-            for (int cnt = 0; cnt < n; cnt++) {
-                overflowStr += "9";
-            }
-            preValue = BigDecimalUtil.subtract(preValue, new BigDecimal(overflowStr));
         }
         return preValue;
     }
