@@ -5,6 +5,7 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.IntegerUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
@@ -106,13 +107,15 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
                 datePassList.add(defectSjg);
                 continue;
             }
-            int goodNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getGoodNum()) ? 0 : qtCheckTask.getGoodNum()).sum();
-            Integer checkNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
-            BigDecimal passRate;
+            List<Integer> goodNumSumList = checkTaskList.stream().map(QtCheckTask::getGoodNum).collect(Collectors.toList());
+            Integer goodNumSum = IntegerUtil.sum(goodNumSumList);
+//            int goodNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getGoodNum()) ? 0 : qtCheckTask.getGoodNum()).sum();
 
-            if (checkNumSum.equals(0)) {
-                passRate = BigDecimal.ZERO;
-            } else {
+            List<Integer> checkNumSumList = checkTaskList.stream().map(QtCheckTask::getCheckNum).collect(Collectors.toList());
+            Integer checkNumSum = IntegerUtil.sum(checkNumSumList);
+//            Integer checkNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
+            BigDecimal passRate = null;
+            if (Objects.nonNull(checkNumSum)) {
                 passRate = BigDecimal.valueOf(goodNumSum).divide(BigDecimal.valueOf(checkNumSum), 4, BigDecimal.ROUND_DOWN);
             }
             datePassList.add(passRate);
@@ -162,7 +165,6 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
 
     private void getPassRateOverViewVO(PassRateOverViewVO passRateOverViewVO, List<BigDecimal> datePassList, Integer type) {
         if (CollectionUtils.isNotEmpty(datePassList)) {
-            DecimalFormat decimalFormat = new DecimalFormat("0.00%");
             //最后一天的合格率
             BigDecimal endDatePassRate = datePassList.get(datePassList.size() - 1);
             //获取第一天的合格率
@@ -190,32 +192,31 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
                     passRateOverViewVO.setDayValue(dayValue.multiply(BigDecimalUtil.HUNDRED));
                 }
             } else {
-                passRateOverViewVO.setValue(endDatePassRate.multiply(BigDecimalUtil.HUNDRED));
+                passRateOverViewVO.setValue(BigDecimalUtil.multiply(endDatePassRate, BigDecimalUtil.HUNDRED));
                 //获取日环比
-                if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) < 0) {
+                BigDecimal subtractTmp = BigDecimalUtil.subtract(endDatePassRate,datePassList.get(datePassList.size() - 2));
+                if (Objects.nonNull(subtractTmp) && subtractTmp.compareTo(BigDecimal.ZERO) < 0) {
                     passRateOverViewVO.setDayFlag(0);
                     passRateOverViewVO.setDayValue(datePassList.get(datePassList.size() - 2).subtract(endDatePassRate).multiply(BigDecimalUtil.HUNDRED));
-                } else if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) == 0) {
+                } else if (Objects.isNull(subtractTmp) || subtractTmp.compareTo(BigDecimal.ZERO) == 0) {
                     passRateOverViewVO.setDayFlag(2);
                 } else {
                     passRateOverViewVO.setDayFlag(1);
-                    passRateOverViewVO.setDayValue(endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).multiply(BigDecimalUtil.HUNDRED));
+                    BigDecimal edSub = BigDecimalUtil.subtract(endDatePassRate, datePassList.get(datePassList.size() - 2));
+                    passRateOverViewVO.setDayValue(BigDecimalUtil.multiply(edSub,BigDecimalUtil.HUNDRED));
                 }
             }
             //获取周同比
             BigDecimal weekValue = BigDecimal.ZERO;
-            if (startDatePassRate.equals(BigDecimal.ZERO)) {
+            if (Objects.isNull(startDatePassRate) || startDatePassRate.equals(BigDecimal.ZERO)) {
                 passRateOverViewVO.setWeekFlag(2);
                 passRateOverViewVO.setWeekValue(BigDecimal.ZERO);
             } else {
-                BigDecimal subtract = BigDecimalUtil.subtract(endDatePassRate, startDatePassRate);
                 weekValue = BigDecimalUtil.subtract(endDatePassRate, startDatePassRate);
-                if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
+                if (Objects.nonNull(weekValue) && weekValue.compareTo(BigDecimal.ZERO) < 0) {
                     weekValue = BigDecimalUtil.subtract(startDatePassRate, endDatePassRate);
-                    //subtract1 = BigDecimalUtil.subtract(startDatePassRate, endDatePassRate);
-//                    weekValue = BigDecimalUtil.divide(subtract1, startDatePassRate, 4);
                     passRateOverViewVO.setWeekFlag(0);
-                } else if (weekValue.compareTo(BigDecimal.ZERO) == 0) {
+                } else if (Objects.isNull(weekValue) || weekValue.compareTo(BigDecimal.ZERO) == 0) {
                     passRateOverViewVO.setWeekFlag(2);
                 } else {
                     passRateOverViewVO.setWeekFlag(1);
