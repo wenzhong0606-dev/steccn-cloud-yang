@@ -221,7 +221,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
                     passRateOverViewVO.setWeekFlag(1);
                 }
             }
-            passRateOverViewVO.setWeekValue(weekValue.multiply(BigDecimalUtil.HUNDRED));
+            passRateOverViewVO.setWeekValue(BigDecimalUtil.percent(weekValue, startDatePassRate));
 
             String tooltip;
             LocalDate endDate = passRateOverViewVO.getXData().get(passRateOverViewVO.getXData().size() - 1);
