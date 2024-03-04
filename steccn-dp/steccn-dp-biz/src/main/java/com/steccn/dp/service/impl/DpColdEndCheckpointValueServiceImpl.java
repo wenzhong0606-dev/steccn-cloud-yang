@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
 * @author Admin
@@ -35,12 +36,13 @@ public class DpColdEndCheckpointValueServiceImpl extends ServiceImpl<DpColdEndCh
         List<DpColdEndCheckpointValueVO> results = Lists.newArrayList();
         //获取各测点最新的检查时间
         List<DpColdEndCheckpointValue> dpColdEndCheckpointValues = dpColdEndCheckpointValueMapper.selectLatestTime();
-        Map<String, String> codeNameMap = FeignOptional.of(() -> remoteDictFeignApi.getCheckPointName(Sets.newHashSet(key)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, String> codeNameMap = FeignOptional.of(() -> remoteDictFeignApi.getCheckPointName(Sets.newHashSet(dpColdEndCheckpointValues
+                .stream().map(DpColdEndCheckpointValue::getCheckPointCode).collect(Collectors.toSet()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         dpColdEndCheckpointValues.forEach(tmp->{
             //查询各测点检查时间
             DpColdEndCheckpointValue one = getOne(new LambdaQueryWrapper<DpColdEndCheckpointValue>()
                     .eq(DpColdEndCheckpointValue::getCheckPointCode, tmp.getCheckPointCode())
-                    .eq(DpColdEndCheckpointValue::getTimestamp, tmp.getTimestamp()).last("LIMIT 1"));
+                    .eq(DpColdEndCheckpointValue::getTimeStamp, tmp.getTimeStamp()).last("LIMIT 1"));
             DpColdEndCheckpointValueVO vo = new DpColdEndCheckpointValueVO();
             BeanUtil.copyProperties(one,vo);
             vo.setCheckPointName(codeNameMap.get(one.getCheckPointCode()));

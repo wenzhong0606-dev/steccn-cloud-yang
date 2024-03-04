@@ -64,9 +64,13 @@ public class KafkaConsumer {
         JSONObject value = JSONObject.parseObject(record.value());
         DpColdEndCheckpointValue model = new DpColdEndCheckpointValue();
         model.setCheckPointCode(key);
-        model.setTimestamp(LocalDateTime.parse(value.getString("serverTime"),DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss")));
+        model.setTimeStamp(LocalDateTime.parse(value.getString("serverTime"),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         model.setCheckPointName(codeNameMap.get(key));
         model.setValue(value.getBigDecimal("value"));
+        model.setCreateDate(LocalDateTime.now());
+        model.setUpdateDate(LocalDateTime.now());
+        model.setCreateBy("kafkaConsumer");
+        model.setUpdateBy("kafkaConsumer");
         dpColdEndCheckpointValueService.save(model);
         ack.acknowledge();
     }

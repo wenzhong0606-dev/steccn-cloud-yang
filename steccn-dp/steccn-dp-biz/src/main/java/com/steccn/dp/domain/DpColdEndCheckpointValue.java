@@ -56,7 +56,7 @@ public class DpColdEndCheckpointValue implements Serializable {
     /**
      * 时间戳
      */
-    private LocalDateTime timestamp;
+    private LocalDateTime timeStamp;
 
     /**
      * 值
