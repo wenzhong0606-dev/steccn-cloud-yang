@@ -409,6 +409,10 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
 
     @Override
     public List<OaTodayClassVO> getTodayClassInfoYL(LocalDate date) {
+        //判断date是否大于今天
+        if(date.isAfter(LocalDate.now())) {
+            date = LocalDate.now();
+        }
         List<OaTodayClassVO> results = Lists.newArrayList();
         //分为早班和晚班
         for(int i = 0; i < 2;i++){
@@ -502,7 +506,9 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
                 //考勤组的人要包括部门的人
                 if(CollUtil.isNotEmpty(hrmresources)
                         &&CollUtil.isNotEmpty(kqGroupmembers)){
-                    List<Integer> hrmIdList = hrmresources.stream().map(Hrmresource::getId).collect(Collectors.toList());
+                    //需要去除离职的人
+                    List<Integer> hrmIdList = hrmresources.stream().filter(v->!v.getStatus().equals(OaConstant.NUM_5))
+                            .map(Hrmresource::getId).collect(Collectors.toList());
                     kqGroupmembers = kqGroupmembers.stream().filter(v->hrmIdList.contains(v.getTypevalue())).collect(Collectors.toList());
                     //查到姓名
                     if(CollUtil.isNotEmpty(kqGroupmembers)){
