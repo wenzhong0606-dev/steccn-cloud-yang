@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEqpSpare> implements SysEqpSpareService {
+public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEqpSpare> implements SysEqpSpareService{
 
     private final SysEqpSpareMapper sysEqpSpareMapper;
     private final SysDictService sysDictService;
@@ -318,6 +318,41 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             });
         }
         return map;
+    }
+
+    @Override
+    public List<EqpSpareVO> listSpare(String code) {
+        LambdaQueryWrapper<SysEqpSpare> and = new LambdaQueryWrapper<SysEqpSpare>()
+                .and((code != null && !code.equals("")), wrapper -> wrapper.like(SysEqpSpare::getName, code)
+                        .or().like(SysEqpSpare::getCode, code)
+                        .or().like(SysEqpSpare::getSpecifications, code));
+        List<SysEqpSpare> list = list(and);
+        List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(list, EqpSpareVO.class);
+        if (CollUtil.isNotEmpty(eqpSpareVOList)){
+            Set<Long> dictIdSet = Sets.newHashSet();
+            eqpSpareVOList.forEach(eqpSpareVO -> {
+                dictIdSet.add(eqpSpareVO.getProcurementTypeId());
+                dictIdSet.add(eqpSpareVO.getUnitId());
+                dictIdSet.add(eqpSpareVO.getHighUnitId());
+                dictIdSet.add(eqpSpareVO.getLengthUnitId());
+                dictIdSet.add(eqpSpareVO.getThickUnitId());
+                dictIdSet.add(eqpSpareVO.getVolumeUnitId());
+                dictIdSet.add(eqpSpareVO.getWeightUnitId());
+                dictIdSet.add(eqpSpareVO.getWideUnitId());
+            });
+            Map<Long, String> dictMap = sysDictService.listByIdCh(dictIdSet);
+            eqpSpareVOList.forEach(eqpSpareVO -> {
+                eqpSpareVO.setProcurementTypeName(dictMap.get(eqpSpareVO.getProcurementTypeId()));
+                eqpSpareVO.setUnit(dictMap.get(eqpSpareVO.getUnitId()));
+                eqpSpareVO.setHighUnitName(dictMap.get(eqpSpareVO.getHighUnitId()));
+                eqpSpareVO.setLengthUnitName(dictMap.get(eqpSpareVO.getLengthUnitId()));
+                eqpSpareVO.setThickUnitName(dictMap.get(eqpSpareVO.getThickUnitId()));
+                eqpSpareVO.setWeightUnitName(dictMap.get(eqpSpareVO.getWeightUnitId()));
+                eqpSpareVO.setWideUnidName(dictMap.get(eqpSpareVO.getWideUnitId()));
+                eqpSpareVO.setVolumeUnitName(dictMap.get(eqpSpareVO.getVolumeUnitId()));
+            });
+        }
+        return eqpSpareVOList;
     }
 }
 

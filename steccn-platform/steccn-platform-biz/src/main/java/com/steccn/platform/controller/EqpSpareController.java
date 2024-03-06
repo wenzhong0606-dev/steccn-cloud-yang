@@ -40,6 +40,12 @@ public class EqpSpareController {
         return eqpSpareService.listSpares(name);
     }
 
+    @ApiOperation("根据编码名称规格模糊查找物料")
+    @GetMapping("/getSpare")
+    public  R<List<EqpSpareVO>> listSpare(@RequestParam("code") String code){
+        return R.success(eqpSpareService.listSpare(code));
+    }
+
     @ApiOperation("根据编码获取备件")
     @GetMapping("/getByCode")
     public R<EqpSpareVO> getByCode(@RequestParam("code") String code) {
