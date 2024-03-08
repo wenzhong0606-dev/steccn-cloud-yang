@@ -57,8 +57,6 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         getSortField(condition, dto.getSortField(), dto.getAscFlag());
         //查询
         Page<EpDiscountFactor> page = page(new Page<>(dto.getCurrent(), dto.getSize()), condition);
-
-
         //拷贝数据
         List<EpDiscountFactorVO> resList = BeanUtil.copyToList(page.getRecords(), EpDiscountFactorVO.class);
         //查询数据字典[系数类型，计量单位]，能源类型
@@ -72,7 +70,7 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         //去查询数据字典
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> epEnergyMap = epEnergyTypeService.getBySetIds(energyIdSet);
-        resList.forEach(ele ->{
+        resList.forEach(ele -> {
             ele.setTypeName(dictMap.get(ele.getType()));
             ele.setValueUnitName(dictMap.get(ele.getValueUnit()));
             ele.setEnergyTypeName(epEnergyMap.get(ele.getEnergyType()));
@@ -91,7 +89,9 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
      * @param ascFlag   排序-顺序逆序
      */
     private void getSortField(LambdaQueryWrapper<EpDiscountFactor> condition, String sortField, Boolean ascFlag) {
-        if ("type".equals(sortField)) {
+        if ("name".equals(sortField)) {
+            condition.orderBy(true, ascFlag, EpDiscountFactor::getName);
+        } else if ("type".equals(sortField)) {
             condition.orderBy(true, ascFlag, EpDiscountFactor::getType);
         } else if ("energyType".equals(sortField)) {
             condition.orderBy(true, ascFlag, EpDiscountFactor::getEnergyType);

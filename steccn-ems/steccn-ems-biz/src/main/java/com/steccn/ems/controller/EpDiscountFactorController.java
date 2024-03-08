@@ -8,10 +8,7 @@ import com.steccn.ems.vo.EpDiscountFactorVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author yequan
@@ -29,5 +26,11 @@ public class EpDiscountFactorController {
     @ApiOperation(value = "查询折标系数分页列表")
     public R<Page<EpDiscountFactorVO>> page(@RequestBody EpDiscountFactorPageDTO dto) {
         return R.success(epDiscountFactorService.getPage(dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "根据id删除折标系数")
+    public R<Boolean> delete(@PathVariable("id") Long id) {
+        return R.success(epDiscountFactorService.removeById(id));
     }
 }
