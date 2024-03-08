@@ -46,4 +46,10 @@ public class EpDiscountFactorController {
     public R<Boolean> add(@RequestBody EpDiscountFactorDTO dto) {
         return R.success(epDiscountFactorService.add(dto));
     }
+
+    @PutMapping
+    @ApiOperation(value = "编辑折标系数")
+    public R<Boolean> edit(@RequestBody EpDiscountFactorDTO dto) {
+        return R.success(epDiscountFactorService.edit(dto));
+    }
 }

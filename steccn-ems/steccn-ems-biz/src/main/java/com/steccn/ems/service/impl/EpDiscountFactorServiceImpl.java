@@ -159,6 +159,46 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean edit(EpDiscountFactorDTO dto) {
+        //加分布式锁-用于生成唯一主键 格式：ZBXS#6位数字#
+        RLock lock = redisson.getLock("EP_DISCOUNT_FACTOR");
+        lock.lock();
+        try {
+            EpDiscountFactor existModel = getById(dto.getId());
+            Assert.notNull(existModel, "该记录不存在");
+            //系数名称不可重复
+            long count = count(new LambdaQueryWrapper<EpDiscountFactor>()
+                    .ne(EpDiscountFactor::getId, dto.getId())
+                    .eq(EpDiscountFactor::getName, dto.getName()));
+            Assert.isTrue(count == 0, "系数名称不可重复");
+            //定义model
+            EpDiscountFactor model = BeanUtil.copyProperties(dto, EpDiscountFactor.class);
+            //编码不可更改
+            model.setCode(existModel.getCode());
+            //有效期不可重叠
+            EpDiscountFactor start = getOne(new LambdaQueryWrapper<EpDiscountFactor>()
+                    .eq(EpDiscountFactor::getType, dto.getType())
+                    .ne(EpDiscountFactor::getId, dto.getId())
+                    .eq(Objects.nonNull(dto.getEnergyType()), EpDiscountFactor::getEnergyType, dto.getEnergyType())
+                    .not(lr -> lr.ge(EpDiscountFactor::getValidStart, dto.getValidEnd())
+                            .or()
+                            .le(EpDiscountFactor::getValidEnd, dto.getValidStart()))
+                    .last(MpConstant.STR_LIMIT_1));
+            if (Objects.nonNull(start)) {
+                throw new BusinessException("与现有系数【" + start.getName() + "】有效期有重叠”，无法保存");
+            }
+            updateById(model);
+        } catch (Exception e) {
+            log.error("{}", e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+        return Boolean.TRUE;
+
+    }
+
     /**
      * 排序
      *
@@ -174,7 +214,7 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         } else if ("energyType".equals(sortField)) {
             condition.orderBy(true, ascFlag, EpDiscountFactor::getEnergyType);
         } else if ("validStart".equals(sortField)) {
-            condition.orderBy(true, ascFlag, EpDiscountFactor::getValidStart);
+            condition.orderBy(true, ascFlag, Lists.newArrayList(EpDiscountFactor::getValidStart, EpDiscountFactor::getValidEnd));
         }
     }
 

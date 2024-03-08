@@ -38,4 +38,11 @@ public interface EpDiscountFactorService extends IService<EpDiscountFactor> {
      * @return
      */
     Boolean add(EpDiscountFactorDTO dto);
+
+    /**
+     * 编辑折标系数
+     * @param dto 请求对象
+     * @return
+     */
+    Boolean edit(EpDiscountFactorDTO dto);
 }
