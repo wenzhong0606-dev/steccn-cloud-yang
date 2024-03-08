@@ -24,6 +24,7 @@ import org.apache.el.util.ReflectionUtil;
 import org.aspectj.util.Reflection;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -79,6 +80,26 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         BeanUtil.copyProperties(page, resPage);
         resPage.setRecords(resList);
         return resPage;
+    }
+
+    @Override
+    public EpDiscountFactorVO info(Integer id) {
+        EpDiscountFactor existModel = getById(id);
+        Assert.notNull(existModel, "记录不存在");
+        EpDiscountFactorVO resVo = BeanUtil.copyProperties(existModel, EpDiscountFactorVO.class);
+        //查询数据字典[系数类型，计量单位]，能源类型
+        Set<Long> dictSet = Sets.newHashSet();
+        Set<Integer> energyIdSet = Sets.newHashSet();
+        dictSet.add(existModel.getType());
+        dictSet.add(existModel.getValueUnit());
+        energyIdSet.add(existModel.getEnergyType());
+        //去查询数据字典
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> epEnergyMap = epEnergyTypeService.getBySetIds(energyIdSet);
+        resVo.setTypeName(dictMap.get(resVo.getType()));
+        resVo.setValueUnitName(dictMap.get(resVo.getValueUnit()));
+        resVo.setEnergyTypeName(epEnergyMap.get(resVo.getEnergyType()));
+        return resVo;
     }
 
     /**

@@ -21,4 +21,12 @@ public interface EpDiscountFactorService extends IService<EpDiscountFactor> {
      * @return
      */
     Page<EpDiscountFactorVO> getPage(EpDiscountFactorPageDTO dto);
+
+    /**
+     * 根据id查询折标系数
+     *
+     * @param id 主键
+     * @return
+     */
+    EpDiscountFactorVO info(Integer id);
 }

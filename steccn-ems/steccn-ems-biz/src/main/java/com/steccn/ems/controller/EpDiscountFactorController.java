@@ -30,7 +30,13 @@ public class EpDiscountFactorController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "根据id删除折标系数")
-    public R<Boolean> delete(@PathVariable("id") Long id) {
+    public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(epDiscountFactorService.removeById(id));
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation(value = "根据id查询折标系数")
+    public R<EpDiscountFactorVO> info(@PathVariable("id") Integer id) {
+        return R.success(epDiscountFactorService.info(id));
     }
 }
