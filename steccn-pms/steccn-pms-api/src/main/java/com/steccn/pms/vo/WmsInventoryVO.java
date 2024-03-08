@@ -141,6 +141,8 @@ public class WmsInventoryVO {
     @ApiModelProperty("物料")
     private EqpSpareVO eqpSpareVO;
 
+    @ApiModelProperty("物料规格")
+    private String specifications;
 
     @ApiModelProperty("客户条码")
     private String customerBarcode;
