@@ -2,6 +2,7 @@ package com.steccn.ems.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.ems.dto.EpDiscountFactorDTO;
 import com.steccn.ems.dto.EpDiscountFactorPageDTO;
 import com.steccn.ems.service.EpDiscountFactorService;
 import com.steccn.ems.vo.EpDiscountFactorVO;
@@ -38,5 +39,11 @@ public class EpDiscountFactorController {
     @ApiOperation(value = "根据id查询折标系数")
     public R<EpDiscountFactorVO> info(@PathVariable("id") Integer id) {
         return R.success(epDiscountFactorService.info(id));
+    }
+
+    @PostMapping
+    @ApiOperation(value = "新增折标系数")
+    public R<Boolean> add(@RequestBody EpDiscountFactorDTO dto) {
+        return R.success(epDiscountFactorService.add(dto));
     }
 }

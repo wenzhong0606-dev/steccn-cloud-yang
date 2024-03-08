@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.ems.domain.EpDiscountFactor;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpDiscountFactorDTO;
 import com.steccn.ems.dto.EpDiscountFactorPageDTO;
 import com.steccn.ems.vo.EpDiscountFactorVO;
 
@@ -29,4 +30,12 @@ public interface EpDiscountFactorService extends IService<EpDiscountFactor> {
      * @return
      */
     EpDiscountFactorVO info(Integer id);
+
+    /**
+     * 新增折标系数
+     *
+     * @param dto 请求对象
+     * @return
+     */
+    Boolean add(EpDiscountFactorDTO dto);
 }

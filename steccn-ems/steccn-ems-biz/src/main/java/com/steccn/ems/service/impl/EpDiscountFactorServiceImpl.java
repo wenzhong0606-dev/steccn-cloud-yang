@@ -1,6 +1,7 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.BeanUtils;
 import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
@@ -9,9 +10,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.domain.EpDiscountFactor;
+import com.steccn.ems.dto.EpDiscountFactorDTO;
 import com.steccn.ems.dto.EpDiscountFactorPageDTO;
 import com.steccn.ems.service.EpDiscountFactorService;
 import com.steccn.ems.mapper.EpDiscountFactorMapper;
@@ -20,8 +24,11 @@ import com.steccn.ems.vo.EpDiscountFactorVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.el.util.ReflectionUtil;
 import org.aspectj.util.Reflection;
+import org.redisson.Redisson;
+import org.redisson.api.RLock;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -47,6 +54,8 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpEnergyTypeService epEnergyTypeService;
+    private final Redisson redisson;
+    private static final String EP_DISCOUNT_FACTOR_PREFIX = "ZBXS";
 
     @Override
     public Page<EpDiscountFactorVO> getPage(EpDiscountFactorPageDTO dto) {
@@ -100,6 +109,54 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         resVo.setValueUnitName(dictMap.get(resVo.getValueUnit()));
         resVo.setEnergyTypeName(epEnergyMap.get(resVo.getEnergyType()));
         return resVo;
+    }
+
+    @Override
+    public Boolean add(EpDiscountFactorDTO dto) {
+        //加分布式锁-用于生成唯一主键 格式：ZBXS#6位数字#
+        RLock lock = redisson.getLock("EP_DISCOUNT_FACTOR");
+        lock.lock();
+        try {
+            //系数名称不可重复
+            long count = count(new LambdaQueryWrapper<EpDiscountFactor>().eq(EpDiscountFactor::getName, dto.getName()));
+            Assert.isTrue(count == 0, "系数名称不可重复");
+            //定义model
+            EpDiscountFactor model = BeanUtil.copyProperties(dto, EpDiscountFactor.class);
+            //生成唯一编码
+            List<EpDiscountFactor> codeList = list(new LambdaQueryWrapper<EpDiscountFactor>()
+                    .likeRight(EpDiscountFactor::getCode, EP_DISCOUNT_FACTOR_PREFIX)
+                    .orderByDesc(EpDiscountFactor::getCode).last(MpConstant.STR_LIMIT_1));
+            Integer codeInt = 1;
+            String nextCode;
+            if (CollUtil.isNotEmpty(codeList)) {
+                EpDiscountFactor maxCodeModel = codeList.get(0);
+                String code = maxCodeModel.getCode();
+                String substring = code.substring(EP_DISCOUNT_FACTOR_PREFIX.length());
+                codeInt = Integer.parseInt(substring);
+                codeInt += 1;
+            }
+            String codeIntStr = String.valueOf(codeInt);
+            nextCode = StringUtils.leftPad(codeIntStr, 6, "0");
+            model.setCode(EP_DISCOUNT_FACTOR_PREFIX + nextCode);
+            //有效期不可重叠
+            EpDiscountFactor start = getOne(new LambdaQueryWrapper<EpDiscountFactor>()
+                    .eq(EpDiscountFactor::getType, dto.getType())
+                    .eq(Objects.nonNull(dto.getEnergyType()), EpDiscountFactor::getEnergyType, dto.getEnergyType())
+                    .not(lr -> lr.ge(EpDiscountFactor::getValidStart, dto.getValidEnd())
+                            .or()
+                            .le(EpDiscountFactor::getValidEnd, dto.getValidStart()))
+                    .last(MpConstant.STR_LIMIT_1));
+            if (Objects.nonNull(start)) {
+                throw new BusinessException("与现有系数【" + start.getName() + "】有效期有重叠”，无法保存");
+            }
+            save(model);
+        } catch (Exception e) {
+            log.error("{}", e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+        return Boolean.TRUE;
     }
 
     /**
