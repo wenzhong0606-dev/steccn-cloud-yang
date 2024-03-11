@@ -148,9 +148,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //获取创建状态在字典中的id
         Long status = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED, PmManagerConstant.MATERIAL_REQUISITION_STATUS), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId();
         model.setStatus(status);
-        if (Objects.isNull(materialRequisitionDTO.getDepartmentId())) {
-            //获取当前创建用户所属部门
-            OaEmpVO oaEmpVO = FeignOptional.of(() -> oaInfoService.getUserInfoById(SecurityUtils.getUser().getUserId().intValue()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //获取当前创建用户所属部门
+        OaEmpVO oaEmpVO = FeignOptional.of(() -> oaInfoService.getUserInfoById(SecurityUtils.getUser().getUserId().intValue()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //如果前端获取的部门是用户所属部门,那么就是oa中的值
+        if (model.getDepartmentId().equals(oaEmpVO.getDepartmentid())) {
             model.setDepartmentId(oaEmpVO.getDepartmentid());
         }else {
             //找到mes对应的oa部门Id
