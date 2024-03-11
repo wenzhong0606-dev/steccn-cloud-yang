@@ -32,7 +32,7 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @param materialRequisitionDTO
      * @return
      */
-    Boolean add(MaterialRequisitionDTO materialRequisitionDTO);
+    Long add(MaterialRequisitionDTO materialRequisitionDTO);
 
     /**
      * 编辑领料单

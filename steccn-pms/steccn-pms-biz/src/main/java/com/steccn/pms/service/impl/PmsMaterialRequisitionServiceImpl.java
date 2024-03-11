@@ -29,11 +29,9 @@ import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteStationWarehouseFeignApi;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
@@ -85,6 +83,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     private final PmsMaterialRequisitionWorkflowService pmsMaterialRequisitionWorkflowService;
     private final OaInfoService oaInfoService;
     private final PmsMaterialRequisitionDemanderService pmsMaterialRequisitionDemanderService;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
     public Page<MaterialRequisitionVO> pageList(MaterialRequisitionPageDTO dto) {
@@ -141,7 +140,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     }
 
     @Override
-    public Boolean add(MaterialRequisitionDTO materialRequisitionDTO) {
+    public Long add(MaterialRequisitionDTO materialRequisitionDTO) {
         //处理数据
         PmsMaterialRequisition model = new PmsMaterialRequisition();
         BeanUtil.copyProperties(materialRequisitionDTO, model);
@@ -177,7 +176,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             pmsMaterialRequisitionInfoService.saveBatch(list);
             pmsMaterialRequisitionDemanderService.saveBatch(demanderList);
         }
-        return Boolean.TRUE;
+        return model.getId();
     }
 
     @Override
@@ -195,6 +194,15 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             //2.处理数据
             PmsMaterialRequisition model = new PmsMaterialRequisition();
             BeanUtil.copyProperties(materialRequisitionDTO, model);
+            //处理编辑的部门
+            if(Objects.nonNull(model.getDepartmentId())&&!model.getDepartmentId().equals(materialRequisition.getDepartmentId())){
+                //找到mes对应的oa部门Id
+                SysConfigurationDTO conf = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndType(new TupleDTO<>("MES_OA_DEPT", model.getDepartmentId().toString())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(Objects.isNull(conf.getRefContent())){
+                    throw new BusinessException("OA中没有对应的部门");
+                }
+                model.setDepartmentId(Integer.parseInt(conf.getRefContent()));
+            }
             Boolean aBoolean = updateById(model);
             //3.编辑数据
             if (aBoolean) {
@@ -344,6 +352,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 id.add(dto.getId());
                 Map<Long, BigDecimal> quantityMap = pmsMaterialRequisitionInfoService.getTotalQuantity(id);
                 BigDecimal quantity = quantityMap.getOrDefault(dto.getId(), BigDecimal.ZERO);
+                if(Objects.isNull(quantity)){
+                    quantity = BigDecimal.ZERO;
+                }
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_ZSL, quantity.toString()));
                 //领料单编码
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LLDBM, pmsMaterialRequisition.getCode()));
@@ -400,6 +411,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC, eqpSpareVO.getName()));
                         if (Objects.nonNull(eqpSpareVO.getSpecifications())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH, eqpSpareVO.getSpecifications()));
+                        }
+                        if(Objects.isNull(tmp.getRequireDate())){
+                            tmp.setRequireDate(tmp.getUpdateTime().toLocalDate());
                         }
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ, tmp.getRequireDate().toString()));
                         if (Objects.isNull(tmp.getReceiveQuantity())) {
