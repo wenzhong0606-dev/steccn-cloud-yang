@@ -152,6 +152,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             //获取当前创建用户所属部门
             OaEmpVO oaEmpVO = FeignOptional.of(() -> oaInfoService.getUserInfoById(SecurityUtils.getUser().getUserId().intValue()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             model.setDepartmentId(oaEmpVO.getDepartmentid());
+        }else {
+            //找到mes对应的oa部门Id
+            SysConfigurationDTO conf = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndType(new TupleDTO<>("MES_OA_DEPT", materialRequisitionDTO.getDepartmentId().toString())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(Objects.isNull(conf.getRefContent())){
+                throw new BusinessException("OA中没有对应的部门");
+            }
+            model.setDepartmentId(Integer.parseInt(conf.getRefContent()));
         }
         save(model);
         if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
