@@ -583,7 +583,10 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> materialList(WmsInventoryPageDTO dto) {
         //获取查询的物料列表
-        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName()));
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
+                .like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .select(WmsInventory::getId, WmsInventory::getMaterialId, WmsInventory::getMaterialName, WmsInventory::getMaterialCode, WmsInventory::getWarehouseId,
+                        WmsInventory::getWarehouseName,WmsInventory::getTotalQuantity,WmsInventory::getAvailableQuantity,WmsInventory::getStockQuantity,WmsInventory::getFreezeQuantity,WmsInventory::getLockQuantity));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
         Page<WmsInventoryVO> page  = LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());
@@ -712,7 +715,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dict), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             inventoryList.forEach(wmsInventoryVO -> {
                 wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
-                wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
+                wmsInventoryVO.setSpecifications(materialMap.get(wmsInventoryVO.getMaterialId()).getSpecifications());
             });
         }
         return inventoryList;
