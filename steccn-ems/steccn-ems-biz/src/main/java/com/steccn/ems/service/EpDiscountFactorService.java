@@ -8,6 +8,9 @@ import com.steccn.ems.dto.EpDiscountFactorDTO;
 import com.steccn.ems.dto.EpDiscountFactorPageDTO;
 import com.steccn.ems.vo.EpDiscountFactorVO;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * @author yequan
  * @description 针对表【ep_discount_factor(折标系数表)】的数据库操作Service
@@ -45,4 +48,14 @@ public interface EpDiscountFactorService extends IService<EpDiscountFactor> {
      * @return
      */
     Boolean edit(EpDiscountFactorDTO dto);
+
+    /**
+     * 获取指定类型下，有效的折标系数集合
+     *
+     * @param type  系数类型 当量折标系数，等价折标系数，窑龄系数
+     * @param start 开始日期
+     * @param end   结束日期
+     * @return
+     */
+    List<EpDiscountFactorVO> getValidDiscountList(Long type, LocalDate start, LocalDate end);
 }

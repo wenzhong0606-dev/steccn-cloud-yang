@@ -36,6 +36,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -197,6 +198,34 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
         }
         return Boolean.TRUE;
 
+    }
+
+    @Override
+    public List<EpDiscountFactorVO> getValidDiscountList(Long type, LocalDate start, LocalDate end) {
+        //开始时间 <= start
+        //结束时间 >= end
+        List<EpDiscountFactor> dbList = list(new LambdaQueryWrapper<EpDiscountFactor>()
+                .eq(EpDiscountFactor::getType, type)
+                .le(EpDiscountFactor::getValidStart, start)
+                .ge(EpDiscountFactor::getValidEnd, end));
+        List<EpDiscountFactorVO> resList = BeanUtil.copyToList(dbList, EpDiscountFactorVO.class);
+        //查询数据字典[系数类型，计量单位]，能源类型
+        Set<Long> dictSet = Sets.newHashSet();
+        Set<Integer> energyIdSet = Sets.newHashSet();
+        resList.forEach(ele -> {
+            dictSet.add(ele.getType());
+            dictSet.add(ele.getValueUnit());
+            energyIdSet.add(ele.getEnergyType());
+        });
+        //去查询数据字典
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> epEnergyMap = epEnergyTypeService.getBySetIds(energyIdSet);
+        resList.forEach(ele -> {
+            ele.setTypeName(dictMap.get(ele.getType()));
+            ele.setValueUnitName(dictMap.get(ele.getValueUnit()));
+            ele.setEnergyTypeName(epEnergyMap.get(ele.getEnergyType()));
+        });
+        return resList;
     }
 
     /**

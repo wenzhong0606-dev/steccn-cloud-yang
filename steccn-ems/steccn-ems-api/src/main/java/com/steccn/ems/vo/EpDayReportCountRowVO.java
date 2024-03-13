@@ -38,4 +38,14 @@ public class EpDayReportCountRowVO implements Serializable {
     @ApiModelProperty("总计")
     private BigDecimal sumStr;
 
+    /**
+     * 能源消费量当量值 tce
+     */
+    private BigDecimal equivalentValue;
+
+    /**
+     * 能源消费量等价值 tce
+     */
+    private BigDecimal equalValue;
+
 }

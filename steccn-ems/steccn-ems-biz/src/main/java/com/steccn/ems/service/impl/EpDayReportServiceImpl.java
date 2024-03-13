@@ -60,9 +60,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final EpMeterReadService epMeterReadService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final EpDiscountFactorService epDiscountFactorService;
 
     @Override
-    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
@@ -220,7 +221,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
 
         //重新计算基片行和产线行
-        ftLineRow(lineRowList, timeList, lineResMap);
+        ftLineRow(lineRowList, timeList, lineResMap, new EpDiscountFactorVO(), new EpDiscountFactorVO());
         //构造深加工产线产量的数据
         //深加工1-4车间需要小计
         //深加工5-8车间需要小计
@@ -528,14 +529,30 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<EpDayReportCountRowVO> dataList = Lists.newArrayList();
         //获取全部厚度
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        SysDictVO sysDictVO1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDictVO2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDictVO3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("2","discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysDictVO1,"数据字典-当量折标系数不存在");
+        Assert.notNull(sysDictVO2,"数据字典-等价折标系数不存在");
+        Assert.notNull(sysDictVO3,"数据字典-窑龄系数不存在");
+        //获取日期范围内 有效的折标系数-当量折标系数
+        List<EpDiscountFactorVO> validDiscountList1 = epDiscountFactorService.getValidDiscountList(sysDictVO1.getId(), start, end);
+        //获取日期范围内 有效的折标系数-等价折标系数
+        List<EpDiscountFactorVO> validDiscountList2 = epDiscountFactorService.getValidDiscountList(sysDictVO2.getId(), start, end);
+        //获取日期范围内 有效的折标系数-窑龄系数
+        List<EpDiscountFactorVO> validDiscountList3 = epDiscountFactorService.getValidDiscountList(sysDictVO3.getId(), start, end);
 
         CompletableFuture<List<EpDayReportCountRowVO>> elecFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 RequestContextHolder.setRequestAttributes(attributes);
+                //判断电能源
+                Optional<EpDiscountFactorVO> discount1 = validDiscountList1.stream().filter(ele -> Integer.valueOf(1).equals(ele.getEnergyType())).findFirst();
+                Optional<EpDiscountFactorVO> discount2 = validDiscountList2.stream().filter(ele -> Integer.valueOf(1).equals(ele.getEnergyType())).findFirst();
+
                 //计算电耗
                 Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
                 EpEnergyTypeVO elecEnergy = eleOp.get();
-                List<EpDayReportCountRowVO> elecList = calElec(elecEnergy, start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC));
+                List<EpDayReportCountRowVO> elecList = calElec(elecEnergy, start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC), discount1.orElse(new EpDiscountFactorVO()), discount2.orElse(new EpDiscountFactorVO()));
                 //获取能源类型
                 //获取电表（其他） - 余热发电的仪表
                 List<TripleDTO<Long, Integer, String>> eleConfList = defaultNodeMap.getOrDefault(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Lists.newArrayList());
@@ -545,11 +562,19 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                     if (CollUtil.isNotEmpty(accountMap)) {
                         Optional<EpInstrumentAccount> heatPowerAccount = accountMap.values().stream().findFirst();
                         EpDayReportCountRowVO heatPowerRow = heatPowerRow(start, end, elecEnergy, heatPowerAccount.get());
+                        //能源消费量当量值tc 转换
+                        BigDecimal shEquivalentValue = BigDecimalUtil.multiply(heatPowerRow.getSumStr(), GetValueUtil.get(discount1.get(), x -> x.getValue()));
+                        shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, BigDecimalUtil.THOUSAND);
+                        heatPowerRow.setEquivalentValue(BigDecimalUtil.setScale(shEquivalentValue, 2));
+                        //能源消费量等量值tce 转换
+                        BigDecimal shEqualValue = BigDecimalUtil.multiply(heatPowerRow.getSumStr(), GetValueUtil.get(discount2.get(), x -> x.getValue()));
+                        shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
+                        heatPowerRow.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
                         elecList.add(heatPowerRow);
                     }
                 }
                 //插入合计行
-                EpDayReportCountRowVO sumRow = countRow(elecList, elecEnergy);
+                EpDayReportCountRowVO sumRow = countRow(elecList, elecEnergy, discount1.get(), discount2.get());
                 elecList.add(sumRow);
                 return elecList;
             } catch (Exception e) {
@@ -563,7 +588,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用油量数据
                 Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
-                List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL));
+                //判断天然气能源
+                Optional<EpDiscountFactorVO> discount1 = validDiscountList1.stream().filter(ele -> EpManagerConstant.ENERGY_OIL.equals(ele.getEnergyType())).findFirst();
+                Optional<EpDiscountFactorVO> discount2 = validDiscountList2.stream().filter(ele -> EpManagerConstant.ENERGY_OIL.equals(ele.getEnergyType())).findFirst();
+                List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL),discount1.orElse(new EpDiscountFactorVO()),discount2.orElse(new EpDiscountFactorVO()));
                 return oilRowList;
             } catch (Exception e) {
                 log.error("oil -> {}", e.getLocalizedMessage());
@@ -576,7 +604,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用气量
                 Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
-                return consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS));
+                //判断天然气能源
+                Optional<EpDiscountFactorVO> discount1 = validDiscountList1.stream().filter(ele -> EpManagerConstant.ENERGY_GAS.equals(ele.getEnergyType())).findFirst();
+                Optional<EpDiscountFactorVO> discount2 = validDiscountList2.stream().filter(ele -> EpManagerConstant.ENERGY_GAS.equals(ele.getEnergyType())).findFirst();
+                List<EpDayReportCountRowVO> gasRes = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS),discount1.orElse(new EpDiscountFactorVO()),discount2.orElse(new EpDiscountFactorVO()));
+                return gasRes;
             } catch (Exception e) {
                 log.error("gas -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
@@ -600,7 +632,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 RequestContextHolder.setRequestAttributes(attributes);
                 //获取用水量
                 Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_AIR.equals(v.getId())).findFirst();
-                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_AIR));
+                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_AIR), new EpDiscountFactorVO(), new EpDiscountFactorVO());
             } catch (Exception e) {
                 log.error("water -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
@@ -711,7 +743,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param energy   能源类型
      * @return
      */
-    private EpDayReportCountRowVO countRow(List<EpDayReportCountRowVO> dataList, EpEnergyTypeVO energy) {
+    private EpDayReportCountRowVO countRow(List<EpDayReportCountRowVO> dataList, EpEnergyTypeVO energy, EpDiscountFactorVO discount1, EpDiscountFactorVO discount2) {
         //对行进行合计
         List<BigDecimal> countRowList = Lists.newArrayList();
         for (EpDayReportCountRowVO rowVO : dataList) {
@@ -731,6 +763,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         countRow.setDepartmentName("合计");
         BigDecimal countRowValue = BigDecimalUtil.sum(countRowList);
         countRow.setSumStr(BigDecimalUtil.setScale(countRowValue, 0));
+        //能源消费量当量值tc 转换
+        BigDecimal shEquivalentValue = BigDecimalUtil.multiply(countRow.getSumStr(), GetValueUtil.get(discount1, x -> x.getValue()));
+        shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, BigDecimalUtil.THOUSAND);
+        countRow.setEquivalentValue(BigDecimalUtil.setScale(shEquivalentValue, 2));
+        //能源消费量等量值tce 转换
+        BigDecimal shEqualValue = BigDecimalUtil.multiply(countRow.getSumStr(), GetValueUtil.get(discount2, x -> x.getValue()));
+        shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
+        countRow.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
         return countRow;
     }
 
@@ -743,7 +783,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param partitionList 所有节点的集合
      * @return
      */
-    private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
+    private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList, EpDiscountFactorVO discount1, EpDiscountFactorVO discount2) {
         List<EpDayReportCountRowVO> resList = Lists.newArrayList();
         //获取配置map
         Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -810,7 +850,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         shRow.setUnit(epEnergy.getMeasureUnitName());
         shRow.setEnergyType(epEnergy.getName());
         shRow.setDepartmentName("生活用电");
-
+        //能源消费量当量值tc 转换
+        BigDecimal shEquivalentValue = BigDecimalUtil.multiply(shSum, GetValueUtil.get(discount1, x -> x.getValue()));
+        shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, BigDecimalUtil.THOUSAND);
+        shRow.setEquivalentValue(BigDecimalUtil.setScale(shEquivalentValue, 2));
+        //能源消费量等量值tce 转换
+        BigDecimal shEqualValue = BigDecimalUtil.multiply(shSum, GetValueUtil.get(discount2, x -> x.getValue()));
+        shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
+        shRow.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
         //深加工一~八产线
         List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2()) || sjgLine58List.contains(v.getField2())).collect(Collectors.toList());
         Set<Integer> lineOfficeIdSet = Sets.newHashSet();
@@ -865,9 +912,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
 
         //重新计算基片行和产线行
-        ftJpRow(jpRow, timeList, jpResMap);
-        ftLineRow(lineRowList, timeList, lineResMap);
-
+        ftJpRow(jpRow, timeList, jpResMap,discount1,discount2);
+        ftLineRow(lineRowList, timeList, lineResMap,discount1,discount2);
         return resList;
     }
 
@@ -878,7 +924,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param timeList    班次时间集合
      * @param lineResMap  产线数据集合
      */
-    private void ftLineRow(List<EpDayReportCountRowVO> lineRowList, List<LocalDate> timeList, Map<String, List<BigDecimal>> lineResMap) {
+    private void ftLineRow(List<EpDayReportCountRowVO> lineRowList, List<LocalDate> timeList, Map<String, List<BigDecimal>> lineResMap, EpDiscountFactorVO discount1, EpDiscountFactorVO discount2) {
         for (EpDayReportCountRowVO row : lineRowList) {
             BigDecimal rowSum = BigDecimal.ZERO;
             List<BigDecimal> consumeList = row.getConsumeList();
@@ -889,7 +935,16 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 consumeList.add(i, format);
                 rowSum = BigDecimalUtil.add(format, rowSum);
             }
-            row.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
+            BigDecimal value = BigDecimalUtil.setScale(rowSum, 0);
+            row.setSumStr(value);
+            //能源消费量当量值tc 转换
+            BigDecimal shEquivalentValue = BigDecimalUtil.multiply(value, GetValueUtil.get(discount1, x -> x.getValue()));
+            shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, BigDecimalUtil.THOUSAND);
+            row.setEquivalentValue(BigDecimalUtil.setScale(shEquivalentValue, 2));
+            //能源消费量等量值tce 转换
+            BigDecimal shEqualValue = BigDecimalUtil.multiply(value, GetValueUtil.get(discount2, x -> x.getValue()));
+            shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
+            row.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
         }
     }
 
@@ -900,17 +955,28 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param timeList
      * @param jpResMap
      */
-    private void ftJpRow(EpDayReportCountRowVO jpRow, List<LocalDate> timeList, Map<LocalDate, List<BigDecimal>> jpResMap) {
+    private void ftJpRow(EpDayReportCountRowVO jpRow, List<LocalDate> timeList, Map<LocalDate, List<BigDecimal>> jpResMap, EpDiscountFactorVO discount1, EpDiscountFactorVO discount2) {
         List<BigDecimal> consumeList = jpRow.getConsumeList();
         BigDecimal rowSum = BigDecimal.ZERO;
         for (int i = 0; i < timeList.size(); i++) {
             List<BigDecimal> valueList = jpResMap.get(timeList.get(i));
             BigDecimal sum = BigDecimalUtil.sum(valueList);
             BigDecimal format = BigDecimalUtil.setScale(sum, 0);
+            //能源消费量当量值tc 转换
+            //能源消费量等量值tce 转换
             consumeList.add(i, format);
             rowSum = BigDecimalUtil.add(format, rowSum);
         }
-        jpRow.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
+        BigDecimal value = BigDecimalUtil.setScale(rowSum, 0);
+        jpRow.setSumStr(value);
+        //能源消费量当量值tc 转换
+        BigDecimal shEquivalentValue = BigDecimalUtil.multiply(value, GetValueUtil.get(discount1, x -> x.getValue()));
+        shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, BigDecimalUtil.THOUSAND);
+        jpRow.setEquivalentValue(BigDecimalUtil.setScale(shEquivalentValue, 2));
+        //能源消费量等量值tce 转换
+        BigDecimal shEqualValue = BigDecimalUtil.multiply(value, GetValueUtil.get(discount2, x -> x.getValue()));
+        shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
+        jpRow.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
     }
 
     /**
@@ -1120,7 +1186,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param partitionList 节点集合
      * @return
      */
-    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList) {
+    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList, EpDiscountFactorVO discount1, EpDiscountFactorVO discount2) {
         List<EpDayReportCountRowVO> rowList = Lists.newArrayList();
         if (CollUtil.isEmpty(partitionList) || Objects.isNull(epEnergy)) {
             return rowList;
@@ -1151,12 +1217,27 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             row.setDepartmentName(tripleDTO.getField3());
             BigDecimal sum = BigDecimalUtil.sum(consumeList);
             row.setSumStr(BigDecimalUtil.setScale(sum, UnitLengthUtil.UNIT_TON_LENGTH));
+
+            //能源消费量当量值tc 转换
+            BigDecimal equivalentValue = BigDecimalUtil.multiply(row.getSumStr(), GetValueUtil.get(discount1, x -> x.getValue()));
+            //判断类型
+            if(!EpManagerConstant.ENERGY_OIL.equals(epEnergy.getId())){
+                equivalentValue = BigDecimalUtil.divide(equivalentValue, BigDecimalUtil.THOUSAND);
+            }
+            row.setEquivalentValue(BigDecimalUtil.setScale(equivalentValue, 2));
+            //能源消费量等量值tce 转换
+            BigDecimal equalValue = BigDecimalUtil.multiply(row.getSumStr(), GetValueUtil.get(discount2, x -> x.getValue()));
+            //判断类型
+            if(!EpManagerConstant.ENERGY_OIL.equals(epEnergy.getId())) {
+                equalValue = BigDecimalUtil.divide(equalValue, BigDecimalUtil.THOUSAND);
+            }
+            row.setEqualValue(BigDecimalUtil.setScale(equalValue, 2));
             rowList.add(row);
         }
 
         //如果超过一行，则添加一个合计行
         if (rowList.size() > 1) {
-            EpDayReportCountRowVO countRow = countRow(rowList, epEnergy);
+            EpDayReportCountRowVO countRow = countRow(rowList, epEnergy, new EpDiscountFactorVO(), new EpDiscountFactorVO());
             rowList.add(countRow);
         }
         return rowList;
@@ -1240,7 +1321,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         }
         //如果超过一行，则添加一个合计行
         if (rowList.size() > 1) {
-            EpDayReportCountRowVO countRow = countRow(rowList, epEnergy);
+            EpDayReportCountRowVO countRow = countRow(rowList, epEnergy, new EpDiscountFactorVO(), new EpDiscountFactorVO());
             rowList.add(countRow);
         }
         return rowList;
