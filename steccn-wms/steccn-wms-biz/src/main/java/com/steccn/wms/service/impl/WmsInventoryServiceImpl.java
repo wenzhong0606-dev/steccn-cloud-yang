@@ -75,6 +75,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
                 .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
                 .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                        .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
                 .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
                         .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
                         .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
