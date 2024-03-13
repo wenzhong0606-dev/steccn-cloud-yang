@@ -63,7 +63,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpDiscountFactorService epDiscountFactorService;
 
     @Override
-//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
@@ -78,6 +78,18 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         try {
             List<EpDayReportCountRowVO> dataList = asyncTask(start, end, energyTypeList, defaultNodeMap);
             resVo.setDataList(dataList);
+            //计算汇总
+            BigDecimal equivalentValueSum = null;
+            BigDecimal equalValueSum = null;
+            for (EpDayReportCountRowVO ele : dataList) {
+                equalValueSum = BigDecimalUtil.add(equalValueSum, ele.getEqualValue());
+                equivalentValueSum = BigDecimalUtil.add(equivalentValueSum, ele.getEquivalentValue());
+            }
+            EpDayReportCountRowVO rowSum = new EpDayReportCountRowVO();
+            rowSum.setEnergyType("能源消费量总计");
+            rowSum.setEqualValue(equalValueSum);
+            rowSum.setEquivalentValue(equivalentValueSum);
+            dataList.add(rowSum);
         } catch (Exception e) {
             log.error("{}", e.getLocalizedMessage());
         }
@@ -1348,6 +1360,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM-dd")));
         head.setConsumeList(dateStrList);
         head.setSumStr("总计");
+        head.setEquivalentValue("能源消费量当量值（tce）");
+        head.setEqualValue("能源消费量等价值（tce）");
         return head;
     }
 }

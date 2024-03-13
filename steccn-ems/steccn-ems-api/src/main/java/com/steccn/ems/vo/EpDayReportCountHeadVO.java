@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -31,5 +32,15 @@ public class EpDayReportCountHeadVO implements Serializable {
 
     @ApiModelProperty("总计")
     private String sumStr;
+
+    /**
+     * 能源消费量当量值 tce
+     */
+    private String equivalentValue;
+
+    /**
+     * 能源消费量等价值 tce
+     */
+    private String equalValue;
 
 }
