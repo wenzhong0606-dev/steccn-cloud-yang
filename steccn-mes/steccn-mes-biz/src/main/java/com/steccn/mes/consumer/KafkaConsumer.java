@@ -69,7 +69,7 @@ public class KafkaConsumer {
      *
      * @param record
      */
-//    @KafkaListener(topics = "opc_ua_topic_09", concurrency = "1")
+    @KafkaListener(topics = "opc_ua_topic_09", concurrency = "1")
     @Transactional(rollbackFor = Exception.class)
     public void tpFirst(ConsumerRecord<Object, String> record, Acknowledgment ack) {
         // 消费的哪个topic、partition的消息,打印出消息内容
@@ -197,6 +197,8 @@ public class KafkaConsumer {
             Boolean pulse;
             String pulseStr = stringRedisTemplate.opsForValue().get("OA1.BOOL.STOP_BOOL");
             if(StrUtil.isNotBlank(pulseStr)&&pulseStr.equals("true")){
+                pulse = false;
+            }else if(StrUtil.isBlank(pulseStr)){
                 pulse = false;
             }else {
                 pulse = true;
