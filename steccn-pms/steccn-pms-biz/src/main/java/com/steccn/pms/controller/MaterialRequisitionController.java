@@ -50,7 +50,7 @@ public class MaterialRequisitionController {
     @ApiOperation("生产领料单新增")
     @PostMapping
     @SysLog("生产领料单新增")
-    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody MaterialRequisitionDTO materialRequisitionDTO) {
+    public R<Long> add(@Validated(InsertGroup.class) @RequestBody MaterialRequisitionDTO materialRequisitionDTO) {
         return R.success(pmsMaterialRequisitionService.add(materialRequisitionDTO));
     }
 
