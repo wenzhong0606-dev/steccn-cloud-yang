@@ -273,4 +273,12 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+
+    /**
+     * 库存列表 可用库存为0不显示
+     * @param dto
+     * @return
+     */
+    Page<WmsInventoryVO> pageListAvailableZero(WmsInventoryPageDTO dto);
 }

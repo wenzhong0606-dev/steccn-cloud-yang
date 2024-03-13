@@ -44,6 +44,13 @@ public class WmsInventoryController {
         return R.success(wmsInventoryService.pageList(dto));
     }
 
+    @ApiOperation("库存分页列表-可用库存为0的不显示")
+    @PostMapping("/list/available/zero")
+    public R<Page<WmsInventoryVO>> pageListAvailableZero(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.pageListAvailableZero(dto));
+    }
+
+
     @ApiOperation("冻结")
     @PutMapping("/freeze")
     public R<Boolean> freeze(@RequestBody WmsInventoryDTO dto) {
