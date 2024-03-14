@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -732,6 +733,25 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         PmManagerConstant.QtGranularityEnum granularity = dto.getGranularity();
         return materialQuantity(granularity, dto.getStartDate(), dto.getEndDate(), dto.getWarehouseIds(), dto.getMaterialIds(), 3, sqSysDict);
+    }
+
+    @Override
+    public BigDecimal totalQuantityM(WmsReportWarehouseDTO dto) {
+        AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
+        List<WmsTransferSlipInfo> infos = this.baseMapper.totalQuantity(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)) {
+            //单位换算
+            Set<Long> materialIdSet = infos.stream().map(WmsTransferSlipInfo::getMaterialId).collect(Collectors.toSet());
+            //获取转换单位
+            SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            infos.forEach(inventory -> {
+                totalM.set(BigDecimalUtil.add(totalM.get(), UnitConvertUtil.convertMaterial(materialConvertMap.get(inventory.getMaterialId()), unitPiece.getId(), unitSm.getId(), inventory.getQuantity(), 4)));
+            });
+        }
+        return totalM.get();
     }
 
 

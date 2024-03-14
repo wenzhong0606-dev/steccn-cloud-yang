@@ -16,6 +16,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.util.BigDecimalUtil;
@@ -29,15 +30,11 @@ import com.steccn.platform.dto.SalesLogisticsDTO;
 import com.steccn.platform.dto.SalesLogisticsInfoDTO;
 import com.steccn.platform.dto.SalesLogisticsInfoDetailDTO;
 import com.steccn.platform.dto.SalesLogisticsSyncDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSalesFeignApi;
+import com.steccn.platform.feign.*;
+import com.steccn.platform.vo.*;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SalesLogisticsVO;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
@@ -84,6 +81,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -119,6 +117,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final WmsInventoryRecordService wmsInventoryRecordService;
 
     private final RemoteMessFeignApi remoteMessFeignApi;
+
+    private  final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -963,6 +963,25 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             quantity = infos.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add);
         }
         return quantity;
+    }
+
+    @Override
+    public BigDecimal totalQuantityM(WmsReportWarehouseDTO dto) {
+        AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
+        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassification(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)) {
+            //单位换算
+            Set<Long> materialIdSet = infos.stream().map(WmsDeliveryReceiptInfo::getMaterialId).collect(Collectors.toSet());
+            //获取转换单位
+            SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            infos.forEach(inventory -> {
+                totalM.set(BigDecimalUtil.add(totalM.get(), UnitConvertUtil.convertMaterial(materialConvertMap.get(inventory.getMaterialId()), unitPiece.getId(), unitSm.getId(), inventory.getQuantity(), 4)));
+            });
+        }
+        return totalM.get();
     }
 
     /**

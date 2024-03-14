@@ -169,5 +169,22 @@ public class WmsReportController {
         quantityVO.setTransferTotalQuantity(wmsTransferSlipService.totalQuantity(dto));
         return R.success(quantityVO);
     }
+
+    @PostMapping("/total/quantity/m")
+    @ApiOperation("获取单据明细总数")
+    public R<WmsReportTotalQuantityVO> totalQuantityM(@RequestBody WmsReportWarehouseDTO dto) {
+        WmsReportTotalQuantityVO quantityVO = new WmsReportTotalQuantityVO();
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+        }
+        //获取入库单据明细总数
+        quantityVO.setWarehouseTotalQuantity(wmsStorageReceiptService.totalQuantityM(dto));
+        //获取出库单据明细总数
+        quantityVO.setOutboundTotalQuantity(wmsDeliveryReceiptService.totalQuantityM(dto));
+        //获取调拨单据明细总数
+        quantityVO.setTransferTotalQuantity(wmsTransferSlipService.totalQuantityM(dto));
+        return R.success(quantityVO);
+    }
 }
 

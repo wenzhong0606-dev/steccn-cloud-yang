@@ -154,4 +154,6 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
+
+    BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
 }
