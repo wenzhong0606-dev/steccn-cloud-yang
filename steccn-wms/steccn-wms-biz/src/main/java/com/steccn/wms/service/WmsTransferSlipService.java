@@ -131,4 +131,6 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
      * @return
      */
     Map<String,BigDecimal> materialQuantityByDateAndWarehouseQuantity(RawMaterialReportDTO dto);
+
+    BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
 }

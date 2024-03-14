@@ -20,6 +20,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
@@ -36,9 +37,11 @@ import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.*;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemoteMessFeignApi;
@@ -70,6 +73,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 
@@ -115,6 +119,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     private final RemoteMessFeignApi remoteMessFeignApi;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -1675,6 +1681,25 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         WmsDeliveryReceipt wmsDeliveryReceipt =wmsDeliveryReceiptService.getById(deliveryId);
         Assert.notNull(wmsDeliveryReceipt,"单据不存在");
         return chargeAgainstStorage(deliveryId,userName);
+    }
+
+    @Override
+    public BigDecimal totalQuantityM(WmsReportWarehouseDTO dto) {
+        AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
+        List<WmsStorageReceiptInfo> infos = this.baseMapper.warehousingClassification(dto.getWarehouseIds(),dto.getStartTime(),dto.getEndTime());
+        if (CollUtil.isNotEmpty(infos)) {
+            //单位换算
+            Set<Long> materialIdSet = infos.stream().map(WmsStorageReceiptInfo::getMaterialId).collect(Collectors.toSet());
+            //获取转换单位
+            SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            infos.forEach(inventory -> {
+                totalM.set(BigDecimalUtil.add(totalM.get(), UnitConvertUtil.convertMaterial(materialConvertMap.get(inventory.getMaterialId()), unitPiece.getId(), unitSm.getId(), inventory.getQuantity(), 4)));
+            });
+        }
+        return totalM.get();
     }
 
     /**

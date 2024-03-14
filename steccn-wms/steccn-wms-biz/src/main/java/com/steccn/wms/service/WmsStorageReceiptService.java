@@ -205,4 +205,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     Boolean chargeAgainstDelivery(Long deliveryId,String userName);
+
+    BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
 }
