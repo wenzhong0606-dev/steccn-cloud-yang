@@ -3,6 +3,7 @@ package com.steccn.wms.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
@@ -66,7 +67,7 @@ public class WmsReportController {
 
     @PostMapping("/inaction/stock")
     @ApiOperation("获取呆滞库存")
-    public R<BigDecimal>  inactionStock(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
+    public R<TupleDTO<BigDecimal,BigDecimal>>  inactionStock(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
         return R.success(wmsInventoryService.inactionStock(wmsReportWarehouseDTO));
     }
 

@@ -10,17 +10,22 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.CaseSiteDTO;
+import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
@@ -34,7 +39,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.events.Event;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -63,6 +67,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     private final WmsCustomerBarcodeService customerBarcodeService;
 
     private final WmsInventoryRecordService wmsInventoryRecordService;
+    
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
@@ -613,8 +619,10 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
      * @return
      */
     @Override
-    public BigDecimal inactionStock(WmsReportWarehouseDTO dto) {
+    public TupleDTO<BigDecimal,BigDecimal> inactionStock(WmsReportWarehouseDTO dto) {
+        TupleDTO<BigDecimal,BigDecimal>  tupleDTO =  new TupleDTO<>();
         BigDecimal quantity = null;
+        AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
         //获取仓库下的呆滞货架
         if (Objects.nonNull(dto.getWarehouseIds())){
             SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
@@ -624,18 +632,29 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                     .collect(Collectors.toSet());
             sysOfficeParentDTO.setParentIds(warehouseIds);
             List<SysOfficeVO> officeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if (CollUtil.isNotEmpty(officeVOList)){
+            if (CollUtil.isNotEmpty(officeVOList)) {
                 //获取呆滞品货架
-                Set<Integer> shelfIds= officeVOList.stream()
-                        .filter(vo ->WmsManagerConstant.INACTION_STOCK.equals(vo.getOfficeName())).map(SysOfficeVO::getId).collect(Collectors.toSet());
+                Set<Integer> shelfIds = officeVOList.stream()
+                        .filter(vo -> WmsManagerConstant.INACTION_STOCK.equals(vo.getOfficeName())).map(SysOfficeVO::getId).collect(Collectors.toSet());
                 List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getShelfId, shelfIds));
-                if (CollUtil.isNotEmpty(list)){
+                if (CollUtil.isNotEmpty(list)) {
                     List<BigDecimal> collect = list.stream().map(WmsInventory::getTotalQuantity).collect(Collectors.toList());
+                    Set<Long> materialIdSet = list.stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
+                    //获取转换单位
+                    SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    //单位转换
+                    Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     quantity = BigDecimalUtil.sum(collect);
+                    list.forEach(inventory -> {
+                        totalM.set(BigDecimalUtil.add(totalM.get(), UnitConvertUtil.convertMaterial(materialConvertMap.get(inventory.getMaterialId()), unitPiece.getId(), unitSm.getId(), inventory.getTotalQuantity(), 4)));
+                    });
                 }
             }
         }
-        return quantity;
+        tupleDTO.setField1(quantity);
+        tupleDTO.setField2(totalM.get());
+        return tupleDTO;
     }
 
     @Override

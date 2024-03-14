@@ -2,6 +2,7 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsInventory;
@@ -264,7 +265,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @param wmsReportWarehouseDTO
      * @return
      */
-    BigDecimal inactionStock(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+    TupleDTO<BigDecimal,BigDecimal> inactionStock(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 
 
     /**
