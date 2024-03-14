@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.BeanUtils;
 import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
@@ -60,14 +61,15 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
 
     @Override
     public Page<EpDiscountFactorVO> getPage(EpDiscountFactorPageDTO dto) {
-        LambdaQueryWrapper<EpDiscountFactor> condition = new LambdaQueryWrapper<EpDiscountFactor>()
+        QueryWrapper<EpDiscountFactor> condition = new QueryWrapper<EpDiscountFactor>();
+        //排序
+        getSortField(condition, dto.getSortField(), dto.getAscFlag());
+        LambdaQueryWrapper<EpDiscountFactor> eq = condition.lambda()
                 .like(Objects.nonNull(dto.getName()), EpDiscountFactor::getName, dto.getName())
                 .eq(Objects.nonNull(dto.getType()), EpDiscountFactor::getType, dto.getType())
                 .eq(Objects.nonNull(dto.getEnergyType()), EpDiscountFactor::getEnergyType, dto.getEnergyType());
-        //排序
-        getSortField(condition, dto.getSortField(), dto.getAscFlag());
         //查询
-        Page<EpDiscountFactor> page = page(new Page<>(dto.getCurrent(), dto.getSize()), condition);
+        Page<EpDiscountFactor> page = page(new Page<>(dto.getCurrent(), dto.getSize()), eq);
         //拷贝数据
         List<EpDiscountFactorVO> resList = BeanUtil.copyToList(page.getRecords(), EpDiscountFactorVO.class);
         //查询数据字典[系数类型，计量单位]，能源类型
@@ -235,15 +237,17 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
      * @param sortField 排序字段
      * @param ascFlag   排序-顺序逆序
      */
-    private void getSortField(LambdaQueryWrapper<EpDiscountFactor> condition, String sortField, Boolean ascFlag) {
+    private void getSortField(QueryWrapper condition, String sortField, Boolean ascFlag) {
         if ("name".equals(sortField)) {
-            condition.orderBy(true, ascFlag, EpDiscountFactor::getName);
+            condition.orderBy(true, ascFlag, "CONVERT(`name` USING gbk)");
         } else if ("type".equals(sortField)) {
-            condition.orderBy(true, ascFlag, EpDiscountFactor::getType);
+            condition.orderBy(true, ascFlag, "type");
         } else if ("energyType".equals(sortField)) {
-            condition.orderBy(true, ascFlag, EpDiscountFactor::getEnergyType);
+            condition.orderBy(true, ascFlag, "energy_type");
         } else if ("validStart".equals(sortField)) {
-            condition.orderBy(true, ascFlag, Lists.newArrayList(EpDiscountFactor::getValidStart, EpDiscountFactor::getValidEnd));
+            condition.orderBy(true, ascFlag, Lists.newArrayList("valid_start", "valid_end"));
+        } else {
+            condition.orderBy(true, false, "id");
         }
     }
 
