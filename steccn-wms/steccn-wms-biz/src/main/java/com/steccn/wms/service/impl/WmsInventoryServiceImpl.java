@@ -658,8 +658,21 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
-    public BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO) {
-        return this.baseMapper.inventory(wmsReportWarehouseDTO.getWarehouseIds());
+    public BigDecimal inventoryM(WmsReportWarehouseDTO wmsReportWarehouseDTO) {
+        AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
+        List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getWarehouseId, wmsReportWarehouseDTO.getWarehouseIds()));
+        if (CollUtil.isNotEmpty(list)){
+            Set<Long> materialIdSet = list.stream().map(WmsInventory::getMaterialId).collect(Collectors.toSet());
+            //获取转换单位
+            SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //单位转换
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            list.forEach(inventory -> {
+                totalM.set(BigDecimalUtil.add(totalM.get(), UnitConvertUtil.convertMaterial(materialConvertMap.get(inventory.getMaterialId()), unitPiece.getId(), unitSm.getId(), inventory.getTotalQuantity(), 4)));
+            });
+        }
+        return totalM.get();
     }
 
     @Override
@@ -700,6 +713,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         });
         page.setRecords(res);
         return page;
+    }
+
+    @Override
+    public BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO) {
+        return this.baseMapper.inventory(wmsReportWarehouseDTO.getWarehouseIds());
     }
 
     @Override

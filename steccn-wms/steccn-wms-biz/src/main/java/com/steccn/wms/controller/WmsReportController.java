@@ -73,8 +73,13 @@ public class WmsReportController {
 
     @PostMapping("/inventory")
     @ApiOperation("获取实时库存")
-    public R<BigDecimal>  inventory(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
+    public R<BigDecimal> inventory(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
         return R.success(wmsInventoryService.inventory(wmsReportWarehouseDTO));
+    }
+    @PostMapping("/inventory/m")
+    @ApiOperation("获取实时库存-平方米")
+    public R<BigDecimal> inventoryM(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
+        return R.success(wmsInventoryService.inventoryM(wmsReportWarehouseDTO));
     }
 
 

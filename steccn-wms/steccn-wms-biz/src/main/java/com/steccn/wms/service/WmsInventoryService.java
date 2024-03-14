@@ -273,7 +273,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @param wmsReportWarehouseDTO
      * @return
      */
-    BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+    BigDecimal inventoryM(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 
 
     /**
@@ -282,4 +282,6 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Page<WmsInventoryVO> pageListAvailableZero(WmsInventoryPageDTO dto);
+
+    BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 }
