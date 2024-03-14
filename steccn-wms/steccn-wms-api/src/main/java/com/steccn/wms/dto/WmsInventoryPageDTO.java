@@ -17,6 +17,10 @@ import java.math.BigDecimal;
 @ApiModel("库存分页DTO")
 public class WmsInventoryPageDTO  extends BasePageDTO {
 
+
+    @ApiModelProperty("编码名称")
+    private String codeOrName;
+
     @ApiModelProperty("物料名称")
     private String materialName;
 
