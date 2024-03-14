@@ -21,6 +21,7 @@ import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.*;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -44,6 +45,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice> implements SysOfficeService {
     private final OaInfoService oaInfoService;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+
 
     @Override
     public List<SysOfficeVO> sysList(String officeType) {

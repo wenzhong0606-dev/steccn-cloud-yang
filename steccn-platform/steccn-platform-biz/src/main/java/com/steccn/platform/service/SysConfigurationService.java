@@ -41,4 +41,11 @@ public interface SysConfigurationService extends IService<SysConfiguration> {
     Set<String> contentByType(String type);
 
     SysConfigurationDTO infoByTypeAndContent(String type,String content);
+
+    /**
+     * 根据type查询所有类型
+     * @param type
+     * @return
+     */
+    List<SysConfigurationDTO> infoByType(String type);
 }

@@ -94,4 +94,10 @@ public class SysConfigurationFeignController {
     public R<SysConfigurationDTO> infoByContentAndType(@RequestBody TupleDTO<String, String> dto) {
         return R.success(sysConfigurationService.infoByTypeAndContent(dto.getField1(), dto.getField2()));
     }
+
+    @ApiOperation(value = "根据type获取所有的的配置")
+    @GetMapping("/infoByType")
+    public R<List<SysConfigurationDTO>> infoByType(@RequestParam("type") String type) {
+        return R.success(sysConfigurationService.infoByType(type));
+    }
 }
