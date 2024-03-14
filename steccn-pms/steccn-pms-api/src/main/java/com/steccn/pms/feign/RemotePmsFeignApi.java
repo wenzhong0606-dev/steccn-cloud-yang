@@ -15,6 +15,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+import reactor.util.function.Tuple3;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -192,5 +193,9 @@ public interface RemotePmsFeignApi {
     @ApiOperation("获取电能源类型的产量")
     @PostMapping("/feign/pms/produce/order/electric/energy/order")
     R<Map<String, BigDecimal>> orderDetailElectricEnergy(@RequestBody Tuple4DTO<LocalDate, LocalDate, List<Integer>, List<BigDecimal>> tupleDTO);
+
+    @ApiOperation("获取车间的入库量汇总")
+    @PostMapping("/feign/pms/produce/order/part/instorage")
+    R<BigDecimal> partInStorageTon(@RequestBody TripleDTO<Integer, LocalDate, LocalDate> tripleDTO);
 
 }

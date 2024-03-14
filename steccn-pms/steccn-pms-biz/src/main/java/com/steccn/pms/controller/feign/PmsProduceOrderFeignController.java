@@ -1,20 +1,24 @@
 package com.steccn.pms.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.service.PmsBarcodePrintService;
-import com.steccn.pms.service.PmsCompleteStorageInfoService;
-import com.steccn.pms.service.PmsProduceOrderService;
-import com.steccn.pms.service.PmsWorkOrderBatchService;
+import com.steccn.pms.service.*;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.Api;
@@ -25,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.tomcat.jni.Local;
 import org.springframework.web.bind.annotation.*;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -55,6 +61,9 @@ public class PmsProduceOrderFeignController {
     private final PmsBarcodePrintService pmsBarcodePrintService;
 
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+
+    private final PmsReportDashboardService pmsReportDashboardService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @PostMapping("/report")
     @ApiOperation("查询当前班次日期的所有报工记录")
@@ -177,6 +186,13 @@ public class PmsProduceOrderFeignController {
     @PostMapping("/electric/energy/order")
     R<Map<String, BigDecimal>> orderDetailElectricEnergy(@RequestBody Tuple4DTO<LocalDate, LocalDate, List<Integer>,List<BigDecimal>> tupleDTO){
         return R.success(pmsProduceOrderService.orderDetailElectricEnergy(tupleDTO.getField1(),tupleDTO.getField2(), tupleDTO.getField3(),tupleDTO.getField4()));
+    }
+
+    @ApiOperation("获取车间的入库量汇总")
+    @PostMapping("/part/instorage")
+    R<BigDecimal> partInStorageTon(@RequestBody TripleDTO<Integer, LocalDate, LocalDate> tripleDTO) {
+        List<BigDecimal> resList = pmsReportDashboardService.inStorageDateRange(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3());
+        return R.success(resList.get(0));
     }
 
 }

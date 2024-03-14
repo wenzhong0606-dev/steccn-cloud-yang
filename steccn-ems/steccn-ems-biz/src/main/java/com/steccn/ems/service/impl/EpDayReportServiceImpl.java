@@ -21,9 +21,14 @@ import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
@@ -61,6 +66,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpMeterReadService epMeterReadService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpDiscountFactorService epDiscountFactorService;
+    private final RemotePmsFeignApi remotePmsFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
@@ -78,18 +85,63 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         try {
             List<EpDayReportCountRowVO> dataList = asyncTask(start, end, energyTypeList, defaultNodeMap);
             resVo.setDataList(dataList);
-            //计算汇总
+            BigDecimal ec1 = null, ec2 = null, ed = null, pb = null;
+            //计算能源消费量总计
             BigDecimal equivalentValueSum = null;
             BigDecimal equalValueSum = null;
             for (EpDayReportCountRowVO ele : dataList) {
+                if ("电".equals(ele.getEnergyType()) && ele.getDepartmentName().contains("基片")) {
+                    ed = ele.getEquivalentValue();
+                } else if ("天然气".equals(ele.getEnergyType())) {
+                    ec1 = ele.getEquivalentValue();
+                } else if ("燃料油".equals(ele.getEnergyType())) {
+                    ec2 = ele.getEquivalentValue();
+                }
+
                 equalValueSum = BigDecimalUtil.add(equalValueSum, ele.getEqualValue());
                 equivalentValueSum = BigDecimalUtil.add(equivalentValueSum, ele.getEquivalentValue());
             }
             EpDayReportCountRowVO rowSum = new EpDayReportCountRowVO();
             rowSum.setEnergyType("能源消费量总计");
-            rowSum.setEqualValue(equalValueSum);
-            rowSum.setEquivalentValue(equivalentValueSum);
+            rowSum.setEqualValue(BigDecimalUtil.setScale(equalValueSum, 2));
+            rowSum.setEquivalentValue(BigDecimalUtil.setScale(equivalentValueSum, 2));
             dataList.add(rowSum);
+            //计算单位产量综合能耗
+            //单位产量综合能耗Eb = 1000 *（ec1 / (c1 * 1.08) + ec2 / c1 + ed) / Pb
+            //ec1：“天然气”的能源消费量当量值总计
+            //c1：当月窑龄系数（对照系数的有效期）
+            //ec2：“燃料油”的能源消费量当量值总计
+            //ed：“基片”行的能源消费量当量值
+            //Pb：所有列的班次日期对应的基片入库总量加总，单位为吨（班次日期T的基片入库总量，相当于生产管理->统计分析报表->基片日报表中，班次日期T所有产线的“入库(t)"合计值加总）
+            SysDictVO sysDictVO3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("2","discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取日期范围内 有效的折标系数-窑龄系数
+            Assert.notNull(sysDictVO3,"数据字典-窑龄系数不存在");
+            List<EpDiscountFactorVO> validDiscountList3 = epDiscountFactorService.getValidDiscountList(sysDictVO3.getId(), start, end);
+            EpDiscountFactorVO discountFactor3 = new EpDiscountFactorVO();
+            if(CollUtil.isNotEmpty(validDiscountList3)){
+                discountFactor3 = validDiscountList3.get(0);
+            }
+            BigDecimal c1 = GetValueUtil.get(discountFactor3, x -> x.getValue());
+            SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
+            sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.DEPARTMENT));
+            sysOfficeTypeKeyDTO.setKeyList(Lists.newArrayList("基片制造部"));
+            List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(officeList)){
+                pb = FeignOptional.of(() -> remotePmsFeignApi.partInStorageTon(new TripleDTO<>(officeList.get(0).getId(),start, end)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            }
+            //单位产量综合能耗Eb = 1000 *（ec1 / (c1 * 1.08) + ec2 / c1 + ed) / Pb
+            BigDecimal tmp1 = BigDecimalUtil.add(c1, new BigDecimal("1.08"));
+            tmp1 = BigDecimalUtil.divide(ec1, tmp1);
+            BigDecimal tmp2 = BigDecimalUtil.divide(ec2, c1);
+            tmp2 = BigDecimalUtil.add(tmp2, ed);
+            BigDecimal tmp = BigDecimalUtil.add(tmp1,tmp2);
+            tmp = BigDecimalUtil.divide(tmp , pb);
+            tmp = BigDecimalUtil.multiply(tmp,BigDecimalUtil.THOUSAND);
+            EpDayReportCountRowVO rowSumConvert = new EpDayReportCountRowVO();
+            rowSumConvert.setEnergyType("单位产量综合能耗");
+            rowSumConvert.setUnit("kgce/t");
+            rowSumConvert.setEquivalentValue(BigDecimalUtil.setScale(tmp, 2));
+            dataList.add(rowSumConvert);
         } catch (Exception e) {
             log.error("{}", e.getLocalizedMessage());
         }
@@ -543,16 +595,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         SysDictVO sysDictVO1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", "discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO sysDictVO2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysDictVO sysDictVO3 = FeignOptional.of(() -> remoteDictFeignApi.getByCode("2","discount_factor_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(sysDictVO1,"数据字典-当量折标系数不存在");
         Assert.notNull(sysDictVO2,"数据字典-等价折标系数不存在");
-        Assert.notNull(sysDictVO3,"数据字典-窑龄系数不存在");
         //获取日期范围内 有效的折标系数-当量折标系数
         List<EpDiscountFactorVO> validDiscountList1 = epDiscountFactorService.getValidDiscountList(sysDictVO1.getId(), start, end);
         //获取日期范围内 有效的折标系数-等价折标系数
         List<EpDiscountFactorVO> validDiscountList2 = epDiscountFactorService.getValidDiscountList(sysDictVO2.getId(), start, end);
-        //获取日期范围内 有效的折标系数-窑龄系数
-        List<EpDiscountFactorVO> validDiscountList3 = epDiscountFactorService.getValidDiscountList(sysDictVO3.getId(), start, end);
 
         CompletableFuture<List<EpDayReportCountRowVO>> elecFuture = CompletableFuture.supplyAsync(() -> {
             try {

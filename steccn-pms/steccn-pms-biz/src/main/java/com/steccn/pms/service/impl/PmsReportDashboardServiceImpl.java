@@ -275,7 +275,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     @Override
     public List<BigDecimal> inStorageDateRange(Integer partId, LocalDate start, LocalDate end) {
-        SysOfficeVO partOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(partId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeVO partOffice = FeignOptional.of(() -> remoteOfficeFeign.info(partId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(partOffice, "制造部不能为空");
         List<SysOfficeVO> workshopList = pmsOfficeManager.getChildren(partOffice.getId(), SysOfficeConstant.WORKSHOP);
         Assert.notEmpty(workshopList, "制造部下暂无车间");
