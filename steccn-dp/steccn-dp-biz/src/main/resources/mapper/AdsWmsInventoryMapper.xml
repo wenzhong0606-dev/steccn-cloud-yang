@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.AdsWmsInventoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.AdsWmsInventory">
+            <id property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <id property="warehouseId" column="warehouse_id" jdbcType="INTEGER"/>
+            <id property="shelfId" column="shelf_id" jdbcType="INTEGER"/>
+            <id property="unit1" column="unit1" jdbcType="BIGINT"/>
+            <id property="dt" column="dt" jdbcType="DATE"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+            <result property="warehouseCode" column="warehouse_code" jdbcType="VARCHAR"/>
+            <result property="warehouseName" column="warehouse_name" jdbcType="VARCHAR"/>
+            <result property="shelfCode" column="shelf_code" jdbcType="VARCHAR"/>
+            <result property="shelfName" column="shelf_name" jdbcType="VARCHAR"/>
+            <result property="totalQuantity1" column="total_quantity1" jdbcType="DECIMAL"/>
+            <result property="totalQuantity2" column="total_quantity2" jdbcType="DECIMAL"/>
+            <result property="unit2" column="unit2" jdbcType="BIGINT"/>
+            <result property="totalQuantity3" column="total_quantity3" jdbcType="DECIMAL"/>
+            <result property="unit3" column="unit3" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        material_id,warehouse_id,shelf_id,
+        unit1,dt,material_code,
+        material_name,warehouse_code,warehouse_name,
+        shelf_code,shelf_name,total_quantity1,
+        total_quantity2,unit2,total_quantity3,
+        unit3
+    </sql>
+</mapper>
