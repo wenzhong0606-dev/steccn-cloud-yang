@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -22,6 +24,7 @@ import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.platform.service.SysConfigurationService;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -45,7 +48,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice> implements SysOfficeService {
     private final OaInfoService oaInfoService;
-    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final SysConfigurationService sysConfigurationService;
 
 
     @Override
@@ -63,6 +66,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public List<SysOfficeVO> treeData() {
+        List<SysConfigurationDTO> mesOaDept = sysConfigurationService.infoByType("MES_OA_DEPT");
         //获取所有数据
         //机构类型
         List<String> officeTypeList = Lists.newArrayList();
@@ -91,7 +95,10 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             SysOfficeVO vo = new SysOfficeVO();
             BeanUtil.copyProperties(tmp,vo);
             //塞入oa
-            if(!tmp.getOfficeType().equals(SysOfficeConstant.POST)){
+            SysConfigurationDTO oaId = mesOaDept.stream().filter(v -> v.getContent().equals(tmp.getId().toString())).findFirst().orElse(null);
+            if(Objects.nonNull(oaId)){
+                vo.setOaId(Integer.parseInt(oaId.getRefContent()));
+            }else if(!tmp.getOfficeType().equals(SysOfficeConstant.POST)){
                 OaDepartmentVO oaDepartmentVO = allDepartment.stream().filter(v -> v.getDepartmentName().equals(vo.getOfficeName())).findFirst().orElse(null);
                 if(Objects.nonNull(oaDepartmentVO)){
                     vo.setOaId(oaDepartmentVO.getId());

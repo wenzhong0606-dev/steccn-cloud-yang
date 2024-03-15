@@ -106,7 +106,7 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
         if(CollUtil.isNotEmpty(config)){
             config.forEach(tmp->{
                 SysConfigurationDTO result = new SysConfigurationDTO();
-                BeanUtils.copyProperties(config, result);
+                BeanUtils.copyProperties(tmp, result);
                 results.add(result);
             });
         }
