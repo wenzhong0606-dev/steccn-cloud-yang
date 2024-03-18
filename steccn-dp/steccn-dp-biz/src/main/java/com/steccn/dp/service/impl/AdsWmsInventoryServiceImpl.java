@@ -30,9 +30,6 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
     @Override
     public TupleDTO<BigDecimal, BigDecimal> ending(DpWmsDataDTO dto) {
         TupleDTO<BigDecimal, BigDecimal> tupleDTO = new TupleDTO<>();
-        if (Objects.nonNull(dto.getDate())) {
-            dto.setDate(dto.getDate().minusDays(1));
-        }
         List<AdsWmsInventory> list = list(new LambdaQueryWrapper<AdsWmsInventory>()
                 .eq(AdsWmsInventory::getDt, dto.getDate())
                 .in(AdsWmsInventory::getWarehouseId, dto.getWarehouseIds()));
@@ -46,6 +43,9 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
     @Override
     public TupleDTO<BigDecimal, BigDecimal> openning(DpWmsDataDTO dto) {
         TupleDTO<BigDecimal, BigDecimal> tupleDTO = new TupleDTO<>();
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setDate(dto.getDate().minusDays(1));
+        }
         List<AdsWmsInventory> list = list(new LambdaQueryWrapper<AdsWmsInventory>()
                 .eq(AdsWmsInventory::getDt, dto.getDate())
                 .in(AdsWmsInventory::getWarehouseId, dto.getWarehouseIds()));
