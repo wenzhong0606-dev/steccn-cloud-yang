@@ -4,6 +4,7 @@ package com.steccn.wms.controller;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
@@ -158,8 +159,8 @@ public class WmsReportController {
     public R<WmsReportTotalQuantityVO> totalQuantity(@RequestBody WmsReportWarehouseDTO dto) {
         WmsReportTotalQuantityVO quantityVO = new WmsReportTotalQuantityVO();
         if (Objects.nonNull(dto.getDate())) {
-            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
-            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+            dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
+            dto.setEndTime(LocalDateUtil.getMorning(dto.getDate()).plusDays(1));
         }
         //获取入库单据明细总数
         quantityVO.setWarehouseTotalQuantity(wmsStorageReceiptService.totalQuantity(dto));
@@ -175,8 +176,8 @@ public class WmsReportController {
     public R<WmsReportTotalQuantityVO> totalQuantityM(@RequestBody WmsReportWarehouseDTO dto) {
         WmsReportTotalQuantityVO quantityVO = new WmsReportTotalQuantityVO();
         if (Objects.nonNull(dto.getDate())) {
-            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
-            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+            dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
+            dto.setEndTime(LocalDateUtil.getMorning(dto.getDate()).plusDays(1));
         }
         //获取入库单据明细总数
         quantityVO.setWarehouseTotalQuantity(wmsStorageReceiptService.totalQuantityM(dto));

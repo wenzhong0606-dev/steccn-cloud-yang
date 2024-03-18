@@ -120,9 +120,9 @@
             </foreach>
         </if>
         <if test="startTime !=null and endTime !=null">
-            and wts.create_time between #{startTime} and #{endTime}
+            and wts.affirm_time between #{startTime} and #{endTime}
         </if>
-        and wts.`status` != 5
+        and wts.`status` in(1,2,3)
         group by info.material_id;
     </select>
     <select id="materialDepot" resultType="com.steccn.wms.domain.WmsTransferSlipInfo">

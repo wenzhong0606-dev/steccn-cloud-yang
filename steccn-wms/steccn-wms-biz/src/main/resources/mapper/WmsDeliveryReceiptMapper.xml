@@ -122,9 +122,9 @@
             </foreach>
         </if>
         <if test="startTime !=null and endTime !=null">
-            and wdr.create_time between #{startTime} and #{endTime}
+            and wdr.affirm_time between #{startTime} and #{endTime}
         </if>
-        and wdr.`status` != 5
+        and wdr.`status` in(1,2,3,5)
         group by info.material_id;
     </select>
 </mapper>
