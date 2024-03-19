@@ -833,12 +833,27 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     @Override
     public List<EpMeterReadAllDataVO> classDateAllDataShare(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
+        List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         //分摊逻辑-只涉及基片制造部&深加工一~八线
         //获取指定的组织结构名称和主键
         Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap = epPartitionService.dayReportCountDefaultNode();
         List<TripleDTO<Long, Integer, String>> partitionList = defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC);
         List<Long> sharePartitionList = partitionList.stream().map(TripleDTO::getField1).collect(Collectors.toList());
+        //包含厚度的数据结果集
         List<EpMeterReadAllDataVO> classDateAllData = classDateAllData(dateSet, energyType, sharePartitionList);
+        //将classDateAllData根据日期和节点分组--最终返回规范
+        Map<String, List<EpMeterReadAllDataVO>> map = classDateAllData.stream().collect(Collectors.groupingBy(v -> v.getReadDate() + "_" + v.getSysOfficeId()));
+        map.forEach((k, v) -> {
+            EpMeterReadAllDataVO ele = v.get(0);
+            List<BigDecimal> valueList = v.stream().map(aa -> aa.getConsume()).collect(Collectors.toList());
+            ele.setThick(null);
+            ele.setClassId(null);
+            ele.setClassGroupId(null);
+            ele.setConsume(BigDecimalUtil.sum(valueList));
+            resList.add(ele);
+        });
+        classDateAllData = resList;
+
         //获取配置map
         Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //基片制造部
@@ -863,12 +878,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取
         LocalDate start = dateSet.stream().min((x, y) -> x.compareTo(y)).get();
         LocalDate end = dateSet.stream().max((x, y) -> x.compareTo(y)).get();
-        List<LocalDate> timeList  = dateSet.stream().sorted(new Comparator<LocalDate>() {
-            @Override
-            public int compare(LocalDate o1, LocalDate o2) {
-                return o1.compareTo(o2);
-            }
-        }).collect(Collectors.toList());
+        List<LocalDate> timeList = dateSet.stream().sorted((x, y) -> x.compareTo(y)).collect(Collectors.toList());
         //基片制造部=b1+b2+b3
         List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> jpzzbList.contains(v.getSysOfficeId())).collect(Collectors.toList());
         Map<LocalDate, List<BigDecimal>> jpResMap = Maps.newHashMap();
@@ -918,10 +928,44 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
         Map<String, BigDecimal> nRateMap = getNRateMap(sjgLineList, timeList, jpResMap, lineResMap);
         dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
-        log.info("{}", jpResMap);
-        log.info("{}", lineResMap);
-
+        classDateAllData = classDateAllData.stream().filter(ele -> jpzzbList.contains(ele.getSysOfficeId()) || sjgLine14List.contains(ele.getSysOfficeId()) || sjgLine58List.contains(ele.getSysOfficeId())).collect(Collectors.toList());
+        List<EpMeterReadAllDataVO> jpzzCDAD = classDateAllData.stream().filter(ele -> jpzzbList.contains(ele.getSysOfficeId())).collect(Collectors.toList());
+        List<EpMeterReadAllDataVO> lineCDAD = classDateAllData.stream().filter(ele -> sjgLine14List.contains(ele.getSysOfficeId()) || sjgLine58List.contains(ele.getSysOfficeId())).collect(Collectors.toList());
+        //重新计算基片行和产线行
+        ftJpRow(jpzzCDAD, jpResMap);
+        ftLineRow(lineCDAD, lineResMap);
         return classDateAllData;
+    }
+
+
+    /**
+     * 产线行分摊-数据+合计调整
+     *
+     * @param classDateAllData 数据集合
+     * @param lineResMap  产线数据集合
+     */
+    private void ftLineRow(List<EpMeterReadAllDataVO> classDateAllData, Map<String, List<BigDecimal>> lineResMap) {
+        for (EpMeterReadAllDataVO ele : classDateAllData) {
+            List<BigDecimal> valueList = lineResMap.get(mapKey(ele.getSysOfficeId(), ele.getReadDate()));
+            BigDecimal sum = BigDecimalUtil.sum(valueList);
+            BigDecimal format = BigDecimalUtil.setScale(sum, 0);
+            ele.setConsume(format);
+        }
+    }
+
+    /**
+     * 重新计算分摊的行-数据+合计调整
+     *
+     * @param classDateAllData
+     * @param jpResMap
+     */
+    private void ftJpRow(List<EpMeterReadAllDataVO> classDateAllData, Map<LocalDate, List<BigDecimal>> jpResMap) {
+        for (EpMeterReadAllDataVO ele : classDateAllData) {
+            List<BigDecimal> valueList = jpResMap.get(ele.getReadDate());
+            BigDecimal sum = BigDecimalUtil.sum(valueList);
+            BigDecimal format = BigDecimalUtil.setScale(sum, 0);
+            ele.setConsume(format);
+        }
     }
 
 
