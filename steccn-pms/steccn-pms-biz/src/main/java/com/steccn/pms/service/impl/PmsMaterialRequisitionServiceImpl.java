@@ -285,7 +285,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         }
         //3.3 获取字典、物料以及部门数据
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO eqpSpareVO = new EqpSpareVO();
         Map<Long, List<PmsMaterialRequisitionDemander>> demanderMap = Maps.newHashMap();
@@ -297,14 +297,15 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             for (MaterialRequisitionInfoVO infoVO : infoList) {
                 EqpSpareVO orDefault = materialMap.getOrDefault(infoVO.getMaterialId(), eqpSpareVO);
                 infoVO.setMaterialName(orDefault.getName());
-                infoVO.setShelfName(officeMap.get(infoVO.getShelfId()));
+                infoVO.setShelfName(officeMap.get(infoVO.getShelfId()).getOfficeName());
+                infoVO.setShelfCode(officeMap.get(infoVO.getShelfId()).getOfficeCode());
 //                infoVO.setUnitName(dictMap.get(infoVO.getUnitId()));
                 infoVO.setUnitName(materialMap.get(infoVO.getMaterialId()).getUnit());
                 //3.3.1处理机构数据
                 List<String> organizationList = Lists.newArrayList();
                 if(CollUtil.isNotEmpty(infoVO.getOrganization())){
                     infoVO.getOrganization().forEach(integer -> {
-                        organizationList.add(officeMap.get(integer));
+                        organizationList.add(officeMap.get(integer).getOfficeName());
                     });
                 }
                 infoVO.setOrganizationName(organizationList);
@@ -317,7 +318,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
         materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
         materialRequisitionVO.setDepartmentName(FeignOptional.of(() -> oaInfoService.getDepartmentInfoById(materialRequisitionVO.getDepartmentId()), FeignConstant.STECCN_OA_SERVICE_NAME).get().getDepartmentName());
-        materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
+        materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()).getOfficeName());
         materialRequisitionVO.setList(infoList);
         return materialRequisitionVO;
     }

@@ -52,6 +52,9 @@ public class MaterialRequisitionInfoVO {
     @ApiModelProperty("货架id")
     private Integer shelfId;
 
+    @ApiModelProperty("货架code")
+    private String shelfCode;
+
     @ApiModelProperty("货架名称")
     private String shelfName;
 
