@@ -1,10 +1,11 @@
 package com.steccn.websocket.service;
 
 import cn.hutool.core.collection.CollUtil;
+import com.google.common.collect.Lists;
+import com.steccn.common.dto.TupleDTO;
 import lombok.extern.slf4j.Slf4j;
 import javax.websocket.Session;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -23,7 +24,7 @@ public class WebSocketManager {
     /**
      * 存放在线用户的socket对象【包含用户id-随机数】
      */
-    private static ConcurrentHashMap<Long, CopyOnWriteArraySet<WebSocketServer>> webSocketMap = new ConcurrentHashMap<>();
+    private static Map<Long, CopyOnWriteArraySet<WebSocketServer>> webSocketMap = new ConcurrentHashMap<>();
 
     /**
      * 添加websocket
@@ -62,6 +63,28 @@ public class WebSocketManager {
      *
      * @return 获取ws的数量
      */
+    public synchronized static List<TupleDTO<Long, Long>> activeWebSocket() {
+        List<TupleDTO<Long, Long>> resList = Lists.newArrayList();
+        webSocketMap.forEach((k, v) -> {
+            Long timeStamp = Long.MAX_VALUE;
+            for (WebSocketServer ele : v) {
+                if (Objects.nonNull(ele.getLinkTimeStamp()) && ele.getLinkTimeStamp() < timeStamp) {
+                    timeStamp = ele.getLinkTimeStamp();
+                }
+            }
+            if (timeStamp != Long.MAX_VALUE) {
+                resList.add(new TupleDTO<>(k, timeStamp));
+            }
+        });
+        return resList;
+    }
+
+
+    /**
+     * 活跃的websocket的数量，不是精确值
+     *
+     * @return 获取ws的数量
+     */
     public synchronized static int activeWsSize() {
         int sum = 0;
         for (Map.Entry<Long, CopyOnWriteArraySet<WebSocketServer>> entry : webSocketMap.entrySet()) {
@@ -69,7 +92,6 @@ public class WebSocketManager {
         }
         return sum;
     }
-
 
     /**
      * 服务端群发消息-心跳包

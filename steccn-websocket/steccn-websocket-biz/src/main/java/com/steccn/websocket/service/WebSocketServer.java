@@ -37,6 +37,8 @@ public class WebSocketServer {
      */
     private Long randomId;
 
+    private Long linkTimeStamp;
+
     /**
      * 链接成功调用的方法
      */
@@ -47,6 +49,7 @@ public class WebSocketServer {
             session.setMaxIdleTimeout(MAX_IDLE_TIMEOUT);
             this.userId = userId;
             this.randomId = randomId;
+            this.linkTimeStamp = System.currentTimeMillis();
             WebSocketManager.addWsServer(userId, this);
             log.info("【websocket消息】有新的连接，总数为:" + WebSocketManager.activeWsSize());
         } catch (Exception e) {
@@ -102,5 +105,14 @@ public class WebSocketServer {
      */
     public Long getUserId() {
         return userId;
+    }
+
+    /**
+     * 获取连接时间戳
+     *
+     * @return
+     */
+    public Long getLinkTimeStamp() {
+        return linkTimeStamp;
     }
 }

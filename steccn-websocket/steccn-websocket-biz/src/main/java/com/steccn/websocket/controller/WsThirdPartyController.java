@@ -2,6 +2,7 @@ package com.steccn.websocket.controller;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -14,14 +15,14 @@ import com.steccn.platform.feign.RemoteSafetyFeignApi;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.platform.vo.SafetyTokenVO;
 import com.steccn.websocket.dto.MsgPushDTO;
+import com.steccn.websocket.dto.OnlineUserDTO;
 import com.steccn.websocket.service.WebSocketManager;
+import com.steccn.websocket.service.WsThirdPartyService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -43,7 +44,7 @@ public class WsThirdPartyController {
 
     private final ObjectMapper objectMapper;
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
-    private final RemoteSafetyBizFeignApi remoteSafetyBizFeignApi;
+    private final WsThirdPartyService wsThirdPartyService;
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
     /**
@@ -64,6 +65,12 @@ public class WsThirdPartyController {
 //        });
         return R.success(true);
     }
+
+    @GetMapping("/online")
+    public R<Page<OnlineUserDTO>> online(@RequestParam("current") int current, @RequestParam("size") int size) {
+        return R.success(wsThirdPartyService.online(current, size));
+    }
+
 
     /**
      * 校验请求头信息

@@ -19,4 +19,10 @@ public class KafkaConf {
     @Value("${topicWs}")
     private String topicWs;
 
+    /**
+     * 端口号
+     */
+    @Value("${server.port}")
+    private Integer serverPort;
+
 }
