@@ -183,7 +183,9 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private Map<Integer, BigDecimal> eleConsume(LocalDate start, LocalDate end, List<Long> partitionIdList) {
         Map<Integer, BigDecimal> resMap = Maps.newHashMap();
         List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
-        List<EpMeterReadAllDataVO> electricAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), 1, partitionIdList);
+        Assert.notEmpty(conditionDt,"日期参数不正确");
+        conditionDt.remove(conditionDt.size() - 1);
+        List<EpMeterReadAllDataVO> electricAllData = epMeterReadService.classDateAllDataShare(Sets.newHashSet(conditionDt), 1, partitionIdList);
         if(CollUtil.isNotEmpty(electricAllData)){
             electricAllData.forEach(ele -> {
                 MapUtil.add(resMap, ele.getSysOfficeId(), ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, BigDecimalUtil.SCALE_0));

@@ -1,18 +1,23 @@
 package com.steccn.ems.controller;
 
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.jni.Local;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author chenhuan
@@ -58,4 +63,11 @@ public class EpMeterReadController {
     public R<Boolean> updateBatch(@RequestBody List<EpMeterReadUpdateDTO> dtoList) {
         return R.success(epMeterReadService.updateBatch(dtoList));
     }
+
+    @PostMapping("/class/all/data/share")
+    @ApiOperation(value = "能耗-分摊")
+    public R<List<EpMeterReadAllDataVO>> classAllDataShare(@RequestBody TupleDTO<Set<LocalDate>, List<Long>> tupleDto) {
+        return R.success(epMeterReadService.classDateAllDataShare(tupleDto.getField1(), 1, tupleDto.getField2()));
+    }
+
 }
