@@ -18,10 +18,7 @@ import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsStorageReceiptService;
-import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsSalesDeliveryVO;
-import com.steccn.wms.vo.WmsStorageFlagInfoVO;
-import com.steccn.wms.vo.WmsStorageReceiptVO;
+import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -172,6 +169,13 @@ public class WmsStorageReceiptController {
     @PostMapping("/storage/flag/info")
     public R<WmsStorageFlagInfoVO> storageFlagInfo(@RequestBody WmsStorageReceiptFlagInfoDTO dto){
         return R.success(wmsStorageReceiptService.storageFlagInfo(dto));
+    }
+
+
+    @ApiOperation("销售退货获取物流单标识相关内容")
+    @GetMapping("/sales/returns/flag")
+    public R<WmsSalesReturnsFlagVO> salesReturnsFlag(@RequestParam("number")String number){
+        return R.success(wmsStorageReceiptService.salesReturnsFlag(number));
     }
 
     @ApiOperation("采购入库单明细")

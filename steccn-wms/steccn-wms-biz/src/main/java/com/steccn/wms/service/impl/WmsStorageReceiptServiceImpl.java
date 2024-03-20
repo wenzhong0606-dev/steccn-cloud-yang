@@ -30,10 +30,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.platform.dto.SrmDeliveryBodyDTO;
-import com.steccn.platform.dto.SrmDeliveryDTO;
-import com.steccn.platform.dto.SrmOaWorkFlowDTO;
-import com.steccn.platform.dto.SysConfigurationDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.*;
@@ -121,6 +118,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+
+    private final RemoteSalesFeignApi remoteSalesFeignApi;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -1700,6 +1699,34 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             });
         }
         return totalM.get();
+    }
+
+    @Override
+    public WmsSalesReturnsFlagVO salesReturnsFlag(String number) {
+        WmsSalesReturnsFlagVO wmsSalesReturnsFlagVO = new WmsSalesReturnsFlagVO();
+        //调用物流单明细查询接口
+        SalesLogisticsDTO dto = new SalesLogisticsDTO();
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE1);
+        List<String> codes = Lists.newArrayList();
+        codes.add(number);
+        dto.setCode(codes);
+        String data = remoteSalesFeignApi.queryLogistics(dto);
+        JSONObject jsonObject = JSONObject.parseObject(data);
+        try {
+            List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
+            if (CollUtil.isNotEmpty(logisticsVOS)){
+                wmsSalesReturnsFlagVO.setExists(WmsManagerConstant.YesOrNo.YES.getCode());
+                SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
+                String state = salesLogisticsVO.getState();
+                if (WmsManagerConstant.LogisticsBillState.RETURNED.getName().equals(state) ||
+                        WmsManagerConstant.LogisticsBillState.REISSUED.getName().equals(state)){
+                    wmsSalesReturnsFlagVO.setReturnedState(WmsManagerConstant.YesOrNo.YES.getCode());
+                }
+            }
+        } catch (Exception e) {
+            throw new BusinessException("物流单不存在");
+        }
+        return wmsSalesReturnsFlagVO;
     }
 
     /**
