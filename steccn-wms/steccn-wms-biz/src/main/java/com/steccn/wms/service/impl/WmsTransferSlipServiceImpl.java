@@ -641,6 +641,10 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     public EpChartGraphVO<List<String>, BigDecimal> transferSlipClassification(WmsReportWarehouseDTO dto) {
         EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
+            dto.setEndTime(LocalDateUtil.getMorning(dto.getDate()).plusDays(1));
+        }
         //获取调拨单数据
         LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
                 .eq(Objects.nonNull(dto.getStatus()), WmsTransferSlip::getStatus, dto.getStatus())

@@ -20,16 +20,14 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.ErpReturnStockSaveDTO;
 import com.steccn.mes.dto.ErpStockSaveDetailDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.platform.dto.SalesLogisticsDTO;
-import com.steccn.platform.dto.SalesLogisticsInfoDTO;
-import com.steccn.platform.dto.SalesLogisticsInfoDetailDTO;
-import com.steccn.platform.dto.SalesLogisticsSyncDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -917,6 +915,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     public EpChartGraphVO<List<String>, BigDecimal> outboundDeliveryClassification(WmsReportWarehouseDTO dto) {
         EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        if (Objects.nonNull(dto.getDate())) {
+            dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
+            dto.setEndTime(LocalDateUtil.getMorning(dto.getDate()).plusDays(1));
+        }
         //获取出库单数据
         List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassification(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
         if (CollUtil.isNotEmpty(infos)) {
@@ -957,10 +959,21 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     @Override
     public BigDecimal totalQuantity(WmsReportWarehouseDTO dto) {
         BigDecimal quantity  = null;
-        //获取出库单数据
-        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassification(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
-        if (CollUtil.isNotEmpty(infos)){
-            quantity = infos.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimalUtil::add);
+        //获取当前仓库下的货架
+        SysOfficeParentDTO officeParentDTO = new SysOfficeParentDTO();
+        Set<Integer> ids = dto.getWarehouseIds().stream().mapToInt(Long::intValue)
+                .boxed()
+                .collect(Collectors.toSet());
+        officeParentDTO.setParentIds(ids);
+        officeParentDTO.setOfficeType(WmsManagerConstant.CODE_FIVE);
+        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(officeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(officeVOS)) {
+            Set<Integer> shelfIds = officeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+            //获取出库单数据
+            List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassificationByShelfIds(shelfIds, dto.getStartTime(), dto.getEndTime());
+            if (CollUtil.isNotEmpty(infos)) {
+                quantity = infos.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+            }
         }
         return quantity;
     }
@@ -968,7 +981,15 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     @Override
     public BigDecimal totalQuantityM(WmsReportWarehouseDTO dto) {
         AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
-        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassification(dto.getWarehouseIds(), dto.getStartTime(), dto.getEndTime());
+        //获取当前仓库下的货架
+        SysOfficeParentDTO officeParentDTO = new SysOfficeParentDTO();
+        Set<Integer> ids = dto.getWarehouseIds().stream().mapToInt(Long::intValue)
+                .boxed()
+                .collect(Collectors.toSet());
+        officeParentDTO.setParentIds(ids);
+        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> shelfIds = officeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.outboundDeliveryClassificationByShelfIds(shelfIds, dto.getStartTime(), dto.getEndTime());
         if (CollUtil.isNotEmpty(infos)) {
             //单位换算
             Set<Long> materialIdSet = infos.stream().map(WmsDeliveryReceiptInfo::getMaterialId).collect(Collectors.toSet());

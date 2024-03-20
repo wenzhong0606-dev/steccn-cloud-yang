@@ -1402,8 +1402,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         EpChartGraphVO<List<String>, BigDecimal>   chartVO =  new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         if (Objects.nonNull(dto.getDate())) {
-            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
-            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+            dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
+            dto.setEndTime(LocalDateUtil.getMorning(dto.getDate()).plusDays(1));
         }
         //获取入库单数据
 //        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>()
@@ -1685,7 +1685,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     public BigDecimal totalQuantityM(WmsReportWarehouseDTO dto) {
         AtomicReference<BigDecimal> totalM = new AtomicReference<>(BigDecimal.ZERO);
-        List<WmsStorageReceiptInfo> infos = this.baseMapper.warehousingClassification(dto.getWarehouseIds(),dto.getStartTime(),dto.getEndTime());
+        //获取当前仓库下的货架
+        SysOfficeParentDTO officeParentDTO = new SysOfficeParentDTO();
+        Set<Integer> ids = dto.getWarehouseIds().stream().mapToInt(Long::intValue)
+                .boxed()
+                .collect(Collectors.toSet());
+        officeParentDTO.setParentIds(ids);
+        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> shelfIds = officeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<WmsStorageReceiptInfo> infos = this.baseMapper.warehousingClassificationByShelfIds(shelfIds,dto.getStartTime(),dto.getEndTime());
         if (CollUtil.isNotEmpty(infos)) {
             //单位换算
             Set<Long> materialIdSet = infos.stream().map(WmsStorageReceiptInfo::getMaterialId).collect(Collectors.toSet());

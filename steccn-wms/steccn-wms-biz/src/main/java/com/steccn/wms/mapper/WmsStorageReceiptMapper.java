@@ -59,6 +59,16 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
 
 
     /**
+     * 入库单分类分析
+     * @param shelfIds 货架id集合
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return
+     */
+    List<WmsStorageReceiptInfo> warehousingClassificationByShelfIds(@Param("shelfIds") Set<Integer> shelfIds, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+
+    /**
      * 根据明细的关联单号获取单据信息
      * @param dtoList
      * @return
