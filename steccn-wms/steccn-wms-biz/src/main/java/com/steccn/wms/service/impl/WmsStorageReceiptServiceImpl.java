@@ -1691,7 +1691,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 .boxed()
                 .collect(Collectors.toSet());
         officeParentDTO.setParentIds(ids);
-        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        officeParentDTO.setOfficeType(WmsManagerConstant.CODE_FIVE);
+        List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentIdAndType(officeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Integer> shelfIds = officeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         List<WmsStorageReceiptInfo> infos = this.baseMapper.warehousingClassificationByShelfIds(shelfIds,dto.getStartTime(),dto.getEndTime());
         if (CollUtil.isNotEmpty(infos)) {
