@@ -55,6 +55,7 @@ public class WsHeartBeatService implements InitializingBean {
             if (CollUtil.isNotEmpty(jsonList)) {
                 redisTemplate.opsForList().leftPushAll("ACTIVE_WEBSOCKET_" + kafkaConf.getServerPort(), jsonList);
             }
+            redisTemplate.expire("ACTIVE_WEBSOCKET_" + kafkaConf.getServerPort(), 60, TimeUnit.SECONDS);
         }, 10, 30, TimeUnit.SECONDS);
     }
 }
