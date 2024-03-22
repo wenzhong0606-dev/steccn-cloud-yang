@@ -107,7 +107,9 @@ public interface WmsManagerConstant {
         RESERVED( "已预约"),
         SYN_SENT("已同步"),
         ALREADY_ENTERED("已入场"),
-        OUT_OF_STORAGE("已出库");
+        OUT_OF_STORAGE("已出库"),
+        RETURNED("已退货"),
+        REISSUED("已补发");
 
         private String name;
 

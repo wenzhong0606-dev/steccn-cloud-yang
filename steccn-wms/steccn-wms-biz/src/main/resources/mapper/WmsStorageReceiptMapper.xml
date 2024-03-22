@@ -114,8 +114,8 @@
         </foreach>
     </select>
     <select id="warehousingClassification" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
-        select info.material_id, sum(quantity) as quantity  from wms_storage_receipt wdr join wms_storage_receipt_info info on wdr.id = info.storage_receipt_id and info.del_flag = 0
-        where wdr.del_flag = 0
+        select info.material_id, sum(quantity) as quantity  from wms_storage_receipt wdr join wms_storage_receipt_info info on wdr.id = info.storage_receipt_id
+        where wdr.del_flag = 0 and info.del_flag = 0
         <if test="warehouseIds != null and warehouseIds.size > 0">
             and wdr.warehouse_id in
             <foreach collection="warehouseIds" item="id" open="(" close=")" separator=",">
@@ -127,8 +127,6 @@
         </if>
         and wdr.`status` in (1,2,3,5)
         group by info.material_id;
-
-
     </select>
 
     <update id="salesAutoConfirm">
@@ -152,5 +150,20 @@
                (a.associated_no = #{dto.code} and a.create_time between #{dto.startTime} and #{dto.endTime})
             </foreach>
         </if>
+    </select>
+    <select id="warehousingClassificationByShelfIds" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
+        select info.material_id, sum(quantity) as quantity  from wms_storage_receipt wdr join wms_storage_receipt_info info on wdr.id = info.storage_receipt_id
+        where wdr.del_flag = 0 and info.del_flag = 0
+        <if test="shelfIds != null and shelfIds.size > 0">
+            and info.shelf_id in
+            <foreach collection="shelfIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="startTime !=null and endTime !=null">
+            and wdr.affirm_time between #{startTime} and #{endTime}
+        </if>
+        and wdr.`status` in (1,2,3,5)
+        group by info.material_id;
     </select>
 </mapper>

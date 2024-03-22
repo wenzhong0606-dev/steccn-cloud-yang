@@ -128,8 +128,8 @@ public class WmsReportController {
     public R<WmsDocumentQuantityVO> documentQuantity(@RequestBody  WmsReportWarehouseDTO dto) {
         WmsDocumentQuantityVO wmsDocumentQuantityVO = new WmsDocumentQuantityVO();
         if (Objects.nonNull(dto.getDate())){
-            dto.setStartTime(LocalDateTime.of(dto.getDate(), LocalTime.MIN));
-            dto.setEndTime(LocalDateTime.of(dto.getDate(), LocalTime.MAX));
+            dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
+            dto.setEndTime(LocalDateUtil.getMorning(dto.getDate()).plusDays(1));
         }
         long count1 = wmsStorageReceiptService.count(new LambdaQueryWrapper<WmsStorageReceipt>()
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsStorageReceipt::getCreateTime, dto.getStartTime(), dto.getEndTime())
@@ -142,7 +142,7 @@ public class WmsReportController {
                 .notIn(WmsDeliveryReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()))));
         LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsTransferSlip::getCreateTime, dto.getStartTime(), dto.getEndTime())
-                .notIn(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+                .in(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
         if (CollUtil.isNotEmpty(dto.getWarehouseIds())) {
             wrapper.and(w -> {
                 w.in(WmsTransferSlip::getSourceWarehouse, dto.getWarehouseIds()).or()

@@ -691,6 +691,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 
     @Override
     public Boolean scan(ScanDto scanDto) {
+        //回填领料单关联的调拨单或者出库单单号 并更新领用数量
         Assert.notNull(scanDto.getList(), "扫描明细不能为空");
         //根据类型生成出库单或者调拨单
         if (PmManagerConstant.OrderEnum.ONE.getCode().equals(scanDto.getType())) {
@@ -708,7 +709,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             SysDictVO dict = FeignOptional.of(() -> remoteDictFeignApi.getByCode("other_allocation001", "transfer_slip_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             wmsTransferSlipDTO.setType(dict.getId());
             ScanInfoDto scanInfoDto = scanDto.getList().get(0);
-            SysOfficeVO office = FeignOptional.of(() -> remoteOfficeFeign.shelfWarehouse(scanInfoDto.getShelfId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysOfficeVO office = FeignOptional.of(() -> remoteOfficeFeign.shelfWarehouse(scanInfoDto.getDemandShelfId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             wmsTransferSlipDTO.setSourceWarehouse(scanInfoDto.getWarehouseId());
             wmsTransferSlipDTO.setTargetWarehouse(office.getId());
             List<WmsTransferSlipInfoDTO> list = new ArrayList<>();
