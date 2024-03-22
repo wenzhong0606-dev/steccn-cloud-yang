@@ -624,11 +624,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                         EpDayReportCountRowVO heatPowerRow = heatPowerRow(start, end, elecEnergy, heatPowerAccount.get());
                         //能源消费量当量值tc 转换
                         BigDecimal shEquivalentValue = BigDecimalUtil.multiply(heatPowerRow.getSumStr(), GetValueUtil.get(discount1.get(), x -> x.getValue()));
-                        shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, BigDecimalUtil.THOUSAND);
+                        shEquivalentValue = BigDecimalUtil.divide(shEquivalentValue, new BigDecimal("10000"));
                         heatPowerRow.setEquivalentValue(BigDecimalUtil.setScale(shEquivalentValue, 2));
                         //能源消费量等量值tce 转换
                         BigDecimal shEqualValue = BigDecimalUtil.multiply(heatPowerRow.getSumStr(), GetValueUtil.get(discount2.get(), x -> x.getValue()));
-                        shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
+                        shEqualValue = BigDecimalUtil.divide(shEqualValue, new BigDecimal("10000"));
                         heatPowerRow.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
                         elecList.add(heatPowerRow);
                     }
@@ -1282,14 +1282,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             BigDecimal equivalentValue = BigDecimalUtil.multiply(row.getSumStr(), GetValueUtil.get(discount1, x -> x.getValue()));
             //判断类型
             if(!EpManagerConstant.ENERGY_OIL.equals(epEnergy.getId())){
-                equivalentValue = BigDecimalUtil.divide(equivalentValue, BigDecimalUtil.THOUSAND);
+                equivalentValue = BigDecimalUtil.divide(equivalentValue, new BigDecimal("10000"));
             }
             row.setEquivalentValue(BigDecimalUtil.setScale(equivalentValue, 2));
             //能源消费量等量值tce 转换
             BigDecimal equalValue = BigDecimalUtil.multiply(row.getSumStr(), GetValueUtil.get(discount2, x -> x.getValue()));
             //判断类型
             if(!EpManagerConstant.ENERGY_OIL.equals(epEnergy.getId())) {
-                equalValue = BigDecimalUtil.divide(equalValue, BigDecimalUtil.THOUSAND);
+                equalValue = BigDecimalUtil.divide(equalValue, new BigDecimal("10000"));
             }
             row.setEqualValue(BigDecimalUtil.setScale(equalValue, 2));
             rowList.add(row);
