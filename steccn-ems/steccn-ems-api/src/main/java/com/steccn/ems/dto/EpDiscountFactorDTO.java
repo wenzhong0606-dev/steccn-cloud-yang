@@ -4,6 +4,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
+
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -40,7 +41,6 @@ public class EpDiscountFactorDTO implements Serializable {
     /**
      * 能源类型
      */
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "能源类型不能为空")
     private Integer energyType;
 
     /**
@@ -55,7 +55,6 @@ public class EpDiscountFactorDTO implements Serializable {
     /**
      * 计量单位
      */
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "计量单位不能为空")
     private Long valueUnit;
 
     /**
