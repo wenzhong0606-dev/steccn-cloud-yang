@@ -11,6 +11,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.oa.dto.OaHrmresourceDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.websocket.dto.OnlineUserDTO;
@@ -67,7 +68,7 @@ public class WsThirdPartyService {
             });
             log.info("START_OA");
             long ll = System.currentTimeMillis();
-            Map<Long, String> userIdNameMap = FeignOptional.of(() -> oaInfoService.listByIdCh(Lists.newArrayList(valueMap.keySet())), FeignConstant.OA_SERVICE_NAME).get();
+            Map<Long, OaHrmresourceDTO> userIdNameMap = FeignOptional.of(() -> oaInfoService.listById(Lists.newArrayList(valueMap.keySet())), FeignConstant.OA_SERVICE_NAME).get();
             log.info("END_OA ->{}", (System.currentTimeMillis() - ll));
             //遍历元素返回
             valueMap.forEach((k, v) -> {
@@ -76,9 +77,10 @@ public class WsThirdPartyService {
                 Instant instant = Instant.ofEpochMilli(v);
                 LocalDateTime linkTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
                 onlineUserDTO.setLinkTime(linkTime);
-                String realName = userIdNameMap.get(k);
-                if (StrUtil.isNotBlank(realName)) {
-                    onlineUserDTO.setRealName(realName);
+                OaHrmresourceDTO info = userIdNameMap.get(k);
+                if (Objects.nonNull(info)) {
+                    onlineUserDTO.setRealName(info.getLastname());
+                    onlineUserDTO.setHeadImage(info.getMessagerurl());
                     resList.add(onlineUserDTO);
                 }
             });

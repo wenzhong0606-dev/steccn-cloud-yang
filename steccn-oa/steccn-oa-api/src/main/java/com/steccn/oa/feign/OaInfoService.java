@@ -93,6 +93,16 @@ public interface OaInfoService {
     @ApiOperation("根据主键id查询oa用户的中文名称")
     R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList);
 
+
+    /**
+     * 根据主键id查询oa用户的中文名称
+     * @param idList
+     * @return
+     */
+    @PostMapping("/feign/oa/user")
+    @ApiOperation("根据主键id查询oa用户的中文名称")
+    R<Map<Long, OaHrmresourceDTO>> listById(@RequestBody List<Long> idList);
+
     /**
      *
      *

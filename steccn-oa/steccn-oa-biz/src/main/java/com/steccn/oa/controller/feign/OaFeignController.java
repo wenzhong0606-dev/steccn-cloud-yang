@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.service.*;
 import com.steccn.oa.vo.*;
@@ -56,6 +57,15 @@ public class OaFeignController {
             return R.success(Maps.newHashMap());
         }
         return R.success(hrmresourceService.listByIdCh(idList));
+    }
+
+    @PostMapping("/user")
+    @ApiOperation("根据主键id查询oa用户的信息")
+    public R<Map<Long, OaHrmresourceDTO>> listById(@RequestBody List<Long> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(hrmresourceService.listById(idList));
     }
 
     @ApiOperation("获取流程当前节点的操作人")

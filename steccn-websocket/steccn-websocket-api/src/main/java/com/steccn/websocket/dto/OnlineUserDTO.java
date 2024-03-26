@@ -1,8 +1,6 @@
 package com.steccn.websocket.dto;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import lombok.Data;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -20,6 +18,11 @@ public class OnlineUserDTO implements Serializable {
      * 真实名称
      */
     private String realName;
+
+    /**
+     * 头像
+     */
+    private String headImage;
 
     /**
      * 建立链接时间

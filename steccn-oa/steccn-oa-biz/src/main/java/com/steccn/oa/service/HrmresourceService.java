@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmresource;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.oa.dto.OaHrmresourceDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.vo.OaClassVO;
 import com.steccn.oa.vo.OaEmpVO;
@@ -57,6 +58,13 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     Map<Long, String> listByIdCh(List<Long> idList);
+
+    /**
+     * 根据id获取用户的中文信息
+     * @param idList
+     * @return
+     */
+    Map<Long, OaHrmresourceDTO> listById(List<Long> idList);
 
     /**
      * 根据用户名列表查询id

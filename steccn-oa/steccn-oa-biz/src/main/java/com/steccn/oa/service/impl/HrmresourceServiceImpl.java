@@ -12,6 +12,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.*;
+import com.steccn.oa.dto.OaHrmresourceDTO;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.mapper.HrmdepartmentMapper;
 import com.steccn.oa.mapper.HrmjobtitlesMapper;
@@ -111,12 +112,31 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     @Override
     public Map<Long, String> listByIdCh(List<Long> idList) {
         Map<Long, String> map = Maps.newHashMap();
-        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().in(Hrmresource::getId, idList));
-        if (CollUtil.isNotEmpty(list)){
-            if (CollUtil.isNotEmpty(list)) {
-                for (Hrmresource hrmresource : list) {
-                    map.put(Long.valueOf(hrmresource.getId()), hrmresource.getLastname());
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
+                .in(Hrmresource::getId, idList)
+                .select(Hrmresource::getId, Hrmresource::getLastname));
+        if (CollUtil.isNotEmpty(list)) {
+            for (Hrmresource hrmresource : list) {
+                map.put(Long.valueOf(hrmresource.getId()), hrmresource.getLastname());
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, OaHrmresourceDTO> listById(List<Long> idList) {
+        Map<Long, OaHrmresourceDTO> map = Maps.newHashMap();
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
+                .in(Hrmresource::getId, idList)
+                .select(Hrmresource::getId, Hrmresource::getLastname, Hrmresource::getMessagerurl));
+        if (CollUtil.isNotEmpty(list)) {
+            for (Hrmresource hrmresource : list) {
+                OaHrmresourceDTO oaHrmresourceDTO = new OaHrmresourceDTO();
+                oaHrmresourceDTO.setLastname(hrmresource.getLastname());
+                if (StrUtil.isNotBlank(hrmresource.getMessagerurl())) {
+                    oaHrmresourceDTO.setMessagerurl(OaConstant.OA_WEAVER_SITE + hrmresource.getMessagerurl());
                 }
+                map.put(Long.valueOf(hrmresource.getId()), oaHrmresourceDTO);
             }
         }
         return map;
