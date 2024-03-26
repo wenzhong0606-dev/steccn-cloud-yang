@@ -195,7 +195,7 @@ public class KafkaConsumer {
             //运行状态
             //先获取脉冲状态
             Boolean pulse;
-            String pulseStr = stringRedisTemplate.opsForValue().get("OA1.BOOL.STOP_BOOL");
+            String pulseStr = stringRedisTemplate.opsForValue().get("KafkaEqpSignal::OA1.BOOL.STOP_BOOL");
             if(StrUtil.isNotBlank(pulseStr)&&pulseStr.equals("true")){
                 pulse = false;
             }else if(StrUtil.isBlank(pulseStr)){
