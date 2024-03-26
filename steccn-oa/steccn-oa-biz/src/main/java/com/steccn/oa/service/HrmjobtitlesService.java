@@ -7,6 +7,8 @@ import com.steccn.oa.vo.OaJobTitleVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -20,6 +22,14 @@ public interface HrmjobtitlesService extends IService<Hrmjobtitles> {
      * @return
      */
     OaJobTitleVO getJobInfoById(Integer id);
+
+    /**
+     * 根据id集合查询岗位数据
+     *
+     * @param idSet 集合
+     * @return
+     */
+    Map<Integer, String> listByIdCh(Set<Integer> idSet);
 
     /**
      * 获取所有岗位信息

@@ -111,6 +111,7 @@ public class OaHrmresourceDTO implements Serializable {
      */
     private Integer jobtitle;
 
+    private String jobtitleName;
     /**
      * 
      */

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmjobtitles;
 import com.steccn.oa.service.HrmjobtitlesService;
@@ -13,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -35,6 +38,21 @@ public class HrmjobtitlesServiceImpl extends ServiceImpl<HrmjobtitlesMapper, Hrm
         vo.setId(hrmjobtitles.getId());
         vo.setJobTitleName(hrmjobtitles.getJobtitlename());
         return vo;
+    }
+
+    @Override
+    public Map<Integer, String> listByIdCh(Set<Integer> idSet) {
+        Map<Integer, String> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(idSet)) {
+            List<Hrmjobtitles> dbList = list(new LambdaQueryWrapper<Hrmjobtitles>().in(Hrmjobtitles::getId, idSet)
+                    .select(Hrmjobtitles::getId, Hrmjobtitles::getJobtitlename));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    resMap.put(ele.getId(), ele.getJobtitlename());
+                });
+            }
+        }
+        return resMap;
     }
 
     @Override

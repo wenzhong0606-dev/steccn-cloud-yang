@@ -81,6 +81,7 @@ public class WsThirdPartyService {
                 if (Objects.nonNull(info)) {
                     onlineUserDTO.setRealName(info.getLastname());
                     onlineUserDTO.setHeadImage(info.getMessagerurl());
+                    onlineUserDTO.setJobTitle(info.getJobtitleName());
                     resList.add(onlineUserDTO);
                 }
             });

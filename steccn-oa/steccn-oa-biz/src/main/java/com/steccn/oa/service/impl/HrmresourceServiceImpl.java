@@ -18,6 +18,7 @@ import com.steccn.oa.mapper.HrmdepartmentMapper;
 import com.steccn.oa.mapper.HrmjobtitlesMapper;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
+import com.steccn.oa.service.HrmjobtitlesService;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaMesUserVO;
@@ -49,8 +50,8 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     private final HrmdepartmentMapper hrmdepartmentMapper;
 
     private final HrmjobtitlesMapper hrmjobtitlesMapper;
-
     private final HrmresourceMapper hrmresourceMapper;
+    private final HrmjobtitlesService hrmjobtitlesService;
 
     @Override
     public Long getIdByWorkCode(String workCode) {
@@ -128,14 +129,17 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         Map<Long, OaHrmresourceDTO> map = Maps.newHashMap();
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
                 .in(Hrmresource::getId, idList)
-                .select(Hrmresource::getId, Hrmresource::getLastname, Hrmresource::getMessagerurl));
+                .select(Hrmresource::getId, Hrmresource::getLastname, Hrmresource::getMessagerurl, Hrmresource::getJobtitle));
         if (CollUtil.isNotEmpty(list)) {
+            Set<Integer> jobTitleIdSet = list.stream().map(Hrmresource::getJobtitle).collect(Collectors.toSet());
+            Map<Integer, String> jobMap = hrmjobtitlesService.listByIdCh(jobTitleIdSet);
             for (Hrmresource hrmresource : list) {
                 OaHrmresourceDTO oaHrmresourceDTO = new OaHrmresourceDTO();
                 oaHrmresourceDTO.setLastname(hrmresource.getLastname());
                 if (StrUtil.isNotBlank(hrmresource.getMessagerurl())) {
                     oaHrmresourceDTO.setMessagerurl(OaConstant.OA_WEAVER_SITE + hrmresource.getMessagerurl());
                 }
+                oaHrmresourceDTO.setJobtitleName(jobMap.get(hrmresource.getJobtitle()));
                 map.put(Long.valueOf(hrmresource.getId()), oaHrmresourceDTO);
             }
         }
