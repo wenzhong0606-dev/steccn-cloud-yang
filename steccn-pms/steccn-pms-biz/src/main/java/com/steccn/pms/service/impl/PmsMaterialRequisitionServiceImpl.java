@@ -166,6 +166,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             List<PmsMaterialRequisitionInfo> list = Lists.newArrayList();
             List<PmsMaterialRequisitionDemander> demanderList = Lists.newArrayList();
             materialRequisitionDTO.getList().forEach(materialRequisitionInfoDTO -> {
+                if(Objects.isNull(materialRequisitionInfoDTO.getQuantity())){
+                    materialRequisitionInfoDTO.setQuantity(BigDecimal.ZERO);
+                }
                 PmsMaterialRequisitionInfo materialRequisitionInfo = new PmsMaterialRequisitionInfo();
                 BeanUtil.copyProperties(materialRequisitionInfoDTO, materialRequisitionInfo);
                 materialRequisitionInfo.setMaterialRequisitionId(model.getId());
