@@ -49,6 +49,11 @@ public class SysLogAspect {
         if (Objects.nonNull(logDTO)) {
             logDTO.setTitle(apiOperation.value());
         }
+        //如果是feign请求，直接返回null
+        if (point.toString().toUpperCase().indexOf("FEIGN") != -1) {
+            logDTO = null;
+        }
+
         // 发送异步日志事件
         Long startTime = System.currentTimeMillis();
         Object obj;

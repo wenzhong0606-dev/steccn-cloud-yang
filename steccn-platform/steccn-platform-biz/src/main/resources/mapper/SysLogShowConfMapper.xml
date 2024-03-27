@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.SysLogShowConfMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.SysLogShowConf">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="requestUrl" column="request_url" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,request_url,create_by,
+        create_name,create_time,del_flag
+    </sql>
+</mapper>
