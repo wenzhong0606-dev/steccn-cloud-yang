@@ -8,6 +8,7 @@ import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
+import com.steccn.wms.dto.WmsTransferSlipBatchDto;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
@@ -133,4 +134,6 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
     Map<String,BigDecimal> materialQuantityByDateAndWarehouseQuantity(RawMaterialReportDTO dto);
 
     BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
+
+    Boolean batch(WmsTransferSlipBatchDto dto);
 }

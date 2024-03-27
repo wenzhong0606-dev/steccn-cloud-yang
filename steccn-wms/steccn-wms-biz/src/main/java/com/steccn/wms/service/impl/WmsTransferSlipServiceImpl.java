@@ -55,6 +55,7 @@ import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -65,10 +66,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -79,6 +77,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMapper, WmsTransferSlip> implements WmsTransferSlipService {
 
     private final RedissonClient redissonClient;
@@ -756,6 +755,51 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             });
         }
         return totalM.get();
+    }
+
+    @Override
+    public Boolean batch(WmsTransferSlipBatchDto dto) {
+        //将 455 /453的仓库所有的物料编码P开头调拨到加工成品库 445-东库（货架 7078）
+        //获取车间下的库存数据
+        Set<Integer> warehouseIds =  Sets.newHashSet(445);
+        List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>()
+                .in(WmsInventory::getWarehouseId, warehouseIds)
+                .notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO));
+        List<WmsInventory> inventoryList = list.stream()
+                .filter(inventory -> inventory.getMaterialCode().startsWith("P"))
+                .collect(Collectors.toList());
+        Map<Integer, List<WmsInventory>> inventoryMap = inventoryList.stream().collect(Collectors.groupingBy(WmsInventory::getWarehouseId));
+        //创建调拨单
+        inventoryMap.entrySet().forEach(e->{
+            List<WmsInventory> value = e.getValue();
+            WmsTransferSlipDTO wmsTransferSlipDTO = new WmsTransferSlipDTO();
+            wmsTransferSlipDTO.setType(1600404685319471104L);
+            wmsTransferSlipDTO.setSourceWarehouse(e.getKey());
+            wmsTransferSlipDTO.setTargetWarehouse(445);
+            List<WmsTransferSlipInfoDTO> infos = Lists.newArrayList();
+            value.forEach(inventory -> {
+                WmsTransferSlipInfoDTO wmsTransferSlipInfoDTO = new WmsTransferSlipInfoDTO();
+                wmsTransferSlipInfoDTO.setMaterialId(inventory.getMaterialId());
+                wmsTransferSlipInfoDTO.setMaterialName(inventory.getMaterialName());
+                wmsTransferSlipInfoDTO.setMaterialCode(inventory.getMaterialCode());
+                wmsTransferSlipInfoDTO.setSourceInventoryId(inventory.getId());
+                wmsTransferSlipInfoDTO.setSourceShelf(inventory.getShelfId());
+                wmsTransferSlipInfoDTO.setSourceShelfName(inventory.getShelfName());
+                wmsTransferSlipInfoDTO.setSourceShelfCode(inventory.getShelfCode());
+                wmsTransferSlipInfoDTO.setTargetShelf(7078);
+                wmsTransferSlipInfoDTO.setTargetShelfName("成品东库");
+                wmsTransferSlipInfoDTO.setTargetShelfCode("WH007003");
+                wmsTransferSlipInfoDTO.setOriginalCaseNo(inventory.getCaseNo());
+                wmsTransferSlipInfoDTO.setOriginalQuantity(inventory.getAvailableQuantity());
+                wmsTransferSlipInfoDTO.setQuantity(inventory.getAvailableQuantity());
+                wmsTransferSlipInfoDTO.setUnit(inventory.getUnit());
+                wmsTransferSlipInfoDTO.setCaseNo(inventory.getCaseNo());
+                infos.add(wmsTransferSlipInfoDTO);
+                wmsTransferSlipDTO.setList(infos);
+            });
+            add(wmsTransferSlipDTO);
+        });
+        return true;
     }
 
 

@@ -7,11 +7,11 @@ spring:
     nacos:
       discovery:
         server-addr: 192.168.1.179:8848
-        namespace: 02661da9-6934-416e-b9e8-d1bd0c1b4d1d
+        namespace: 86bb5247-39e5-4887-ba42-d6830f4db689
       config:
         server-addr: 192.168.1.179:8848
         file-extension: yaml
         shared-configs:
           - data-id: application.yaml
             refresh: true
-        namespace: 02661da9-6934-416e-b9e8-d1bd0c1b4d1d
+        namespace: 86bb5247-39e5-4887-ba42-d6830f4db689
