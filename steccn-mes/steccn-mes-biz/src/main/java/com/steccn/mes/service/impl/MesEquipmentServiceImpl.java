@@ -206,7 +206,7 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
             result.setEqpDashBoard(StackGraphUtil.convertData(dataList, Boolean.TRUE));
         }
         //获取点检任务信息
-        List<MesEqpCountDTO> taskCount = mesEqpInsTaskMapper.findTaskCount2(departments,dto.getField1().atTime(8,0,0),dto.getField2().atTime(8,0,0));
+        List<MesEqpCountDTO> taskCount = mesEqpInsTaskMapper.findTaskCount2(departments,dto.getField1().atTime(8,0,0),dto.getField2().plusDays(1).atTime(8,0,0));
         if(CollUtil.isNotEmpty(taskCount)){
             result.setInsNum(taskCount.stream().mapToInt(MesEqpCountDTO::getNum).sum());
             result.setInsFinishedPercent(BigDecimalUtil.percent(new BigDecimal(taskCount.stream().filter(v->v.getState().equals(0)).findFirst().orElse(new MesEqpCountDTO(0,0)).getNum()),
