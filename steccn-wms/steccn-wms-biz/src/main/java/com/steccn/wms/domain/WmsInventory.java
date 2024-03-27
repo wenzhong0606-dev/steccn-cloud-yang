@@ -70,32 +70,32 @@ public class WmsInventory implements Serializable {
     /**
      * 总数
      */
-    private BigDecimal totalQuantity;
+    private BigDecimal totalQuantity = BigDecimal.ZERO;
 
     /**
      * 可用数量
      */
-    private BigDecimal availableQuantity;
+    private BigDecimal availableQuantity  = BigDecimal.ZERO;
 
     /**
      * 在途库存
      */
-    private BigDecimal stockQuantity;
+    private BigDecimal stockQuantity = BigDecimal.ZERO;
 
     /**
      * 冻结库存
      */
-    private BigDecimal freezeQuantity;
+    private BigDecimal freezeQuantity = BigDecimal.ZERO;
 
     /**
      * 锁定库存
      */
-    private BigDecimal lockQuantity;
+    private BigDecimal lockQuantity = BigDecimal.ZERO;
 
     /**
      * 质检库存
      */
-    private BigDecimal detectionQuantity;
+    private BigDecimal detectionQuantity = BigDecimal.ZERO;
 
     /**
      * 单位id

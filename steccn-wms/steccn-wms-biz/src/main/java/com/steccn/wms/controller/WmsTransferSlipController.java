@@ -6,6 +6,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.wms.dto.WmsTransferSlipBatchDto;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.service.WmsTransferSlipService;
@@ -78,5 +79,12 @@ public class WmsTransferSlipController {
     @GetMapping("/linkErp")
     public R<Boolean> linkErp(@ApiParam("调拨单id") @RequestParam("id") Long id){
         return R.success(wmsTransferSlipService.linkErp(id));
+    }
+
+    @ApiOperation("批量调拨玻璃物料")
+    @PostMapping("/batch")
+    public R<Boolean> batch(@RequestBody WmsTransferSlipBatchDto dto){
+        return R.success(wmsTransferSlipService.batch(dto));
+
     }
 }
