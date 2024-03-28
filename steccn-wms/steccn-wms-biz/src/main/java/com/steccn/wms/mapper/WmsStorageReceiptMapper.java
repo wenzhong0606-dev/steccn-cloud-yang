@@ -74,6 +74,14 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @return
      */
     List<WmsDeliveryReceipt> listByAssociatedNo(@Param("dtoList") List<BatchChargeAgainstDTO> dtoList);
+
+    /**
+     * 区间数据
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
 }
 
 

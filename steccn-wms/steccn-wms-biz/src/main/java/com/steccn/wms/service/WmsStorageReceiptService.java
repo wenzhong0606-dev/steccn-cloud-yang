@@ -7,6 +7,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.vo.*;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -214,4 +216,11 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     WmsSalesReturnsFlagVO salesReturnsFlag(String number);
+
+
+    /**
+     * 区间的数据
+     * @return
+     */
+    List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
 }

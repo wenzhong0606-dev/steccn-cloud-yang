@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.StockInfoDTO;
 import com.steccn.common.vo.R;
@@ -18,6 +19,7 @@ import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -156,4 +158,12 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     BigDecimal totalQuantity(WmsReportWarehouseDTO dto);
 
     BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
+
+    /**
+     * 获取区间时间的入库单数据明细总和，单位为平方米
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
 }
