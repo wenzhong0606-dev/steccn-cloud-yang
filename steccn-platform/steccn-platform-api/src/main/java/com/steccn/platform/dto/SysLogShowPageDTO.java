@@ -4,6 +4,7 @@ import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -23,10 +24,10 @@ public class SysLogShowPageDTO extends BasePageDTO implements Serializable {
     /**
      * 开始时间
      */
-    private LocalDateTime start;
+    private LocalDate start;
 
     /**
      * 结束时间
      */
-    private LocalDateTime end;
+    private LocalDate end;
 }

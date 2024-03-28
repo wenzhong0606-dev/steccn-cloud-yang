@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.domain.SysLogShow;
 import com.steccn.platform.dto.SysLogShowPageDTO;
 import com.steccn.platform.service.SysLogShowService;
@@ -18,6 +19,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.text.Collator;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -34,11 +36,13 @@ public class SysLogShowServiceImpl extends ServiceImpl<SysLogShowMapper, SysLogS
 
     @Override
     public Page<SysLogShowPageVO> pageList(SysLogShowPageDTO dto) {
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd());
         Page<SysLogShowPageVO> resPage = new Page<>();
         Page<SysLogShow> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<SysLogShow>()
                 .eq(Objects.nonNull(dto.getUserId()), SysLogShow::getCreateBy, dto.getUserId())
-                .ge(Objects.nonNull(dto.getStart()), SysLogShow::getCreateTime, dto.getStart())
-                .le(Objects.nonNull(dto.getEnd()), SysLogShow::getCreateTime, dto.getEnd())
+                .ge(Objects.nonNull(dto.getStart()), SysLogShow::getCreateTime,start)
+                .le(Objects.nonNull(dto.getEnd()), SysLogShow::getCreateTime, end)
                 .orderByDesc(SysLogShow::getId));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
