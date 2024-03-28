@@ -54,7 +54,8 @@ public class SysLogShowServiceImpl extends ServiceImpl<SysLogShowMapper, SysLogS
         List<SysLogShow> list = list(new QueryWrapper<SysLogShow>()
                 .select("distinct create_by , create_name")
                 .lambda()
-                .like(StrUtil.isNotBlank(name), SysLogShow::getCreateName, name));
+                .like(StrUtil.isNotBlank(name), SysLogShow::getCreateName, name)
+                .ne(SysLogShow::getCreateBy, 0));
         if (CollUtil.isNotEmpty(list)) {
             list.forEach(ele -> {
                 resList.add(new TupleDTO<>(ele.getCreateBy(), ele.getCreateName()));
