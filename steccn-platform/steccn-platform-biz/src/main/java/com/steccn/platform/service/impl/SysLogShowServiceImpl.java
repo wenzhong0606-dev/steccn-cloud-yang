@@ -36,8 +36,13 @@ public class SysLogShowServiceImpl extends ServiceImpl<SysLogShowMapper, SysLogS
 
     @Override
     public Page<SysLogShowPageVO> pageList(SysLogShowPageDTO dto) {
-        LocalDateTime start = LocalDateUtil.getMorning(dto.getStart());
-        LocalDateTime end = LocalDateUtil.getMorning(dto.getEnd());
+        LocalDateTime start = null, end = null;
+        if (Objects.nonNull(dto.getStart())) {
+            start = LocalDateUtil.getMorning(dto.getStart());
+        }
+        if (Objects.nonNull(dto.getEnd())) {
+            end = LocalDateUtil.getMorning(dto.getEnd());
+        }
         Page<SysLogShowPageVO> resPage = new Page<>();
         Page<SysLogShow> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<SysLogShow>()
                 .eq(Objects.nonNull(dto.getUserId()), SysLogShow::getCreateBy, dto.getUserId())
