@@ -359,8 +359,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     }
 
     @Override
-    public SteccnTableDataDTO<Map<String, String>> weightDetail(LocalDate date) {
-        List<RawMaterialDetailDTO> rawMaterialDetailDTOS = postRawDetail(new TupleDTO<>(date.atTime(8, 0, 0), date.plusDays(1).atTime(7, 59, 59)));
+    public SteccnTableDataDTO<Map<String, String>> weightDetail(TupleDTO<LocalDateTime,LocalDateTime> date) {
+        List<RawMaterialDetailDTO> rawMaterialDetailDTOS = postRawDetail(new TupleDTO<>(date.getField1(), date.getField2()));
         Assert.notEmpty(rawMaterialDetailDTOS,"数据为空");
         List<AdsOpcUaAll3> adsOpcUaAll3s = Lists.newArrayList();
 //        weightCountList.forEach(tmp->{
@@ -514,12 +514,141 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         oneLine.put("total",totalSum.toString());
         tableList.add(oneLine);
+//        List<PmRawMaterialVO> pmRawMaterialVOS = FeignOptional.of(() -> remotePmsFeignApi.listByDate(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//        if(CollUtil.isNotEmpty(pmRawMaterialVOS)){
+//            Map<String,String> oneLine2 = Maps.newHashMap();
+//            oneLine2.put("time","确认数量");
+//            oneLine2.put("ENo","确认数量");
+//            oneLine2.put("num","确认数量");
+//            oneLine2.put("type","2");
+//            pmRawMaterialVOS.forEach(tmp->{
+//                oneLine2.put(tmp.getTagId(),tmp.getValue().toString());
+//            });
+//            BigDecimal totalReduce = pmRawMaterialVOS.stream().map(PmRawMaterialVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+//            oneLine2.put("total",totalReduce.toString());
+//            tableList.add(oneLine2);
+//        }else {
+//            //若无则需要返回总计行数据
+//            Map<String,String> oneLine2 = Maps.newHashMap();
+//            oneLine2.put("time","确认数量");
+//            oneLine2.put("ENo","确认数量");
+//            oneLine2.put("num","确认数量");
+//            oneLine2.put("type","2");
+//            for(Map.Entry<String,BigDecimal> entry:count.entrySet()){
+//                oneLine2.put(entry.getKey(),entry.getValue().toString());
+//            }
+//            //合计碎玻璃和硅砂
+////            oneLine2.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID,countG.toString());
+////            oneLine2.put(DpConstant.DP_WEIGHT_GUISHA_2_TAGID,countG.toString());
+////            oneLine2.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID,countS.toString());
+////            oneLine2.put(DpConstant.DP_WEIGHT_GLASS_2_TAGID,countS.toString());
+//            oneLine2.put("total",totalSum.toString());
+//            tableList.add(oneLine2);
+//        }
+        result.setTableList(tableList);
+        result.setColumns(columns);
+        return result;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> weightSum(LocalDate date) {
+        Map<String, BigDecimal> day = postWeightCount(new TupleDTO<LocalDateTime, LocalDateTime>(date.atTime(8, 0, 0)
+                , date.atTime(19, 59, 59)));
+        Map<String, BigDecimal> night = postWeightCount(new TupleDTO<LocalDateTime, LocalDateTime>(date.atTime(20, 0, 0)
+                , date.plusDays(1).atTime(7, 59, 59)));
+        if(CollUtil.isEmpty(day)&&CollUtil.isEmpty(night)){
+            Assert.notEmpty(Lists.newArrayList(),"数据为空");
+        }
+        //生成报表数据
+        SteccnTableDataDTO<Map<String,String>> result = new SteccnTableDataDTO();
+        //2.1、组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("class","班次",null));
+        //获取名称
+        List<String> tagNameList = Lists.newArrayList(DpConstant.DP_WEIGHT_GUISHA_1_TAGID
+                ,DpConstant.DP_WEIGHT_GUISHA_2_TAGID
+                ,DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID
+                ,DpConstant.DP_WEIGHT_CHUNJIAN_TAGID
+                ,DpConstant.DP_WEIGHT_SHIHUI_TAGID
+                ,DpConstant.DP_WEIGHT_FUHE_TAGID
+                ,DpConstant.DP_WEIGHT_LVFEN_TAGID
+                ,DpConstant.DP_WEIGHT_XIAOLIAO_TAGID
+                ,DpConstant.DP_WEIGHT_GLASS_1_TAGID
+                ,DpConstant.DP_WEIGHT_GLASS_2_TAGID);
+        Set<String> refSet = Sets.newHashSet(tagNameList);
+        Map<String, List<SysConfigurationDTO>> dpWeight = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("DP_WEIGHT", refSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //组第一层表格
+        for(int i = 0;i < tagNameList.size();i++){
+            String tagName = tagNameList.get(i);
+            //合并硅砂和碎玻璃
+            if(tagName.equals(DpConstant.DP_WEIGHT_GUISHA_2_TAGID)||tagName.equals(DpConstant.DP_WEIGHT_GLASS_2_TAGID)){
+                continue;
+            }
+            String labelName = dpWeight.get(tagName).get(0).getRefContent();
+            if(labelName.contains("1#")){
+                labelName = labelName.substring(2);
+            }
+            columns.add(new SteccnTableColumn(tagName+"_name",labelName,
+                    Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null))));
+        }
+        columns.add(new SteccnTableColumn("total","总计",null));
+        //开始组数据
+        List<Map<String,String>> tableList = Lists.newArrayList();
+        //总计数据
+        Map<String,BigDecimal> count = Maps.newHashMap();
+        //分早班晚班
+        for (int i = 0; i < 2; i++) {
+            //总计一行
+            BigDecimal rowTotal = BigDecimal.ZERO;
+            //一行数据
+            Map<String,String> oneLine = Maps.newHashMap();
+            oneLine.put("type","0");
+            for(int j = 1; j <= tagNameList.size();j++){
+                //硅砂2和碎玻璃2跳过
+                if(j==2||j==10){
+                    continue;
+                }
+                //分早班晚班
+                Map<String, BigDecimal> dataTmp = Maps.newHashMap();
+                if(i == 0){
+                    dataTmp = day;
+                    oneLine.put("class","早班");
+                }else {
+                    dataTmp = night;
+                    oneLine.put("class","晚班");
+                }
+                //合并硅砂和碎玻璃
+                if(j==1||j==9){
+                    int k = j+1;
+                    BigDecimal countTmp = BigDecimalUtil.add(dataTmp.get("data"+j),dataTmp.get("data"+k),2);
+                    oneLine.put(tagNameList.get(j-1),Objects.isNull(countTmp) ? null:countTmp.toString());
+                    rowTotal = BigDecimalUtil.add(rowTotal,countTmp);
+                    BigDecimalUtil.accumulate(count,tagNameList.get(j-1),countTmp);
+                }else {
+                    oneLine.put(tagNameList.get(j-1),Objects.isNull(dataTmp.get("data"+j)) ? null:BigDecimalUtil.setScale(dataTmp.get("data"+j),2).toString());
+                    rowTotal = BigDecimalUtil.add(rowTotal,dataTmp.get("data"+j));
+                    BigDecimalUtil.accumulate(count,tagNameList.get(j-1),BigDecimalUtil.setScale(dataTmp.get("data"+j),2));
+                }
+            }
+            //合计
+            oneLine.put("total",Objects.isNull(rowTotal) ? null:BigDecimalUtil.setScale(rowTotal,2).toString());
+            tableList.add(oneLine);
+        }
+        //总计行
+        Map<String,String> oneLine = Maps.newHashMap();
+        oneLine.put("class","统计报表");
+        oneLine.put("type","1");
+        for(Map.Entry<String,BigDecimal> entry:count.entrySet()){
+            oneLine.put(entry.getKey(),entry.getValue().toString());
+        }
+        BigDecimal totalSum = count.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        oneLine.put("total",totalSum.toString());
+        tableList.add(oneLine);
         List<PmRawMaterialVO> pmRawMaterialVOS = FeignOptional.of(() -> remotePmsFeignApi.listByDate(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         if(CollUtil.isNotEmpty(pmRawMaterialVOS)){
             Map<String,String> oneLine2 = Maps.newHashMap();
-            oneLine2.put("time","确认数量");
-            oneLine2.put("ENo","确认数量");
-            oneLine2.put("num","确认数量");
+            oneLine2.put("class","确认数量");
             oneLine2.put("type","2");
             pmRawMaterialVOS.forEach(tmp->{
                 oneLine2.put(tmp.getTagId(),tmp.getValue().toString());
@@ -530,18 +659,11 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         }else {
             //若无则需要返回总计行数据
             Map<String,String> oneLine2 = Maps.newHashMap();
-            oneLine2.put("time","确认数量");
-            oneLine2.put("ENo","确认数量");
-            oneLine2.put("num","确认数量");
+            oneLine2.put("class","确认数量");
             oneLine2.put("type","2");
             for(Map.Entry<String,BigDecimal> entry:count.entrySet()){
                 oneLine2.put(entry.getKey(),entry.getValue().toString());
             }
-            //合计碎玻璃和硅砂
-//            oneLine2.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID,countG.toString());
-//            oneLine2.put(DpConstant.DP_WEIGHT_GUISHA_2_TAGID,countG.toString());
-//            oneLine2.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID,countS.toString());
-//            oneLine2.put(DpConstant.DP_WEIGHT_GLASS_2_TAGID,countS.toString());
             oneLine2.put("total",totalSum.toString());
             tableList.add(oneLine2);
         }

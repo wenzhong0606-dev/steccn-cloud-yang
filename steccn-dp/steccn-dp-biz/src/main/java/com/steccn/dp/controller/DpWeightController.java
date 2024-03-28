@@ -53,10 +53,16 @@ public class DpWeightController {
         return R.success(adsOpcUaAll3Service.weightCountDashBoard(dto));
     }
 
-    @GetMapping("/weightDetail")
+    @PostMapping("/weightDetail")
     @ApiOperation(value = "获取原料配料详情")
-    public R<SteccnTableDataDTO> weightDetail(@RequestParam("date") LocalDate date){
+    public R<SteccnTableDataDTO> weightDetail(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> date){
         return R.success(adsOpcUaAll3Service.weightDetail(date));
+    }
+
+    @GetMapping("/weightSum")
+    @ApiOperation(value = "获取原料配料聚合数据")
+    public R<SteccnTableDataDTO> weightSum(@RequestParam("date") LocalDate date){
+        return R.success(adsOpcUaAll3Service.weightSum(date));
     }
 
     @PostMapping("/test")
