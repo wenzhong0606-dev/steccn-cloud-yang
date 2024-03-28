@@ -72,5 +72,12 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @param date
      * @return
      */
-    SteccnTableDataDTO<Map<String,String>> weightDetail(LocalDate date);
+    SteccnTableDataDTO<Map<String,String>> weightDetail(TupleDTO<LocalDateTime,LocalDateTime> date);
+
+    /**
+     * 电子称读数单日汇总
+     * @param date
+     * @return
+     */
+    SteccnTableDataDTO<Map<String,String>> weightSum(LocalDate date);
 }
