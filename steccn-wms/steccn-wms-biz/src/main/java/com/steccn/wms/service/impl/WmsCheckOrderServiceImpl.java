@@ -456,7 +456,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
                 BeanUtils.copyProperties(vo,wmsCheckOrderInfoVO);
                 wmsCheckOrderInfoVO.setBatch(vo.getBatchNo());
-                wmsCheckOrderInfoVO.setQuantity(vo.getTotalQuantity());
+                wmsCheckOrderInfoVO.setQuantity(vo.getAvailableQuantity());
                 if(Objects.nonNull(wmsCheckOrderInfoVO.getMaterialId()) && Objects.nonNull(wmsCheckOrderInfoVO.getShelf())
                         && Objects.nonNull(wmsCheckOrderInfoVO.getWarehouse()))   orderInfoNowVoList.add(wmsCheckOrderInfoVO);
             }
@@ -482,7 +482,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
             if (Objects.nonNull(wmsInventory)) {
                 wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getTotalQuantity() : BigDecimal.ZERO);
-                wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getTotalQuantity() : BigDecimal.ZERO);
+                wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getAvailableQuantity() : BigDecimal.ZERO);
                 wmsCheckOrderInfoVO.setUnitId(wmsInventory.getUnit());
                 orderInfoNowVoList.add(wmsCheckOrderInfoVO);
             }
