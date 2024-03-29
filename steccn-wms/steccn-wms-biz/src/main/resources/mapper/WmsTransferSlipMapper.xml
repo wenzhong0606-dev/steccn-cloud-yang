@@ -107,7 +107,7 @@
         ORDER BY a.update_time DESC
     </select>
     <select id="totalQuantity" resultType="com.steccn.wms.domain.WmsTransferSlipInfo">
-        select info.material_id, sum(quantity) as quantity  from wms_transfer_slip wts join wms_storage_receipt_info info on wts.id = info.storage_receipt_id and info.del_flag = 0
+        select info.material_id, sum(quantity) as quantity  from wms_transfer_slip wts join wms_transfer_slip_info info on wts.id = info.transfer_slip_id and info.del_flag = 0
         where wts.del_flag = 0
         <if test="warehouseIds != null and warehouseIds.size > 0">
             and wts.source_warehouse in
