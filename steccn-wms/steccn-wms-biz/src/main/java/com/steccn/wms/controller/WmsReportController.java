@@ -151,7 +151,7 @@ public class WmsReportController {
                 .notIn(WmsDeliveryReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()))));
         LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsTransferSlip::getCreateTime, dto.getStartTime(), dto.getEndTime())
-                .in(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+                .notIn(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode(),WmsManagerConstant.OrderStateEnum.ZERO.getCode());
         if (CollUtil.isNotEmpty(dto.getWarehouseIds())) {
             wrapper.and(w -> {
                 w.in(WmsTransferSlip::getSourceWarehouse, dto.getWarehouseIds()).or()
