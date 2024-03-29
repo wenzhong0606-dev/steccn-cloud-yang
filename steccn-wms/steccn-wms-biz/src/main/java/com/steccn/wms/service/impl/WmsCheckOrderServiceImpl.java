@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -422,9 +425,9 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      */
     public List<WmsStockVO> getByShelfCodeOrMaterialsInventoryList(Set<String> shelfs,Set<Long> materials){
         List<WmsStockVO>  wmsStockNewList =  wmsInventoryMapper.getByShelfCodeOrMaterialsInventoryList(shelfs,materials);
-        for (WmsStockVO vo:wmsStockNewList) {
-            vo.setUnit(typeName( vo.getUnitId()));
-        }
+//        for (WmsStockVO vo:wmsStockNewList) {
+//            vo.setUnit(typeName( vo.getUnitId()));
+//        }
         return wmsStockNewList;
     }
 
@@ -479,11 +482,21 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
             wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory)?wmsInventory.getTotalQuantity():BigDecimal.ZERO);
             wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory)?wmsInventory.getAvailableQuantity():BigDecimal.ZERO);
+            wmsCheckOrderInfoVO.setUnitId(wmsInventory.getUnit());
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
                 status ==1? vo.getStatus() == status :Objects.isNull(vo.getStatus())).collect(Collectors.toList());
-        return LogicalPageUtil.page(orderInfoNowVoList, current, size);
+        Page<WmsCheckOrderInfoVO> page = LogicalPageUtil.page(orderInfoNowVoList, current, size);
+        Set<Long> unitIds = Sets.newHashSet();
+        page.getRecords().forEach(info->{
+            unitIds.add(info.getUnitId());
+        });
+        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIds), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        page.getRecords().forEach(info->{
+            info.setUnit(unitMap.get(info.getUnitId()));
+        });
+        return page;
     }
 
     /****
