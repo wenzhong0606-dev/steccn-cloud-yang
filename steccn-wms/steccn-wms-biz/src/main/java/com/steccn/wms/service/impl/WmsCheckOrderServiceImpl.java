@@ -456,7 +456,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
                 BeanUtils.copyProperties(vo,wmsCheckOrderInfoVO);
                 wmsCheckOrderInfoVO.setBatch(vo.getBatchNo());
-                wmsCheckOrderInfoVO.setQuantity(vo.getAvailableQuantity());
+                wmsCheckOrderInfoVO.setQuantity(vo.getTotalQuantity());
                 if(Objects.nonNull(wmsCheckOrderInfoVO.getMaterialId()) && Objects.nonNull(wmsCheckOrderInfoVO.getShelf())
                         && Objects.nonNull(wmsCheckOrderInfoVO.getWarehouse()))   orderInfoNowVoList.add(wmsCheckOrderInfoVO);
             }
@@ -477,13 +477,15 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsCheckOrderInfoVO.setMaterialName(wmsCheckOrderInfoVOTem.getMaterialName());
             wmsCheckOrderInfoVO.setMaterialCode(wmsCheckOrderInfoVOTem.getMaterialCode());
             LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
-            inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,old.getCaseNo());
+            inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,old.getCaseNo()).notIn(WmsInventory::getTotalQuantity,BigDecimal.ZERO);
             //库存
             WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
-            wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory)?wmsInventory.getTotalQuantity():BigDecimal.ZERO);
-            wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory)?wmsInventory.getAvailableQuantity():BigDecimal.ZERO);
-            wmsCheckOrderInfoVO.setUnitId(wmsInventory.getUnit());
-            orderInfoNowVoList.add(wmsCheckOrderInfoVO);
+            if (Objects.nonNull(wmsInventory)) {
+                wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getTotalQuantity() : BigDecimal.ZERO);
+                wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getTotalQuantity() : BigDecimal.ZERO);
+                wmsCheckOrderInfoVO.setUnitId(wmsInventory.getUnit());
+                orderInfoNowVoList.add(wmsCheckOrderInfoVO);
+            }
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
                 status ==1? vo.getStatus() == status :Objects.isNull(vo.getStatus())).collect(Collectors.toList());
