@@ -153,7 +153,6 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         excelWriter.write(dataList, writeSheet);
         excelWriter.finish();
         response.flushBuffer();
-
     }
 
     @Override
@@ -1008,6 +1007,52 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         tableData.setColumns(columns);
         tableData.setTableList(data);
         return tableData;
+    }
+
+    @Override
+    public void acStationDownload(LocalDate date, HttpServletResponse response) throws IOException {
+        SteccnTableDataDTO<Map<String, String>> recordDto = acStation(date);
+        List<SteccnTableColumn> columns = recordDto.getColumns();
+        List<Map<String, String>> tableList = recordDto.getTableList();
+        Assert.notEmpty(tableList,"暂无数据");
+        //写表头
+        List<List<String>> headList = new ArrayList<>();
+        columns.forEach(h ->{
+            headList.add(Lists.newArrayList(h.getLabel()));
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("空压站报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            columns.forEach(h ->{
+                String value = ele.get(h.getProp());
+                try {
+                    BigDecimal valueBd = BigDecimalUtil.valueOf(value);
+                    dataEle.add(valueBd);
+                } catch (Exception e) {
+                    dataEle.add(value);
+                }
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "空压站报表")
+                .head(headList)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     @Override
