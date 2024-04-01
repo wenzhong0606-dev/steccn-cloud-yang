@@ -1,33 +1,49 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.http.HttpUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.dto.SteccnRow;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.pms.dto.DataCollectDTO;
 import com.steccn.pms.service.PmsDataCollectReportService;
+import com.steccn.pms.vo.SjgMonthCountReportTransverseVO;
+import com.steccn.pms.vo.SjgMonthCountReportVO;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 类说明
@@ -91,6 +107,53 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         tableData.setColumns(columns);
         tableData.setTableList(data);
         return tableData;
+    }
+
+    @Override
+    public void turbineReportDownload(LocalDate date, HttpServletResponse response) throws IOException {
+        SteccnTableDataDTO<Map<String, String>> recordDto = turbineReport(date);
+        List<SteccnTableColumn> columns = recordDto.getColumns();
+        List<Map<String, String>> tableList = recordDto.getTableList();
+        Assert.notEmpty(tableList,"暂无数据");
+        //写表头
+        List<List<String>> headList = new ArrayList<>();
+        columns.forEach(h ->{
+            headList.add(Lists.newArrayList(h.getLabel()));
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("余热汽轮机报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            columns.forEach(h ->{
+                String value = ele.get(h.getProp());
+                try {
+                    BigDecimal valueBd = BigDecimalUtil.valueOf(value);
+                    dataEle.add(valueBd);
+                } catch (Exception e) {
+                    dataEle.add(value);
+                }
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "余热汽轮机报表")
+                .head(headList)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+
     }
 
     @Override

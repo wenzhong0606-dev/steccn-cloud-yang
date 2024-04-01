@@ -1,16 +1,22 @@
 package com.steccn.pms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.PmsDataCollectReportService;
 import com.steccn.pms.vo.SubstrateDayReportVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * 数采报表控制器
@@ -29,6 +35,23 @@ public class PmsDataCollectReportController {
     @ApiOperation("余热汽轮机报表")
     public R<SteccnTableDataDTO> turbine(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.turbineReport(date));
+    }
+
+    @GetMapping("/turbine/download")
+    @ApiOperation("余热汽轮机报表")
+    public void turbineDownload(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.turbineReportDownload(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @GetMapping("/boiler")

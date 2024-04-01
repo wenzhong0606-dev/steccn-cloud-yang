@@ -2,6 +2,9 @@ package com.steccn.pms.service;
 
 import com.steccn.common.dto.SteccnTableDataDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -18,6 +21,14 @@ public interface PmsDataCollectReportService {
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> turbineReport(LocalDate date);
+
+    /**
+     * 余热汽轮机报表-导出
+     *
+     * @param date
+     * @param response
+     */
+    void turbineReportDownload(LocalDate date, HttpServletResponse response) throws IOException;
 
     /**
      * 锅炉报表
