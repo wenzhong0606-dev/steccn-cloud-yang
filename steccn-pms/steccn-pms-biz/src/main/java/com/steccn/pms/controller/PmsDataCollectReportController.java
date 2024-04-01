@@ -131,4 +131,21 @@ public class PmsDataCollectReportController {
         return R.success(pmsDataCollectReportService.waterPump(date));
     }
 
+    @GetMapping("/waterPump/download")
+    @ApiOperation("水泵房-导出")
+    public void waterPumpDownload(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.waterPumpDownload(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
 }

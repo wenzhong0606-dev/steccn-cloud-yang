@@ -108,4 +108,10 @@ public interface PmsDataCollectReportService {
      */
     SteccnTableDataDTO<Map<String,String>> waterPump(LocalDate date);
 
+    /**
+     * 水泵房 - 导出
+     * @param date
+     * @param response
+     */
+    void waterPumpDownload(LocalDate date, HttpServletResponse response) throws IOException;
 }
