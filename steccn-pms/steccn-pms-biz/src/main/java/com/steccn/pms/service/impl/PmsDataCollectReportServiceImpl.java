@@ -29,6 +29,8 @@ import com.steccn.pms.vo.SjgMonthCountReportVO;
 import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
 import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
 import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
+import com.steccn.qms.vo.DefectDayRowVO;
+import com.steccn.qms.vo.DefectDayVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -232,6 +234,58 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         tableData.setColumns(columns);
         tableData.setTableList(data);
         return tableData;
+    }
+
+    @Override
+    public void boilerReportDownload(LocalDate date, HttpServletResponse response) throws IOException {
+        SteccnTableDataDTO<Map<String, String>> result = boilerReport(date);
+        List<Map<String, String>> tableList = result.getTableList();
+        List<SteccnTableColumn> columns = result.getColumns();
+        SteccnTableAssertUtil.notEmpty(tableList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        columns.forEach(c -> {
+            if (CollUtil.isNotEmpty(c.getChildren())) {
+                c.getChildren().forEach(ch -> {
+                    list.add(Lists.newArrayList(c.getLabel(), ch.getLabel()));
+                });
+            } else {
+                list.add(Lists.newArrayList(c.getLabel(), c.getLabel()));
+            }
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("锅炉报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            columns.forEach(c -> {
+                if (CollUtil.isNotEmpty(c.getChildren())) {
+                    c.getChildren().forEach(ch -> {
+                        dataEle.add(BigDecimalUtil.valueOf(ele.get(ch.getProp())));
+                    });
+                } else {
+                    dataEle.add(ele.get(c.getProp()));
+                }
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "锅炉报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     @Override
