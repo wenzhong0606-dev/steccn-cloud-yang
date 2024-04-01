@@ -54,6 +54,14 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     List<WmsDeliveryReceiptInfo> outboundDeliveryClassificationByShelfIds(@Param("shelfIds")Set<Integer> shelfIds,@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime);
+
+    /**
+     * 获取区间的数据
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
 }
 
 

@@ -1,5 +1,6 @@
 package com.steccn.dp.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,7 +11,9 @@ import com.steccn.dp.dto.DpWmsDataDTO;
 import com.steccn.dp.mapper.AdsPmsReportWorkMapper;
 import com.steccn.dp.service.AdsWmsInventoryService;
 import com.steccn.dp.mapper.AdsWmsInventoryMapper;
+import com.steccn.dp.vo.AdsWmsInventoryVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -54,6 +57,13 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
             tupleDTO.setField2(list.stream().map(AdsWmsInventory::getTotalQuantity2).reduce(BigDecimal.ZERO,BigDecimalUtil::add));
         }
         return tupleDTO;
+    }
+
+    @Override
+    public List<AdsWmsInventoryVO> endingData(DpWmsDataDTO dto) {
+        List<AdsWmsInventory> list = list(new LambdaQueryWrapper<AdsWmsInventory>()
+                .eq(AdsWmsInventory::getDt, dto.getDate()));
+        return  BeanUtil.copyToList(list, AdsWmsInventoryVO.class);
     }
 }
 

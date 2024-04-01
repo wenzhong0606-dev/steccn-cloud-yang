@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -618,6 +619,23 @@ public class LocalDateUtil {
         }
         result.setField1(minTime);
         result.setField2(maxTime);
+        return result;
+    }
+
+
+    /**
+     * 当前时间区间的上一个区间
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public static TupleDTO<LocalDateTime,LocalDateTime> intervalTime(LocalDateTime startTime,LocalDateTime endTime){
+        TupleDTO<LocalDateTime,LocalDateTime> result = new TupleDTO<LocalDateTime,LocalDateTime>();
+        //计算时间区间的天数
+        long between = ChronoUnit.DAYS.between(startTime, endTime);
+        // 计算上一个区间的开始和结束日期
+        result.setField1(startTime.minusDays(between));
+        result.setField1(startTime.minusDays(between));
         return result;
     }
 

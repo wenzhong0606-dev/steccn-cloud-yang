@@ -5,8 +5,10 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.AdsWmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.dp.dto.DpWmsDataDTO;
+import com.steccn.dp.vo.AdsWmsInventoryVO;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
 * @author 34872
@@ -18,4 +20,6 @@ public interface AdsWmsInventoryService extends IService<AdsWmsInventory> {
     TupleDTO<BigDecimal,BigDecimal> ending(DpWmsDataDTO dto);
 
     TupleDTO<BigDecimal,BigDecimal> openning(DpWmsDataDTO dto);
+
+    List<AdsWmsInventoryVO> endingData(DpWmsDataDTO dto);
 }

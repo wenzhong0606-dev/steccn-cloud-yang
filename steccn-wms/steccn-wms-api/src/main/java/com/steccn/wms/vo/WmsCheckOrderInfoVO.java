@@ -46,6 +46,10 @@ public class WmsCheckOrderInfoVO implements Serializable {
     @ApiModelProperty("箱号")
     private String caseNo;
 
+
+    @ApiModelProperty("单位id")
+    private Long unitId;
+
     @ApiModelProperty("单位")
     private String unit;
 

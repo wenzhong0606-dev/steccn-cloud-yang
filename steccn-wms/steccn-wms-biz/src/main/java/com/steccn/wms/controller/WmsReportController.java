@@ -3,6 +3,7 @@ package com.steccn.wms.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -14,6 +15,7 @@ import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsTransferSlip;
+import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.service.*;
 import com.steccn.wms.vo.WmsDocumentQuantityVO;
@@ -53,12 +55,19 @@ public class WmsReportController {
 
     private final WmsInventoryService wmsInventoryService;
 
+    private final WmsReportService wmsReportService;
+
+    @PostMapping("/statistical")
+    @ApiOperation("仓储统计报表")
+    public R<SteccnTableDataDTO> statisticalData(@RequestBody WmsReportStatisticalDTO dto){
+        return R.success(wmsReportService.statisticalData(dto));
+    }
+
     @PostMapping("/opening/inventory")
     @ApiOperation("获取期初库存")
     public R<BigDecimal>  openingInventory(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
         return R.success(wmsInventoryRecordService.openingInventory(wmsReportWarehouseDTO));
     }
-
 
     @PostMapping("/ending/inventory")
     @ApiOperation("获取期末库存")
@@ -142,7 +151,7 @@ public class WmsReportController {
                 .notIn(WmsDeliveryReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()))));
         LambdaQueryWrapper<WmsTransferSlip> wrapper = new LambdaQueryWrapper<WmsTransferSlip>()
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsTransferSlip::getCreateTime, dto.getStartTime(), dto.getEndTime())
-                .in(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+                .notIn(WmsTransferSlip::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode(),WmsManagerConstant.OrderStateEnum.ZERO.getCode());
         if (CollUtil.isNotEmpty(dto.getWarehouseIds())) {
             wrapper.and(w -> {
                 w.in(WmsTransferSlip::getSourceWarehouse, dto.getWarehouseIds()).or()

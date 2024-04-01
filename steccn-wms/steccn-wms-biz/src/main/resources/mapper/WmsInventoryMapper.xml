@@ -109,7 +109,7 @@
           a.warehouse_name warehouseName,a.shelf_id shelf,a.shelf_name shelfName,a.material_code materialCode
         FROM
         wms_inventory a
-        WHERE   a.del_flag = 0
+        WHERE   a.del_flag = 0 AND a.total_quantity != 0
         <if test="shelfCodes!=null and shelfCodes.size() >0 ">
             <foreach collection="shelfCodes" open=" and a.shelf_code in(" close=")" item="shelfCode" separator=",">
                 #{shelfCode}

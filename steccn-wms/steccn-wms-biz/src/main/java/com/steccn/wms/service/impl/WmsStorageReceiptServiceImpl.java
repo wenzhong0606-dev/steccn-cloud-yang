@@ -1738,6 +1738,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return wmsSalesReturnsFlagVO;
     }
 
+    @Override
+    public  List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime) {
+        return  this.baseMapper.intervalData(startTime,endTime);
+    }
+
     /**
      * 冲销
      * @return
