@@ -85,25 +85,38 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     public Map<String, BigDecimal> getWeightCountMap(TupleDTO<LocalDateTime, LocalDateTime> dto) {
         Map<String,BigDecimal> result = Maps.newHashMap();
         //合并硅砂和碎玻璃
-        List<DpWeightVO> weighCount = getWeighCount(dto);
-        if(CollUtil.isNotEmpty(weighCount)){
-            weighCount.forEach(tmp->{
-                if(tmp.getTagName().contains("硅砂")){
-                    if(result.containsKey("硅砂")){
-                        result.computeIfPresent("硅砂",(k,v)->BigDecimalUtil.add(v,BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
-                    }else {
-                        result.put("硅砂",BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
-                    }
-                }else if(tmp.getTagName().contains("碎玻璃")){
-                    if(result.containsKey("碎玻璃")){
-                        result.computeIfPresent("碎玻璃",(k,v)->BigDecimalUtil.add(v,BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2)));
-                    }else {
-                        result.put("碎玻璃",BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
-                    }
-                }else {
-                    result.put(tmp.getTagName(),BigDecimalUtil.divide(tmp.getValue(),new BigDecimal(1000),2));
+        Map<String, BigDecimal> data = postWeightCount(dto);
+        if(CollUtil.isNotEmpty(data)){
+            for(Map.Entry<String,BigDecimal> entry:data.entrySet()){
+                switch (entry.getKey()){
+                    case "data1":
+                        result.put("石英砂（低铁硅砂）",BigDecimalUtil.add(entry.getValue(),data.get("data2"),2));
+                        break;
+                    case "data2":
+                        break;
+                    case "data3":
+                        result.put("白云石（普通白云石）",BigDecimalUtil.setScale(entry.getValue(),2));
+                        break;
+                    case "data4":
+                        result.put("纯碱",BigDecimalUtil.setScale(entry.getValue(),2));
+                        break;
+                    case "data5":
+                        result.put("石灰石",BigDecimalUtil.setScale(entry.getValue(),2));
+                        break;
+                    case "data6":
+                        result.put("复合澄清剂",BigDecimalUtil.setScale(entry.getValue(),2));
+                        break;
+                    case "data7":
+                        result.put("三氧化二铝",BigDecimalUtil.setScale(entry.getValue(),2));
+                        break;
+                    case "data8":
+                        result.put("小料",BigDecimalUtil.setScale(entry.getValue(),2));
+                        break;
+                    case "data9":
+                        result.put("碎玻璃（外购）",BigDecimalUtil.add(entry.getValue(),data.get("data10"),2));
+                        break;
                 }
-            });
+            }
         }
         return result;
     }
