@@ -274,7 +274,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead(source));
         //落板原因
-        resVo.setFallList(fallList(date, manData, sysOfficeVOMap));
+        resVo.setFallList(fallList(date, manData, sysOfficeVOMap,dateDTO));
         return resVo;
     }
 
@@ -395,11 +395,16 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param manDataList 人工检测数据
      * @return 落板原因集合
      */
-    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList, Map<Integer, SysOfficeVO> lineIdNameMap) {
+    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList, Map<Integer, SysOfficeVO> lineIdNameMap,TripleDTO<LocalDate, LocalDate, Integer> tDateDTO) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
+        Map<String, OaGroupCountDTO> groupInfoMap;
         if (CollUtil.isNotEmpty(manDataList)) {
-            TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO(curDate, curDate);
-            Map<String, OaGroupCountDTO> groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if(Objects.isNull(tDateDTO)){
+                TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO(curDate, curDate);
+                groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            }else {
+                groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(tDateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            }
             OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(manDataList)) {
@@ -986,7 +991,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
             if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
                 //落板原因
-                luoData.addAll(fallList(dto.getDate(), manData, officeVoMap));
+                luoData.addAll(fallList(dto.getDate(), manData, officeVoMap,null));
                 //缺陷表格
             }
 
