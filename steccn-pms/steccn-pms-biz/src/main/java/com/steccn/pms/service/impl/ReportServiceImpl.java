@@ -1826,12 +1826,12 @@ public class ReportServiceImpl implements ReportService {
             storageTotalQuantity = storageTotalQuantity.add(storageQuantity);
 
             // 消耗数
-            BigDecimal transferSlipQuantity = Optional.ofNullable(transferSlipMap.get(material)).orElse(BigDecimal.ZERO);
+            BigDecimal transferSlipQuantity = Optional.ofNullable(countMap.get(material)).orElse(BigDecimal.ZERO);
             transferSlipQuantityList.add(transferSlipQuantity);
             transferSlipTotalQuantity = transferSlipTotalQuantity.add(transferSlipQuantity);
 
             // 领用数
-            BigDecimal countQuantity = Optional.ofNullable(countMap.get(material)).orElse(BigDecimal.ZERO);
+            BigDecimal countQuantity = Optional.ofNullable(transferSlipMap.get(material)).orElse(BigDecimal.ZERO);
             countQuantityList.add(countQuantity);
             countTotalQuantity = countTotalQuantity.add(countQuantity);
         };
