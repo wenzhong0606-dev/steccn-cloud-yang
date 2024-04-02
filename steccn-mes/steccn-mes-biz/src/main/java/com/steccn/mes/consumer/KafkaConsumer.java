@@ -81,12 +81,17 @@ public class KafkaConsumer {
         EqpListenerDTO eqpListenerDTO = JSONObject.parseObject(record.value(), EqpListenerDTO.class);
         //如果是脉冲消息则直接修改redis
         if(eqpListenerDTO.getTagId().equals("OA1.BOOL.STOP_BOOL")){
-            stringRedisTemplate.opsForValue().set("KafkaEqpSignal::"+eqpListenerDTO.getTagId(),eqpListenerDTO.getValueAsString());
+            if(eqpListenerDTO.getValueAsString().equals("true")){
+                stringRedisTemplate.opsForValue().set("KafkaEqpSignal::pulse","false");
+            }
             ack.acknowledge();
             return;
         }
         //start没有作用
         if(eqpListenerDTO.getTagId().equals("OA1.BOOL.START_BOOL")){
+            if(eqpListenerDTO.getValueAsString().equals("true")){
+                stringRedisTemplate.opsForValue().set("KafkaEqpSignal::pulse","true");
+            }
             ack.acknowledge();
             return;
         }
@@ -198,13 +203,11 @@ public class KafkaConsumer {
             //运行状态
             //先获取脉冲状态
             Boolean pulse;
-            String pulseStr = stringRedisTemplate.opsForValue().get("KafkaEqpSignal::OA1.BOOL.STOP_BOOL");
+            String pulseStr = stringRedisTemplate.opsForValue().get("KafkaEqpSignal::pulse");
             if(StrUtil.isNotBlank(pulseStr)&&pulseStr.equals("true")){
-                pulse = false;
-            }else if(StrUtil.isBlank(pulseStr)){
-                pulse = false;
-            }else {
                 pulse = true;
+            }else {
+                pulse = false;
             }
             //修改的对象
             MesEquipment equipment = new MesEquipment();
@@ -226,6 +229,10 @@ public class KafkaConsumer {
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                     .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
                     .last("limit 1"));
+            //只有原料车间的设备才需要考虑待机停机
+            if(!eqp.getParentCodes().contains("1501738403312599040")){
+                equipment.setState(OaConstant.NUM_3.toString());
+            }
             if(Objects.isNull(eqp)){
                 log.error(config.getRefContent()+"设备不存在");
                 throw new BusinessException(config.getRefContent()+"设备不存在");
