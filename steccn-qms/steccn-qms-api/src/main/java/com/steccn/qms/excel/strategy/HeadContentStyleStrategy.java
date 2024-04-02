@@ -31,6 +31,7 @@ public class HeadContentStyleStrategy extends HorizontalCellStyleStrategy {
         headWriteCellStyle.setWriteFont(contentWriteFont);
         //标题黄色底纹
         headWriteCellStyle.setFillForegroundColor(IndexedColors.GREY_40_PERCENT.getIndex());
+        headWriteCellStyle.setWrapped(true);
         contentWriteCellStyle.setBorderBottom(BorderStyle.THIN);
         contentWriteCellStyle.setBorderLeft(BorderStyle.THIN);
         contentWriteCellStyle.setBorderRight(BorderStyle.THIN);

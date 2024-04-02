@@ -52,6 +52,13 @@ public interface PmsDataCollectReportService {
     SteccnTableDataDTO<Map<String,String>> thirtyFiveKvReport(LocalDate date);
 
     /**
+     * 35kv总开关站运行值班日报表 - 导出
+     * @param date 日期
+     * @param response 响应
+     */
+    void thirtyFiveKvReportDownload(LocalDate date, HttpServletResponse response) throws IOException;
+
+    /**
      * 脱硫脱硝报表
      * @param date
      * @return
@@ -121,5 +128,4 @@ public interface PmsDataCollectReportService {
      * @param response
      */
     void waterPumpDownload(LocalDate date, HttpServletResponse response) throws IOException;
-
 }
