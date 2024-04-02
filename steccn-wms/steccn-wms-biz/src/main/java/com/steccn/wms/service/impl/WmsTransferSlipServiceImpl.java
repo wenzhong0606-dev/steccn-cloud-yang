@@ -174,7 +174,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 List<WmsInventoryDTO> sourceList = Lists.newArrayList();
                 List<WmsInventoryDTO> targetList = Lists.newArrayList();
                 //获取箱号规则
-                Long caseNo = getCaseNo(model.getCode(), model.getId());
+//                Long caseNo = getCaseNo(model.getCode(), model.getId());
 
                 List<WmsTransferSlipInfoDTO> list = dto.getList();
                 for (WmsTransferSlipInfoDTO info : list) {
@@ -191,8 +191,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                     WmsInventoryDTO target = new WmsInventoryDTO();
                     BeanUtil.copyProperties(info, target);
                     //生成箱号
-                    caseNo = ++caseNo;
-                    target.setCaseNo(model.getCode() + WmsCodeUtil.SHORT_LINE + caseNo);
+//                    caseNo = ++caseNo;
+//                    target.setCaseNo(model.getCode() + WmsCodeUtil.SHORT_LINE + caseNo);
                     target.setShelfId(info.getTargetShelf());
                     target.setWarehouseId(model.getTargetWarehouse());
                     targetList.add(target);

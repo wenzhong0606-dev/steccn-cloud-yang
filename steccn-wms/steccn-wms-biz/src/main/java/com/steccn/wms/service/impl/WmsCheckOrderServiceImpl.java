@@ -148,12 +148,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsCheckOrderInfoVO.setWarehouse(((WmsCheckOrderInfo) vo).getWarehouse().toString());
             //仓库
             if(Objects.nonNull(wmsCheckOrderInfoVO.getWarehouse())){
-                R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.parseInt(wmsCheckOrderInfoVO.getWarehouse()));
+                R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.valueOf(wmsCheckOrderInfoVO.getWarehouse()));
                 wmsCheckOrderInfoVO.setWarehouseName(warehouseInfo.getData().getOfficeName());
             }
             //货架
             if(Objects.nonNull(wmsCheckOrderInfoVO.getShelf())){
-                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.parseInt(wmsCheckOrderInfoVO.getShelf()));
+                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.valueOf(wmsCheckOrderInfoVO.getShelf()));
                 wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             }
             //物料
@@ -195,11 +195,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsStorageReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT, WmsCodeUtil.NUM_BIT_4, getStorageReceiptCurrentMaxCode()));
             wmsStorageReceipt.setType(wmsCheckOrder.getType());
             wmsStorageReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
-            wmsStorageReceipt.setWarehouseId(Long.parseLong(surplusEntry.getKey()));
+            wmsStorageReceipt.setWarehouseId(Long.valueOf(surplusEntry.getKey()));
             wmsStorageReceipt.setAffirmTime(LocalDateTime.now());
             wmsStorageReceipt.setAffirmName(SecurityUtils.getUser().getName());
             wmsStorageReceipt.setNote(wmsCheckOrder.getNote());
             wmsStorageReceiptMapper.insert(wmsStorageReceipt);
+            SysOfficeVO warehouseInfo = FeignOptional.of(() -> remoteOfficeFeign.shelfWarehouseInfo(Integer.valueOf(surplusEntry.getKey())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //保存入库明细
             for (WmsCheckOrderInfoVO vo:surplusEntry.getValue()) {
                 WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
@@ -210,20 +211,36 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 materialIds.add(vo.getMaterialId());
                 R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
                 if(materialInfo.getData().size()>0) wmsStorageReceiptInfo.setMaterialCode(materialInfo.getData().get(vo.getMaterialId()).getCode());
-                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.parseInt(vo.getShelf()));
+                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.valueOf(vo.getShelf()));
+
                 if(Objects.nonNull(shelfInfo.getData()))  wmsStorageReceiptInfo.setShelfCode(shelfInfo.getData().getOfficeCode());
-                wmsStorageReceiptInfo.setQuantity(vo.getResult());
+                wmsStorageReceiptInfo.setQuantity(vo.getDifference());
                 //获取库存信息
                 LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
-                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo());
+                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo()).eq(WmsInventory::getBatch,vo.getBatch());
                 WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
                 wmsStorageReceiptInfo.setUnit(Objects.isNull(wmsInventory)?null:wmsInventory.getUnit());
                 wmsStorageReceiptInfoMapper.insert(wmsStorageReceiptInfo);
                 //更新库存
                 if(Objects.nonNull(wmsInventory)){
-                    wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().add(vo.getResult()));
-                    wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(vo.getResult()));
+                    wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().add(vo.getDifference()));
+                    wmsInventory.setBatch(vo.getBatch());
+                    wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(vo.getDifference()));
                     wmsInventoryMapper.updateById(wmsInventory);
+                }else {
+                    WmsInventory inventory = new WmsInventory();
+                    BeanUtils.copyProperties(vo,inventory);
+                    inventory.setTotalQuantity(vo.getDifference());
+                    inventory.setShelfId(Integer.valueOf(vo.getShelf()));
+                    inventory.setShelfName(shelfInfo.getData().getOfficeName());
+                    inventory.setShelfCode(shelfInfo.getData().getOfficeCode());
+                    inventory.setWarehouseId(Integer.valueOf(vo.getWarehouse()));
+                    inventory.setWarehouseName(warehouseInfo.getOfficeName());
+                    inventory.setWarehouseCode(warehouseInfo.getOfficeCode());
+                    inventory.setAvailableQuantity(vo.getDifference());
+                    inventory.setBatch(vo.getBatch());
+                    inventory.setUnit(vo.getUnitId());
+                    wmsInventoryMapper.insert(inventory);
                 }
             }
         }
@@ -237,16 +254,16 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsDeliveryReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, getDeliveryReceiptCurrentMaxCode()));
             wmsDeliveryReceipt.setType(wmsCheckOrder.getType());
             wmsDeliveryReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
-            wmsDeliveryReceipt.setWarehouseId(Long.parseLong(lossEntry.getKey()));
+            wmsDeliveryReceipt.setWarehouseId(Long.valueOf(lossEntry.getKey()));
             wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
             wmsDeliveryReceipt.setAffirmName(SecurityUtils.getUser().getName());
             wmsDeliveryReceiptMapper.insert(wmsDeliveryReceipt);
             for (WmsCheckOrderInfoVO vo:lossEntry.getValue()) {
                 LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo());
+                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo()).eq(WmsInventory::getBatch,vo.getBatch());
                 WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
                 //保存出库明细
-                BigDecimal availableQuantity = vo.getResult();//数量
+                BigDecimal availableQuantity = vo.getDifference().abs();//数量
                 WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
                 wmsDeliveryReceiptInfo.setDeliveryReceiptId(wmsDeliveryReceipt.getId());
                 wmsDeliveryReceiptInfo.setMaterialId(vo.getMaterialId());
@@ -256,7 +273,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 //更新库存
                 if(Objects.nonNull(wmsInventory)){
                     wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getDifference().abs()));
-                    wmsInventory.setAvailableQuantity(vo.getResult());
+                    wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(vo.getDifference().abs()));
                     wmsInventoryMapper.updateById(wmsInventory);
                 }
             }
@@ -466,11 +483,11 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             BeanUtils.copyProperties(old,wmsCheckOrderInfoVO);
             //仓库
             R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouseInfo(old.getWarehouse());
-            wmsCheckOrderInfoVO.setWarehouse(old.getWarehouse().toString());
+            wmsCheckOrderInfoVO.setWarehouse(String.valueOf(old.getWarehouse()));
             wmsCheckOrderInfoVO.setWarehouseName(warehouseInfo.getData().getOfficeName());
             //货架
             R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(old.getShelf());
-            wmsCheckOrderInfoVO.setShelf(old.getShelf().toString());
+            wmsCheckOrderInfoVO.setShelf(String.valueOf(old.getShelf()));
             wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             //物料
             WmsCheckOrderInfoVO wmsCheckOrderInfoVOTem = getWmsCheckOrderInfoVOInfo(wmsCheckOrderInfoVO.getMaterialId());

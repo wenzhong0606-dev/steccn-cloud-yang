@@ -1,5 +1,6 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -1703,6 +1704,33 @@ public class ReportServiceImpl implements ReportService {
                     }
                 }
             }
+//            if (CollUtil.isNotEmpty(dataList)){
+//                Map<String, List<OutputQualitySjgDataVO>> classVoMap = dataList.stream().collect(Collectors.groupingBy(OutputQualitySjgDataVO::getClasses));
+//                classVoMap.entrySet().forEach(classVO->{
+//                    Map<String, List<OutputQualitySjgDataVO>> classGroupVoMap = classVO.getValue().stream().collect(Collectors.groupingBy(OutputQualitySjgDataVO::getClassGroup));
+//                    classGroupVoMap.entrySet().forEach(classGroupVo->{
+//                        Map<String, List<OutputQualitySjgDataVO>> produceLineVoMap = classGroupVo.getValue().stream().collect(Collectors.groupingBy(OutputQualitySjgDataVO::getProductLine));
+//                        produceLineVoMap.entrySet().forEach(produceLineVo->{
+//                            Map<String, List<OutputQualitySjgDataVO>> specificationsVo = produceLineVo.getValue().stream().collect(Collectors.groupingBy(OutputQualitySjgDataVO::getSpecifications)).;
+//                            BigDecimal quantitySlice = BigDecimal.ZERO;
+//                            BigDecimal quantitySquare = BigDecimal.ZERO;
+//                            specificationsVo.entrySet().forEach(v->{
+//                                        v.getValue().forEach( value-> {
+//                                            if (Objects.nonNull(value.getProcessQuantitySlice()) && quantitySlice.compareTo(value.getProcessQuantitySlice()==0){
+//
+//                                            }
+//                                            if (Objects.nonNull(value.getProcessQuantitySquare())){
+//
+//                                            }
+//
+//                                                }
+//                                        );
+//                                    });
+//                        });
+//                    });
+//                });
+//
+//            }
         }
         //合计 月累计
         if (CollUtil.isNotEmpty(dataList)) {
