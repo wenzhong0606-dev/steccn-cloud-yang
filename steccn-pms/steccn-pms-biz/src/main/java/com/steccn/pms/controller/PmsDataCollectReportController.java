@@ -100,11 +100,27 @@ public class PmsDataCollectReportController {
         }
     }
 
-
     @GetMapping("/des")
     @ApiOperation("脱硫脱硝报表")
     public R<SteccnTableDataDTO> des(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.desReport(date));
+    }
+
+    @GetMapping("/des/download")
+    @ApiOperation("脱硫脱硝报表-导出")
+    public void desDownload(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.desReportDownload(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @GetMapping("/melting1")
