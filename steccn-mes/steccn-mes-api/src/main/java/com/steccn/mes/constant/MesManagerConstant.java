@@ -51,6 +51,10 @@ public interface MesManagerConstant {
      * 设备动力部
      */
     String PLANT_POWER = "CUCC007";
+    /**
+     * 设备动力部岗位
+     */
+    String PLANT_POWER_POST = "CUCC007004";
 
     /**
      * 深加工制造部
@@ -58,9 +62,19 @@ public interface MesManagerConstant {
     String DEEP_PROCESSING = "STEC005";
 
     /**
+     * 深加工制造部岗位
+     */
+    String DEEP_PROCESSING_POST = "STEC0186";
+
+    /**
      * 基片制造部
      */
     String SUB_MANU_FAC = "STEC001";
+
+    /**
+     * 基片制造部岗位
+     */
+    String SUB_MANU_FAC_POST = "JPGW";
 
     /**
      * 温度点检项

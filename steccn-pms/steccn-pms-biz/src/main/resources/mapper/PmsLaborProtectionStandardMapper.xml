@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsLaborProtectionStandardMapper">
+
+<!--    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsLaborProtectionStandard">-->
+<!--            <id property="id" column="id" jdbcType="INTEGER"/>-->
+<!--            <result property="officeId" column="office_id" jdbcType="OTHER"/>-->
+<!--            <result property="riskFactor" column="risk_factor" jdbcType="VARCHAR"/>-->
+<!--            <result property="createBy" column="create_by" jdbcType="BIGINT"/>-->
+<!--            <result property="createName" column="create_name" jdbcType="VARCHAR"/>-->
+<!--            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>-->
+<!--            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>-->
+<!--            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
+<!--            <result property="note" column="note" jdbcType="VARCHAR"/>-->
+<!--    </resultMap>-->
+
+<!--    <sql id="Base_Column_List">-->
+<!--        id,office_id,risk_factor,-->
+<!--        create_by,create_name,create_time,-->
+<!--        update_by,update_name,update_time,-->
+<!--        del_flag,note-->
+<!--    </sql>-->
+</mapper>
