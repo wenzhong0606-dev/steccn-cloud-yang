@@ -1,10 +1,15 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
 import com.steccn.qms.dto.QtCheckTaskStatusDTO;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -34,5 +39,18 @@ public interface PmsLaborProtectionStandardService extends IService<PmsLaborProt
      * @return
      */
     PmsLaborStandardVO info(Integer id);
+
+    /**
+     * 通过id批量删除
+     * @param id
+     * @return
+     */
+    Boolean batchDeleteById(Set<Integer> id);
+
+    /**
+     * 表单数据
+     * @return
+     */
+    SteccnTableDataDTO<Map<String, String>> listInfo();
 
 }

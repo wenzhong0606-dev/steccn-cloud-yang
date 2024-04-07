@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
@@ -10,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 /**
  * 劳保控制器
@@ -42,5 +45,18 @@ public class PmsLaborController {
     @ApiOperation(value = "劳保标准详情")
     public R<PmsLaborStandardVO> info(@PathVariable("id")Integer id) {
         return R.success(pmsLaborProtectionStandardService.info(id));
+    }
+
+    @PostMapping("/standard/delete")
+    @ApiOperation(value = "删除劳保标准")
+    @SysLog("删除劳保标准")
+    public R<Boolean> batchDeleteById(@RequestBody Set<Integer> dto) {
+        return R.success(pmsLaborProtectionStandardService.batchDeleteById(dto));
+    }
+
+    @GetMapping("/standard/list")
+    @ApiOperation(value = "劳保标准列表")
+    public R<SteccnTableDataDTO> listInfo() {
+        return R.success(pmsLaborProtectionStandardService.listInfo());
     }
 }
