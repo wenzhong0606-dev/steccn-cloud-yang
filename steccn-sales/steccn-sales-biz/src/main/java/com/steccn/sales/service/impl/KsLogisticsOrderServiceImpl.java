@@ -142,7 +142,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         SteccnTableAssertUtil.notEmpty(dashBoard, "暂无数据");
         //2、组数据
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        List<Integer> locationList = dashBoard.stream().map(KsLogisticsDashBoardDTO::getCustomerId).distinct().sorted().collect(Collectors.toList());
+        List<Integer> locationList = dashBoard.stream().filter(v->Objects.nonNull(v.getCustomerId())).map(KsLogisticsDashBoardDTO::getCustomerId).distinct().sorted().collect(Collectors.toList());
         List<Integer> companyList = dashBoard.stream().filter(v->Objects.nonNull(v.getCompanyId())).map(KsLogisticsDashBoardDTO::getCompanyId).distinct().sorted().collect(Collectors.toList());
         //收货地址
         List<ResPartner> resPartners = resPartnerMapper.selectList(new LambdaQueryWrapper<ResPartner>().in(ResPartner::getId, locationList));

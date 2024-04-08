@@ -1781,7 +1781,7 @@ public class ReportServiceImpl implements ReportService {
     public EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>> > rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate) {
         //获取计划数（等待采购数据）
         //获取到货数（入库管理 采购入库数据）
-        List<String> materialNames =Arrays.asList("石英砂（低铁硅砂）","纯碱","石灰石","白云石（普通白云石）","三氧化二铝","复合澄清剂","小料","碎玻璃（外购）");
+        List<String> materialNames = Arrays.asList("石英砂（低铁硅砂）","纯碱","石灰石","白云石（普通白云石）","三氧化二铝","复合澄清剂","小料","碎玻璃（外购）");
         RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
         rawMaterialReportDTO.setMaterialName(materialNames);
         rawMaterialReportDTO.setStartTime(startDate.atTime(8, 0, 0));
@@ -1826,12 +1826,12 @@ public class ReportServiceImpl implements ReportService {
             storageTotalQuantity = storageTotalQuantity.add(storageQuantity);
 
             // 消耗数
-            BigDecimal transferSlipQuantity = Optional.ofNullable(transferSlipMap.get(material)).orElse(BigDecimal.ZERO);
+            BigDecimal transferSlipQuantity = Optional.ofNullable(countMap.get(material)).orElse(BigDecimal.ZERO);
             transferSlipQuantityList.add(transferSlipQuantity);
             transferSlipTotalQuantity = transferSlipTotalQuantity.add(transferSlipQuantity);
 
             // 领用数
-            BigDecimal countQuantity = Optional.ofNullable(countMap.get(material)).orElse(BigDecimal.ZERO);
+            BigDecimal countQuantity = Optional.ofNullable(transferSlipMap.get(material)).orElse(BigDecimal.ZERO);
             countQuantityList.add(countQuantity);
             countTotalQuantity = countTotalQuantity.add(countQuantity);
         };

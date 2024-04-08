@@ -145,10 +145,33 @@ public class KafkaConsumer {
                         //获取部门及部门下的岗位
                         List<JsSysOffice> sysOffices = Lists.newArrayList();
                         if(StrUtil.isNotBlank(departmentStr)){
-                            sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
-                                    .select(JsSysOffice::getOfficeCode)
-                                    .like(JsSysOffice::getParentCodes, departmentStr)
-                                    .eq(JsSysOffice::getStatus,OaConstant.NO));
+                            if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER)
+                                    ||officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING)
+                                    ||officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC)){
+                                sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                        .select(JsSysOffice::getOfficeCode)
+                                        .like(JsSysOffice::getParentCodes, departmentStr)
+                                        .eq(JsSysOffice::getStatus,OaConstant.NO));
+                            }else {
+                                //加逻辑，若设备的使用部门是设备动力部、深加工制造部、基片制造部的下级，则只需要发给设备动力部岗位下的人和自身部门下的人
+                                if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER+",")){
+                                    departmentStr = departmentStr+MesManagerConstant.PLANT_POWER_POST+",";
+                                }else if (officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING+",")){
+                                    departmentStr = departmentStr+MesManagerConstant.DEEP_PROCESSING_POST+",";
+                                }else if (officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC+",")){
+                                    departmentStr = departmentStr+MesManagerConstant.SUB_MANU_FAC_POST+",";
+                                }
+                                sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                        .select(JsSysOffice::getOfficeCode)
+                                        .like(JsSysOffice::getParentCodes, departmentStr)
+                                        .eq(JsSysOffice::getStatus,OaConstant.NO));
+                                //自身使用部门下的人
+                                List<JsSysOffice> office2 = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                        .select(JsSysOffice::getOfficeCode)
+                                        .like(JsSysOffice::getParentCodes, one.getDepartment() + ",")
+                                        .eq(JsSysOffice::getStatus, OaConstant.NO));
+                                sysOffices.addAll(office2);
+                            }
                         }
                         Set<String> officeCodes = Sets.newHashSet();
                         if(CollUtil.isNotEmpty(sysOffices)){
