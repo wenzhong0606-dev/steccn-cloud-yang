@@ -125,4 +125,11 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     List<Integer> getUserIdByJobTitleId(Set<Integer> jobTitles);
+
+    /**
+     * 根据用户登录信息获取入职时间
+     * @param loginCode
+     * @return
+     */
+    Map<String,LocalDate> getCompanyStartTime(Set<String> loginCode);
 }

@@ -771,6 +771,34 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
       return resList;
     }
 
+    @Override
+    public Map<Integer, SysOfficeVO> depMapOrPostMap(Set<Integer> ids) {
+        List<SysOffice> officeList = listByIds(ids);
+        if(CollUtil.isNotEmpty(officeList)){
+            for(SysOffice tmp:officeList){
+                if(tmp.getOfficeType().equals("6")){
+                    //如果是岗位则查询机构
+                    String parentCodes = tmp.getParentCodes();
+                    parentCodes = parentCodes.substring(0,parentCodes.length()-1);
+                    List<String> parentCodeList = Arrays.asList(parentCodes.split(","));
+                    List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>()
+                            .select(SysOffice::getId,SysOffice::getOfficeName,SysOffice::getOfficeType)
+                            .in(SysOffice::getOfficeCode, parentCodeList));
+                    parentList.forEach(parent->{
+                        if(parent.getOfficeType().equals("15")){
+
+                        }
+                    });
+                }else if(tmp.getOfficeType().equals("15")){
+
+                }
+
+            }
+
+        }
+        return null;
+    }
+
 
     /**
      * 根据组织机构类型获取数据

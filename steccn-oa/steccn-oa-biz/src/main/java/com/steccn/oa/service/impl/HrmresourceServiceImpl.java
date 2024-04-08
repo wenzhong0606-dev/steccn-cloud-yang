@@ -28,6 +28,7 @@ import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -326,6 +327,20 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                 .in(Hrmresource::getJobtitle,jobTitles));
         if(CollUtil.isNotEmpty(list)){
             results = list.stream().map(Hrmresource::getId).collect(Collectors.toList());
+        }
+        return results;
+    }
+
+    @Override
+    public Map<String, LocalDate> getCompanyStartTime(Set<String> loginCode) {
+        Map<String,LocalDate> results = Maps.newHashMap();
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().select(Hrmresource::getCompanystartdate, Hrmresource::getLoginid)
+                .in(Hrmresource::getLoginid, loginCode));
+        if(CollUtil.isNotEmpty(list)){
+            results = list.stream().collect(Collectors.toMap(
+                    Hrmresource::getLoginid,
+                    v->LocalDate.parse(v.getCompanystartdate())
+            ));
         }
         return results;
     }

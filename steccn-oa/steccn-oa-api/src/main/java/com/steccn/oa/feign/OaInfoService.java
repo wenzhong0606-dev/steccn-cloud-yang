@@ -341,4 +341,13 @@ public interface OaInfoService {
      */
     @PostMapping("/feign/oa/jobTitle/id")
     R<List<Integer>> getJobTitleById(@RequestBody Set<Integer> jobTitles);
+
+    /**
+     * 获取oa用户入职时间
+     * @param loginCode
+     * @return
+     */
+    @ApiOperation("获取用户入职时间")
+    @PostMapping("/feign/oa/user/workStartTime")
+    R<Map<String, LocalDate>> getCompanyStartTime(@RequestBody Set<String> loginCode);
 }

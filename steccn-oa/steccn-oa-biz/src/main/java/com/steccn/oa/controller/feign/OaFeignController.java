@@ -175,4 +175,10 @@ public class OaFeignController {
     public R<List<Integer>> getJobTitleById(@RequestBody Set<Integer> jobTitles){
         return R.success(hrmresourceService.getUserIdByJobTitleId(jobTitles));
     }
+
+    @ApiOperation("获取用户入职时间")
+    @PostMapping("/user/workStartTime")
+    public R<Map<String, LocalDate>> getCompanyStartTime(@RequestBody Set<String> loginCode){
+        return R.success(hrmresourceService.getCompanyStartTime(loginCode));
+    }
 }

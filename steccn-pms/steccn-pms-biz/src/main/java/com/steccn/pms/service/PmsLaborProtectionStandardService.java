@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
+import com.steccn.pms.dto.PmsStandardListDTO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
 import com.steccn.qms.dto.QtCheckTaskStatusDTO;
 
@@ -52,5 +53,11 @@ public interface PmsLaborProtectionStandardService extends IService<PmsLaborProt
      * @return
      */
     SteccnTableDataDTO<Map<String, String>> listInfo();
+
+    /**
+     * 领用清单
+     * @return
+     */
+    SteccnTableDataDTO<Map<String, String>> standardList(PmsStandardListDTO dto);
 
 }

@@ -21,6 +21,7 @@ import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.domain.PmsLaborProtectionStandardDetail;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.dto.PmsLaborStandardDetailDTO;
+import com.steccn.pms.dto.PmsStandardListDTO;
 import com.steccn.pms.service.PmsLaborProtectionStandardDetailService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.mapper.PmsLaborProtectionStandardMapper;
@@ -206,6 +207,11 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         result.setTableList(tableList);
         result.setColumns(columns);
         return result;
+    }
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> standardList(PmsStandardListDTO dto) {
+        return null;
     }
 }
 
