@@ -146,13 +146,29 @@ public class PmsDataCollectReportController {
         }
     }
 
-
     @GetMapping("/melting2")
     @ApiOperation("1200t/d熔化日志2")
     public R<SteccnTableDataDTO> melting2(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.melting2(date));
     }
 
+    @GetMapping("/melting2/download")
+    @ApiOperation("1200t/d熔化日志2--导出")
+    public void melting2Download(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.melting2Download(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+    
     @GetMapping("/annealing")
     @ApiOperation("退火窑日志")
     public R<SteccnTableDataDTO> annealing(@RequestParam("date") LocalDate date,@RequestParam("type") Integer type) {

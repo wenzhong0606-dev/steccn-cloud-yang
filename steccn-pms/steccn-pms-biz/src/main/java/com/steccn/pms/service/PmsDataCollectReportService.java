@@ -79,6 +79,12 @@ public interface PmsDataCollectReportService {
      */
     SteccnTableDataDTO<Map<String,String>> melting1(LocalDate date);
 
+    /**
+     * 熔化日志1报表导出
+     * @param date
+     * @param response
+     * @throws IOException
+     */
     void melting1Download(LocalDate date, HttpServletResponse response) throws IOException;
 
     /**
@@ -87,6 +93,13 @@ public interface PmsDataCollectReportService {
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> melting2(LocalDate date);
+
+    /**
+     * 熔化日志2报表导出
+     * @param date
+     * @param response
+     */
+    void melting2Download(LocalDate date, HttpServletResponse response) throws IOException;
 
     /**
      * 退火窑日志
@@ -137,5 +150,4 @@ public interface PmsDataCollectReportService {
      * @param response
      */
     void waterPumpDownload(LocalDate date, HttpServletResponse response) throws IOException;
-
 }
