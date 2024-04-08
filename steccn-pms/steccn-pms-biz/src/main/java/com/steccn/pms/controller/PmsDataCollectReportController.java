@@ -198,6 +198,23 @@ public class PmsDataCollectReportController {
         return R.success(pmsDataCollectReportService.molding1(date));
     }
 
+    @GetMapping("/molding1/download")
+    @ApiOperation("1200t/d成型作业日志(1-4)--导出")
+    public void molding1Download(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.molding1Download(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @GetMapping("/molding2")
     @ApiOperation("1200t/d成型作业日志(5-8)")
     public R<SteccnTableDataDTO> molding2(@RequestParam("date") LocalDate date) {

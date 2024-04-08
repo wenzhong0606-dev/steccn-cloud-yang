@@ -125,6 +125,13 @@ public interface PmsDataCollectReportService {
     SteccnTableDataDTO<Map<String,String>> molding1(LocalDate date);
 
     /**
+     * 成型作业日志(1-4)线
+     * @param date
+     * @param response
+     */
+    void molding1Download(LocalDate date, HttpServletResponse response) throws IOException;
+
+    /**
      * 成型作业日志(5-8)线
      * @param date
      * @return
