@@ -79,6 +79,8 @@ public interface PmsDataCollectReportService {
      */
     SteccnTableDataDTO<Map<String,String>> melting1(LocalDate date);
 
+    void melting1Download(LocalDate date, HttpServletResponse response) throws IOException;
+
     /**
      * 熔化日志2报表
      * @param date

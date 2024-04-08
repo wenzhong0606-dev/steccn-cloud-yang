@@ -676,6 +676,74 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
     }
 
     @Override
+    public void melting1Download(LocalDate date, HttpServletResponse response) throws IOException {
+        SteccnTableDataDTO<Map<String, String>> result = melting1(date);
+        List<Map<String, String>> tableList = result.getTableList();
+        List<SteccnTableColumn> columns = result.getColumns();
+        SteccnTableAssertUtil.notEmpty(tableList, "数据为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        for (SteccnTableColumn c : columns) {
+            if (CollUtil.isNotEmpty(c.getChildren())) {
+                for (SteccnTableColumn ch : c.getChildren()) {
+                    if (CollUtil.isNotEmpty(ch.getChildren())) {
+                        for (SteccnTableColumn cch : ch.getChildren()) {
+                            list.add(Lists.newArrayList(c.getLabel(), ch.getLabel(), cch.getLabel()));
+                        }
+                    } else {
+                        list.add(Lists.newArrayList(c.getLabel(), ch.getLabel(), ch.getLabel()));
+                    }
+                }
+            } else {
+                list.add(Lists.newArrayList(c.getLabel(), c.getLabel(), c.getLabel()));
+            }
+        }
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("1200T熔化日志1", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            columns.forEach(c -> {
+                if (CollUtil.isNotEmpty(c.getChildren())) {
+                    c.getChildren().forEach(ch -> {
+                        if (CollUtil.isNotEmpty(ch.getChildren())) {
+                            ch.getChildren().forEach(cch -> {
+                                dataEle.add(BigDecimalUtil.valueOf(ele.get(cch.getProp())));
+                            });
+                        } else {
+                            dataEle.add(BigDecimalUtil.valueOf(ele.get(ch.getProp())));
+                        }
+                    });
+                } else {
+                    try {
+                        dataEle.add(BigDecimalUtil.valueOf(ele.get(c.getProp())));
+                    } catch (Exception e) {
+                        dataEle.add(ele.get(c.getProp()));
+                    }
+                }
+            });
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "1200T熔化日志1")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    @Override
     public SteccnTableDataDTO<Map<String, String>> melting2(LocalDate date) {
         List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("RY_TE2_PV"
                 ,"RY_TE4_PV"
