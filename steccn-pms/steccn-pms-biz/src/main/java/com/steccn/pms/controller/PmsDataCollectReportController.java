@@ -168,11 +168,28 @@ public class PmsDataCollectReportController {
             response.getWriter().println(JSON.toJSONString(map));
         }
     }
-    
+
     @GetMapping("/annealing")
     @ApiOperation("退火窑日志")
     public R<SteccnTableDataDTO> annealing(@RequestParam("date") LocalDate date,@RequestParam("type") Integer type) {
         return R.success(pmsDataCollectReportService.annealing(date,type));
+    }
+
+    @GetMapping("/annealing/download")
+    @ApiOperation("退火窑日志-导出")
+    public void annealingDownload(@RequestParam("date") LocalDate date,@RequestParam("type") Integer type, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.annealingDownload(date, type, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @GetMapping("/molding1")

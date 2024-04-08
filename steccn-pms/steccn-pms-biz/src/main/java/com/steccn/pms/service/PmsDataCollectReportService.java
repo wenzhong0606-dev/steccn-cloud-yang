@@ -109,6 +109,15 @@ public interface PmsDataCollectReportService {
     SteccnTableDataDTO<Map<String,String>> annealing(LocalDate date,Integer type);
 
     /**
+     * 退火窑日志导出
+     * @param date
+     * @param type
+     * @param response
+     */
+    void annealingDownload(LocalDate date, Integer type, HttpServletResponse response) throws IOException;
+
+
+    /**
      * 成型作业日志(1-4)线
      * @param date
      * @return
@@ -150,4 +159,5 @@ public interface PmsDataCollectReportService {
      * @param response
      */
     void waterPumpDownload(LocalDate date, HttpServletResponse response) throws IOException;
+
 }
