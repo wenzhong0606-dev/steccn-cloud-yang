@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * mes 远程调用
@@ -38,4 +40,13 @@ public interface RemoteMesFeignApi {
      */
     @PostMapping("/feign/mes/eqp/state")
     R<Boolean> updateEqpState(@RequestBody TupleDTO<String,String> dto);
+
+    /**
+     * 获取岗位下的人员
+     * @param dto 岗位code
+     * @return
+     */
+    @ApiOperation("获取岗位下的人员")
+    @PostMapping("/feign/mes/emp/post")
+    R<Map<String, List<String>>> getPostUser(@RequestBody Set<String> dto);
 }

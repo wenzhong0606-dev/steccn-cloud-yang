@@ -772,9 +772,10 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
-    public Map<Integer, SysOfficeVO> depMapOrPostMap(Set<Integer> ids) {
+    public Map<Integer, SysOfficeVO> depMapOrPostMap(Set<String> codes) {
         Map<Integer, SysOfficeVO> resultMap = Maps.newHashMap();
-        List<SysOffice> officeList = listByIds(ids);
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .in(SysOffice::getOfficeCode,codes));
         if(CollUtil.isNotEmpty(officeList)){
             for(SysOffice tmp:officeList){
                 if(tmp.getOfficeType().equals("6")){
@@ -793,6 +794,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                             break;
                         }
                     }
+                }else if(tmp.getOfficeType().equals("15")){
+                    //如果是机构则查询岗位
+
                 }
             }
 

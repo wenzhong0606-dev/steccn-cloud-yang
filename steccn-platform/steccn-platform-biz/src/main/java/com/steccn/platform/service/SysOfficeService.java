@@ -286,9 +286,9 @@ public interface SysOfficeService extends IService<SysOffice> {
     List<SysOfficeVO>  listWorkshop(Integer type);
 
     /**
-     * 根据岗位id查询机构
-     * @param ids
+     * 根据岗位code查询机构
+     * @param codes
      * @return
      */
-    Map<Integer,SysOfficeVO> depMapOrPostMap(Set<Integer> ids);
+    Map<Integer,SysOfficeVO> depMapOrPostMap(Set<String> codes);
 }
