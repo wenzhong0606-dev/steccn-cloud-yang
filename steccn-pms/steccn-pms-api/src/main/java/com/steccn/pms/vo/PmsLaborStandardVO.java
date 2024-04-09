@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 public class PmsLaborStandardVO {
     private Integer id;
-    private List<Integer> officeId;
+    private List<String> officeId;
     private String riskFactor;
     private List<PmsLaborStandardDetailVO> details;
 }

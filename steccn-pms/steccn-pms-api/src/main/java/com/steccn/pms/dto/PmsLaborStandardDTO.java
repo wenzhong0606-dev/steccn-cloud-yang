@@ -18,7 +18,7 @@ import java.util.List;
 public class PmsLaborStandardDTO {
     private Integer id;
     @NotEmpty(message = "机构不能为空")
-    private List<Integer> officeId;
+    private List<String> officeId;
     private String riskFactor;
     @Valid
     private List<PmsLaborStandardDetailDTO> details;

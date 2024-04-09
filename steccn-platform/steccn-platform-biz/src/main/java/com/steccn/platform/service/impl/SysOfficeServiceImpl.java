@@ -773,6 +773,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public Map<Integer, SysOfficeVO> depMapOrPostMap(Set<Integer> ids) {
+        Map<Integer, SysOfficeVO> resultMap = Maps.newHashMap();
         List<SysOffice> officeList = listByIds(ids);
         if(CollUtil.isNotEmpty(officeList)){
             for(SysOffice tmp:officeList){
@@ -784,15 +785,15 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                     List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>()
                             .select(SysOffice::getId,SysOffice::getOfficeName,SysOffice::getOfficeType)
                             .in(SysOffice::getOfficeCode, parentCodeList));
-                    parentList.forEach(parent->{
+                    for(SysOffice parent:parentList){
                         if(parent.getOfficeType().equals("15")){
-
+                            SysOfficeVO officeVO = new SysOfficeVO();
+                            BeanUtil.copyProperties(parent,officeVO);
+                            resultMap.put(tmp.getId(),officeVO);
+                            break;
                         }
-                    });
-                }else if(tmp.getOfficeType().equals("15")){
-
+                    }
                 }
-
             }
 
         }

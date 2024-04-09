@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -146,7 +147,7 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         List<PmsLaborProtectionStandardDetail> detailData = pmsLaborProtectionStandardDetailService.list(new LambdaQueryWrapper<PmsLaborProtectionStandardDetail>()
                 .orderByDesc(PmsLaborProtectionStandardDetail::getStandardId));
         //机构
-        Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(data.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(data.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Long> materialIdList = detailData.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //收集unitId
@@ -211,6 +212,18 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
 
     @Override
     public SteccnTableDataDTO<Map<String, String>> standardList(PmsStandardListDTO dto) {
+        //需要拿到所有配置的数据
+        List<PmsLaborProtectionStandard> standardList = list();
+        //拿到所有详情
+        List<PmsLaborProtectionStandardDetail> standardDetailList = pmsLaborProtectionStandardDetailService.list();
+        //先过滤物料
+        if(CollUtil.isNotEmpty(dto.getMaterialId())){
+            standardDetailList = standardDetailList.stream().filter(v->dto.getMaterialId().contains(v.getMaterialId())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(standardDetailList)){
+                Set<Integer> standardIdSet = standardDetailList.stream().map(PmsLaborProtectionStandardDetail::getStandardId).collect(Collectors.toSet());
+                standardList = standardList.stream().filter(v->standardIdSet.contains(v.getId())).collect(Collectors.toList());
+            }
+        }
         return null;
     }
 }

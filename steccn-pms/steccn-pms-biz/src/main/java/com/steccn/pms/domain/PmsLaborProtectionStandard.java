@@ -27,7 +27,7 @@ public class PmsLaborProtectionStandard implements Serializable {
      * 机构列表
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<Integer> officeId;
+    private List<String> officeId;
 
     /**
      * 职业健康风险因素
