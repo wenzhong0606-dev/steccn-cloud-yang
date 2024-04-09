@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -769,39 +770,39 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
 //                .filter(inventory -> inventory.getMaterialCode().startsWith("P"))
 //                .collect(Collectors.toList());
 //        Map<Integer, List<WmsInventory>> inventoryMap = inventoryList.stream().collect(Collectors.groupingBy(WmsInventory::getWarehouseId));
-        List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId, 1772803168818130946L).eq(WmsTransferSlipInfo::getSourceShelf,10468));
-        List<WmsTransferSlipInfoDTO> infos = Lists.newArrayList();
-        List<String> collect = list.stream().map(WmsTransferSlipInfo::getTargetCaseNo).collect(Collectors.toList());
-        List<WmsInventory> list1 = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getWarehouseId, 445).in(WmsInventory::getCaseNo, collect));
-        Map<String, List<WmsInventory>> map = list1.stream().collect(Collectors.groupingBy(WmsInventory::getCaseNo));
-        WmsTransferSlipDTO wmsTransferSlipDTO = new WmsTransferSlipDTO();
-        wmsTransferSlipDTO.setType(1600404685319471104L);
-        wmsTransferSlipDTO.setSourceWarehouse(445);
-        wmsTransferSlipDTO.setTargetWarehouse(445);
-        list.forEach( info->{
-            WmsTransferSlipInfoDTO wmsTransferSlipInfoDTO = new WmsTransferSlipInfoDTO();
-            List<WmsInventory> inventoryList = map.get(info.getTargetCaseNo());
-            WmsInventory wmsInventory = inventoryList.get(0);
-            wmsTransferSlipInfoDTO.setMaterialId(info.getMaterialId());
-            wmsTransferSlipInfoDTO.setMaterialName(info.getMaterialName());
-            wmsTransferSlipInfoDTO.setMaterialCode(info.getMaterialCode());
-            wmsTransferSlipInfoDTO.setSourceInventoryId(wmsInventory.getId());
-            wmsTransferSlipInfoDTO.setSourceShelf(wmsInventory.getShelfId());
-            wmsTransferSlipInfoDTO.setSourceShelfName(wmsInventory.getShelfName());
-            wmsTransferSlipInfoDTO.setSourceShelfCode(wmsInventory.getShelfCode());
-            wmsTransferSlipInfoDTO.setTargetShelf(10468);
-            wmsTransferSlipInfoDTO.setTargetShelfName("呆滞品");
-            wmsTransferSlipInfoDTO.setTargetShelfCode("WH007001005");
-            wmsTransferSlipInfoDTO.setOriginalCaseNo(wmsInventory.getCaseNo());
-            wmsTransferSlipInfoDTO.setOriginalQuantity(wmsInventory.getAvailableQuantity());
-            wmsTransferSlipInfoDTO.setQuantity(wmsInventory.getAvailableQuantity());
-            wmsTransferSlipInfoDTO.setUnit(wmsInventory.getUnit());
-            wmsTransferSlipInfoDTO.setCaseNo(info.getCaseNo());
-            infos.add(wmsTransferSlipInfoDTO);
-            wmsTransferSlipDTO.setList(infos);
-        });
-//        System.out.println(wmsTransferSlipDTO);
-        add(wmsTransferSlipDTO);
+//        List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId, 1772803168818130946L).eq(WmsTransferSlipInfo::getSourceShelf,10468));
+//        List<WmsTransferSlipInfoDTO> infos = Lists.newArrayList();
+//        List<String> collect = list.stream().map(WmsTransferSlipInfo::getTargetCaseNo).collect(Collectors.toList());
+//        List<WmsInventory> list1 = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getWarehouseId, 445).in(WmsInventory::getCaseNo, collect));
+//        Map<String, List<WmsInventory>> map = list1.stream().collect(Collectors.groupingBy(WmsInventory::getCaseNo));
+//        WmsTransferSlipDTO wmsTransferSlipDTO = new WmsTransferSlipDTO();
+//        wmsTransferSlipDTO.setType(1600404685319471104L);
+//        wmsTransferSlipDTO.setSourceWarehouse(445);
+//        wmsTransferSlipDTO.setTargetWarehouse(445);
+//        list.forEach( info->{
+//            WmsTransferSlipInfoDTO wmsTransferSlipInfoDTO = new WmsTransferSlipInfoDTO();
+//            List<WmsInventory> inventoryList = map.get(info.getTargetCaseNo());
+//            WmsInventory wmsInventory = inventoryList.get(0);
+//            wmsTransferSlipInfoDTO.setMaterialId(info.getMaterialId());
+//            wmsTransferSlipInfoDTO.setMaterialName(info.getMaterialName());
+//            wmsTransferSlipInfoDTO.setMaterialCode(info.getMaterialCode());
+//            wmsTransferSlipInfoDTO.setSourceInventoryId(wmsInventory.getId());
+//            wmsTransferSlipInfoDTO.setSourceShelf(wmsInventory.getShelfId());
+//            wmsTransferSlipInfoDTO.setSourceShelfName(wmsInventory.getShelfName());
+//            wmsTransferSlipInfoDTO.setSourceShelfCode(wmsInventory.getShelfCode());
+//            wmsTransferSlipInfoDTO.setTargetShelf(10468);
+//            wmsTransferSlipInfoDTO.setTargetShelfName("呆滞品");
+//            wmsTransferSlipInfoDTO.setTargetShelfCode("WH007001005");
+//            wmsTransferSlipInfoDTO.setOriginalCaseNo(wmsInventory.getCaseNo());
+//            wmsTransferSlipInfoDTO.setOriginalQuantity(wmsInventory.getAvailableQuantity());
+//            wmsTransferSlipInfoDTO.setQuantity(wmsInventory.getAvailableQuantity());
+//            wmsTransferSlipInfoDTO.setUnit(wmsInventory.getUnit());
+//            wmsTransferSlipInfoDTO.setCaseNo(info.getCaseNo());
+//            infos.add(wmsTransferSlipInfoDTO);
+//            wmsTransferSlipDTO.setList(infos);
+//        });
+////        System.out.println(wmsTransferSlipDTO);
+//        add(wmsTransferSlipDTO);
 //        //创建调拨单
 //        inventoryMap.entrySet().forEach(e->{
 //            List<WmsInventory> value = e.getValue();
@@ -832,6 +833,22 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
 //            });
 //            add(wmsTransferSlipDTO);
 //        });
+
+        //获取调拨单明细
+        List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>()
+                .in(WmsTransferSlipInfo::getTransferSlipId, 1773601691868295169L,1772803168818130946L,1772802637198458882L,1772786050789736449L,1772547657661128705L));
+        Map<String, List<WmsTransferSlipInfo>> collect = list.stream().collect(Collectors.groupingBy(WmsTransferSlipInfo::getTargetCaseNo));
+        Set<String> strings = list.stream().collect(Collectors.groupingBy(WmsTransferSlipInfo::getTargetCaseNo)).keySet();
+        List<WmsInventory> inventoryList = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, strings));
+        if (CollUtil.isNotEmpty(inventoryList)){
+          List<WmsInventory> objects = Lists.newArrayList();
+            inventoryList.forEach(inventory -> {
+                inventory.setCaseNo(collect.get(inventory.getCaseNo()).get(0).getCaseNo());
+                objects.add(inventory);
+            });
+
+            wmsInventoryService.updateBatchById(objects);
+        }
         return true;
     }
 
