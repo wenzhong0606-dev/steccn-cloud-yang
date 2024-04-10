@@ -80,11 +80,26 @@ public interface PmsDataCollectReportService {
     SteccnTableDataDTO<Map<String,String>> melting1(LocalDate date);
 
     /**
+     * 熔化日志1报表导出
+     * @param date
+     * @param response
+     * @throws IOException
+     */
+    void melting1Download(LocalDate date, HttpServletResponse response) throws IOException;
+
+    /**
      * 熔化日志2报表
      * @param date
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> melting2(LocalDate date);
+
+    /**
+     * 熔化日志2报表导出
+     * @param date
+     * @param response
+     */
+    void melting2Download(LocalDate date, HttpServletResponse response) throws IOException;
 
     /**
      * 退火窑日志
@@ -94,6 +109,15 @@ public interface PmsDataCollectReportService {
     SteccnTableDataDTO<Map<String,String>> annealing(LocalDate date,Integer type);
 
     /**
+     * 退火窑日志导出
+     * @param date
+     * @param type
+     * @param response
+     */
+    void annealingDownload(LocalDate date, Integer type, HttpServletResponse response) throws IOException;
+
+
+    /**
      * 成型作业日志(1-4)线
      * @param date
      * @return
@@ -101,11 +125,25 @@ public interface PmsDataCollectReportService {
     SteccnTableDataDTO<Map<String,String>> molding1(LocalDate date);
 
     /**
+     * 成型作业日志(1-4)线
+     * @param date
+     * @param response
+     */
+    void molding1Download(LocalDate date, HttpServletResponse response) throws IOException;
+
+    /**
      * 成型作业日志(5-8)线
      * @param date
      * @return
      */
     SteccnTableDataDTO<Map<String,String>> molding2(LocalDate date);
+
+    /**
+     * 成型作业日志(5-8)线
+     * @param date
+     * @param response
+     */
+    void molding2Download(LocalDate date, HttpServletResponse response) throws IOException;
 
     /**
      * 空压站
@@ -135,5 +173,4 @@ public interface PmsDataCollectReportService {
      * @param response
      */
     void waterPumpDownload(LocalDate date, HttpServletResponse response) throws IOException;
-
 }

@@ -129,10 +129,44 @@ public class PmsDataCollectReportController {
         return R.success(pmsDataCollectReportService.melting1(date));
     }
 
+    @GetMapping("/melting1/download")
+    @ApiOperation("1200t/d熔化日志1--导出")
+    public void melting1Download(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.melting1Download(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @GetMapping("/melting2")
     @ApiOperation("1200t/d熔化日志2")
     public R<SteccnTableDataDTO> melting2(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.melting2(date));
+    }
+
+    @GetMapping("/melting2/download")
+    @ApiOperation("1200t/d熔化日志2--导出")
+    public void melting2Download(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.melting2Download(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @GetMapping("/annealing")
@@ -141,16 +175,67 @@ public class PmsDataCollectReportController {
         return R.success(pmsDataCollectReportService.annealing(date,type));
     }
 
+    @GetMapping("/annealing/download")
+    @ApiOperation("退火窑日志-导出")
+    public void annealingDownload(@RequestParam("date") LocalDate date,@RequestParam("type") Integer type, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.annealingDownload(date, type, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @GetMapping("/molding1")
     @ApiOperation("1200t/d成型作业日志(1-4)")
     public R<SteccnTableDataDTO> molding1(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.molding1(date));
     }
 
+    @GetMapping("/molding1/download")
+    @ApiOperation("1200t/d成型作业日志(1-4)--导出")
+    public void molding1Download(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.molding1Download(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @GetMapping("/molding2")
     @ApiOperation("1200t/d成型作业日志(5-8)")
     public R<SteccnTableDataDTO> molding2(@RequestParam("date") LocalDate date) {
         return R.success(pmsDataCollectReportService.molding2(date));
+    }
+
+    @GetMapping("/molding2/download")
+    @ApiOperation("1200t/d成型作业日志(5-8)--导出")
+    public void molding2Download(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
+        try {
+            pmsDataCollectReportService.molding2Download(date, response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @GetMapping("/acStation")
