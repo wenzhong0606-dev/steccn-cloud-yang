@@ -321,4 +321,12 @@ public interface RemoteOfficeFeign {
     @GetMapping("/feign/platform/sys/office/workshop/children/list")
     @ApiOperation("根据类型获取基片或者深加工的车间和产线以及工位（平铺数据）")
     R<List<SysOfficeVO>> listWorkshop(@RequestParam("type") Integer type);
+
+    @PostMapping("/feign/platform/sys/office/postDep")
+    @ApiOperation("根据岗位code查询机构")
+    R<Map<String,SysOfficeVO>> postDepMap(@RequestBody Set<String> codes);
+
+    @PostMapping("/feign/platform/sys/office/depPost")
+    @ApiOperation("查询部门下的岗位")
+    R<Map<String,List<String>>> depPostMap(@RequestBody Set<String> codes);
 }

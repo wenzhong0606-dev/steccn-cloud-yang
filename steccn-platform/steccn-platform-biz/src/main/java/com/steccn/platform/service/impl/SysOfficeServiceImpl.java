@@ -772,8 +772,8 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
-    public Map<Integer, SysOfficeVO> depMapOrPostMap(Set<String> codes) {
-        Map<Integer, SysOfficeVO> resultMap = Maps.newHashMap();
+    public Map<String, SysOfficeVO> postDepMap(Set<String> codes) {
+        Map<String, SysOfficeVO> resultMap = Maps.newHashMap();
         List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
                 .in(SysOffice::getOfficeCode,codes));
         if(CollUtil.isNotEmpty(officeList)){
@@ -784,24 +784,40 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                     parentCodes = parentCodes.substring(0,parentCodes.length()-1);
                     List<String> parentCodeList = Arrays.asList(parentCodes.split(","));
                     List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>()
-                            .select(SysOffice::getId,SysOffice::getOfficeName,SysOffice::getOfficeType)
+                            .select(SysOffice::getOfficeCode,SysOffice::getOfficeName,SysOffice::getOfficeType)
                             .in(SysOffice::getOfficeCode, parentCodeList));
                     for(SysOffice parent:parentList){
                         if(parent.getOfficeType().equals("15")){
                             SysOfficeVO officeVO = new SysOfficeVO();
                             BeanUtil.copyProperties(parent,officeVO);
-                            resultMap.put(tmp.getId(),officeVO);
+                            resultMap.put(tmp.getOfficeCode(),officeVO);
                             break;
                         }
                     }
-                }else if(tmp.getOfficeType().equals("15")){
-                    //如果是机构则查询岗位
-
                 }
             }
 
         }
-        return null;
+        return resultMap;
+    }
+
+    @Override
+    public Map<String, List<String>> depPostMap(Set<String> codes) {
+        Map<String, List<String>> result = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(codes)){
+            codes.forEach(tmp->{
+                List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>()
+                        .select(SysOffice::getOfficeCode)
+                        .like(SysOffice::getParentCodes, tmp + ",")
+                        .eq(SysOffice::getOfficeType, "6")
+                        .eq(SysOffice::getStatus, "0"));
+                if(CollUtil.isNotEmpty(list)){
+                    List<String> officeCodes = list.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+                    result.put(tmp,officeCodes);
+                }
+            });
+        }
+        return result;
     }
 
 

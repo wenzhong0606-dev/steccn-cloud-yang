@@ -50,7 +50,7 @@ public class PmsLaborController {
     @PostMapping("/standard/delete")
     @ApiOperation(value = "删除劳保标准")
     @SysLog("删除劳保标准")
-    public R<Boolean> batchDeleteById(@RequestBody Set<Integer> dto) {
+    public R<Boolean> batchDeleteById(@RequestBody PmsLaborStandardDTO dto) {
         return R.success(pmsLaborProtectionStandardService.batchDeleteById(dto));
     }
 

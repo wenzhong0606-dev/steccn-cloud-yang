@@ -275,4 +275,16 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.listWorkshop(type));
     }
 
+    @PostMapping("/postDep")
+    @ApiOperation("根据岗位code查询机构")
+    public R<Map<String,SysOfficeVO>> postDepMap(@RequestBody Set<String> codes){
+        return R.success(sysOfficeService.postDepMap(codes));
+    }
+
+    @PostMapping("/depPost")
+    @ApiOperation("查询部门下的岗位")
+    public R<Map<String,List<String>>> depPostMap(@RequestBody Set<String> codes){
+        return R.success(sysOfficeService.depPostMap(codes));
+    }
+
 }

@@ -46,7 +46,7 @@ public interface PmsLaborProtectionStandardService extends IService<PmsLaborProt
      * @param id
      * @return
      */
-    Boolean batchDeleteById(Set<Integer> id);
+    Boolean batchDeleteById(PmsLaborStandardDTO id);
 
     /**
      * 表单数据

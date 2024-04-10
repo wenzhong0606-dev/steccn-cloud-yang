@@ -290,5 +290,12 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @param codes
      * @return
      */
-    Map<Integer,SysOfficeVO> depMapOrPostMap(Set<String> codes);
+    Map<String,SysOfficeVO> postDepMap(Set<String> codes);
+
+    /**
+     * 查询部门下的岗位
+     * @param codes
+     * @return
+     */
+    Map<String,List<String>>  depPostMap(Set<String> codes);
 }

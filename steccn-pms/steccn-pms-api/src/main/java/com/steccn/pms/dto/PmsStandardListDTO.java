@@ -15,11 +15,11 @@ public class PmsStandardListDTO {
     /**
      * 部门Id
      */
-    private List<Integer> officeId;
+    private List<String> officeId;
     /**
      * 岗位Id
      */
-    private List<Integer> postId;
+    private List<String> postId;
     /**
      * 用户名称
      */
