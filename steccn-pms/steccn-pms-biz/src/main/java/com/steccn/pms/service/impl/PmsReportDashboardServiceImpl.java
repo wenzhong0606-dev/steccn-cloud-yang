@@ -3,9 +3,13 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.thread.ThreadUtil;
-import com.alibaba.nacos.common.utils.ThreadUtils;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -26,7 +30,10 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.*;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.domain.PmsPullForce;
+import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.PmsPullForceDayCountDTO;
@@ -36,17 +43,22 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -845,8 +857,22 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
         CompletableFuture<JpAnalysisReportVO> inStorageSmVoFuture = inStorageSmVoFuture1.thenCombineAsync(inStorageSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
         //单耗：参考基片驾驶舱
-        CompletableFuture<EpPmsConsumeVO> unitConsumeFuture1 = CompletableFuture.supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, start, end)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL);
-        CompletableFuture<EpPmsConsumeVO> unitConsumeFuture2 = CompletableFuture.supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, prevStart, prevEnd)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL);
+        CompletableFuture<EpPmsConsumeVO> unitConsumeFuture1 = CompletableFuture
+                .supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, start, end)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL)
+                .handle((vo, ex) -> {
+                    if (ex != null) {
+                        log.error("能源系统 调用错误 -> {}", ex.getMessage());
+                    }
+                    return Objects.nonNull(vo) ? vo : new EpPmsConsumeVO();
+                });
+        CompletableFuture<EpPmsConsumeVO> unitConsumeFuture2 = CompletableFuture
+                .supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, prevStart, prevEnd)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL)
+                .handle((vo, ex) -> {
+                    if (ex != null) {
+                        log.error("能源系统 调用错误 -> {}", ex.getMessage());
+                    }
+                    return Objects.nonNull(vo) ? vo : new EpPmsConsumeVO();
+                });
         CompletableFuture<JpAnalysisReportVO> unitConsumeFuture = unitConsumeFuture1.thenCombineAsync(unitConsumeFuture2, (a, b) -> getJpAnalysisReportVO("单耗（kcal/kg）", a.getSum(), b.getSum()), MY_POOL);
         CompletableFuture.allOf(pfVoFuture, pmVoFuture, pmSmVoFuture, inStorageVoFuture, inStorageSmVoFuture, unitConsumeFuture);
         JpAnalysisReportVO pmVo = pmVoFuture.join();
@@ -867,6 +893,44 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 BigDecimalUtil.percent(inStorageVo.getPreValue(), pfVo.getPreValue())));
         resList.add(unitConsumeFuture.join());
         return resList;
+    }
+
+    @Override
+    public void analysisReportDownload(Integer workshopId, LocalDate start, LocalDate end, HttpServletResponse response) throws IOException {
+        List<JpAnalysisReportVO> tableList = analysisReport(workshopId, start, end);
+        SteccnTableAssertUtil.notEmpty(tableList, "数据为空");
+        //写表头
+        List<List<String>> list = Lists.newArrayList(Lists.newArrayList(""), Lists.newArrayList("值"), Lists.newArrayList("环比"), Lists.newArrayList("差异"), Lists.newArrayList("差异（%）"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("基片分析报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getName());
+            dataEle.add(ele.getCurrentValue());
+            dataEle.add(ele.getPreValue());
+            dataEle.add(ele.getDiffValue());
+            dataEle.add(ele.getDiffValueRate());
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "基片分析报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+
     }
 
     /**

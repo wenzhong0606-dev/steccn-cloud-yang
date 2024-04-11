@@ -12,6 +12,8 @@ import com.steccn.pms.vo.DashboardProducePageVO;
 import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -195,4 +197,13 @@ public interface PmsReportDashboardService {
      * @return
      */
     List<JpAnalysisReportVO> analysisReport(Integer workshopId, LocalDate start, LocalDate end);
+
+    /**
+     * 基片分析报表 - 下载
+     * @param workshopId 车间主键
+     * @param start 区间开始日期
+     * @param end 区间结束日期
+     * @return
+     */
+    void analysisReportDownload(Integer workshopId, LocalDate start, LocalDate end, HttpServletResponse response) throws IOException;
 }

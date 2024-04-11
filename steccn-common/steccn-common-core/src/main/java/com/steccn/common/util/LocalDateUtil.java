@@ -650,9 +650,8 @@ public class LocalDateUtil {
         //计算时间区间的天数
         long between = ChronoUnit.DAYS.between(start, end);
         // 计算上一个区间的开始和结束日期
-        result.setField1(start.minusDays(between));
-        result.setField1(start.minusDays(between));
+        result.setField1(start.minusDays(between + 1));
+        result.setField2(end.minusDays(between + 1));
         return result;
     }
-
 }
