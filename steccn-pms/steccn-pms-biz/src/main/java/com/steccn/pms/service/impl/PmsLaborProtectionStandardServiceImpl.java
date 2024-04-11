@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
@@ -14,7 +15,9 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.feign.RemoteMesFeignApi;
+import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -136,7 +139,7 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
     public Boolean batchDeleteById(PmsLaborStandardDTO id) {
         removeByIds(id.getIds());
         pmsLaborProtectionStandardDetailService.remove(new LambdaQueryWrapper<PmsLaborProtectionStandardDetail>()
-                .in(PmsLaborProtectionStandardDetail::getStandardId,id));
+                .in(PmsLaborProtectionStandardDetail::getStandardId,id.getIds()));
         return true;
     }
 
@@ -230,6 +233,9 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                 standardList = standardList.stream().filter(v->standardIdSet.contains(v.getId())).collect(Collectors.toList());
             }
         }
+        if(CollUtil.isEmpty(standardList)){
+            throw new BusinessException("劳保标准不存在");
+        }
         //处理部门和岗位
         //拿到标准中的所有部门了岗位
         List<PmsLaborProtectionStandard> finalStandardList = standardList;
@@ -253,7 +259,12 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         //拿到所有岗位下的人员和岗位所属机构
         Map<String, List<String>> employee = FeignOptional.of(() -> remoteMesFeignApi.getPostUser(availPost), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         //拿到所有人员的入职时间
-        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.keySet()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.keySet().stream().map(
+                str->{
+                    int index = str.indexOf('_');
+                    return index != -1 ? str.substring(0,index) : str;
+                }
+        ).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //拿到所有入职超过1个月的人员
         Set<String> employeeId = employeeTime.entrySet().stream().filter(v -> v.getValue().plusMonths(1).isBefore(LocalDate.now()))
                 .map(Map.Entry::getKey).collect(Collectors.toSet());
@@ -261,8 +272,33 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         if(cn.hutool.core.util.StrUtil.isNotBlank(dto.getUserName())){
             employeeId =employeeId.stream().filter(v->v.contains(dto.getUserName())).collect(Collectors.toSet());
         }
-        // TODO: 2024/4/10 获取用户所属部门和岗位 
+        // TODO: 2024/4/10 获取用户所属部门和岗位
+        Set<String> finalEmployeeId = employeeId;
+        List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(finalEmployeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+        //开始过滤
+        if(StrUtil.isNotBlank(dto.getUserName())){
+            userInfos = userInfos.stream().filter(v->v.getName().contains(dto.getUserName())).collect(Collectors.toList());
+        }
+        if(CollUtil.isNotEmpty(dto.getOfficeId())){
+            userInfos = userInfos.stream().filter(v->dto.getOfficeId().contains(v.getDepCode())).collect(Collectors.toList());
+        }
+        if(CollUtil.isNotEmpty(dto.getPostId())){
+            userInfos = userInfos.stream().filter(v->dto.getPostId().contains(v.getPostCode())).collect(Collectors.toList());
+        }
+        Assert.notEmpty(userInfos,"没有符合标准的用户");
+        //开始组装数据
         return null;
+    }
+
+    @Override
+    public List<EqpSpareVO> getAvailSpare() {
+        List<PmsLaborProtectionStandardDetail> data = pmsLaborProtectionStandardDetailService.list(new QueryWrapper<PmsLaborProtectionStandardDetail>().select("DISTINCT material_id"));
+        List<EqpSpareVO> result = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(data)){
+            Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(data.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).collect(Collectors.toList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            result = spareMap.values().stream().collect(Collectors.toList());
+        }
+        return result;
     }
 }
 

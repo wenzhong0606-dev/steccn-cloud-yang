@@ -31,4 +31,19 @@
         update_date,remarks,corp_code,
         corp_name
     </sql>
+
+    <select id="selectEmpInfo" resultType="com.steccn.mes.vo.MesUserInfoVO">
+        SELECT a.login_code AS loginCode,a.user_name AS name,b.office_code AS postCode,c.office_name AS postName
+        FROM js_sys_user a
+        LEFT JOIN js_sys_employee b
+        on a.user_code = b.emp_code
+        LEFT JOIN js_sys_office c
+        on b.office_code = c.office_code
+        WHERE a.status = '0'
+        AND b.status = '0'
+        AND a.login_code IN
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

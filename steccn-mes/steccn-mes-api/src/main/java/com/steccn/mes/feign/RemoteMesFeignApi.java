@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.vo.MesEqpVO;
+import com.steccn.mes.vo.MesUserInfoVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,4 +50,13 @@ public interface RemoteMesFeignApi {
     @ApiOperation("获取岗位下的人员")
     @PostMapping("/feign/mes/emp/post")
     R<Map<String, List<String>>> getPostUser(@RequestBody Set<String> dto);
+
+    /**
+     * 获取用户所属部门和岗位
+     * @param dto
+     * @return
+     */
+    @PostMapping("/user/getEmpDepPost")
+    @ApiOperation(value = "获取用户所属部门和岗位")
+    R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto);
 }
