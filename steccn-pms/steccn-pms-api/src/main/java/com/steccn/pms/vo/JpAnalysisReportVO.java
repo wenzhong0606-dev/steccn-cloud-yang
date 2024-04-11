@@ -1,4 +1,4 @@
-package com.steccn.platform.vo;
+package com.steccn.pms.vo;
 
 import lombok.Data;
 import java.io.Serializable;

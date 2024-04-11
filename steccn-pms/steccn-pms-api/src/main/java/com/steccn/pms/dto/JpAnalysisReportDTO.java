@@ -1,4 +1,4 @@
-package com.steccn.platform.dto;
+package com.steccn.pms.dto;
 
 import lombok.Data;
 
