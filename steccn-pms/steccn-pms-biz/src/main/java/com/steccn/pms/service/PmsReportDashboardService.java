@@ -7,6 +7,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.platform.vo.JpAnalysisReportVO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.vo.DashboardProducePageVO;
@@ -187,4 +188,13 @@ public interface PmsReportDashboardService {
      * @return
      */
     EpChartGraphVO<List<String>, TripleDTO<BigDecimal,BigDecimal,BigDecimal>> deepProcessingHistogram(PmsOperateDriverDTO dto);
+
+    /**
+     * 基片分析报表
+     * @param workshopId 车间主键
+     * @param start 区间开始日期
+     * @param end 区间结束日期
+     * @return
+     */
+    List<JpAnalysisReportVO> analysisReport(Integer workshopId, LocalDate start, LocalDate end);
 }

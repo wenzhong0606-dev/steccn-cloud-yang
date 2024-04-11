@@ -5,6 +5,8 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.platform.dto.JpAnalysisReportDTO;
+import com.steccn.platform.vo.JpAnalysisReportVO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
@@ -147,4 +149,11 @@ public class PmsReportDashboardController {
     public R<EpChartGraphVO<List<String>, TripleDTO<BigDecimal,BigDecimal,BigDecimal>>> deepProcessingHistogram(@Valid @RequestBody PmsOperateDriverDTO dto) {
         return R.success(pmsReportDashboardService.deepProcessingHistogram(dto));
     }
+
+    @PostMapping("/analysis/report")
+    @ApiOperation("基片分析报表")
+    public R<List<JpAnalysisReportVO>> analysisReport(@Valid @RequestBody JpAnalysisReportDTO dto) {
+        return R.success(pmsReportDashboardService.analysisReport(dto.getWorkshopId(), dto.getStart(), dto.getEnd()));
+    }
+
 }

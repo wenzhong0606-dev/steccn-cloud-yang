@@ -639,4 +639,20 @@ public class LocalDateUtil {
         return result;
     }
 
+    /**
+     * 当前时间区间的上一个区间
+     * @param start
+     * @param end
+     * @return
+     */
+    public static TupleDTO<LocalDate, LocalDate> intervalTime(LocalDate start, LocalDate end) {
+        TupleDTO<LocalDate, LocalDate> result = new TupleDTO<>();
+        //计算时间区间的天数
+        long between = ChronoUnit.DAYS.between(start, end);
+        // 计算上一个区间的开始和结束日期
+        result.setField1(start.minusDays(between));
+        result.setField1(start.minusDays(between));
+        return result;
+    }
+
 }

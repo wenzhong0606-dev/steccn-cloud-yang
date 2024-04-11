@@ -22,6 +22,8 @@ import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
+import com.steccn.ems.feign.RemoteMeterReadFeignApi;
+import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -85,6 +87,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
     private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -817,4 +820,67 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         res.setOther(tripleDTO);
         return res;
     }
+
+    @Override
+    public List<JpAnalysisReportVO> analysisReport(Integer workshopId, LocalDate start, LocalDate end) {
+        List<JpAnalysisReportVO> resList = Lists.newArrayList();
+        //求解上一区间
+        TupleDTO<LocalDate, LocalDate> preAreaTuple = LocalDateUtil.intervalTime(start, end);
+        LocalDate prevStart = preAreaTuple.getField1();
+        LocalDate prevEnd = preAreaTuple.getField1();
+        List<SysOfficeVO> lineList = pmsOfficeManager.getWsLineList(workshopId);
+        Assert.notEmpty(lineList, "车间下暂无产线");
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        Map<String, BigDecimal> currentPfMap = pmsPullForceService.datePullForce(lineIdList, start, end);
+        Map<String, BigDecimal> prevPfMap = pmsPullForceService.datePullForce(lineIdList, prevStart, prevEnd);
+        JpAnalysisReportVO pfVo = getJpAnalysisReportVO("总拉引量（T）", BigDecimalUtil.sum(currentPfMap.values()), BigDecimalUtil.sum(prevPfMap.values()));
+        resList.add(pfVo);
+        Map<String, BigDecimal> currentTonPmMap = pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> prevTonPmMap = pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_TON);
+        JpAnalysisReportVO pmVo = getJpAnalysisReportVO("总产量（T）", BigDecimalUtil.sum(currentTonPmMap.values()), BigDecimalUtil.sum(prevTonPmMap.values()));
+        resList.add(pmVo);
+        Map<String, BigDecimal> currentSmPmMap = pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_SM);
+        Map<String, BigDecimal> prevSmPmMap = pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_SM);
+        resList.add(getJpAnalysisReportVO("总产量（㎡）", BigDecimalUtil.sum(currentSmPmMap.values()), BigDecimalUtil.sum(prevSmPmMap.values())));
+
+        Map<String, BigDecimal> currentTonIsMap = pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON);
+        Map<String, BigDecimal> prevTonIsMap = pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_TON);
+        JpAnalysisReportVO inStorageVo = getJpAnalysisReportVO("总入库量（T）", BigDecimalUtil.sum(currentTonIsMap.values()), BigDecimalUtil.sum(prevTonIsMap.values()));
+        resList.add(inStorageVo);
+        Map<String, BigDecimal> currentSmIsMap = pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM);
+        Map<String, BigDecimal> prevSmIsMap = pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_SM);
+        resList.add(getJpAnalysisReportVO("总入库量（㎡）", BigDecimalUtil.sum(currentSmIsMap.values()), BigDecimalUtil.sum(prevSmIsMap.values())));
+
+        //成品率：产量T/拉引量
+        resList.add(getJpAnalysisReportVO("成品率（%）",
+                BigDecimalUtil.percent(pmVo.getCurrentValue(), pfVo.getCurrentValue()),
+                BigDecimalUtil.percent(pmVo.getPreValue(), pfVo.getPreValue())));
+        //入库成品率: 入库量T/拉引量
+        resList.add(getJpAnalysisReportVO("入库成品率（%）",
+                BigDecimalUtil.percent(inStorageVo.getCurrentValue(), pfVo.getCurrentValue()),
+                BigDecimalUtil.percent(inStorageVo.getPreValue(), pfVo.getPreValue())));
+        //单耗：参考基片驾驶舱
+        EpPmsConsumeVO currentUnitConsumeVo = FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, start, end)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        EpPmsConsumeVO prevUnitConsumeVo = FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, prevStart, prevEnd)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        resList.add(getJpAnalysisReportVO("单耗（kcal/kg）", currentUnitConsumeVo.getSum(), prevUnitConsumeVo.getSum()));
+        return resList;
+    }
+
+    /**
+     * 获取分析报表对象
+     * @param name
+     * @param currentValue
+     * @param prevValue
+     * @return
+     */
+    private JpAnalysisReportVO getJpAnalysisReportVO(String name, BigDecimal currentValue, BigDecimal prevValue){
+        JpAnalysisReportVO reportVo = new JpAnalysisReportVO();
+        reportVo.setName(name);
+        reportVo.setCurrentValue(currentValue);
+        reportVo.setPreValue(prevValue);
+        reportVo.setDiffValue(BigDecimalUtil.subtract(reportVo.getCurrentValue(), reportVo.getPreValue(),2));
+        reportVo.setDiffValueRate(BigDecimalUtil.percent(reportVo.getDiffValue(), reportVo.getCurrentValue()));
+        return reportVo;
+    }
+
 }

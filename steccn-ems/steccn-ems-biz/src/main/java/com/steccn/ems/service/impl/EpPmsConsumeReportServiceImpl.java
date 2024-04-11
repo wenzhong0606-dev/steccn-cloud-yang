@@ -83,7 +83,7 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     @Override
     public EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate start, LocalDate end) {
         //获取office的数据
-        SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(officeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.info(officeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(sysOfficeVO, "组织机构不存在");
         Set<Integer> workshopIdSet = Sets.newHashSet();
         if (SysOfficeConstant.DEPARTMENT.equals(sysOfficeVO.getOfficeType())) {
