@@ -1007,10 +1007,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
-    public List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime) {
-        return  this.baseMapper.intervalData(startTime,endTime);
-
-
+    public List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long>materialIds) {
+        return  this.baseMapper.intervalData(startTime,endTime,materialIds);
     }
 
     /**

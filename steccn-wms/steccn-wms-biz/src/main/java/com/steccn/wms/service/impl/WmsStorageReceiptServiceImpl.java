@@ -1739,8 +1739,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
     @Override
-    public  List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime) {
-        return  this.baseMapper.intervalData(startTime,endTime);
+    public  List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds) {
+        return  this.baseMapper.intervalData(startTime,endTime,materialIds);
     }
 
     /**

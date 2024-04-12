@@ -81,7 +81,7 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @param endTime
      * @return
      */
-    List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
+    List<WmsStorageReceiptInfo> intervalData(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds);
 }
 
 

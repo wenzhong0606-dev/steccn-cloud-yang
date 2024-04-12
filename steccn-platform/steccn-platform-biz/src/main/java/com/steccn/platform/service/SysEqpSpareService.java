@@ -3,6 +3,7 @@ package com.steccn.platform.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
@@ -143,4 +144,12 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
      * @return
      */
     List<EqpSpareVO> listSpare(String code);
+
+
+    /**
+     * 根据产品属性以及物料编码获取物料
+     * @param dto k(物料编码) v(产品属性)
+     * @return
+     */
+    List<EqpSpareVO> listByProperty(TupleDTO<String, Integer> dto);
 }

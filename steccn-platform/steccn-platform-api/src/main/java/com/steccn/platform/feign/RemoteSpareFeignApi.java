@@ -2,6 +2,7 @@ package com.steccn.platform.feign;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SparePageDTO;
@@ -178,4 +179,9 @@ public interface RemoteSpareFeignApi {
     @PostMapping("/feign/platform/eqpSpare/updateConversion")
     @ApiOperation("修改单位转换数据")
     R<Boolean> updateConversion(@RequestBody SysSpareUnitConversionDTO unitConversionDTO);
+
+
+    @PostMapping("/feign/platform/eqpSpare/listByProperty")
+    @ApiOperation("根据产品属性获取物料列表")
+    R<List<EqpSpareVO>> listByProperty(@RequestBody TupleDTO<String,Integer> dto);
 }

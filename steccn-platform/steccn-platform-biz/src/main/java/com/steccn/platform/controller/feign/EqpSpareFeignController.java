@@ -3,6 +3,7 @@ package com.steccn.platform.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.domain.SysSpareUnitConversion;
 import com.steccn.platform.dto.EqpSpareDto;
@@ -161,5 +162,12 @@ public class EqpSpareFeignController {
     @ApiOperation("删除单位转换数据")
     public R<Boolean> deleteConversion(@RequestParam("id") Long id) {
         return R.success(conversionService.removeById(id));
+    }
+
+
+    @PostMapping("/listByProperty")
+    @ApiOperation("根据产品属性获取物料列表")
+    public R<List<EqpSpareVO>> listByProperty(@RequestBody TupleDTO<String,Integer> dto){
+        return R.success(eqpSpareService.listByProperty(dto));
     }
 }
