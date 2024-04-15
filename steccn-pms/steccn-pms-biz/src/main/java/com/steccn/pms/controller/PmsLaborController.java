@@ -1,11 +1,15 @@
 package com.steccn.pms.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.pms.dto.PmsLaborRecordPageDTO;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
+import com.steccn.pms.service.PmsLaborProtectionRecordService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
+import com.steccn.pms.vo.PmsLaborRecordVO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -28,6 +32,7 @@ import java.util.Set;
 @RequestMapping("/pms/labor")
 public class PmsLaborController {
     private final PmsLaborProtectionStandardService pmsLaborProtectionStandardService;
+    private final PmsLaborProtectionRecordService pmsLaborProtectionRecordService;
 
     @PostMapping("/standard")
     @ApiOperation(value = "新建劳保标准")
@@ -66,5 +71,11 @@ public class PmsLaborController {
     @ApiOperation(value = "劳保标准列表")
     public R<SteccnTableDataDTO> listInfo() {
         return R.success(pmsLaborProtectionStandardService.listInfo());
+    }
+
+    @PostMapping("/standard/record")
+    @ApiOperation(value = "劳保记录列表")
+    public R<Page<PmsLaborRecordVO>> record(@RequestBody PmsLaborRecordPageDTO dto) {
+        return R.success(pmsLaborProtectionRecordService.pageList(dto));
     }
 }

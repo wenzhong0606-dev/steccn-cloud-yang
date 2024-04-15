@@ -17,5 +17,5 @@ public class MesUserInfoVO implements Serializable {
     private String depCode;
     private String depName;
     private String postCode;
-    private String poseName;
+    private String postName;
 }

@@ -16,6 +16,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.feign.OaInfoService;
@@ -26,9 +27,11 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.domain.PmsLaborProtectionStandardDetail;
+import com.steccn.pms.dto.PmsLaborMaterialReceiptDTO;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.dto.PmsLaborStandardDetailDTO;
 import com.steccn.pms.dto.PmsStandardListDTO;
+import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
 import com.steccn.pms.service.PmsLaborProtectionStandardDetailService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.mapper.PmsLaborProtectionStandardMapper;
@@ -38,7 +41,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,6 +66,7 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteMesFeignApi remoteMesFeignApi;
     private final OaInfoService oaInfoService;
+    private final PmsLaborProtectionRecordMapper pmsLaborProtectionRecordMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -272,7 +279,6 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         if(cn.hutool.core.util.StrUtil.isNotBlank(dto.getUserName())){
             employeeId =employeeId.stream().filter(v->v.contains(dto.getUserName())).collect(Collectors.toSet());
         }
-        // TODO: 2024/4/10 获取用户所属部门和岗位
         Set<String> finalEmployeeId = employeeId;
         List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(finalEmployeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         //开始过滤
@@ -287,7 +293,66 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         }
         Assert.notEmpty(userInfos,"没有符合标准的用户");
         //开始组装数据
-        return null;
+        //表头
+        SteccnTableDataDTO<Map<String, String>> result = new SteccnTableDataDTO<>();
+        //先组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("depName","部门",null));
+        columns.add(new SteccnTableColumn("postName","岗位",null));
+        columns.add(new SteccnTableColumn("userName","人员",null));
+        columns.add(new SteccnTableColumn("enterTime","入职时间",null));
+        //动态部分
+        List<Long> materialIdList = standardDetailList.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        materialIdList.forEach(tmp->{
+            EqpSpareVO spareVO = spareMap.get(tmp);
+            columns.add(new SteccnTableColumn(tmp.toString(),spareVO.getName(),
+                    Lists.newArrayList(new SteccnTableColumn(tmp+"_"+"receiptTime","上次领用时间",null),
+                            new SteccnTableColumn(tmp+"_claimNum","待领数量",null),
+                            new SteccnTableColumn(tmp+"_availNum","可领数量",null))));
+        });
+        List<Map<String,String>> tableList = Lists.newArrayList();
+        //处理数据，遍历人员
+        for(MesUserInfoVO tmp:userInfos){
+            Map<String,String> column = Maps.newHashMap();
+            //获取岗位的劳保标准
+            PmsLaborProtectionStandard standardTmp;
+            standardTmp = standardList.stream().filter(v->v.getOfficeId().contains(tmp.getPostCode())).findFirst().orElse(null);
+            if(Objects.isNull(standardTmp)){
+                //获取用户的部门标准
+                standardTmp = standardList.stream().filter(v->v.getOfficeId().contains(tmp.getDepCode())).findFirst().orElse(null);
+            }
+            column.put("depName",tmp.getDepName());
+            column.put("postName",tmp.getPostName());
+            column.put("userName",tmp.getName());
+            column.put("enterTime",employeeTime.get(tmp.getLoginCode()).toString());
+            //获取部门详情
+            PmsLaborProtectionStandard finalStandardTmp = standardTmp;
+            List<PmsLaborProtectionStandardDetail> standardDetailTmp = standardDetailList.stream().filter(v -> v.getStandardId().equals(finalStandardTmp.getId())).collect(Collectors.toList());
+            standardDetailTmp.forEach(detailTmp->{
+                //查看用户的领用记录
+                PmsLaborMaterialReceiptDTO pmsLaborMaterialReceiptDTO = pmsLaborProtectionRecordMapper.selectReceiptNum(tmp.getLoginCode(),
+                        LocalDateTime.now().minusMonths(detailTmp.getPeriod().longValue())
+                        , LocalDateTime.now()
+                        , detailTmp.getMaterialId());
+                if(Objects.nonNull(pmsLaborMaterialReceiptDTO)){
+                    //可领数量
+                    BigDecimal availNum = BigDecimalUtil.subtract(new BigDecimal(detailTmp.getAmount()), pmsLaborMaterialReceiptDTO.getReceiptNum(),2);
+                    if(availNum.compareTo(BigDecimal.ZERO)==1){
+                        column.put(detailTmp.getMaterialId()+"_claimNum",availNum.toString());
+                        column.put(detailTmp.getMaterialId()+"_availNum",availNum.toString());
+                        column.put(detailTmp.getMaterialId()+"_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }
+                }else {
+                    column.put(detailTmp.getMaterialId()+"_claimNum",detailTmp.getAmount().toString());
+                    column.put(detailTmp.getMaterialId()+"_availNum",detailTmp.getAmount().toString());
+                }
+            });
+            tableList.add(column);
+        }
+        result.setColumns(columns);
+        result.setTableList(tableList);
+        return result;
     }
 
     @Override

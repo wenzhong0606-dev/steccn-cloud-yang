@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsLaborProtectionRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsLaborProtectionRecord">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="depCode" column="dep_code" jdbcType="VARCHAR"/>
+            <result property="postCode" column="post_code" jdbcType="VARCHAR"/>
+            <result property="loginCode" column="login_code" jdbcType="VARCHAR"/>
+            <result property="startTime" column="start_time" jdbcType="DATE"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="receiptTime" column="receipt_time" jdbcType="TIMESTAMP"/>
+            <result property="receiptNum" column="receipt_num" jdbcType="DECIMAL"/>
+            <result property="receiptCode" column="receipt_code" jdbcType="VARCHAR"/>
+            <result property="receiptWarehouse" column="receipt_warehouse" jdbcType="VARCHAR"/>
+            <result property="receiptPersonCode" column="receipt_person_code" jdbcType="VARCHAR"/>
+            <result property="receiptPersonName" column="receipt_person_name" jdbcType="VARCHAR"/>
+            <result property="receiptId" column="receipt_id" jdbcType="INTEGER"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,dep_code,post_code,
+        login_code,start_time,material_id,
+        receipt_time,receipt_num,receipt_code,
+        receipt_warehouse,receipt_person_code,receipt_person_name,
+        receipt_id,create_by,create_name,
+        update_time,create_time,update_by,
+        update_name,del_flag,note
+    </sql>
+
+    <select id="selectReceiptNum" resultType="com.steccn.pms.dto.PmsLaborMaterialReceiptDTO">
+        SELECT SUM(receipt_num) AS receiptNum,Max(receipt_time) AS receiptTime
+        FROM pms_labor_protection_record
+        WHERE login_code = #{loginCode}
+        AND material_id = #{materialId}
+        AND receipt_time &gt; #{start}
+        AND receipt_time &lt;= #{end}
+        AND del_flag = 0
+    </select>
+</mapper>

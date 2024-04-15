@@ -2,7 +2,6 @@ package com.steccn.mes.controller;
 
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
-import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.service.JsSysEmployeeService;
 import com.steccn.mes.vo.MesUserInfoVO;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * mes用户控制器
@@ -29,7 +29,7 @@ public class MesUserController {
     private final JsSysEmployeeService jsSysEmployeeService;
 
     @PostMapping("/getEmpDepPost")
-    @ApiOperation(value = "同步物料")
+    @ApiOperation(value = "获取用户所属部门")
     public R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto) {
         return R.success(jsSysEmployeeService.getEmpDepPost(dto.getField1()));
     }
