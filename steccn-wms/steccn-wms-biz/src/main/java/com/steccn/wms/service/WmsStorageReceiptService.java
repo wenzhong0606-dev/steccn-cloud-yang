@@ -222,5 +222,5 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * 区间的数据
      * @return
      */
-    List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
+    List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds);
 }

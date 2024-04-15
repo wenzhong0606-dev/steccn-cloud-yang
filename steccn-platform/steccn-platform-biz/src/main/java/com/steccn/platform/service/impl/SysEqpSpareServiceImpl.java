@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.domain.SysClassification;
 import com.steccn.platform.domain.SysEqpSpare;
@@ -353,6 +354,12 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             });
         }
         return eqpSpareVOList;
+    }
+
+    @Override
+    public List<EqpSpareVO> listByProperty(TupleDTO<String, Integer> dto) {
+        List<SysEqpSpare> list  =  this.baseMapper.listByProperty(dto.getField1(),dto.getField2());
+        return BeanUtil.copyToList(list, EqpSpareVO.class);
     }
 }
 

@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.mes.service.JsSysEmployeeService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
+import com.steccn.mes.vo.MesUserInfoVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +45,11 @@ public class MesEqpFeignController {
     @PostMapping("/emp/post")
     public R<Map<String, List<String>>> getPostUser(@RequestBody Set<String> dto) {
         return R.success(jsSysEmployeeService.getPostUser(dto));
+    }
+
+    @PostMapping("/user/getEmpDepPost")
+    @ApiOperation(value = "同步物料")
+    public R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto) {
+        return R.success(jsSysEmployeeService.getEmpDepPost(dto.getField1()));
     }
 }

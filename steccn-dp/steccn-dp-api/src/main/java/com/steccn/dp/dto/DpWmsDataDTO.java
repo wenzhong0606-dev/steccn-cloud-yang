@@ -17,13 +17,13 @@ public class DpWmsDataDTO {
     /**
      * 日期
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "日期不能为空")
+//    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "日期不能为空")
     private LocalDate date;
 
     /**
      * 仓库id
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库不能为空")
+//    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库不能为空")
     private Set<Long> warehouseIds;
 
     /**
@@ -45,4 +45,7 @@ public class DpWmsDataDTO {
      * 结束时间
      */
     private LocalDateTime endTime;
+
+
+    private Set<Long> materialIds;
 }

@@ -95,4 +95,46 @@
         FROM sys_eqp_spare a
         WHERE a.code = #{code} AND a.status = 0
     </select>
+    <select id="listByProperty" resultType="com.steccn.platform.domain.SysEqpSpare">
+        SELECT
+            id,
+            CODE,
+            NAME,
+            specifications,
+            unit,
+            STATUS,
+            create_by,
+            create_date,
+            update_by,
+            update_date,
+            type,
+            state,
+            batch_type,
+            remarks,
+            length_unit_id,
+            length_quantity,
+            high_unit_id,
+            high_quantity,
+            wide_unit_id,
+            wide_quantity,
+            thick_unit_id,
+            thick_quantity,
+            volume_quantity,
+            volume_unit_id,
+            weight_quantity,
+            weight_unit_id,
+            procurement_type_id,
+            unit_id,
+            product_property
+        FROM
+            sys_eqp_spare
+        WHERE
+            state = 1
+        <if test="field1 != null and field1 != ''">
+            AND CODE LIKE CONCAT('%', #{field1},'%')
+        </if>
+        <if test="field2 != null and field2 != ''">
+            AND product_property = #{field2}
+        </if>
+    </select>
 </mapper>

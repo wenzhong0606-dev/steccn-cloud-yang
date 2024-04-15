@@ -1,5 +1,6 @@
 package com.steccn.platform.mapper;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -40,6 +41,8 @@ public interface SysEqpSpareMapper extends BaseMapper<SysEqpSpare> {
      * @return
      */
     Collection<SysEqpSpare> listByCode(@Param("codeList") List<String> codeList);
+
+    List<SysEqpSpare>  listByProperty(@Param("field1") String field1,@Param("field2")Integer field2 );
 }
 
 

@@ -1,7 +1,10 @@
 package com.steccn.mes.service;
 
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.JsSysEmployee;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.mes.vo.MesUserInfoVO;
 
 import java.util.List;
 import java.util.Map;
@@ -20,5 +23,12 @@ public interface JsSysEmployeeService extends IService<JsSysEmployee> {
      * @return
      */
     Map<String, List<String>> getPostUser(Set<String> postCode);
+
+    /**
+     * 获取用户的机构和岗位
+     * @param userName
+     * @return t1用户名 t2机构 t3岗位
+     */
+    List<MesUserInfoVO>  getEmpDepPost(Set<String> userName);
 
 }

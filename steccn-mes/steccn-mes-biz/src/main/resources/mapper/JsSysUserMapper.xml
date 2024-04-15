@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.JsSysUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.JsSysUser">
+            <result property="userCode" column="user_code" jdbcType="VARCHAR"/>
+            <result property="loginCode" column="login_code" jdbcType="VARCHAR"/>
+            <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+            <result property="password" column="password" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="mobile" column="mobile" jdbcType="VARCHAR"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
+            <result property="sex" column="sex" jdbcType="CHAR"/>
+            <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
+            <result property="sign" column="sign" jdbcType="VARCHAR"/>
+            <result property="wxOpenid" column="wx_openid" jdbcType="VARCHAR"/>
+            <result property="mobileImei" column="mobile_imei" jdbcType="VARCHAR"/>
+            <result property="userType" column="user_type" jdbcType="VARCHAR"/>
+            <result property="refCode" column="ref_code" jdbcType="VARCHAR"/>
+            <result property="refName" column="ref_name" jdbcType="VARCHAR"/>
+            <result property="mgrType" column="mgr_type" jdbcType="CHAR"/>
+            <result property="pwdSecurityLevel" column="pwd_security_level" jdbcType="DECIMAL"/>
+            <result property="pwdUpdateDate" column="pwd_update_date" jdbcType="TIMESTAMP"/>
+            <result property="pwdUpdateRecord" column="pwd_update_record" jdbcType="VARCHAR"/>
+            <result property="pwdQuestion" column="pwd_question" jdbcType="VARCHAR"/>
+            <result property="pwdQuestionAnswer" column="pwd_question_answer" jdbcType="VARCHAR"/>
+            <result property="pwdQuestion2" column="pwd_question_2" jdbcType="VARCHAR"/>
+            <result property="pwdQuestionAnswer2" column="pwd_question_answer_2" jdbcType="VARCHAR"/>
+            <result property="pwdQuestion3" column="pwd_question_3" jdbcType="VARCHAR"/>
+            <result property="pwdQuestionAnswer3" column="pwd_question_answer_3" jdbcType="VARCHAR"/>
+            <result property="pwdQuestUpdateDate" column="pwd_quest_update_date" jdbcType="TIMESTAMP"/>
+            <result property="lastLoginIp" column="last_login_ip" jdbcType="VARCHAR"/>
+            <result property="lastLoginDate" column="last_login_date" jdbcType="TIMESTAMP"/>
+            <result property="freezeDate" column="freeze_date" jdbcType="TIMESTAMP"/>
+            <result property="freezeCause" column="freeze_cause" jdbcType="VARCHAR"/>
+            <result property="userWeight" column="user_weight" jdbcType="DECIMAL"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="corpCode" column="corp_code" jdbcType="VARCHAR"/>
+            <result property="corpName" column="corp_name" jdbcType="VARCHAR"/>
+            <result property="extendS1" column="extend_s1" jdbcType="VARCHAR"/>
+            <result property="extendS2" column="extend_s2" jdbcType="VARCHAR"/>
+            <result property="extendS3" column="extend_s3" jdbcType="VARCHAR"/>
+            <result property="extendS4" column="extend_s4" jdbcType="VARCHAR"/>
+            <result property="extendS5" column="extend_s5" jdbcType="VARCHAR"/>
+            <result property="extendS6" column="extend_s6" jdbcType="VARCHAR"/>
+            <result property="extendS7" column="extend_s7" jdbcType="VARCHAR"/>
+            <result property="extendS8" column="extend_s8" jdbcType="VARCHAR"/>
+            <result property="extendI1" column="extend_i1" jdbcType="DECIMAL"/>
+            <result property="extendI2" column="extend_i2" jdbcType="DECIMAL"/>
+            <result property="extendI3" column="extend_i3" jdbcType="DECIMAL"/>
+            <result property="extendI4" column="extend_i4" jdbcType="DECIMAL"/>
+            <result property="extendF1" column="extend_f1" jdbcType="DECIMAL"/>
+            <result property="extendF2" column="extend_f2" jdbcType="DECIMAL"/>
+            <result property="extendF3" column="extend_f3" jdbcType="DECIMAL"/>
+            <result property="extendF4" column="extend_f4" jdbcType="DECIMAL"/>
+            <result property="extendD1" column="extend_d1" jdbcType="TIMESTAMP"/>
+            <result property="extendD2" column="extend_d2" jdbcType="TIMESTAMP"/>
+            <result property="extendD3" column="extend_d3" jdbcType="TIMESTAMP"/>
+            <result property="extendD4" column="extend_d4" jdbcType="TIMESTAMP"/>
+            <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+            <result property="subcompanyId" column="subcompany_id" jdbcType="VARCHAR"/>
+            <result property="orgId" column="org_id" jdbcType="VARCHAR"/>
+            <result property="birthday" column="birthday" jdbcType="TIMESTAMP"/>
+            <result property="plantId" column="plant_id" jdbcType="VARCHAR"/>
+            <result property="extendJson" column="extend_json" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        user_code,login_code,user_name,
+        password,email,mobile,
+        phone,sex,avatar,
+        sign,wx_openid,mobile_imei,
+        user_type,ref_code,ref_name,
+        mgr_type,pwd_security_level,pwd_update_date,
+        pwd_update_record,pwd_question,pwd_question_answer,
+        pwd_question_2,pwd_question_answer_2,pwd_question_3,
+        pwd_question_answer_3,pwd_quest_update_date,last_login_ip,
+        last_login_date,freeze_date,freeze_cause,
+        user_weight,status,create_by,
+        create_date,update_by,update_date,
+        remarks,corp_code,corp_name,
+        extend_s1,extend_s2,extend_s3,
+        extend_s4,extend_s5,extend_s6,
+        extend_s7,extend_s8,extend_i1,
+        extend_i2,extend_i3,extend_i4,
+        extend_f1,extend_f2,extend_f3,
+        extend_f4,extend_d1,extend_d2,
+        extend_d3,extend_d4,user_id,
+        subcompany_id,org_id,birthday,
+        plant_id,extend_json
+    </sql>
+</mapper>

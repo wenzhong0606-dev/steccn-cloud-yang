@@ -22,5 +22,5 @@ public class PmsLaborStandardDTO {
     private String riskFactor;
     @Valid
     private List<PmsLaborStandardDetailDTO> details;
-    private List<Integer> ids;
+    private List<String> ids;
 }

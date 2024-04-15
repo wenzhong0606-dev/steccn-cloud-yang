@@ -61,7 +61,7 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @param endTime
      * @return
      */
-    List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
+    List<WmsDeliveryReceiptInfo> intervalData(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds);
 }
 
 

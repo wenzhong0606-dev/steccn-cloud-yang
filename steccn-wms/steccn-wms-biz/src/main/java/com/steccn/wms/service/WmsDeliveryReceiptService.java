@@ -165,5 +165,5 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @param endTime
      * @return
      */
-    List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime);
+    List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds);
 }

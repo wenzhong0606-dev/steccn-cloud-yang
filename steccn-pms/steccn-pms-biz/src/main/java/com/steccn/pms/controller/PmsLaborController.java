@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.vo.PmsLaborStandardVO;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,6 +47,12 @@ public class PmsLaborController {
     @ApiOperation(value = "劳保标准详情")
     public R<PmsLaborStandardVO> info(@PathVariable("id")Integer id) {
         return R.success(pmsLaborProtectionStandardService.info(id));
+    }
+
+    @GetMapping("/standard/material")
+    @ApiOperation(value = "获取物料下拉框")
+    public R<List<EqpSpareVO>> material() {
+        return R.success(pmsLaborProtectionStandardService.getAvailSpare());
     }
 
     @PostMapping("/standard/delete")

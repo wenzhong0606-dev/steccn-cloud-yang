@@ -2,9 +2,11 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.dto.PmsStandardListDTO;
+import com.steccn.pms.vo.PmMaterialVO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
 import com.steccn.qms.dto.QtCheckTaskStatusDTO;
 
@@ -59,5 +61,11 @@ public interface PmsLaborProtectionStandardService extends IService<PmsLaborProt
      * @return
      */
     SteccnTableDataDTO<Map<String, String>> standardList(PmsStandardListDTO dto);
+
+    /**
+     * 获取可用物料的下拉框
+     * @return
+     */
+    List<EqpSpareVO> getAvailSpare();
 
 }
