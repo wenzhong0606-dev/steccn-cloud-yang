@@ -1,25 +1,35 @@
 package com.steccn.pms.controller;
 
+import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.pms.dto.JpAnalysisReportDTO;
+import com.steccn.pms.vo.JpAnalysisReportVO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.service.PmsReportDashboardService;
 import com.steccn.pms.vo.DashboardProducePageVO;
 import com.steccn.pms.vo.PmsDeepProcessingNumVO;
 import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -146,5 +156,30 @@ public class PmsReportDashboardController {
     @ApiOperation("深加工制造部-基片数柱状图")
     public R<EpChartGraphVO<List<String>, TripleDTO<BigDecimal,BigDecimal,BigDecimal>>> deepProcessingHistogram(@Valid @RequestBody PmsOperateDriverDTO dto) {
         return R.success(pmsReportDashboardService.deepProcessingHistogram(dto));
+    }
+
+    @PostMapping("/analysis/report")
+    @ApiOperation("基片分析报表")
+    public R<List<JpAnalysisReportVO>> analysisReport(@Valid @RequestBody JpAnalysisReportDTO dto) {
+        Assert.isTrue(LocalDateUtil.le(dto.getStart(), dto.getEnd()), "起始日期不得大于终止日期");
+        return R.success(pmsReportDashboardService.analysisReport(dto.getWorkshopId(), dto.getStart(), dto.getEnd()));
+    }
+
+    @PostMapping("/analysis/report/download")
+    @ApiOperation("基片分析报表-导出")
+    public void analysisReportDownload(@Valid @RequestBody JpAnalysisReportDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            Assert.isTrue(LocalDateUtil.le(dto.getStart(), dto.getEnd()), "起始日期不得大于终止日期");
+            pmsReportDashboardService.analysisReportDownload(dto.getWorkshopId(), dto.getStart(), dto.getEnd(), response);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 }

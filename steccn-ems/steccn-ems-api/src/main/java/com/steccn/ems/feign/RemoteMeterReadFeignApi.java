@@ -5,9 +5,13 @@ import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.Tuple5DTO;
 import com.steccn.common.vo.R;
+import com.steccn.ems.vo.EpPmsConsumeVO;
+import org.apache.tomcat.jni.Local;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,7 +45,14 @@ public interface RemoteMeterReadFeignApi {
     @PostMapping("/feign/ems/meter/read/energy/consume/office")
     R<Map<String, BigDecimal>> energyConsumeOffice(@RequestBody Tuple5DTO<Integer, List<Integer>, LocalDate, LocalDate, Integer> dto);
 
-
+    /**
+     * 获取日期范围的能源的单耗
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/ems/meter/read/consume/use/unit/consume/date/range")
+    R<EpPmsConsumeVO> consumeUseUnitConsumeDateRange(@RequestBody TripleDTO<Integer, LocalDate, LocalDate> dto);
 
     /**
      * 获取指定能源的单耗

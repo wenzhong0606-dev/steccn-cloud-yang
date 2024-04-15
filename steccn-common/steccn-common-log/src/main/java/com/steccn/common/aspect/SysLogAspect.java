@@ -60,8 +60,10 @@ public class SysLogAspect {
         try {
             obj = point.proceed();
         } catch (Exception e) {
-            logDTO.setType(LogTypeEnum.ERROR.getType());
-            logDTO.setException(e.getMessage());
+            if(Objects.nonNull(logDTO)){
+                logDTO.setType(LogTypeEnum.ERROR.getType());
+                logDTO.setException(e.getMessage());
+            }
             throw e;
         } finally {
             Long endTime = System.currentTimeMillis();

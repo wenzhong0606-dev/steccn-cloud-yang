@@ -1,35 +1,39 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.thread.ThreadUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
-import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
-import com.steccn.oa.constant.OaConstant;
+import com.steccn.ems.feign.RemoteMeterReadFeignApi;
+import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.controller.ProduceOrderController;
-import com.steccn.pms.domain.*;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.domain.PmsPullForce;
+import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.dto.PmsPullForceDayCountDTO;
@@ -37,27 +41,29 @@ import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.UnitConvertUtil;
-import com.steccn.pms.vo.DashboardProducePageListVO;
-import com.steccn.pms.vo.DashboardProducePageVO;
-import com.steccn.pms.vo.PmsDeepProcessingNumVO;
-import com.steccn.pms.vo.PmsPullForceMeltingNumVO;
+import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -85,6 +91,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
     private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
+    private final static ThreadPoolExecutor MY_POOL = ThreadUtil.newExecutor(0, Runtime.getRuntime().availableProcessors() * 2);
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -817,4 +825,129 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         res.setOther(tripleDTO);
         return res;
     }
+
+    @Override
+    public List<JpAnalysisReportVO> analysisReport(Integer workshopId, LocalDate start, LocalDate end) {
+        List<JpAnalysisReportVO> resList = Lists.newArrayList();
+        //求解上一区间
+        TupleDTO<LocalDate, LocalDate> preAreaTuple = LocalDateUtil.intervalTime(start, end);
+        LocalDate prevStart = preAreaTuple.getField1();
+        LocalDate prevEnd = preAreaTuple.getField1();
+        List<SysOfficeVO> lineList = pmsOfficeManager.getWsLineList(workshopId);
+        Assert.notEmpty(lineList, "车间下暂无产线");
+        List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
+        //总拉引量（T）
+        CompletableFuture<Map<String, BigDecimal>> pfVoFuture1 = CompletableFuture.supplyAsync(() -> pmsPullForceService.datePullForce(lineIdList, start, end), MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> pfVoFuture2 = CompletableFuture.supplyAsync(() -> pmsPullForceService.datePullForce(lineIdList, prevStart, prevEnd), MY_POOL);
+        CompletableFuture<JpAnalysisReportVO> pfVoFuture = pfVoFuture1.thenCombineAsync(pfVoFuture2, (a, b) -> getJpAnalysisReportVO("总拉引量（T）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+        //总产量（T）
+        CompletableFuture<Map<String, BigDecimal>> pmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> pmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
+        CompletableFuture<JpAnalysisReportVO> pmVoFuture = pmVoFuture1.thenCombineAsync(pmVoFuture2, (a, b) -> getJpAnalysisReportVO("总产量（T）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+        //总产量（㎡）
+        CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_SM),MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_SM),MY_POOL);
+        CompletableFuture<JpAnalysisReportVO> pmSmVoFuture = pmSmVoFuture1.thenCombineAsync(pmSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总产量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+        //总入库量（T）
+        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
+        CompletableFuture<JpAnalysisReportVO> inStorageVoFuture = inStorageVoFuture1.thenCombineAsync(inStorageVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（T）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+        //总入库量（㎡）
+        CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
+        CompletableFuture<JpAnalysisReportVO> inStorageSmVoFuture = inStorageSmVoFuture1.thenCombineAsync(inStorageSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+        //单耗：参考基片驾驶舱
+        CompletableFuture<EpPmsConsumeVO> unitConsumeFuture1 = CompletableFuture
+                .supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, start, end)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL)
+                .handle((vo, ex) -> {
+                    if (ex != null) {
+                        log.error("能源系统 调用错误 -> {}", ex.getMessage());
+                    }
+                    return Objects.nonNull(vo) ? vo : new EpPmsConsumeVO();
+                });
+        CompletableFuture<EpPmsConsumeVO> unitConsumeFuture2 = CompletableFuture
+                .supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, prevStart, prevEnd)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL)
+                .handle((vo, ex) -> {
+                    if (ex != null) {
+                        log.error("能源系统 调用错误 -> {}", ex.getMessage());
+                    }
+                    return Objects.nonNull(vo) ? vo : new EpPmsConsumeVO();
+                });
+        CompletableFuture<JpAnalysisReportVO> unitConsumeFuture = unitConsumeFuture1.thenCombineAsync(unitConsumeFuture2, (a, b) -> getJpAnalysisReportVO("单耗（kcal/kg）", a.getSum(), b.getSum()), MY_POOL);
+        CompletableFuture.allOf(pfVoFuture, pmVoFuture, pmSmVoFuture, inStorageVoFuture, inStorageSmVoFuture, unitConsumeFuture);
+        JpAnalysisReportVO pmVo = pmVoFuture.join();
+        resList.add(pmVo);
+        JpAnalysisReportVO pfVo = pfVoFuture.join();
+        resList.add(pfVo);
+        resList.add(pmSmVoFuture.join());
+        JpAnalysisReportVO inStorageVo = inStorageVoFuture.join();
+        resList.add(inStorageVo);
+        resList.add(inStorageSmVoFuture.join());
+        //成品率：产量T/拉引量
+        resList.add(getJpAnalysisReportVO("成品率（%）",
+                BigDecimalUtil.percent(pmVo.getCurrentValue(), pfVo.getCurrentValue()),
+                BigDecimalUtil.percent(pmVo.getPreValue(), pfVo.getPreValue())));
+        //入库成品率: 入库量T/拉引量
+        resList.add(getJpAnalysisReportVO("入库成品率（%）",
+                BigDecimalUtil.percent(inStorageVo.getCurrentValue(), pfVo.getCurrentValue()),
+                BigDecimalUtil.percent(inStorageVo.getPreValue(), pfVo.getPreValue())));
+        resList.add(unitConsumeFuture.join());
+        return resList;
+    }
+
+    @Override
+    public void analysisReportDownload(Integer workshopId, LocalDate start, LocalDate end, HttpServletResponse response) throws IOException {
+        List<JpAnalysisReportVO> tableList = analysisReport(workshopId, start, end);
+        SteccnTableAssertUtil.notEmpty(tableList, "数据为空");
+        //写表头
+        List<List<String>> list = Lists.newArrayList(Lists.newArrayList(""), Lists.newArrayList("值"), Lists.newArrayList("环比"), Lists.newArrayList("差异"), Lists.newArrayList("差异（%）"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("基片分析报表", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        tableList.forEach(ele -> {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(ele.getName());
+            dataEle.add(ele.getCurrentValue());
+            dataEle.add(ele.getPreValue());
+            dataEle.add(ele.getDiffValue());
+            dataEle.add(ele.getDiffValueRate());
+            dataList.add(dataEle);
+        });
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "基片分析报表")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
+
+    }
+
+    /**
+     * 获取分析报表对象
+     * @param name
+     * @param currentValue
+     * @param prevValue
+     * @return
+     */
+    private JpAnalysisReportVO getJpAnalysisReportVO(String name, BigDecimal currentValue, BigDecimal prevValue){
+        JpAnalysisReportVO reportVo = new JpAnalysisReportVO();
+        reportVo.setName(name);
+        reportVo.setCurrentValue(currentValue);
+        reportVo.setPreValue(prevValue);
+        reportVo.setDiffValue(BigDecimalUtil.subtract(reportVo.getCurrentValue(), reportVo.getPreValue(),2));
+        reportVo.setDiffValueRate(BigDecimalUtil.percent(reportVo.getDiffValue(), reportVo.getCurrentValue()));
+        return reportVo;
+    }
+
 }

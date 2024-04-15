@@ -11,8 +11,10 @@ import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.service.EpDayReportService;
 import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.service.EpPmsConsumeReportService;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
+import com.steccn.ems.vo.EpPmsConsumeVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class EpMeterReadFeignController {
 
     private final EpMeterReadService epMeterReadService;
     private final EpDayReportService epDayReportService;
+    private final EpPmsConsumeReportService consumeReportService;
 
     /**
      * 获取指定能源的耗用数
@@ -57,6 +60,12 @@ public class EpMeterReadFeignController {
     R<Map<String, BigDecimal>> unitConsumeOffice(@RequestBody Tuple5DTO<Integer, List<Integer>, LocalDate, LocalDate, Integer> dto){
         Assert.isTrue(LocalDateUtil.le(dto.getField3(), dto.getField4()), "结束时间必须小于等于开始时间");
         return R.success(epMeterReadService.unitConsumeOffice(dto.getField1(), dto.getField2(), dto.getField3(), dto.getField4(), dto.getField5()));
+    }
+
+    @PostMapping("/consume/use/unit/consume/date/range")
+    @ApiOperation(value = "获取日期范围能源单耗")
+    public R<EpPmsConsumeVO> consumeUseUnitConsumeDateRange(@RequestBody TripleDTO<Integer, LocalDate, LocalDate> dto) {
+        return R.success(consumeReportService.consumeUseUnitConsume(dto.getField1(), dto.getField2(), dto.getField3()));
     }
 
     /**
