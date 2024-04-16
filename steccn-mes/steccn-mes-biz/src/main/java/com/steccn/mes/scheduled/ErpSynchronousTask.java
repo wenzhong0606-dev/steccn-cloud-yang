@@ -1,5 +1,6 @@
 package com.steccn.mes.scheduled;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.service.JsSysOfficeService;
@@ -103,7 +104,7 @@ public class ErpSynchronousTask {
     public void deleteColdData() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime seven = now.minusDays(7);
-        remoteDpFeignApi.deleteData(seven);
+        remoteDpFeignApi.deleteData(new TupleDTO<LocalDateTime,String>(seven,null));
         XxlJobHelper.log("同步仓库-任务结束");
     }
 }

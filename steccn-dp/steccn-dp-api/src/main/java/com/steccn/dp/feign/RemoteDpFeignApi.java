@@ -81,5 +81,5 @@ public interface RemoteDpFeignApi {
      */
     @PostMapping("/feign/dp/coldEnd/deleteData")
     @ApiOperation(value = "只保留7天的数据")
-    R<Boolean> deleteData(@RequestBody LocalDateTime dto);
+    R<Boolean> deleteData(@RequestBody TupleDTO<LocalDateTime,String> dto);
 }

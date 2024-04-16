@@ -69,7 +69,7 @@ public class DpWeightFeignController {
 
     @PostMapping("/coldEnd/deleteData")
     @ApiOperation(value = "只保留7天的数据")
-    public R<Boolean> deleteData(@RequestBody LocalDateTime dto) {
-        return R.success(dpColdEndCheckpointValueService.deleteData(dto));
+    public R<Boolean> deleteData(@RequestBody TupleDTO<LocalDateTime,String> dto) {
+        return R.success(dpColdEndCheckpointValueService.deleteData(dto.getField1()));
     }
 }
