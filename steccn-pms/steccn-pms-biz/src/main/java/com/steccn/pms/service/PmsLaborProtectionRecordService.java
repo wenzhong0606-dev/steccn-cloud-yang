@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsLaborProtectionRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsLaborGerReqDTO;
 import com.steccn.pms.dto.PmsLaborRecordPageDTO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 
@@ -18,4 +19,11 @@ public interface PmsLaborProtectionRecordService extends IService<PmsLaborProtec
      * @return
      */
     Page<PmsLaborRecordVO> pageList(PmsLaborRecordPageDTO dto);
+
+    /**
+     * 生成领用单
+     * @param dto
+     * @return
+     */
+    Boolean generateReq(PmsLaborGerReqDTO dto);
 }

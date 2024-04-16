@@ -86,6 +86,10 @@
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
+            <artifactId>steccn-dp-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
         <!--添加actuator依赖-->

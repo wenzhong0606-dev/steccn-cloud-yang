@@ -6,6 +6,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.service.AdsOnOffCountService;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
+import com.steccn.dp.service.DpColdEndCheckpointValueService;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -34,6 +35,7 @@ import java.util.Map;
 public class DpWeightFeignController {
     private final AdsOpcUaAll3Service adsOpcUaAll3Service;
     private final AdsOnOffCountService adsOnOffCountService;
+    private final DpColdEndCheckpointValueService dpColdEndCheckpointValueService;
 
     @PostMapping("/weight/count")
     @ApiOperation(value = "电子秤读数")
@@ -63,5 +65,11 @@ public class DpWeightFeignController {
     @ApiOperation(value = "玻璃片数光电信号")
     public R<List<DpOnOffCountVO>> onOffList(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
         return R.success(adsOnOffCountService.onOffList(dto));
+    }
+
+    @PostMapping("/coldEnd/deleteData")
+    @ApiOperation(value = "只保留7天的数据")
+    public R<Boolean> deleteData(@RequestBody LocalDateTime dto) {
+        return R.success(dpColdEndCheckpointValueService.deleteData(dto));
     }
 }

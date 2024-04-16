@@ -195,6 +195,12 @@
                 <artifactId>steccn-mes-biz</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+            <!-- steccn-dp-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-dp-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
 
             <!--redis-->
             <dependency>

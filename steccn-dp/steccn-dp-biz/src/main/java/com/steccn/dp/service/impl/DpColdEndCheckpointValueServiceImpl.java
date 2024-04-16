@@ -11,10 +11,13 @@ import com.steccn.dp.domain.DpColdEndCheckpointValue;
 import com.steccn.dp.service.DpColdEndCheckpointValueService;
 import com.steccn.dp.mapper.DpColdEndCheckpointValueMapper;
 import com.steccn.dp.vo.DpColdEndCheckpointValueVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,6 +52,33 @@ public class DpColdEndCheckpointValueServiceImpl extends ServiceImpl<DpColdEndCh
             results.add(vo);
         });
         return results;
+    }
+
+    @Override
+    public BigDecimal getScreenData(Integer num) {
+        // 1 KLW 2 NOX 3 SO2
+        BigDecimal result = BigDecimal.ZERO;
+        String code = null;
+        if(num.equals(OaConstant.NUM_1)){
+            code = "OA.YR_TX.yibiao.KLW_INPUT";
+        }else if(num.equals(OaConstant.NUM_2)){
+            code = "OA.YR_TX.yibiao.NOX_INPUT";
+        }else if (num.equals(OaConstant.NUM_3)){
+            code = "OA.YR_TX.yibiao.SO2_INPUT";
+        }
+        DpColdEndCheckpointValue one = getOne(new LambdaQueryWrapper<DpColdEndCheckpointValue>()
+                .select(DpColdEndCheckpointValue::getValue)
+                .eq(DpColdEndCheckpointValue::getCheckPointCode, code)
+                .orderByDesc(DpColdEndCheckpointValue::getTimeStamp)
+                .last("LIMIT 1"));
+        result = one.getValue();
+        return result;
+    }
+
+    @Override
+    public Boolean deleteData(LocalDateTime date) {
+        dpColdEndCheckpointValueMapper.deleteData(date);
+        return true;
     }
 }
 

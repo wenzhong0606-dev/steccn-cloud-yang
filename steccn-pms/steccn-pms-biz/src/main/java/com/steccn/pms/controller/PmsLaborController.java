@@ -5,6 +5,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.pms.dto.PmsLaborGerReqDTO;
 import com.steccn.pms.dto.PmsLaborRecordPageDTO;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
@@ -77,5 +78,12 @@ public class PmsLaborController {
     @ApiOperation(value = "劳保记录列表")
     public R<Page<PmsLaborRecordVO>> record(@RequestBody PmsLaborRecordPageDTO dto) {
         return R.success(pmsLaborProtectionRecordService.pageList(dto));
+    }
+
+    @PostMapping("/standard/generateReq")
+    @SysLog("生成领用单")
+    @ApiOperation(value = "生成领用单")
+    public R<Boolean> generateReq(@RequestBody PmsLaborGerReqDTO dto) {
+        return R.success(pmsLaborProtectionRecordService.generateReq(dto));
     }
 }

@@ -9,19 +9,25 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaUserInfo;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsLaborProtectionRecord;
-import com.steccn.pms.dto.PmsLaborRecordPageDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
+import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +45,8 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     implements PmsLaborProtectionRecordService{
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmsMaterialRequisitionService pmsMaterialRequisitionService;
+    private final OaInfoService oaInfoService;
 
     @Override
     public Page<PmsLaborRecordVO> pageList(PmsLaborRecordPageDTO dto) {
@@ -77,6 +85,44 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
         //7.设置数据
         page.setRecords(resRecords);
         return page;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generateReq(PmsLaborGerReqDTO dto) {
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(dto.getDetails()
+                .stream().map(PmsLaborGerReqDetailDTO::getDepCode).collect(Collectors.toSet())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(dto.getDetails().stream().map(PmsLaborGerReqDetailDTO::getMaterialId).collect(Collectors.toList())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, List<PmsLaborGerReqDetailDTO>> depMap = dto.getDetails().stream().collect(Collectors.groupingBy(PmsLaborGerReqDetailDTO::getDepCode));
+        for(Map.Entry<String,List<PmsLaborGerReqDetailDTO>> tmp:depMap.entrySet()){
+            MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
+            SysOfficeVO office = officeMap.get(tmp.getKey());
+            materialRequisitionDTO.setDepartmentId(office.getId());
+            //部门领料
+            materialRequisitionDTO.setTypeId(1588003364973592576L);
+            //备品备件库
+            materialRequisitionDTO.setWarehouseId(440L);
+            //详情
+            List<MaterialRequisitionInfoDTO> detailList = Lists.newArrayList();
+            for(PmsLaborGerReqDetailDTO detailTmp:tmp.getValue()){
+                MaterialRequisitionInfoDTO detailModel = new MaterialRequisitionInfoDTO();
+                EqpSpareVO spare = spareMap.get(detailTmp.getMaterialId());
+                detailModel.setMaterialCode(spare.getCode());
+                detailModel.setMaterialName(spare.getName());
+                detailModel.setMaterialId(spare.getId());
+                detailModel.setUnitId(spare.getUnitId().toString());
+                detailModel.setUnitName(spare.getUnit());
+                detailModel.setQuantity(detailTmp.getNum());
+                detailModel.setReceiveQuantity(detailTmp.getNum());
+                detailModel.setRequireDate(LocalDate.now());
+                OaUserInfo oaUserInfo = FeignOptional.of(() -> oaInfoService.getOaUserInfo(detailTmp.getLoginCode()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                List<MaterialRequisitionDemanderDTO> demanderList = Lists.newArrayList(new MaterialRequisitionDemanderDTO(oaUserInfo.getOaUserId().longValue(),oaUserInfo.getName()));
+                detailList.add(detailModel);
+            }
+            materialRequisitionDTO.setList(detailList);
+//            pmsMaterialRequisitionService.add(materialRequisitionDTO);
+        }
+        return true;
     }
 }
 

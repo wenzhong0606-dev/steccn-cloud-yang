@@ -27,4 +27,9 @@
         FROM dp_cold_end_checkpoint_value
         GROUP BY check_point_code
     </select>
+
+    <delete id="deleteData">
+        delete from dp_cold_end_checkpoint_value
+        where timestamp &lt; #{date}
+    </delete>
 </mapper>

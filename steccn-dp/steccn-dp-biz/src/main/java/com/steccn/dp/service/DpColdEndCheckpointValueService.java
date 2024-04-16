@@ -4,6 +4,8 @@ import com.steccn.dp.domain.DpColdEndCheckpointValue;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.dp.vo.DpColdEndCheckpointValueVO;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -18,4 +20,19 @@ public interface DpColdEndCheckpointValueService extends IService<DpColdEndCheck
      * @return
      */
     List<DpColdEndCheckpointValueVO> getColdEndValue();
+
+    /**
+     * 获取屏幕数据 1 KLW 2 NOX 3 SO2
+     * @param num
+     * @return
+     */
+    BigDecimal getScreenData(Integer num);
+
+    /**
+     * 删除date时间前的数据
+     * @param date
+     * @return
+     */
+    Boolean deleteData(LocalDateTime date);
+
 }

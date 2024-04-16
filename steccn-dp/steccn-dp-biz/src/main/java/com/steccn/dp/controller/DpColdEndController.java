@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +42,12 @@ public class DpColdEndController {
     public R<List<DpColdEndCheckpointValueVO>> count(HttpServletRequest request) {
         validRequestHeader(request);
         return R.success(dpColdEndCheckpointValueService.getColdEndValue());
+    }
+
+    @GetMapping("/screen/{num}")
+    @ApiOperation(value = "冷端数采数据")
+    public BigDecimal count(@PathVariable Integer num) {
+        return dpColdEndCheckpointValueService.getScreenData(num);
     }
 
     /**

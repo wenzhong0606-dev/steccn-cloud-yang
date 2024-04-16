@@ -1,8 +1,10 @@
 package com.steccn.mes.scheduled;
 
+import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.service.JsSysOfficeService;
 import com.steccn.mes.service.MesEqpSpareService;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 public class ErpSynchronousTask {
     private final JsSysOfficeService jsSysOfficeService;
     private final MesEqpSpareService mesEqpSpareService;
+    private final RemoteDpFeignApi remoteDpFeignApi;
     /**
      * @desc 每天 2点同步昨天数据
      *
@@ -88,6 +91,19 @@ public class ErpSynchronousTask {
         dto.setPageindex(1);
         dto.setPagesize(1000);
         jsSysOfficeService.synchronousStock(dto);
+        XxlJobHelper.log("同步仓库-任务结束");
+    }
+
+
+    /**
+     * @desc 每天 1点10分保留7天数据
+     *
+     */
+    @XxlJob("deleteColdData")
+    public void deleteColdData() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime seven = now.minusDays(7);
+        remoteDpFeignApi.deleteData(seven);
         XxlJobHelper.log("同步仓库-任务结束");
     }
 }

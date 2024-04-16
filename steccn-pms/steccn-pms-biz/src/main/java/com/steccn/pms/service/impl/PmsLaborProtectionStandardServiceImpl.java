@@ -323,7 +323,9 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                 standardTmp = standardList.stream().filter(v->v.getOfficeId().contains(tmp.getDepCode())).findFirst().orElse(null);
             }
             column.put("depName",tmp.getDepName());
+            column.put("depCode",tmp.getDepCode());
             column.put("postName",tmp.getPostName());
+            column.put("loginCode",tmp.getLoginCode());
             column.put("userName",tmp.getName());
             column.put("enterTime",employeeTime.get(tmp.getLoginCode()).toString());
             //获取部门详情
@@ -339,6 +341,7 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                     //可领数量
                     BigDecimal availNum = BigDecimalUtil.subtract(new BigDecimal(detailTmp.getAmount()), pmsLaborMaterialReceiptDTO.getReceiptNum(),2);
                     if(availNum.compareTo(BigDecimal.ZERO)==1){
+                        column.put("materialId",detailTmp.getMaterialId().toString());
                         column.put(detailTmp.getMaterialId()+"_claimNum",availNum.toString());
                         column.put(detailTmp.getMaterialId()+"_availNum",availNum.toString());
                         column.put(detailTmp.getMaterialId()+"_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));

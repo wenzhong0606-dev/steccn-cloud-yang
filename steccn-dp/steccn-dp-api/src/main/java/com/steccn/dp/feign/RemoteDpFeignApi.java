@@ -72,4 +72,14 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/onOff/list")
     @ApiOperation(value = "玻璃片数光电信号")
     R<List<DpOnOffCountVO>> onOffList(@RequestBody TupleDTO<LocalDate,LocalDate> dto);
+
+
+    /**
+     * 保留数采7天的数据
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/dp/coldEnd/deleteData")
+    @ApiOperation(value = "只保留7天的数据")
+    R<Boolean> deleteData(@RequestBody LocalDateTime dto);
 }
