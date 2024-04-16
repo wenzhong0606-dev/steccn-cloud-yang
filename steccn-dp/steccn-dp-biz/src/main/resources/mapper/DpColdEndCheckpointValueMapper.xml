@@ -30,6 +30,6 @@
 
     <delete id="deleteData">
         delete from dp_cold_end_checkpoint_value
-        where timestamp &lt; #{date}
+        where time_stamp &lt; #{date}
     </delete>
 </mapper>
