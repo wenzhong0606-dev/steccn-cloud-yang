@@ -23,9 +23,19 @@ public class JpAnalysisReportVO implements Serializable {
     private BigDecimal currentValue;
 
     /**
+     * 当前时间区间均值
+     */
+    private BigDecimal currentAvgValue;
+
+    /**
      * 前一个时间区间的值-环比
      */
     private BigDecimal preValue;
+
+    /**
+     * 当前时间区间均值
+     */
+    private BigDecimal preAvgValue;
 
     /**
      * 差异

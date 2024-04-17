@@ -61,6 +61,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -831,8 +832,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         List<JpAnalysisReportVO> resList = Lists.newArrayList();
         //求解上一区间
         TupleDTO<LocalDate, LocalDate> preAreaTuple = LocalDateUtil.intervalTime(start, end);
+        BigDecimal intervalDays = new BigDecimal(ChronoUnit.DAYS.between(start, end) + 1);
         LocalDate prevStart = preAreaTuple.getField1();
-        LocalDate prevEnd = preAreaTuple.getField1();
+        LocalDate prevEnd = preAreaTuple.getField2();
         List<SysOfficeVO> lineList = pmsOfficeManager.getWsLineList(workshopId);
         Assert.notEmpty(lineList, "车间下暂无产线");
         List<Integer> lineIdList = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
@@ -848,14 +850,14 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_SM),MY_POOL);
         CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_SM),MY_POOL);
         CompletableFuture<JpAnalysisReportVO> pmSmVoFuture = pmSmVoFuture1.thenCombineAsync(pmSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总产量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
-        //总入库量（T）
-        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
-        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
-        CompletableFuture<JpAnalysisReportVO> inStorageVoFuture = inStorageVoFuture1.thenCombineAsync(inStorageVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（T）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
-        //总入库量（㎡）
-        CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
-        CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
-        CompletableFuture<JpAnalysisReportVO> inStorageSmVoFuture = inStorageSmVoFuture1.thenCombineAsync(inStorageSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+//        //总入库量（T）
+//        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
+//        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
+//        CompletableFuture<JpAnalysisReportVO> inStorageVoFuture = inStorageVoFuture1.thenCombineAsync(inStorageVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（T）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
+//        //总入库量（㎡）
+//        CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
+//        CompletableFuture<Map<String, BigDecimal>> inStorageSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, prevStart, prevEnd, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
+//        CompletableFuture<JpAnalysisReportVO> inStorageSmVoFuture = inStorageSmVoFuture1.thenCombineAsync(inStorageSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总入库量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
         //单耗：参考基片驾驶舱
         CompletableFuture<EpPmsConsumeVO> unitConsumeFuture1 = CompletableFuture
                 .supplyAsync(() -> FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<>(workshopId, start, end)), FeignConstant.STECCN_EMS_SERVICE_NAME).get(), MY_POOL)
@@ -874,23 +876,33 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     return Objects.nonNull(vo) ? vo : new EpPmsConsumeVO();
                 });
         CompletableFuture<JpAnalysisReportVO> unitConsumeFuture = unitConsumeFuture1.thenCombineAsync(unitConsumeFuture2, (a, b) -> getJpAnalysisReportVO("单耗（kcal/kg）", a.getSum(), b.getSum()), MY_POOL);
-        CompletableFuture.allOf(pfVoFuture, pmVoFuture, pmSmVoFuture, inStorageVoFuture, inStorageSmVoFuture, unitConsumeFuture);
-        JpAnalysisReportVO pmVo = pmVoFuture.join();
-        resList.add(pmVo);
+        CompletableFuture.allOf(pfVoFuture, pmVoFuture, pmSmVoFuture, unitConsumeFuture);
+
         JpAnalysisReportVO pfVo = pfVoFuture.join();
+        pfVo.setCurrentAvgValue(BigDecimalUtil.divide(pfVo.getCurrentValue(), intervalDays));
+        pfVo.setPreAvgValue(BigDecimalUtil.divide(pfVo.getPreValue(), intervalDays));
         resList.add(pfVo);
-        resList.add(pmSmVoFuture.join());
-        JpAnalysisReportVO inStorageVo = inStorageVoFuture.join();
-        resList.add(inStorageVo);
-        resList.add(inStorageSmVoFuture.join());
+
+        JpAnalysisReportVO pmVo = pmVoFuture.join();
+        pmVo.setCurrentAvgValue(BigDecimalUtil.divide(pmVo.getCurrentValue(), intervalDays));
+        pmVo.setPreAvgValue(BigDecimalUtil.divide(pmVo.getPreValue(), intervalDays));
+        resList.add(pmVo);
+
+        JpAnalysisReportVO pmSmVo = pmSmVoFuture.join();
+        pmSmVo.setCurrentAvgValue(BigDecimalUtil.divide(pmSmVo.getCurrentValue(), intervalDays));
+        pmSmVo.setPreAvgValue(BigDecimalUtil.divide(pmSmVo.getPreValue(), intervalDays));
+        resList.add(pmSmVo);
+//        JpAnalysisReportVO inStorageVo = inStorageVoFuture.join();
+//        resList.add(inStorageVo);
+//        resList.add(inStorageSmVoFuture.join());
         //成品率：产量T/拉引量
         resList.add(getJpAnalysisReportVO("成品率（%）",
                 BigDecimalUtil.percent(pmVo.getCurrentValue(), pfVo.getCurrentValue()),
                 BigDecimalUtil.percent(pmVo.getPreValue(), pfVo.getPreValue())));
-        //入库成品率: 入库量T/拉引量
-        resList.add(getJpAnalysisReportVO("入库成品率（%）",
-                BigDecimalUtil.percent(inStorageVo.getCurrentValue(), pfVo.getCurrentValue()),
-                BigDecimalUtil.percent(inStorageVo.getPreValue(), pfVo.getPreValue())));
+//        //入库成品率: 入库量T/拉引量
+//        resList.add(getJpAnalysisReportVO("入库成品率（%）",
+//                BigDecimalUtil.percent(inStorageVo.getCurrentValue(), pfVo.getCurrentValue()),
+//                BigDecimalUtil.percent(inStorageVo.getPreValue(), pfVo.getPreValue())));
         resList.add(unitConsumeFuture.join());
         return resList;
     }
