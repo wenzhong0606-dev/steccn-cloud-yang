@@ -46,6 +46,9 @@ public class DpColdEndCheckpointValueServiceImpl extends ServiceImpl<DpColdEndCh
             DpColdEndCheckpointValue one = getOne(new LambdaQueryWrapper<DpColdEndCheckpointValue>()
                     .eq(DpColdEndCheckpointValue::getCheckPointCode, tmp.getCheckPointCode())
                     .eq(DpColdEndCheckpointValue::getTimeStamp, tmp.getTimeStamp()).last("LIMIT 1"));
+            if(one.getTimeStamp().isBefore(LocalDateTime.now().minusHours(2))){
+                one.setValue(BigDecimal.ZERO);
+            }
             DpColdEndCheckpointValueVO vo = new DpColdEndCheckpointValueVO();
             BeanUtil.copyProperties(one,vo);
             vo.setCheckPointName(codeNameMap.get(one.getCheckPointCode()));

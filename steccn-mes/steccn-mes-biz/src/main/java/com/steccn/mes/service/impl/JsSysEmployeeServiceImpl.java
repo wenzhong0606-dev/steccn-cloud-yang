@@ -57,10 +57,10 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     public List<MesUserInfoVO> getEmpDepPost(Set<String> userName) {
         List<MesUserInfoVO> mesUserInfo = jsSysEmployeeMapper.selectEmpInfo(userName);
         if(CollUtil.isNotEmpty(mesUserInfo)){
-            Set<String> postSet = mesUserInfo.stream().map(MesUserInfoVO::getDepCode).collect(Collectors.toSet());
+            Set<String> postSet = mesUserInfo.stream().map(MesUserInfoVO::getPostCode).collect(Collectors.toSet());
             Map<String, SysOfficeVO> postDepMap = FeignOptional.of(() -> remoteOfficeFeign.postDepMap(postSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             mesUserInfo.forEach(tmp->{
-                SysOfficeVO officeInfo = postDepMap.get(tmp.getDepCode());
+                SysOfficeVO officeInfo = postDepMap.get(tmp.getPostCode());
                 if(Objects.nonNull(officeInfo)){
                     tmp.setDepCode(officeInfo.getOfficeCode());
                     tmp.setDepName(officeInfo.getOfficeName());

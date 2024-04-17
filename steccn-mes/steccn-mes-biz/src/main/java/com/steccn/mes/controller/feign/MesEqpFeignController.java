@@ -48,7 +48,7 @@ public class MesEqpFeignController {
     }
 
     @PostMapping("/user/getEmpDepPost")
-    @ApiOperation(value = "同步物料")
+    @ApiOperation(value = "获取人员部门岗位")
     public R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto) {
         return R.success(jsSysEmployeeService.getEmpDepPost(dto.getField1()));
     }

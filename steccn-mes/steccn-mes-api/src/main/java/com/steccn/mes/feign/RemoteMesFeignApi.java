@@ -56,7 +56,7 @@ public interface RemoteMesFeignApi {
      * @param dto
      * @return
      */
-    @PostMapping("/user/getEmpDepPost")
+    @PostMapping("/feign/mes/user/getEmpDepPost")
     @ApiOperation(value = "获取用户所属部门和岗位")
     R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto);
 }

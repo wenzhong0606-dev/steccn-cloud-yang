@@ -58,6 +58,7 @@ public interface PmsLaborProtectionStandardService extends IService<PmsLaborProt
 
     /**
      * 领用清单
+     * @param dto
      * @return
      */
     SteccnTableDataDTO<Map<String, String>> standardList(PmsStandardListDTO dto);

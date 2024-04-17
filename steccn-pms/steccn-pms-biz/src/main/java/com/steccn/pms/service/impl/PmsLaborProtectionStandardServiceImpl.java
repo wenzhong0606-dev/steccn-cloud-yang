@@ -45,10 +45,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -266,21 +263,22 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         //拿到所有岗位下的人员和岗位所属机构
         Map<String, List<String>> employee = FeignOptional.of(() -> remoteMesFeignApi.getPostUser(availPost), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         //拿到所有人员的入职时间
-        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.keySet().stream().map(
-                str->{
+        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .map(str->{
                     int index = str.indexOf('_');
                     return index != -1 ? str.substring(0,index) : str;
-                }
-        ).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        }).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //拿到所有入职超过1个月的人员
         Set<String> employeeId = employeeTime.entrySet().stream().filter(v -> v.getValue().plusMonths(1).isBefore(LocalDate.now()))
                 .map(Map.Entry::getKey).collect(Collectors.toSet());
         //过滤名称
-        if(cn.hutool.core.util.StrUtil.isNotBlank(dto.getUserName())){
-            employeeId =employeeId.stream().filter(v->v.contains(dto.getUserName())).collect(Collectors.toSet());
-        }
-        Set<String> finalEmployeeId = employeeId;
-        List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(finalEmployeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+//        if(cn.hutool.core.util.StrUtil.isNotBlank(dto.getUserName())){
+//            employeeId =employeeId.stream().filter(v->v.contains(dto.getUserName())).collect(Collectors.toSet());
+//        }
+//        Set<String> finalEmployeeId = employeeId;
+        List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(employeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         //开始过滤
         if(StrUtil.isNotBlank(dto.getUserName())){
             userInfos = userInfos.stream().filter(v->v.getName().contains(dto.getUserName())).collect(Collectors.toList());
@@ -322,9 +320,13 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                 //获取用户的部门标准
                 standardTmp = standardList.stream().filter(v->v.getOfficeId().contains(tmp.getDepCode())).findFirst().orElse(null);
             }
+            if(Objects.isNull(standardTmp)){
+                continue;
+            }
             column.put("depName",tmp.getDepName());
             column.put("depCode",tmp.getDepCode());
             column.put("postName",tmp.getPostName());
+            column.put("postCode",tmp.getPostCode());
             column.put("loginCode",tmp.getLoginCode());
             column.put("userName",tmp.getName());
             column.put("enterTime",employeeTime.get(tmp.getLoginCode()).toString());
@@ -347,6 +349,7 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                         column.put(detailTmp.getMaterialId()+"_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     }
                 }else {
+                    column.put("materialId",detailTmp.getMaterialId().toString());
                     column.put(detailTmp.getMaterialId()+"_claimNum",detailTmp.getAmount().toString());
                     column.put(detailTmp.getMaterialId()+"_availNum",detailTmp.getAmount().toString());
                 }

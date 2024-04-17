@@ -85,7 +85,7 @@ public class PmsLaborProtectionRecord implements Serializable {
     /**
      * 领用单id
      */
-    private Integer receiptId;
+    private Long receiptId;
 
     /**
      * 创建人id

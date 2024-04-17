@@ -8,6 +8,7 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.dto.PmsLaborGerReqDTO;
 import com.steccn.pms.dto.PmsLaborRecordPageDTO;
 import com.steccn.pms.dto.PmsLaborStandardDTO;
+import com.steccn.pms.dto.PmsStandardListDTO;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.vo.PmsLaborRecordVO;
@@ -72,6 +73,12 @@ public class PmsLaborController {
     @ApiOperation(value = "劳保标准列表")
     public R<SteccnTableDataDTO> listInfo() {
         return R.success(pmsLaborProtectionStandardService.listInfo());
+    }
+
+    @PostMapping("/standard/detail")
+    @ApiOperation(value = "劳保清单列表")
+    public R<SteccnTableDataDTO> standardList(@RequestBody PmsStandardListDTO dto) {
+        return R.success(pmsLaborProtectionStandardService.standardList(dto));
     }
 
     @PostMapping("/standard/record")
