@@ -72,6 +72,6 @@ public class EpDiscountFactorDTO implements Serializable {
     /**
      * 备注
      */
-    @Length(max = 100, message = "备注不能超过50个文字")
+    @Length(groups = {UpdateGroup.class, InsertGroup.class}, max = 50, message = "备注不能超过50个文字")
     private String note;
 }
