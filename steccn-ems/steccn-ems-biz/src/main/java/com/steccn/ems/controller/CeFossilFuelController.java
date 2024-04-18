@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * @author yequan
- * @desc 电力设置控制器
+ * @desc 化石燃料设置控制器
  */
 @Api("化石燃料设置")
 @RestController
