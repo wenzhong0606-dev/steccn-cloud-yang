@@ -44,4 +44,9 @@ public class OaEmpVO implements Serializable {
      * 部门id
      */
     private Integer departmentid;
+
+    /**
+     * 用户名
+     */
+    private String loginidspan;
 }
