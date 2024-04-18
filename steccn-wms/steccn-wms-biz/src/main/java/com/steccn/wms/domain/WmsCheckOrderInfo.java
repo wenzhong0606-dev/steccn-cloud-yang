@@ -50,6 +50,12 @@ public class WmsCheckOrderInfo implements Serializable {
      */
     private String caseNo;
 
+
+    /**
+     * 单位
+     */
+    private Long unitId;
+
     /**
      * 单位
      */

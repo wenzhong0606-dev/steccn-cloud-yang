@@ -525,7 +525,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         WmsScanInventoryVO wmsScanInventoryVO = new WmsScanInventoryVO();
         //根据箱号获取对应库存信息
         LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,caseNo).and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO));
+        inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,caseNo)
+                .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or()
+                        .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO));
         WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
         if(Objects.isNull(wmsInventory) ) return R.failure("未查询到此箱号信息，请联系管理员");
         //检索当前箱号是否已出库
@@ -545,7 +547,13 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             wmsScanInventoryVO.setDeliveryReceiptTime(wmsDeliveryReceipt.getAffirmTime());
             return R.success(wmsScanInventoryVO);
         }
-        if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0 ) return R.failure("可用数量不足，请联系管理员");
+        if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0 ) {
+            if (wmsInventory.getStockQuantity().compareTo(BigDecimal.ZERO)>0){
+                return R.failure("可用库存不足，请联系管理员");
+            }else {
+                return R.failure("已出库");
+            }
+        }
         BeanUtils.copyProperties(wmsInventory,wmsScanInventoryVO);
         wmsScanInventoryVO.setInventoryId(wmsInventory.getId());
         return R.success(wmsScanInventoryVO);
