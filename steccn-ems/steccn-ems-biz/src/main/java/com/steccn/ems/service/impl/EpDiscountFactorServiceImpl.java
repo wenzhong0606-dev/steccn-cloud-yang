@@ -145,9 +145,9 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
             EpDiscountFactor start = getOne(new LambdaQueryWrapper<EpDiscountFactor>()
                     .eq(EpDiscountFactor::getType, dto.getType())
                     .eq(Objects.nonNull(dto.getEnergyType()), EpDiscountFactor::getEnergyType, dto.getEnergyType())
-                    .not(lr -> lr.ge(EpDiscountFactor::getValidStart, dto.getValidEnd())
+                    .not(lr -> lr.gt(EpDiscountFactor::getValidStart, dto.getValidEnd())
                             .or()
-                            .le(EpDiscountFactor::getValidEnd, dto.getValidStart()))
+                            .lt(EpDiscountFactor::getValidEnd, dto.getValidStart()))
                     .last(MpConstant.STR_LIMIT_1));
             if (Objects.nonNull(start)) {
                 throw new BusinessException("与现有系数【" + start.getName() + "】有效期有重叠”，无法保存");
@@ -184,9 +184,9 @@ public class EpDiscountFactorServiceImpl extends ServiceImpl<EpDiscountFactorMap
                     .eq(EpDiscountFactor::getType, dto.getType())
                     .ne(EpDiscountFactor::getId, dto.getId())
                     .eq(Objects.nonNull(dto.getEnergyType()), EpDiscountFactor::getEnergyType, dto.getEnergyType())
-                    .not(lr -> lr.ge(EpDiscountFactor::getValidStart, dto.getValidEnd())
+                    .not(lr -> lr.gt(EpDiscountFactor::getValidStart, dto.getValidEnd())
                             .or()
-                            .le(EpDiscountFactor::getValidEnd, dto.getValidStart()))
+                            .lt(EpDiscountFactor::getValidEnd, dto.getValidStart()))
                     .last(MpConstant.STR_LIMIT_1));
             if (Objects.nonNull(start)) {
                 throw new BusinessException("与现有系数【" + start.getName() + "】有效期有重叠”，无法保存");

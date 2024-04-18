@@ -79,9 +79,9 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
             CeElectricSetting model = BeanUtil.copyProperties(dto, CeElectricSetting.class);
             //有效期不可重叠
             CeElectricSetting start = getOne(new LambdaQueryWrapper<CeElectricSetting>()
-                    .not(lr -> lr.ge(CeElectricSetting::getValidStart, dto.getValidEnd())
+                    .not(lr -> lr.gt(CeElectricSetting::getValidStart, dto.getValidEnd())
                             .or()
-                            .le(CeElectricSetting::getValidEnd, dto.getValidStart()))
+                            .lt(CeElectricSetting::getValidEnd, dto.getValidStart()))
                     .last(MpConstant.STR_LIMIT_1));
             if (Objects.nonNull(start)) {
                 throw new BusinessException("与现有电力设置【" + start.getName() + "】有效期有重叠”，无法保存");
@@ -108,9 +108,9 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
             //有效期不可重叠
             CeElectricSetting start = getOne(new LambdaQueryWrapper<CeElectricSetting>()
                     .ne(CeElectricSetting::getId, dto.getId())
-                    .not(lr -> lr.ge(CeElectricSetting::getValidStart, dto.getValidEnd())
+                    .not(lr -> lr.gt(CeElectricSetting::getValidStart, dto.getValidEnd())
                             .or()
-                            .le(CeElectricSetting::getValidEnd, dto.getValidStart()))
+                            .lt(CeElectricSetting::getValidEnd, dto.getValidStart()))
                     .last(MpConstant.STR_LIMIT_1));
             if (Objects.nonNull(start)) {
                 throw new BusinessException("与现有电力设置【" + start.getName() + "】有效期有重叠”，无法保存");
