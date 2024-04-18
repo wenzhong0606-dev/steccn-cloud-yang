@@ -18,7 +18,7 @@ public class CeElectricSetting implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**
