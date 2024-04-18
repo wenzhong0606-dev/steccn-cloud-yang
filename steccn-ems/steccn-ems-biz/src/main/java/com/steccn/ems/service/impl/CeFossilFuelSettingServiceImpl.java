@@ -45,7 +45,9 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
         //排序
         getSortField(condition, dto.getSortField(), dto.getAscFlag());
         //查询
-        Page<CeFossilFuelSetting> page = page(new Page<>(dto.getCurrent(), dto.getSize()), condition.lambda());
+        LambdaQueryWrapper<CeFossilFuelSetting> lambda = condition.lambda()
+                .like(CeFossilFuelSetting::getMaterialName, dto.getMaterialName());
+        Page<CeFossilFuelSetting> page = page(new Page<>(dto.getCurrent(), dto.getSize()), lambda);
         //拷贝数据
         List<CeFossilFuelSettingVO> resList = BeanUtil.copyToList(page.getRecords(), CeFossilFuelSettingVO.class);
         Page<CeFossilFuelSettingVO> resPage = new Page<>();
