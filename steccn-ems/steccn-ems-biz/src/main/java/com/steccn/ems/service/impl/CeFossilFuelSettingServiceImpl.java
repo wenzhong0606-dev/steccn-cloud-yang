@@ -1,9 +1,13 @@
 package com.steccn.ems.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.ems.domain.CeFossilFuelSetting;
+import com.steccn.ems.dto.CeFossilFuelSettingDTO;
+import com.steccn.ems.dto.CeFossilFuelSettingPageDTO;
 import com.steccn.ems.service.CeFossilFuelSettingService;
 import com.steccn.ems.mapper.CeFossilFuelSettingMapper;
+import com.steccn.ems.vo.CeFossilFuelSettingVO;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +19,25 @@ import org.springframework.stereotype.Service;
 public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSettingMapper, CeFossilFuelSetting>
     implements CeFossilFuelSettingService{
 
+    @Override
+    public Page<CeFossilFuelSettingVO> getPage(CeFossilFuelSettingPageDTO dto) {
+        return null;
+    }
+
+    @Override
+    public CeFossilFuelSettingVO info(Integer id) {
+        return null;
+    }
+
+    @Override
+    public Boolean add(CeFossilFuelSettingDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean edit(CeFossilFuelSettingDTO dto) {
+        return null;
+    }
 }
 
 
