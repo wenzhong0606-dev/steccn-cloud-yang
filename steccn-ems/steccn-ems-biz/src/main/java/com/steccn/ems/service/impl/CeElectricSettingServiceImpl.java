@@ -124,7 +124,6 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
         }
     }
 
-
     /**
      * 排序
      *
@@ -140,7 +139,3 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
         }
     }
 }
-
-
-
-
