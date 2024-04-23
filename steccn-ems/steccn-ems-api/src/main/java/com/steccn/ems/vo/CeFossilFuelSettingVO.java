@@ -83,5 +83,10 @@ public class CeFossilFuelSettingVO implements Serializable {
      */
     private LocalDateTime createTime;
 
+    /**
+     * 修改时间
+     */
+    private LocalDateTime updateTime;
+
     private static final long serialVersionUID = 1L;
 }
