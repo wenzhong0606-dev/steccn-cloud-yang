@@ -1,6 +1,7 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -46,7 +47,7 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
         getSortField(condition, dto.getSortField(), dto.getAscFlag());
         //查询
         LambdaQueryWrapper<CeProduceIngredientSetting> lambda = condition.lambda()
-                .like(CeProduceIngredientSetting::getMaterialName, dto.getMaterialName());
+                .like(StrUtil.isNotBlank(dto.getMaterialName()), CeProduceIngredientSetting::getMaterialName, dto.getMaterialName());
         Page<CeProduceIngredientSetting> page = page(new Page<>(dto.getCurrent(), dto.getSize()), lambda);
         //拷贝数据
         List<CeProduceIngredientSettingVO> resList = BeanUtil.copyToList(page.getRecords(), CeProduceIngredientSettingVO.class);
