@@ -1791,6 +1791,15 @@ public class ReportServiceImpl implements ReportService {
         Map<String, BigDecimal> transferSlipMap = FeignOptional.of(() -> remoteWmsTransferSlipFeignApi.materialDepot(rawMaterialReportDTO),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         //获取耗用数（电子秤读数）
         Map<String, BigDecimal> countMap = FeignOptional.of(() -> remoteDpFeignApi.countMap(new TupleDTO<LocalDateTime, LocalDateTime>(startDate.atTime(8, 0, 0), endDate.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        //电子秤读数的数据除以1000
+        if(CollUtil.isNotEmpty(countMap)){
+            countMap = countMap.entrySet().stream()
+                    .collect(
+                            HashMap::new,
+                            (map, entry) -> map.put(entry.getKey(), BigDecimalUtil.divide(entry.getValue(),BigDecimal.valueOf(1000),3)),
+                            HashMap::putAll
+                    );
+        }
         //表格
         EpChartGraphVO<List<String>,  List<TripleDTO<String, BigDecimal, String>> > res = new EpChartGraphVO<>();
         //图例

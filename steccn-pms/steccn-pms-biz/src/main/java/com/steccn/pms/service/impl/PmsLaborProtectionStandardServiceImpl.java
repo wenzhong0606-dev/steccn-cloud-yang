@@ -330,6 +330,7 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
             column.put("loginCode",tmp.getLoginCode());
             column.put("userName",tmp.getName());
             column.put("enterTime",employeeTime.get(tmp.getLoginCode()).toString());
+            column.put("materialList",materialIdList.toString());
             //获取部门详情
             PmsLaborProtectionStandard finalStandardTmp = standardTmp;
             List<PmsLaborProtectionStandardDetail> standardDetailTmp = standardDetailList.stream().filter(v -> v.getStandardId().equals(finalStandardTmp.getId())).collect(Collectors.toList());

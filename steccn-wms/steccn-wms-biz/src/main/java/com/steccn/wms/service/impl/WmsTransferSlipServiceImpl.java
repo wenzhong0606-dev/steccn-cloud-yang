@@ -846,7 +846,6 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 inventory.setCaseNo(collect.get(inventory.getCaseNo()).get(0).getCaseNo());
                 objects.add(inventory);
             });
-
             wmsInventoryService.updateBatchById(objects);
         }
         return true;

@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 类说明
@@ -14,6 +15,6 @@ import java.util.List;
  */
 @Data
 public class PmsLaborGerReqDTO implements Serializable {
-    @NotEmpty
-    private List<PmsLaborGerReqDetailDTO> details;
+    private List<Map<String,String>>  details;
+//    private List<PmsLaborGerReqDetailDTO> details;
 }

@@ -33,6 +33,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -95,12 +96,29 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateReq(PmsLaborGerReqDTO dto) {
-        Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(dto.getDetails()
+        List<PmsLaborGerReqDetailDTO> data = Lists.newArrayList();
+        //处理前端传的数据
+        for(Map<String,String> tmp:dto.getDetails()){
+            String str = tmp.get("materialList");
+            str = tmp.get("materialList").substring(1, str.length() - 1).replaceAll("\\s+", "");
+            List<String> materialList = Arrays.asList(str.split(","));
+            materialList.forEach(material->{
+                PmsLaborGerReqDetailDTO dataTmp = new PmsLaborGerReqDetailDTO();
+                dataTmp.setMaterialId(Long.parseLong(material));
+                dataTmp.setDepCode(tmp.get("depCode"));
+                dataTmp.setLoginCode(tmp.get("loginCode"));
+                if(StrUtil.isNotBlank(tmp.get(material+"_claimNum"))){
+                    dataTmp.setNum(new BigDecimal(tmp.get(material+"_claimNum")));
+                    data.add(dataTmp);
+                }
+            });
+        }
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(data
                 .stream().map(PmsLaborGerReqDetailDTO::getDepCode).collect(Collectors.toSet())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(dto.getDetails().stream().map(PmsLaborGerReqDetailDTO::getMaterialId).collect(Collectors.toList())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<MesUserInfoVO> mesUserInfoVOS = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<Set<String>, Integer>(dto.getDetails().stream().map(PmsLaborGerReqDetailDTO::getLoginCode).collect(Collectors.toSet()), null)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(dto.getDetails().stream().map(PmsLaborGerReqDetailDTO::getLoginCode).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        Map<String, List<PmsLaborGerReqDetailDTO>> depMap = dto.getDetails().stream().collect(Collectors.groupingBy(PmsLaborGerReqDetailDTO::getDepCode));
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(data.stream().map(PmsLaborGerReqDetailDTO::getMaterialId).collect(Collectors.toList())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<MesUserInfoVO> mesUserInfoVOS = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<Set<String>, Integer>(data.stream().map(PmsLaborGerReqDetailDTO::getLoginCode).collect(Collectors.toSet()), null)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(data.stream().map(PmsLaborGerReqDetailDTO::getLoginCode).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        Map<String, List<PmsLaborGerReqDetailDTO>> depMap = data.stream().collect(Collectors.groupingBy(PmsLaborGerReqDetailDTO::getDepCode));
         for(Map.Entry<String,List<PmsLaborGerReqDetailDTO>> tmp:depMap.entrySet()){
             MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
             SysOfficeVO office = officeMap.get(tmp.getKey());

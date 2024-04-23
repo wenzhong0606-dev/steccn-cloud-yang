@@ -1,6 +1,7 @@
 package com.steccn.mes.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -13,11 +14,13 @@ import com.steccn.mes.service.JsSysEmployeeService;
 import com.steccn.mes.mapper.JsSysEmployeeMapper;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +38,7 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     implements JsSysEmployeeService{
     private final JsSysEmployeeMapper jsSysEmployeeMapper;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final OaInfoService oaInfoService;
 
     @Override
     public Map<String, List<String>> getPostUser(Set<String> postCode) {
@@ -57,10 +61,15 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     public List<MesUserInfoVO> getEmpDepPost(Set<String> userName) {
         List<MesUserInfoVO> mesUserInfo = jsSysEmployeeMapper.selectEmpInfo(userName);
         if(CollUtil.isNotEmpty(mesUserInfo)){
+            Map<String, LocalDate> enterTimeMap = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(mesUserInfo.stream()
+                    .map(MesUserInfoVO::getLoginCode).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             Set<String> postSet = mesUserInfo.stream().map(MesUserInfoVO::getPostCode).collect(Collectors.toSet());
             Map<String, SysOfficeVO> postDepMap = FeignOptional.of(() -> remoteOfficeFeign.postDepMap(postSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             mesUserInfo.forEach(tmp->{
                 SysOfficeVO officeInfo = postDepMap.get(tmp.getPostCode());
+                if(Objects.nonNull(enterTimeMap.get(tmp.getLoginCode()))){
+                    tmp.setEnterTime(enterTimeMap.get(tmp.getLoginCode()));
+                }
                 if(Objects.nonNull(officeInfo)){
                     tmp.setDepCode(officeInfo.getOfficeCode());
                     tmp.setDepName(officeInfo.getOfficeName());

@@ -184,9 +184,11 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 id,1,10000,null);
         if(orderInfoVOPage.getRecords().size() == 0) return  "盘点库存不存在，无法调整";
         List<WmsCheckOrderInfoVO> orderInfoVOList = orderInfoVOPage.getRecords();
-        if(orderInfoVOList.stream().filter(m-> Objects.isNull(m.getStatus())).findAny().isPresent()) return "盘点未完成";
+        if (wmsCheckOrder.getType().equals(1773263209901236224L)){
+            if(orderInfoVOList.stream().filter(m-> Objects.isNull(m.getStatus())).findAny().isPresent()) return "盘点未完成";
+        }
         //差额为正数，则盘盈；盘盈生成对应的入库单，类型为盘点入库，关联单据为盘点单号，入库单自动确认
-        List<WmsCheckOrderInfoVO> surplusList = orderInfoVOList.stream().filter(WmsCheckOrderInfoVO ->
+        List<WmsCheckOrderInfoVO> surplusList = orderInfoVOList.stream().filter(wmsCheckOrderInfoVO -> Objects.nonNull(wmsCheckOrderInfoVO.getDifference())).filter(WmsCheckOrderInfoVO ->
                 WmsCheckOrderInfoVO.getDifference().compareTo(BigDecimal.ZERO) == 1).collect(Collectors.toList());
         Map<String, List<WmsCheckOrderInfoVO>> warehouseSurplusList = surplusList.stream().collect(Collectors.groupingBy(t -> t.getWarehouse()));
         for (Map.Entry<String, List<WmsCheckOrderInfoVO>> surplusEntry : warehouseSurplusList.entrySet()) {
@@ -217,7 +219,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsStorageReceiptInfo.setQuantity(vo.getDifference());
                 //获取库存信息
                 LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
-                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo()).eq(WmsInventory::getBatch,vo.getBatch());
+                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo()).eq(WmsInventory::getBatch,vo.getBatch()).eq(WmsInventory::getWarehouseId,vo.getWarehouse());
                 WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
                 wmsStorageReceiptInfo.setUnit(Objects.isNull(wmsInventory)?null:wmsInventory.getUnit());
                 wmsStorageReceiptInfoMapper.insert(wmsStorageReceiptInfo);
@@ -245,7 +247,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             }
         }
         //差额为负数，则盘亏；盘亏生成对应的出库单，类型为盘点出库，关联单据为盘点单号，出库单自动确认
-        List<WmsCheckOrderInfoVO> lossList = orderInfoVOList.stream().filter(WmsCheckOrderInfoVO ->
+        List<WmsCheckOrderInfoVO> lossList = orderInfoVOList.stream().filter(wmsCheckOrderInfoVO -> Objects.nonNull(wmsCheckOrderInfoVO.getDifference())).filter(WmsCheckOrderInfoVO ->
                 WmsCheckOrderInfoVO.getDifference().compareTo(BigDecimal.ZERO) == -1).collect(Collectors.toList());
         Map<String, List<WmsCheckOrderInfoVO>> warehouseLossList = lossList.stream().collect(Collectors.groupingBy(t -> t.getWarehouse()));
         for (Map.Entry<String, List<WmsCheckOrderInfoVO>> lossEntry : warehouseLossList.entrySet()) {
@@ -260,7 +262,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsDeliveryReceiptMapper.insert(wmsDeliveryReceipt);
             for (WmsCheckOrderInfoVO vo:lossEntry.getValue()) {
                 LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo()).eq(WmsInventory::getBatch,vo.getBatch());
+                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo()).eq(WmsInventory::getBatch,vo.getBatch()).eq(WmsInventory::getWarehouseId,vo.getWarehouse());
                 WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
                 //保存出库明细
                 BigDecimal availableQuantity = vo.getDifference().abs();//数量
@@ -274,6 +276,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 if(Objects.nonNull(wmsInventory)){
                     wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getDifference().abs()));
                     wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(vo.getDifference().abs()));
+                    if (wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO)<0){
+                        wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
+                    }
+                    if (wmsInventory.getTotalQuantity().compareTo(BigDecimal.ZERO)<0){
+                        wmsInventory.setTotalQuantity(BigDecimal.ZERO);
+                    }
                     wmsInventoryMapper.updateById(wmsInventory);
                 }
             }
@@ -357,6 +365,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoTem.setMaterialId(Long.parseLong(orderInfo.get("materialId").toString()));
                 wmsCheckOrderInfoTem.setCaseNo(orderInfo.get("caseNo").toString());
                 wmsCheckOrderInfoTem.setBatch(orderInfo.get("batch").toString());
+                wmsCheckOrderInfoTem.setUnitId(Long.parseLong(orderInfo.get("unitId").toString()));
                 wmsCheckOrderInfoTem.setUnit(orderInfo.get("unit").toString());
                 wmsCheckOrderInfoTem.setStatus(Objects.isNull(orderInfo.get("result"))?WmsManagerConstant.CheckOrderInfoStateEnum.ZERO.getCode()
                         :WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());//原始数据设置未执行
@@ -494,15 +503,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsCheckOrderInfoVO.setMaterialName(wmsCheckOrderInfoVOTem.getMaterialName());
             wmsCheckOrderInfoVO.setMaterialCode(wmsCheckOrderInfoVOTem.getMaterialCode());
             LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
-            inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,old.getCaseNo()).notIn(WmsInventory::getTotalQuantity,BigDecimal.ZERO);
+            inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,old.getCaseNo()).notIn(WmsInventory::getTotalQuantity,BigDecimal.ZERO).eq(WmsInventory::getBatch,old.getBatch());
             //库存
             WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
-            if (Objects.nonNull(wmsInventory)) {
-                wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getTotalQuantity() : BigDecimal.ZERO);
-                wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getAvailableQuantity() : BigDecimal.ZERO);
-                wmsCheckOrderInfoVO.setUnitId(wmsInventory.getUnit());
-                orderInfoNowVoList.add(wmsCheckOrderInfoVO);
-            }
+            wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getTotalQuantity() : BigDecimal.ZERO);
+            wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory) ? wmsInventory.getAvailableQuantity() : BigDecimal.ZERO);
+            orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
                 status ==1? vo.getStatus() == status :Objects.isNull(vo.getStatus())).collect(Collectors.toList());
