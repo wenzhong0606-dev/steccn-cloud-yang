@@ -4,6 +4,7 @@ import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * 劳保记录查询
@@ -14,8 +15,9 @@ import java.io.Serializable;
 @Data
 public class PmsLaborRecordPageDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
-    private String postCode;
-    private String depCode;
+    private Set<String> postId;
+    private Set<String> officeId;
     private String userName;
+    private Set<Long> materialId;
 
 }

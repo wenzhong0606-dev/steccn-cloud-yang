@@ -58,8 +58,9 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     public Page<PmsLaborRecordVO> pageList(PmsLaborRecordPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmsLaborProtectionRecord> condition = new LambdaQueryWrapper<PmsLaborProtectionRecord>()
-                .eq(StrUtil.isNotBlank(dto.getDepCode()),PmsLaborProtectionRecord::getDepCode, dto.getDepCode())
-                .eq(StrUtil.isNotBlank(dto.getPostCode()),PmsLaborProtectionRecord::getPostCode, dto.getPostCode())
+                .in(CollUtil.isNotEmpty(dto.getOfficeId()),PmsLaborProtectionRecord::getDepCode, dto.getOfficeId())
+                .in(CollUtil.isNotEmpty(dto.getPostId()),PmsLaborProtectionRecord::getPostCode, dto.getPostId())
+                .in(CollUtil.isNotEmpty(dto.getMaterialId()),PmsLaborProtectionRecord::getMaterialId, dto.getMaterialId())
                 .like(StrUtil.isNotBlank(dto.getUserName()), PmsLaborProtectionRecord::getLoginName, dto.getUserName());
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -164,12 +165,12 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 modelList.add(recordModel);
             }
             materialRequisitionDTO.setList(detailList);
-//            Long id = pmsMaterialRequisitionService.add(materialRequisitionDTO);
-//            MaterialRequisitionVO materialRequisitionVO = pmsMaterialRequisitionService.get(id);
-//            modelList.forEach(tmp2->{
-//                tmp2.setReceiptId(id);
-//                tmp2.setReceiptCode(materialRequisitionVO.getCode());
-//            });
+            Long id = pmsMaterialRequisitionService.add(materialRequisitionDTO);
+            MaterialRequisitionVO materialRequisitionVO = pmsMaterialRequisitionService.get(id);
+            modelList.forEach(tmp2->{
+                tmp2.setReceiptId(id);
+                tmp2.setReceiptCode(materialRequisitionVO.getCode());
+            });
             saveBatch(modelList);
         }
         return true;
