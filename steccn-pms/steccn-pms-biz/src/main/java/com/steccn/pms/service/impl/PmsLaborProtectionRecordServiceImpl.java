@@ -107,7 +107,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 dataTmp.setMaterialId(Long.parseLong(material));
                 dataTmp.setDepCode(tmp.get("depCode"));
                 dataTmp.setLoginCode(tmp.get("loginCode"));
-                if(Objects.nonNull(tmp.get(material+"_claimNum"))){
+                if(StrUtil.isNotBlank(tmp.get(material+"_claimNum"))){
                     dataTmp.setNum(new BigDecimal(tmp.get(material+"_claimNum")));
                     data.add(dataTmp);
                 }

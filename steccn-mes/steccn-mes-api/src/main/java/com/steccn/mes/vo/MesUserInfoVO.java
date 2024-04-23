@@ -3,6 +3,7 @@ package com.steccn.mes.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * 用户信息VO
@@ -18,4 +19,5 @@ public class MesUserInfoVO implements Serializable {
     private String depName;
     private String postCode;
     private String postName;
+    private LocalDate enterTime;
 }
