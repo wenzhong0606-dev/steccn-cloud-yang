@@ -409,7 +409,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         EpEnergyType waterType = epEnergyTypeService.getById(2);
         Assert.notNull(waterType, "能源类型-水不存在");
         //获取余热发电-电
-        List<TripleDTO<Long, Integer, String>> heatPowerList = eleConfList.stream().filter(ele -> "余热发电站（站用电）".equals(ele.getField3())).collect(Collectors.toList());
+        List<TripleDTO<Long, Integer, String>> heatPowerList = eleConfList.stream().filter(ele -> "余热发电".equals(ele.getField3())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(heatPowerList)) {
             List<Integer> hpIdSet = heatPowerList.stream().map(TripleDTO::getField2).collect(Collectors.toList());
             Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_ELECTRIC_OTHER, Sets.newHashSet(hpIdSet));
