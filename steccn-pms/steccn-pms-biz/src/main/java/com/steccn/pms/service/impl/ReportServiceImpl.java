@@ -442,6 +442,10 @@ public class ReportServiceImpl implements ReportService {
      */
     private void addWorkShopOther(SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap) {
         for (PmReportConstant.SubstrateReportConsumeEnum consumeEnum : PmReportConstant.SubstrateReportConsumeEnum.values()) {
+            //产线的水电油气不需要了
+            if(Sets.newHashSet(2,3,4,5).contains(consumeEnum.getCode())){
+                continue;
+            }
             Integer idx = consumeEnum.getCode();
             SubstrateDayReportListVO subVo = rowData(productLine, Arrays.asList(workshopCountMap.get(idx), workshopCountMap.get(idx), workshopCountMap.get(idx)), consumeEnum.getName());
             if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
@@ -528,13 +532,13 @@ public class ReportServiceImpl implements ReportService {
         BigDecimalUtil.accumulate(workshopCountMap, 7, BigDecimalUtil.add(morningRate,nightRate));
         productLineVOList.add(rateVo);
         productLineVOList.add(inRateVo);
-        //0耗电量 1耗水量 2耗气量 3耗油量
-        List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine, workshopCountMap);
-
-        //单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
-        SubstrateDayReportListVO bly = getSubstrateDayReportListVO(productLine, morningBigDecimal, nightBigDecimal, energyList, workshopCountMap);
-        productLineVOList.addAll(energyList);
-        productLineVOList.add(bly);
+//        //0耗电量 1耗水量 2耗气量 3耗油量
+//        List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine, workshopCountMap);
+//
+//        //单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
+//        SubstrateDayReportListVO bly = getSubstrateDayReportListVO(productLine, morningBigDecimal, nightBigDecimal, energyList, workshopCountMap);
+//        productLineVOList.addAll(energyList);
+//        productLineVOList.add(bly);
     }
 
     /**
