@@ -112,6 +112,15 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
     Map<String, BigDecimal> datePullForce(List<Integer> lineIdList, LocalDate start, LocalDate end);
 
     /**
+     * 查询班次日期的拉引量 key = workshopId  value 车间拉引量
+     *
+     * @param workshopIdList 产线
+     * @param date           班次日期
+     * @return
+     */
+    Map<Integer, BigDecimal> dateWsPullForce(List<Integer> workshopIdList, LocalDate date);
+
+    /**
      * 查询班次日期的拉引量 key = classDate +"_"+classId
      *
      * @param lineIdList 产线

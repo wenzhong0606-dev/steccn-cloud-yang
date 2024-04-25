@@ -349,6 +349,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     }
 
     @Override
+    public Map<Integer, BigDecimal> dateWsPullForce(List<Integer> workshopIdList, LocalDate date) {
+        Map<Integer, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(workshopIdList)) {
+            List<PmsPullForce> dbList = list(new LambdaQueryWrapper<PmsPullForce>()
+                    .eq(PmsPullForce::getPullForceDate, date)
+                    .in(PmsPullForce::getWorkshopId, workshopIdList));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(x -> MapUtil.add(resMap, x.getWorkshopId(), x.getQuantity(), BigDecimalUtil::add));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, BigDecimal> dateClassPullForce(List<Integer> lineIdList, LocalDate start, LocalDate end) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         List<PmsPullForce> dbList = list(new LambdaQueryWrapper<PmsPullForce>()
