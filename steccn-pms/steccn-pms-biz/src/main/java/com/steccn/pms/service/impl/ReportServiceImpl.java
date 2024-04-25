@@ -568,14 +568,12 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal rateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), sum);
         SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "产量合格率(%)");
         BigDecimalUtil.accumulate(workshopCountMap, 1, BigDecimalUtil.add(morningRate,nightRate));
-
-        BigDecimal inDayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap1.get(2));
-        BigDecimal inNightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap2.get(2));
-        BigDecimal inMorningRate = BigDecimalUtil.divide(inDayPq, morningBigDecimal);
-        BigDecimal inNightRate = BigDecimalUtil.divide(inNightPq, nightBigDecimal);
-        //产量的合格率
+        BigDecimal inMorningRate = BigDecimalUtil.percent(countMap1.get(2), morningBigDecimal);
+        BigDecimal inNightRate = BigDecimalUtil.percent(countMap2.get(2), nightBigDecimal);
+        //入库的合格率
         BigDecimal inSumNum = BigDecimalUtil.add(countMap1.get(2), countMap2.get(2));
-        BigDecimal inRateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), inSumNum);
+        BigDecimal inSumNum2 = BigDecimalUtil.add(morningBigDecimal, nightBigDecimal);
+        BigDecimal inRateSum = BigDecimalUtil.percent(inSumNum, inSumNum2);
         SubstrateDayReportListVO inRateVo = rowData(productLine, Arrays.asList(inMorningRate, inNightRate, inRateSum), "入库合格率(%)");
         BigDecimalUtil.accumulate(workshopCountMap, 7, BigDecimalUtil.add(morningRate,nightRate));
         productLineVOList.add(rateVo);
