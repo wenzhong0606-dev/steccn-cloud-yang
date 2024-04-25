@@ -22,6 +22,7 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsLaborProtectionRecord;
+import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
@@ -166,10 +167,10 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             }
             materialRequisitionDTO.setList(detailList);
             Long id = pmsMaterialRequisitionService.add(materialRequisitionDTO);
-            MaterialRequisitionVO materialRequisitionVO = pmsMaterialRequisitionService.get(id);
+            PmsMaterialRequisition byId = pmsMaterialRequisitionService.getById(id);
             modelList.forEach(tmp2->{
                 tmp2.setReceiptId(id);
-                tmp2.setReceiptCode(materialRequisitionVO.getCode());
+                tmp2.setReceiptCode(byId.getCode());
             });
             saveBatch(modelList);
         }
