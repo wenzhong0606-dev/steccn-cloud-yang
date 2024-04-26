@@ -61,7 +61,7 @@ public class SysScreenConfig implements Serializable {
      * 创建人
      */
     @TableField(fill = FieldFill.INSERT)
-    private Integer createBy;
+    private Long createBy;
 
     /**
      * 创建人姓名
@@ -73,7 +73,7 @@ public class SysScreenConfig implements Serializable {
      * 修改人
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Integer updateBy;
+    private Long updateBy;
 
     /**
      * 修改人姓名
