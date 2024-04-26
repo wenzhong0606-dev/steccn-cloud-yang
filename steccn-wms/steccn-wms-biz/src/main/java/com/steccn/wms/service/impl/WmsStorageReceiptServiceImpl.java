@@ -1194,6 +1194,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             //获取完工入库类型
             SysDictVO dictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(WmsManagerConstant.Code_ZERO, WmsManagerConstant.WAREHOUSING_TYPE),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             model.setType(dictVO.getId());
+            model.setComeTime(dto.getComeTime());
             //4.保存入库单信息
             save(model);
             //5.保存入库单明细信息
