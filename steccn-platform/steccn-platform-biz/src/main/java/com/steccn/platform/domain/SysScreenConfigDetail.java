@@ -26,6 +26,11 @@ public class SysScreenConfigDetail implements Serializable {
     private Integer configId;
 
     /**
+     * 值
+     */
+    private String price;
+
+    /**
      * 类型
      */
     private String type;
