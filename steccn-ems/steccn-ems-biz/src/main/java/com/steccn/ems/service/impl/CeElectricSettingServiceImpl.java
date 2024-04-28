@@ -28,6 +28,8 @@ import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -122,6 +124,31 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public List<BigDecimal> carbonSumReportDay(LocalDate start, LocalDate end) {
+        /**
+         * 电力：日期D的碳排放量C = 当日净购入电量 * 排放因子
+         *         当日净购入电力
+         * “用量统计来源”为“抄表记录”时：当日净购入电力为 当日全厂总电耗量 - 当日光伏发电量 - 当日余热发电量
+         * “用量统计来源”属性：参见电力设置
+         *         当日全厂总电耗量取自【能耗日统计报表】中“电”的当日合计值（转换为MWh）
+         *         当日光伏发电量取自【能耗日统计报表】中“光伏发电一”、“光伏发电二”的当日数值加总（转换为MWh）
+         *         当日余热发电量取自【能耗日统计报表】中“余热发电”的当日数值（转换为MWh）
+         * “用量统计来源”为“领料记录”时：暂无此情况
+         * 排放因子取自当日对应有效期的设置，若取不到值C计为空值（例如所有设置均已过期）
+         * 小数点后最多2位
+         */
+         //1.从数据库表中获取有效期内的结果
+        List<CeElectricSetting> validList = list(new LambdaQueryWrapper<CeElectricSetting>().and(
+                lr -> lr.le(CeElectricSetting::getValidStart, end)
+                        .or()
+                        .ge(CeElectricSetting::getValidEnd, start)));
+        //2.查询
+        log.info("validList -> {}",validList);
+
+        return null;
     }
 
     /**

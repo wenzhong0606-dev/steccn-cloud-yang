@@ -9,6 +9,10 @@ import com.steccn.ems.dto.CeElectricSettingDTO;
 import com.steccn.ems.dto.EpDiscountFactorPageDTO;
 import com.steccn.ems.vo.CeElectricSettingVO;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * @author yequan
  * @description 针对表【ce_electric_setting(电力设置表)】的数据库操作Service
@@ -47,4 +51,12 @@ public interface CeElectricSettingService extends IService<CeElectricSetting> {
      * @return
      */
     Boolean edit(CeElectricSettingDTO dto);
+
+    /**
+     * 碳排放总量报表-按日为粒度
+     * @param start 开始日期
+     * @param end 结束日期
+     * @return
+     */
+    List<BigDecimal> carbonSumReportDay(LocalDate start, LocalDate end);
 }
