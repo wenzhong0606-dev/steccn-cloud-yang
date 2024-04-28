@@ -155,6 +155,17 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     }
 
     @Override
+    public Boolean countTask(LocalDate date) {
+        EpDayReportCountVO count = count(date, Boolean.FALSE);
+        if(CollUtil.isNotEmpty(count.getDataList())){
+            for (EpDayReportCountRowVO row : count.getDataList()) {
+
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
     @Cacheable(cacheNames = "unitConsumeCount#86400", unless = "#flag == false")
     public EpDayReportCountVO unitConsumeCount(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();

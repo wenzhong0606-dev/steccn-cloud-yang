@@ -147,7 +147,10 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
                         .ge(CeElectricSetting::getValidEnd, start)));
         //2.查询
         log.info("validList -> {}",validList);
+        if(CollUtil.isNotEmpty(validList)){
+              //当日全厂总电耗量取自【能耗日统计报表】中“电”的当日合计值（转换为MWh）
 
+        }
         return null;
     }
 

@@ -1,5 +1,6 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.ems.vo.EpDayReportCountVO;
 import java.time.LocalDate;
@@ -20,6 +21,8 @@ public interface EpDayReportService {
      * @return 结果
      */
     EpDayReportCountVO count(LocalDate month, boolean flag);
+
+    Boolean countTask(LocalDate date);
 
     /**
      * 单耗日统计报表

@@ -43,6 +43,12 @@ public class EpDayReportController {
         return R.success(epDayReportService.count(parse, flag));
     }
 
+    @GetMapping("/count/task")
+    @ApiOperation(value = "能耗日统计报表-任务")
+    public R<Boolean> count(@RequestParam("date") LocalDate date) {
+        return R.success(epDayReportService.countTask(date));
+    }
+
     @GetMapping("/unit/consume")
     @ApiOperation(value = "单耗日统计报表")
     public R<EpDayReportCountVO> unitConsumeCount(@RequestParam("date") String date) {
