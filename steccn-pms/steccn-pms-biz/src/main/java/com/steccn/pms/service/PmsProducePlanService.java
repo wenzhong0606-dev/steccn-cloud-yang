@@ -21,10 +21,10 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
     /**
      * 生产月计划列表
      *
-     * @param monthDate
+     * @param dto
      * @return
      */
-    List<PmsProducePlanDTO> list(String monthDate);
+    List<PmsProducePlanDTO> list(PmsProducePlanQueryDTO dto);
 
     /**
      * 批量新增

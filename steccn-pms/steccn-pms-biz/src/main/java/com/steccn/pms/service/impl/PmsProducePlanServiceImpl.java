@@ -98,7 +98,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
 
     @Override
-    public List<PmsProducePlanDTO> list(String monthDate) {
+    public List<PmsProducePlanDTO> list(PmsProducePlanQueryDTO dto) {
+        String monthDate = dto.getMonthDate();
         //根据月份查询数据
         List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().like(PmsProducePlan::getPlanDate, monthDate + "%"));
         List<PmsProducePlanVO> producePlanVOList = new ArrayList<>();
@@ -111,9 +112,18 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             BeanUtils.copyProperties(pmsProducePlan, producePlanVO);
             producePlanVO.setMaterialCode(spareVO.getCode());
             producePlanVO.setMaterialName(spareVO.getName());
+            producePlanVO.setProductProperty(spareVO.getProductProperty());
             producePlanVOList.add(producePlanVO);
         }
-
+        //过滤
+        producePlanVOList = producePlanVOList.stream().filter(v->
+                (StrUtil.isEmpty(dto.getMaterialCode())||v.getMaterialCode().contains(dto.getMaterialCode()))
+                        &&(StrUtil.isEmpty(dto.getMaterialName())||v.getMaterialName().contains(dto.getMaterialName()))
+                        &&(Objects.isNull(dto.getProductProperty())||v.getProductProperty().equals(dto.getProductProperty())))
+                .collect(Collectors.toList());
+        if(CollUtil.isEmpty(producePlanVOList)){
+            throw new BusinessException("数据为空");
+        }
         Map<String, List<PmsProducePlanVO>> groupBy = producePlanVOList
                 .stream()
                 .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId() + "," + pmsProducePlanVO.getCustomerId()+"," + pmsProducePlanVO.getCustomerCode() + "," + pmsProducePlanVO.getCustomerName()+ "," + pmsProducePlanVO.getPosition()));
