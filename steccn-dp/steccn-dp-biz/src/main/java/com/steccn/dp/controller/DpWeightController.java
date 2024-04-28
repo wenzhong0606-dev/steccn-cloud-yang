@@ -13,6 +13,7 @@ import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -55,12 +56,14 @@ public class DpWeightController {
 
     @PostMapping("/weightDetail")
     @ApiOperation(value = "获取原料配料详情")
+    @PreAuthorize("hasAuthority('pms:raw:detail')")
     public R<SteccnTableDataDTO> weightDetail(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> date){
         return R.success(adsOpcUaAll3Service.weightDetail(date));
     }
 
     @GetMapping("/weightSum")
     @ApiOperation(value = "获取原料配料聚合数据")
+    @PreAuthorize("hasAuthority('pms:raw:count')")
     public R<SteccnTableDataDTO> weightSum(@RequestParam("date") LocalDate date){
         return R.success(adsOpcUaAll3Service.weightSum(date));
     }

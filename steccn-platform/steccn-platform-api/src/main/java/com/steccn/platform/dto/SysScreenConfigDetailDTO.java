@@ -11,6 +11,11 @@ import lombok.Data;
 @Data
 public class SysScreenConfigDetailDTO {
     /**
+     * 值
+     */
+    private String price;
+
+    /**
      * 类型
      */
     private String type;

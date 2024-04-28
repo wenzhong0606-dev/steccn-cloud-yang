@@ -26,6 +26,11 @@ public class SysScreenConfigDetail implements Serializable {
     private Integer configId;
 
     /**
+     * 值
+     */
+    private String price;
+
+    /**
      * 类型
      */
     private String type;
@@ -86,7 +91,7 @@ public class SysScreenConfigDetail implements Serializable {
      * 创建人
      */
     @TableField(fill = FieldFill.INSERT)
-    private Integer createBy;
+    private Long createBy;
 
     /**
      * 创建人姓名
@@ -98,7 +103,7 @@ public class SysScreenConfigDetail implements Serializable {
      * 修改人
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Integer updateBy;
+    private Long updateBy;
 
     /**
      * 修改人姓名

@@ -304,7 +304,17 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         materialIdList.forEach(tmp->{
             EqpSpareVO spareVO = spareMap.get(tmp);
-            columns.add(new SteccnTableColumn(tmp.toString(),spareVO.getName(),
+            StringBuilder materialName = new StringBuilder();
+            materialName.append(spareVO.getName());
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())){
+                materialName.append("/");
+                materialName.append(spareVO.getCode());
+            }
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())){
+                materialName.append("/");
+                materialName.append(spareVO.getSpecifications());
+            }
+            columns.add(new SteccnTableColumn(tmp.toString(),materialName.toString(),
                     Lists.newArrayList(new SteccnTableColumn(tmp+"_"+"receiptTime","上次领用时间",null),
                             new SteccnTableColumn(tmp+"_claimNum","待领数量",null),
                             new SteccnTableColumn(tmp+"_availNum","可领数量",null))));
