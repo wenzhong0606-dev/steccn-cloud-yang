@@ -34,7 +34,10 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         //获取有效期内的
         Map<LocalDate,BigDecimal> valueList1 = ceElectricSettingService.carbonSumReportDay(start, end);
         log.info("valueList1 -> {}",valueList1);
-        Map<LocalDate, BigDecimal> valueMap1 = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(1554387196106801152L, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+
+
+
+        Map<LocalDate, BigDecimal> valueMap1 = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(1554387211520868352L, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         log.info("valueMap1 -> {}",valueMap1);
 
 

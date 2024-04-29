@@ -66,7 +66,7 @@
             </foreach>
         GROUP BY material_name
     </select>
-    <select id="produceConsumeQuantity" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
+    <select id="produceReturnQuantity" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
         SELECT
         IF( HOUR (  a.affirm_time ) >= 8, DATE_FORMAT(  a.affirm_time, '%Y-%m-%d' ), DATE_SUB( DATE_FORMAT(  a.affirm_time, '%Y-%m-%d' ), INTERVAL 1 DAY ) ) AS valid_time,
         b.quantity

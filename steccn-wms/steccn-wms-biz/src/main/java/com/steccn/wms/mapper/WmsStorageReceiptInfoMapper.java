@@ -39,17 +39,17 @@ public interface WmsStorageReceiptInfoMapper extends BaseMapper<WmsStorageReceip
     List<WmsStorageReceiptInfo> purchaseQuantity(@Param("typeId") Long typeId, @Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialName") List<String> materialName);
 
     /**
-     * 获取物料确认日期在[start,end]中的消耗数量
+     * 获取物料确认日期在[start,end]中的消耗数量-退料
      * @param typeId 类型
      * @param materialId 物料主键
      * @param start 开始时间
      * @param end 结束时间
      * @return
      */
-    List<WmsStorageReceiptInfo> produceConsumeQuantity(@Param("typeId") Long typeId ,
-                                                       @Param("materialId")  Long materialId,
-                                                       @Param("startTime") LocalDateTime start,
-                                                       @Param("endTime") LocalDateTime end);
+    List<WmsStorageReceiptInfo> produceReturnQuantity(@Param("typeId") Long typeId ,
+                                                      @Param("materialId")  Long materialId,
+                                                      @Param("startTime") LocalDateTime start,
+                                                      @Param("endTime") LocalDateTime end);
 }
 
 
