@@ -66,4 +66,18 @@
             </foreach>
         GROUP BY material_name
     </select>
+    <select id="produceConsumeQuantity" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
+        SELECT
+        IF( HOUR (  a.affirm_time ) >= 8, DATE_FORMAT(  a.affirm_time, '%Y-%m-%d' ), DATE_SUB( DATE_FORMAT(  a.affirm_time, '%Y-%m-%d' ), INTERVAL 1 DAY ) ) AS valid_time,
+        b.quantity
+        FROM
+        wms_storage_receipt a
+        LEFT JOIN wms_storage_receipt_info b ON a.id = b.storage_receipt_id
+        where a.del_flag = 0 and b.del_flag = 0 AND
+        a.`status` = 1 AND
+        a.type = #{typeId} AND
+        b.material_id = #{materialId} AND
+        a.affirm_time &gt;= #{startTime} AND
+        a.affirm_time &lt; #{endTime}
+    </select>
 </mapper>

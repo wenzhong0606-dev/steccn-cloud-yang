@@ -7,22 +7,22 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.FeignOptional;
-import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.BasePageDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.GetValueUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.CeElectricSetting;
-import com.steccn.ems.domain.EpDiscountFactor;
 import com.steccn.ems.dto.CeElectricSettingDTO;
-import com.steccn.ems.service.CeElectricSettingService;
 import com.steccn.ems.mapper.CeElectricSettingMapper;
+import com.steccn.ems.service.CeElectricSettingService;
+import com.steccn.ems.service.EpDayCountReportService;
 import com.steccn.ems.vo.CeElectricSettingVO;
-import com.steccn.ems.vo.EpDiscountFactorVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 
 /**
  * @author yequan
@@ -47,6 +47,7 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
         implements CeElectricSettingService {
 
     private final Redisson redisson;
+    private final EpDayCountReportService epDayCountReportService;
 
     @Override
     public Page<CeElectricSettingVO> getPage(BasePageDTO dto) {
@@ -127,7 +128,8 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
     }
 
     @Override
-    public List<BigDecimal> carbonSumReportDay(LocalDate start, LocalDate end) {
+    public Map<LocalDate, BigDecimal> carbonSumReportDay(LocalDate start, LocalDate end) {
+        Map<LocalDate, BigDecimal> resMap = Maps.newHashMap();
         /**
          * 电力：日期D的碳排放量C = 当日净购入电量 * 排放因子
          *         当日净购入电力
@@ -140,18 +142,41 @@ public class CeElectricSettingServiceImpl extends ServiceImpl<CeElectricSettingM
          * 排放因子取自当日对应有效期的设置，若取不到值C计为空值（例如所有设置均已过期）
          * 小数点后最多2位
          */
-         //1.从数据库表中获取有效期内的结果
-        List<CeElectricSetting> validList = list(new LambdaQueryWrapper<CeElectricSetting>().and(
-                lr -> lr.le(CeElectricSetting::getValidStart, end)
+        //1.从数据库表中获取有效期内的结果
+        List<CeElectricSetting> validList = list(new LambdaQueryWrapper<CeElectricSetting>()
+                .not(lr -> lr.gt(CeElectricSetting::getValidStart, end)
                         .or()
-                        .ge(CeElectricSetting::getValidEnd, start)));
+                        .lt(CeElectricSetting::getValidEnd, start)));
         //2.查询
-        log.info("validList -> {}",validList);
-        if(CollUtil.isNotEmpty(validList)){
-              //当日全厂总电耗量取自【能耗日统计报表】中“电”的当日合计值（转换为MWh）
-
+        if (CollUtil.isNotEmpty(validList)) {
+            //当日全厂总电耗量取自【能耗日统计报表】中“电”的当日合计值（转换为MWh）
+            Map<LocalDate, BigDecimal> map1 = epDayCountReportService.consumeValue("电", "合计", start, end);
+            // 当日光伏发电量取自【能耗日统计报表】中“光伏发电一”、“光伏发电二”的当日数值加总（转换为MWh）
+            Map<LocalDate, BigDecimal> map2 = epDayCountReportService.consumeValue("电（其他）", "光伏发电一", start, end);
+            Map<LocalDate, BigDecimal> map3 = epDayCountReportService.consumeValue("电（其他）", "光伏发电二", start, end);
+            //当日余热发电量取自【能耗日统计报表】中“余热发电”的当日数值（转换为MWh）
+            Map<LocalDate, BigDecimal> map4 = epDayCountReportService.consumeValue("电（其他）", "余热发电", start, end);
+            //求当日净购入电力为 当日全厂总电耗量 - 当日光伏发电量 - 当日余热发电量
+            LocalDate startTmp = start;
+            while (LocalDateUtil.le(startTmp, end)) {
+                LocalDate finalValidStart = startTmp;
+                Optional<CeElectricSetting> settingOp = validList.stream().filter(ele -> LocalDateUtil.isRange(finalValidStart, ele.getValidStart(), ele.getValidEnd(), true, true)).findFirst();
+                if (settingOp.isPresent() && EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(settingOp.get().getCountSource())) {
+                    CeElectricSetting setting = settingOp.get();
+                    BigDecimal map1Value = GetValueUtil.get(map1, x -> x.get(finalValidStart), BigDecimal.ZERO);
+                    BigDecimal map2Value = GetValueUtil.get(map2, x -> x.get(finalValidStart), BigDecimal.ZERO);
+                    BigDecimal map3Value = GetValueUtil.get(map3, x -> x.get(finalValidStart), BigDecimal.ZERO);
+                    BigDecimal map4Value = GetValueUtil.get(map4, x -> x.get(finalValidStart), BigDecimal.ZERO);
+                    BigDecimal value = BigDecimalUtil.subtract(map1Value, map2Value);
+                    value = BigDecimalUtil.subtract(value, map3Value);
+                    value = BigDecimalUtil.subtract(value, map4Value);
+                    value = BigDecimalUtil.divide(value, BigDecimalUtil.THOUSAND);
+                    resMap.put(startTmp, BigDecimalUtil.multiply(value, setting.getFactorValue()));
+                }
+                startTmp = startTmp.plusDays(1);
+            }
         }
-        return null;
+        return resMap;
     }
 
     /**

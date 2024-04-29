@@ -2,6 +2,7 @@ package com.steccn.wms.feign;
 
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -33,4 +35,8 @@ public interface RemoteWmsStorageReceiptFeignApi {
     @ApiOperation("根据时间获取类型为采购入库的指定物料数量")
     @PostMapping("/feign/wms/storage/receipt/purchase/quantity")
     R<Map<String, BigDecimal>> purchaseQuantity(@RequestBody RawMaterialReportDTO dto);
+
+    @ApiOperation("根据时间获取类型为生产领料和生产退料的物料数量-用于碳核算")
+    @PostMapping("/feign/wms/storage/receipt/produce/consume/quantity")
+    R<Map<LocalDate, BigDecimal>> produceConsumeQuantity(@RequestBody TripleDTO<Long, LocalDate, LocalDate> dto);
 }

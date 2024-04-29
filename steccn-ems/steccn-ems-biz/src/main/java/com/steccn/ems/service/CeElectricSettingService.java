@@ -12,6 +12,7 @@ import com.steccn.ems.vo.CeElectricSettingVO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -58,5 +59,5 @@ public interface CeElectricSettingService extends IService<CeElectricSetting> {
      * @param end 结束日期
      * @return
      */
-    List<BigDecimal> carbonSumReportDay(LocalDate start, LocalDate end);
+    Map<LocalDate,BigDecimal> carbonSumReportDay(LocalDate start, LocalDate end);
 }

@@ -1,12 +1,16 @@
 package com.steccn.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
@@ -21,6 +25,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +69,23 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
         if (CollUtil.isNotEmpty(infoList)){
             infoList.forEach( info->{
                 resMap.put(info.getMaterialName(),info.getQuantity());
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<LocalDate, BigDecimal> produceConsumeQuantity(Long materialId, LocalDate start, LocalDate end) {
+        Map<LocalDate, BigDecimal> resMap = Maps.newHashMap();
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("1", "warehousing_type"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(sysDictVO, "采购入库字典不存在");
+        //获取物料确认日期在[start,end]中的消耗数量
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
+        List<WmsStorageReceiptInfo> list1 = wmsStorageReceiptInfoMapper.produceConsumeQuantity(sysDictVO.getId(), materialId, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(list1)) {
+            list1.forEach(ele -> {
+                MapUtil.add(resMap, ele.getValidTime(), ele.getQuantity(), BigDecimalUtil::add);
             });
         }
         return resMap;

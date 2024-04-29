@@ -401,4 +401,18 @@ public interface EpManagerConstant {
         }
     }
 
+    /**
+     * 配置碳核算统计来源
+     */
+    @Getter
+    @AllArgsConstructor
+    enum CarbonCountSourceEnum {
+        METER_READ(0, "抄表记录"),
+        PICK_MATERIAL(1, "领料记录");
+
+        private final Integer code;
+        private final String sourceName;
+
+    }
+
 }

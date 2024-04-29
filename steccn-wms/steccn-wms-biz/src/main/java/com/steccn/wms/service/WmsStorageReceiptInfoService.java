@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -42,4 +43,14 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
      * @return
      */
     Map<String, BigDecimal> purchaseQuantity(RawMaterialReportDTO rawMaterialReportDTO);
+
+    /**
+     * 根据时间获取类型为生产领料和生产退料的物料数量-用于碳核算
+     *
+     * @param materialId 物料主键
+     * @param start      开始日期
+     * @param end        结束日期
+     * @return
+     */
+    Map<LocalDate, BigDecimal> produceConsumeQuantity(Long materialId, LocalDate start, LocalDate end);
 }

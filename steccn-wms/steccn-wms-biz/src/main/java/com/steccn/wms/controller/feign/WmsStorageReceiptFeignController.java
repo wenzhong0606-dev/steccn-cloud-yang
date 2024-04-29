@@ -1,6 +1,7 @@
 package com.steccn.wms.controller.feign;
 
 
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
@@ -52,4 +53,9 @@ public class WmsStorageReceiptFeignController {
         return R.success(wmsStorageReceiptInfoService.purchaseQuantity(dto));
     }
 
+    @ApiOperation("根据时间获取类型为生产领料和生产退料的物料数量-用于碳核算")
+    @PostMapping("/produce/consume/quantity")
+    public R<Map<LocalDate, BigDecimal>> produceConsumeQuantity(@RequestBody TripleDTO<Long,LocalDate,LocalDate> dto){
+        return R.success(wmsStorageReceiptInfoService.produceConsumeQuantity(dto.getField1(),dto.getField2(),dto.getField3()));
+    }
 }
