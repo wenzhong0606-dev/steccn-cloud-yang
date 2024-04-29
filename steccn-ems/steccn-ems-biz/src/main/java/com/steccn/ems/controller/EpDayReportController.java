@@ -1,6 +1,7 @@
 package com.steccn.ems.controller;
 
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.vo.EpDayReportCountVO;
 import com.steccn.ems.service.EpDayReportService;
@@ -11,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author chenhuan
@@ -47,6 +50,15 @@ public class EpDayReportController {
     @ApiOperation(value = "能耗日统计报表-任务")
     public R<Boolean> count(@RequestParam("date") LocalDate date) {
         return R.success(epDayReportService.countTask(date));
+    }
+
+    @RequestMapping("/count/task")
+    @ApiOperation(value = "能耗日统计报表-任务")
+    public R<Boolean> count(@RequestBody TupleDTO<List<LocalDate>,String> dto) {
+        for (LocalDate date : dto.getField1()) {
+            epDayReportService.countTask(date);
+        }
+        return R.success(Boolean.TRUE);
     }
 
     @GetMapping("/unit/consume")

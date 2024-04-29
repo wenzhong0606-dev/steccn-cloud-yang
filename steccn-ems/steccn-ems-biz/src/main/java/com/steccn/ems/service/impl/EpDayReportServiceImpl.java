@@ -15,10 +15,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.domain.EpEnergyType;
-import com.steccn.ems.domain.EpInstrumentAccount;
-import com.steccn.ems.domain.EpMeterRead;
-import com.steccn.ems.domain.EpPartition;
+import com.steccn.ems.domain.*;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -37,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -68,6 +66,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpDiscountFactorService epDiscountFactorService;
     private final RemotePmsFeignApi remotePmsFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final EpDayCountReportService epDayCountReportService;
 
     @Override
     @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
@@ -155,14 +154,27 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean countTask(LocalDate date) {
         EpDayReportCountVO count = count(date, Boolean.FALSE);
+        Boolean flag = Boolean.FALSE;
         if(CollUtil.isNotEmpty(count.getDataList())){
+            epDayCountReportService.remove(new LambdaQueryWrapper<EpDayCountReport>().eq(EpDayCountReport::getClassDate,date));
+            List<EpDayCountReport> insertList = Lists.newArrayList();
             for (EpDayReportCountRowVO row : count.getDataList()) {
-
+                EpDayCountReport model = new EpDayCountReport();
+                model.setEnergyType(row.getEnergyType());
+                model.setDepartmentName(row.getDepartmentName());
+                model.setEnergyUnit(row.getUnit());
+                model.setClassDate(date);
+                if(CollUtil.isNotEmpty(row.getConsumeList())){
+                    model.setConsumeValue(row.getConsumeList().get(0));
+                    insertList.add(model);
+                }
             }
+            flag = epDayCountReportService.saveBatch(insertList);
         }
-        return Boolean.TRUE;
+        return flag;
     }
 
     @Override
