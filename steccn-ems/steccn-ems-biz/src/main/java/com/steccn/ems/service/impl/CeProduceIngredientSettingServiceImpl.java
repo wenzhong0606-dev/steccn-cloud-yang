@@ -1,14 +1,24 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.GetValueUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.CeElectricSetting;
 import com.steccn.ems.domain.CeFossilFuelSetting;
 import com.steccn.ems.domain.CeProduceIngredientSetting;
 import com.steccn.ems.dto.CeProduceIngredientSettingDTO;
@@ -17,6 +27,7 @@ import com.steccn.ems.service.CeProduceIngredientSettingService;
 import com.steccn.ems.mapper.CeProduceIngredientSettingMapper;
 import com.steccn.ems.vo.CeFossilFuelSettingVO;
 import com.steccn.ems.vo.CeProduceIngredientSettingVO;
+import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
@@ -24,8 +35,10 @@ import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.util.List;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author yequan
@@ -39,6 +52,7 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
     implements CeProduceIngredientSettingService{
 
     private final Redisson redisson;
+    private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
 
     @Override
     public Page<CeProduceIngredientSettingVO> getPage(CeProduceIngredientSettingPageDTO dto) {
@@ -120,6 +134,69 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public List<Map<LocalDate, BigDecimal>> carbonSumReportDay(LocalDate start, LocalDate end) {
+        List<Map<LocalDate, BigDecimal>> resList = Lists.newArrayList();
+        /**
+         * 生产原料：日期D原料P的碳排放量C = 当日P的消耗量 * P的排放因子 * P的纯度 * P的煅烧比例 / 100 / 100
+         *
+         *   当日P的消耗量
+         *      P的“用量统计来源”为“抄表记录”时：暂无此情况
+         *           “用量统计来源”属性：参见生产原料设置
+         *      P的“用量统计来源”为“领料记录”（例如纯碱）时：当日P的消耗量为 当日P的生产领料总吨数 - 当日P的生产退料总吨数
+         *           统计当日P的生产领料/生产退料总吨数时，查询满足下列条件的出库/入库单
+         *              类型为“生产领料”/“生产退料”
+         *              状态为“已确认”
+         *              确认时间在区间(D 8:00:00, D+1 8:00:00]内
+         *              明细中包含P
+         *           若查询不到满足条件的出库/入库单，C计为空值
+         * 排放因子、纯度、煅烧比例取自当日P对应有效期的设置，若取不到值C计为空值（例如P的设置均已过期）
+         * 小数点后最多2位
+         */
+
+        //先获取有效期内的生产原料
+        List<CeProduceIngredientSetting> validList = list(new LambdaQueryWrapper<CeProduceIngredientSetting>()
+                .not(lr -> lr.gt(CeProduceIngredientSetting::getValidStart, end)
+                        .or()
+                        .lt(CeProduceIngredientSetting::getValidEnd, start)));
+        if(CollUtil.isNotEmpty(validList)){
+            List<Long> materialIdList = validList.stream().map(CeProduceIngredientSetting::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long,Map<LocalDate, BigDecimal>> consumeMap = Maps.newHashMap();
+            //这里考虑性能-优先考虑异步
+            for (Long materialId : materialIdList) {
+                Map<LocalDate, BigDecimal> valueMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(materialId, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                consumeMap.put(materialId, valueMap);
+            }
+            //开始遍历-形成返回集合
+            LocalDate startTmp = start;
+            Map<Long,Map<LocalDate, BigDecimal>> resMap = Maps.newHashMap();
+            while (LocalDateUtil.le(startTmp, end)) {
+                LocalDate finalValidStart = startTmp;
+                List<CeProduceIngredientSetting> settingList = validList.stream()
+                        .filter(ele -> EpManagerConstant.CarbonCountSourceEnum.PICK_MATERIAL.getCode().equals(ele.getCountSource()))
+                        .filter(ele -> LocalDateUtil.isRange(finalValidStart, ele.getValidStart(), ele.getValidEnd(), true, true))
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(settingList)) {
+                    for (CeProduceIngredientSetting setting : settingList) {
+                        Map<LocalDate, BigDecimal> valueMap = consumeMap.get(setting.getMaterialId());
+                        BigDecimal consumeValue = valueMap.get(finalValidStart);
+                        BigDecimal value = BigDecimalUtil.multiply(consumeValue, setting.getFactorValue());
+                        value = BigDecimalUtil.percent(value, setting.getPurityValue());
+                        value = BigDecimalUtil.percent(value, setting.getCalcinationRatio());
+                        if(Objects.nonNull(value)){
+                            resMap.computeIfAbsent(setting.getMaterialId(), x -> Maps.newHashMap()).put(finalValidStart, value);
+                        }
+                    }
+                }
+                startTmp = startTmp.plusDays(1);
+            }
+            for (Long materialId : materialIdList) {
+                resList.add(resMap.getOrDefault(materialId, new HashMap<>()));
+            }
+        }
+        return resList;
     }
 
 

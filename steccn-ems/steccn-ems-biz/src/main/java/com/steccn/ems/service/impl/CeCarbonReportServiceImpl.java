@@ -4,9 +4,11 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.ems.domain.CeProduceIngredientSetting;
 import com.steccn.ems.dto.CeCarbonReportDTO;
 import com.steccn.ems.service.CeCarbonReportService;
 import com.steccn.ems.service.CeElectricSettingService;
+import com.steccn.ems.service.CeProduceIngredientSettingService;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,19 +29,16 @@ import java.util.Map;
 public class CeCarbonReportServiceImpl implements CeCarbonReportService {
 
     private final CeElectricSettingService ceElectricSettingService;
-    private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
+    private final CeProduceIngredientSettingService ceProduceIngredientSettingService;
 
     @Override
     public CeCarbonReportDTO carbonSumReport(LocalDate start, LocalDate end, Integer granularity) {
         //获取有效期内的
-        Map<LocalDate,BigDecimal> valueList1 = ceElectricSettingService.carbonSumReportDay(start, end);
-        log.info("valueList1 -> {}",valueList1);
+        Map<LocalDate,BigDecimal> valueMap = ceElectricSettingService.carbonSumReportDay(start, end);
+        log.info("valueMap -> {}",valueMap);
 
-
-
-        Map<LocalDate, BigDecimal> valueMap1 = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(1554387211520868352L, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-        log.info("valueMap1 -> {}",valueMap1);
-
+        List<Map<LocalDate,BigDecimal>> valueList2 = ceProduceIngredientSettingService.carbonSumReportDay(start, end);
+        log.info("valueList2 -> {}",valueList2);
 
         return null;
     }
