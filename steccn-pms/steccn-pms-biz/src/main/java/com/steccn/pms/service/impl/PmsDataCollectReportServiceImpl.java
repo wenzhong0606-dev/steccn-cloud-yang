@@ -1121,6 +1121,10 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 ,"YY_CR_A_4"
                 ,"YY_UP_A_4"
                 ,"YY_DR_A_4"
+                ,"YY_LINE1_MR_S"
+                ,"YY_LINE2_MR_S"
+                ,"YY_LINE3_MR_S"
+                ,"YY_LINE4_MR_S"
         ));
         SteccnTableAssertUtil.notEmpty(data, "暂无数据");
         SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
@@ -1128,7 +1132,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         List<SteccnTableColumn> columns = Lists.newArrayList();
         columns.add(new SteccnTableColumn("time","时间",null));
         columns.add(new SteccnTableColumn("head1","一线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_1","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE1_MR_S","一线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_1","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_1","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_1","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_1","下辊速度",null)
@@ -1137,7 +1142,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_UP_A_1","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_1","下辊电流",null))));
         columns.add(new SteccnTableColumn("head2","二线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_2","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE2_MR_S","二线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_2","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_2","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_2","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_2","下辊速度",null)
@@ -1146,7 +1152,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_UP_A_2","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_2","下辊电流",null))));
         columns.add(new SteccnTableColumn("head3","三线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_3","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE3_MR_S","三线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_3","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_3","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_3","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_3","下辊速度",null)
@@ -1155,7 +1162,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_UP_A_3","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_3","下辊电流",null))));
         columns.add(new SteccnTableColumn("head4","四线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_4","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE4_MR_S","四线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_4","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_4","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_4","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_4","下辊速度",null)
@@ -1254,6 +1262,10 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 ,"YY_CR_A_8"
                 ,"YY_UP_A_8"
                 ,"YY_DR_A_8"
+                ,"YY_LINE5_MR_S"
+                ,"YY_LINE6_MR_S"
+                ,"YY_LINE7_MR_S"
+                ,"YY_LINE8_MR_S"
         ));
         SteccnTableAssertUtil.notEmpty(data, "暂无数据");
         SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
@@ -1261,7 +1273,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         List<SteccnTableColumn> columns = Lists.newArrayList();
         columns.add(new SteccnTableColumn("time","时间",null));
         columns.add(new SteccnTableColumn("head1","五线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_5","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE5_MR_S","五线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_5","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_5","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_5","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_5","下辊速度",null)
@@ -1270,7 +1283,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_UP_A_5","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_5","下辊电流",null))));
         columns.add(new SteccnTableColumn("head2","六线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_6","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE6_MR_S","六线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_6","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_6","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_6","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_6","下辊速度",null)
@@ -1279,7 +1293,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_UP_A_6","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_6","下辊电流",null))));
         columns.add(new SteccnTableColumn("head3","七线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_7","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE7_MR_S","七线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_7","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_7","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_7","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_7","下辊速度",null)
@@ -1288,7 +1303,8 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("YY_UP_A_7","上辊电流",null)
                         ,new SteccnTableColumn("YY_DR_A_7","下辊电流",null))));
         columns.add(new SteccnTableColumn("head4","八线",
-                Lists.newArrayList(new SteccnTableColumn("YY_TR_S_8","过度辊速度",null)
+                Lists.newArrayList(new SteccnTableColumn("YY_LINE8_MR_S","八线主传动速度",null)
+                        ,new SteccnTableColumn("YY_TR_S_8","过度辊速度",null)
                         ,new SteccnTableColumn("YY_CR_S_8","副辊速度",null)
                         ,new SteccnTableColumn("YY_UP_S_8","上辊速度",null)
                         ,new SteccnTableColumn("YY_DR_S_8","下辊速度",null)
