@@ -423,7 +423,9 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 labelName = labelName.substring(2);
             }
             columns.add(new SteccnTableColumn(tagName+"_name",labelName,
-                    Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null))));
+                    Lists.newArrayList(new SteccnTableColumn(tagName,"实际重量",null),
+                            new SteccnTableColumn(tagName+"diff","误差值",null),
+                            new SteccnTableColumn(tagName+"allow","允许误差",null))));
         }
         columns.add(new SteccnTableColumn("total","总计",null));
         //开始组数据
@@ -440,8 +442,12 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             BigDecimal rowTotal = BigDecimal.ZERO;
             //合并硅砂
             BigDecimal countGUISHA = BigDecimalUtil.add(tmp.getFact1(),tmp.getFact2(),2);
+            BigDecimal countGUISHADiff = BigDecimalUtil.add(tmp.getDiff1(),tmp.getDiff2(),2);
+            BigDecimal countGUISHAAllow = BigDecimalUtil.add(tmp.getAllowDiff1(),tmp.getAllowDiff2(),2);
             rowTotal = BigDecimalUtil.add(rowTotal,countGUISHA);
             oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID,Objects.isNull(countGUISHA) ? null:countGUISHA.toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID+"diff",Objects.isNull(countGUISHADiff) ? null:countGUISHADiff.toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID+"allow",Objects.isNull(countGUISHAAllow) ? null:countGUISHAAllow.toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_GUISHA_1_TAGID+"_error",Objects.isNull(tmp.getDiff1()) ? null:tmp.getDiff1().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_GUISHA_1_TAGID,countGUISHA);
 
@@ -451,38 +457,54 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
 
             rowTotal = BigDecimalUtil.add(rowTotal,tmp.getFact3());
             oneLine.put(DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID,Objects.isNull(tmp.getFact3()) ? null:BigDecimalUtil.setScale(tmp.getFact3(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID+"diff",Objects.isNull(tmp.getDiff3()) ? null:BigDecimalUtil.setScale(tmp.getDiff3(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID+"allow",Objects.isNull(tmp.getAllowDiff3()) ? null:BigDecimalUtil.setScale(tmp.getAllowDiff3(),2).toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID+"_error",Objects.isNull(tmp.getDiff3()) ? null:tmp.getDiff3().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_BAIYUNSHI_TAGID,BigDecimalUtil.setScale(tmp.getFact3(),2));
 
             rowTotal = BigDecimalUtil.add(rowTotal,tmp.getFact4());
             oneLine.put(DpConstant.DP_WEIGHT_CHUNJIAN_TAGID,Objects.isNull(tmp.getFact4()) ? null:BigDecimalUtil.setScale(tmp.getFact4(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_CHUNJIAN_TAGID+"diff",Objects.isNull(tmp.getDiff4()) ? null:BigDecimalUtil.setScale(tmp.getDiff4(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_CHUNJIAN_TAGID+"allow",Objects.isNull(tmp.getAllowDiff4()) ? null:BigDecimalUtil.setScale(tmp.getAllowDiff4(),2).toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_CHUNJIAN_TAGID+"_error",Objects.isNull(tmp.getDiff4()) ? null:tmp.getDiff4().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_CHUNJIAN_TAGID,BigDecimalUtil.setScale(tmp.getFact4(),2));
 
             rowTotal = BigDecimalUtil.add(rowTotal,tmp.getFact5());
             oneLine.put(DpConstant.DP_WEIGHT_SHIHUI_TAGID,Objects.isNull(tmp.getFact5()) ? null:BigDecimalUtil.setScale(tmp.getFact5(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_SHIHUI_TAGID+"diff",Objects.isNull(tmp.getDiff5()) ? null:BigDecimalUtil.setScale(tmp.getDiff5(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_SHIHUI_TAGID+"allow",Objects.isNull(tmp.getAllowDiff5()) ? null:BigDecimalUtil.setScale(tmp.getAllowDiff5(),2).toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_SHIHUI_TAGID+"_error",Objects.isNull(tmp.getDiff5()) ? null:tmp.getDiff5().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_SHIHUI_TAGID,BigDecimalUtil.setScale(tmp.getFact5(),2));
 
             rowTotal = BigDecimalUtil.add(rowTotal,tmp.getFact6());
             oneLine.put(DpConstant.DP_WEIGHT_FUHE_TAGID,Objects.isNull(tmp.getFact6()) ? null:BigDecimalUtil.setScale(tmp.getFact6(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_FUHE_TAGID+"diff",Objects.isNull(tmp.getDiff6()) ? null:BigDecimalUtil.setScale(tmp.getDiff6(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_FUHE_TAGID+"allow",Objects.isNull(tmp.getAllowDiff6()) ? null:BigDecimalUtil.setScale(tmp.getAllowDiff6(),2).toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_FUHE_TAGID+"_error",Objects.isNull(tmp.getDiff6()) ? null:tmp.getDiff6().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_FUHE_TAGID,BigDecimalUtil.setScale(tmp.getFact6(),2));
 
             rowTotal = BigDecimalUtil.add(rowTotal,tmp.getFact7());
             oneLine.put(DpConstant.DP_WEIGHT_LVFEN_TAGID,Objects.isNull(tmp.getFact7()) ? null:BigDecimalUtil.setScale(tmp.getFact7(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_LVFEN_TAGID+"diff",Objects.isNull(tmp.getDiff7()) ? null:BigDecimalUtil.setScale(tmp.getDiff7(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_LVFEN_TAGID+"allow",Objects.isNull(tmp.getAllowDiff7()) ? null:BigDecimalUtil.setScale(tmp.getAllowDiff7(),2).toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_LVFEN_TAGID+"_error",Objects.isNull(tmp.getDiff7()) ? null:tmp.getDiff7().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_LVFEN_TAGID,BigDecimalUtil.setScale(tmp.getFact7(),2));
 
             rowTotal = BigDecimalUtil.add(rowTotal,tmp.getFact8());
             oneLine.put(DpConstant.DP_WEIGHT_XIAOLIAO_TAGID,Objects.isNull(tmp.getFact8()) ? null:BigDecimalUtil.setScale(tmp.getFact8(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_XIAOLIAO_TAGID+"diff",Objects.isNull(tmp.getDiff8()) ? null:BigDecimalUtil.setScale(tmp.getDiff8(),2).toString());
+            oneLine.put(DpConstant.DP_WEIGHT_XIAOLIAO_TAGID+"allow",Objects.isNull(tmp.getAllowDiff8()) ? null:BigDecimalUtil.setScale(tmp.getAllowDiff8(),2).toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_XIAOLIAO_TAGID+"_error",Objects.isNull(tmp.getDiff8()) ? null:tmp.getDiff8().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_XIAOLIAO_TAGID,BigDecimalUtil.setScale(tmp.getFact8(),2));
 
             //合并碎玻璃
             BigDecimal countGlASS = BigDecimalUtil.add(tmp.getFact9(),tmp.getFact10(),2);
+            BigDecimal countGlASSDiff = BigDecimalUtil.add(tmp.getDiff9(),tmp.getDiff10(),2);
+            BigDecimal countGlASSAllow = BigDecimalUtil.add(tmp.getAllowDiff9(),tmp.getAllowDiff10(),2);
             rowTotal = BigDecimalUtil.add(rowTotal,countGlASS);
             oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID,Objects.isNull(countGlASS) ? null:countGlASS.toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID+"diff",Objects.isNull(countGlASSDiff) ? null:countGlASSDiff.toString());
+            oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID+"allow",Objects.isNull(countGlASSAllow) ? null:countGlASSAllow.toString());
 //            oneLine.put(DpConstant.DP_WEIGHT_GLASS_1_TAGID+"_error",Objects.isNull(tmp.getDiff9()) ? null:tmp.getDiff9().toString());
             BigDecimalUtil.accumulate(count,DpConstant.DP_WEIGHT_GLASS_1_TAGID,countGlASS);
 
