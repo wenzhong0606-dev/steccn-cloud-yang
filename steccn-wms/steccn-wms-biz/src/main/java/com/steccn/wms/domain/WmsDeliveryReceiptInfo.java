@@ -25,6 +25,7 @@ public class WmsDeliveryReceiptInfo implements Serializable {
      */
     private Long materialId;
 
+
     /**
      * 库存id
      */

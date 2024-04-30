@@ -15,6 +15,7 @@ import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsTransferSlip;
+import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.service.*;
@@ -62,6 +63,13 @@ public class WmsReportController {
     public R<SteccnTableDataDTO> statisticalData(@RequestBody WmsReportStatisticalDTO dto){
         return R.success(wmsReportService.statisticalData(dto));
     }
+
+    @PostMapping("out/in/warehouse/info")
+    @ApiOperation("出入库明细")
+    public R<SteccnTableDataDTO> outInWarehouseInfo(@RequestBody WmsOutInWarehouseInfoDTO dto){
+        return R.success(wmsReportService.outInWarehouseInfo(dto));
+    }
+
 
     @PostMapping("/opening/inventory")
     @ApiOperation("获取期初库存")

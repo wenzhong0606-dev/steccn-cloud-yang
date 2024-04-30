@@ -168,4 +168,14 @@
         and wdr.`status` in(1,2,3,5)
         group by info.material_id;
     </select>
+    <select id="intervalDataVO" resultType="com.steccn.wms.vo.WmsDeliveryReceiptInfoVO">
+        select info.material_id,info.quantity as quantity,wdr.affirm_time,wi.material_code from wms_delivery_receipt wdr
+        join wms_delivery_receipt_info info on wdr.id = info.delivery_receipt_id
+        join wms_inventory wi on wi.id = info.inventory_id
+        where wdr.del_flag = 0 and info.del_flag = 0
+        <if test="startTime !=null and endTime !=null">
+            and wdr.affirm_time between #{startTime} and #{endTime}
+        </if>
+        and wdr.`status` in(1,2,3,5)
+    </select>
 </mapper>

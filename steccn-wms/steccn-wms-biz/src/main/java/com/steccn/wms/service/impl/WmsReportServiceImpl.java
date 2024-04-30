@@ -22,12 +22,17 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
+import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsReportService;
 import com.steccn.wms.service.WmsStorageReceiptService;
+import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
+import com.steccn.wms.vo.WmsOutInWarehouseInfoVO;
 import com.steccn.wms.vo.WmsReportDataVO;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -38,9 +43,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -220,6 +223,111 @@ public class WmsReportServiceImpl implements WmsReportService {
         return steccnTableDataDTO;
     }
 
+    @Override
+    public SteccnTableDataDTO outInWarehouseInfo(WmsOutInWarehouseInfoDTO dto) {
+        SteccnTableDataDTO steccnTableDataDTO = new SteccnTableDataDTO();
+        LocalDateTime  morningStartTime = LocalDateUtil.getMorning(dto.getDate());
+        LocalDateTime  nightStartTime = LocalDateUtil.getNight(dto.getDate());
+        LocalDateTime  nightEndTime = LocalDateUtil.getMorning(dto.getDate()).plusDays(1);
+        //出库数据
+        List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOList = wmsDeliveryReceiptService.intervalDataVO(morningStartTime,nightEndTime);
+        //入库数据
+        List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOList = wmsStorageReceiptService.intervalDataVO(morningStartTime, nightEndTime);
+
+        //P1.Z.P ——自制原片
+        List<WmsOutInWarehouseInfoVO> voList = Lists.newArrayList();
+        TupleDTO<String, Integer> materialDTO = new TupleDTO<>();
+        materialDTO.setField1("P1.Z.P");
+        List<WmsOutInWarehouseInfoVO> inOutInfoDataVO = getInOutInfoDataVO(wmsDeliveryReceiptInfoVOList, wmsStorageReceiptInfoVOList, "自制/原片", materialDTO, morningStartTime, nightStartTime, nightEndTime,0);
+        //P1.W.P ——外购原片
+        TupleDTO<String, Integer> materialDTO1 = new TupleDTO<>();
+        materialDTO1.setField1("P1.W.P");
+        List<WmsOutInWarehouseInfoVO> inOutInfoDataVO1 = getInOutInfoDataVO(wmsDeliveryReceiptInfoVOList, wmsStorageReceiptInfoVOList, "外购/原片", materialDTO1, morningStartTime, nightStartTime, nightEndTime,1);
+        //P1.Z.S ——自制加工
+        TupleDTO<String, Integer> materialDTO2 = new TupleDTO<>();
+        materialDTO2.setField1("P1.Z.S");
+        List<WmsOutInWarehouseInfoVO> inOutInfoDataVO2 = getInOutInfoDataVO(wmsDeliveryReceiptInfoVOList, wmsStorageReceiptInfoVOList, "自制/加工", materialDTO2, morningStartTime, nightStartTime, nightEndTime,2);
+        //P1.W.S ——外购加工
+        TupleDTO<String, Integer> materialDTO3 = new TupleDTO<>();
+        materialDTO3.setField1("P1.W.S");
+        List<WmsOutInWarehouseInfoVO> inOutInfoDataVO3 = getInOutInfoDataVO(wmsDeliveryReceiptInfoVOList, wmsStorageReceiptInfoVOList, "外购/加工", materialDTO3, morningStartTime, nightStartTime, nightEndTime,3);
+        voList.addAll(inOutInfoDataVO);
+        voList.addAll(inOutInfoDataVO2);
+        voList.addAll(inOutInfoDataVO1);
+        voList.addAll(inOutInfoDataVO3);
+        //合计
+        if (CollUtil.isNotEmpty(voList)){
+            //分类合计3
+            //P1_Z 自制 P1_W 外购
+            Map<String, List<WmsOutInWarehouseInfoVO>> p1ZMap = voList.stream().filter(info -> info.getMaterialCode() != null && info.getMaterialCode().startsWith("P1.Z") && info.getTotalFlag() == 0).collect(Collectors.groupingBy(WmsOutInWarehouseInfoVO::getUnit));
+            p1ZMap.forEach((k,v)->{
+                WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoVO = new WmsOutInWarehouseInfoVO();
+                wmsOutInWarehouseInfoVO.setType("合计（自制）");
+                wmsOutInWarehouseInfoVO.setType1(3);
+                wmsOutInWarehouseInfoVO.setTotalFlag(1);
+                wmsOutInWarehouseInfoVO.setSortFlag1(0);
+                v.forEach(info->{
+                    wmsOutInWarehouseInfoVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(),info.getMorningShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(),info.getMorningShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftStorage(),info.getNightShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftOutbound(),info.getNightShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setTotalInboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalInboundQuantity(),info.getTotalInboundQuantity()));
+                    wmsOutInWarehouseInfoVO.setTotalOutboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalOutboundQuantity(),info.getTotalOutboundQuantity()));
+                });
+                voList.add(wmsOutInWarehouseInfoVO);
+            });
+
+            Map<String, List<WmsOutInWarehouseInfoVO>> p1WMap = voList.stream().filter(info -> info.getMaterialCode() != null && info.getMaterialCode().startsWith("P1.W") && info.getTotalFlag() == 0).collect(Collectors.groupingBy(WmsOutInWarehouseInfoVO::getUnit));
+            p1WMap.forEach((k,v)->{
+                WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoVO = new WmsOutInWarehouseInfoVO();
+                wmsOutInWarehouseInfoVO.setType("合计（外购）");
+                wmsOutInWarehouseInfoVO.setType1(3);
+                wmsOutInWarehouseInfoVO.setTotalFlag(1);
+                wmsOutInWarehouseInfoVO.setSortFlag1(1);
+                v.forEach(info->{
+                    wmsOutInWarehouseInfoVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(),info.getMorningShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(),info.getMorningShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftStorage(),info.getNightShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftOutbound(),info.getNightShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setTotalInboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalInboundQuantity(),info.getTotalInboundQuantity()));
+                    wmsOutInWarehouseInfoVO.setTotalOutboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalOutboundQuantity(),info.getTotalOutboundQuantity()));
+                });
+                voList.add(wmsOutInWarehouseInfoVO);
+            });
+            //总合计4
+            Map<String, List<WmsOutInWarehouseInfoVO>> collect = voList.stream().filter(info -> info.getTotalFlag() == 0).collect(Collectors.groupingBy(WmsOutInWarehouseInfoVO::getUnit));
+            collect.forEach((k,v)->{
+                WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoVO = new WmsOutInWarehouseInfoVO();
+                wmsOutInWarehouseInfoVO.setType("合计");
+                wmsOutInWarehouseInfoVO.setType1(4);
+                wmsOutInWarehouseInfoVO.setTotalFlag(1);
+                wmsOutInWarehouseInfoVO.setUnit(k);
+                v.forEach(info->{
+                    wmsOutInWarehouseInfoVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(),info.getMorningShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(),info.getMorningShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftStorage(),info.getNightShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftOutbound(),info.getNightShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setTotalInboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalInboundQuantity(),info.getTotalInboundQuantity()));
+                    wmsOutInWarehouseInfoVO.setTotalOutboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalOutboundQuantity(),info.getTotalOutboundQuantity()));
+                });
+                voList.add(wmsOutInWarehouseInfoVO);
+            });
+        }
+        //排序
+        List<WmsOutInWarehouseInfoVO> collect = voList.stream()
+                .sorted(Comparator.comparing(WmsOutInWarehouseInfoVO::getSortFlag, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(WmsOutInWarehouseInfoVO::getSortFlag1, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(WmsOutInWarehouseInfoVO::getThick, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+        steccnTableDataDTO.setTableList(collect);
+        return steccnTableDataDTO;
+
+
+
+
+    }
+
+
     /**
      * 获取指定格式日期
      * @param dateTime
@@ -297,5 +405,158 @@ public class WmsReportServiceImpl implements WmsReportService {
             wmsReportDataVO.setGrowthRate(decimalFormat.format(multiply));
         }
         return wmsReportDataVO;
+    }
+
+    private List<WmsOutInWarehouseInfoVO>  getInOutInfoDataVO( List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOList,
+                                                               List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOList,
+                                                               String type,
+                                                               TupleDTO<String, Integer> materialDTO,
+                                                               LocalDateTime  morningStartTime,
+                                                               LocalDateTime  nightStartTime,
+                                                               LocalDateTime  nightEndTime,
+                                                               Integer sortFlag){
+        List<WmsOutInWarehouseInfoVO> voList = Lists.newArrayList();
+        List<EqpSpareVO> materialList = FeignOptional.of(() -> remoteSpareFeignApi.listByProperty(materialDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, List<EqpSpareVO>> materialMap = materialList.stream().collect(Collectors.groupingBy(EqpSpareVO::getId));
+        Set<Long> materialIds = materialList.stream().map(EqpSpareVO::getId).collect(Collectors.toSet());
+
+        //白班出库数据
+        Map<Long, List<WmsDeliveryReceiptInfoVO>> morningDeliveryMap = wmsDeliveryReceiptInfoVOList.stream()
+                .filter(delivery ->
+                        materialIds.contains(delivery.getMaterialId()) &&
+                                (!delivery.getAffirmTime().isBefore(morningStartTime) && !delivery.getAffirmTime().isAfter(nightStartTime))
+                )
+                .collect(Collectors.groupingBy(WmsDeliveryReceiptInfoVO::getMaterialId));
+        //夜班出库数据
+        Map<Long, List<WmsDeliveryReceiptInfoVO>> nightDeliveryMap = wmsDeliveryReceiptInfoVOList.stream()
+                .filter(delivery ->
+                        materialIds.contains(delivery.getMaterialId()) &&
+                                (!delivery.getAffirmTime().isBefore(nightStartTime) && !delivery.getAffirmTime().isAfter(nightEndTime))
+                )
+                .collect(Collectors.groupingBy(WmsDeliveryReceiptInfoVO::getMaterialId));
+        //白班入库数据
+        Map<Long, List<WmsStorageReceiptInfoVO>> morningStorageMap = wmsStorageReceiptInfoVOList.stream().filter(storage ->
+                        materialIds.contains(storage.getMaterialId()) && (!storage.getAffirmTime().isBefore(morningStartTime) && !storage.getAffirmTime().isAfter(nightStartTime))
+                )
+                .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getMaterialId));
+        //夜班入库数据
+        Map<Long, List<WmsStorageReceiptInfoVO>> nightStorageMap = wmsStorageReceiptInfoVOList.stream().filter(storage ->
+                        materialIds.contains(storage.getMaterialId()) && (!storage.getAffirmTime().isBefore(nightStartTime) && !storage.getAffirmTime().isAfter(nightEndTime))
+                )
+                .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getMaterialId));
+
+        //单位换算
+        SysDictVO unitPiece = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO unitSm = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_SM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        materialList.forEach(material ->{
+            List<EqpSpareVO> eqpSpareVOS = materialMap.get(material.getId());
+            WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoVO = new WmsOutInWarehouseInfoVO();
+            wmsOutInWarehouseInfoVO.setType(type);
+            wmsOutInWarehouseInfoVO.setUnit(PmManagerConstant.MEASURE_UNIT_SM);
+            wmsOutInWarehouseInfoVO.setThick(eqpSpareVOS.get(0).getThickQuantity());
+            wmsOutInWarehouseInfoVO.setWidth(eqpSpareVOS.get(0).getWeightQuantity());
+            wmsOutInWarehouseInfoVO.setLength(eqpSpareVOS.get(0).getLengthQuantity());
+            wmsOutInWarehouseInfoVO.setMaterialCode(material.getCode());
+            wmsOutInWarehouseInfoVO.setSortFlag(sortFlag);
+
+            WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoPieceVO = new WmsOutInWarehouseInfoVO();
+            wmsOutInWarehouseInfoPieceVO.setType(type);
+            wmsOutInWarehouseInfoPieceVO.setUnit(PmManagerConstant.MEASURE_UNIT_PIECE);
+            wmsOutInWarehouseInfoPieceVO.setThick(eqpSpareVOS.get(0).getThickQuantity());
+            wmsOutInWarehouseInfoPieceVO.setWidth(eqpSpareVOS.get(0).getWeightQuantity());
+            wmsOutInWarehouseInfoPieceVO.setLength(eqpSpareVOS.get(0).getLengthQuantity());
+            wmsOutInWarehouseInfoPieceVO.setMaterialCode(material.getCode());
+            wmsOutInWarehouseInfoPieceVO.setSortFlag(sortFlag);
+
+            // 白班出库
+            List<WmsDeliveryReceiptInfoVO> morningDeliverInfos = morningDeliveryMap.get(material.getId());
+            if (CollUtil.isNotEmpty(morningDeliverInfos)) {
+                morningDeliverInfos.forEach(delivery -> {
+                    wmsOutInWarehouseInfoVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(), UnitConvertUtil.convertMaterial(materialConvertMap.get(delivery.getMaterialId()), unitPiece.getId(), unitSm.getId(), delivery.getQuantity(), 4)));
+                    wmsOutInWarehouseInfoPieceVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoPieceVO.getMorningShiftOutbound(), delivery.getQuantity()));
+                });
+            }
+            // 夜班出库
+            List<WmsDeliveryReceiptInfoVO> nightDeliveryInfos = nightDeliveryMap.get(material.getId());
+            if (CollUtil.isNotEmpty(nightDeliveryInfos)) {
+                nightDeliveryInfos.forEach(delivery -> {
+                    wmsOutInWarehouseInfoVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftOutbound(), UnitConvertUtil.convertMaterial(materialConvertMap.get(delivery.getMaterialId()), unitPiece.getId(), unitSm.getId(), delivery.getQuantity(), 4)));
+                    wmsOutInWarehouseInfoPieceVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoPieceVO.getNightShiftOutbound(), delivery.getQuantity()));
+                });
+            }
+            // 白班入库
+            List<WmsStorageReceiptInfoVO> morningStorageInfos = morningStorageMap.get(material.getId());
+            if (CollUtil.isNotEmpty(morningStorageInfos)) {
+                morningStorageInfos.forEach(storageInfo -> {
+
+                    wmsOutInWarehouseInfoVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(), UnitConvertUtil.convertMaterial(materialConvertMap.get(storageInfo.getMaterialId()), unitPiece.getId(), unitSm.getId(), storageInfo.getQuantity(), 4)));
+                    wmsOutInWarehouseInfoPieceVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoPieceVO.getMorningShiftStorage(), storageInfo.getQuantity()));
+                });
+            }
+            // 夜班入库
+            List<WmsStorageReceiptInfoVO> nightStorageInfos = nightStorageMap.get(material.getType());
+            if (CollUtil.isNotEmpty(nightStorageInfos)) {
+                nightStorageInfos.forEach(storageInfo -> {
+                    wmsOutInWarehouseInfoVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftStorage(), UnitConvertUtil.convertMaterial(materialConvertMap.get(storageInfo.getMaterialId()), unitPiece.getId(), unitSm.getId(), storageInfo.getQuantity(), 4)));
+                    wmsOutInWarehouseInfoPieceVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoPieceVO.getNightShiftStorage(), storageInfo.getQuantity()));
+                });
+            }
+            //入库总数
+            wmsOutInWarehouseInfoVO.setTotalInboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(),wmsOutInWarehouseInfoVO.getNightShiftStorage()));
+            //出库总数
+            wmsOutInWarehouseInfoVO.setTotalOutboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(),wmsOutInWarehouseInfoVO.getNightShiftOutbound()));
+            if (Objects.nonNull(wmsOutInWarehouseInfoVO.getMorningShiftOutbound()) || Objects.nonNull(wmsOutInWarehouseInfoVO.getMorningShiftStorage())
+                    || Objects.nonNull(wmsOutInWarehouseInfoVO.getNightShiftOutbound()) || Objects.nonNull(wmsOutInWarehouseInfoVO.getNightShiftStorage())) {
+                voList.add(wmsOutInWarehouseInfoVO);
+                voList.add(wmsOutInWarehouseInfoPieceVO);
+            }
+        });
+        //合计
+        if (CollUtil.isNotEmpty(voList)){
+            //厚度合计
+            Map<BigDecimal, List<WmsOutInWarehouseInfoVO>> collect = voList.stream().collect(Collectors.groupingBy(WmsOutInWarehouseInfoVO::getThick));
+            collect.forEach((k,v)->{
+                Map<String, List<WmsOutInWarehouseInfoVO>> unitMap = v.stream().collect(Collectors.groupingBy(WmsOutInWarehouseInfoVO::getUnit));
+                unitMap.forEach((unitKey,unitValue)->{
+                    WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoVO = new WmsOutInWarehouseInfoVO();
+                    wmsOutInWarehouseInfoVO.setType(type);
+                    wmsOutInWarehouseInfoVO.setType1(1);
+                    wmsOutInWarehouseInfoVO.setTotalFlag(1);
+                    wmsOutInWarehouseInfoVO.setUnit(unitKey);
+                    wmsOutInWarehouseInfoVO.setThick(k);
+                    wmsOutInWarehouseInfoVO.setSortFlag(sortFlag);
+                    unitValue.forEach(info->{
+                        wmsOutInWarehouseInfoVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(),info.getMorningShiftStorage()));
+                        wmsOutInWarehouseInfoVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(),info.getMorningShiftOutbound()));
+                        wmsOutInWarehouseInfoVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftStorage(),info.getNightShiftStorage()));
+                        wmsOutInWarehouseInfoVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftOutbound(),info.getNightShiftOutbound()));
+                        wmsOutInWarehouseInfoVO.setTotalInboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalInboundQuantity(),info.getTotalInboundQuantity()));
+                        wmsOutInWarehouseInfoVO.setTotalOutboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalOutboundQuantity(),info.getTotalOutboundQuantity()));
+                    });
+                    voList.add(wmsOutInWarehouseInfoVO);
+                });
+            });
+            //小分类合并
+            Map<String, List<WmsOutInWarehouseInfoVO>> map = voList.stream().filter(e ->e.getTotalFlag() == 0).collect(Collectors.toList()).stream().collect(Collectors.groupingBy(WmsOutInWarehouseInfoVO::getUnit));
+            map.forEach((k,v)->{
+                WmsOutInWarehouseInfoVO wmsOutInWarehouseInfoVO = new WmsOutInWarehouseInfoVO();
+                wmsOutInWarehouseInfoVO.setType(type);
+                wmsOutInWarehouseInfoVO.setType1(2);
+                wmsOutInWarehouseInfoVO.setTotalFlag(1);
+                wmsOutInWarehouseInfoVO.setUnit(k);
+                wmsOutInWarehouseInfoVO.setSortFlag(sortFlag);
+                v.forEach(info->{
+                    wmsOutInWarehouseInfoVO.setMorningShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftStorage(),info.getMorningShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setMorningShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getMorningShiftOutbound(),info.getMorningShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setNightShiftStorage(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftStorage(),info.getNightShiftStorage()));
+                    wmsOutInWarehouseInfoVO.setNightShiftOutbound(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getNightShiftOutbound(),info.getNightShiftOutbound()));
+                    wmsOutInWarehouseInfoVO.setTotalInboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalInboundQuantity(),info.getTotalInboundQuantity()));
+                    wmsOutInWarehouseInfoVO.setTotalOutboundQuantity(BigDecimalUtil.add(wmsOutInWarehouseInfoVO.getTotalOutboundQuantity(),info.getTotalOutboundQuantity()));
+                });
+                voList.add(wmsOutInWarehouseInfoVO);
+            });
+        }
+        return voList;
     }
 }

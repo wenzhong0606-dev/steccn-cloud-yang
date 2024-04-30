@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.BatchChargeAgainstDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
+import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -82,6 +84,8 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
      * @return
      */
     List<WmsStorageReceiptInfo> intervalData(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds);
+
+    List<WmsStorageReceiptInfoVO> intervalDataVO(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime);
 }
 
 
