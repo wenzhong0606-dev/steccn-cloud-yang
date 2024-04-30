@@ -1,8 +1,10 @@
 package com.steccn.ems.vo;
 
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author yequan
@@ -22,6 +24,11 @@ public class CeCarbonSumReportListVO implements Serializable {
      * 明细
      */
     private String detailName;
+
+    /**
+     * 动态列
+     */
+    private List<BigDecimal> valueList;
 
     /**
      * 合计（吨）

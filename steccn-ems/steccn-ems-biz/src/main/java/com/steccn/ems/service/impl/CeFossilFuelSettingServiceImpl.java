@@ -14,6 +14,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.constant.EpManagerConstant;
@@ -37,10 +38,7 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -142,8 +140,8 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
     }
 
     @Override
-    public List<Map<LocalDate, BigDecimal>> carbonSumReportDay(LocalDate start, LocalDate end) {
-        List<Map<LocalDate, BigDecimal>> resList = Lists.newArrayList();
+    public List<TupleDTO<String,Map<LocalDate, BigDecimal>>> carbonSumReportDay(LocalDate start, LocalDate end) {
+        List<TupleDTO<String,Map<LocalDate, BigDecimal>>> resList = Lists.newArrayList();
         /**
          * 化石燃料：日期D燃料F的碳排放量C = 当日F的消耗量 * F的低位发热量 * F的单位热值含碳量 * F的碳氧化率 / 100 * 44 / 12
          *
@@ -167,7 +165,10 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                         .lt(CeFossilFuelSetting::getValidEnd, start)));
         if (CollUtil.isNotEmpty(validList)) {
             //获取领料的物料集合
-            List<Long> materialIdListAll = validList.stream().map(CeFossilFuelSetting::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long,String> materialIdMap = Maps.newLinkedHashMap();
+            validList.forEach(ele -> {
+                materialIdMap.put(ele.getMaterialId(), ele.getMaterialName());
+            });
             List<Long> materialIdList = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.PICK_MATERIAL.getCode().equals(ele.getCountSource())).map(CeFossilFuelSetting::getMaterialId).distinct().collect(Collectors.toList());
             Map<Long,Map<LocalDate, BigDecimal>> consumeMap = Maps.newHashMap();
             //这里考虑性能-优先考虑异步
@@ -217,9 +218,8 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                 }
                 startTmp = startTmp.plusDays(1);
             }
-            for (Long materialId : materialIdListAll) {
-                resList.add(resMap.getOrDefault(materialId, new HashMap<>()));
-            }
+
+            materialIdMap.forEach((k, v) -> resList.add(new TupleDTO<>(v, resMap.getOrDefault(k, new HashMap<>()))));
         }
         return resList;
     }

@@ -1,6 +1,7 @@
 package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.domain.CeFossilFuelSetting;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.CeFossilFuelSettingDTO;
@@ -57,5 +58,5 @@ public interface CeFossilFuelSettingService extends IService<CeFossilFuelSetting
      * @param end 结束日期
      * @return
      */
-    List<Map<LocalDate, BigDecimal>> carbonSumReportDay(LocalDate start, LocalDate end);
+    List<TupleDTO<String,Map<LocalDate, BigDecimal>>> carbonSumReportDay(LocalDate start, LocalDate end);
 }

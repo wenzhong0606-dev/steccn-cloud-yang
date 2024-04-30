@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.ems.dto.CeCarbonReportDTO;
+import com.steccn.ems.vo.CeCarbonSumReportVO;
 
 import java.time.LocalDate;
 
@@ -19,5 +20,5 @@ public interface CeCarbonReportService {
      * @param granularity 粒度
      * @return
      */
-    CeCarbonReportDTO carbonSumReport(LocalDate start, LocalDate end, Integer granularity);
+    CeCarbonSumReportVO carbonSumReport(LocalDate start, LocalDate end, Integer granularity);
 }

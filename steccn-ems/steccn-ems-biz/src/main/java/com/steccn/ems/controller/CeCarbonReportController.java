@@ -4,6 +4,7 @@ import com.steccn.common.dto.SteccnRow;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.CeCarbonReportDTO;
 import com.steccn.ems.service.CeCarbonReportService;
+import com.steccn.ems.vo.CeCarbonSumReportVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class CeCarbonReportController {
 
     @PostMapping("/sum/report")
     @ApiOperation(value = "碳排放总量报表")
-    public R<CeCarbonReportDTO> carbonSumReport(@RequestBody CeCarbonReportDTO dto) {
+    public R<CeCarbonSumReportVO> carbonSumReport(@RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.carbonSumReport(dto.getStart(),dto.getEnd(),dto.getGranularity()));
     }
 

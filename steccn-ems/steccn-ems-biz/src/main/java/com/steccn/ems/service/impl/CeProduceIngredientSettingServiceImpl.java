@@ -14,6 +14,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -137,8 +138,8 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
     }
 
     @Override
-    public List<Map<LocalDate, BigDecimal>> carbonSumReportDay(LocalDate start, LocalDate end) {
-        List<Map<LocalDate, BigDecimal>> resList = Lists.newArrayList();
+    public List<TupleDTO<String,Map<LocalDate, BigDecimal>>> carbonSumReportDay(LocalDate start, LocalDate end) {
+        List<TupleDTO<String,Map<LocalDate, BigDecimal>>> resList = Lists.newArrayList();
         /**
          * 生产原料：日期D原料P的碳排放量C = 当日P的消耗量 * P的排放因子 * P的纯度 * P的煅烧比例 / 100 / 100
          *
@@ -162,10 +163,14 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
                         .or()
                         .lt(CeProduceIngredientSetting::getValidEnd, start)));
         if(CollUtil.isNotEmpty(validList)){
-            List<Long> materialIdList = validList.stream().map(CeProduceIngredientSetting::getMaterialId).distinct().collect(Collectors.toList());
+            //将id转换成名称
+            LinkedHashMap<Long, String> linkedHashMap = Maps.newLinkedHashMap();
+            validList.forEach(ele -> {
+                linkedHashMap.put(ele.getMaterialId(), ele.getMaterialName());
+            });
             Map<Long,Map<LocalDate, BigDecimal>> consumeMap = Maps.newHashMap();
             //这里考虑性能-优先考虑异步
-            for (Long materialId : materialIdList) {
+            for (Long materialId : linkedHashMap.keySet()) {
                 Map<LocalDate, BigDecimal> valueMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(materialId, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 consumeMap.put(materialId, valueMap);
             }
@@ -192,9 +197,10 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
                 }
                 startTmp = startTmp.plusDays(1);
             }
-            for (Long materialId : materialIdList) {
-                resList.add(resMap.getOrDefault(materialId, new HashMap<>()));
-            }
+            linkedHashMap.forEach((k,v) ->{
+                resList.add(new TupleDTO<>(v, resMap.getOrDefault(k, new HashMap<>())));
+
+            });
         }
         return resList;
     }

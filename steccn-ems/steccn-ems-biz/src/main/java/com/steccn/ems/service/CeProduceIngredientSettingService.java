@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.domain.CeProduceIngredientSetting;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.CeProduceIngredientSettingDTO;
@@ -58,5 +59,5 @@ public interface CeProduceIngredientSettingService extends IService<CeProduceIng
      * @param end 结束日期
      * @return
      */
-    List<Map<LocalDate, BigDecimal>> carbonSumReportDay(LocalDate start, LocalDate end);
+    List<TupleDTO<String,Map<LocalDate, BigDecimal>>> carbonSumReportDay(LocalDate start, LocalDate end);
 }
