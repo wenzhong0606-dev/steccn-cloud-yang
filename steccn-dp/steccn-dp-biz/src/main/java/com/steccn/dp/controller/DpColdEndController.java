@@ -46,8 +46,8 @@ public class DpColdEndController {
 
     @GetMapping("/screen/{num}")
     @ApiOperation(value = "冷端数采数据")
-    public BigDecimal count(@PathVariable Integer num) {
-        return dpColdEndCheckpointValueService.getScreenData(num);
+    public R<BigDecimal> count(@PathVariable Integer num) {
+        return R.success(dpColdEndCheckpointValueService.getScreenData(num));
     }
 
     /**
