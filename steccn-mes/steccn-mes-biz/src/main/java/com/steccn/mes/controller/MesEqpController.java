@@ -8,11 +8,14 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.mes.dto.EqpOperationReportDTO;
 import com.steccn.mes.dto.MesDefectChartDTO;
 import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
 import com.steccn.mes.service.MesDefectService;
 import com.steccn.mes.service.MesEqpInsTaskService;
+import com.steccn.mes.service.MesEqpReportService;
 import com.steccn.mes.service.MesEquipmentService;
+import com.steccn.mes.vo.EqpOperationReportVO;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.mes.vo.MesItemIdNameVO;
 import com.steccn.mes.vo.YlEqpDashboardVO;
@@ -44,6 +47,7 @@ public class MesEqpController {
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
     private final MesEqpInsTaskService mesEqpInsTaskService;
     private final MesDefectService mesDefectService;
+    private final MesEqpReportService mesEqpReportService;
 
     @GetMapping("/thirdParty")
     @ApiOperation(value = "获取设备信息")
@@ -92,6 +96,12 @@ public class MesEqpController {
     @ApiOperation(value = "原料图表")
     public R<YlEqpDashboardVO> ylDashboard(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
         return R.success(mesEquipmentService.dashBoard(dto));
+    }
+
+    @PostMapping("/operation/report")
+    @ApiOperation(value = "获取设备运行报表")
+    public R<List<EqpOperationReportVO>> getOperationReport(@RequestBody EqpOperationReportDTO dto) {
+        return R.success(mesEqpReportService.queryReport(dto));
     }
 
     /**
