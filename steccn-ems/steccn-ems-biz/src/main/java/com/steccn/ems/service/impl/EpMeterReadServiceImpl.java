@@ -1378,7 +1378,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
                         //判断最大是否已经超过了最大读数，最大值是N个9,此处可能会存在些许误差
                         preValue = possibleBigDecimal(preValue, curValue);
-                        if (energyType == 3 && !dateEntry.getKey().isEqual(minLocalDate)) {
+                        if ((energyType == 3 || energyType == 8)&& !dateEntry.getKey().isEqual(minLocalDate)) {
                             resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), curValue);
                         } else if (energyType == 4 && !dateEntry.getKey().isEqual(minLocalDate)) {
                             BigDecimal subtract = BigDecimalUtil.subtract(curValue, preValue);
