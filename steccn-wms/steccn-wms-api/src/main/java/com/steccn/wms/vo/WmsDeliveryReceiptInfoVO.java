@@ -6,6 +6,7 @@ import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 类说明
@@ -55,5 +56,8 @@ public class WmsDeliveryReceiptInfoVO {
 
     @ApiModelProperty("单位名称")
     private String unitName;
+
+    @ApiModelProperty("确认时间")
+    private LocalDateTime affirmTime;
 
 }

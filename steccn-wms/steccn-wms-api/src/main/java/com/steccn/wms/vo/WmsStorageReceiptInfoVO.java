@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 类说明
@@ -70,4 +71,6 @@ public class WmsStorageReceiptInfoVO {
 
     @ApiModelProperty("erp产线编码")
     private String erpLineCode;
+
+    private LocalDateTime affirmTime;
 }

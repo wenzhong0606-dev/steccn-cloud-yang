@@ -223,4 +223,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds);
+
+    List<WmsStorageReceiptInfoVO> intervalDataVO(LocalDateTime morningStartTime, LocalDateTime nightStartTime);
 }

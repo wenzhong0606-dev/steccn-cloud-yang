@@ -35,6 +35,8 @@ public class PmsProducePlanVO {
 
     private Integer type;
 
+    private Integer productProperty;
+
     /**
      * 创建时间
      */

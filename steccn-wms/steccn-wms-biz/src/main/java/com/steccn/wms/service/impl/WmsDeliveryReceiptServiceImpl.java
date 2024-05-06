@@ -1019,6 +1019,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return  this.baseMapper.intervalData(startTime,endTime,materialIds);
     }
 
+    @Override
+    public List<WmsDeliveryReceiptInfoVO> intervalDataVO(LocalDateTime startTime, LocalDateTime endTime) {
+        return  this.baseMapper.intervalDataVO(startTime,endTime);
+    }
+
     /**
      * 当前最大的code值
      *

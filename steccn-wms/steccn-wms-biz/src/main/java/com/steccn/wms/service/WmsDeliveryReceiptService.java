@@ -166,4 +166,13 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds);
+
+
+    /**
+     * 获取区间时间的入库单数据明细总和，单位为平方米
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<WmsDeliveryReceiptInfoVO> intervalDataVO(LocalDateTime startTime, LocalDateTime endTime);
 }

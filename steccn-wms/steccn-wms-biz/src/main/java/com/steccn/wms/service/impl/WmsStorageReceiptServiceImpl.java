@@ -1744,6 +1744,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return  this.baseMapper.intervalData(startTime,endTime,materialIds);
     }
 
+    @Override
+    public List<WmsStorageReceiptInfoVO> intervalDataVO(LocalDateTime morningStartTime, LocalDateTime nightStartTime) {
+        return  this.baseMapper.intervalDataVO(morningStartTime,nightStartTime);
+    }
+
     /**
      * 冲销
      * @return

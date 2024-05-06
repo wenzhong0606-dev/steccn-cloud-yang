@@ -10,10 +10,7 @@ import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
-import com.steccn.pms.dto.PmExcelDTO;
-import com.steccn.pms.dto.PmsProducePlanDTO;
-import com.steccn.pms.dto.PmsProducePlanExcelDTO;
-import com.steccn.pms.dto.PmsProducePlanOrderDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -42,9 +39,9 @@ public class PmsProducePlanController {
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
     @ApiOperation("月计划列表")
-    @GetMapping("/list")
-    public R<List<PmsProducePlanDTO>> list(@RequestParam("monthDate") String monthDate) {
-        return R.success(pmsProducePlanService.list(monthDate));
+    @PostMapping("/list")
+    public R<List<PmsProducePlanDTO>> list(@RequestBody @Validated PmsProducePlanQueryDTO dto) {
+        return R.success(pmsProducePlanService.list(dto));
     }
 
     @ApiOperation("月计划批量新增")

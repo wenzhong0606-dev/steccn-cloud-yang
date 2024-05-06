@@ -5,6 +5,7 @@ import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -62,6 +63,8 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     List<WmsDeliveryReceiptInfo> intervalData(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds);
+
+    List<WmsDeliveryReceiptInfoVO> intervalDataVO(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime);
 }
 
 
