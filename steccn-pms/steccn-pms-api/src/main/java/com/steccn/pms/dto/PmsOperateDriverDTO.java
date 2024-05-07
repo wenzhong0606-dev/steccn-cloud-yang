@@ -39,4 +39,9 @@ public class PmsOperateDriverDTO implements Serializable {
      */
     @NotNull(message = "粒度不能为空")
     private Integer granularity;
+
+    /**
+     * 单位
+     */
+    private String unit;
 }

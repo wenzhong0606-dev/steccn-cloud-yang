@@ -156,6 +156,19 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
     Map<String, BigDecimal> sjgInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, Integer bit);
 
     /**
+     * 运营驾驶舱 - 深加工入库-单位
+     *
+     * @param granularity 粒度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param lineIdSet   产线主键集合
+     * @param bit         保留位数
+     * @return
+     */
+    Map<String, BigDecimal> sjgInStorageUnit(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, Integer bit, String unitName);
+
+
+    /**
      * 运营驾驶舱 - 基片入库
      *
      * @param granularity 粒度

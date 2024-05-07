@@ -218,6 +218,10 @@ public interface RemoteOfficeFeign {
     R<SysOfficeVO> info(@PathVariable("id") Integer id);
 
     @ApiOperation("获取组织结构信息")
+    @GetMapping("/feign/platform/sys/office/info/code")
+    R<SysOfficeVO> infoCode(@RequestParam("type") String type, @RequestParam("code") String code);
+
+    @ApiOperation("获取组织结构信息")
     @GetMapping("/platform/sys/office/sysOfficeInfo/{id}")
     R<SysOfficeVO> sysOfficeInfo(@PathVariable("id") Integer id);
 

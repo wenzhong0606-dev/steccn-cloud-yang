@@ -2,6 +2,7 @@ package com.steccn.platform.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -264,6 +266,20 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeVO);
     }
 
+    @ApiOperation("获取组织结构信息")
+    @GetMapping("/info/code")
+    R<SysOfficeVO> infoCode(@RequestParam("type") String type, @RequestParam("code") String code) {
+        SysOfficeVO resVo = null;
+        SysOffice model = sysOfficeService.getOne(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, type)
+                .eq(SysOffice::getOfficeCode, code));
+        if (Objects.nonNull(model)) {
+            resVo = new SysOfficeVO();
+            BeanUtils.copyProperties(model, resVo);
+        }
+        return R.success(resVo);
+    }
+    
     /**
      * 0基片 1车间
      * @param type

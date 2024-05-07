@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -59,6 +60,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -732,6 +734,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
     @Override
+    public Map<String, BigDecimal> sjgInStorageUnit(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> wsIdSet, Integer bit , String unit) {
+        SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sqSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(pieceSysDict, "片单位不存在");
+        Assert.notNull(sqSysDict, "转换单位不存在");
+        return operateDriverInStorage(granularity, start, end, wsIdSet, bit, pieceSysDict, sqSysDict);
+    }
+
+    @Override
     public Map<String, BigDecimal> jpInStorage(QtManagerConstant.QtGranularityEnum granularity, LocalDate start, LocalDate end, Set<Integer> lineIdSet, int bit) {
         SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysDictVO tonSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -758,7 +769,13 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         List<SysOfficeVO> lineList = pmsOfficeManager.getChildren(wsIdSet, SysOfficeConstant.PRODUCT_LINE);
         Assert.notNull(lineList, "制造部下暂无产线");
         Set<Integer> lineIdSet = lineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        return sjgInStorage(granularity, dto.getStart(), dto.getEnd(), lineIdSet, 2);
+        String unit;
+        if(StrUtil.isNotBlank(dto.getUnit())){
+             unit = dto.getUnit();
+        }else{
+            unit = PmManagerConstant.MEASURE_UNIT_SM;
+        }
+        return sjgInStorageUnit(granularity, dto.getStart(), dto.getEnd(), lineIdSet, 2 , unit);
     }
 
     /**
