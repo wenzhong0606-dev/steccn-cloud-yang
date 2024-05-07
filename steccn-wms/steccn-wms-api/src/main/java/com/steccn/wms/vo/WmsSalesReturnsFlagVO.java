@@ -3,6 +3,8 @@ package com.steccn.wms.vo;
 import com.steccn.wms.constant.WmsManagerConstant;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 /**
  * 销售退货入库标识
  */
@@ -20,5 +22,18 @@ public class WmsSalesReturnsFlagVO {
      * 已退货/已补发？
      */
     private Integer returnedState = WmsManagerConstant.YesOrNo.NO.getCode();
+
+
+    /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 退货片数
+     */
+    private BigDecimal qty;
+
+
 
 }

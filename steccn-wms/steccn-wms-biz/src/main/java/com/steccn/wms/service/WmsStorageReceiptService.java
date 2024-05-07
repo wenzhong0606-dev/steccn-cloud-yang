@@ -211,7 +211,7 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
 
     /**
-     * 销售退货入库获取物流单相关标识
+     * 销售入库获取物流单相关标识
      * @param number
      * @return
      */
@@ -225,4 +225,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     List<WmsStorageReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds);
 
     List<WmsStorageReceiptInfoVO> intervalDataVO(LocalDateTime morningStartTime, LocalDateTime nightStartTime);
+
+    String salesReturns(WmsSalesReturnsDTO wmsSalesReturnsDTO);
 }
