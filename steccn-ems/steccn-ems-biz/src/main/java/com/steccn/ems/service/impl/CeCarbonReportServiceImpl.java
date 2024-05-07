@@ -25,6 +25,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -65,16 +68,54 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         contentList.addAll(convert(dateList, "化石燃料", valueList2));
         contentList.addAll(convert(dateList, "生产原料", valueList3));
         contentList.addAll(convert(dateList, "电力", Lists.newArrayList(new TupleDTO<>("净购入电力", electricMap))));
-
+        //添加总计
+        if (CollUtil.isNotEmpty(contentList)) {
+            List<BigDecimal> sumValueList = Lists.newArrayList();
+            for (int i = 1; i < dateList.size(); i++) {
+                int finalI = i;
+                List<BigDecimal> collect = contentList.stream().filter(ele -> ele.getType() != 0).flatMap(ele -> Stream.of(ele.getValueList().get(finalI - 1))).collect(Collectors.toList());
+                sumValueList.add(BigDecimalUtil.setScale(BigDecimalUtil.sum(collect), 2));
+            }
+            CeCarbonSumReportListVO sum = new CeCarbonSumReportListVO();
+            sum.setCategoryName("总计（吨）");
+            sum.setType(3);
+            sum.setDetailName("总计（吨）");
+            sum.setValueList(sumValueList);
+            sum.setSum(BigDecimalUtil.setScale(BigDecimalUtil.sum(sumValueList), 2));
+            contentList.add(sum);
+        }
         return resVo;
     }
 
+    @Override
+    public CeCarbonSumReportVO carbonStrongReport(LocalDate start, LocalDate end, Integer granularity) {
+        CeCarbonSumReportVO resVo = new CeCarbonSumReportVO();
+        CeCarbonSumReportVO sumVo = carbonSumReport(start, end, granularity);
+        resVo.setHeadList(sumVo.getHeadList());
+        if (CollUtil.isNotEmpty(sumVo.getContentList())) {
+
+        }
+        return resVo;
+    }
+
+    /**
+     * 转换数据
+     *
+     * @param dateList     日期集合
+     * @param categoryName 类别集合
+     * @param dataList     数据集合
+     * @return
+     */
     public List<CeCarbonSumReportListVO> convert(List<LocalDate> dateList, String categoryName, List<TupleDTO<String, Map<LocalDate, BigDecimal>>> dataList) {
         List<CeCarbonSumReportListVO> resList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dataList)) {
             for (TupleDTO<String, Map<LocalDate, BigDecimal>> data : dataList) {
                 CeCarbonSumReportListVO resVo = new CeCarbonSumReportListVO();
                 List<BigDecimal> valueList = Lists.newArrayList();
+                resVo.setType(0);
+                if (categoryName.contains("电力")) {
+                    resVo.setType(2);
+                }
                 resVo.setValueList(valueList);
                 resVo.setCategoryName(categoryName);
                 resVo.setDetailName(data.getField1());
@@ -107,6 +148,7 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             for (int i = 1; i < dateList.size(); i++) {
                 totalValueList.add(BigDecimalUtil.setScale(totalDateMap.get(i - 1), 2));
             }
+            total.setType(1);
             total.setCategoryName("合计（单类别）");
             total.setDetailName("合计（单类别）");
             total.setValueList(totalValueList);

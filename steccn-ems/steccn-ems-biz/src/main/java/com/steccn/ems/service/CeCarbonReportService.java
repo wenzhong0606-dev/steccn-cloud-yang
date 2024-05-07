@@ -21,4 +21,14 @@ public interface CeCarbonReportService {
      * @return
      */
     CeCarbonSumReportVO carbonSumReport(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 碳排放强度报表
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    CeCarbonSumReportVO carbonStrongReport(LocalDate start, LocalDate end, Integer granularity);
 }

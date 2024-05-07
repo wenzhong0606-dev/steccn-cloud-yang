@@ -16,6 +16,11 @@ public class CeCarbonSumReportListVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 类型
+     */
+    private Integer type;
+
+    /**
      * 类别
      */
     private String categoryName;

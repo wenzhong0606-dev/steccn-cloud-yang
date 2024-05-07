@@ -28,7 +28,13 @@ public class CeCarbonReportController {
     @PostMapping("/sum/report")
     @ApiOperation(value = "碳排放总量报表")
     public R<CeCarbonSumReportVO> carbonSumReport(@RequestBody CeCarbonReportDTO dto) {
-        return R.success(ceCarbonReportService.carbonSumReport(dto.getStart(),dto.getEnd(),dto.getGranularity()));
+        return R.success(ceCarbonReportService.carbonSumReport(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
+
+    @PostMapping("/strong/report")
+    @ApiOperation(value = "碳排放强度报表")
+    public R<CeCarbonSumReportVO> carbonStrongReport(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.carbonStrongReport(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
 }
