@@ -1,5 +1,6 @@
 package com.steccn.mes.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 /**
@@ -9,7 +10,7 @@ import lombok.Data;
  * @date 2024/05/06
  */
 @Data
-public class EqpOperationReportDTO {
+public class EqpOperationReportDTO extends BasePageDTO {
     /**
      * 设备编码
      */

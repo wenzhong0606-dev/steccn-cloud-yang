@@ -1,5 +1,6 @@
 package com.steccn.mes.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.mes.domain.MesEqpReport;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.mes.dto.EqpOperationReportDTO;
@@ -19,5 +20,5 @@ public interface MesEqpReportService extends IService<MesEqpReport> {
      * @param dto
      * @return
      */
-    List<EqpOperationReportVO> queryReport(EqpOperationReportDTO dto);
+    Page<EqpOperationReportVO> queryReport(EqpOperationReportDTO dto);
 }

@@ -1,7 +1,10 @@
 package com.steccn.mes.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
@@ -15,6 +18,7 @@ import com.steccn.mes.mapper.MesEqpReportMapper;
 import com.steccn.mes.vo.EqpOperationReportVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.vo.OaUserVO;
+import com.steccn.qms.vo.QtCustomerComplainVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,33 +38,34 @@ public class MesEqpReportServiceImpl extends ServiceImpl<MesEqpReportMapper, Mes
     private final MesEqpReportMapper mesEqpReportMapper;
 
     @Override
-    public List<EqpOperationReportVO> queryReport(EqpOperationReportDTO dto) {
-        List<EqpOperationReportVO> results = mesEqpReportMapper.selectJoinList(EqpOperationReportVO.class,
-                new MPJLambdaWrapper<EqpOperationReportVO>()
-                        .selectAs(MesEquipment::getEquipmentCode, EqpOperationReportVO::getEqpCode)
-                        .selectAs(MesEquipment::getEquipmentName, EqpOperationReportVO::getEqpName)
-                        .selectAs(MesEquipment::getState, EqpOperationReportVO::getState)
-                        .selectAs(MesEqpClassification::getName,EqpOperationReportVO::getClsName)
-                        .selectAs(JsSysOffice::getOfficeName, EqpOperationReportVO::getOfficeName)
-                        .selectAs(MesEqpReport::getStartPeriod, EqpOperationReportVO::getStartPeriod)
-                        .selectAs(MesEqpReport::getStartPeriodAll,EqpOperationReportVO::getStartPeriodAll)
-                        .selectAs(MesEqpReport::getStopPeriod,EqpOperationReportVO::getStopPeriod)
-                        .selectAs(MesEqpReport::getMaxStartPeriod, EqpOperationReportVO::getMaxStartPeriod)
-                        .selectAs(MesEqpReport::getMinStartPeriod, EqpOperationReportVO::getMinStartPeriod)
-                        .leftJoin(MesEquipment.class, MesEquipment::getId, MesEqpReport::getEqpId)
-                        .leftJoin(MesEquipment.class, MesEquipment::getClassification, MesEqpClassification::getId)
-                        .leftJoin(MesEquipment.class, MesEquipment::getDepartment, JsSysOffice::getOfficeCode)
-//                        .ne(Hrmresource::getStatus, OaConstant.NUM_5)
-                        .like(StrUtil.isNotBlank(dto.getEqpCode()),MesEquipment::getEquipmentCode,dto.getEqpCode())
-                        .like(StrUtil.isNotBlank(dto.getEqpName()),MesEquipment::getEquipmentName,dto.getEqpName())
-                        .eq(StrUtil.isNotBlank(dto.getDepartmentCode()),MesEquipment::getDepartment,dto.getDepartmentCode())
-                        .eq(StrUtil.isNotBlank(dto.getClsCode()),MesEquipment::getClassification,dto.getClsCode())
-                        .eq(Objects.nonNull(dto.getState()),MesEquipment::getState,dto.getState())
-                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-        if(CollUtil.isEmpty(results)){
-            return Lists.newArrayList();
-        }
-        return results;
+    public Page<EqpOperationReportVO> queryReport(EqpOperationReportDTO dto) {
+        //1.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //2.查询分页数据
+        IPage<EqpOperationReportVO> resPage = mesEqpReportMapper.selectJoinPage(page, EqpOperationReportVO.class, new MPJLambdaWrapper<EqpOperationReportVO>()
+                .selectAs(MesEquipment::getEquipmentCode, EqpOperationReportVO::getEqpCode)
+                .selectAs(MesEquipment::getId, EqpOperationReportVO::getEqpId)
+                .selectAs(MesEquipment::getEquipmentName, EqpOperationReportVO::getEqpName)
+                .selectAs(MesEquipment::getState, EqpOperationReportVO::getState)
+                .selectAs(MesEqpClassification::getName,EqpOperationReportVO::getClsName)
+                .selectAs(JsSysOffice::getOfficeName, EqpOperationReportVO::getOfficeName)
+                .selectAs(MesEqpReport::getStartPeriod, EqpOperationReportVO::getStartPeriod)
+                .selectAs(MesEqpReport::getStartPeriodAll,EqpOperationReportVO::getStartPeriodAll)
+                .selectAs(MesEqpReport::getStopPeriod,EqpOperationReportVO::getStopPeriod)
+                .selectAs(MesEqpReport::getMaxStartPeriod, EqpOperationReportVO::getMaxStartPeriod)
+                .selectAs(MesEqpReport::getMinStartPeriod, EqpOperationReportVO::getMinStartPeriod)
+                .leftJoin(MesEquipment.class, MesEquipment::getId, MesEqpReport::getEqpId)
+                .leftJoin(MesEqpClassification.class, MesEqpClassification::getId,MesEquipment::getClassification)
+                .leftJoin(JsSysOffice.class, JsSysOffice::getOfficeCode,MesEquipment::getDepartment)
+                .like(StrUtil.isNotBlank(dto.getEqpCode()),MesEquipment::getEquipmentCode,dto.getEqpCode())
+                .like(StrUtil.isNotBlank(dto.getEqpName()),MesEquipment::getEquipmentName,dto.getEqpName())
+                .eq(StrUtil.isNotBlank(dto.getDepartmentCode()),MesEquipment::getDepartment,dto.getDepartmentCode())
+                .eq(StrUtil.isNotBlank(dto.getClsCode()),MesEquipment::getClassification,dto.getClsCode())
+                .eq(Objects.nonNull(dto.getState()),MesEquipment::getState,dto.getState())
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+        //3.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        return page;
     }
 }
 

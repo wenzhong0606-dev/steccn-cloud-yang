@@ -2,6 +2,7 @@ package com.steccn.mes.controller;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
@@ -100,7 +101,7 @@ public class MesEqpController {
 
     @PostMapping("/operation/report")
     @ApiOperation(value = "获取设备运行报表")
-    public R<List<EqpOperationReportVO>> getOperationReport(@RequestBody EqpOperationReportDTO dto) {
+    public R<Page<EqpOperationReportVO>> getOperationReport(@RequestBody EqpOperationReportDTO dto) {
         return R.success(mesEqpReportService.queryReport(dto));
     }
 

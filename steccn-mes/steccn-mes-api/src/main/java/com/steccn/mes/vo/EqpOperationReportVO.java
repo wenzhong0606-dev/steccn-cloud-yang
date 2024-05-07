@@ -13,6 +13,10 @@ import java.math.BigDecimal;
 @Data
 public class EqpOperationReportVO {
     /**
+     * 设备Id
+     */
+    private Long eqpId;
+    /**
      * 设备编码
      */
     private String eqpCode;
