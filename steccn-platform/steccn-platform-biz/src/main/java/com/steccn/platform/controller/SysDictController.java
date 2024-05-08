@@ -33,6 +33,12 @@ public class SysDictController {
         return R.success(sysDictService.sysList(type));
     }
 
+    @GetMapping("/unAuth")
+    @ApiOperation("数据字典")
+    public R<List<SysDictVO>> unAuthList(@ApiParam("类型编码") @RequestParam("type") String type) {
+        return R.success(sysDictService.sysList(type));
+    }
+
     @GetMapping("/filter")
     @ApiOperation("数据字典-过滤版")
     public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam(value = "name", required = false) String name) {

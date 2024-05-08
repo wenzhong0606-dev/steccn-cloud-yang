@@ -178,6 +178,13 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.salesReturnsFlag(number));
     }
 
+
+    @ApiOperation("销售退货")
+    @PostMapping("/sales/returns")
+    public R<String> salesReturns(@RequestBody WmsSalesReturnsDTO wmsSalesReturnsDTO){
+        return R.success(wmsStorageReceiptService.salesReturns(wmsSalesReturnsDTO));
+    }
+
     @ApiOperation("采购入库单明细")
     @PostMapping("/sales/page")
     public R<Page<WmsSalesDeliveryVO>> salesDeliveryPage(@RequestBody WmsDeliveryOrderDTO dto){

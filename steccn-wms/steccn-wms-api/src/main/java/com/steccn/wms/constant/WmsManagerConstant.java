@@ -17,6 +17,8 @@ public interface WmsManagerConstant {
 
     String SERVER_CODE1 = "query_logistics";
 
+    String SERVER_CODE2 = "return_order";
+
     /**
      * 柱状图标识
      */
@@ -68,6 +70,7 @@ public interface WmsManagerConstant {
 
     String CODE_TWO = "2";
 
+    String CODE_THREE = "3";
 
     String CODE_FOUR = "4";
 

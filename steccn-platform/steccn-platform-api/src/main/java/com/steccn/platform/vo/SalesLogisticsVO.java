@@ -50,6 +50,10 @@ public class SalesLogisticsVO {
      * 发货数量 片
      */
     private Integer sale_qty;
+    /**
+     * 退货入库单专用数量
+     */
+    private BigDecimal qty;
 
     /**
      * 面积 平方米

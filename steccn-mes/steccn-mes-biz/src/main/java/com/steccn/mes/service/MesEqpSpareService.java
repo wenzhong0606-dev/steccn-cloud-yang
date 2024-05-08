@@ -4,6 +4,7 @@ import com.steccn.mes.domain.MesEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.vo.MesSpareDownloadVO;
+import com.steccn.mes.vo.MesSpareSupplierVO;
 
 import java.util.List;
 
@@ -44,4 +45,6 @@ public interface MesEqpSpareService extends IService<MesEqpSpare> {
      * @return
      */
     Boolean synchronousSpareToQms();
+
+    List<MesSpareSupplierVO> querySpareSupplier(String code);
 }

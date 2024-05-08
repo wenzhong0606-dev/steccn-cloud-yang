@@ -2,11 +2,15 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
@@ -18,12 +22,16 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
+import com.steccn.mes.dto.SrmQueryDTO;
+import com.steccn.mes.vo.MesSpareSupplierVO;
+import com.steccn.mes.vo.SrmSupplierVO;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
+import com.steccn.pms.config.SrmUrl;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.*;
@@ -45,6 +53,7 @@ import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import reactor.util.function.Tuple5;
@@ -89,6 +98,9 @@ public class ReportServiceImpl implements ReportService {
     private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final RemoteSrmFeignApi remoteSrmFeignApi;
+    private final SrmUrl srmConfig;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -1853,6 +1865,52 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>> > rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate) {
         //获取计划数（等待采购数据）
+//        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
+//        if(StrUtil.isBlank(srmToken)){
+//            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
+//        }
+//        Map<String,String> headers = Maps.newHashMap();
+//        headers.put("Authorization",srmToken);
+//        SrmQueryDTO dto = new SrmQueryDTO();
+//        dto.setItemCodes(com.google.common.collect.Lists.newArrayList("01.01.0001","01.03.0001","01.02.0001","01.04.0001","01.09.0001","01.05.0002","01.20.0001"));
+//        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v2p/rest/invoke/U1JNOk9BX1RPX1NSTV9JVEVNX1E6c3JtLXBybS5vYS1pdGVtLXF1YW50aXR5LXF1ZXJ5LmdldEl0ZW1RdWFudGl0eQ==").addHeaders(headers).body(new cn.hutool.json.JSONObject(dto).toString()).execute().body();
+//        JSONObject payloadObj = JSONObject.parseObject(result).getJSONObject("payload");
+//        if(payloadObj.getString("responseStatus").equals("ERROR")){
+//            throw new BusinessException(payloadObj.getString("responseMessage"));
+//        }
+//        if(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseStatus").equals("ERROR")){
+//            throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
+//        }
+//        List<SrmSupplierVO> results = payloadObj.getJSONArray("itemQuantitys").getJSONObject(0).getJSONArray("suppliers").toJavaList(SrmSupplierVO.class);
+//        Map<String,BigDecimal> supplierCountMap = Maps.newHashMap();
+//        if(CollUtil.isNotEmpty(results)){
+//            for(SrmSupplierVO tmp:results){
+//                switch (tmp.getItemCode()){
+//                    case "01.01.0001":
+//                        supplierCountMap.put("石英砂（低铁硅砂）",tmp.getPrQuantity());
+//                        break;
+//                    case "01.03.0001":
+//                        supplierCountMap.put("白云石（普通白云石）",tmp.getPrQuantity());
+//                        break;
+//                    case "01.02.0001":
+//                        supplierCountMap.put("纯碱",tmp.getPrQuantity());
+//                        break;
+//                    case "01.04.0001":
+//                        supplierCountMap.put("石灰石",tmp.getPrQuantity());
+//                        break;
+//                    case "01.09.0001":
+//                        supplierCountMap.put("复合澄清剂",tmp.getPrQuantity());
+//                        break;
+//                    case "01.05.0002":
+//                        supplierCountMap.put("三氧化二铝",tmp.getPrQuantity());
+//                        break;
+//                    case "01.20.0001":
+//                        supplierCountMap.put("碎玻璃（外购）",tmp.getPrQuantity());
+//                        break;
+//
+//                }
+//            }
+//        }
         //获取到货数（入库管理 采购入库数据）
         List<String> materialNames = Arrays.asList("石英砂（低铁硅砂）","纯碱","石灰石","白云石（普通白云石）","三氧化二铝","复合澄清剂","小料","碎玻璃（外购）");
         RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();

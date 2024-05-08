@@ -49,6 +49,16 @@ public interface RemoteSalesFeignApi {
     String queryLogistics(@RequestBody SalesLogisticsDTO dto);
 
     /**
+     * 查询退货单接口
+     * @param dto
+     * @return
+     */
+    @PostMapping("/query/return_order")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String queryReturnOrder(@RequestBody SalesReturnOrderDTO dto);
+
+    /**
      * 同步物流单
      * @param dto
      * @return
@@ -57,6 +67,16 @@ public interface RemoteSalesFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String syncLogistics(@RequestBody SalesLogisticsSyncDTO dto);
+
+    /**
+     * 同步退货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/entry/stock_order")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String syncReturnOrder(@RequestBody SalesReturnOrderSyncDTO dto);
 
     /**
      * 查询合同图表

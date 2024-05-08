@@ -1715,18 +1715,17 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     public WmsSalesReturnsFlagVO salesReturnsFlag(String number) {
         WmsSalesReturnsFlagVO wmsSalesReturnsFlagVO = new WmsSalesReturnsFlagVO();
         //调用物流单明细查询接口
-        SalesLogisticsDTO dto = new SalesLogisticsDTO();
-        dto.setServer_code(WmsManagerConstant.SERVER_CODE1);
-        List<String> codes = Lists.newArrayList();
-        codes.add(number);
-        dto.setCode(codes);
-        String data = remoteSalesFeignApi.queryLogistics(dto);
+        SalesReturnOrderDTO dto = new SalesReturnOrderDTO();
+        dto.setServer_code(WmsManagerConstant.SERVER_CODE2);
+        dto.setCode(number);
+        String data = remoteSalesFeignApi.queryReturnOrder(dto);
         JSONObject jsonObject = JSONObject.parseObject(data);
         try {
             List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
             if (CollUtil.isNotEmpty(logisticsVOS)){
                 wmsSalesReturnsFlagVO.setExists(WmsManagerConstant.YesOrNo.YES.getCode());
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
+                wmsSalesReturnsFlagVO.setMaterialName(salesLogisticsVO.getProduct_name());
                 String state = salesLogisticsVO.getState();
                 if (WmsManagerConstant.LogisticsBillState.RETURNED.getName().equals(state) ||
                         WmsManagerConstant.LogisticsBillState.REISSUED.getName().equals(state)){
@@ -1747,6 +1746,29 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     public List<WmsStorageReceiptInfoVO> intervalDataVO(LocalDateTime morningStartTime, LocalDateTime nightStartTime) {
         return  this.baseMapper.intervalDataVO(morningStartTime,nightStartTime);
+    }
+
+    @Override
+    public String salesReturns(WmsSalesReturnsDTO wmsSalesReturnsDTO) {
+
+        WmsStorageReceiptDTO wmsStorageReceiptDTO = new WmsStorageReceiptDTO();
+        wmsStorageReceiptDTO.setSourceCode(wmsStorageReceiptDTO.getSourceCode());
+        wmsStorageReceiptDTO.setComeTime(LocalDateTime.now());
+        wmsStorageReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
+        //获取创建入库单的类型
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_THREE, WmsManagerConstant.WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        wmsStorageReceiptDTO.setType(sysDictVO.getId());
+        wmsStorageReceiptDTO.setWarehouseId(wmsSalesReturnsDTO.getWarehouseId());
+        wmsStorageReceiptDTO.setList(wmsSalesReturnsDTO.getList());
+        //创建入库单
+        String order = createOrder(wmsStorageReceiptDTO);
+        //销售同步
+        SalesReturnOrderSyncDTO salesReturnOrderSyncDTO = new SalesReturnOrderSyncDTO();
+        salesReturnOrderSyncDTO.setStock_order(order);
+        salesReturnOrderSyncDTO.setServer_code(WmsManagerConstant.SERVER_CODE2);
+        salesReturnOrderSyncDTO.setLogistics_code(wmsSalesReturnsDTO.getSourceCode());
+        remoteSalesFeignApi.syncReturnOrder(salesReturnOrderSyncDTO);
+        return order;
     }
 
     /**

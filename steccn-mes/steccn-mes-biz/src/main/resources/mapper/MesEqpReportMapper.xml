@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEqpReportMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEqpReport">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="eqpId" column="eqp_id" jdbcType="BIGINT"/>
+            <result property="startPeriod" column="start_period" jdbcType="DECIMAL"/>
+            <result property="startPeriodAll" column="start_period_all" jdbcType="DECIMAL"/>
+            <result property="stopPeriod" column="stop_period" jdbcType="DECIMAL"/>
+            <result property="maxStartPeriod" column="max_start_period" jdbcType="DECIMAL"/>
+            <result property="minStartPeriod" column="min_start_period" jdbcType="DECIMAL"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,eqp_id,start_period,
+        start_period_all,stop_period,max_start_period,
+        min_start_period,create_time,update_time,
+        del_flag
+    </sql>
+</mapper>
