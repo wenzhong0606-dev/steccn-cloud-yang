@@ -852,9 +852,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                             wmsInventoryList.add(wmsInventory);
                         }
                         wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
-
                     }
-
                 }
                 System.out.println("库存:" + wmsInventoryList.size());
 //                保存库存信息
@@ -1480,11 +1478,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //获取出库类型
                 SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_FOUR, WmsManagerConstant.OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 //                // 获取库存中物料的库存信息
-                Set<Long> materialId = list.stream().map(WmsStorageReceiptInfoVO::getMaterialId).collect(Collectors.toSet());
-                Map<Long, List<WmsInventory>> inventoryMap = wmsInventoryService.inventoryMap(materialId);
+//                Set<Long> materialId = list.stream().map(WmsStorageReceiptInfoVO::getMaterialId).collect(Collectors.toSet());
+//                Map<Long, List<WmsInventory>> inventoryMap = wmsInventoryService.inventoryMap(materialId);
                 //根据箱号获取库存中的物料信息
-//                Set<String> caseNos = list.stream().map(WmsStorageReceiptInfoVO::getCaseNo).collect(Collectors.toSet());
-//                Map<String, WmsInventory> inventoryMap =  wmsInventoryService.inventoryMapByCaseNos(caseNos);
+                Set<String> caseNos = list.stream().map(WmsStorageReceiptInfoVO::getCaseNo).collect(Collectors.toSet());
+                Map<String, WmsInventory> inventoryMap =  wmsInventoryService.inventoryMapByCaseNos(caseNos);
                 // 获取库存中物料的库存信息
 //                Set<Long> materialId = list.stream().map(WmsStorageReceiptInfoVO::getMaterialId).collect(Collectors.toSet());
 //                Map<Long, List<WmsInventory>> inventoryMap = wmsInventoryService.inventoryMap(materialId);
@@ -1499,70 +1497,121 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsInventoryRecord> wmsInventoryRecordList = Lists.newArrayList();
                 for (WmsStorageReceiptInfoVO info : list) {
                     //处理库存数据
-                    List<WmsInventory> inventoryList = inventoryMap.get(info.getMaterialId());
-                    Assert.isTrue(CollUtil.isNotEmpty(inventoryList), info.getMaterialName() + "库存不足,冲销失败");
-                    //过滤可用库存为O的数据
-                  inventoryList = inventoryList.stream()
-                            .filter(inventory -> inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
-                            .collect(Collectors.toList());
+//                    List<WmsInventory> inventoryList = inventoryMap.get(info.getMaterialId());
+                    WmsInventory inventory = inventoryMap.get(info.getCaseNo());
                     BigDecimal quantity = info.getQuantity();
-                    for (WmsInventory inventory : inventoryList) {
-                        if (quantity.compareTo(BigDecimal.ZERO) == 0) {
-                            break;
-                        }
-                        //库存变动记录
-                        WmsInventoryRecord wmsInventoryRecord = new WmsInventoryRecord();
-                        wmsInventoryRecord.setMaterialId(inventory.getMaterialId());
-                        wmsInventoryRecord.setMaterialName(inventory.getMaterialName());
-                        wmsInventoryRecord.setType(incomingType.getId());
-                        wmsInventoryRecord.setCode(wmsStorageReceiptVO.getCode());
-                        wmsInventoryRecord.setWarehouseId(inventory.getWarehouseId());
-                        wmsInventoryRecord.setShelfId(inventory.getShelfId());
-                        //变动前
-                        //变动前
-                        wmsInventoryRecord.setFrontAvailableQuantity(inventory.getAvailableQuantity());
-                        wmsInventoryRecord.setFrontStockQuantity(inventory.getStockQuantity());
-                        wmsInventoryRecord.setFrontLockQuantity(inventory.getLockQuantity());
-                        wmsInventoryRecord.setFrontTotalQuantity(inventory.getTotalQuantity());
+                    Assert.isTrue(Objects.nonNull(inventory) && quantity.compareTo(inventory.getAvailableQuantity()) <= 0, info.getMaterialName() + "库存不足,冲销失败");
+//                    //过滤可用库存为O的数据
+//                  inventoryList = inventoryList.stream()
+//                            .filter(inventory -> inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
+//                            .collect(Collectors.toList());
+                    WmsInventoryRecord wmsInventoryRecord = new WmsInventoryRecord();
+                    wmsInventoryRecord.setMaterialId(inventory.getMaterialId());
+                    wmsInventoryRecord.setMaterialName(inventory.getMaterialName());
+                    wmsInventoryRecord.setType(incomingType.getId());
+                    wmsInventoryRecord.setCode(wmsStorageReceiptVO.getCode());
+                    wmsInventoryRecord.setWarehouseId(inventory.getWarehouseId());
+                    wmsInventoryRecord.setShelfId(inventory.getShelfId());
+                    //变动前
+                    //变动前
+                    wmsInventoryRecord.setFrontAvailableQuantity(inventory.getAvailableQuantity());
+                    wmsInventoryRecord.setFrontStockQuantity(inventory.getStockQuantity());
+                    wmsInventoryRecord.setFrontLockQuantity(inventory.getLockQuantity());
+                    wmsInventoryRecord.setFrontTotalQuantity(inventory.getTotalQuantity());
 
-                        WmsInventory wmsInventory = new WmsInventory();
-                        WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfoDTO();
-                        BeanUtil.copyProperties(inventory, wmsInventory);
-                        wmsDeliveryReceiptInfo.setInventoryId(inventory.getId());
-                        wmsDeliveryReceiptInfo.setMaterialId(inventory.getMaterialId());
-                        if (quantity.compareTo(inventory.getAvailableQuantity()) <= 0) {
-                            //变动数量
-                            wmsInventoryRecord.setVariableQuantity(quantity);
-                            //变动后
-                            wmsInventoryRecord.setBackAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
-                            wmsInventoryRecord.setBackStockQuantity(inventory.getStockQuantity());
-                            wmsInventoryRecord.setBackTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
-                            wmsInventoryRecord.setBackLockQuantity(inventory.getLockQuantity());
+                    WmsInventory wmsInventory = new WmsInventory();
+                    WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfoDTO();
+                    BeanUtil.copyProperties(inventory, wmsInventory);
+                    wmsDeliveryReceiptInfo.setInventoryId(inventory.getId());
+                    wmsDeliveryReceiptInfo.setMaterialId(inventory.getMaterialId());
+                    if (quantity.compareTo(inventory.getAvailableQuantity()) <= 0) {
+                        //变动数量
+                        wmsInventoryRecord.setVariableQuantity(quantity);
+                        //变动后
+                        wmsInventoryRecord.setBackAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
+                        wmsInventoryRecord.setBackStockQuantity(inventory.getStockQuantity());
+                        wmsInventoryRecord.setBackTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
+                        wmsInventoryRecord.setBackLockQuantity(inventory.getLockQuantity());
 
-                            wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
-                            wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
-                            wmsDeliveryReceiptInfo.setQuantity(quantity);
-                            quantity = BigDecimal.ZERO;
-                        } else {
-                            //变动数量
-                            wmsInventoryRecord.setVariableQuantity(inventory.getAvailableQuantity());
-                            //变动后
-                            wmsInventoryRecord.setBackAvailableQuantity(BigDecimal.ZERO);
-                            wmsInventoryRecord.setBackStockQuantity(inventory.getStockQuantity());
-                            wmsInventoryRecord.setBackTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
-                            wmsInventoryRecord.setBackLockQuantity(inventory.getLockQuantity());
-                            quantity = quantity.subtract(inventory.getAvailableQuantity());
-                            wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
-                            wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
-                            wmsDeliveryReceiptInfo.setQuantity(inventory.getAvailableQuantity());
-                        }
-                        if (wmsInventoryRecord.getVariableQuantity().compareTo(BigDecimal.ZERO)>0) {
-                            wmsInventoryRecordList.add(wmsInventoryRecord);
-                        }
-                        wmsInventoryList.add(wmsInventory);
-                        infoDTOList.add(wmsDeliveryReceiptInfo);
+                        wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
+                        wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
+                        wmsDeliveryReceiptInfo.setQuantity(quantity);
+                        quantity = BigDecimal.ZERO;
+                    } else {
+                        //变动数量
+                        wmsInventoryRecord.setVariableQuantity(inventory.getAvailableQuantity());
+                        //变动后
+                        wmsInventoryRecord.setBackAvailableQuantity(BigDecimal.ZERO);
+                        wmsInventoryRecord.setBackStockQuantity(inventory.getStockQuantity());
+                        wmsInventoryRecord.setBackTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
+                        wmsInventoryRecord.setBackLockQuantity(inventory.getLockQuantity());
+                        quantity = quantity.subtract(inventory.getAvailableQuantity());
+                        wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
+                        wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
+                        wmsDeliveryReceiptInfo.setQuantity(inventory.getAvailableQuantity());
                     }
+                    if (wmsInventoryRecord.getVariableQuantity().compareTo(BigDecimal.ZERO)>0) {
+                        wmsInventoryRecordList.add(wmsInventoryRecord);
+                    }
+                    wmsInventoryList.add(wmsInventory);
+                    infoDTOList.add(wmsDeliveryReceiptInfo);
                 }
+//                    for (WmsInventory inventory : inventoryList) {
+//                        if (quantity.compareTo(BigDecimal.ZERO) == 0) {
+//                            break;
+//                        }
+//                        //库存变动记录
+//                        WmsInventoryRecord wmsInventoryRecord = new WmsInventoryRecord();
+//                        wmsInventoryRecord.setMaterialId(inventory.getMaterialId());
+//                        wmsInventoryRecord.setMaterialName(inventory.getMaterialName());
+//                        wmsInventoryRecord.setType(incomingType.getId());
+//                        wmsInventoryRecord.setCode(wmsStorageReceiptVO.getCode());
+//                        wmsInventoryRecord.setWarehouseId(inventory.getWarehouseId());
+//                        wmsInventoryRecord.setShelfId(inventory.getShelfId());
+//                        //变动前
+//                        //变动前
+//                        wmsInventoryRecord.setFrontAvailableQuantity(inventory.getAvailableQuantity());
+//                        wmsInventoryRecord.setFrontStockQuantity(inventory.getStockQuantity());
+//                        wmsInventoryRecord.setFrontLockQuantity(inventory.getLockQuantity());
+//                        wmsInventoryRecord.setFrontTotalQuantity(inventory.getTotalQuantity());
+//
+//                        WmsInventory wmsInventory = new WmsInventory();
+//                        WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfoDTO();
+//                        BeanUtil.copyProperties(inventory, wmsInventory);
+//                        wmsDeliveryReceiptInfo.setInventoryId(inventory.getId());
+//                        wmsDeliveryReceiptInfo.setMaterialId(inventory.getMaterialId());
+//                        if (quantity.compareTo(inventory.getAvailableQuantity()) <= 0) {
+//                            //变动数量
+//                            wmsInventoryRecord.setVariableQuantity(quantity);
+//                            //变动后
+//                            wmsInventoryRecord.setBackAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
+//                            wmsInventoryRecord.setBackStockQuantity(inventory.getStockQuantity());
+//                            wmsInventoryRecord.setBackTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
+//                            wmsInventoryRecord.setBackLockQuantity(inventory.getLockQuantity());
+//
+//                            wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(quantity));
+//                            wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(quantity));
+//                            wmsDeliveryReceiptInfo.setQuantity(quantity);
+//                            quantity = BigDecimal.ZERO;
+//                        } else {
+//                            //变动数量
+//                            wmsInventoryRecord.setVariableQuantity(inventory.getAvailableQuantity());
+//                            //变动后
+//                            wmsInventoryRecord.setBackAvailableQuantity(BigDecimal.ZERO);
+//                            wmsInventoryRecord.setBackStockQuantity(inventory.getStockQuantity());
+//                            wmsInventoryRecord.setBackTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
+//                            wmsInventoryRecord.setBackLockQuantity(inventory.getLockQuantity());
+//                            quantity = quantity.subtract(inventory.getAvailableQuantity());
+//                            wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(inventory.getAvailableQuantity()));
+//                            wmsInventory.setAvailableQuantity(BigDecimal.ZERO);
+//                            wmsDeliveryReceiptInfo.setQuantity(inventory.getAvailableQuantity());
+//                        }
+//                        if (wmsInventoryRecord.getVariableQuantity().compareTo(BigDecimal.ZERO)>0) {
+//                            wmsInventoryRecordList.add(wmsInventoryRecord);
+//                        }
+//                        wmsInventoryList.add(wmsInventory);
+//                        infoDTOList.add(wmsDeliveryReceiptInfo);
+//                    }
                 wmsDeliveryReceiptDTO.setList(infoDTOList);
                 //生成出库单并自动确认
                 wmsDeliveryReceiptService.createAndAffirm(wmsDeliveryReceiptDTO, userName);
@@ -1574,7 +1623,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 WmsStorageReceipt receipt = getById(id);
                 receipt.setStatus(WmsManagerConstant.OrderStateEnum.FIVE.getCode());
                 updateById(receipt);
-            }
+                }
         } finally {
             lock.unlock();
         }

@@ -112,6 +112,8 @@ public interface WmsManagerConstant {
         ALREADY_ENTERED("已入场"),
         OUT_OF_STORAGE("已出库"),
         RETURNED("已退货"),
+        TO_BE_REPLACED("待补发"),
+        TO_BE_CONFIRMED("待确认"),
         REISSUED("已补发");
 
         private String name;
