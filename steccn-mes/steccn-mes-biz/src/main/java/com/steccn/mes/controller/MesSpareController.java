@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.mes.dto.ErpCustomerDTO;
 import com.steccn.mes.service.MesEqpSpareService;
 import com.steccn.mes.vo.MesSpareDownloadVO;
+import com.steccn.mes.vo.MesSpareSupplierVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.List;
 
 /**
  * 类说明
@@ -62,5 +64,11 @@ public class MesSpareController {
     @ApiOperation(value = "同步物料单位")
     public R<Boolean> synchronousSpareToQms() {
         return R.success(mesEqpSpareService.synchronousSpareToQms());
+    }
+
+    @ApiOperation("获取备品备件供应商")
+    @GetMapping("/supplier")
+    public R<List<MesSpareSupplierVO>> querySpareSupplier(@RequestParam("code") String code){
+        return R.success(mesEqpSpareService.querySpareSupplier(code));
     }
 }

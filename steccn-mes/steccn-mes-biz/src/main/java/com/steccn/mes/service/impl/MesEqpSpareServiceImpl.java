@@ -2,19 +2,22 @@ package com.steccn.mes.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.vo.R;
+import com.steccn.mes.config.SrmUrl;
 import com.steccn.mes.domain.JsSysDictData;
 import com.steccn.mes.domain.MesEqpClassification;
 import com.steccn.mes.domain.MesEqpSpare;
 import com.steccn.mes.dto.ErpCustomerDTO;
+import com.steccn.mes.dto.SrmQueryDTO;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.mes.mapper.MesEqpClassificationMapper;
 import com.steccn.mes.service.JsSysDictDataService;
@@ -23,18 +26,22 @@ import com.steccn.mes.mapper.MesEqpSpareMapper;
 import com.steccn.mes.vo.ErpMaterialUnitVO;
 import com.steccn.mes.vo.ErpMaterialVO;
 import com.steccn.mes.vo.MesSpareDownloadVO;
+import com.steccn.mes.vo.MesSpareSupplierVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.EqpSpareDto;
+import com.steccn.platform.feign.RemoteSrmFeignApi;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -51,6 +58,9 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
     private final MesEqpClassificationMapper mesEqpClassificationMapper;
     private final JsSysDictDataService jsSysDictDataService;
     private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    private final SrmUrl srmConfig;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final RemoteSrmFeignApi remoteSrmFeignApi;
 
     @Override
     public List<MesSpareDownloadVO> downloadSpare() {
@@ -247,6 +257,28 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
             Boolean result = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.synchronizeMaterial(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
         });
         return true;
+    }
+
+    @Override
+    public List<MesSpareSupplierVO> querySpareSupplier(String code) {
+        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
+        if(StrUtil.isBlank(srmToken)){
+            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
+        }
+        Map<String,String> headers = Maps.newHashMap();
+        headers.put("Authorization",srmToken);
+        SrmQueryDTO dto = new SrmQueryDTO();
+        dto.setItemCodes(com.google.common.collect.Lists.newArrayList(code));
+        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v2p/rest/invoke/U1JNOk9BX1RPX1NSTV9JVEVNOnNybS1wdXJjaGFzZS1jb29wZXJhdGlvbi5vYS1pdGVtLXN1cHBsaWVyLXF1ZXJ5LmdldEl0ZW1TdXBwbGllcg==").addHeaders(headers).body(new cn.hutool.json.JSONObject(dto).toString()).execute().body();
+        JSONObject payloadObj = JSONObject.parseObject(result).getJSONObject("payload");
+        if(payloadObj.getString("responseStatus").equals("ERROR")){
+            throw new BusinessException(payloadObj.getString("responseMessage"));
+        }
+        if(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseStatus").equals("ERROR")){
+            throw new BusinessException(payloadObj.getJSONArray("restResponseDtlDTOList").getJSONObject(0).getString("responseMessage"));
+        }
+        List<MesSpareSupplierVO> results = payloadObj.getJSONArray("itemSuppliers").getJSONObject(0).getJSONArray("suppliers").toJavaList(MesSpareSupplierVO.class);
+        return results;
     }
 }
 
