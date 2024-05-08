@@ -1,10 +1,13 @@
 package com.steccn.ems.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.ems.dto.CeCarbonReportDTO;
 import com.steccn.ems.vo.CeCarbonSumReportVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author yequan
@@ -31,4 +34,13 @@ public interface CeCarbonReportService {
      * @return
      */
     CeCarbonSumReportVO carbonStrongReport(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 分析看板-碳排放总量，总产量，碳排放强度
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    List<BigDecimal> analysisCarbonStrongValue(LocalDate start, LocalDate end, Integer granularity);
 }

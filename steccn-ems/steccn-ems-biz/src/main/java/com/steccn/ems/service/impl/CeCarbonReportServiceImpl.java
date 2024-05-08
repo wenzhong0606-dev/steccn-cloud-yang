@@ -154,6 +154,19 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         return resVo;
     }
 
+    @Override
+    public List<BigDecimal> analysisCarbonStrongValue(LocalDate start, LocalDate end, Integer granularity) {
+        List<BigDecimal> resList = Lists.newArrayList();
+        CeCarbonSumReportVO reportVO = carbonStrongReport(start, end, granularity);
+        for (CeCarbonSumReportListVO vo : reportVO.getContentList()) {
+            resList.add(vo.getSum());
+        }
+        while (resList.size() < 3) {
+            resList.add(null);
+        }
+        return resList;
+    }
+
     /**
      * 转换数据
      *

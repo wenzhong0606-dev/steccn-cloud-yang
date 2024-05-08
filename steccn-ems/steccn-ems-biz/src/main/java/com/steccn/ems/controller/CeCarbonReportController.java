@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 /**
  * @author yequan
  * @desc 碳排放报表控制器
@@ -35,6 +38,12 @@ public class CeCarbonReportController {
     @ApiOperation(value = "碳排放强度报表")
     public R<CeCarbonSumReportVO> carbonStrongReport(@RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.carbonStrongReport(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
+
+    @PostMapping("/analysis/strong/value")
+    @ApiOperation(value = "分析看板-碳排放总量，总产量，碳排放强度")
+    public R<List<BigDecimal>> analysisCarbonStrongValue(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisCarbonStrongValue(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
 }
