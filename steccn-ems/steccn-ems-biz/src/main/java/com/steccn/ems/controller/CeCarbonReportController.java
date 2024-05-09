@@ -59,4 +59,9 @@ public class CeCarbonReportController {
         return R.success(ceCarbonReportService.analysisPmLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
+    @PostMapping("/analysis/unit/line")
+    @ApiOperation(value = "分析看板-碳排放强度趋势")
+    public R<QtLineChartBarDTO> analysisUnitLine(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisUnitLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
 }

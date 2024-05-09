@@ -65,4 +65,14 @@ public interface CeCarbonReportService {
      * @return
      */
     QtLineChartBarDTO analysisPmLine(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 分析看板-碳排放强度趋势
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    QtLineChartBarDTO analysisUnitLine(LocalDate start, LocalDate end, Integer granularity);
 }

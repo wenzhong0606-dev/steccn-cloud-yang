@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -175,6 +176,11 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
     @Override
     public QtLineChartBarDTO analysisPmLine(LocalDate start, LocalDate end, Integer granularity) {
         return line(start, end, granularity, 1, "碳排放量（吨）");
+    }
+
+    @Override
+    public QtLineChartBarDTO analysisUnitLine(LocalDate start, LocalDate end, Integer granularity) {
+        return line(start, end, granularity, 2, "碳排放强度（吨/万重箱）");
     }
 
     /**
