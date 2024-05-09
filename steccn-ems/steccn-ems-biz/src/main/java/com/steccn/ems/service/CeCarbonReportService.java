@@ -86,4 +86,14 @@ public interface CeCarbonReportService {
      * @return
      */
     QtChartPieVO analysisCategoryPie(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 分析看板-碳排放详细分布
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    QtChartPieVO analysisDetailPie(LocalDate start, LocalDate end, Integer granularity);
 }

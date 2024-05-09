@@ -71,4 +71,10 @@ public class CeCarbonReportController {
     public R<QtChartPieVO> analysisCategoryPie(@RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisCategoryPie(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
+
+    @PostMapping("/analysis/detail/pie")
+    @ApiOperation(value = "分析看板-碳排放详细分布")
+    public R<QtChartPieVO> analysisDetailPie(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisDetailPie(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
 }

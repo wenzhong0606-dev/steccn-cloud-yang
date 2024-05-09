@@ -195,7 +195,7 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         List<CeCarbonSumReportListVO> contentList = report.getContentList();
         if (CollUtil.isNotEmpty(contentList)) {
             List<CeCarbonSumReportListVO> collect = contentList.stream()
-                    .filter(ele -> ele.getType() == 1 || ele.getType() == 3)
+                    .filter(ele -> ele.getType() == 1 || ele.getType() == 2)
                     .filter(ele -> Objects.nonNull(ele.getSum()) && BigDecimalUtil.gt(ele.getSum(), BigDecimal.ZERO))
                     .collect(Collectors.toList());
             List<BigDecimal> valueList = collect.stream().map(CeCarbonSumReportListVO::getSum).collect(Collectors.toList());
@@ -203,6 +203,31 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             collect.forEach(ele -> {
                 QtChartPieValueVO<BigDecimal> single = new QtChartPieValueVO<>();
                 single.setName(GetValueUtil.get(ele.getHintName(), x -> x, "电力"));
+                single.setValue(ele.getSum());
+                single.setPercent(BigDecimalUtil.percent(single.getValue(), sum));
+                dataList.add(single);
+            });
+        }
+        return resPie;
+    }
+
+    @Override
+    public QtChartPieVO analysisDetailPie(LocalDate start, LocalDate end, Integer granularityInt) {
+        QtChartPieVO<BigDecimal> resPie = new QtChartPieVO();
+        List<QtChartPieValueVO<BigDecimal>> dataList = Lists.newArrayList();
+        resPie.setData(dataList);
+        CeCarbonSumReportVO report = carbonSumReport(start, end, granularityInt);
+        List<CeCarbonSumReportListVO> contentList = report.getContentList();
+        if (CollUtil.isNotEmpty(contentList)) {
+            List<CeCarbonSumReportListVO> collect = contentList.stream()
+                    .filter(ele -> ele.getType() == 0 || ele.getType() == 2)
+                    .filter(ele -> Objects.nonNull(ele.getSum()) && BigDecimalUtil.gt(ele.getSum(), BigDecimal.ZERO))
+                    .collect(Collectors.toList());
+            List<BigDecimal> valueList = collect.stream().map(CeCarbonSumReportListVO::getSum).collect(Collectors.toList());
+            BigDecimal sum = BigDecimalUtil.sum(valueList);
+            collect.forEach(ele -> {
+                QtChartPieValueVO<BigDecimal> single = new QtChartPieValueVO<>();
+                single.setName(ele.getDetailName());
                 single.setValue(ele.getSum());
                 single.setPercent(BigDecimalUtil.percent(single.getValue(), sum));
                 dataList.add(single);
