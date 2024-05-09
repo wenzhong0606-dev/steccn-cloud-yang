@@ -1632,6 +1632,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //修改入库单状态为已冲销
                 WmsStorageReceipt receipt = getById(id);
                 receipt.setStatus(WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+                receipt.setChargeName(SecurityUtils.getUser().getName());
+                receipt.setChargeTime(LocalDateTime.now());
                 updateById(receipt);
                 }
         } finally {
