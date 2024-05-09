@@ -1534,6 +1534,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     BeanUtil.copyProperties(inventory, wmsInventory);
                     wmsDeliveryReceiptInfo.setInventoryId(inventory.getId());
                     wmsDeliveryReceiptInfo.setMaterialId(inventory.getMaterialId());
+                    wmsDeliveryReceiptInfo.setAssociatedNo(wmsStorageReceiptVO.getCode());
                     if (quantity.compareTo(inventory.getAvailableQuantity()) <= 0) {
                         //变动数量
                         wmsInventoryRecord.setVariableQuantity(quantity);
