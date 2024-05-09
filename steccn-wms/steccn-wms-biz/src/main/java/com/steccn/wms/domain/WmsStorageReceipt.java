@@ -55,6 +55,17 @@ public class WmsStorageReceipt implements Serializable {
     private String affirmName;
 
     /**
+     * 冲销人
+     */
+    private String chargeName;
+
+
+    /**
+     * 冲销时间
+     */
+    private LocalDateTime chargeTime;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
