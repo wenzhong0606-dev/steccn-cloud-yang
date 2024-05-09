@@ -250,7 +250,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @param warehouseId
      * @return
      */
-    Boolean addInfo(List<WmsInventoryDTO> infoList, String code, Integer warehouseId);
+    Boolean addInfo(List<WmsInventoryDTO> infoList, String code, Integer warehouseId,Long typeId);
 
 
     /**

@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 物流单VO
@@ -66,6 +67,8 @@ public class SalesLogisticsVO {
     private String warehouse;
     private String contract_code;
     private Integer contract_qty;
+
+    private List<SaleLogisticsDataVO> list_data;
 
     /**
      * 状态  草稿 已预约 已同步 已出库 已反馈 已退货 已补发

@@ -288,6 +288,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             if(dto.getType().equals(1600405739121573888L)&&dto.getIsSRMSys()!=null&&dto.getIsSRMSys().equals(OaConstant.NUM_2)){
                 affirm(model.getId(),SecurityUtils.getUser().getName());
             }
+
             id = model.getId();
         } finally {
             lock.unlock();
@@ -423,11 +424,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 long count = infoList.stream().distinct().count();
                 Assert.isFalse(count < infoList.size(), "箱号重复，请修改");
                 //生成库存变化
-                wmsInventoryService.addInfo(infoList,model.getCode(),dto.getWarehouseId());
+                wmsInventoryService.addInfo(infoList,model.getCode(),dto.getWarehouseId(), dto.getType());
+
 //                //增加库存信息
 //                wmsInventoryService.addInfo(infoList);
                 //保存明细信息
                 wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
+            }
+            //如果是销售退货单,则自动确认
+            if (dto.getType().equals(1600405825377435648L)){
+                affirm(model.getId(),SecurityUtils.getUser().getName());
             }
             return model.getCode();
         } finally {
@@ -624,6 +630,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
                         wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
                         wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                        if (Objects.isNull(wmsInventoryRecord.getWarehouseId())) {
+                            wmsInventoryRecord.setWarehouseId(Math.toIntExact(receipt.getWarehouseId()));
+                            wmsInventoryRecord.setShelfId(info.getShelfId());
+                        }
                         wmsInventoryRecords.add(wmsInventoryRecord);
                     });
                     //生成库存流水记录
@@ -1770,12 +1780,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         String data = remoteSalesFeignApi.queryReturnOrder(dto);
         JSONObject jsonObject = JSONObject.parseObject(data);
         try {
-            List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
-            if (CollUtil.isNotEmpty(logisticsVOS)){
+            SalesLogisticsVO logisticsVOS = jsonObject.getJSONObject("result").getObject("mdMappings",SalesLogisticsVO.class);
+            if (Objects.nonNull(logisticsVOS)){
                 wmsSalesReturnsFlagVO.setExists(WmsManagerConstant.YesOrNo.YES.getCode());
-                SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
-                wmsSalesReturnsFlagVO.setMaterialName(salesLogisticsVO.getProduct_name());
-                String state = salesLogisticsVO.getState();
+                SaleLogisticsDataVO saleLogisticsDataVO = logisticsVOS.getList_data().get(0);
+                wmsSalesReturnsFlagVO.setMaterialName(saleLogisticsDataVO.getProduct_name());
+                EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(saleLogisticsDataVO.getProduct_code()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                wmsSalesReturnsFlagVO.setMaterialId(eqpSpareVO.getId());
+                wmsSalesReturnsFlagVO.setQty(saleLogisticsDataVO.getQty());
+                String state = logisticsVOS.getState();
                 if (WmsManagerConstant.LogisticsBillState.RETURNED.getName().equals(state) ||
                         WmsManagerConstant.LogisticsBillState.REISSUED.getName().equals(state)){
                     wmsSalesReturnsFlagVO.setReturnedState(WmsManagerConstant.YesOrNo.YES.getCode());
@@ -1810,13 +1823,13 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         wmsStorageReceiptDTO.setWarehouseId(wmsSalesReturnsDTO.getWarehouseId());
         wmsStorageReceiptDTO.setList(wmsSalesReturnsDTO.getList());
         //创建入库单
-        String order = createOrder(wmsStorageReceiptDTO);
-        //销售同步
-        SalesReturnOrderSyncDTO salesReturnOrderSyncDTO = new SalesReturnOrderSyncDTO();
-        salesReturnOrderSyncDTO.setStock_order(order);
-        salesReturnOrderSyncDTO.setServer_code(WmsManagerConstant.SERVER_CODE2);
-        salesReturnOrderSyncDTO.setLogistics_code(wmsSalesReturnsDTO.getSourceCode());
-        remoteSalesFeignApi.syncReturnOrder(salesReturnOrderSyncDTO);
+        String order = addReturnCode(wmsStorageReceiptDTO);
+//        //销售同步
+//        SalesReturnOrderSyncDTO salesReturnOrderSyncDTO = new SalesReturnOrderSyncDTO();
+//        salesReturnOrderSyncDTO.setStock_order(order);
+//        salesReturnOrderSyncDTO.setServer_code(WmsManagerConstant.SERVER_CODE2);
+//        salesReturnOrderSyncDTO.setLogistics_code(wmsSalesReturnsDTO.getSourceCode());
+//        remoteSalesFeignApi.syncReturnOrder(salesReturnOrderSyncDTO);
         return order;
     }
 
