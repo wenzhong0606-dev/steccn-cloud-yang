@@ -164,27 +164,38 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         List<Long> materialIdList = detailData.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //收集unitId
-        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(spareMap.values().stream().map(EqpSpareVO::getUnitId).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(spareMap.values().stream().map(EqpSpareVO::getUnitId).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SteccnTableColumn complexColumn = new SteccnTableColumn();
         StringBuilder tableName = new StringBuilder();
-        tableName.append("劳保用品发放标准(");
-        for (int i = 0; i <materialIdList.size(); i++){
-            String unitName = unitMap.get(spareMap.get(materialIdList.get(i)).getUnitId());
-            if(i==materialIdList.size()-1){
-                tableName.append(unitName);
-                tableName.append("/月)");
-            }else {
-                tableName.append(unitName);
-                tableName.append("、");
-            }
-
-        }
+        tableName.append("劳保用品发放标准(件、套、双、条/月)");
+//        for (int i = 0; i <materialIdList.size(); i++){
+//            String unitName = unitMap.get(spareMap.get(materialIdList.get(i)).getUnitId());
+//            if(i==materialIdList.size()-1){
+//                tableName.append(unitName);
+//                tableName.append("/月)");
+//            }else {
+//                tableName.append(unitName);
+//                tableName.append("、");
+//            }
+//
+//        }
         complexColumn.setProp("labor");
         complexColumn.setLabel(tableName.toString());
         List<SteccnTableColumn> complexColumnChildren = Lists.newArrayList();
         complexColumnChildren.add(new SteccnTableColumn("riskFactor","职业健康风险因素",null));
         materialIdList.forEach(tmp->{
-            complexColumnChildren.add(new SteccnTableColumn(tmp.toString(),spareMap.get(tmp).getName(),null));
+            EqpSpareVO spareVO = spareMap.get(tmp);
+            StringBuilder materialName = new StringBuilder();
+            materialName.append(spareVO.getName());
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())){
+                materialName.append("/");
+                materialName.append(spareVO.getCode());
+            }
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())){
+                materialName.append("/");
+                materialName.append(spareVO.getSpecifications());
+            }
+            complexColumnChildren.add(new SteccnTableColumn(tmp.toString(),materialName.toString(),null));
         });
         complexColumn.setChildren(complexColumnChildren);
         columns.add(complexColumn);
