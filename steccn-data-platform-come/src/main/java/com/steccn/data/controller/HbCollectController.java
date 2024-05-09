@@ -10,6 +10,7 @@ import com.steccn.data.constant.HbThirdPartyConstant;
 import com.steccn.data.dto.*;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.HbCollectService;
+import com.steccn.data.service.MesEqpSignalService;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +32,7 @@ public class HbCollectController {
 
     private final HbCollectService hbCollectService;
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+    private final MesEqpSignalService mesEqpSignalService;
 
     /**
      * 能源绩效-远传仪表
@@ -81,6 +83,11 @@ public class HbCollectController {
         validRequestHeader(request);
         Assert.notEmpty(dto.getData(), "数据集合为空");
         return R.success(hbCollectService.mesEqpSignal(dto));
+    }
+
+    @GetMapping("/mes/generateReport")
+    public R<Boolean> generateReport() {
+        return R.success(mesEqpSignalService.saveReport());
     }
 
     /**

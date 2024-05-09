@@ -27,9 +27,9 @@ public class MesEqpReport implements Serializable {
     private String eqpId;
 
     /**
-     * 本次运行时长
+     * 最新运行时间
      */
-    private BigDecimal startPeriod;
+    private LocalDateTime startTime;
 
     /**
      * 累计运行时长

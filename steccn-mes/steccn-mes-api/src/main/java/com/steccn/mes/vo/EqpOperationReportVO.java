@@ -3,6 +3,7 @@ package com.steccn.mes.vo;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 设备操作报表VO
@@ -45,6 +46,11 @@ public class EqpOperationReportVO {
      * 本次运行时长
      */
     private BigDecimal startPeriod;
+
+    /**
+     * 开始时间
+     */
+    private LocalDateTime startTime;
 
     /**
      * 累计运行时长

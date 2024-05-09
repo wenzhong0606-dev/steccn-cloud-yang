@@ -3,6 +3,7 @@ package com.steccn.data.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
@@ -11,12 +12,14 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.constant.HbThirdPartyConstant;
 import com.steccn.data.domain.*;
 import com.steccn.data.dto.*;
 import com.steccn.data.service.*;
+import com.steccn.mes.dto.EqpReportDTO;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaRosterRecordDTO;
@@ -31,6 +34,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -187,6 +193,23 @@ public class HbCollectServiceImpl implements HbCollectService {
                     });
                 }
             }
+            poolExecutor.execute(()->{
+                //拿到最新的一条数据
+                MesEqpSignal one = mesEqpSignalService.getOne(new LambdaQueryWrapper<MesEqpSignal>()
+                        .eq(MesEqpSignal::getCode, tmp.getCode()).orderByDesc(MesEqpSignal::getTimestamp).last("LIMIT 1"));
+                if(Objects.nonNull(one)){
+                    EqpReportDTO reportDTO = new EqpReportDTO();
+                    reportDTO.setTimestamp(tmp.getTimestamp());
+                    reportDTO.setEqpCode(tmp.getCode());
+                    reportDTO.setState(tmp.getValue());
+                    Duration duration2 = Duration.between(one.getTimestamp(),tmp.getTimestamp());
+                    BigDecimal hours2 = BigDecimalUtil.divide(BigDecimal.valueOf(duration2.getSeconds()),BigDecimal.valueOf(60));
+                    reportDTO.setValue(BigDecimalUtil.setScale(hours2,2));
+                    reportDTO.setValue(hours2);
+                    FeignOptional.of(() -> remoteMesFeignApi.changeReportData(reportDTO), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+                }
+
+            });
             model.setCreateTime(LocalDateTime.now());
             models.add(model);
             //启停时修改mes状态
