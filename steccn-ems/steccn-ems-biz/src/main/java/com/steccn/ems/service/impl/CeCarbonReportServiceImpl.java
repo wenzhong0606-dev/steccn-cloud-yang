@@ -119,37 +119,34 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         driverDTO.setUnit(PmManagerConstant.MEASURE_UNIT_TON);
         driverDTO.setOfficeId(department.getId());
         Map<String, BigDecimal> pmMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(driverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-        if (CollUtil.isNotEmpty(pmMap)) {
-            CeCarbonSumReportListVO pmRow = new CeCarbonSumReportListVO();
-            List<BigDecimal> pmList = Lists.newArrayList();
-            for (String date : sumVo.getHeadList()) {
-                //日总产量 = 每日深加工入库总产量（转化为吨） * 1000 / 50 / 10000
-                pmList.add(BigDecimalUtil.divide(pmMap.get(date), new BigDecimal("500"), 2));
-            }
-            pmRow.setValueList(pmList);
-            pmRow.setCategoryName("总产量（万重箱）");
-            pmRow.setDetailName("总产量（万重箱）");
-            pmRow.setSum(BigDecimalUtil.sum(pmList));
-            contentList.add(pmRow);
+        CeCarbonSumReportListVO pmRow = new CeCarbonSumReportListVO();
+        List<BigDecimal> pmList = Lists.newArrayList();
+        for (String date : sumVo.getHeadList()) {
+            //日总产量 = 每日深加工入库总产量（转化为吨） * 1000 / 50 / 10000
+            pmList.add(BigDecimalUtil.divide(pmMap.get(date), new BigDecimal("500"), 2));
         }
+        pmRow.setValueList(pmList);
+        pmRow.setCategoryName("总产量（万重箱）");
+        pmRow.setDetailName("总产量（万重箱）");
+        pmRow.setSum(BigDecimalUtil.sum(pmList));
+        contentList.add(pmRow);
         //计算总计
         //添加总计
-        if (CollUtil.isNotEmpty(contentList) && contentList.size() == 2) {
-            List<BigDecimal> sumValueList = Lists.newArrayList();
-            CeCarbonSumReportListVO one = contentList.get(0);
-            CeCarbonSumReportListVO two = contentList.get(1);
-            for (int i = 0; i < sumVo.getHeadList().size(); i++) {
-                BigDecimal oneValue = one.getValueList().get(i);
-                BigDecimal twoValue = two.getValueList().get(i);
-                sumValueList.add(BigDecimalUtil.divide(oneValue, twoValue, 2));
-            }
-            CeCarbonSumReportListVO sum = new CeCarbonSumReportListVO();
-            sum.setCategoryName("碳排放强度（吨/万重箱）");
-            sum.setDetailName("碳排放强度（吨/万重箱）");
-            sum.setValueList(sumValueList);
-            sum.setSum(BigDecimalUtil.divide(one.getSum(), two.getSum(), 2));
-            contentList.add(sum);
+        List<BigDecimal> sumValueList = Lists.newArrayList();
+        CeCarbonSumReportListVO one = contentList.get(0);
+        CeCarbonSumReportListVO two = contentList.get(1);
+        for (int i = 0; i < sumVo.getHeadList().size(); i++) {
+            BigDecimal oneValue = one.getValueList().get(i);
+            BigDecimal twoValue = two.getValueList().get(i);
+            sumValueList.add(BigDecimalUtil.divide(oneValue, twoValue, 2));
         }
+        CeCarbonSumReportListVO sum = new CeCarbonSumReportListVO();
+        sum.setCategoryName("碳排放强度（吨/万重箱）");
+        sum.setDetailName("碳排放强度（吨/万重箱）");
+        sum.setValueList(sumValueList);
+        sum.setSum(BigDecimalUtil.divide(one.getSum(), two.getSum(), 2));
+        contentList.add(sum);
+
         return resVo;
     }
 
