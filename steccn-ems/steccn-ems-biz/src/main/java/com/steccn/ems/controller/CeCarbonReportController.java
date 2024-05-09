@@ -1,5 +1,6 @@
 package com.steccn.ems.controller;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnRow;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.CeCarbonReportDTO;
@@ -44,6 +45,12 @@ public class CeCarbonReportController {
     @ApiOperation(value = "分析看板-碳排放总量，总产量，碳排放强度")
     public R<List<BigDecimal>> analysisCarbonStrongValue(@RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisCarbonStrongValue(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
+
+    @PostMapping("/analysis/sum/line")
+    @ApiOperation(value = "分析看板-碳排放总量趋势")
+    public R<QtLineChartBarDTO> analysisSumLine(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisSumLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
 }

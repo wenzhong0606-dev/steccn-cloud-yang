@@ -1,6 +1,7 @@
 package com.steccn.ems.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.ems.dto.CeCarbonReportDTO;
 import com.steccn.ems.vo.CeCarbonSumReportVO;
@@ -37,10 +38,21 @@ public interface CeCarbonReportService {
 
     /**
      * 分析看板-碳排放总量，总产量，碳排放强度
+     *
      * @param start       开始日期
      * @param end         结束日期
      * @param granularity 粒度
      * @return
      */
     List<BigDecimal> analysisCarbonStrongValue(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 分析看板-碳排放总量趋势
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    QtLineChartBarDTO analysisSumLine(LocalDate start, LocalDate end, Integer granularity);
 }

@@ -6,11 +6,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.MapUtil;
-import com.steccn.common.util.ShardTimeUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.R;
 import com.steccn.ems.service.CeCarbonReportService;
 import com.steccn.ems.service.CeElectricSettingService;
@@ -165,6 +164,29 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             resList.add(null);
         }
         return resList;
+    }
+
+    @Override
+    public QtLineChartBarDTO analysisSumLine(LocalDate start, LocalDate end, Integer granularity) {
+        //定义数据集合
+        List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+        //获取数据
+        CeCarbonSumReportVO reportVO = carbonStrongReport(start, end, granularity);
+        if (CollUtil.isNotEmpty(reportVO.getContentList())) {
+            CeCarbonSumReportListVO row = reportVO.getContentList().get(0);
+            List<String> headList = reportVO.getHeadList();
+            for (int i = 0; i < row.getValueList().size(); i++) {
+                BigDecimal value = row.getValueList().get(i);
+                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                stackGraphDTO.setXAxis(headList.get(i));
+                List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+                dataList.add(new TupleDTO<>("碳排放量（吨）", value));
+                stackGraphDTO.setData(dataList);
+                stackGraphDTOList.add(stackGraphDTO);
+            }
+        }
+        //自定义转换工具
+        return StackGraphUtil.convertData(stackGraphDTOList);
     }
 
     /**
