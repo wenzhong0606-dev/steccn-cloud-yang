@@ -16,6 +16,11 @@ public class CeCarbonSumReportListVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 化石燃料的名称
+     */
+    private String hintName;
+
+    /**
      * 类型
      */
     private Integer type;

@@ -11,6 +11,8 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
+import com.steccn.common.vo.QtChartPieVO;
+import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.service.CeCarbonReportService;
 import com.steccn.ems.service.CeElectricSettingService;
@@ -36,6 +38,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -183,6 +186,31 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         return line(start, end, granularity, 2, "碳排放强度（吨/万重箱）");
     }
 
+    @Override
+    public QtChartPieVO analysisCategoryPie(LocalDate start, LocalDate end, Integer granularityInt) {
+        QtChartPieVO<BigDecimal> resPie = new QtChartPieVO();
+        List<QtChartPieValueVO<BigDecimal>> dataList = Lists.newArrayList();
+        resPie.setData(dataList);
+        CeCarbonSumReportVO report = carbonSumReport(start, end, granularityInt);
+        List<CeCarbonSumReportListVO> contentList = report.getContentList();
+        if (CollUtil.isNotEmpty(contentList)) {
+            List<CeCarbonSumReportListVO> collect = contentList.stream()
+                    .filter(ele -> ele.getType() == 1 || ele.getType() == 3)
+                    .filter(ele -> Objects.nonNull(ele.getSum()) && BigDecimalUtil.gt(ele.getSum(), BigDecimal.ZERO))
+                    .collect(Collectors.toList());
+            List<BigDecimal> valueList = collect.stream().map(CeCarbonSumReportListVO::getSum).collect(Collectors.toList());
+            BigDecimal sum = BigDecimalUtil.sum(valueList);
+            collect.forEach(ele -> {
+                QtChartPieValueVO<BigDecimal> single = new QtChartPieValueVO<>();
+                single.setName(GetValueUtil.get(ele.getHintName(), x -> x, "电力"));
+                single.setValue(ele.getSum());
+                single.setPercent(BigDecimalUtil.percent(single.getValue(), sum));
+                dataList.add(single);
+            });
+        }
+        return resPie;
+    }
+
     /**
      * 折线图
      *
@@ -234,6 +262,7 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
                     resVo.setType(2);
                 }
                 resVo.setValueList(valueList);
+                resVo.setHintName(categoryName);
                 resVo.setCategoryName(categoryName);
                 resVo.setDetailName(data.getField1());
                 Map<LocalDate, BigDecimal> dataMap = data.getField2();
@@ -266,6 +295,7 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
                 totalValueList.add(BigDecimalUtil.setScale(totalDateMap.get(i - 1), 2));
             }
             total.setType(1);
+            total.setHintName(categoryName);
             total.setCategoryName("合计（单类别）");
             total.setDetailName("合计（单类别）");
             total.setValueList(totalValueList);

@@ -2,6 +2,7 @@ package com.steccn.ems.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnRow;
+import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.CeCarbonReportDTO;
 import com.steccn.ems.service.CeCarbonReportService;
@@ -63,5 +64,11 @@ public class CeCarbonReportController {
     @ApiOperation(value = "分析看板-碳排放强度趋势")
     public R<QtLineChartBarDTO> analysisUnitLine(@RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisUnitLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
+
+    @PostMapping("/analysis/category/pie")
+    @ApiOperation(value = "分析看板-碳排放类别分布")
+    public R<QtChartPieVO> analysisCategoryPie(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisCategoryPie(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 }
