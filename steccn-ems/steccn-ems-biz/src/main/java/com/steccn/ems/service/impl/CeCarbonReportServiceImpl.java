@@ -25,6 +25,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -121,9 +122,12 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         Map<String, BigDecimal> pmMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(driverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         CeCarbonSumReportListVO pmRow = new CeCarbonSumReportListVO();
         List<BigDecimal> pmList = Lists.newArrayList();
-        for (String date : sumVo.getHeadList()) {
-            //日总产量 = 每日深加工入库总产量（转化为吨） * 1000 / 50 / 10000
-            pmList.add(BigDecimalUtil.divide(pmMap.get(date), new BigDecimal("500"), 2));
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
+        List<LocalDate> dateList = ShardTimeUtil.cutDate(granularityEnum.getType(), start, end);
+        for (int i = 1; i < dateList.size(); i++) {
+            LocalDate startArea = dateList.get(i - 1);
+            String convert = MysqlDateKeyUtil.convert(granularityEnum, startArea);
+            pmList.add(BigDecimalUtil.divide(pmMap.get(convert), new BigDecimal("500"), 2));
         }
         pmRow.setValueList(pmList);
         pmRow.setCategoryName("总产量（万重箱）");
@@ -165,19 +169,38 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
 
     @Override
     public QtLineChartBarDTO analysisSumLine(LocalDate start, LocalDate end, Integer granularity) {
+        return line(start, end, granularity, 0, "碳排放量（吨）");
+    }
+
+    @Override
+    public QtLineChartBarDTO analysisPmLine(LocalDate start, LocalDate end, Integer granularity) {
+        return line(start, end, granularity, 1, "碳排放量（吨）");
+    }
+
+    /**
+     * 折线图
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @param idx         索引
+     * @param hint        提示语
+     * @return 折线
+     */
+    private QtLineChartBarDTO line(LocalDate start, LocalDate end, Integer granularity, Integer idx, String hint) {
         //定义数据集合
         List<StackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
         //获取数据
         CeCarbonSumReportVO reportVO = carbonStrongReport(start, end, granularity);
         if (CollUtil.isNotEmpty(reportVO.getContentList())) {
-            CeCarbonSumReportListVO row = reportVO.getContentList().get(0);
+            CeCarbonSumReportListVO row = reportVO.getContentList().get(idx);
             List<String> headList = reportVO.getHeadList();
             for (int i = 0; i < row.getValueList().size(); i++) {
                 BigDecimal value = row.getValueList().get(i);
                 StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
                 stackGraphDTO.setXAxis(headList.get(i));
                 List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-                dataList.add(new TupleDTO<>("碳排放量（吨）", value));
+                dataList.add(new TupleDTO<>(hint, value));
                 stackGraphDTO.setData(dataList);
                 stackGraphDTOList.add(stackGraphDTO);
             }

@@ -53,4 +53,10 @@ public class CeCarbonReportController {
         return R.success(ceCarbonReportService.analysisSumLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
+    @PostMapping("/analysis/pm/line")
+    @ApiOperation(value = "分析看板-总产量趋势")
+    public R<QtLineChartBarDTO> analysisPmLine(@RequestBody CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisPmLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
+
 }

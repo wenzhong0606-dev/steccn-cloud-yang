@@ -55,4 +55,14 @@ public interface CeCarbonReportService {
      * @return
      */
     QtLineChartBarDTO analysisSumLine(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 分析看板-总产量趋势
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    QtLineChartBarDTO analysisPmLine(LocalDate start, LocalDate end, Integer granularity);
 }
