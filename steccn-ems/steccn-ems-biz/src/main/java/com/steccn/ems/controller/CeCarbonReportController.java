@@ -35,55 +35,55 @@ public class CeCarbonReportController {
 
     @PostMapping("/sum/report")
     @ApiOperation(value = "碳排放总量报表")
-    public R<CeCarbonSumReportVO> carbonSumReport(@RequestBody CeCarbonReportDTO dto) {
+    public R<CeCarbonSumReportVO> carbonSumReport(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.carbonSumReport(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/strong/report")
     @ApiOperation(value = "碳排放强度报表")
-    public R<CeCarbonSumReportVO> carbonStrongReport(@RequestBody CeCarbonReportDTO dto) {
+    public R<CeCarbonSumReportVO> carbonStrongReport(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.carbonStrongReport(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/strong/value")
     @ApiOperation(value = "分析看板-碳排放总量，总产量，碳排放强度")
-    public R<List<BigDecimal>> analysisCarbonStrongValue(@RequestBody CeCarbonReportDTO dto) {
+    public R<List<BigDecimal>> analysisCarbonStrongValue(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisCarbonStrongValue(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/sum/line")
     @ApiOperation(value = "分析看板-碳排放总量趋势")
-    public R<QtLineChartBarDTO> analysisSumLine(@RequestBody CeCarbonReportDTO dto) {
+    public R<QtLineChartBarDTO> analysisSumLine(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisSumLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/pm/line")
     @ApiOperation(value = "分析看板-总产量趋势")
-    public R<QtLineChartBarDTO> analysisPmLine(@RequestBody CeCarbonReportDTO dto) {
+    public R<QtLineChartBarDTO> analysisPmLine(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisPmLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/unit/line")
     @ApiOperation(value = "分析看板-碳排放强度趋势")
-    public R<QtLineChartBarDTO> analysisUnitLine(@RequestBody CeCarbonReportDTO dto) {
+    public R<QtLineChartBarDTO> analysisUnitLine(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisUnitLine(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/category/pie")
     @ApiOperation(value = "分析看板-碳排放类别分布")
-    public R<QtChartPieVO> analysisCategoryPie(@RequestBody CeCarbonReportDTO dto) {
+    public R<QtChartPieVO> analysisCategoryPie(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisCategoryPie(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/detail/pie")
     @ApiOperation(value = "分析看板-碳排放详细分布")
-    public R<QtChartPieVO> analysisDetailPie(@RequestBody CeCarbonReportDTO dto) {
+    public R<QtChartPieVO> analysisDetailPie(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisDetailPie(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 
     @PostMapping("/analysis/exploded/view")
     @ApiOperation(value = "分析看板-碳排放分解图")
-    public R<EpTreeGraphVO> analysisExplodedView(@RequestBody @Valid CeCarbonReportDTO dto) {
+    public R<EpTreeGraphVO> analysisExplodedView(@Valid @RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisExplodedView(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 }
