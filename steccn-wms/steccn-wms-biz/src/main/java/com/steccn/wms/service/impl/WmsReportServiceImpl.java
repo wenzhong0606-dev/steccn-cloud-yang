@@ -80,7 +80,7 @@ public class WmsReportServiceImpl implements WmsReportService {
         columns.add(category1);
         SteccnTableColumn upperInterval = new SteccnTableColumn();
         upperInterval.setProp("upperInterval");
-        upperInterval.setLabel("上区间（"+formattedDate(tupleDTO.getField1())+" ~ "+formattedDate(tupleDTO.getField2())+")");
+        upperInterval.setLabel("上区间（"+formattedDate(tupleDTO.getField1())+" ~ "+formattedDate(tupleDTO.getField2().minusDays(1))+")");
         List<SteccnTableColumn> upChildrenColumn = Lists.newArrayList();
         SteccnTableColumn upSteccnTableColumn = new SteccnTableColumn();
         upSteccnTableColumn.setLabel("入库(㎡)");
@@ -98,7 +98,7 @@ public class WmsReportServiceImpl implements WmsReportService {
         columns.add(upperInterval);
         SteccnTableColumn homeInterval = new SteccnTableColumn();
         homeInterval.setProp("homeInterval");
-        homeInterval.setLabel("本区间（"+formattedDate(startTime)+" ~ "+formattedDate(endTime)+")");
+        homeInterval.setLabel("本区间（"+formattedDate(startTime)+" ~ "+formattedDate(endTime.minusDays(1))+")");
         List<SteccnTableColumn> childrenColumn = Lists.newArrayList();
         SteccnTableColumn steccnTableColumn = new SteccnTableColumn();
         steccnTableColumn.setLabel("入库(㎡)");

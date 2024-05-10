@@ -3,6 +3,8 @@ package com.steccn.mes.dto;
 import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 设备运行报表
  *
@@ -34,5 +36,5 @@ public class EqpOperationReportDTO extends BasePageDTO {
     /**
      * 状态
      */
-    private Integer state;
+    private List<Integer> state;
 }

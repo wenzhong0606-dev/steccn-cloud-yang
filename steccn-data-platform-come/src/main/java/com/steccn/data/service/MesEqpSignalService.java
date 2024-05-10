@@ -9,5 +9,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2023-04-25 10:43:42
 */
 public interface MesEqpSignalService extends IService<MesEqpSignal> {
-
+    /**
+     * 填充报表
+     * @return
+     */
+    Boolean saveReport();
 }

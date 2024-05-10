@@ -3,6 +3,7 @@ package com.steccn.mes.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.mes.dto.EqpReportDTO;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.mes.vo.MesUserInfoVO;
 import io.swagger.annotations.ApiOperation;
@@ -41,6 +42,14 @@ public interface RemoteMesFeignApi {
      */
     @PostMapping("/feign/mes/eqp/state")
     R<Boolean> updateEqpState(@RequestBody TupleDTO<String,String> dto);
+
+    /**
+     * 修改设备运行报表状态
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/mes/eqp/changeReportData")
+    R<Boolean> changeReportData(@RequestBody EqpReportDTO dto);
 
     /**
      * 获取岗位下的人员

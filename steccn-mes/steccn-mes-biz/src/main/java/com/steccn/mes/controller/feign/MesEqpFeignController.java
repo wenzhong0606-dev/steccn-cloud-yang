@@ -2,7 +2,9 @@ package com.steccn.mes.controller.feign;
 
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.mes.dto.EqpReportDTO;
 import com.steccn.mes.service.JsSysEmployeeService;
+import com.steccn.mes.service.MesEqpReportService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.mes.vo.MesUserInfoVO;
@@ -28,6 +30,7 @@ import java.util.Set;
 public class MesEqpFeignController {
     private final MesEquipmentService mesEquipmentService;
     private final JsSysEmployeeService jsSysEmployeeService;
+    private final MesEqpReportService mesEqpReportService;
 
     @ApiOperation("根据编码获取备件")
     @GetMapping("/eqp/getByCode")
@@ -39,6 +42,12 @@ public class MesEqpFeignController {
     @PostMapping("/eqp/state")
     public R<Boolean> updateEqpState(@RequestBody TupleDTO<String,String> dto) {
         return R.success(mesEquipmentService.changeEqpState(dto));
+    }
+
+    @ApiOperation("修改报表数据")
+    @PostMapping("/eqp/changeReportData")
+    public R<Boolean> changeReportData(@RequestBody EqpReportDTO dto) {
+        return R.success(mesEqpReportService.changeReportData(dto));
     }
 
     @ApiOperation("获取岗位下的人员")

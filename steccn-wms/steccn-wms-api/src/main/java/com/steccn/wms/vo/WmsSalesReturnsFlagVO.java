@@ -29,6 +29,8 @@ public class WmsSalesReturnsFlagVO {
      */
     private String materialName;
 
+    private Long materialId;
+
     /**
      * 退货片数
      */
