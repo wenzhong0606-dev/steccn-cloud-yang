@@ -11,9 +11,7 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
-import com.steccn.common.vo.QtChartPieVO;
-import com.steccn.common.vo.QtChartPieValueVO;
-import com.steccn.common.vo.R;
+import com.steccn.common.vo.*;
 import com.steccn.ems.service.CeCarbonReportService;
 import com.steccn.ems.service.CeElectricSettingService;
 import com.steccn.ems.service.CeFossilFuelSettingService;
@@ -39,6 +37,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -234,6 +233,38 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             });
         }
         return resPie;
+    }
+
+    @Override
+    public EpTreeGraphVO analysisExplodedView(LocalDate start, LocalDate end, Integer granularityInt) {
+        EpTreeGraphVO resVo = new EpTreeGraphVO();
+        List<EpTreeGraphDataVO> dataList = Lists.newArrayList();
+        List<EpTreeGraphLinkVO> linksList = Lists.newArrayList();
+        resVo.setData(dataList);
+        resVo.setLinks(linksList);
+        CeCarbonSumReportVO report = carbonSumReport(start, end, granularityInt);
+        List<CeCarbonSumReportListVO> filterContent = report.getContentList().stream().filter(ele -> Objects.nonNull(ele.getSum()) && BigDecimalUtil.gt(ele.getSum(), BigDecimal.ZERO)).collect(Collectors.toList());
+        List<CeCarbonSumReportListVO> twoLevelList = filterContent.stream().filter(ele -> ele.getType() == 1 || ele.getType() == 2).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(twoLevelList)){
+            String rootName = "碳排放总量";
+            dataList.add(new EpTreeGraphDataVO(rootName));
+
+            List<String> twoLevelNameList = Lists.newArrayList();
+            twoLevelList.forEach(ele -> {
+                dataList.add(new EpTreeGraphDataVO(ele.getHintName()));
+                linksList.add(new EpTreeGraphLinkVO(rootName, ele.getHintName(), ele.getSum()));
+                twoLevelNameList.add(ele.getHintName());
+            });
+
+            for (String twoLevelName : twoLevelNameList) {
+                List<CeCarbonSumReportListVO> children = filterContent.stream().filter(ele -> ele.getType() == 0 || ele.getType() == 2).filter(ele -> twoLevelName.equals(ele.getHintName())).collect(Collectors.toList());
+                children.forEach(child -> {
+                    dataList.add(new EpTreeGraphDataVO(child.getDetailName()));
+                    linksList.add(new EpTreeGraphLinkVO(twoLevelName, child.getDetailName(), child.getSum()));
+                });
+            }
+        }
+        return resVo;
     }
 
     /**

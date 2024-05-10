@@ -2,9 +2,11 @@ package com.steccn.ems.controller;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnRow;
+import com.steccn.common.vo.EpTreeGraphVO;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.CeCarbonReportDTO;
+import com.steccn.ems.dto.EpEnergyFlowLeaderDTO;
 import com.steccn.ems.service.CeCarbonReportService;
 import com.steccn.ems.vo.CeCarbonSumReportVO;
 import io.swagger.annotations.Api;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -76,5 +79,11 @@ public class CeCarbonReportController {
     @ApiOperation(value = "分析看板-碳排放详细分布")
     public R<QtChartPieVO> analysisDetailPie(@RequestBody CeCarbonReportDTO dto) {
         return R.success(ceCarbonReportService.analysisDetailPie(dto.getStart(), dto.getEnd(), dto.getGranularity()));
+    }
+
+    @PostMapping("/analysis/exploded/view")
+    @ApiOperation(value = "分析看板-碳排放分解图")
+    public R<EpTreeGraphVO> analysisExplodedView(@RequestBody @Valid CeCarbonReportDTO dto) {
+        return R.success(ceCarbonReportService.analysisExplodedView(dto.getStart(), dto.getEnd(), dto.getGranularity()));
     }
 }

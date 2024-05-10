@@ -3,6 +3,7 @@ package com.steccn.ems.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.EpTreeGraphVO;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.ems.dto.CeCarbonReportDTO;
 import com.steccn.ems.vo.CeCarbonSumReportVO;
@@ -96,4 +97,14 @@ public interface CeCarbonReportService {
      * @return
      */
     QtChartPieVO analysisDetailPie(LocalDate start, LocalDate end, Integer granularity);
+
+    /**
+     * 分析看板-碳排放分解图
+     *
+     * @param start       开始日期
+     * @param end         结束日期
+     * @param granularity 粒度
+     * @return
+     */
+    EpTreeGraphVO analysisExplodedView(LocalDate start, LocalDate end, Integer granularity);
 }
