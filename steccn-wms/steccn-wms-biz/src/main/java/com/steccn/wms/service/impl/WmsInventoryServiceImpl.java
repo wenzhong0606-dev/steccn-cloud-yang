@@ -829,7 +829,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         if (CollUtil.isNotEmpty(infoList)) {
             //获取库存变动类型
             SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(typeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
+            String type = WmsManagerConstant.variableTypeEnum.getTypeByValue(sysDictVO.getName());
             if (Objects.nonNull(type)) {
                 SysDictVO incomingType = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 List<String> list = Lists.newArrayList();
