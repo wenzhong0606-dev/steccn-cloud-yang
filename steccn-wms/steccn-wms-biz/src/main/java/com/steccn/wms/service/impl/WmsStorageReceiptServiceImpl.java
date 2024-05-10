@@ -1827,12 +1827,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         wmsStorageReceiptDTO.setList(wmsSalesReturnsDTO.getList());
         //创建入库单
         String order = addReturnCode(wmsStorageReceiptDTO);
-//        //销售同步
-//        SalesReturnOrderSyncDTO salesReturnOrderSyncDTO = new SalesReturnOrderSyncDTO();
-//        salesReturnOrderSyncDTO.setStock_order(order);
-//        salesReturnOrderSyncDTO.setServer_code(WmsManagerConstant.SERVER_CODE2);
-//        salesReturnOrderSyncDTO.setLogistics_code(wmsSalesReturnsDTO.getSourceCode());
-//        remoteSalesFeignApi.syncReturnOrder(salesReturnOrderSyncDTO);
+        //销售同步
+        SalesReturnOrderSyncDTO salesReturnOrderSyncDTO = new SalesReturnOrderSyncDTO();
+        salesReturnOrderSyncDTO.setStock_order(order);
+        salesReturnOrderSyncDTO.setServer_code(WmsManagerConstant.SERVER_CODE2);
+        salesReturnOrderSyncDTO.setLogistics_code(wmsSalesReturnsDTO.getSourceCode());
+        remoteSalesFeignApi.syncReturnOrder(salesReturnOrderSyncDTO);
         return order;
     }
 
