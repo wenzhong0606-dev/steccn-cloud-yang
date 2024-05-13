@@ -14,4 +14,10 @@ public interface MesEqpSignalService extends IService<MesEqpSignal> {
      * @return
      */
     Boolean saveReport();
+
+    /**
+     * 保存设备报表
+     * @return
+     */
+    Boolean saveReportEqp(String eqpCode);
 }
