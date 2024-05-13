@@ -12,6 +12,7 @@ import com.steccn.hikvision.service.HikvisionService;
 import com.steccn.hikvision.vo.CameraVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.security.SecurityUtil;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
@@ -79,8 +80,9 @@ public class HikvisionServiceImpl implements HikvisionService {
         VideoApi videoApi = new VideoApi();
         Map<String,String> querys = Maps.newHashMap();
         querys.put("language", "zh_CN");
-        querys.put("service", "http://192.168.200.100/portal");
-        querys.put("userCode", "admin");
+        querys.put("service", "http://192.168.200.100/portal/ui/index");
+        String username = SecurityUtils.getUser().getUsername();
+        querys.put("userCode", username);
         String result = videoApi.ssoLogin(querys);
         JSONObject jsonObject = JSONObject.parseObject(result);
         String token = jsonObject.getJSONObject("data").getString("token");

@@ -335,7 +335,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     public Map<String, LocalDate> getCompanyStartTime(Set<String> loginCode) {
         Map<String,LocalDate> results = Maps.newHashMap();
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().select(Hrmresource::getCompanystartdate, Hrmresource::getLoginid)
-                .in(Hrmresource::getLoginid, loginCode));
+                .in(Hrmresource::getLoginid, loginCode).isNotNull(Hrmresource::getCompanystartdate));
         if(CollUtil.isNotEmpty(list)){
             results = list.stream().collect(Collectors.toMap(
                     Hrmresource::getLoginid,

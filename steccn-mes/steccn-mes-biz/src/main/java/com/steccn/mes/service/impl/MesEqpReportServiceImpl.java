@@ -92,6 +92,9 @@ public class MesEqpReportServiceImpl extends ServiceImpl<MesEqpReportMapper, Mes
         //先根据code查询设备信息
         MesEquipment equipment = mesEquipmentMapper.selectOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getEquipmentCode, dto.getEqpCode())
                 .eq(MesEquipment::getStatus, OaConstant.NO.toString()).last("LIMIT 1"));
+        if(Objects.isNull(equipment)){
+            return true;
+        }
         //先查看是否有数据
         MesEqpReport report = getOne(new LambdaQueryWrapper<MesEqpReport>().eq(MesEqpReport::getEqpId, equipment.getId()).last("LIMIT 1"));
         if(Objects.isNull(report)){
