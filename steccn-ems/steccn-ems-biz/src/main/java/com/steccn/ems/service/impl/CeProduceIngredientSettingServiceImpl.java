@@ -188,8 +188,9 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
                         Map<LocalDate, BigDecimal> valueMap = consumeMap.get(setting.getMaterialId());
                         BigDecimal consumeValue = valueMap.get(finalValidStart);
                         BigDecimal value = BigDecimalUtil.multiply(consumeValue, setting.getFactorValue());
-                        value = BigDecimalUtil.percent(value, setting.getPurityValue());
-                        value = BigDecimalUtil.percent(value, setting.getCalcinationRatio());
+                        value = BigDecimalUtil.multiply(value, setting.getPurityValue());
+                        value = BigDecimalUtil.multiply(value, setting.getCalcinationRatio());
+                        value = BigDecimalUtil.divide(value, BigDecimalUtil.valueOf("10000"));
                         if(Objects.nonNull(value)){
                             resMap.computeIfAbsent(setting.getMaterialId(), x -> Maps.newHashMap()).put(finalValidStart, value);
                         }
