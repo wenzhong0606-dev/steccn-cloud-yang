@@ -1,5 +1,6 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.ems.vo.DeepProcessConsumeReportVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 
@@ -32,6 +33,17 @@ public interface EpPmsConsumeReportService {
      * @return
      */
     EpPmsConsumeVO consumeUseWater(Integer officeId, LocalDate start, LocalDate end);
+
+    /**
+     * 获取今日用水量
+     *
+     * @param officeId 单位id
+     * @param start    开始日期
+     * @param end      结束日期
+     * @return
+     */
+    EpPmsConsumeVO consumeUseLng(Integer officeId, LocalDate start, LocalDate end);
+
 
     /**
      * 获取今日天然气使用量

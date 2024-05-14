@@ -54,6 +54,18 @@ public class EpPmsConsumeReportController {
         return R.success(consumeReportService.consumeUseWater(officeId, start, end));
     }
 
+    @GetMapping("/consume/use/lng")
+    @ApiOperation(value = "获取今日LNG")
+    public R<EpPmsConsumeVO> consumeUseLng(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {
+        return R.success(consumeReportService.consumeUseLng(officeId, date, date));
+    }
+
+    @GetMapping("/consume/use/lng/date/range")
+    @ApiOperation(value = "获取日期范围LNG")
+    public R<EpPmsConsumeVO> consumeUseLngDateRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.consumeUseLng(officeId, start, end));
+    }
+
     @GetMapping("/consume/use/gas")
     @ApiOperation(value = "获取今日天然气使用量")
     public R<EpPmsConsumeVO> consumeUseGas(@RequestParam("officeId") Integer officeId, @RequestParam("date") LocalDate date) {

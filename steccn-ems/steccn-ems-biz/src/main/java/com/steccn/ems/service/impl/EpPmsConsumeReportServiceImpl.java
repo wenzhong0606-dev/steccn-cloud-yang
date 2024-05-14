@@ -72,6 +72,11 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
     }
 
     @Override
+    public EpPmsConsumeVO consumeUseLng(Integer officeId, LocalDate start, LocalDate end) {
+        return consumeUse(officeId, start, end, 8);
+    }
+
+    @Override
     public EpPmsConsumeVO consumeUseGas(Integer officeId, LocalDate start, LocalDate end) {
         return consumeUse(officeId, start, end, 3);
     }
