@@ -120,15 +120,16 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
         }else{
             EpPmsConsumeVO oil = consumeUseOil(officeId, start, end);
             EpPmsConsumeVO gas = consumeUseGas(officeId, start, end);
+            EpPmsConsumeVO lng = consumeUseLng(officeId, start, end);
             PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
             pullForceSumDTO.setWorkshopIdSet(workshopIdSet);
             pullForceSumDTO.setGranularity(QtManagerConstant.QtGranularityEnum.NONE.getCode());
             pullForceSumDTO.setStart(start);
             pullForceSumDTO.setEnd(end);
             Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-            //（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
+            //（天然气 * 7800 + 重油 * 9300 + LNG * 8000）/ 拉引量 * 1000
             BigDecimal pullForce = pullForceMap.get(MysqlDateKeyUtil.convert(QtManagerConstant.QtGranularityEnum.NONE, start));
-            BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), pullForce, 1);
+            BigDecimal sum = UnitConsumeUtil.unitConsume(gas.getSum(), oil.getSum(), lng.getSum(), pullForce, 1);
             EpPmsConsumeVO res = new EpPmsConsumeVO();
             res.setUnitName("kcal/kg");
             res.setSum(sum);

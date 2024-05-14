@@ -333,7 +333,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             BigDecimal oilValue = oilValueMap.get(convert);
             String mysqlKey = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal pullForceValue = pullForceMap.get(mysqlKey);
-            BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue, pullForceValue, bit);
+            BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue,null, pullForceValue, bit);
             valueList.add(result);
             gasValueList.add(gasValue);
             oilValueList.add(oilValue);
@@ -343,7 +343,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         BigDecimal gasSum = BigDecimalUtil.sum(gasValueList);
         BigDecimal oilSum = BigDecimalUtil.sum(oilValueList);
         BigDecimal pullForceSum = BigDecimalUtil.sum(pullForceValueList);
-        BigDecimal unitConsumeAvg = UnitConsumeUtil.unitConsume(gasSum, oilSum, pullForceSum, bit);
+        BigDecimal unitConsumeAvg = UnitConsumeUtil.unitConsume(gasSum, oilSum, null, pullForceSum, bit);
         res.setTotalQuantity(unitConsumeAvg);
         res.setUnitName("kcal/kg");
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();

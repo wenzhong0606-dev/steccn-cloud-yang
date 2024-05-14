@@ -12,18 +12,21 @@ import java.math.BigDecimal;
 public class UnitConsumeUtil {
 
     /**
-     * 单耗的计算方式
+     * 单耗的计算方式 （天然气 * 7800 + 重油 * 9300 + LNG * 8000）/ 拉引量 * 1000
      *
      * @param gas       气
      * @param oil       油
+     * @param lng       液化天然气
      * @param pullForce 拉引量
      * @param bit       保留小数
      * @return
      */
-    public static BigDecimal unitConsume(BigDecimal gas, BigDecimal oil, BigDecimal pullForce, int bit) {
+    public static BigDecimal unitConsume(BigDecimal gas, BigDecimal oil, BigDecimal lng, BigDecimal pullForce, int bit) {
         BigDecimal gasValueMu = BigDecimalUtil.multiply(gas, new BigDecimal("7800"), bit);
+        BigDecimal lngValueMu = BigDecimalUtil.multiply(lng, new BigDecimal("8000"), bit);
         BigDecimal oilValueMu = BigDecimalUtil.multiply(oil, new BigDecimal("9300000"), bit);
         BigDecimal multiply = BigDecimalUtil.add(gasValueMu, oilValueMu, bit);
+        multiply = BigDecimalUtil.add(multiply, lngValueMu, bit);
         BigDecimal pullForceValueMu = BigDecimalUtil.multiply(pullForce, new BigDecimal("1000"), bit);
         BigDecimal result = BigDecimalUtil.divide(multiply, pullForceValueMu, bit);
         return result;
