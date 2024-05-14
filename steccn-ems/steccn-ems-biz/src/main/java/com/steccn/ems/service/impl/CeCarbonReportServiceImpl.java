@@ -78,9 +78,9 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             headList.add(convert);
         }
         resVo.setHeadList(headList);
-        contentList.addAll(convert(dateList, "化石燃料", valueList3));
-        contentList.addAll(convert(dateList, "生产原料", valueList2));
-        contentList.addAll(convert(dateList, "电力", Lists.newArrayList(new TupleDTO<>("净购入电力", electricMap))));
+        contentList.addAll(convert(dateList, "化石燃料", valueList3, Boolean.TRUE));
+        contentList.addAll(convert(dateList, "生产原料", valueList2, Boolean.TRUE));
+        contentList.addAll(convert(dateList, "电力", Lists.newArrayList(new TupleDTO<>("净购入电力", electricMap)), Boolean.FALSE));
         //添加总计
         if (CollUtil.isNotEmpty(contentList)) {
             List<BigDecimal> sumValueList = Lists.newArrayList();
@@ -307,7 +307,7 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
      * @param dataList     数据集合
      * @return
      */
-    public List<CeCarbonSumReportListVO> convert(List<LocalDate> dateList, String categoryName, List<TupleDTO<String, Map<LocalDate, BigDecimal>>> dataList) {
+    public List<CeCarbonSumReportListVO> convert(List<LocalDate> dateList, String categoryName, List<TupleDTO<String, Map<LocalDate, BigDecimal>>> dataList , Boolean flag) {
         List<CeCarbonSumReportListVO> resList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dataList)) {
             for (TupleDTO<String, Map<LocalDate, BigDecimal>> data : dataList) {
@@ -337,7 +337,7 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             }
         }
         //如果超过1条，则添加合计
-        if (resList.size() > 1) {
+        if (resList.size() > 0 && flag) {
             CeCarbonSumReportListVO total = new CeCarbonSumReportListVO();
             Map<Integer, BigDecimal> totalDateMap = Maps.newHashMap();
             resList.forEach(ele -> {
