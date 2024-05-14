@@ -1,9 +1,7 @@
 package com.steccn.ems.service;
 
-import com.steccn.common.constant.ResultCode;
+import com.steccn.ems.vo.DeepProcessConsumeReportVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
-import com.steccn.ems.vo.PmElectricConsumeVO;
-import org.apache.tomcat.jni.Local;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -64,4 +62,11 @@ public interface EpPmsConsumeReportService {
      */
     EpPmsConsumeVO consumeUseUnitConsume(Integer officeId, LocalDate start,LocalDate end);
 
+    /**
+     * 深加工能耗分析
+     * @param start 开始日期
+     * @param end 结束日期
+     * @return
+     */
+    List<DeepProcessConsumeReportVO> deepProcessConsumeReport(LocalDate start, LocalDate end);
 }

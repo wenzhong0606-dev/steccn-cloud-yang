@@ -2,6 +2,7 @@ package com.steccn.ems.controller;
 
 import com.steccn.common.vo.R;
 import com.steccn.ems.service.EpPmsConsumeReportService;
+import com.steccn.ems.vo.DeepProcessConsumeReportVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.ems.vo.PmElectricConsumeVO;
 import io.swagger.annotations.Api;
@@ -87,5 +88,11 @@ public class EpPmsConsumeReportController {
     @ApiOperation(value = "获取日期范围能源单耗")
     public R<EpPmsConsumeVO> consumeUseUnitConsumeDateRange(@RequestParam("officeId") Integer officeId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(consumeReportService.consumeUseUnitConsume(officeId, start, end));
+    }
+
+    @GetMapping("/consume/use/deep/report")
+    @ApiOperation(value = "深加工消耗统计分析")
+    public R<List<DeepProcessConsumeReportVO>> deepProcessConsumeReport(@RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
+        return R.success(consumeReportService.deepProcessConsumeReport(start,end));
     }
 }
