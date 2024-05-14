@@ -15,8 +15,6 @@ import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.dto.DpPullForceDTO;
-import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.*;
@@ -27,7 +25,9 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.PmsOperateDriverDTO;
+import com.steccn.pms.dto.PullForceSumDTO;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
+import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.SjgCountReportRowVO;
 import com.steccn.pms.vo.SjgCountReportVO;
@@ -61,7 +61,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
     private final EpPartitionService epPartitionService;
     private final EpEnergyTypeService epEnergyTypeService;
     private final RemoteDictFeignApi remoteDictFeignApi;
-    private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
+    private final RemotePullForceFeignApi remotePullForceFeignApi;
     private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
     private final EmsOfficeManager emsOfficeManager;
     private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
@@ -295,19 +295,24 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         Assert.notNull(gas, "天然气树，不存在此节点");
         EpPartition oil = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, 4));
         Assert.notNull(oil, "重油树，不存在此节点");
+        EpPartition lng = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getOfficeId()).eq(EpPartition::getType, 8));
+        Assert.notNull(lng, "lng树，不存在此节点");
         List<LocalDate> conditionDt = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), dto.getStart(), dto.getEnd());
         //获取全量数据表
         List<EpMeterReadAllDataVO> gasAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), gas.getType(), Arrays.asList(gas.getId()));
         List<EpMeterReadAllDataVO> oilAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), oil.getType(), Arrays.asList(oil.getId()));
+        List<EpMeterReadAllDataVO> lngAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), lng.getType(), Arrays.asList(lng.getId()));
         SteccnTableAssertUtil.notEmpty(gasAllData, "全量数据表为空");
         SteccnTableAssertUtil.notEmpty(oilAllData, "全量数据表为空");
+        SteccnTableAssertUtil.notEmpty(lngAllData, "全量数据表为空");
         //获取拉引量
-        DpPullForceDTO dpPullForceDTO = new DpPullForceDTO();
-        dpPullForceDTO.setStart(dto.getStart());
-        dpPullForceDTO.setEnd(dto.getEnd());
-        dpPullForceDTO.setGranularity(dto.getGranularity());
-        dpPullForceDTO.setWorkshopIdSet(wsIdSet);
-        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remoteDpPullForceFeignApi.pullForceSum(dpPullForceDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
+        pullForceSumDTO.setStart(dto.getStart());
+        pullForceSumDTO.setEnd(dto.getEnd());
+        pullForceSumDTO.setGranularity(dto.getGranularity());
+        pullForceSumDTO.setWorkshopIdSet(wsIdSet);
+
+        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
 
         Map<String, BigDecimal> gasValueMap = Maps.newHashMap();
         gasAllData.forEach(ele -> {
@@ -319,10 +324,16 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             String convert = XAxisUtil.convert(granularity, ele.getReadDate());
             MapUtil.add(oilValueMap, convert, ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, bit));
         });
+        Map<String, BigDecimal> lngValueMap = Maps.newHashMap();
+        lngAllData.forEach(ele -> {
+            String convert = XAxisUtil.convert(granularity, ele.getReadDate());
+            MapUtil.add(lngValueMap, convert, ele.getConsume(), (x, y) -> BigDecimalUtil.add(x, y, bit));
+        });
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> valueList = Lists.newArrayList();
         List<BigDecimal> gasValueList = Lists.newArrayList();
         List<BigDecimal> oilValueList = Lists.newArrayList();
+        List<BigDecimal> lngValueList = Lists.newArrayList();
         List<BigDecimal> pullForceValueList = Lists.newArrayList();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate ele = dateList.get(i - 1);
@@ -331,19 +342,22 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             //y轴：（天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
             BigDecimal gasValue = gasValueMap.get(convert);
             BigDecimal oilValue = oilValueMap.get(convert);
+            BigDecimal lngValue = lngValueMap.get(convert);
             String mysqlKey = MysqlDateKeyUtil.convert(granularity, ele);
             BigDecimal pullForceValue = pullForceMap.get(mysqlKey);
-            BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue,null, pullForceValue, bit);
+            BigDecimal result = UnitConsumeUtil.unitConsume(gasValue, oilValue,lngValue, pullForceValue, bit);
             valueList.add(result);
             gasValueList.add(gasValue);
             oilValueList.add(oilValue);
+            lngValueList.add(lngValue);
             pullForceValueList.add(pullForceValue);
         }
         PmsOperateEnergyVO res = new PmsOperateEnergyVO();
         BigDecimal gasSum = BigDecimalUtil.sum(gasValueList);
         BigDecimal oilSum = BigDecimalUtil.sum(oilValueList);
+        BigDecimal lngSum = BigDecimalUtil.sum(lngValueList);
         BigDecimal pullForceSum = BigDecimalUtil.sum(pullForceValueList);
-        BigDecimal unitConsumeAvg = UnitConsumeUtil.unitConsume(gasSum, oilSum, null, pullForceSum, bit);
+        BigDecimal unitConsumeAvg = UnitConsumeUtil.unitConsume(gasSum, oilSum, lngSum, pullForceSum, bit);
         res.setTotalQuantity(unitConsumeAvg);
         res.setUnitName("kcal/kg");
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
