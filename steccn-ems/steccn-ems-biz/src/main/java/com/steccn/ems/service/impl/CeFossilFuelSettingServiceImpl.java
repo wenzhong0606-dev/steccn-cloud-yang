@@ -140,8 +140,8 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
     }
 
     @Override
-    public List<TupleDTO<String,Map<LocalDate, BigDecimal>>> carbonSumReportDay(LocalDate start, LocalDate end) {
-        List<TupleDTO<String,Map<LocalDate, BigDecimal>>> resList = Lists.newArrayList();
+    public List<TupleDTO<String, Map<LocalDate, BigDecimal>>> carbonSumReportDay(LocalDate start, LocalDate end) {
+        List<TupleDTO<String, Map<LocalDate, BigDecimal>>> resList = Lists.newArrayList();
         /**
          * 化石燃料：日期D燃料F的碳排放量C = 当日F的消耗量 * F的低位发热量 * F的单位热值含碳量 * F的碳氧化率 / 100 * 44 / 12
          *
@@ -165,12 +165,12 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                         .lt(CeFossilFuelSetting::getValidEnd, start)));
         if (CollUtil.isNotEmpty(validList)) {
             //获取领料的物料集合
-            Map<Long,String> materialIdMap = Maps.newLinkedHashMap();
+            Map<String, String> materialIdMap = Maps.newLinkedHashMap();
             validList.forEach(ele -> {
-                materialIdMap.put(ele.getMaterialId(), ele.getMaterialName());
+                materialIdMap.put(ele.getCountSource() + "_" + ele.getMaterialId(), ele.getMaterialName());
             });
             List<Long> materialIdList = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.PICK_MATERIAL.getCode().equals(ele.getCountSource())).map(CeFossilFuelSetting::getMaterialId).distinct().collect(Collectors.toList());
-            Map<Long,Map<LocalDate, BigDecimal>> consumeMap = Maps.newHashMap();
+            Map<Long, Map<LocalDate, BigDecimal>> consumeMap = Maps.newHashMap();
             //这里考虑性能-优先考虑异步
             for (Long materialId : materialIdList) {
                 Map<LocalDate, BigDecimal> valueMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(materialId, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
@@ -180,15 +180,15 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
             long flag1 = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(ele.getCountSource())).filter(ele -> ele.getMaterialName().contains("天然气")).count();
             long flag2 = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(ele.getCountSource())).filter(ele -> ele.getMaterialName().contains("燃料油")).count();
             Map<LocalDate, BigDecimal> gasMap = null, oilMap = null;
-            if(flag1 != 0){
+            if (flag1 != 0) {
                 gasMap = epDayCountReportService.consumeValue("天然气", "基片", start, end);
             }
-            if(flag2 != 0){
+            if (flag2 != 0) {
                 oilMap = epDayCountReportService.consumeValue("燃料油", "基片", start, end);
             }
             //开始遍历-形成返回集合
             LocalDate startTmp = start;
-            Map<Long,Map<LocalDate, BigDecimal>> resMap = Maps.newHashMap();
+            Map<String, Map<LocalDate, BigDecimal>> resMap = Maps.newHashMap();
             while (LocalDateUtil.le(startTmp, end)) {
                 LocalDate finalValidStart = startTmp;
                 List<CeFossilFuelSetting> settingList = validList.stream()
@@ -197,13 +197,13 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                 if (CollUtil.isNotEmpty(settingList)) {
                     for (CeFossilFuelSetting setting : settingList) {
                         Map<LocalDate, BigDecimal> valueMap = null;
-                        if(EpManagerConstant.CarbonCountSourceEnum.PICK_MATERIAL.getCode().equals(setting.getCountSource())){
+                        if (EpManagerConstant.CarbonCountSourceEnum.PICK_MATERIAL.getCode().equals(setting.getCountSource())) {
                             valueMap = consumeMap.get(setting.getMaterialId());
-                        }else if(setting.getMaterialName().contains("天然气")){
+                        } else if (setting.getMaterialName().contains("天然气")) {
                             valueMap = gasMap;
-                        }else if(setting.getMaterialName().contains("燃料油")){
+                        } else if (setting.getMaterialName().contains("燃料油")) {
                             valueMap = oilMap;
-                        }else{
+                        } else {
                             valueMap = Maps.newHashMap();
                         }
                         BigDecimal consumeValue = valueMap.get(finalValidStart);
@@ -211,15 +211,17 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                         value = BigDecimalUtil.multiply(value, setting.getTceValue());
                         value = BigDecimalUtil.multiply(value, setting.getCoRatio());
                         value = BigDecimalUtil.divide(value, BigDecimalUtil.valueOf("52800"));
-                        if(Objects.nonNull(value)){
-                            resMap.computeIfAbsent(setting.getMaterialId(), x -> Maps.newHashMap()).put(finalValidStart, value);
+                        if (Objects.nonNull(value)) {
+                            resMap.computeIfAbsent(setting.getCountSource() + "_" + setting.getMaterialId(), x -> Maps.newHashMap()).put(finalValidStart, value);
                         }
                     }
                 }
                 startTmp = startTmp.plusDays(1);
             }
-
-            materialIdMap.forEach((k, v) -> resList.add(new TupleDTO<>(v, resMap.getOrDefault(k, new HashMap<>()))));
+            //考虑同一种物料 不同的类型
+            materialIdMap.forEach((k, v) -> {
+                resList.add(new TupleDTO<>(v, resMap.getOrDefault(k, new HashMap<>())));
+            });
         }
         return resList;
     }
