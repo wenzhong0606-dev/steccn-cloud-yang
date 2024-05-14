@@ -114,15 +114,19 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             contentList.add(sumRow);
         }
         //获取深加工制造部的officeId
-        SysOfficeVO department = FeignOptional.of(() -> remoteOfficeFeign.infoCode(SysOfficeConstant.DEPARTMENT, "STEC005"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Assert.notNull(department, "深加工制造部节点不存在");
+        SysOfficeVO workshop1 = FeignOptional.of(() -> remoteOfficeFeign.infoCode(SysOfficeConstant.WORKSHOP, "STEC003"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(workshop1, "深加工二车间节点不存在");
+        SysOfficeVO workshop2 = FeignOptional.of(() -> remoteOfficeFeign.infoCode(SysOfficeConstant.WORKSHOP, "STEC015"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(workshop2, "深加工三车间节点不存在");
         PmsOperateDriverDTO driverDTO = new PmsOperateDriverDTO();
         driverDTO.setGranularity(granularity);
         driverDTO.setStart(start);
         driverDTO.setEnd(end);
         driverDTO.setUnit(PmManagerConstant.MEASURE_UNIT_TON);
-        driverDTO.setOfficeId(department.getId());
-        Map<String, BigDecimal> pmMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(driverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        driverDTO.setOfficeId(workshop1.getId());
+        Map<String, BigDecimal> pmMap1 = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(driverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        driverDTO.setOfficeId(workshop2.getId());
+        Map<String, BigDecimal> pmMap2 = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(driverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         CeCarbonSumReportListVO pmRow = new CeCarbonSumReportListVO();
         List<BigDecimal> pmList = Lists.newArrayList();
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
@@ -130,7 +134,8 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate startArea = dateList.get(i - 1);
             String convert = MysqlDateKeyUtil.convert(granularityEnum, startArea);
-            pmList.add(BigDecimalUtil.divide(pmMap.get(convert), new BigDecimal("500"), 2));
+            BigDecimal pmData = BigDecimalUtil.add(pmMap1.get(convert), pmMap2.get(convert));
+            pmList.add(BigDecimalUtil.divide(pmData, new BigDecimal("500"), 2));
         }
         pmRow.setValueList(pmList);
         pmRow.setCategoryName("总产量（万重箱）");
