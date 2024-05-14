@@ -55,7 +55,7 @@ public class WmsStorageReceiptFeignController {
 
     @ApiOperation("根据时间获取类型为生产领料和生产退料的物料数量-用于碳核算")
     @PostMapping("/produce/consume/quantity")
-    public R<Map<LocalDate, BigDecimal>> produceConsumeQuantity(@RequestBody TripleDTO<Long,LocalDate,LocalDate> dto){
-        return R.success(wmsStorageReceiptInfoService.produceConsumeQuantity(dto.getField1(),dto.getField2(),dto.getField3()));
+    public R<Map<LocalDate, BigDecimal>> produceConsumeQuantity(@RequestBody TripleDTO<Long, LocalDate, LocalDate> dto) {
+        return R.success(wmsStorageReceiptInfoService.produceConsumeQuantity(dto.getField1(), dto.getField2(), dto.getField3()));
     }
 }
