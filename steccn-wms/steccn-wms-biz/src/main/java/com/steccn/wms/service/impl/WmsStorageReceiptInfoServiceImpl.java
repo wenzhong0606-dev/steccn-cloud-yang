@@ -87,7 +87,7 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
         //获取物料确认日期在[start,end]中的消耗数量
         LocalDateTime startLdt = LocalDateUtil.getMorning(start);
         LocalDateTime endLdt = LocalDateUtil.getMorning(end).plusDays(1);
-        List<WmsStorageReceiptInfo> list1 = wmsStorageReceiptInfoMapper.produceReturnQuantity(sysDictVO2.getId(), materialId, startLdt, endLdt);
+        List<WmsStorageReceiptInfo> list1 = wmsStorageReceiptInfoMapper.produceReturnQuantity(sysDictVO1.getId(), materialId, startLdt, endLdt);
         List<WmsStorageReceiptInfo> list2 = wmsDeliveryReceiptInfoMapper.produceConsumeQuantity(sysDictVO2.getId(), materialId, startLdt, endLdt);
         if (CollUtil.isNotEmpty(list1) || CollUtil.isNotEmpty(list2)) {
             while (LocalDateUtil.le(start, end)) {

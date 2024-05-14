@@ -78,8 +78,8 @@ public class CeCarbonReportServiceImpl implements CeCarbonReportService {
             headList.add(convert);
         }
         resVo.setHeadList(headList);
-        contentList.addAll(convert(dateList, "化石燃料", valueList2));
-        contentList.addAll(convert(dateList, "生产原料", valueList3));
+        contentList.addAll(convert(dateList, "化石燃料", valueList3));
+        contentList.addAll(convert(dateList, "生产原料", valueList2));
         contentList.addAll(convert(dateList, "电力", Lists.newArrayList(new TupleDTO<>("净购入电力", electricMap))));
         //添加总计
         if (CollUtil.isNotEmpty(contentList)) {
