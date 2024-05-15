@@ -492,11 +492,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 LocalDate areaEnd = timeList.get(i);
                 String convert = MysqlDateKeyUtil.convert(granularity, areaStart);
                 List<BigDecimal> valueList1 = consumeList.stream()
-                        .filter(ele -> LocalDateUtil.isRange(ele.getReadDate(), areaStart, areaEnd, Boolean.TRUE, Boolean.TRUE))
+                        .filter(ele -> LocalDateUtil.isRange(ele.getReadDate(), areaStart, areaEnd, Boolean.TRUE, Boolean.FALSE))
                         .filter(ele -> officeId.equals(ele.getSysOfficeId()))
                         .map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
                 List<BigDecimal> valueList2 = consumeList.stream()
-                        .filter(ele -> LocalDateUtil.isRange(ele.getReadDate(), areaStart, areaEnd, Boolean.TRUE, Boolean.TRUE))
+                        .filter(ele -> LocalDateUtil.isRange(ele.getReadDate(), areaStart, areaEnd, Boolean.TRUE, Boolean.FALSE))
                         .filter(ele -> officeId.equals(ele.getSysOfficeId()))
                         .map(EpMeterReadAllDataVO::getProductNum).collect(Collectors.toList());
 
