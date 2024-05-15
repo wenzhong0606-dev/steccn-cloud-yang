@@ -365,6 +365,9 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
         CompletableFuture<CommonReportDTO> oilFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(4, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> null);
+        CompletableFuture<CommonReportDTO> lngFuture = CompletableFuture.supplyAsync(() -> {
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(8, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null);
         CompletableFuture<CommonReportDTO> kcalFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(5, Lists.newArrayList(workShopId), start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> null).thenApply(res -> {
@@ -421,12 +424,12 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             return pmsCompleteStorageInfoService.substrateProduceLine(dpPmsOperateDTO);
         }).exceptionally(ex -> null);
 
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture);
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(gasFuture, oilFuture, kcalFuture, electricFuture, waterFuture, lngFuture);
         completableFuture.isDone();
         List<JpCountReportDetailRowVO> rowList = Lists.newArrayList();
 
         countReportDetailRow(rowList, "耗料", hlList.get(), Boolean.TRUE, granularity, timeList);
-        countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
+        countReportDetailRow(rowList, "燃料", Lists.newArrayList(gasFuture.get(), oilFuture.get(),lngFuture.get(), kcalFuture.get()), Boolean.TRUE, granularity, timeList);
         countReportDetailRow(rowList, "水电", Lists.newArrayList(electricFuture.get(), waterFuture.get()), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "余热发电", heatPowerList.get(), Boolean.FALSE, granularity, timeList);
         countReportDetailRow(rowList, "光伏发电", gfList.get(), Boolean.FALSE, granularity, timeList);
