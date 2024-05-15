@@ -471,7 +471,7 @@ public class ReportServiceImpl implements ReportService {
                 BigDecimal gas = BigDecimalUtil.sum(gasMap.values());
                 BigDecimal lng = BigDecimalUtil.sum(lngMap.values());
                 BigDecimal lyl = BigDecimalUtil.sum(pfMap.values());
-                BigDecimal kcal = UnitConsumeUtil.unitConsume(oil, gas, lng, lyl, 2);
+                BigDecimal kcal = UnitConsumeUtil.unitConsume(gas, oil, lng, lyl, 2);
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(kcal, kcal, kcal), consumeEnum.getName());
             }else if(Sets.newHashSet(WATER, ELECTRIC, GAS, OIL, LNG).contains(consumeEnum)) {
                 //水电油气LNG
@@ -536,7 +536,7 @@ public class ReportServiceImpl implements ReportService {
                 BigDecimal gas = consume3.isPresent() ? consume3.get().getValue() : null;
                 BigDecimal lng = consumeLng.isPresent() ? consumeLng.get().getValue() : null;
                 BigDecimal lyl = pfMap.get(productLine.getParentId());
-                BigDecimal kcal = UnitConsumeUtil.unitConsume(oil, gas, lng, lyl, 2);
+                BigDecimal kcal = UnitConsumeUtil.unitConsume(gas, oil, lng, lyl, 2);
                 subVo = rowData(productLine, Arrays.asList(kcal, kcal, kcal), consumeEnum.getName());
             } else if (Sets.newHashSet(WATER, ELECTRIC, GAS, OIL, LNG).contains(consumeEnum)) {
                 //水电油气,LNG
