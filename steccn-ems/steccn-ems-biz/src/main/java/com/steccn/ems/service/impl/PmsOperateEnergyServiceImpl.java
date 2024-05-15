@@ -104,7 +104,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
             return sjgUnitConsume(dto, bit, granularity, dateList);
         } else {
             //基片单耗：天然气用量*7800+重油用量*1000*9300)/(拉引量*1000)
-            return jpUnitConsume(dto, bit, granularity, dateList, wsIdSet);
+            return jpUnitConsume(dto, 1, granularity, dateList, wsIdSet);
         }
     }
 
