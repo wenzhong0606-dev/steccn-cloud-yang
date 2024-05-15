@@ -118,7 +118,8 @@ public interface PmReportConstant {
         ELECTRIC(2, "耗电量(Kwh)"),
         WATER(3, "耗水量(T)"),
         OIL(4, "耗油量(Kg)"),
-        GAS(5, "耗气量(m³)"),
+        GAS(5, "天然气(m³)"),
+        LNG(9, "LNG(m³)"),
         Kcal(6, "单耗(kcal/Kg玻璃液)");
 
         private final Integer code;

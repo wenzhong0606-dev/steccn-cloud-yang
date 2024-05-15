@@ -22,6 +22,7 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
+import com.steccn.ems.util.UnitConsumeUtil;
 import com.steccn.mes.dto.SrmQueryDTO;
 import com.steccn.mes.vo.MesSpareSupplierVO;
 import com.steccn.mes.vo.SrmSupplierVO;
@@ -64,6 +65,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.steccn.pms.constant.PmReportConstant.SubstrateReportConsumeEnum.*;
 
 /**
  * @author yequan
@@ -145,15 +148,22 @@ public class ReportServiceImpl implements ReportService {
 
         List<SubstrateDataListVO> finalRowDataList = rowDataList;
 
-        //获取每个车间的能耗- 水2 电1 油4 气3
+        //获取每个车间的能耗- 水2 电1 油4 气3 LNG 8
         //用于计算车间单耗和总计的单耗 /energy/consume/office
         //能源类型，车间，日期start，日期end，粒度  5元组
         Map<String, BigDecimal> consumeMap1 = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(1, Lists.newArrayList(workShopMap.keySet()), dto.getDate(), dto.getDate(), PmManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         Map<String, BigDecimal> consumeMap2 = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(2, Lists.newArrayList(workShopMap.keySet()), dto.getDate(), dto.getDate(), PmManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         Map<String, BigDecimal> consumeMap3 = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(3, Lists.newArrayList(workShopMap.keySet()), dto.getDate(), dto.getDate(), PmManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         Map<String, BigDecimal> consumeMap4 = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(4, Lists.newArrayList(workShopMap.keySet()), dto.getDate(), dto.getDate(), PmManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        Map<String, BigDecimal> consumeMap5 = FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsumeOffice(new Tuple5DTO<>(8, Lists.newArrayList(workShopMap.keySet()), dto.getDate(), dto.getDate(), PmManagerConstant.QtGranularityEnum.NONE.getCode())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         Map<Integer, BigDecimal> pfMap = pmsPullForceService.dateWsPullForce(Lists.newArrayList(workShopMap.keySet()), dto.getDate());
-        Tuple5DTO<Map<String, BigDecimal>, Map<String, BigDecimal>, Map<String, BigDecimal>, Map<String, BigDecimal>, Map<Integer, BigDecimal>> wsMapTuple = new Tuple5DTO(consumeMap1, consumeMap2, consumeMap3, consumeMap4, pfMap);
+        Map<Integer, Map<?, BigDecimal>> wsMapTupleReplace = Maps.newHashMap();
+        wsMapTupleReplace.put(ELECTRIC.getCode(), consumeMap1);
+        wsMapTupleReplace.put(WATER.getCode(), consumeMap2);
+        wsMapTupleReplace.put(GAS.getCode(), consumeMap3);
+        wsMapTupleReplace.put(OIL.getCode(), consumeMap4);
+        wsMapTupleReplace.put(LNG.getCode(), consumeMap5);
+        wsMapTupleReplace.put(PULL_FORCE.getCode(), pfMap);
 
         workShopMap.forEach((k, v) -> {
             //车间统计
@@ -170,8 +180,6 @@ public class ReportServiceImpl implements ReportService {
                 List<SubstrateDataListVO> productLineDataList = finalRowDataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.toList());
                 //根据规格分组
                 Map<String, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getMaterialCode));
-                //将当前产线下的数据根据物料分组
-//                Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getProduceOrderId));
                 //遍历物料分组的数据，来组装数据
                 for (Map.Entry<String, List<SubstrateDataListVO>> entry : materialMap.entrySet()) {
                     Long materialId = entry.getValue().get(0).getMaterialId();
@@ -268,7 +276,7 @@ public class ReportServiceImpl implements ReportService {
                 addProductLineOther(countMap1, countMap2, dto, classList, productLine, productLineVOList, workshopCountMap);
             }
             //添加车间库存
-            addWorkShopOther(v.get(0), productLineVOList, workshopCountMap, wsMapTuple);
+            addWorkShopOther(v.get(0), productLineVOList, workshopCountMap, wsMapTupleReplace);
             //计算拉引量
             BigDecimalUtil.accumulate(allCountMap, 0, workshopCountMap.get(0));
             BigDecimalUtil.accumulate(allCountMap, 100, workshopCountMap.get(100));
@@ -282,7 +290,7 @@ public class ReportServiceImpl implements ReportService {
             BigDecimalUtil.accumulate(allCountMap, -203, workshopCountMap.get(-203));
         });
         //最后一个总计
-        addAllOther(productLineVOList, allCountMap, wsMapTuple);
+        addAllOther(productLineVOList, allCountMap, wsMapTupleReplace);
         //如果只选择一个班次，则只展示一个班次
         filterClass(dayOrNight(dto.getClassGroupIdList(), classList), productLineVOList);
         vo.setSpecsNum(3);
@@ -435,47 +443,43 @@ public class ReportServiceImpl implements ReportService {
      * 全局总计
      *  @param productLineVOList
      * @param allCountMap
-     * @param wsMapTuple
+     * @param wsMapTupleReplace
      */
-    private void addAllOther(List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> allCountMap, Tuple5DTO<Map<String, BigDecimal>, Map<String, BigDecimal>, Map<String, BigDecimal>, Map<String, BigDecimal>, Map<Integer, BigDecimal>> wsMapTuple) {
+    private void addAllOther(List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> allCountMap, Map<Integer,Map<?,BigDecimal>> wsMapTupleReplace) {
         for (PmReportConstant.SubstrateReportConsumeEnum consumeEnum : PmReportConstant.SubstrateReportConsumeEnum.values()) {
             Integer idx = consumeEnum.getCode();
             SubstrateDayReportListVO subVo = null;
-            if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+            if (PASS_RATE.equals(consumeEnum)) {
                 //产量合格率-早班，晚班，合计
                 BigDecimal rate1 = BigDecimalUtil.percent(allCountMap.get(-101), allCountMap.get(100));
                 BigDecimal rate2 = BigDecimalUtil.percent(allCountMap.get(-102), allCountMap.get(101));
                 BigDecimal rate3 = BigDecimalUtil.percent(allCountMap.get(-1), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(rate1, rate2, rate3), consumeEnum.getName());
-            } else if (PmReportConstant.SubstrateReportConsumeEnum.IN_PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+            } else if (IN_PASS_RATE.equals(consumeEnum)) {
                 //入库合格率-早班，晚班，合计
                 BigDecimal rate1 = BigDecimalUtil.percent(allCountMap.get(-202), allCountMap.get(100));
                 BigDecimal rate2 = BigDecimalUtil.percent(allCountMap.get(-203), allCountMap.get(101));
                 BigDecimal rate3 = BigDecimalUtil.percent(allCountMap.get(-2), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(rate1, rate2, rate3), consumeEnum.getName());
-            } else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
+            } else if (Kcal.equals(consumeEnum)) {
                 //单耗(kcal/Kg玻璃液) 需要重新计算
-                BigDecimal oil = BigDecimalUtil.sum(wsMapTuple.getField4().values());
-                BigDecimal gas = BigDecimalUtil.sum(wsMapTuple.getField3().values());
-                BigDecimal lyl = BigDecimalUtil.sum(wsMapTuple.getField5().values());
-                BigDecimal kcal = kcal(oil, gas, lyl);
+                Map<?, BigDecimal> gasMap = wsMapTupleReplace.get(GAS.getCode());
+                Map<?, BigDecimal> oilMap = wsMapTupleReplace.get(OIL.getCode());
+                Map<?, BigDecimal> lngMap = wsMapTupleReplace.get(LNG.getCode());
+                Map<?, BigDecimal> pfMap = wsMapTupleReplace.get(PULL_FORCE.getCode());
+                BigDecimal oil = BigDecimalUtil.sum(oilMap.values());
+                BigDecimal gas = BigDecimalUtil.sum(gasMap.values());
+                BigDecimal lng = BigDecimalUtil.sum(lngMap.values());
+                BigDecimal lyl = BigDecimalUtil.sum(pfMap.values());
+                BigDecimal kcal = UnitConsumeUtil.unitConsume(oil, gas, lng, lyl, 2);
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(kcal, kcal, kcal), consumeEnum.getName());
-            }else if(idx >= PmReportConstant.SubstrateReportConsumeEnum.ELECTRIC.getCode() && idx <= PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode()) {
-                //水电油气
-                Map<String, BigDecimal> consumeValueMap;
-                if (PmReportConstant.SubstrateReportConsumeEnum.WATER.equals(consumeEnum)) {
-                    consumeValueMap = wsMapTuple.getField2();
-                } else if (PmReportConstant.SubstrateReportConsumeEnum.ELECTRIC.equals(consumeEnum)) {
-                    consumeValueMap = wsMapTuple.getField1();
-                } else if (PmReportConstant.SubstrateReportConsumeEnum.GAS.equals(consumeEnum)) {
-                    consumeValueMap = wsMapTuple.getField3();
-                } else {
-                    consumeValueMap = wsMapTuple.getField4();
-                }
+            }else if(Sets.newHashSet(WATER, ELECTRIC, GAS, OIL, LNG).contains(consumeEnum)) {
+                //水电油气LNG
+                Map<String, BigDecimal> consumeValueMap = (Map<String, BigDecimal>) wsMapTupleReplace.get(consumeEnum.getCode());
                 //组建数据
                 BigDecimal energyValue = BigDecimalUtil.sum(consumeValueMap.values());
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(energyValue, energyValue, energyValue), consumeEnum.getName());
-            }else if(PmReportConstant.SubstrateReportConsumeEnum.PULL_FORCE.equals(consumeEnum)){
+            }else if(PULL_FORCE.equals(consumeEnum)){
                 //拉引量合计
                 BigDecimal rate1 = allCountMap.get(100);
                 BigDecimal rate2 = allCountMap.get(101);
@@ -501,50 +505,47 @@ public class ReportServiceImpl implements ReportService {
      *  @param productLine       产线名称
      * @param productLineVOList 返回集合
      * @param workshopCountMap  车间数据总计
-     * @param wsMapTuple 5个map汇总
+     * @param wsMapTupleReplace 6个map汇总
      */
-    private void addWorkShopOther(SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap, Tuple5DTO<Map<String,BigDecimal>,Map<String,BigDecimal>,Map<String,BigDecimal>,Map<String,BigDecimal>,Map<Integer,BigDecimal>> wsMapTuple) {
+    private void addWorkShopOther(SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap, Map<Integer,Map<?,BigDecimal>> wsMapTupleReplace) {
         for (PmReportConstant.SubstrateReportConsumeEnum consumeEnum : PmReportConstant.SubstrateReportConsumeEnum.values()) {
             Integer idx = consumeEnum.getCode();
             SubstrateDayReportListVO subVo = null;
-            if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+            if (PASS_RATE.equals(consumeEnum)) {
                 //合格率需要重新计算-早班，晚班，合计
                 BigDecimal rate1 = BigDecimalUtil.percent(workshopCountMap.get(-101), workshopCountMap.get(100));
                 BigDecimal rate2 = BigDecimalUtil.percent(workshopCountMap.get(-102), workshopCountMap.get(101));
                 BigDecimal rate3 = BigDecimalUtil.percent(workshopCountMap.get(-1), workshopCountMap.get(0));
                 subVo = rowData(productLine, Arrays.asList(rate1, rate2, rate3), consumeEnum.getName());
-            } else if (PmReportConstant.SubstrateReportConsumeEnum.IN_PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+            } else if (IN_PASS_RATE.equals(consumeEnum)) {
                 //入库合格率需要重新计算-早班，晚班，合计
                 BigDecimal rate1 = BigDecimalUtil.percent(workshopCountMap.get(-202), workshopCountMap.get(100));
                 BigDecimal rate2 = BigDecimalUtil.percent(workshopCountMap.get(-203), workshopCountMap.get(101));
                 BigDecimal rate3 = BigDecimalUtil.percent(workshopCountMap.get(-2), workshopCountMap.get(0));
                 subVo = rowData(productLine, Arrays.asList(rate1, rate2, rate3), consumeEnum.getName());
-            } else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
+            } else if (Kcal.equals(consumeEnum)) {
                 //单耗(kcal/Kg玻璃液)需要重新计算
-                Optional<Map.Entry<String, BigDecimal>> consume3 = wsMapTuple.getField3().entrySet().stream().filter(ele -> ele.getKey().contains(String.valueOf(productLine.getParentId()))).findFirst();
-                Optional<Map.Entry<String, BigDecimal>> consume4 = wsMapTuple.getField4().entrySet().stream().filter(ele -> ele.getKey().contains(String.valueOf(productLine.getParentId()))).findFirst();
+                Map<String, BigDecimal> gasMap = (Map<String, BigDecimal>) wsMapTupleReplace.get(GAS.getCode());
+                Map<String, BigDecimal> oilMap = (Map<String, BigDecimal>) wsMapTupleReplace.get(OIL.getCode());
+                Map<String, BigDecimal> lngMap = (Map<String, BigDecimal>) wsMapTupleReplace.get(LNG.getCode());
+                Map<?, BigDecimal> pfMap = wsMapTupleReplace.get(PULL_FORCE.getCode());
+                Optional<Map.Entry<String, BigDecimal>> consume3 = gasMap.entrySet().stream().filter(ele -> ele.getKey().contains(String.valueOf(productLine.getParentId()))).findFirst();
+                Optional<Map.Entry<String, BigDecimal>> consume4 = oilMap.entrySet().stream().filter(ele -> ele.getKey().contains(String.valueOf(productLine.getParentId()))).findFirst();
+                Optional<Map.Entry<String, BigDecimal>> consumeLng = lngMap.entrySet().stream().filter(ele -> ele.getKey().contains(String.valueOf(productLine.getParentId()))).findFirst();
                 BigDecimal oil = consume4.isPresent() ? consume4.get().getValue() : null;
                 BigDecimal gas = consume3.isPresent() ? consume3.get().getValue() : null;
-                BigDecimal lyl = wsMapTuple.getField5().get(productLine.getParentId());
-                BigDecimal kcal =   kcal(oil, gas, lyl);
+                BigDecimal lng = consumeLng.isPresent() ? consumeLng.get().getValue() : null;
+                BigDecimal lyl = pfMap.get(productLine.getParentId());
+                BigDecimal kcal = UnitConsumeUtil.unitConsume(oil, gas, lng, lyl, 2);
                 subVo = rowData(productLine, Arrays.asList(kcal, kcal, kcal), consumeEnum.getName());
-            }else if(idx >= PmReportConstant.SubstrateReportConsumeEnum.ELECTRIC.getCode() && idx <= PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode()){
-                //水电油气
-                Map<String, BigDecimal> consumeValueMap ;
-                if(PmReportConstant.SubstrateReportConsumeEnum.WATER.equals(consumeEnum)){
-                    consumeValueMap  = wsMapTuple.getField2();
-                }else if(PmReportConstant.SubstrateReportConsumeEnum.ELECTRIC.equals(consumeEnum)){
-                    consumeValueMap  = wsMapTuple.getField1();
-                }else if(PmReportConstant.SubstrateReportConsumeEnum.GAS.equals(consumeEnum)){
-                    consumeValueMap  = wsMapTuple.getField3();
-                }else{
-                    consumeValueMap  = wsMapTuple.getField4();
-                }
+            } else if (Sets.newHashSet(WATER, ELECTRIC, GAS, OIL, LNG).contains(consumeEnum)) {
+                //水电油气,LNG
+                Map<String, BigDecimal> consumeValueMap = (Map<String, BigDecimal>) wsMapTupleReplace.get(consumeEnum.getCode());
                 //组建数据
                 Optional<Map.Entry<String, BigDecimal>> valueOp = consumeValueMap.entrySet().stream().filter(ele -> ele.getKey().contains(String.valueOf(productLine.getParentId()))).findFirst();
                 BigDecimal energyValue = valueOp.isPresent() ? valueOp.get().getValue() : null;
-                subVo = rowData(productLine, Arrays.asList(energyValue,energyValue,energyValue), consumeEnum.getName());
-            } else if(PmReportConstant.SubstrateReportConsumeEnum.PULL_FORCE.equals(consumeEnum)){
+                subVo = rowData(productLine, Arrays.asList(energyValue, energyValue, energyValue), consumeEnum.getName());
+            } else if(PULL_FORCE.equals(consumeEnum)){
                 //其他-拉引量
                 BigDecimal pf1 = workshopCountMap.get(idx + 100);
                 BigDecimal pf2 = workshopCountMap.get(idx + 101);
@@ -559,22 +560,6 @@ public class ReportServiceImpl implements ReportService {
                 productLineVOList.add(subVo);
             }
         }
-    }
-
-    /**
-     * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
-     *
-     * @param oil 油
-     * @param gas 气
-     * @param lyl 拉引量
-     * @return
-     */
-    private BigDecimal kcal(BigDecimal oil, BigDecimal gas, BigDecimal lyl) {
-        BigDecimal gasMultiply = BigDecimalUtil.multiply(gas, BigDecimal.valueOf(7800));
-        BigDecimal oilMultiply = BigDecimalUtil.multiply(oil, BigDecimal.valueOf(9300000));
-        BigDecimal lylMultiply = BigDecimalUtil.multiply(lyl, BigDecimal.valueOf(1000));
-        BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.add(gasMultiply, oilMultiply), lylMultiply);
-        return divide;
     }
 
     /**
@@ -641,44 +626,6 @@ public class ReportServiceImpl implements ReportService {
             }
         }
     }
-
-
-    /**
-     * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
-     * 0耗电量 1耗水量 2耗气量 3耗油量
-     *
-     * @param productLine       产线id
-     * @param morningBigDecimal 早上数量
-     * @param nightBigDecimal   晚上数量
-     * @param energyList        能耗列表
-     * @return 统计数据
-     */
-    private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList, Map<Integer, BigDecimal> workshopCountMap) {
-        BigDecimal morningGas = new BigDecimal(energyList.get(2).getMorning().get(0));
-        BigDecimal morningOil = new BigDecimal(energyList.get(3).getMorning().get(0));
-        BigDecimal morningKcal = BigDecimal.ZERO;
-        BigDecimal nightGas = new BigDecimal(energyList.get(2).getNight().get(0));
-        BigDecimal nightOil = new BigDecimal(energyList.get(3).getNight().get(0));
-        BigDecimal nightKcal = BigDecimal.ZERO;
-        if (BigDecimal.ZERO.compareTo(morningBigDecimal.multiply(BigDecimal.valueOf(1000))) != 0) {
-            BigDecimal morningMultiply = morningGas.multiply(BigDecimal.valueOf(7800)).add(morningOil.multiply(BigDecimal.valueOf(9300)));
-            morningKcal = morningMultiply.divide(morningBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
-        }
-        if (BigDecimal.ZERO.compareTo(nightBigDecimal.multiply(BigDecimal.valueOf(1000))) != 0) {
-            BigDecimal nightMultiply = nightGas.multiply(BigDecimal.valueOf(7800)).add(nightOil.multiply(BigDecimal.valueOf(9300)));
-            nightKcal = nightMultiply.divide(nightBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
-        }
-        //单耗的合计得重新计算
-        BigDecimal gas = BigDecimalUtil.add(morningGas, nightGas);
-        BigDecimal oil = BigDecimalUtil.add(morningOil, nightOil);
-        BigDecimal lyl = BigDecimalUtil.add(morningBigDecimal, nightBigDecimal);
-        BigDecimal divide = kcal(oil, gas, lyl);
-
-        SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, divide), "单耗(kcal/Kg玻璃液)");
-        BigDecimalUtil.accumulate(workshopCountMap, 6, divide);
-        return bly;
-    }
-
 
     @Override
     public SubstrateDayReportListVO rowData(SysOfficeVO productLine, List<BigDecimal> dataList, String specStr) {
