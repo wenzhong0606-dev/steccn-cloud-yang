@@ -2,6 +2,8 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
@@ -16,6 +18,7 @@ import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.service.*;
 import com.steccn.ems.util.UnitConsumeUtil;
+import com.steccn.ems.vo.DeepProcessConsumeReportVO;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.ems.vo.PmElectricConsumeVO;
@@ -126,6 +129,55 @@ public class EpPmsConsumeReportServiceImpl implements EpPmsConsumeReportService 
             res.setSum(sum);
             return res;
         }
+    }
+
+    @Override
+    public List<DeepProcessConsumeReportVO> deepProcessConsumeReport(LocalDate start, LocalDate end) {
+        List<DeepProcessConsumeReportVO> results = Lists.newArrayList();
+        Map<String,BigDecimal> count = Maps.newHashMap();
+        //拿到三个车间的用电量(目前没有一车间,二车间79,三车间193)
+        DeepProcessConsumeReportVO electricResult = new DeepProcessConsumeReportVO();
+        EpPmsConsumeVO electric2 = consumeUseElectric(79, start, end);
+        EpPmsConsumeVO electric3 = consumeUseElectric(193,start,end);
+        BigDecimalUtil.accumulate(count,"electric",electric2.getSum());
+        BigDecimalUtil.accumulate(count,"electric",electric3.getSum());
+        electricResult.setCategory("电(Kwh)");
+        electricResult.setTwo(electric2.getSum());
+        electricResult.setThree(electric3.getSum());
+        electricResult.setCount(count.get("electric"));
+        results.add(electricResult);
+        //用水量
+        DeepProcessConsumeReportVO waterResult = new DeepProcessConsumeReportVO();
+        EpPmsConsumeVO water2 = consumeUseWater(79, start, end);
+        EpPmsConsumeVO water3 = consumeUseWater(193,start,end);
+        BigDecimalUtil.accumulate(count,"water",water2.getSum());
+        BigDecimalUtil.accumulate(count,"water",water3.getSum());
+        waterResult.setCategory("水(T)");
+        waterResult.setTwo(water2.getSum());
+        waterResult.setThree(water3.getSum());
+        waterResult.setCount(count.get("water"));
+        results.add(waterResult);
+        //单耗
+        //深加工单耗：电耗/入库产量(获取入库产量)
+        PmsOperateDriverDTO pmsOperateDriverDTO = new PmsOperateDriverDTO();
+        pmsOperateDriverDTO.setStart(start);
+        pmsOperateDriverDTO.setEnd(end);
+        pmsOperateDriverDTO.setGranularity(QtManagerConstant.QtGranularityEnum.YEAR.getCode());
+        pmsOperateDriverDTO.setOfficeId(79);
+        Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(pmsOperateDriverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        BigDecimal sum2 = BigDecimalUtil.sum(inStorageMap.values());
+        BigDecimalUtil.accumulate(count,"inStorage",sum2);
+        pmsOperateDriverDTO.setOfficeId(193);
+        inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.sjgInStorageSum(pmsOperateDriverDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        BigDecimal sum3 = BigDecimalUtil.sum(inStorageMap.values());
+        BigDecimalUtil.accumulate(count,"inStorage",sum3);
+        DeepProcessConsumeReportVO unitConsumeResult = new DeepProcessConsumeReportVO();
+        unitConsumeResult.setCategory("单位电耗(kwh/㎡)");
+        unitConsumeResult.setTwo(BigDecimalUtil.divide(electric2.getSum(),sum2,1));
+        unitConsumeResult.setThree(BigDecimalUtil.divide(electric3.getSum(),sum3,1));
+        unitConsumeResult.setCount(BigDecimalUtil.divide(count.get("electric"),count.get("inStorage"),1));
+        results.add(unitConsumeResult);
+        return results;
     }
 
     private EpPmsConsumeVO consumeUse(Integer officeId, LocalDate start, LocalDate end, Integer type) {

@@ -161,6 +161,8 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                 .orderByDesc(PmsLaborProtectionStandardDetail::getStandardId));
         //机构
         Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(data.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //机构岗位对应关系
+        Map<String, SysOfficeVO> postDepMap = FeignOptional.of(() -> remoteOfficeFeign.postDepMap(officeMap.values().stream().map(SysOfficeVO::getOfficeCode).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Long> materialIdList = detailData.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //收集unitId
@@ -208,7 +210,13 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
             //处理机构
             StringBuilder officeName = new StringBuilder();
             for(int i = 0; i < tmp.getOfficeId().size();i++){
-                officeName.append(officeMap.get(tmp.getOfficeId().get(i)).getOfficeName());
+                SysOfficeVO officeTmp = officeMap.get(tmp.getOfficeId().get(i));
+                //如果是岗位则显示部门
+                if(officeTmp.getOfficeType().equals("6")&&Objects.nonNull(postDepMap.get(officeTmp.getOfficeCode()))){
+                    officeName.append(postDepMap.get(officeTmp.getOfficeCode()).getOfficeName());
+                    officeName.append("/");
+                }
+                officeName.append(officeTmp.getOfficeName());
                 if(i!=tmp.getOfficeId().size() - 1){
                     officeName.append("、");
                 }

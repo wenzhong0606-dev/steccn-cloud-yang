@@ -12,12 +12,14 @@ import com.steccn.data.mapper.MesEqpSignalMapper;
 import com.steccn.mes.dto.EqpReportDTO;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -27,6 +29,7 @@ import java.util.List;
 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MesEqpSignalServiceImpl extends ServiceImpl<MesEqpSignalMapper, MesEqpSignal>
     implements MesEqpSignalService{
     private final RemoteMesFeignApi remoteMesFeignApi;
@@ -34,7 +37,8 @@ public class MesEqpSignalServiceImpl extends ServiceImpl<MesEqpSignalMapper, Mes
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveReport() {
-        List<MesEqpSignal> list = list(new LambdaQueryWrapper<MesEqpSignal>().select(MesEqpSignal::getCode).groupBy(MesEqpSignal::getCode));
+        List<MesEqpSignal> list = list(new LambdaQueryWrapper<MesEqpSignal>().select(MesEqpSignal::getCode).groupBy(MesEqpSignal::getCode)
+                .orderByAsc(MesEqpSignal::getCode));
         for(MesEqpSignal eqp:list){
             List<MesEqpSignal> eqpList = list(new LambdaQueryWrapper<MesEqpSignal>()
                     .eq(MesEqpSignal::getCode, eqp.getCode())
@@ -54,6 +58,29 @@ public class MesEqpSignalServiceImpl extends ServiceImpl<MesEqpSignalMapper, Mes
                 reportDTO.setValue(BigDecimalUtil.setScale(hours2,2));
                 FeignOptional.of(() -> remoteMesFeignApi.changeReportData(reportDTO), FeignConstant.STECCN_MES_SERVICE_NAME).get();
             }
+            log.info(eqp.getCode());
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean saveReportEqp(String eqpCode) {
+        List<MesEqpSignal> eqpList = list(new LambdaQueryWrapper<MesEqpSignal>()
+                .eq(MesEqpSignal::getCode, eqpCode)
+                .orderByAsc(MesEqpSignal::getTimestamp));
+        for(int i = 0; i < eqpList.size(); i++){
+            if(i==0){
+                continue;
+            }
+            MesEqpSignal signalTmp = eqpList.get(i);
+            EqpReportDTO reportDTO = new EqpReportDTO();
+            reportDTO.setTimestamp(signalTmp.getTimestamp());
+            reportDTO.setEqpCode(signalTmp.getCode());
+            reportDTO.setState(signalTmp.getValue());
+            Duration duration2 = Duration.between(eqpList.get(i-1).getTimestamp(),signalTmp.getTimestamp());
+            BigDecimal hours2 = BigDecimalUtil.divide(BigDecimal.valueOf(duration2.getSeconds()),BigDecimal.valueOf(60));
+            reportDTO.setValue(BigDecimalUtil.setScale(hours2,2));
+            FeignOptional.of(() -> remoteMesFeignApi.changeReportData(reportDTO), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         }
         return true;
     }

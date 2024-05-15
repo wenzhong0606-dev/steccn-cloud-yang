@@ -90,6 +90,11 @@ public class HbCollectController {
         return R.success(mesEqpSignalService.saveReport());
     }
 
+    @GetMapping("/mes/generateReport/eqp")
+    public R<Boolean> generateReport(@RequestParam("eqpCode") String eqpCode) {
+        return R.success(mesEqpSignalService.saveReportEqp(eqpCode));
+    }
+
     /**
      * 设备管理-设备启停信号
      * @param request
