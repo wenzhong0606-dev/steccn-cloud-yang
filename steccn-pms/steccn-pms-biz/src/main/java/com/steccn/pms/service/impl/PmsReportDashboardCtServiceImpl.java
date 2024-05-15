@@ -38,6 +38,7 @@ import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -365,8 +366,21 @@ public class PmsReportDashboardCtServiceImpl implements PmsReportDashboardCtServ
             return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(4, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> null);
         CompletableFuture<CommonReportDTO> kcalFuture = CompletableFuture.supplyAsync(() -> {
-            return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(5, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
-        }).exceptionally(ex -> null);
+            return FeignOptional.of(() -> remoteMeterReadFeignApi.unitConsumeOffice(new Tuple5DTO<>(5, Lists.newArrayList(workShopId), start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        }).exceptionally(ex -> null).thenApply(res -> {
+            CommonReportDTO kcalRes = new CommonReportDTO();
+            Map<String, BigDecimal> resMap = Maps.newHashMap();
+            if (CollUtil.isNotEmpty(res)) {
+                res.forEach((k, v) -> {
+                    String[] split = k.split("_");
+                    resMap.put(split[1], v);
+                });
+            }
+            kcalRes.setValueMap(resMap);
+            kcalRes.setName("单耗");
+            kcalRes.setUnit("kcal/kg");
+            return kcalRes;
+        });
         CompletableFuture<CommonReportDTO> electricFuture = CompletableFuture.supplyAsync(() -> {
             return FeignOptional.of(() -> remoteMeterReadFeignApi.energyConsume(new Tuple5DTO<>(1, workShopId, start, end, granularityInt)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
         }).exceptionally(ex -> null);

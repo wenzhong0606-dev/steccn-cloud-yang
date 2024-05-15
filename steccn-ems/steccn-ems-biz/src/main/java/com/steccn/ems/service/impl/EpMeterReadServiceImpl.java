@@ -456,10 +456,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     @Override
     public Map<String, BigDecimal> unitConsumeOffice(Integer energyType, List<Integer> officeIdList, LocalDate start, LocalDate end, Integer granularityInt) {
+        //门面
+        Integer oldEnergyType = energyType;
+        if (oldEnergyType == 5) {
+            //燃料油+气单耗
+            energyType = 3;
+        } else if (energyType == 1) {
+            energyType = 1;
+            //电单耗
+        }
+        //其他能源的单耗 - 不变
         //确定能源存在
         EpEnergyType epEnergyType = epEnergyTypeService.getById(energyType);
         Assert.notNull(epEnergyType, "能源类型不存在");
-        //日期区间划分
+//        //日期区间划分
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
         Assert.notNull(granularity, "粒度不存在");
         //根据组织架构id查询能源树上id
@@ -468,21 +478,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         List<LocalDate> dayTimeList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
         List<Long> partitionIdList = accountMap.values().stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
-        List<EpMeterReadAllDataVO> consumeList;
         //时间区间内所有班次集合
         List<LocalDate> dayList = ShardTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = Sets.newHashSet(dayList);
-        if (energyType == 5) {
-            //燃料油+气单耗
-            consumeList = kcalDataUnit(dateSet, partitionIdList);
-        } else if (energyType == 1) {
-            //电单耗
-            consumeList = classDateAllDataUnit(dateSet, energyType, partitionIdList);
-        } else {
-            //其他能源的单耗
-            consumeList = classDateAllDataUnitOther(dateSet, energyType, partitionIdList);
-        }
+        List<EpMeterReadAllDataVO> consumeList = unitConsumeFacade(dateSet, oldEnergyType, partitionIdList);
+
         //考虑时间分片
         List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), start, end);
         for (Integer officeId : officeIdList) {
@@ -501,7 +502,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
                 BigDecimal value1 = BigDecimalUtil.sum(valueList1);
                 BigDecimal value2 = BigDecimalUtil.sum(valueList2);
-                resMap.put(officeId + "_" + convert, BigDecimalUtil.divide(value1, value2));
+                resMap.put(officeId + "_" + convert, BigDecimalUtil.divide(value1, value2, 2));
             }
         }
         return resMap;
