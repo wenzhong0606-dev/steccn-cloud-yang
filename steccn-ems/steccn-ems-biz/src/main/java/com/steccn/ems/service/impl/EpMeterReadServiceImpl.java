@@ -469,7 +469,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //确定能源存在
         EpEnergyType epEnergyType = epEnergyTypeService.getById(energyType);
         Assert.notNull(epEnergyType, "能源类型不存在");
-//        //日期区间划分
+        //日期区间划分
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(granularityInt);
         Assert.notNull(granularity, "粒度不存在");
         //根据组织架构id查询能源树上id
@@ -1781,9 +1781,26 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             oilPoMap.put(k, v.getOfficeId());
             oilOpMap.put(v.getOfficeId(), k);
         });
+
+        //第三步获取燃料油【能耗全量数据表】
+        Integer lngEnergyType = 8;
+        //获取节点关联仪表
+        Map<Long, EpInstrumentAccountDTO> lngNodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(lngEnergyType);
+        List<EpEnergyConsumeDTO> lngRowList = consumeTable(dateSet, lngEnergyType, lngNodeLinkMeterMap);
+        Map<String, EpEnergyConsumeDTO> lngRowMap = Maps.newHashMap();
+        lngRowList.forEach(ele -> lngRowMap.put(ele.getReadDate() + "_" + ele.getClassId() + "_" + ele.getThick(), ele));
+
+        Map<Long, EpPartition> lngPartitionMap = epPartitionService.listById(lngNodeLinkMeterMap.keySet());
+        Map<Long, Integer> lngPoMap = Maps.newHashMap();
+        Map<Integer, Long> lngOpMap = Maps.newHashMap();
+        lngPartitionMap.forEach((k, v) -> {
+            lngPoMap.put(k, v.getOfficeId());
+            lngOpMap.put(v.getOfficeId(), k);
+        });
+
         EpEnergyConsumeDTO defaultConsumeDTO = new EpEnergyConsumeDTO();
 
-        //第三步获取【产量全量数据表】
+        //第四步获取【产量全量数据表】
         Integer gasOilEnergyType = 5;
         Map<Long, EpPartition> gasOilPartitionMap = epPartitionService.listById(Sets.newHashSet(partitionIdList));
         Map<Long, Integer> gasOilPoMap = Maps.newHashMap();
@@ -1809,19 +1826,26 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             Map<Long, BigDecimal> oilConsumeMap = oilConsumeDTO.getConsumeMap();
             EpEnergyConsumeDTO gasConsumeDTO = gasRowMap.getOrDefault(ele.getReadDate() + "_" + ele.getClassId() + "_" + ele.getThick(), defaultConsumeDTO);
             Map<Long, BigDecimal> gasConsumeMap = gasConsumeDTO.getConsumeMap();
+            EpEnergyConsumeDTO lngConsumeDTO = lngRowMap.getOrDefault(ele.getReadDate() + "_" + ele.getClassId() + "_" + ele.getThick(), defaultConsumeDTO);
+            Map<Long, BigDecimal> lngConsumeMap = lngConsumeDTO.getConsumeMap();
 
             for (Map.Entry<Long, BigDecimal> entry : consumeMap.entrySet()) {
-                Integer gasOilOfficeId = oilPoMap.get(entry.getKey());
-                BigDecimal yield = officeYieldMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, gasOilOfficeId, ele.getReadDate()));
+                Integer gasOilLngOfficeId = oilPoMap.get(entry.getKey());
+                BigDecimal yield = officeYieldMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, gasOilLngOfficeId, ele.getReadDate()));
                 BigDecimal yieldMu = BigDecimalUtil.multiply(yield, new BigDecimal("1000"));
-                Long gasId = gasOpMap.get(gasOilOfficeId);
-                Long oilId = oilOpMap.get(gasOilOfficeId);
+                Long gasId = gasOpMap.get(gasOilLngOfficeId);
+                Long oilId = oilOpMap.get(gasOilLngOfficeId);
+                Long lngId = lngOpMap.get(gasOilLngOfficeId);
                 BigDecimal gasValue = gasConsumeMap.get(gasId);
                 BigDecimal oilValue = oilConsumeMap.get(oilId);
+                BigDecimal lngValue = lngConsumeMap.get(lngId);
                 BigDecimal gasMu = BigDecimalUtil.multiply(gasValue, new BigDecimal("7800"));
                 BigDecimal oilMu = BigDecimalUtil.multiply(oilValue, new BigDecimal("9300000"));
-                entry.setValue(BigDecimalUtil.add(gasMu, oilMu));
-                Long convertPartitionId = gasOilOpMap.get(gasOilOfficeId);
+                BigDecimal lngMu = BigDecimalUtil.multiply(lngValue, new BigDecimal("8000"));
+                BigDecimal add = BigDecimalUtil.add(gasMu, oilMu);
+                add = BigDecimalUtil.add(add, lngMu);
+                entry.setValue(add);
+                Long convertPartitionId = gasOilOpMap.get(gasOilLngOfficeId);
                 convertConsumeMap.put(convertPartitionId, entry.getValue());
                 convertYieldMap.put(convertPartitionId, yieldMu);
             }
