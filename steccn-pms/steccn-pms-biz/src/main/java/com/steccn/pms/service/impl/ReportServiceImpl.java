@@ -1812,20 +1812,20 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>> > rawMaterialWorkshopHistogram(LocalDate startDate, LocalDate endDate) {
         //获取计划数（等待采购数据）
-        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
-        if(StrUtil.isBlank(srmToken)){
-            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
-        }
-        Map<String,String> headers = Maps.newHashMap();
-        headers.put("Authorization",srmToken);
-        SrmQueryDTO dto = new SrmQueryDTO();
-        dto.setItemCodes(com.google.common.collect.Lists.newArrayList("01.01.0001","01.03.0001","01.02.0001","01.04.0001","01.09.0001","01.05.0002","01.20.0001"));
-        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v2p/rest/invoke/U1JNOk9BX1RPX1NSTV9JVEVNX1E6c3JtLXBybS5vYS1pdGVtLXF1YW50aXR5LXF1ZXJ5LmdldEl0ZW1RdWFudGl0eQ==").addHeaders(headers).body(new cn.hutool.json.JSONObject(dto).toString()).execute().body();
-        JSONObject jsonObj = JSONObject.parseObject(result);
+//        String srmToken = stringRedisTemplate.opsForValue().get("SrmOauthToken::SimpleKey []");
+//        if(StrUtil.isBlank(srmToken)){
+//            srmToken = JSONObject.parseObject(remoteSrmFeignApi.getOauthToken()).getString("access_token");;
+//        }
+//        Map<String,String> headers = Maps.newHashMap();
+//        headers.put("Authorization",srmToken);
+//        SrmQueryDTO dto = new SrmQueryDTO();
+//        dto.setItemCodes(com.google.common.collect.Lists.newArrayList("01.01.0001","01.03.0001","01.02.0001","01.04.0001","01.09.0001","01.05.0002","01.20.0001"));
+//        String result = HttpUtil.createPost(srmConfig.getSrmIp()+"/hitf/v2p/rest/invoke/U1JNOk9BX1RPX1NSTV9JVEVNX1E6c3JtLXBybS5vYS1pdGVtLXF1YW50aXR5LXF1ZXJ5LmdldEl0ZW1RdWFudGl0eQ==").addHeaders(headers).body(new cn.hutool.json.JSONObject(dto).toString()).execute().body();
+//        JSONObject jsonObj = JSONObject.parseObject(result);
         List<SrmSupplierVO> results = Lists.newArrayList();
-        if(jsonObj.getString("status").equals("200")){
-            results = jsonObj.getJSONObject("payload").getJSONArray("itemQuantitys").toJavaList(SrmSupplierVO.class);
-        }
+//        if(jsonObj.getString("status").equals("200")){
+//            results = jsonObj.getJSONObject("payload").getJSONArray("itemQuantitys").toJavaList(SrmSupplierVO.class);
+//        }
         Map<String,BigDecimal> supplierCountMap = Maps.newHashMap();
         if(CollUtil.isNotEmpty(results)){
             for(SrmSupplierVO tmp:results){

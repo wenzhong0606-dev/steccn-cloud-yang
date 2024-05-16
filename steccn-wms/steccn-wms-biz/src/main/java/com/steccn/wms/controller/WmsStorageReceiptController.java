@@ -18,6 +18,7 @@ import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsStorageReceiptService;
+import com.steccn.wms.service.WmsWeighbridgeInfoService;
 import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -50,6 +51,8 @@ public class WmsStorageReceiptController {
     private final WmsStorageReceiptService wmsStorageReceiptService;
 
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+
+    private final WmsWeighbridgeInfoService wmsWeighbridgeInfoService;
 
     @ApiOperation("入库凭证分页列表")
     @PostMapping("/list")
@@ -195,6 +198,19 @@ public class WmsStorageReceiptController {
     @PostMapping("/sales/add")
     public R<String> salesReceiptAdd(@RequestBody @Validated(InsertGroup.class) SalesStorageReceiptDTO dto){
         return R.success(wmsStorageReceiptService.salesReceiptAdd(dto));
+    }
+
+    @ApiOperation("地磅信息生成采购入库")
+    @PostMapping("/weighbridge/generate")
+    @SysLog("地磅生成采购入库")
+    public R<Boolean> generateList(@RequestBody @Validated WmsWeighbridgeGerDTO dto){
+        return R.success(wmsWeighbridgeInfoService.generateList(dto));
+    }
+
+    @ApiOperation("地磅信息分页查询")
+    @PostMapping("/weighbridge/page")
+    public R<Page<WmsWeighbridgeInfoVO>> weighbridgePage(@RequestBody WmsWeighbridgeInfoDTO dto){
+        return R.success(wmsWeighbridgeInfoService.pageList(dto));
     }
 
     /**

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.wms.mapper.WmsWeighbridgeInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.wms.domain.WmsWeighbridgeInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="flowCode" column="flow_code" jdbcType="VARCHAR"/>
+            <result property="licensePlate" column="license_plate" jdbcType="VARCHAR"/>
+            <result property="driverName" column="driver_name" jdbcType="VARCHAR"/>
+            <result property="driverPhone" column="driver_phone" jdbcType="VARCHAR"/>
+            <result property="companyId" column="company_id" jdbcType="VARCHAR"/>
+            <result property="companyName" column="company_name" jdbcType="VARCHAR"/>
+            <result property="grossWeight" column="gross_weight" jdbcType="DECIMAL"/>
+            <result property="tareWeight" column="tare_weight" jdbcType="DECIMAL"/>
+            <result property="netWeight" column="net_weight" jdbcType="DECIMAL"/>
+            <result property="finishTime" column="finish_time" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,material_id,material_name,
+        material_code,flow_code,license_plate,
+        driver_name,driver_phone,company_id,
+        company_name,gross_weight,tare_weight,
+        net_weight,finish_time,create_time,
+        update_by,update_name,update_time,
+        del_flag,note
+    </sql>
+</mapper>

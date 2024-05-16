@@ -6,6 +6,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsWeighbridgeInfoDTO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -39,4 +40,8 @@ public interface RemoteWmsStorageReceiptFeignApi {
     @ApiOperation("根据时间获取类型为生产领料和生产退料的物料数量-用于碳核算")
     @PostMapping("/feign/wms/storage/receipt/produce/consume/quantity")
     R<Map<LocalDate, BigDecimal>> produceConsumeQuantity(@RequestBody TripleDTO<Long, LocalDate, LocalDate> dto);
+
+    @ApiOperation("地磅信息保存")
+    @PostMapping("/feign/wms/storage/receipt/weighbridge/save")
+    R<Boolean> weighbridgeSave(@RequestBody WmsWeighbridgeInfoDTO dto);
 }

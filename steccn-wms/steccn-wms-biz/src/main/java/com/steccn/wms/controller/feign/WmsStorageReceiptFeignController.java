@@ -7,8 +7,10 @@ import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsWeighbridgeInfoDTO;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptService;
+import com.steccn.wms.service.WmsWeighbridgeInfoService;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,6 +37,8 @@ public class WmsStorageReceiptFeignController {
 
     private final WmsStorageReceiptInfoService wmsStorageReceiptInfoService;
 
+    private final WmsWeighbridgeInfoService wmsWeighbridgeInfoService;
+
     @ApiOperation("冲销")
     @PostMapping("/charge/against")
     public R<WmsDeliveryReceiptDTO> chargeAgainstByCode(@ApiParam("入库单编码") @RequestParam("code") String code, @RequestParam("userName")String userName) {
@@ -57,5 +61,11 @@ public class WmsStorageReceiptFeignController {
     @PostMapping("/produce/consume/quantity")
     public R<Map<LocalDate, BigDecimal>> produceConsumeQuantity(@RequestBody TripleDTO<Long, LocalDate, LocalDate> dto) {
         return R.success(wmsStorageReceiptInfoService.produceConsumeQuantity(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
+
+    @ApiOperation("地磅信息保存")
+    @PostMapping("/weighbridge/save")
+    public R<Boolean> weighbridgeSave(@RequestBody WmsWeighbridgeInfoDTO dto) {
+        return R.success(wmsWeighbridgeInfoService.saveInfo(dto));
     }
 }
