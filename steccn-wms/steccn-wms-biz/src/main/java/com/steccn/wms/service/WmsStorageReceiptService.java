@@ -227,4 +227,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     List<WmsStorageReceiptInfoVO> intervalDataVO(LocalDateTime morningStartTime, LocalDateTime nightStartTime);
 
     String salesReturns(WmsSalesReturnsDTO wmsSalesReturnsDTO);
+
+    List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto);
 }

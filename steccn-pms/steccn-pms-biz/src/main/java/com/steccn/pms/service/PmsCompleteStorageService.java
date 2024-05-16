@@ -186,4 +186,6 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return
      */
     Map<String,BigDecimal> sjgInStorageSum(PmsOperateDriverDTO dto);
+
+    Map<String,String> storageReceiptCodeGetLineName(Set<String> codeSet);
 }

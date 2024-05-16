@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author chenhuan
@@ -67,4 +68,8 @@ public interface RemoteCompleteStorageFeignApi {
     @PostMapping("/feign/pms/complete/storage/sjg/in/storage/sum")
     @ApiOperation(value = "入库汇总")
     R<Map<String, BigDecimal>> sjgInStorageSum(@RequestBody PmsOperateDriverDTO dto);
+
+    @ApiOperation("入库单编码获取生产订单产线名称")
+    @PostMapping("/feign/pms/complete/storage/storage/receipt/code/get/line/name")
+    R<Map<String,String>> storageReceiptCodeGetLineName(@RequestBody Set<String> codeSet);
 }

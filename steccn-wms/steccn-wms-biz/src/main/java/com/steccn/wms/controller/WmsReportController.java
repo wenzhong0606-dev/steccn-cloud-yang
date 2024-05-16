@@ -15,11 +15,13 @@ import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsTransferSlip;
+import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.service.*;
 import com.steccn.wms.vo.WmsDocumentQuantityVO;
+import com.steccn.wms.vo.WmsInventoryDaySheetVO;
 import com.steccn.wms.vo.WmsReportTotalQuantityVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import io.swagger.annotations.ApiOperation;
@@ -57,6 +59,13 @@ public class WmsReportController {
     private final WmsInventoryService wmsInventoryService;
 
     private final WmsReportService wmsReportService;
+
+
+    @PostMapping("/day/sheet")
+    @ApiOperation("仓储入库统计日报表")
+    public  R<List<WmsInventoryDaySheetVO>> daySheetData(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.daySheetData(dto));
+    }
 
     @PostMapping("/statistical")
     @ApiOperation("仓储统计报表")

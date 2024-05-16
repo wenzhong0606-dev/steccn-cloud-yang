@@ -195,4 +195,80 @@
         </if>
         and wdr.`status` in (1,2,3,5)
     </select>
+    <select id="daySheetData" resultType="com.steccn.wms.vo.WmsInventoryDaySheetVO">
+        SELECT
+        a.material_name,
+        b.type,
+        b.warehouse_id,
+        b.CODE,
+        CASE
+
+        WHEN b.STATUS = 0 THEN
+        '已创建'
+        WHEN b.STATUS = 1 THEN
+        '已确认'
+        WHEN b.STATUS = 5 THEN
+        '已冲销'
+        END AS STATUS,
+        count(*) AS caseNo,
+        sum( a.quantity ) AS totalQuantity,
+        CASE
+
+        WHEN TIME( b.come_time ) BETWEEN '08:00:00'
+        AND '20:00:00' THEN
+        '白班' ELSE '夜班'
+        END AS classes
+        FROM
+        wms_storage_receipt_info a
+        JOIN wms_storage_receipt b ON b.id = a.storage_receipt_id
+        WHERE
+        a.storage_receipt_id IN ( SELECT id FROM wms_storage_receipt WHERE del_flag = 0 AND STATUS != 5 )
+        <if test="dto.startTime !=null and dto.endTime != null">
+            AND b.create_time between #{dto.startTime} and #{dto.endTime}
+        </if>
+        <if test="dto.status != null and dto.status != ''">
+            AND b.status = #{dto.status}
+        </if>
+        <if test="dto.materialName != null and dto.materialName != ''">
+            AND a.material_name LIKE CONCAT('%',#{dto.materialName},'%')
+        </if>
+        <if test="dto.warehouseId != null and dto.warehouseId != ''">
+            AND b.warehouse_id = #{dto.warehouseId}
+        </if>
+        <if test="dto.type != null and dto.type != ''">
+            AND b.type = #{dto.type}
+        </if>
+        <if test="dto.classes != null and dto.classes != ''">
+            AND (
+            CASE
+            WHEN TIME(b.come_time) BETWEEN '08:00:00' AND '20:00:00' AND dto.classes = '白班' THEN 1
+            WHEN TIME(b.come_time) NOT BETWEEN '08:00:00' AND '20:00:00' AND dto.classes = '夜班' THEN 1
+            ELSE 0
+            END
+            ) = 1
+        </if>
+        GROUP BY
+        a.material_name,
+        b.type,
+        b.warehouse_id,
+        b.CODE,
+        CASE
+
+        WHEN TIME( b.come_time ) BETWEEN '08:00:00'
+        AND '20:00:00' THEN
+        '白班' ELSE '夜班'
+        END,
+        CASE
+
+        WHEN b.STATUS = 0 THEN
+        '已创建'
+        WHEN b.STATUS = 1 THEN
+        '已确认'
+        WHEN b.STATUS = 5 THEN
+        '已冲销'
+        END,
+        b.type
+        ORDER BY
+        b.type;
+    </select>
 </mapper>

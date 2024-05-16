@@ -125,4 +125,10 @@ public class PmsCompleteStorageFeignController {
         return R.success(pmsCompleteStorageService.sjgInStorageSum(dto));
     }
 
+    @ApiOperation("入库单编码获取生产订单产线名称")
+    @PostMapping("/storage/receipt/code/get/line/name")
+    R<Map<String,String>> storageReceiptCodeGetLineName(@RequestBody Set<String> codeSet){
+        return R.success(pmsCompleteStorageService.storageReceiptCodeGetLineName(codeSet));
+    }
+
 }

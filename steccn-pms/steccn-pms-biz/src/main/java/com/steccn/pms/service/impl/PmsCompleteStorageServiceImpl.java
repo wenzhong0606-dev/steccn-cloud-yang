@@ -778,6 +778,18 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         return sjgInStorageUnit(granularity, dto.getStart(), dto.getEnd(), lineIdSet, 2 , unit);
     }
 
+    @Override
+    public Map<String, String> storageReceiptCodeGetLineName(Set<String> codeSet) {
+        List<PmsCompleteStorage> list = list(new LambdaQueryWrapper<PmsCompleteStorage>().in(PmsCompleteStorage::getCode, codeSet));
+        Map<String,String> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(list)){
+            Set<Integer> lineIdSet = list.stream().collect(Collectors.groupingBy(PmsCompleteStorage::getProductLineId)).keySet();
+            Map<Integer, SysOfficeVO> nameMap = FeignOptional.of(() -> remoteOfficeFeign.listById(lineIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            list.forEach(pmsCompleteStorage -> map.put(pmsCompleteStorage.getCode(),nameMap.get(pmsCompleteStorage.getProductLineId()).getOfficeName()));
+        }
+        return map;
+    }
+
     /**
      * 入库
      *

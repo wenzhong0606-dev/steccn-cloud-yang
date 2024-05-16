@@ -1855,6 +1855,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return order;
     }
 
+    @Override
+    public List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto) {
+        return this.baseMapper.daySheetData(dto);
+
+    }
+
     /**
      * 冲销
      * @return

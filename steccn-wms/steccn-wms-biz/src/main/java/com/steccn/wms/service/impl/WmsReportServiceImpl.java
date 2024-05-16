@@ -13,15 +13,20 @@ import com.steccn.dp.dto.DpWmsDataDTO;
 import com.steccn.dp.feign.RemoteDpWmsDataFeignApi;
 import com.steccn.dp.vo.AdsWmsInventoryVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
@@ -29,13 +34,11 @@ import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.service.WmsReportService;
 import com.steccn.wms.service.WmsStorageReceiptService;
-import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
-import com.steccn.wms.vo.WmsOutInWarehouseInfoVO;
-import com.steccn.wms.vo.WmsReportDataVO;
-import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
+import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.compress.utils.Sets;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -45,6 +48,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static cn.hutool.core.collection.CollUtil.keySet;
 
 
 @Service
@@ -58,6 +63,8 @@ public class WmsReportServiceImpl implements WmsReportService {
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
     @Override
     public SteccnTableDataDTO statisticalData(WmsReportStatisticalDTO dto) {
 
@@ -325,6 +332,75 @@ public class WmsReportServiceImpl implements WmsReportService {
 
 
 
+    }
+
+    @Override
+    public List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto) {
+        //获取数据
+        List<WmsInventoryDaySheetVO>  daySheetDataList =  wmsStorageReceiptService.daySheetData(dto);
+        List<WmsInventoryDaySheetVO> resList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(daySheetDataList)){
+            //根据入库单单号找到对应的生产订单的产线名称
+            Set<String> codeSet  = Sets.newHashSet();
+            Set<Long> typeIds = Sets.newHashSet();
+            Set<Integer> officeIdSet = Sets.newHashSet();
+            daySheetDataList.forEach( wmsInventoryDaySheetVO -> {
+                codeSet.add(wmsInventoryDaySheetVO.getCode());
+                typeIds.add(wmsInventoryDaySheetVO.getType());
+                officeIdSet.add(wmsInventoryDaySheetVO.getWarehouseId());
+            });
+            Map<String,String> lineNameMap =  FeignOptional.of(()->remoteCompleteStorageFeignApi.storageReceiptCodeGetLineName(codeSet),FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //获取产线名称
+            Map<Long, String> typeNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            daySheetDataList.forEach( wmsInventoryDaySheetVO -> wmsInventoryDaySheetVO.setProductionLineName(lineNameMap.get(wmsInventoryDaySheetVO.getCode())));
+            //根据产线处理数据
+            Map<String, List<WmsInventoryDaySheetVO>> lineMap = daySheetDataList.stream()
+                    .collect(Collectors.groupingBy(vo -> Optional.ofNullable(vo.getProductionLineName()).orElse("null")));
+            lineMap.forEach((k,v)->{
+                //根据仓库处理数据
+                Map<Integer, List<WmsInventoryDaySheetVO>> warehouseMap = v.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getWarehouseId));
+                warehouseMap.forEach((warehouseKey,warehouseValue)->{
+                    //根据类型处理数据
+                    Map<Long, List<WmsInventoryDaySheetVO>> typeMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getType));
+                    typeMap.forEach((typeKey,typeValue)->{
+                        //根据物料处理数据
+                        Map<String, List<WmsInventoryDaySheetVO>> materialNameMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getMaterialName));
+                        materialNameMap.forEach((materialKey,materialValue)->{
+                            //根据状态处理数据
+                            Map<String, List<WmsInventoryDaySheetVO>> statusMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getStatus));
+                            statusMap.forEach((statusKey,statusValue)->{
+                                //根据班次处理数据
+                                Map<String, List<WmsInventoryDaySheetVO>> classesMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getClasses));
+                                classesMap.forEach((classesKey,classesValue)->{
+                                    WmsInventoryDaySheetVO wmsInventoryDaySheetVO = new WmsInventoryDaySheetVO();
+                                    WmsInventoryDaySheetVO daySheetVO = classesValue.get(0);
+                                    wmsInventoryDaySheetVO.setProductionLineName(daySheetVO.getProductionLineName());
+                                    wmsInventoryDaySheetVO.setWarehouseName(officeMap.get(daySheetVO.getWarehouseId()).getOfficeName());
+                                    wmsInventoryDaySheetVO.setTypeName(typeNameMap.get(daySheetVO.getType()));
+                                    wmsInventoryDaySheetVO.setClasses(daySheetVO.getClasses());
+                                    wmsInventoryDaySheetVO.setMaterialName(daySheetVO.getMaterialName());
+                                    wmsInventoryDaySheetVO.setStatus(daySheetVO.getStatus());
+                                    BigDecimal totalQuantity = BigDecimal.ZERO;
+                                    for (WmsInventoryDaySheetVO inventoryDaySheetVO : classesValue) {
+                                        totalQuantity =BigDecimalUtil.add(totalQuantity,inventoryDaySheetVO.getTotalQuantity());
+                                    }
+                                    wmsInventoryDaySheetVO.setTotalQuantity(totalQuantity);
+                                    resList.add(wmsInventoryDaySheetVO);
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+            //
+            if (Objects.nonNull(dto.getProductionLineName())){
+              return resList.stream()
+                        .filter(vo -> !dto.getProductionLineName().equals(vo.getMaterialName()))
+                        .collect(Collectors.toList());
+            }
+        }
+        return resList;
     }
 
 
