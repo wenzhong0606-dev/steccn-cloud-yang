@@ -560,6 +560,23 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     wmsStorageReceiptInfoService.remove(wrapper);
                 }
                 wmsStorageReceiptInfoService.saveOrUpdateBatch(wmsStorageReceiptInfoList);
+            }else {
+                LambdaQueryWrapper<WmsStorageReceiptInfo> wrapper = new LambdaQueryWrapper<WmsStorageReceiptInfo>().eq(WmsStorageReceiptInfo::getStorageReceiptId, model.getId());
+                //获取需要删除的数据
+                List<WmsStorageReceiptInfo> list = wmsStorageReceiptInfoService.list(wrapper);
+                if (CollUtil.isNotEmpty(list)) {
+                    List<WmsInventoryDTO> deleteList = Lists.newArrayList();
+                    list.forEach(info -> {
+                        WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                        BeanUtil.copyProperties(info, wmsInventoryDTO);
+                        wmsInventoryDTO.setOriginalCaseNo(info.getCaseNo());
+                        wmsInventoryDTO.setOriginalQuantity(info.getQuantity());
+                        deleteList.add(wmsInventoryDTO);
+                    });
+                    //还原之前的库存信息
+                    wmsInventoryService.restore(deleteList);
+                    wmsStorageReceiptInfoService.remove(wrapper);
+                }
             }
         } finally {
             lock.unlock();
