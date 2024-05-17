@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.hikvision.feign.RemoteHikFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.vo.QtCheckPlanVO;
@@ -17,6 +18,7 @@ import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.dto.WmsWeighbridgeGerDTO;
 import com.steccn.wms.dto.WmsWeighbridgeInfoDTO;
+import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.service.WmsWeighbridgeInfoService;
 import com.steccn.wms.mapper.WmsWeighbridgeInfoMapper;
@@ -29,6 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
 * @author Admin

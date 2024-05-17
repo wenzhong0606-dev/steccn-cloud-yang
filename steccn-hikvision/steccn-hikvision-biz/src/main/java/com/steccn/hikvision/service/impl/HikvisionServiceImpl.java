@@ -1,15 +1,19 @@
 package com.steccn.hikvision.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.hikvision.api.VideoApi;
 import com.steccn.hikvision.entity.Cameras;
+import com.steccn.hikvision.entity.HikCommonR;
 import com.steccn.hikvision.entity.HikvisionR;
 import com.steccn.hikvision.entity.PreviewURLs;
 import com.steccn.hikvision.service.HikvisionService;
 import com.steccn.hikvision.vo.CameraVO;
+import com.steccn.hikvision.vo.HikCompanyVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.security.SecurityUtil;
@@ -87,6 +91,21 @@ public class HikvisionServiceImpl implements HikvisionService {
         JSONObject jsonObject = JSONObject.parseObject(result);
         String token = jsonObject.getJSONObject("data").getString("token");
         return token;
+    }
+
+    @Override
+    public List<HikCompanyVO> getCompanyInfo(TupleDTO<String, String> dto) {
+        VideoApi videoApi = new VideoApi();
+        Map<String,String> querys = Maps.newHashMap();
+        if(StrUtil.isNotBlank(dto.getField1())){
+            querys.put("companyId",dto.getField1());
+        }
+        if(StrUtil.isNotBlank(dto.getField2())){
+            querys.put("companyName",dto.getField2());
+        }
+        String result = videoApi.ssoLogin(querys);
+        HikCommonR<HikCompanyVO> r = JSONObject.parseObject(result, HikCommonR.class);
+        return r.getData().getList();
     }
 
     /**

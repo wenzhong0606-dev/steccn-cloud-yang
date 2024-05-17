@@ -118,6 +118,10 @@
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
+            <artifactId>steccn-hikvision-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
             <artifactId>steccn-wms-api</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>

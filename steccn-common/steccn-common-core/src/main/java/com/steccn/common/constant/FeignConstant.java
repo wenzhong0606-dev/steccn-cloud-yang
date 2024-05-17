@@ -79,4 +79,9 @@ public interface FeignConstant {
      * ems服务名称
      */
     String STECCN_EMS_SERVICE_NAME = "steccn-ems";
+
+    /**
+     * 海康威视服务
+     */
+    String STECCN_HIK_SERVICE_NAME = "steccn-hikvision";
 }

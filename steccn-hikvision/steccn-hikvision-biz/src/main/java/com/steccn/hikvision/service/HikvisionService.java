@@ -1,6 +1,8 @@
 package com.steccn.hikvision.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.hikvision.vo.CameraVO;
+import com.steccn.hikvision.vo.HikCompanyVO;
 
 import java.util.List;
 
@@ -35,4 +37,11 @@ public interface HikvisionService {
      * @return
      */
     String ssoToken();
+
+    /**
+     * 获取dto f1 companyId f2 companyName
+     * @param dto
+     * @return
+     */
+    List<HikCompanyVO> getCompanyInfo(TupleDTO<String,String> dto);
 }

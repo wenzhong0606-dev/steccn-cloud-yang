@@ -118,4 +118,20 @@ public class VideoApi {
         String result = ArtemisHttpUtil.doGetArtemis(path,querys,null,"application/json");
         return result;
     }
+
+    /**
+     * 单点登录
+     * @param querys
+     * @return
+     */
+    public String getCompanyInfo(Map<String,String> querys) {
+        String getDataApi = ARTEMIS_PATH + "/api/open/v1/allType/companyQuery";
+        Map<String, String> path = new HashMap<String, String>(2) {
+            {
+                put("https://", getDataApi);
+            }
+        };
+        String result = ArtemisHttpUtil.doGetArtemis(path,querys,null,"application/json");
+        return result;
+    }
 }
