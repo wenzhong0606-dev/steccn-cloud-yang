@@ -210,14 +210,15 @@
         WHEN b.STATUS = 5 THEN
         '已冲销'
         END AS STATUS,
-        count(*) AS caseNo,
+        count(*) AS caseNum,
         sum( a.quantity ) AS totalQuantity,
         CASE
 
         WHEN TIME( b.come_time ) BETWEEN '08:00:00'
         AND '20:00:00' THEN
         '白班' ELSE '夜班'
-        END AS classes
+        END AS classes,
+        group_concat(a.case_no ORDER BY a.case_no SEPARATOR ',  ') as caseNo
         FROM
         wms_storage_receipt_info a
         JOIN wms_storage_receipt b ON b.id = a.storage_receipt_id
@@ -238,14 +239,11 @@
         <if test="dto.type != null and dto.type != ''">
             AND b.type = #{dto.type}
         </if>
-        <if test="dto.classes != null and dto.classes != ''">
-            AND (
-            CASE
-            WHEN TIME(b.come_time) BETWEEN '08:00:00' AND '20:00:00' AND dto.classes = '白班' THEN 1
-            WHEN TIME(b.come_time) NOT BETWEEN '08:00:00' AND '20:00:00' AND dto.classes = '夜班' THEN 1
-            ELSE 0
-            END
-            ) = 1
+        <if test="dto.classes != null and dto.classes != '' and dto.classes == '白班'">
+            AND TIME(b.come_time) BETWEEN '08:00:00' AND '20:00:00'
+        </if>
+        <if test="dto.classes != null and dto.classes != '' and dto.classes =='夜班'">
+            AND TIME(b.come_time) NOT BETWEEN '08:00:00' AND '20:00:00'
         </if>
         GROUP BY
         a.material_name,
@@ -270,5 +268,38 @@
         b.type
         ORDER BY
         b.type;
+    </select>
+    <select id="daySheetCaseList" resultType="com.steccn.wms.vo.WmsInventoryDaySheetCaseVO">
+        select
+        a.shelf_name as shelfName,
+        a.material_name as materialName,
+        a.quantity as quantity,
+        a.case_no as caseNo,
+        b.`code` as code,
+        b.STATUS as status,
+        b.create_time as createTime,
+        b.create_name as createName,
+        b.affirm_time as affirmTime,
+        b.affirm_name as affirmName,
+        b.come_time as comeTime
+        from wms_storage_receipt_info a
+        JOIN wms_storage_receipt b on b.id = a.storage_receipt_id
+        where
+        a.storage_receipt_id
+        in (
+        SELECT id
+        from wms_storage_receipt
+        where
+        del_flag = 0
+        AND status != 5)
+        <if test="dto.startTime !=null and dto.endTime != null">
+            AND b.come_time between #{dto.startTime} and #{dto.endTime}
+        </if>
+        <if test="dto.caseNoList != null and dto.caseNoList.size > 0">
+            and a.case_no in
+            <foreach collection="dto.caseNoList" item="caseNo" open="(" close=")" separator=",">
+                #{caseNo}
+            </foreach>
+        </if>
     </select>
 </mapper>

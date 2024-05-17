@@ -8,6 +8,7 @@ import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.IntegerUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.dp.dto.DpWmsDataDTO;
 import com.steccn.dp.feign.RemoteDpWmsDataFeignApi;
@@ -382,10 +383,19 @@ public class WmsReportServiceImpl implements WmsReportService {
                                     wmsInventoryDaySheetVO.setMaterialName(daySheetVO.getMaterialName());
                                     wmsInventoryDaySheetVO.setStatus(daySheetVO.getStatus());
                                     BigDecimal totalQuantity = BigDecimal.ZERO;
+                                    List<String> caseNoList = Lists.newArrayList();
+                                    Integer caseNum = null;
                                     for (WmsInventoryDaySheetVO inventoryDaySheetVO : classesValue) {
                                         totalQuantity =BigDecimalUtil.add(totalQuantity,inventoryDaySheetVO.getTotalQuantity());
+                                        caseNum = IntegerUtil.add(caseNum,inventoryDaySheetVO.getCaseNum());
+                                        List<String> boxNumbers = Arrays.stream(inventoryDaySheetVO.getCaseNo().split(",\\s*"))
+                                                .map(String::trim)
+                                                .collect(Collectors.toList());
+                                        caseNoList.addAll(boxNumbers);
                                     }
+                                    wmsInventoryDaySheetVO.setCaseNum(caseNum);
                                     wmsInventoryDaySheetVO.setTotalQuantity(totalQuantity);
+                                    wmsInventoryDaySheetVO.setCaseNoList(caseNoList);
                                     resList.add(wmsInventoryDaySheetVO);
                                 });
                             });
@@ -401,6 +411,11 @@ public class WmsReportServiceImpl implements WmsReportService {
             }
         }
         return resList;
+    }
+
+    @Override
+    public List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto) {
+      return wmsStorageReceiptService.daySheetCaseList(dto);
     }
 
 

@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @ApiModel("仓储统计日报表DTO")
@@ -25,5 +26,7 @@ public class WmsInventoryDaySheetDTO {
     private String productionLineName;
 
     private String materialName;
+
+    private List<String> caseNoList;
 
 }

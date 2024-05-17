@@ -1652,7 +1652,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 //修改入库单状态为已冲销
                 WmsStorageReceipt receipt = getById(id);
                 receipt.setStatus(WmsManagerConstant.OrderStateEnum.FIVE.getCode());
-                receipt.setChargeName(SecurityUtils.getUser().getName());
+                receipt.setChargeName(userName);
                 receipt.setChargeTime(LocalDateTime.now());
                 updateById(receipt);
                 }
@@ -1859,6 +1859,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     public List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto) {
         return this.baseMapper.daySheetData(dto);
 
+    }
+
+    @Override
+    public List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto) {
+        return this.baseMapper.daySheetCaseList(dto);
     }
 
     /**

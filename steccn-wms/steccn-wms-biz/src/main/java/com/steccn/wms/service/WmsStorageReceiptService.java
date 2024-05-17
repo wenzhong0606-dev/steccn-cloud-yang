@@ -229,4 +229,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     String salesReturns(WmsSalesReturnsDTO wmsSalesReturnsDTO);
 
     List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto);
+
+    List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto);
 }

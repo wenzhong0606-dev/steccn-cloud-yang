@@ -20,10 +20,7 @@ import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.service.*;
-import com.steccn.wms.vo.WmsDocumentQuantityVO;
-import com.steccn.wms.vo.WmsInventoryDaySheetVO;
-import com.steccn.wms.vo.WmsReportTotalQuantityVO;
-import com.steccn.wms.vo.WmsReportWarehouseVO;
+import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +62,12 @@ public class WmsReportController {
     @ApiOperation("仓储入库统计日报表")
     public  R<List<WmsInventoryDaySheetVO>> daySheetData(@RequestBody WmsInventoryDaySheetDTO dto){
         return R.success(wmsReportService.daySheetData(dto));
+    }
+
+    @PostMapping("/day/sheet/case/list")
+    @ApiOperation("仓储入库统计日报箱列表")
+    public R<List<WmsInventoryDaySheetCaseVO>> daySheetCaseList(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.daySheetCaseList(dto));
     }
 
     @PostMapping("/statistical")

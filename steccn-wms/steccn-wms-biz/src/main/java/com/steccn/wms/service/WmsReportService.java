@@ -5,6 +5,7 @@ import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
+import com.steccn.wms.vo.WmsInventoryDaySheetCaseVO;
 import com.steccn.wms.vo.WmsInventoryDaySheetVO;
 
 import java.util.List;
@@ -33,4 +34,6 @@ public interface WmsReportService {
      * @return
      */
     List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto);
+
+    List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto);
 }

@@ -6,10 +6,7 @@ import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.*;
-import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsInventoryDaySheetVO;
-import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
-import com.steccn.wms.vo.WmsStorageReceiptVO;
+import com.steccn.wms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -86,6 +83,8 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
     List<WmsStorageReceiptInfoVO> intervalDataVO(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime);
 
     List<WmsInventoryDaySheetVO> daySheetData(@Param("dto") WmsInventoryDaySheetDTO dto);
+
+    List<WmsInventoryDaySheetCaseVO> daySheetCaseList(@Param("dto") WmsInventoryDaySheetDTO dto);
 }
 
 

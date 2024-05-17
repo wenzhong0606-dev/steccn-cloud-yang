@@ -2,6 +2,7 @@ package com.steccn.wms.mapper;
 
 import com.steccn.wms.domain.WmsWeighbridgeInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author Admin
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2024-05-16 14:30:55
 * @Entity com.steccn.wms.domain.WmsWeighbridgeInfo
 */
+@Mapper
 public interface WmsWeighbridgeInfoMapper extends BaseMapper<WmsWeighbridgeInfo> {
 
 }
