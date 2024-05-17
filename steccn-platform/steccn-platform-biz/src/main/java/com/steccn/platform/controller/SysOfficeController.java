@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -178,4 +180,19 @@ public class SysOfficeController {
     public R<List<SysOfficeVO>> listByParentIds(@RequestBody Set<Long> ids) {
         return R.success(sysOfficeService.listByParentIds(ids));
     }
+
+    @ApiOperation("获取组织结构信息")
+    @GetMapping("/info/code")
+    R<SysOfficeVO> infoCode(@RequestParam("type") String type, @RequestParam("code") String code) {
+        SysOfficeVO resVo = null;
+        SysOffice model = sysOfficeService.getOne(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, type)
+                .eq(SysOffice::getOfficeCode, code));
+        if (Objects.nonNull(model)) {
+            resVo = new SysOfficeVO();
+            BeanUtils.copyProperties(model, resVo);
+        }
+        return R.success(resVo);
+    }
+
 }

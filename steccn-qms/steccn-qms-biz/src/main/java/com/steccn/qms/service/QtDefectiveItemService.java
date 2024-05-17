@@ -133,4 +133,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return
      */
     List<QtDefectiveItemVO> getDefectItemByCategory(String categoryName);
+
+    /**
+     * 根据code查询show_flag=1缺陷项
+     * @param code code
+     * @return
+     */
+    QtDefectiveItemVO infoCode(String code);
 }

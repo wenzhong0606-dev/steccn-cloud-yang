@@ -210,7 +210,8 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                         BigDecimal value = BigDecimalUtil.multiply(consumeValue, setting.getLowerHeatingValue());
                         value = BigDecimalUtil.multiply(value, setting.getTceValue());
                         value = BigDecimalUtil.multiply(value, setting.getCoRatio());
-                        value = BigDecimalUtil.divide(value, BigDecimalUtil.valueOf("52800"));
+                        value = BigDecimalUtil.divide(value, BigDecimalUtil.valueOf("1200"));
+                        value = BigDecimalUtil.multiply(value, BigDecimalUtil.valueOf("44"));
                         if (Objects.nonNull(value)) {
                             resMap.computeIfAbsent(setting.getCountSource() + "_" + setting.getMaterialId(), x -> Maps.newHashMap()).put(finalValidStart, value);
                         }

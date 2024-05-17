@@ -5,6 +5,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.vo.QtCheckItemListVO;
@@ -65,6 +66,12 @@ public class QtDefectiveItemController implements Serializable {
     @SysLog("删除缺陷项")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtDefectiveItemService.delete(id));
+    }
+
+    @GetMapping("/info/code")
+    @ApiOperation(value = "根据code查询show_flag=1缺陷项")
+    public R<QtDefectiveItemVO> infoCode(@RequestParam("code") String code) {
+        return R.success(qtDefectiveItemService.infoCode(code));
     }
 
     @PostMapping("/select/item")

@@ -462,6 +462,16 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resList;
     }
 
+    @Override
+    public QtDefectiveItemVO infoCode(String code) {
+        QtDefectiveItemVO res = null;
+        QtDefectiveItem item = getOne(new LambdaQueryWrapper<QtDefectiveItem>().eq(QtDefectiveItem::getCode, code).eq(QtDefectiveItem::getShowFlag, 1).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(item)) {
+            res = BeanUtil.copyProperties(item, QtDefectiveItemVO.class);
+        }
+        return res;
+    }
+
     /**
      * 同类别下名称是否重复
      *
