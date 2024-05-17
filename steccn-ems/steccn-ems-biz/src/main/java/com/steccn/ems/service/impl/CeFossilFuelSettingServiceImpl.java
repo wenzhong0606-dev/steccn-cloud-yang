@@ -212,6 +212,9 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                         value = BigDecimalUtil.multiply(value, setting.getCoRatio());
                         value = BigDecimalUtil.divide(value, BigDecimalUtil.valueOf("1200"));
                         value = BigDecimalUtil.multiply(value, BigDecimalUtil.valueOf("44"));
+                        if (setting.getMaterialName().contains("天然气")) {
+                            value = BigDecimalUtil.divide(value, BigDecimalUtil.valueOf("10000"));
+                        }
                         if (Objects.nonNull(value)) {
                             resMap.computeIfAbsent(setting.getCountSource() + "_" + setting.getMaterialId(), x -> Maps.newHashMap()).put(finalValidStart, value);
                         }
