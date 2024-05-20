@@ -617,6 +617,9 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //油
         Map<String, List<SysConfigurationDTO>> oilConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_OIL, Sets.newHashSet(EpManagerConstant.CONF_EMS_OIL_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysConfigurationDTO> oilConfList = oilConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //lng
+        Map<String, List<SysConfigurationDTO>> lngConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_LNG, Sets.newHashSet(EpManagerConstant.CONF_EMS_LNG_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> lngConfList = lngConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         //压缩空气
         Map<String, List<SysConfigurationDTO>> airConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_AIR, Sets.newHashSet(EpManagerConstant.CONF_EMS_AIR_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysConfigurationDTO> airConfList = airConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
@@ -635,6 +638,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, waterConfList));
         resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, gasConfList));
         resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, oilConfList));
+        resMap.put(EpManagerConstant.ENERGY_LNG, queryNodeByNameList(EpManagerConstant.ENERGY_LNG, lngConfList));
         resMap.put(EpManagerConstant.ENERGY_AIR, queryNodeByNameList(EpManagerConstant.ENERGY_AIR, airConfList));
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
         return resMap;

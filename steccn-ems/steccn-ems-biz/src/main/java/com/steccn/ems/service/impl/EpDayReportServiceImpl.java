@@ -722,6 +722,18 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             }
         }).exceptionally(ex -> Lists.newArrayList());
 
+        CompletableFuture<List<EpDayReportCountRowVO>> lngFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                RequestContextHolder.setRequestAttributes(attributes);
+                //获取lng
+                Optional<EpEnergyTypeVO> lngOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_LNG.equals(v.getId())).findFirst();
+                return consumeRow(lngOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_LNG), new EpDiscountFactorVO(), new EpDiscountFactorVO());
+            } catch (Exception e) {
+                log.error("lng -> {}", e.getLocalizedMessage());
+                throw new BusinessException("业务执行异常");
+            }
+        }).exceptionally(ex -> Lists.newArrayList());
+
 
         CompletableFuture<List<EpDayReportCountRowVO>> elecOtherFuture = CompletableFuture.supplyAsync(() -> {
             try {
@@ -744,9 +756,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                         });
                     }
                 }
-                //插入合计行
-//                EpDayReportCountRowVO sumRow = countRow(resList, elecEnergy);
-//                resList.add(sumRow);
                 return resList;
             } catch (Exception e) {
                 log.error("elecOther -> {}", e.getLocalizedMessage());
@@ -755,12 +764,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         }).exceptionally(ex -> Lists.newArrayList());
 
         //5个都执行完毕，才来执行继续
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture, airFuture);
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture, airFuture, lngFuture);
         completableFuture.isDone();
         dataList.addAll(elecFuture.get());
         dataList.addAll(waterFuture.get());
         dataList.addAll(gasFuture.get());
         dataList.addAll(oilFuture.get());
+        //添加lng
+        dataList.addAll(lngFuture.get());
         //添加压缩空气
         dataList.addAll(airFuture.get());
         dataList.addAll(elecOtherFuture.get());
