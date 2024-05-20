@@ -18,7 +18,7 @@ public class WmsWeighbridgeInfo implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**

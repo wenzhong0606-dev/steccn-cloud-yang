@@ -15,7 +15,7 @@ public class HikDbEventDTO {
     private HikDbEventDataDTO data;
     private String eventId;
     private String eventType;
-    private Long happenTime;
+    private String happenTime;
     private String srcIndex;
     private String srcName;
     private String srcType;

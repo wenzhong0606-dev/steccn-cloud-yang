@@ -3,6 +3,7 @@ package com.steccn.hikvision.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.dto.TupleDTO;
@@ -97,13 +98,18 @@ public class HikvisionServiceImpl implements HikvisionService {
     public List<HikCompanyVO> getCompanyInfo(TupleDTO<String, String> dto) {
         VideoApi videoApi = new VideoApi();
         Map<String,String> querys = Maps.newHashMap();
+        querys.put("pageSize","20");
+        querys.put("pageNo","1");
         if(StrUtil.isNotBlank(dto.getField1())){
             querys.put("companyId",dto.getField1());
         }
         if(StrUtil.isNotBlank(dto.getField2())){
             querys.put("companyName",dto.getField2());
         }
-        String result = videoApi.ssoLogin(querys);
+        if(StrUtil.isBlank(dto.getField1())&&StrUtil.isBlank(dto.getField2())){
+            return Lists.newArrayList();
+        }
+        String result = videoApi.getCompanyInfo(querys);
         HikCommonR<HikCompanyVO> r = JSONObject.parseObject(result, HikCommonR.class);
         return r.getData().getList();
     }

@@ -3,6 +3,7 @@ package com.steccn.platform.service;
 import com.steccn.platform.domain.HikResponse;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.HikDbDTO;
+import com.steccn.platform.dto.HikDbParamsDTO;
 
 /**
 * @author Admin
