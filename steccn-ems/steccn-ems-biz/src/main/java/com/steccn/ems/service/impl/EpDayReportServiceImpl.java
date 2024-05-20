@@ -378,7 +378,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             gasOilPmList.add(pm);
         }
         gasOil.setSumStr(BigDecimalUtil.divide(BigDecimalUtil.sum(gasOilConsumeList), BigDecimalUtil.sum(gasOilPmList)));
-        gasOil.setEnergyType("天然气+燃料油");
+        gasOil.setEnergyType("天然气+燃料油+LNG");
         gasOil.setConsumeList(gasOilUnitConsumeList);
         lineRowList.add(gasOil);
 
