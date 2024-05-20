@@ -84,7 +84,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         try {
             List<EpDayReportCountRowVO> dataList = asyncTask(start, end, energyTypeList, defaultNodeMap);
             resVo.setDataList(dataList);
-            BigDecimal ec1 = null, ec2 = null, ed = null, pb = null;
+            BigDecimal ec11 = null, ec12 = null , ec1 = null, ec2 = null, ed = null, pb = null;
             //计算能源消费量总计
             BigDecimal equivalentValueSum = null;
             BigDecimal equalValueSum = null;
@@ -92,9 +92,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 if ("电".equals(ele.getEnergyType()) && ele.getDepartmentName().contains("基片")) {
                     ed = ele.getEquivalentValue();
                 } else if ("天然气".equals(ele.getEnergyType())) {
-                    ec1 = ele.getEquivalentValue();
+                    ec11 = ele.getEquivalentValue();
                 } else if ("燃料油".equals(ele.getEnergyType())) {
                     ec2 = ele.getEquivalentValue();
+                } else if ("LNG".equals(ele.getEnergyType())) {
+                    ec12 = ele.getEquivalentValue();
                 }
 
                 equalValueSum = BigDecimalUtil.add(equalValueSum, ele.getEqualValue());
@@ -130,6 +132,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             }
             //单位产量综合能耗Eb = 1000 *（ec1 / (c1 * 1.08) + ec2 / c1 + ed) / Pb
             BigDecimal tmp1 = BigDecimalUtil.add(c1, new BigDecimal("1.08"));
+            ec1 = BigDecimalUtil.add(ec11, ec12);
             tmp1 = BigDecimalUtil.divide(ec1, tmp1);
             BigDecimal tmp2 = BigDecimalUtil.divide(ec2, c1);
             tmp2 = BigDecimalUtil.add(tmp2, ed);
@@ -725,9 +728,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         CompletableFuture<List<EpDayReportCountRowVO>> lngFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 RequestContextHolder.setRequestAttributes(attributes);
+                //判断天然气能源
+                Optional<EpDiscountFactorVO> discount1 = validDiscountList1.stream().filter(ele -> EpManagerConstant.ENERGY_GAS.equals(ele.getEnergyType())).findFirst();
+                Optional<EpDiscountFactorVO> discount2 = validDiscountList2.stream().filter(ele -> EpManagerConstant.ENERGY_GAS.equals(ele.getEnergyType())).findFirst();
                 //获取lng
                 Optional<EpEnergyTypeVO> lngOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_LNG.equals(v.getId())).findFirst();
-                return consumeRow(lngOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_LNG), new EpDiscountFactorVO(), new EpDiscountFactorVO());
+                return consumeRow(lngOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_LNG), discount1.orElse(new EpDiscountFactorVO()), discount2.orElse(new EpDiscountFactorVO()));
             } catch (Exception e) {
                 log.error("lng -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
