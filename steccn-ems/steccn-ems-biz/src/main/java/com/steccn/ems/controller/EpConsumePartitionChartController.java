@@ -190,7 +190,7 @@ public class EpConsumePartitionChartController {
     @ApiOperation(value = "领导驾驶舱-总体能耗趋势(近7日)-折线图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> totalConsumePartitionLine(@Valid @RequestBody EpTotalConsumeDTO dto) {
         dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
-        dto.setEnergyType(Arrays.asList(1, 2, 3, 4));
+        dto.setEnergyType(Arrays.asList(1, 2, 3, 4 , 8));
         return R.success(epConsumePartitionChartService.totalConsumePartitionLine(dto));
     }
 
