@@ -177,14 +177,18 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                 consumeMap.put(materialId, valueMap);
             }
             //如果包括天然气和燃料油
-            long flag1 = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(ele.getCountSource())).filter(ele -> ele.getMaterialName().contains("天然气")).count();
+            long flag1 = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(ele.getCountSource())).filter(ele -> ele.getMaterialName().contains("天然气") && !ele.getMaterialName().toUpperCase().contains("LNG")).count();
             long flag2 = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(ele.getCountSource())).filter(ele -> ele.getMaterialName().contains("燃料油")).count();
-            Map<LocalDate, BigDecimal> gasMap = null, oilMap = null;
+            long flag3 = validList.stream().filter(ele -> EpManagerConstant.CarbonCountSourceEnum.METER_READ.getCode().equals(ele.getCountSource())).filter(ele -> ele.getMaterialName().toUpperCase().contains("LNG")).count();
+            Map<LocalDate, BigDecimal> gasMap = null, oilMap = null , lngMap = null;
             if (flag1 != 0) {
                 gasMap = epDayCountReportService.consumeValue("天然气", "基片", start, end);
             }
             if (flag2 != 0) {
                 oilMap = epDayCountReportService.consumeValue("燃料油", "基片", start, end);
+            }
+            if (flag3 != 0) {
+                lngMap = epDayCountReportService.consumeValue("LNG", "基片", start, end);
             }
             //开始遍历-形成返回集合
             LocalDate startTmp = start;
@@ -199,11 +203,13 @@ public class CeFossilFuelSettingServiceImpl extends ServiceImpl<CeFossilFuelSett
                         Map<LocalDate, BigDecimal> valueMap = null;
                         if (EpManagerConstant.CarbonCountSourceEnum.PICK_MATERIAL.getCode().equals(setting.getCountSource())) {
                             valueMap = consumeMap.get(setting.getMaterialId());
+                        }else if(setting.getMaterialName().toUpperCase().contains("LNG")){
+                            valueMap = lngMap;
                         } else if (setting.getMaterialName().contains("天然气")) {
                             valueMap = gasMap;
                         } else if (setting.getMaterialName().contains("燃料油")) {
                             valueMap = oilMap;
-                        } else {
+                        }else {
                             valueMap = Maps.newHashMap();
                         }
                         BigDecimal consumeValue = valueMap.get(finalValidStart);
