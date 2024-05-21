@@ -25,9 +25,9 @@ public class HikDbWeighRegDTO {
     private String scene_id;
     private Integer scene_version;
     private String reserve_no;
-    private String operateTime;
-    private String endTime;
-    private Integer currentWeighCount;
+    private String operate_time;
+    private String end_time;
+    private Integer current_weigh_count;
     private Boolean just_returned;
     private String new_weigh_ev_id;
     private String trans_carrierTypeName;

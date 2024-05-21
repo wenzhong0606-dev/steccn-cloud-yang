@@ -1,5 +1,7 @@
 package com.steccn.platform.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.util.FeignOptional;
@@ -9,6 +11,7 @@ import com.steccn.hikvision.feign.RemoteHikFeignApi;
 import com.steccn.hikvision.vo.HikCompanyVO;
 import com.steccn.platform.domain.HikResponse;
 import com.steccn.platform.dto.HikDbDTO;
+import com.steccn.platform.dto.HikDbParamsDTO;
 import com.steccn.platform.dto.HikDbWeighCommitDTO;
 import com.steccn.platform.dto.HikDbWeighRegDTO;
 import com.steccn.platform.service.HikResponseService;
@@ -51,17 +54,17 @@ public class HikResponseServiceImpl extends ServiceImpl<HikResponseMapper, HikRe
         //称重确认时间的id
         response.setType("79174070273");
         // 解析为 OffsetDateTime
-        OffsetDateTime offsetDateTime = OffsetDateTime.parse(dto.getSendTime());
+        OffsetDateTime offsetDateTime = OffsetDateTime.parse(dto.getParams().getSendTime());
         response.setHappenTime(offsetDateTime.toLocalDateTime());
         JSONObject jsonObject = new JSONObject(dto);
         response.setContentJson(jsonObject.toString());
         save(response);
         //保存到仓储页面
-        if(dto.getEvents().get(0).getData().getModelData().getWeighReg().getWeigh_status().equals(200)){
+        if(dto.getParams().getEvents().get(0).getData().getModelData().getWeighReg().getWeigh_status().equals(200)){
             poolExecutor.execute(()->{
                 WmsWeighbridgeInfoDTO weighbridgeDTO = new WmsWeighbridgeInfoDTO();
-                List<HikDbWeighCommitDTO> weighCommits = dto.getEvents().get(0).getData().getModelData().getWeighCommits();
-                HikDbWeighRegDTO weighReg = dto.getEvents().get(0).getData().getModelData().getWeighReg();
+                List<HikDbWeighCommitDTO> weighCommits = dto.getParams().getEvents().get(0).getData().getModelData().getWeighCommits();
+                HikDbWeighRegDTO weighReg = dto.getParams().getEvents().get(0).getData().getModelData().getWeighReg();
                 String materialName = weighCommits.get(1).getTrans_materialName();
                 EqpSpareVO eqpSpareVO = eqpSpareService.getByName(materialName);
                 if(Objects.isNull(eqpSpareVO)){
@@ -76,12 +79,17 @@ public class HikResponseServiceImpl extends ServiceImpl<HikResponseMapper, HikRe
                 weighbridgeDTO.setDriverName(weighReg.getDriver_name());
                 weighbridgeDTO.setDriverPhone(weighReg.getDriver_phone());
                 List<HikCompanyVO> companyVOS = FeignOptional.of(() -> remoteHikFeignApi.hikCompanyInfo(new TupleDTO<String, String>(weighCommits.get(1).getCompany_id(), null)), FeignConstant.STECCN_HIK_SERVICE_NAME).get();
-                weighbridgeDTO.setCompanyId(companyVOS.get(0).getCompanyId());
-                weighbridgeDTO.setCompanyName(companyVOS.get(0).getCompanyName());
+                if(CollUtil.isNotEmpty(companyVOS)){
+                    weighbridgeDTO.setCompanyId(companyVOS.get(0).getCompanyId());
+                    weighbridgeDTO.setCompanyName(companyVOS.get(0).getCompanyName());
+
+                }
                 weighbridgeDTO.setGrossWeight(weighCommits.get(1).getRaw_net_weight());
                 weighbridgeDTO.setTareWeight(weighCommits.get(1).getDeduct_weight());
                 weighbridgeDTO.setNetWeight(weighCommits.get(1).getResult());
-                weighbridgeDTO.setFinishTime(OffsetDateTime.parse(weighReg.getEndTime()).toLocalDateTime());
+                if(StrUtil.isNotBlank(weighReg.getEnd_time())){
+                    weighbridgeDTO.setFinishTime(OffsetDateTime.parse(weighReg.getEnd_time()).toLocalDateTime());
+                }
                 FeignOptional.of(()->remoteWmsStorageReceiptFeignApi.weighbridgeSave(weighbridgeDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             });
 

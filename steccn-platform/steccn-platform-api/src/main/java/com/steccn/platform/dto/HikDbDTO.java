@@ -2,17 +2,14 @@ package com.steccn.platform.dto;
 
 import lombok.Data;
 
-import java.util.List;
-
 /**
- * 海康地磅DTO
+ * 海康外层DTO
  *
  * @author AndrewLuo
- * @date 2024/05/15
+ * @date 2024/05/20
  */
 @Data
 public class HikDbDTO {
-    private String ability;
-    private List<HikDbEventDTO> events;
-    private String sendTime;
+    private String method;
+    private HikDbParamsDTO params;
 }
