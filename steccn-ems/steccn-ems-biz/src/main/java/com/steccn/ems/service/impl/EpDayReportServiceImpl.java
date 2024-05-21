@@ -716,11 +716,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         CompletableFuture<List<EpDayReportCountRowVO>> airFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 RequestContextHolder.setRequestAttributes(attributes);
-                //获取用水量
-                Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_AIR.equals(v.getId())).findFirst();
-                return consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_AIR), new EpDiscountFactorVO(), new EpDiscountFactorVO());
+                //获取用气量
+                Optional<EpEnergyTypeVO> airOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_AIR.equals(v.getId())).findFirst();
+                return consumeRow(airOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_AIR), new EpDiscountFactorVO(), new EpDiscountFactorVO());
             } catch (Exception e) {
-                log.error("water -> {}", e.getLocalizedMessage());
+                log.error("air -> {}", e.getLocalizedMessage());
                 throw new BusinessException("业务执行异常");
             }
         }).exceptionally(ex -> Lists.newArrayList());
