@@ -111,6 +111,12 @@ public class QtDefectReportController {
         return R.success(qtDefectReportService.thickAvg(dto));
     }
 
+    @PostMapping("/thick/material")
+    @ApiOperation(value = "厚度报表-根据物料厚度分组")
+    public R<QtCheckItemSingleAvgVO> thickAvgMaterial(@Valid @RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.thickAvgMaterial(dto));
+    }
+
     @PostMapping("/thick/download")
     @ApiOperation(value = "厚度报表-下载")
     public void thickAvgDownload(@Valid @RequestBody QtDefectReportDTO dto, HttpServletResponse response) throws IOException {

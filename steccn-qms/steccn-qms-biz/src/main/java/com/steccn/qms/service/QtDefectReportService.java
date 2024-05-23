@@ -60,6 +60,13 @@ public interface QtDefectReportService {
     QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto);
 
     /**
+     * 厚度报表-根据物料厚度分组
+     * @param dto
+     * @return
+     */
+    QtCheckItemSingleAvgVO thickAvgMaterial(QtDefectReportDTO dto);
+
+    /**
      * 厚度报表
      *
      * @param dto 请求

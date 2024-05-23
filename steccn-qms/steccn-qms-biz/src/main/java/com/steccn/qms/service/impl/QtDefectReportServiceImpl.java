@@ -394,6 +394,44 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
     }
 
     @Override
+    public QtCheckItemSingleAvgVO thickAvgMaterial(QtDefectReportDTO dto) {
+        //去配置文件中查询
+        String itemHd = itemCodeFromCf("QMS_DEFECT_JYX", "ITEM_HD");
+        Assert.notNull(itemHd, "厚度检验项配置未配置");
+        List<QtCheckItem> thickItemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, itemHd).select(QtCheckItem::getId));
+        SteccnTableAssertUtil.notEmpty(thickItemList, "厚度平均值检验项不存在");
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        List<Integer> thickItemIdList = thickItemList.stream().map(QtCheckItem::getId).collect(Collectors.toList());
+        List<QtCheckItemMaterialAvgDTO> thickAvgDTOList = qtCheckTaskMapper.checkItemMaterialAvg(dto.getProductLineList(), thickItemIdList, start, end, 3);
+        SteccnTableAssertUtil.notEmpty(thickAvgDTOList, "暂无符合条件的记录");
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Long> materialId = thickAvgDTOList.stream().map(QtCheckItemMaterialAvgDTO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> materialEleMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<BigDecimal> thickStandardList = materialEleMap.values().stream().map(EqpSpareVO::getThickQuantity).distinct().sorted(BigDecimal::compareTo).collect(Collectors.toList());
+        QtCheckItemSingleAvgVO resVo = new QtCheckItemSingleAvgVO();
+        List<QtCheckItemSingleAvgListVO> rowList = Lists.newArrayList();
+        resVo.setRowList(rowList);
+        resVo.setDateList(thickStandardList.stream().map(BigDecimalUtil::format).collect(Collectors.toList()));
+        for (Integer lineId : dto.getProductLineList()) {
+            String lineName = lineIdNameMap.get(lineId);
+            QtCheckItemSingleAvgListVO rowVo = new QtCheckItemSingleAvgListVO();
+            rowVo.setProductLineName(lineName);
+            List<BigDecimal> valueList = Lists.newArrayList();
+            rowVo.setValueList(valueList);
+            for (BigDecimal thick : thickStandardList) {
+                List<QtCheckItemMaterialAvgDTO> eleList = thickAvgDTOList.stream().filter(ele -> ele.getProductLineId().equals(lineId) && BigDecimalUtil.equals(thick, materialEleMap.getOrDefault(ele.getMaterialId(), new EqpSpareVO()).getThickQuantity())).collect(Collectors.toList());
+                BigDecimal sum = BigDecimalUtil.sum(eleList.stream().map(QtCheckItemMaterialAvgDTO::getValue).collect(Collectors.toList()));
+                BigDecimal avg = BigDecimalUtil.divide(sum, BigDecimalUtil.valueOf(eleList.size()), 2);
+                valueList.add(avg);
+            }
+            rowList.add(rowVo);
+        }
+        return resVo;
+    }
+
+
+    @Override
     public void thickAvgDownload(QtDefectReportDTO dto, HttpServletResponse response) throws IOException {
         QtCheckItemMultiAvgVO result = thickAvg(dto);
         List<QtCheckItemMultiAvgListVO> rowList = result.getRowList();
