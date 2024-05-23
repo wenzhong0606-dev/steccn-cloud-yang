@@ -410,7 +410,10 @@ public class WmsReportServiceImpl implements WmsReportService {
                         .collect(Collectors.toList());
             }
         }
-        return resList;
+        List<WmsInventoryDaySheetVO> collect = resList.stream().sorted(Comparator.comparing(WmsInventoryDaySheetVO::getProductionLineName, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(WmsInventoryDaySheetVO::getType, Comparator.nullsLast(Comparator.naturalOrder()))).collect(Collectors.toList());
+        //排序
+        return collect;
     }
 
     @Override
