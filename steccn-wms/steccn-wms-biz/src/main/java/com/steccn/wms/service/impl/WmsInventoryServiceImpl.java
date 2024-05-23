@@ -184,6 +184,23 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
+    public Boolean addInfoByInventoryId(List<WmsInventoryDTO> infoList) {
+        if (CollUtil.isNotEmpty(infoList)){
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            List<Long> ids = infoList.stream().map(WmsInventoryDTO::getId).collect(Collectors.toList());
+            Map<Long, WmsInventory> map = getInventoryId(ids);
+            infoList.forEach(info -> {
+                WmsInventory orDefault = map.get(info.getId());
+                    orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
+                    orDefault.setTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
+                addWmsInventory.add(orDefault);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
     public Boolean add(List<WmsInventoryDTO> infoList) {
         if (CollUtil.isNotEmpty(infoList)) {
             Set<Integer> officeIds = Sets.newHashSet();

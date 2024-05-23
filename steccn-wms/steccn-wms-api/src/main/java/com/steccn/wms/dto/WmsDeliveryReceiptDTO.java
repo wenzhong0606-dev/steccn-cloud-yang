@@ -59,7 +59,6 @@ public class WmsDeliveryReceiptDTO {
     @ApiModelProperty("出库单关联主键")
     private Long linkedId;
 
-
     /**
      * 是否自动确认 0：否 1：是
      */

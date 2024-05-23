@@ -1024,6 +1024,24 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return  this.baseMapper.intervalDataVO(startTime,endTime);
     }
 
+    @Override
+    public Boolean deleteInfo(WmsDeliveryReceiptDTO dto) {
+       if (CollUtil.isNotEmpty(dto.getList())){
+           List<WmsInventoryDTO> deleteList = Lists.newArrayList();
+           Set<Long> ids = Sets.newHashSet();
+           dto.getList().forEach(info->{
+                       WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                       wmsInventoryDTO.setId(info.getInventoryId());
+                       wmsInventoryDTO.setQuantity(info.getQuantity());
+                       deleteList.add(wmsInventoryDTO);
+                       ids.add(info.getId());
+                   });
+                   wmsInventoryService.addInfoByInventoryId(deleteList);
+                   wmsDeliveryReceiptInfoService.removeByIds(ids);
+               }
+       return true;
+    }
+
     /**
      * 当前最大的code值
      *

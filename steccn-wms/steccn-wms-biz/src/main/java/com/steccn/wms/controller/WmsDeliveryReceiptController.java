@@ -129,4 +129,11 @@ public class WmsDeliveryReceiptController {
         return R.success(code);
     }
 
+
+    @ApiOperation("删除出库单明细并还原库存")
+    @PostMapping("/delete/info")
+    public R<Boolean> deleteInfo(@RequestBody WmsDeliveryReceiptDTO dto){
+        return R.success(wmsDeliveryReceiptService.deleteInfo(dto));
+    }
+
 }

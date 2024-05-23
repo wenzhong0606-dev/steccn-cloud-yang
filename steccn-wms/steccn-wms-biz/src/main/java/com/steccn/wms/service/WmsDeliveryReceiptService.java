@@ -175,4 +175,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     List<WmsDeliveryReceiptInfoVO> intervalDataVO(LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 删除明细并还原库存
+     * @param dto
+     * @return
+     */
+    Boolean deleteInfo(WmsDeliveryReceiptDTO dto);
 }
