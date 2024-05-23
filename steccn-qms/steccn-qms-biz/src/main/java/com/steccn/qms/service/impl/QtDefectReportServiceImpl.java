@@ -19,10 +19,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.dto.SteccnTableColumn;
-import com.steccn.common.dto.SteccnTableDataDTO;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
@@ -731,6 +728,43 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             }
         }
         return resVo;
+    }
+
+    @Override
+    public QtLineChartBarDTO transmittanceLine(QtDefectReportDTO dto) {
+        //获取透光率报表
+        QtCheckItemTransmitVO transmittance = transmittance(dto);
+        List<QtCheckItemTransmitDataVO> sourceList = transmittance.getDataList();
+        Assert.notEmpty(sourceList, "透光率数据不存在");
+        List<StackGraphDTO<String, String>> stackGraphDTOList = Lists.newArrayList();
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getStartDate());
+        LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
+        QtManagerConstant.LossReportType granularityEntity = QtManagerConstant.LossReportType.getByCode(dto.getGranularity());
+        Assert.notNull(granularityEntity, "粒度不存在");
+        List<LocalDateTime> shardTimeList = ShardTimeUtil.cutDateRangeNew(granularityEntity.getType(), start, end);
+        Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        for (int i = 1; i < shardTimeList.size(); i++) {
+            StackGraphDTO<String, String> stackGraphDTO = new StackGraphDTO<>();
+            LocalDateTime begin = shardTimeList.get(i - 1);
+            LocalDate classDate = LocalDateUtil.getClassDate(begin, false);
+            stackGraphDTO.setXAxis(LocalDateUtil.localDateFormat(classDate, DatePattern.NORM_DATE_PATTERN));
+            List<TupleDTO<String, String>> dataList = Lists.newArrayList();
+            stackGraphDTO.setData(dataList);
+            for (Integer line : dto.getProductLineList()) {
+                String lineName = lineIdNameMap.get(line);
+                Optional<QtCheckItemTransmitDataVO> eleOp = sourceList.stream().filter(ele -> ele.getProductLineName().equals(lineName) && ele.getClassDateStr().equals(stackGraphDTO.getXAxis())).findFirst();
+                String ele = null;
+                try {
+                    ele = eleOp.get().getModule().get(0).getValue().get(0);
+                } catch (Exception e) {
+                }
+                dataList.add(new TupleDTO<String, String>(lineName, ele));
+            }
+            stackGraphDTOList.add(stackGraphDTO);
+        }
+        //自定义转换工具
+        return StackGraphUtil.convertData(stackGraphDTOList);
     }
 
     @Override

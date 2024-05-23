@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.qms.dto.QtFinishedRateDTO;
 import com.steccn.qms.vo.DefectDayVO;
@@ -105,6 +106,14 @@ public interface QtDefectReportService {
      * @return
      */
     QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
+
+    /**
+     * 基片二车间透光率走势图
+     * @param dto
+     * @return
+     */
+    QtLineChartBarDTO transmittanceLine(QtDefectReportDTO dto);
+
 
     /**
      * 透光率报表-下载

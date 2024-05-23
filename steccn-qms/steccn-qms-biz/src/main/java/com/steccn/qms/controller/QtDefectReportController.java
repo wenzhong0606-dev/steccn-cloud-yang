@@ -2,6 +2,7 @@ package com.steccn.qms.controller;
 
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -177,6 +178,12 @@ public class QtDefectReportController {
     @ApiOperation(value = "透光率报表")
     public R<QtCheckItemTransmitVO> transmittance(@Valid @RequestBody QtDefectReportDTO dto) {
         return R.success(qtDefectReportService.transmittance(dto));
+    }
+
+    @PostMapping("/transmittance/line")
+    @ApiOperation(value = "基片二车间透光率走势图")
+    public R<QtLineChartBarDTO> transmittanceLine(@Valid @RequestBody QtDefectReportDTO dto) {
+        return R.success(qtDefectReportService.transmittanceLine(dto));
     }
 
     @PostMapping("/transmittance/download")
