@@ -1649,13 +1649,13 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 wmsInventoryRecordService.saveBatch(wmsInventoryRecordList);
                 //扣除库存
                 wmsInventoryService.deduct(wmsInventoryList);
-                //修改入库单状态为已冲销
-                WmsStorageReceipt receipt = getById(id);
-                receipt.setStatus(WmsManagerConstant.OrderStateEnum.FIVE.getCode());
-                receipt.setChargeName(userName);
-                receipt.setChargeTime(LocalDateTime.now());
-                updateById(receipt);
                 }
+            //修改入库单状态为已冲销
+            WmsStorageReceipt receipt = getById(id);
+            receipt.setStatus(WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+            receipt.setChargeName(userName);
+            receipt.setChargeTime(LocalDateTime.now());
+            updateById(receipt);
         } finally {
             lock.unlock();
         }
