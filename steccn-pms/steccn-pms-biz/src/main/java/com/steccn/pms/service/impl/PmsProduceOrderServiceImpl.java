@@ -527,7 +527,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //行
         List<PmsProduceOrderGanttRowsVO> rows = Lists.newArrayList();
         //过滤掉车间
-        sysOfficeVOS = sysOfficeVOS.stream().filter(v -> !v.getOfficeName().contains("车间")).collect(Collectors.toList());
+        sysOfficeVOS = sysOfficeVOS.stream().filter(v -> !v.getOfficeType().equals("8")).collect(Collectors.toList());
         sysOfficeVOS.forEach(tmp->{
             rows.add(new PmsProduceOrderGanttRowsVO(PmManagerConstant.GANTT_PREFIX+tmp.getId(), tmp.getOfficeName()));
         });
