@@ -366,13 +366,13 @@ public class WmsReportServiceImpl implements WmsReportService {
                     Map<Long, List<WmsInventoryDaySheetVO>> typeMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getType));
                     typeMap.forEach((typeKey,typeValue)->{
                         //根据物料处理数据
-                        Map<String, List<WmsInventoryDaySheetVO>> materialNameMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getMaterialName));
+                        Map<String, List<WmsInventoryDaySheetVO>> materialNameMap = typeValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getMaterialName));
                         materialNameMap.forEach((materialKey,materialValue)->{
                             //根据状态处理数据
-                            Map<String, List<WmsInventoryDaySheetVO>> statusMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getStatus));
+                            Map<String, List<WmsInventoryDaySheetVO>> statusMap = materialValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getStatus));
                             statusMap.forEach((statusKey,statusValue)->{
                                 //根据班次处理数据
-                                Map<String, List<WmsInventoryDaySheetVO>> classesMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getClasses));
+                                Map<String, List<WmsInventoryDaySheetVO>> classesMap = statusValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getClasses));
                                 classesMap.forEach((classesKey,classesValue)->{
                                     WmsInventoryDaySheetVO wmsInventoryDaySheetVO = new WmsInventoryDaySheetVO();
                                     WmsInventoryDaySheetVO daySheetVO = classesValue.get(0);
@@ -411,7 +411,9 @@ public class WmsReportServiceImpl implements WmsReportService {
             }
         }
         List<WmsInventoryDaySheetVO> collect = resList.stream().sorted(Comparator.comparing(WmsInventoryDaySheetVO::getProductionLineName, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(WmsInventoryDaySheetVO::getType, Comparator.nullsLast(Comparator.naturalOrder()))).collect(Collectors.toList());
+                .thenComparing(WmsInventoryDaySheetVO::getType, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(WmsInventoryDaySheetVO::getClasses,Comparator.nullsFirst(Comparator.naturalOrder()))
+        ).collect(Collectors.toList());
         //排序
         return collect;
     }
