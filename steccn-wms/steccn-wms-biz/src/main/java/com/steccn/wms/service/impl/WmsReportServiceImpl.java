@@ -350,11 +350,18 @@ public class WmsReportServiceImpl implements WmsReportService {
                 typeIds.add(wmsInventoryDaySheetVO.getType());
                 officeIdSet.add(wmsInventoryDaySheetVO.getWarehouseId());
             });
-            Map<String,String> lineNameMap =  FeignOptional.of(()->remoteCompleteStorageFeignApi.storageReceiptCodeGetLineName(codeSet),FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             //获取产线名称
+            Map<String,String> lineNameMap =  FeignOptional.of(()->remoteCompleteStorageFeignApi.storageReceiptCodeGetLineName(codeSet),FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //获取类型名称
             Map<Long, String> typeNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取仓库名称
             Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            daySheetDataList.forEach( wmsInventoryDaySheetVO -> wmsInventoryDaySheetVO.setProductionLineName(lineNameMap.get(wmsInventoryDaySheetVO.getCode())));
+            daySheetDataList.forEach( wmsInventoryDaySheetVO -> {
+                wmsInventoryDaySheetVO.setProductionLineName(lineNameMap.get(wmsInventoryDaySheetVO.getCode()));
+            });
+            Set<String> collect = lineNameMap.values().stream()
+                    .collect(Collectors.toSet());
+            Map<String, SysOfficeVO>  officeMapByLineName = FeignOptional.of(() -> remoteOfficeFeign.listByName(collect), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //根据产线处理数据
             Map<String, List<WmsInventoryDaySheetVO>> lineMap = daySheetDataList.stream()
                     .collect(Collectors.groupingBy(vo -> Optional.ofNullable(vo.getProductionLineName()).orElse("null")));
@@ -377,6 +384,7 @@ public class WmsReportServiceImpl implements WmsReportService {
                                     WmsInventoryDaySheetVO wmsInventoryDaySheetVO = new WmsInventoryDaySheetVO();
                                     WmsInventoryDaySheetVO daySheetVO = classesValue.get(0);
                                     wmsInventoryDaySheetVO.setProductionLineName(daySheetVO.getProductionLineName());
+                                    wmsInventoryDaySheetVO.setSort(officeMapByLineName.get(daySheetVO.getProductionLineName()).getTreeSort());
                                     wmsInventoryDaySheetVO.setWarehouseName(officeMap.get(daySheetVO.getWarehouseId()).getOfficeName());
                                     wmsInventoryDaySheetVO.setTypeName(typeNameMap.get(daySheetVO.getType()));
                                     wmsInventoryDaySheetVO.setClasses(daySheetVO.getClasses());
@@ -410,7 +418,7 @@ public class WmsReportServiceImpl implements WmsReportService {
                         .collect(Collectors.toList());
             }
         }
-        List<WmsInventoryDaySheetVO> collect = resList.stream().sorted(Comparator.comparing(WmsInventoryDaySheetVO::getProductionLineName, Comparator.nullsLast(Comparator.naturalOrder()))
+        List<WmsInventoryDaySheetVO> collect = resList.stream().sorted(Comparator.comparing(WmsInventoryDaySheetVO::getSort, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(WmsInventoryDaySheetVO::getType, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(WmsInventoryDaySheetVO::getClasses,Comparator.nullsFirst(Comparator.naturalOrder()))
         ).collect(Collectors.toList());
