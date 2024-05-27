@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  */
 @Data
 public class WmsWeighbridgeInfoVO implements Serializable {
+    private Long id;
     /**
      * 物料id
      */
