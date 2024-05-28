@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.qms.dto.QtFinishedRateDTO;
 import com.steccn.qms.vo.DefectDayVO;
@@ -59,6 +60,13 @@ public interface QtDefectReportService {
     QtCheckItemMultiAvgVO thickAvg(QtDefectReportDTO dto);
 
     /**
+     * 厚度报表-根据物料厚度分组
+     * @param dto
+     * @return
+     */
+    QtCheckItemSingleAvgVO thickAvgMaterial(QtDefectReportDTO dto);
+
+    /**
      * 厚度报表
      *
      * @param dto 请求
@@ -105,6 +113,14 @@ public interface QtDefectReportService {
      * @return
      */
     QtCheckItemTransmitVO transmittance(QtDefectReportDTO dto);
+
+    /**
+     * 基片二车间透光率走势图
+     * @param dto
+     * @return
+     */
+    QtLineChartBarDTO transmittanceLine(QtDefectReportDTO dto);
+
 
     /**
      * 透光率报表-下载
