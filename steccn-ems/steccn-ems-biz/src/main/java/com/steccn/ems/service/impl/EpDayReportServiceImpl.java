@@ -349,9 +349,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //添加合计和总计
         EpDayReportCountRowVO count1 = countSum(timeList, lineRowList.get(0), valueMap1, "小计（深加工二车间）");
         lineRowList.add(4, count1);
-        EpDayReportCountRowVO count2 = countSum(timeList, lineRowList.get(0), valueMap1, "小计（深加工三车间）");
+        EpDayReportCountRowVO count2 = countSum(timeList, lineRowList.get(0), valueMap2, "小计（深加工三车间）");
         lineRowList.add(lineRowList.size(), count2);
-        EpDayReportCountRowVO count3 = countSum(timeList, lineRowList.get(0), valueMap1, "合计");
+        EpDayReportCountRowVO count3 = countSum(timeList, lineRowList.get(0), valueMap, "合计");
         lineRowList.add(lineRowList.size(), count3);
 
         //需要天然气和燃料油
