@@ -1552,6 +1552,10 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<QtCheckItemMaterialAvgDTO> dataList = qtCheckTaskMapper.defectMonth(categoryIdSet, dto.getProductLineList(), start, end);
         SteccnTableAssertUtil.notEmpty(dataList, "缺陷类别暂无数据");
+        //漏检，漏检率
+
+
+
         //查询产线
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
@@ -1560,6 +1564,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountMonth(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
         //根据开始时间和结束时间 区分不同周
+
         Map<Integer, BigDecimal> sumMap = Maps.newHashMap();
         List<LocalDateTime> timeList = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.MONTH.getType(), start, end);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
