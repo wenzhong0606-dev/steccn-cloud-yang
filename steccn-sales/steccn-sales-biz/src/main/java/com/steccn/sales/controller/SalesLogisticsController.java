@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
 import com.steccn.sales.dto.KsLogisticsDTO;
+import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.vo.KsLogisticsVO;
+import com.steccn.sales.vo.KsShippingReconciliationVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -37,5 +39,11 @@ public class SalesLogisticsController {
     @ApiOperation("图表")
     R<QtLineChartBarDTO> logisticsRecordDashBoard(@Valid @RequestBody KsLogisticsDTO dto){
         return R.success(ksLogisticsOrderService.logisticsRecordDashBoard(dto));
+    }
+
+    @PostMapping("/shipping/reconciliation")
+    @ApiOperation("发货对账")
+    R<Page<KsShippingReconciliationVO>> shippingReconciliation(@RequestBody KsShippingReconciliationDTO dto){
+        return R.success(ksLogisticsOrderService.shippingReconciliation(dto));
     }
 }

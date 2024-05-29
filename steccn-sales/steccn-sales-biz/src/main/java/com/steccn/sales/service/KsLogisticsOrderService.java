@@ -1,11 +1,14 @@
 package com.steccn.sales.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.sales.domain.KsLogisticsOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.sales.dto.KsLogisticsDTO;
+import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.vo.KsLogisticsVO;
+import com.steccn.sales.vo.KsShippingReconciliationVO;
 
 import java.time.LocalDate;
 
@@ -28,4 +31,12 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
      * @return
      */
     QtLineChartBarDTO logisticsRecordDashBoard(KsLogisticsDTO dto);
+
+
+    /**
+     * 发货对账数据
+     * @param dto
+     * @return
+     */
+    Page<KsShippingReconciliationVO> shippingReconciliation(KsShippingReconciliationDTO dto);
 }
