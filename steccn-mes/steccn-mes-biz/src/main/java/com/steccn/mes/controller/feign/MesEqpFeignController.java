@@ -4,6 +4,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.EqpReportDTO;
 import com.steccn.mes.service.JsSysEmployeeService;
+import com.steccn.mes.service.JsSysRoleMenuService;
 import com.steccn.mes.service.MesEqpReportService;
 import com.steccn.mes.service.MesEquipmentService;
 import com.steccn.mes.vo.MesEqpVO;
@@ -31,6 +32,7 @@ public class MesEqpFeignController {
     private final MesEquipmentService mesEquipmentService;
     private final JsSysEmployeeService jsSysEmployeeService;
     private final MesEqpReportService mesEqpReportService;
+    private final JsSysRoleMenuService jsSysRoleMenuService;
 
     @ApiOperation("根据编码获取备件")
     @GetMapping("/eqp/getByCode")
@@ -60,5 +62,11 @@ public class MesEqpFeignController {
     @ApiOperation(value = "获取人员部门岗位")
     public R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto) {
         return R.success(jsSysEmployeeService.getEmpDepPost(dto.getField1()));
+    }
+
+    @GetMapping("/user/menuAuth")
+    @ApiOperation(value = "获取用户所属菜单")
+    public R<List<Long>> getUserMenuAuth(@RequestParam("userName") String userName) {
+        return R.success(jsSysRoleMenuService.menuIds(userName));
     }
 }

@@ -147,6 +147,10 @@
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
+            <artifactId>steccn-mes-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
             <artifactId>steccn-qms-api</artifactId>
         </dependency>
         <dependency>
