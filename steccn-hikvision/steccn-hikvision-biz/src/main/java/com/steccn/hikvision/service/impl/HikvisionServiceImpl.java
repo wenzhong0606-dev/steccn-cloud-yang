@@ -112,8 +112,8 @@ public class HikvisionServiceImpl implements HikvisionService {
             return Lists.newArrayList();
         }
         String result = videoApi.getCompanyInfo(querys);
-        HikCommonR<HikCompanyVO> r = JSONObject.parseObject(result, HikCommonR.class);
-        return r.getData().getList();
+        List<HikCompanyVO> hikCompanyVOS = JSONObject.parseObject(result).getJSONObject("data").getJSONArray("list").toJavaList(HikCompanyVO.class);
+        return hikCompanyVOS;
     }
 
     @Override
