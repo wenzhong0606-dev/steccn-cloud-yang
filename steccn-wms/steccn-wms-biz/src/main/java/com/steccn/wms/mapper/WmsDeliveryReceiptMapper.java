@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
+import com.steccn.wms.dto.SalesLogisticsBillDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.vo.SalesLogisticsBillVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -65,6 +67,8 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     List<WmsDeliveryReceiptInfo> intervalData(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds);
 
     List<WmsDeliveryReceiptInfoVO> intervalDataVO(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime);
+
+    Page<SalesLogisticsBillVO> shippingReconciliation(Page page,@Param("dto") SalesLogisticsBillDTO dto);
 }
 
 

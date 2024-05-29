@@ -6,14 +6,10 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.dto.StockInfoDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
-import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
-import com.steccn.wms.dto.WmsDeliveryReceiptFlagInfoDto;
-import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.*;
-import com.steccn.wms.dto.WmsReportWarehouseDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
@@ -182,4 +178,6 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     Boolean deleteInfo(WmsDeliveryReceiptDTO dto);
+
+    Page<SalesLogisticsBillVO> shippingReconciliation(SalesLogisticsBillDTO dto);
 }

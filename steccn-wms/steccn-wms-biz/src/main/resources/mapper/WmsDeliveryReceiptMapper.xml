@@ -178,4 +178,16 @@
         </if>
         and wdr.`status` in(1,2,3,5)
     </select>
+    <select id="shippingReconciliation" resultType="com.steccn.wms.vo.SalesLogisticsBillVO">
+        select
+            date(b.create_time) as sendDate,
+            a.associated_no as code,
+            count(*) as pieceQty,
+            b.type as typeId
+        from wms_delivery_receipt_info a
+            join wms_delivery_receipt b on a.delivery_receipt_id = b.id
+        where b.type = 1582297407643815936
+        GROUP BY a.associated_no,b.type,date(b.create_time)
+        ORDER BY date(b.create_time) DESC,b.type,a.associated_no DESC
+    </select>
 </mapper>
