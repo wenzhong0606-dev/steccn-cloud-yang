@@ -59,6 +59,15 @@ public interface WmsInventoryService extends IService<WmsInventory> {
 
 
     /**
+     * 减少库存(根据库存id)
+     *
+     * @param infoList
+     * @return
+     */
+    Boolean reduceInfoByCaseNoList(List<WmsInventoryDTO> infoList);
+
+
+    /**
      * 新增库存(新增)
      *
      * @param infoList

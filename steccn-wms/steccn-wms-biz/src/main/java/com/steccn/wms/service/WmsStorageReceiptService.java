@@ -231,4 +231,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto);
 
     List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto);
+
+    Boolean deleteInfo(WmsStorageReceiptDTO dto);
 }

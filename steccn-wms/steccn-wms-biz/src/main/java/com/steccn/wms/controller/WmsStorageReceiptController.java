@@ -225,4 +225,10 @@ public class WmsStorageReceiptController {
         Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
     }
 
+
+    @ApiOperation("删除入库单明细并还原库存")
+    @PostMapping("/delete/info")
+    public R<Boolean> deleteInfo(@RequestBody WmsStorageReceiptDTO dto){
+        return R.success(wmsStorageReceiptService.deleteInfo(dto));
+    }
 }

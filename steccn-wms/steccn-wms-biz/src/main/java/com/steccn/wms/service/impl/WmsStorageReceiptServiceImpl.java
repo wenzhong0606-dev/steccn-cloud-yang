@@ -1866,6 +1866,26 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return this.baseMapper.daySheetCaseList(dto);
     }
 
+    @Override
+    public Boolean deleteInfo(WmsStorageReceiptDTO dto) {
+        if (CollUtil.isNotEmpty(dto.getList())) {
+            List<WmsInventoryDTO> deleteList = Lists.newArrayList();
+            Set<Long> ids = Sets.newHashSet();
+            dto.getList().forEach(info -> {
+                ids.add(info.getId());
+                WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                BeanUtil.copyProperties(info, wmsInventoryDTO);
+                wmsInventoryDTO.setOriginalCaseNo(info.getCaseNo());
+                wmsInventoryDTO.setOriginalQuantity(info.getQuantity());
+                deleteList.add(wmsInventoryDTO);
+            });
+            //还原之前的库存信息
+            wmsInventoryService.reduceInfoByCaseNoList(deleteList);
+            wmsStorageReceiptInfoService.removeByIds(ids);
+        }
+        return true;
+    }
+
     /**
      * 冲销
      * @return
