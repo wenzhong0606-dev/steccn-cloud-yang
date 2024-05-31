@@ -33,6 +33,12 @@ public class DefectCountRowVO implements Serializable {
     @ApiModelProperty("原片不良率")
     private BigDecimal originDefectRate;
 
+    @ApiModelProperty("漏检")
+    private BigDecimal missNum;
+
+    @ApiModelProperty("漏检率")
+    private BigDecimal missRate;
+
     @ApiModelProperty("磨边不良")
     private BigDecimal edgeDefectNum;
 

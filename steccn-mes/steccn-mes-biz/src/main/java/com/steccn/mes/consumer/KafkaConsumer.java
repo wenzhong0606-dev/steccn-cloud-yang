@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -37,9 +38,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -261,6 +260,71 @@ public class KafkaConsumer {
                 throw new BusinessException(config.getRefContent()+"设备不存在");
             }
             idSet.add(eqp.getId());
+            //所有下级设备改变状态
+            List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                    .like(MesEquipment::getParentCodes, eqp.getId().toString()+",")
+                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+            if(CollUtil.isNotEmpty(childrenList)){
+                //仅对设备信号外的设备有效
+                childrenList.forEach(tmp->{
+                    idSet.add(tmp.getId());
+                });
+            }
+            mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                    .in(MesEquipment::getId,idSet)
+                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+            //处理该设备的设备树
+            String rootEqpCode = cutString(eqp.getEquipmentCode());
+            MesEquipment eqpRoot = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                    .eq(MesEquipment::getEquipmentCode, rootEqpCode)
+                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                    .last("limit 1"));
+            if(Objects.nonNull(eqpRoot)){
+                List<MesEquipment> eqpTree = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                        .like(MesEquipment::getParentCodes, eqpRoot.getId().toString()+",")
+                        .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                eqpTree.add(eqpRoot);
+                //对整颗设备树进行处理
+                if(CollUtil.isNotEmpty(eqpTree)){
+                    // 构建树状结构
+                    Map<String, MesEquipment> equipmentMap = Maps.newHashMap();
+                    for (MesEquipment equipmentTmp : eqpTree) {
+                        equipmentMap.put(equipmentTmp.getId().toString(), equipmentTmp);
+                    }
+                    for (MesEquipment equipmentTmp : eqpTree) {
+                        if (equipment.getParentCode() != null) {
+                            MesEquipment parent = equipmentMap.get(equipmentTmp.getParentCode());
+                            if (parent != null) {
+                                parent.getChildren().add(equipment);
+                            }
+                        }
+                    }
+                    MesEquipment root = equipmentMap.get(rootEqpCode);
+                    // 更新节点状态
+                    // map用于记录被更新的节点ID和状态
+                    Map<String,Set<Long>> updatedIds = Maps.newHashMap();
+                    updateState(root,updatedIds);
+                    if(CollUtil.isNotEmpty(updatedIds)){
+                        for(Map.Entry<String,Set<Long>> entry:updatedIds.entrySet()){
+                            MesEquipment eqpTmp = new MesEquipment();
+                            eqpTmp.setState(entry.getKey());
+                            mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                    .in(MesEquipment::getId,entry.getValue())
+                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                        }
+                    }
+                }else {
+                    log.error(rootEqpCode+"设备树不存在");
+                }
+            }else {
+                log.error(rootEqpCode+"设备不存在");
+            }
+
+
+            /*
             MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
                     .eq(MesEquipment::getEquipmentCode, eqp.getEquipmentCode())
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString())
@@ -280,7 +344,7 @@ public class KafkaConsumer {
                     }
                 });
             }
-            //2)同级是否是否都停止，若都停止则上级也停止
+            2)同级是否是否都停止，若都停止则上级也停止
             List<MesEquipment> platList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
                     .eq(MesEquipment::getParentCode, eqp.getParentCode())
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString())
@@ -293,9 +357,11 @@ public class KafkaConsumer {
                     idSet.add(parent.getId());
                 }
             }
+
             mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
                     .in(MesEquipment::getId,idSet)
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+             */
         }
         //找到对应关系
 //        //然后发送到websocket中
@@ -309,5 +375,38 @@ public class KafkaConsumer {
 //            }
 //        }
         ack.acknowledge();
+    }
+
+    protected String cutString(String input) {
+        // 找到第三个和第四个_符号的位置
+        int firstUnderscore = input.indexOf('_');
+        int secondUnderscore = input.indexOf('_', firstUnderscore + 1);
+        int thirdUnderscore = input.indexOf('_', secondUnderscore + 1);
+        int fourthUnderscore = input.indexOf('_', thirdUnderscore + 1);
+
+        // 如果找到第四个_符号
+        if (fourthUnderscore != -1) {
+            // 截取从开头到第三个_符号之后第四个_符号之前的字符串
+            return input.substring(0, fourthUnderscore);
+        } else {
+            // 如果没有第四个_符号，就返回原字符串
+            return input;
+        }
+    }
+
+    private static void updateState(MesEquipment node,Map<String,Set<Long>> changeEqp) {
+        if (node == null) return;
+        for (MesEquipment child : node.getChildren()) {
+            updateState(child,changeEqp);
+        }
+
+        if (!node.getChildren().isEmpty()) {
+            String firstChildState = node.getChildren().get(0).getState();
+            boolean allSame = node.getChildren().stream().allMatch(c -> c.getState().equals(firstChildState));
+            if (allSame) {
+                node.setState(firstChildState);
+                changeEqp.computeIfAbsent(firstChildState, k -> new HashSet<>()).add(node.getId());
+            }
+        }
     }
 }

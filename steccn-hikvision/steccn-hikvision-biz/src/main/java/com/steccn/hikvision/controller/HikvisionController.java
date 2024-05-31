@@ -1,11 +1,13 @@
 package com.steccn.hikvision.controller;
 
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 
 import com.steccn.hikvision.dto.SysHikEventDTO;
 import com.steccn.hikvision.service.HikvisionService;
 import com.steccn.hikvision.vo.CameraVO;
+import com.steccn.hikvision.vo.HikCompanyVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -65,5 +67,10 @@ public class HikvisionController {
     @PostMapping("/bookEvent")
     public R<Boolean> bookEvent(@RequestBody SysHikEventDTO dto) {
         return R.success(hikvisionService.bookEvent(dto));
+    }
+
+    @PostMapping("/company")
+    public R<List<HikCompanyVO>> hikCompanyInfo(@RequestBody TupleDTO<String,String> dto) {
+        return R.success(hikvisionService.getCompanyInfo(dto));
     }
 }

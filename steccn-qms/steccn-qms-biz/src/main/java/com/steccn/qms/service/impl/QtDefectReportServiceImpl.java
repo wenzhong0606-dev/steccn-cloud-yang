@@ -58,6 +58,7 @@ import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -1552,13 +1553,23 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         LocalDateTime end = LocalDateUtil.getMorning(dto.getEndDate().plusDays(1));
         List<QtCheckItemMaterialAvgDTO> dataList = qtCheckTaskMapper.defectMonth(categoryIdSet, dto.getProductLineList(), start, end);
         SteccnTableAssertUtil.notEmpty(dataList, "缺陷类别暂无数据");
-        //漏检，漏检率
-
-
-
+        //漏检 （漏检数即为：集合T内所有任务中开口泡数量 + 气线泡数量 + 夹杂/结石数量），漏检率 （所在行漏检 / 所在行使用数 * 100%） - 月粒度
+        // 查询满足以下条件的在线检任务，记为集合T：状态为已检验 产线为所在行产线 缺陷记录时段属于所在行班次日期&班次
+        QtChartParamDTO request = new QtChartParamDTO();
+        request.setDateStart(dto.getStartDate());
+        request.setDateEnd(dto.getEndDate());
+        request.setProductLineIdList(dto.getProductLineList());
+        //获取人工采集的缺陷集合+获取机器采集的缺陷集合
+        request.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
+        //是否加入数采数据
+        request.setJoinAcquisition(0);
+        List<QtCheckTaskDetailReportVO> sourceDataList = qtDefectiveReportService.defectiveDataFlat(request);
+        //获取开口泡数量
+        //获取气线泡数量
+        //获取夹杂/结石数量
+        String kkpCode = "QXX000070", qxpCode = "QXX000071", jsCode = "QXX000074";
         //查询产线
         Map<Integer, String> lineIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
         //查询每周的原片耗用量和入库量
         Map<String, BigDecimal> inStorageMap = FeignOptional.of(() -> remoteCompleteStorageFeignApi.inStorageMonth(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         Map<String, BigDecimal> useCountMap = FeignOptional.of(() -> reportWorkFeignApi.useCountMonth(new TripleDTO<>(dto.getProductLineList(), start, end)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
@@ -1571,6 +1582,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         for (int i = 1; i < timeList.size(); i++) {
             Map<Integer, BigDecimal> countMap = Maps.newHashMap();
             LocalDateTime begin = timeList.get(i - 1);
+            LocalDateTime over = timeList.get(i);
+            LocalDate beginLd = LocalDateUtil.getClassDate(begin, false);
+            LocalDate overLd = LocalDateUtil.getClassDate(over, false);
             String timeStr = formatter.format(begin);
             String xAxis = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.MONTH, begin);
             for (Integer line : dto.getProductLineList()) {
@@ -1578,6 +1592,18 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 row.setType(0);
                 row.setTimeStr(xAxis);
                 row.setProductLineName(lineIdNameMap.get(line));
+                //获取开口泡数量
+                List<Integer> kkpList = sourceDataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && kkpCode.equals(ele.getDefectCode()) && LocalDateUtil.isRange(ele.getClassesDate(), beginLd, overLd, true, false)).map(aa -> aa.getDefectNum()).collect(Collectors.toList());
+                //获取气线泡数量
+                List<Integer> qxpList = sourceDataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && qxpCode.equals(ele.getDefectCode()) && LocalDateUtil.isRange(ele.getClassesDate(), beginLd, overLd, true, false)).map(aa -> aa.getDefectNum()).collect(Collectors.toList());
+                //获取夹杂/结石数量
+                List<Integer> jsList = sourceDataList.stream().filter(ele -> line.equals(ele.getProductLineId()) && jsCode.equals(ele.getDefectCode()) && LocalDateUtil.isRange(ele.getClassesDate(), beginLd, overLd, true, false)).map(aa -> aa.getDefectNum()).collect(Collectors.toList());
+                Integer kkpNum = IntegerUtil.sum(kkpList);
+                Integer qxpNum = IntegerUtil.sum(qxpList);
+                Integer jsNum = IntegerUtil.sum(jsList);
+                BigDecimal missBd = BigDecimalUtil.add(BigDecimalUtil.valueOf(kkpNum), BigDecimalUtil.valueOf(qxpNum));
+                missBd = BigDecimalUtil.add(missBd, BigDecimalUtil.valueOf(jsNum));
+                row.setMissNum(BigDecimalUtil.setScale(missBd, 0));
                 //获取使用量和成品数
                 row.setUseCountNum(BigDecimalUtil.setScale(useCountMap.get(line + "_" + timeStr),0));
                 row.setInStorageNum(inStorageMap.get(line + "_" + timeStr));
@@ -1618,6 +1644,9 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
                 BigDecimalUtil.accumulate(sumMap, 8, row.getTotalDefectNum());
                 BigDecimalUtil.accumulate(countMap, 9, row.getTotalDeepDefectNum());
                 BigDecimalUtil.accumulate(sumMap, 9, row.getTotalDeepDefectNum());
+                BigDecimalUtil.accumulate(countMap, 10, row.getMissNum());
+                BigDecimalUtil.accumulate(sumMap, 10, row.getMissNum());
+                row.setMissRate(BigDecimalUtil.percent(row.getMissNum(), row.getUseCountNum()));
                 row.setTotalDefectRate(BigDecimalUtil.percent(row.getTotalDefectNum(), row.getUseCountNum(), 2));
                 row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
                 rowList.add(row);
@@ -2051,6 +2080,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         row.setType(type);
         row.setProductLineName(lineName);
         row.setOriginDefectNum(countMap.get(0));
+        row.setMissNum(countMap.get(10));
         row.setEdgeDefectNum(countMap.get(1));
         row.setDrillDefectNum(countMap.get(2));
         row.setSilkDefectNum(countMap.get(3));
@@ -2068,6 +2098,7 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
         row.setTemperDefectRate(BigDecimalUtil.percent(row.getTemperDefectRate(), row.getUseCountNum(), 2));
         row.setTotalDefectRate(BigDecimalUtil.percent(row.getTotalDefectNum(), row.getUseCountNum(), 2));
         row.setTotalDeepDefectRate(BigDecimalUtil.percent(row.getTotalDeepDefectNum(), row.getUseCountNum(), 2));
+        row.setMissRate(BigDecimalUtil.percent(row.getMissNum(), row.getUseCountNum()));
         return row;
     }
 
