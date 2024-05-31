@@ -82,6 +82,11 @@ public class WmsWeighbridgeInfo implements Serializable {
     private BigDecimal netWeight;
 
     /**
+     * 扣重
+     */
+    private BigDecimal deductWeight;
+
+    /**
      * 完成时间
      */
     private LocalDateTime finishTime;

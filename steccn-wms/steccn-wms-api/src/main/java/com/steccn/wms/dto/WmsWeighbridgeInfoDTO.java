@@ -15,6 +15,14 @@ import java.time.LocalDateTime;
 @Data
 public class WmsWeighbridgeInfoDTO extends BasePageDTO {
     /**
+     * 数据id
+     */
+    private Long id;
+    /**
+     * 扣重
+     */
+    private BigDecimal deductWeight;
+    /**
      * 物料id
      */
     private Long materialId;

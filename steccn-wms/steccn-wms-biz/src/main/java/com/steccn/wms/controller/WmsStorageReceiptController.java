@@ -213,6 +213,12 @@ public class WmsStorageReceiptController {
         return R.success(wmsWeighbridgeInfoService.pageList(dto));
     }
 
+    @ApiOperation("地磅信息分页查询")
+    @PutMapping("/weighbridge/deduct")
+    public R<Boolean> changeDeduct(@RequestBody WmsWeighbridgeInfoDTO dto){
+        return R.success(wmsWeighbridgeInfoService.changeDeduct(dto));
+    }
+
     /**
      * 校验请求头信息
      *

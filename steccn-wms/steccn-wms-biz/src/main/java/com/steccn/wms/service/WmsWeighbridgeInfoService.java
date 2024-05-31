@@ -9,6 +9,7 @@ import com.steccn.wms.dto.WmsWeighbridgeGerDTO;
 import com.steccn.wms.dto.WmsWeighbridgeInfoDTO;
 import com.steccn.wms.vo.WmsWeighbridgeInfoVO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -38,5 +39,12 @@ public interface WmsWeighbridgeInfoService extends IService<WmsWeighbridgeInfo> 
      * @return
      */
     Boolean generateList(WmsWeighbridgeGerDTO dto);
+
+    /**
+     * 修改扣重
+     * @param dto
+     * @return
+     */
+    Boolean changeDeduct(WmsWeighbridgeInfoDTO dto);
 
 }

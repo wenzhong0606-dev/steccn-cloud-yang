@@ -71,6 +71,11 @@ public class WmsWeighbridgeInfoVO implements Serializable {
     private BigDecimal tareWeight;
 
     /**
+     * 扣重
+     */
+    private BigDecimal deductWeight;
+
+    /**
      * 净重
      */
     private BigDecimal netWeight;
