@@ -84,4 +84,9 @@ public interface FeignConstant {
      * 海康威视服务
      */
     String STECCN_HIK_SERVICE_NAME = "steccn-hikvision";
+
+    /**
+     * 销售系统服务
+     */
+    String STECCN_SALES_NAME = "steccn-sales";
 }

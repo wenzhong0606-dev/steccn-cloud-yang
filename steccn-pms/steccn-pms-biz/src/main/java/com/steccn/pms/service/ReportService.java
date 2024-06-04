@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.*;
@@ -100,6 +101,13 @@ public interface ReportService {
      * @return
      */
     List<OutputQualitySjgVO> outputQualitySjg(OutputQualityDTO outputQualityDTO);
+
+    /**
+     * 总经理日报表
+     * @param dto
+     * @return
+     */
+    List<PmsManageReportVO> managerReportVO(TupleDTO<LocalDate,LocalDate> dto);
 
 
     /**

@@ -409,4 +409,22 @@ public class BigDecimalUtil {
         }
         return null;
     }
+
+    /**
+     * 计算环比
+     * @param current 当前值
+     * @param previous 前期值
+     * @param scale 保留小数
+     * @return
+     */
+    public static BigDecimal linkRelative(BigDecimal current,BigDecimal previous,int scale) {
+        if (Objects.nonNull(current)&&Objects.nonNull(previous)) {
+            if(previous.compareTo(BigDecimal.ZERO)==0){
+                return null;
+            }else {
+                return percent(current,previous,2).subtract(HUNDRED);
+            }
+        }
+        return null;
+    }
 }

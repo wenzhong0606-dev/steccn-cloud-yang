@@ -175,6 +175,12 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         //自定义sql查询订单信息列表
        return ksLogisticsOrderMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
     }
+
+    @Override
+    public BigDecimal salesDeliverySum(TupleDTO<LocalDate, LocalDate> dto) {
+        BigDecimal bigDecimal = ksLogisticsOrderMapper.selectDeliverySum(dto);
+        return bigDecimal;
+    }
 }
 
 
