@@ -411,18 +411,18 @@ public class WmsReportServiceImpl implements WmsReportService {
                     });
                 });
             });
-            //
-            if (Objects.nonNull(dto.getProductionLineName())){
-              return resList.stream()
-                        .filter(vo -> !dto.getProductionLineName().equals(vo.getMaterialName()))
-                        .collect(Collectors.toList());
-            }
         }
+        //排序
         List<WmsInventoryDaySheetVO> collect = resList.stream().sorted(Comparator.comparing(WmsInventoryDaySheetVO::getSort, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(WmsInventoryDaySheetVO::getType, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(WmsInventoryDaySheetVO::getClasses,Comparator.nullsFirst(Comparator.naturalOrder()))
         ).collect(Collectors.toList());
-        //排序
+        if (Objects.nonNull(dto.getProductionLineName())){
+            List<WmsInventoryDaySheetVO> voList = collect.stream()
+                    .filter(vo -> dto.getProductionLineName().equals(vo.getProductionLineName()))
+                    .collect(Collectors.toList());
+            return voList;
+        }
         return collect;
     }
 
