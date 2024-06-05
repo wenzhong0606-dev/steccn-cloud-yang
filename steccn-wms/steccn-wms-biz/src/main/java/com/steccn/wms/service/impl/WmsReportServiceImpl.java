@@ -384,7 +384,10 @@ public class WmsReportServiceImpl implements WmsReportService {
                                     WmsInventoryDaySheetVO wmsInventoryDaySheetVO = new WmsInventoryDaySheetVO();
                                     WmsInventoryDaySheetVO daySheetVO = classesValue.get(0);
                                     wmsInventoryDaySheetVO.setProductionLineName(daySheetVO.getProductionLineName());
-                                    wmsInventoryDaySheetVO.setSort(officeMapByLineName.get(daySheetVO.getProductionLineName()).getTreeSort());
+                                    SysOfficeVO sysOfficeVO = officeMapByLineName.get(daySheetVO.getProductionLineName());
+                                    if (Objects.nonNull(sysOfficeVO)) {
+                                        wmsInventoryDaySheetVO.setSort(sysOfficeVO.getTreeSort());
+                                    }
                                     wmsInventoryDaySheetVO.setWarehouseName(officeMap.get(daySheetVO.getWarehouseId()).getOfficeName());
                                     wmsInventoryDaySheetVO.setTypeName(typeNameMap.get(daySheetVO.getType()));
                                     wmsInventoryDaySheetVO.setClasses(daySheetVO.getClasses());
