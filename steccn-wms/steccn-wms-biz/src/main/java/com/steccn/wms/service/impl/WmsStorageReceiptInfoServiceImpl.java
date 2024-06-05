@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -104,6 +105,11 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
             }
         }
         return resMap;
+    }
+
+    @Override
+    public BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDate, LocalDate> tupleDTO) {
+        return null;
     }
 }
 

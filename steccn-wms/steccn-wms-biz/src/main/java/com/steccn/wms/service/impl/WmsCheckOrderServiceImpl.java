@@ -421,7 +421,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         if(checkScope == WmsManagerConstant.CheckScope.SHELVES.getCode()){
             //根据货架获取关联库存
             checkAreaList.forEach(vo->{
-                shelfs.add(remoteOfficeFeign.getByIdSysOfficeInfo(vo.getId()).getMsg());
+                shelfs.add(remoteOfficeFeign.getByIdSysOfficeInfo(vo.getId()).getData());
             });
         }
         if(checkScope == WmsManagerConstant.CheckScope.MATERIALCLASSIFICATION.getCode()){
