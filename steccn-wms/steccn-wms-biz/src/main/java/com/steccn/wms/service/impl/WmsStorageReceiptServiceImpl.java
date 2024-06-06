@@ -27,6 +27,7 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.common.vo.R;
 import com.steccn.mes.dto.*;
 import com.steccn.mes.feign.RemoteErpFeignApi;
 import com.steccn.oa.constant.OaConstant;
@@ -1931,6 +1932,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             BeanUtil.copyProperties(inventory, codeInfoVO);
             codeInfoVO.setBatchNo(inventory.getBatch());
             codeInfoVO.setUnitId(inventory.getUnit());
+            codeInfoVO.setShelfName(FeignOptional.of(() -> remoteOfficeFeign.getNameById(inventory.getShelfId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get());
         }
         return codeInfoVO;
     }

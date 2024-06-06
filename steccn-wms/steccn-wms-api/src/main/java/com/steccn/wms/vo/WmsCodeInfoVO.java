@@ -47,6 +47,8 @@ public class WmsCodeInfoVO {
      */
     private Integer shelfId;
 
+    private String shelfName;
+
 
     /**
      * 批次号
