@@ -35,6 +35,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -254,7 +255,7 @@ public class WmsStorageReceiptController {
 
     @ApiOperation("原片采购入库数")
     @PostMapping("/purchase/inventory/raw/glass")
-    public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO){
+    public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO){
         return R.success(wmsStorageReceiptInfoService.purchaseInventoryRawGlass(tupleDTO));
     }
 }

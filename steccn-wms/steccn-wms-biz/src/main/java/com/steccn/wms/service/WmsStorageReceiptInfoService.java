@@ -60,5 +60,5 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
      * @param tupleDTO
      * @return
      */
-    BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDate, LocalDate> tupleDTO);
+    BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDateTime, LocalDateTime> tupleDTO);
 }

@@ -52,7 +52,7 @@ public interface WmsStorageReceiptInfoMapper extends BaseMapper<WmsStorageReceip
                                                       @Param("startTime") LocalDateTime start,
                                                       @Param("endTime") LocalDateTime end);
 
-    BigDecimal purchaseInventoryRawGlass(@Param("startTime")LocalDate field1,@Param("endTime") LocalDate field2,@Param("materialIds") List<Long> materialIds);
+    BigDecimal purchaseInventoryRawGlass(@Param("startTime")LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") List<Long> materialIds);
 }
 
 

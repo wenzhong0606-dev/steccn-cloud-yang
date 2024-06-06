@@ -73,7 +73,7 @@ public class WmsStorageReceiptFeignController {
 
     @ApiOperation("原片采购入库数")
     @PostMapping("/purchase/inventory/raw/glass")
-    public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody  TupleDTO<LocalDate,LocalDate> tupleDTO){
+    public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody  TupleDTO<LocalDateTime,LocalDateTime> tupleDTO){
         return R.success(wmsStorageReceiptInfoService.purchaseInventoryRawGlass(tupleDTO));
     }
 }

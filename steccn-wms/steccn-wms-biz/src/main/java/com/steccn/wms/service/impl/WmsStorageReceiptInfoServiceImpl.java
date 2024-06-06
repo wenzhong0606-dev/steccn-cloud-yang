@@ -112,11 +112,9 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
     }
 
     @Override
-    public BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDate, LocalDate> tupleDTO) {
+    public BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDateTime, LocalDateTime> tupleDTO) {
         //获取物料类型为原片以及下级的物料id
         List<EqpSpareVO> eqpSpareVOS = FeignOptional.of(() -> remoteSpareFeignApi.listByTypeId(Sets.newHashSet("1551432406889791488")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-//        List<EqpSpareVO> eqpSpareVOS = FeignOptional.of(() -> remoteSpareFeignApi.getByTypeIdSpareList(Sets.newHashSet("1551432406889791488")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
         List<Long> materialIds  = eqpSpareVOS.stream().map(EqpSpareVO::getId).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(materialIds)){
            return this.baseMapper.purchaseInventoryRawGlass(tupleDTO.getField1(),tupleDTO.getField2(),materialIds);
