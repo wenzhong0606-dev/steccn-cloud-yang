@@ -1908,6 +1908,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getById(codeInfoVO.getMaterialId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 codeInfoVO.setMaterialName(eqpSpareVO.getName());
                 codeInfoVO.setMaterialCode(eqpSpareVO.getCode());
+                codeInfoVO.setUnitId(eqpSpareVO.getUnitId());
             }else {
                 //根据code 获取物料id名称
                 EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(codeInfoVO.getMaterialCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
