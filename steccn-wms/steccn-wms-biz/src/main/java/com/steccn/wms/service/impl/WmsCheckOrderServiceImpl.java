@@ -344,6 +344,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         //获取盘点信息
         WmsCheckOrder wmsCheckOrder = getById(checkOrderId);
         if(Objects.isNull(wmsCheckOrder)) return  R.success(false) ;
+        //清楚盘点信息 报村新的明细
+        wmsCheckOrderInfoService.remove(new LambdaQueryWrapper<WmsCheckOrderInfo>().eq(WmsCheckOrderInfo::getCheckOrderId,checkOrderId));
         for (Map<String, Object> orderInfo : wmsCheckOrderInfoList) {
             //获取明细
             LambdaQueryWrapper<WmsCheckOrderInfo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -382,7 +384,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfo.setQuantity(quantity);
                 wmsCheckOrderInfo.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
                 wmsCheckOrderInfo.setNote(note);
-                result = wmsCheckOrderInfoService.updateById(wmsCheckOrderInfo);
+                result = wmsCheckOrderInfoService.save(wmsCheckOrderInfo);
             }
         }
         return R.success(result);

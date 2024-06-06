@@ -50,6 +50,10 @@ public class WmsCheckOrderVO implements Serializable {
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
 
+    private Long warehouseId;
+
+    private String warehouseName;
+
     @ApiModelProperty("盘点明细")
     private List<WmsCheckOrderInfoVO> wmsCheckOrderInfoVOList;
     @ApiModelProperty("盘点区域")
