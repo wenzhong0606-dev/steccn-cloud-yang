@@ -348,18 +348,18 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         wmsCheckOrderInfoService.remove(new LambdaQueryWrapper<WmsCheckOrderInfo>().eq(WmsCheckOrderInfo::getCheckOrderId,checkOrderId));
         for (Map<String, Object> orderInfo : wmsCheckOrderInfoList) {
             //获取明细
-            LambdaQueryWrapper<WmsCheckOrderInfo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-            lambdaQueryWrapper.eq(WmsCheckOrderInfo::getWarehouse,orderInfo.get("warehouse")).eq(WmsCheckOrderInfo::getShelf,orderInfo.get("shelf"))
-                    .eq(WmsCheckOrderInfo::getMaterialId,orderInfo.get("materialId")).eq(WmsCheckOrderInfo::getBatch,orderInfo.get("batch"))
-                    .eq(WmsCheckOrderInfo::getCaseNo,orderInfo.get("caseNo")).eq(WmsCheckOrderInfo::getCheckOrderId,checkOrderId);
-            WmsCheckOrderInfo wmsCheckOrderInfo = wmsCheckOrderInfoService.getOne(lambdaQueryWrapper,false);
+//            LambdaQueryWrapper<WmsCheckOrderInfo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+//            lambdaQueryWrapper.eq(WmsCheckOrderInfo::getWarehouse,orderInfo.get("warehouse")).eq(WmsCheckOrderInfo::getShelf,orderInfo.get("shelf"))
+//                    .eq(WmsCheckOrderInfo::getMaterialId,orderInfo.get("materialId")).eq(WmsCheckOrderInfo::getBatch,orderInfo.get("batch"))
+//                    .eq(WmsCheckOrderInfo::getCaseNo,orderInfo.get("caseNo")).eq(WmsCheckOrderInfo::getCheckOrderId,checkOrderId);
+//            WmsCheckOrderInfo wmsCheckOrderInfo = wmsCheckOrderInfoService.getOne(lambdaQueryWrapper,false);
             WmsCheckOrderInfo wmsCheckOrderInfoTem = new WmsCheckOrderInfo();
             BigDecimal resultNum = Objects.isNull(orderInfo.get("result"))?new BigDecimal(orderInfo.get("quantity").toString())
                     :new BigDecimal(orderInfo.get("result").toString());
             BigDecimal difference = Objects.isNull(orderInfo.get("difference"))?BigDecimal.ZERO:new BigDecimal(orderInfo.get("difference").toString());
             BigDecimal quantity = new BigDecimal(orderInfo.get("quantity").toString());//代表总数量
             String note = Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString();
-            if(Objects.isNull(wmsCheckOrderInfo)){
+//            if(Objects.isNull(wmsCheckOrderInfo)){
                 wmsCheckOrderInfoTem.setResult(resultNum);
                 wmsCheckOrderInfoTem.setDifference(difference);
                 wmsCheckOrderInfoTem.setQuantity(quantity);
@@ -378,14 +378,14 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoTem.setCheckTime(LocalDateTime.now());
                 wmsCheckOrderInfoTem.setNote(note);
                 result = wmsCheckOrderInfoService.save(wmsCheckOrderInfoTem);
-            }else{
-                wmsCheckOrderInfo.setResult(resultNum);
-                wmsCheckOrderInfo.setDifference(difference);
-                wmsCheckOrderInfo.setQuantity(quantity);
-                wmsCheckOrderInfo.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
-                wmsCheckOrderInfo.setNote(note);
-                result = wmsCheckOrderInfoService.save(wmsCheckOrderInfo);
-            }
+//            }else{
+//                wmsCheckOrderInfo.setResult(resultNum);
+//                wmsCheckOrderInfo.setDifference(difference);
+//                wmsCheckOrderInfo.setQuantity(quantity);
+//                wmsCheckOrderInfo.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
+//                wmsCheckOrderInfo.setNote(note);
+//                result = wmsCheckOrderInfoService.save(wmsCheckOrderInfo);
+//            }
         }
         return R.success(result);
     }
