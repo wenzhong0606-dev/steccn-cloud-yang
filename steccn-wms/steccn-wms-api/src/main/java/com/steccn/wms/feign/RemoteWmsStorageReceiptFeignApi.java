@@ -3,6 +3,7 @@ package com.steccn.wms.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
@@ -44,4 +45,9 @@ public interface RemoteWmsStorageReceiptFeignApi {
     @ApiOperation("地磅信息保存")
     @PostMapping("/feign/wms/storage/receipt/weighbridge/save")
     R<Boolean> weighbridgeSave(@RequestBody WmsWeighbridgeInfoDTO dto);
+
+
+    @ApiOperation("原片采购入库数")
+    @PostMapping("/feign/wms/storage/receipt/purchase/inventory/raw/glass")
+    R<BigDecimal> purchaseInventoryRawGlass(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO);
 }

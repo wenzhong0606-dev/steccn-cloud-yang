@@ -113,7 +113,7 @@ public class WmsDeliveryReceiptController {
         return R.success(wmsDeliveryReceiptService.deliveryFlagInfo(dto));
     }
 
-    @ApiOperation("销售出库通过物流单号获取物料明细")
+    @ApiOperation("销售出库通过s物流单号获取物料明细")
     @GetMapping("/delivery/sell/material/info")
     public R<WmsDeliverySellInfoVO> deliverySellMaterialInfo(@ApiParam("物流单号") @RequestParam("number")String number){
         return R.success(wmsDeliveryReceiptService.deliverySellMaterialInfo(number));
