@@ -19,6 +19,7 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.*;
+import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.Api;
@@ -153,6 +154,13 @@ public class PmsProduceOrderFeignController {
     public R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo){
         return R.success(pmsBarcodePrintService.getCaseNoFlag(caseNo));
     }
+
+    @GetMapping("/get/caseNo/info")
+    @ApiOperation(("箱号是否存在"))
+    public R<PmsCaseNoInfoVO> getCaseNoInfo(@RequestParam("caseNo") String caseNo){
+        return R.success(pmsBarcodePrintService.getCaseNoInfo(caseNo));
+    }
+
 
 
     @ApiOperation("根据箱号获取生产订单号批次号以及物料名称")

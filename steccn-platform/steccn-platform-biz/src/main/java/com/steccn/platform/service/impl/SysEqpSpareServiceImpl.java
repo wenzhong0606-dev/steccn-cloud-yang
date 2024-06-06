@@ -361,6 +361,13 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         List<SysEqpSpare> list  =  this.baseMapper.listByProperty(dto.getField1(),dto.getField2());
         return BeanUtil.copyToList(list, EqpSpareVO.class);
     }
+
+    @Override
+    public List<EqpSpareVO> listByTypeId(Set<String> types) {
+        //获取分类下级所有层级typeId
+//        sysClassificationService.
+        return null;
+    }
 }
 
 

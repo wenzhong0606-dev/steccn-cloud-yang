@@ -8,6 +8,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -17,6 +18,7 @@ import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.service.WmsWeighbridgeInfoService;
 import com.steccn.wms.vo.*;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +56,8 @@ public class WmsStorageReceiptController {
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
     private final WmsWeighbridgeInfoService wmsWeighbridgeInfoService;
+
+    private final WmsStorageReceiptInfoService wmsStorageReceiptInfoService;
 
     @ApiOperation("入库凭证分页列表")
     @PostMapping("/list")
@@ -175,6 +180,14 @@ public class WmsStorageReceiptController {
     }
 
 
+    @ApiOperation("根据二维码获取信息（包含仓储信息）")
+    @PostMapping("/code/info")
+    public R<WmsCodeInfoVO> codeInfo(@RequestBody WmsStorageReceiptFlagInfoDTO dto){
+        return R.success(wmsStorageReceiptService.codeInfo(dto));
+    }
+
+
+
     @ApiOperation("销售退货获取物流单标识相关内容")
     @GetMapping("/sales/returns/flag")
     public R<WmsSalesReturnsFlagVO> salesReturnsFlag(@RequestParam("number")String number){
@@ -236,5 +249,12 @@ public class WmsStorageReceiptController {
     @PostMapping("/delete/info")
     public R<Boolean> deleteInfo(@RequestBody WmsStorageReceiptDTO dto){
         return R.success(wmsStorageReceiptService.deleteInfo(dto));
+    }
+
+
+    @ApiOperation("原片采购入库数")
+    @PostMapping("/purchase/inventory/raw/glass")
+    public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO){
+        return R.success(wmsStorageReceiptInfoService.purchaseInventoryRawGlass(tupleDTO));
     }
 }

@@ -820,6 +820,14 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return result;
     }
 
+    @Override
+    public SysOfficeVO getByCode(String code) {
+        SysOfficeVO sysOfficeVO = new SysOfficeVO();
+        SysOffice one = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, code));
+        BeanUtil.copyProperties(one,sysOfficeVO);
+        return sysOfficeVO;
+    }
+
 
     /**
      * 根据组织机构类型获取数据

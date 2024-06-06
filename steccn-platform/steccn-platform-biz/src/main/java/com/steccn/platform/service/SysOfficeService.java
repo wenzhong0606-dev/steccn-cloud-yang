@@ -298,4 +298,8 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Map<String,List<String>>  depPostMap(Set<String> codes);
+
+
+
+    SysOfficeVO getByCode(String code);
 }

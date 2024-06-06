@@ -333,4 +333,7 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/depPost")
     @ApiOperation("查询部门下的岗位")
     R<Map<String,List<String>>> depPostMap(@RequestBody Set<String> codes);
+    @GetMapping("/feign/platform/sys/office/code")
+    @ApiOperation("根据机构code获取机构信息")
+    R<SysOfficeVO> getByCode(String warehouseCode);
 }

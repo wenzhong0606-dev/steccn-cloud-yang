@@ -1886,6 +1886,53 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return true;
     }
 
+    @Override
+    public WmsCodeInfoVO codeInfo(WmsStorageReceiptFlagInfoDTO dto) {
+        //新线：仓储存在->返回仓储相关信息 不存在->获取生产订单相关信息
+        //老线：存在->返回仓储相关信息
+        WmsCodeInfoVO codeInfoVO = new WmsCodeInfoVO();
+        WmsInventory inventory = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, dto.getCaseNo()).orderByDesc(WmsInventory::getUpdateTime).last(MpConstant.STR_LIMIT_1));
+        if (Objects.isNull(inventory)) {
+            //通过判断参数中是否存在物料编码判断新老产线
+            if (Objects.isNull(dto.getMaterialCode())) {
+                //新线 （获取生产订单相关信息）
+                PmsCaseNoInfoVO pmsCaseNoInfoVO = FeignOptional.of(() -> remotePmsFeignApi.getCaseNoInfo(dto.getCaseNo()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                BeanUtil.copyProperties(pmsCaseNoInfoVO,codeInfoVO);
+            }else {
+                codeInfoVO.setMaterialCode(dto.getMaterialCode());
+                codeInfoVO.setCaseNo(dto.getCaseNo());
+                codeInfoVO.setQuantity(dto.getQuantity());
+            }
+            //处理物料
+            if (Objects.nonNull(codeInfoVO.getMaterialId())) {
+                EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getById(codeInfoVO.getMaterialId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                codeInfoVO.setMaterialName(eqpSpareVO.getName());
+                codeInfoVO.setMaterialCode(eqpSpareVO.getCode());
+            }else {
+                //根据code 获取物料id名称
+                EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(codeInfoVO.getMaterialCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                codeInfoVO.setMaterialId(eqpSpareVO.getId());
+                codeInfoVO.setMaterialName(eqpSpareVO.getName());
+            }
+            //处理仓库
+            if (Objects.nonNull(codeInfoVO.getWarehouseId())) {
+                Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(Math.toIntExact(codeInfoVO.getMaterialId()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                codeInfoVO.setWarehouseName(officeMap.get(codeInfoVO.getWarehouseId()).getOfficeName());
+                codeInfoVO.setWarehouseCode(officeMap.get(codeInfoVO.getWarehouseId()).getOfficeCode());
+            } else if (Objects.nonNull(codeInfoVO.getWarehouseCode())){
+                //根据code 获取物料id名称
+                SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.getByCode(codeInfoVO.getWarehouseCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                codeInfoVO.setWarehouseId(sysOfficeVO.getId());
+                codeInfoVO.setWarehouseName(sysOfficeVO.getOfficeName());
+            }
+        }else {
+            BeanUtil.copyProperties(inventory, codeInfoVO);
+            codeInfoVO.setBatchNo(inventory.getBatch());
+            codeInfoVO.setUnitId(inventory.getUnit());
+        }
+        return codeInfoVO;
+    }
+
     /**
      * 冲销
      * @return

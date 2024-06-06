@@ -80,4 +80,16 @@
         a.affirm_time &gt;= #{startTime} AND
         a.affirm_time &lt; #{endTime}
     </select>
+    <select id="purchaseInventoryRawGlass" resultType="java.math.BigDecimal">
+        SELECT
+            sum(a.quantity)
+        FROM
+            wms_storage_receipt_info a
+                JOIN wms_storage_receipt b ON b.id = a.storage_receipt_id  where b.type = '1600405739121573888'
+        and a.material_id in
+        <foreach collection="materialIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        and b.come_time between #{startTime} and #{endTime}
+    </select>
 </mapper>
