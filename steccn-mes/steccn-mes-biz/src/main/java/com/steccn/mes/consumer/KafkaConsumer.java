@@ -68,7 +68,7 @@ public class KafkaConsumer {
      *
      * @param record
      */
-    @KafkaListener(topics = "opc_ua_all_topic", concurrency = "2")
+    @KafkaListener(topics = "opc_ua_all_topic", concurrency = "1")
     @Transactional(rollbackFor = Exception.class)
     public void tpFirst(ConsumerRecord<Object, String> record, Acknowledgment ack) {
         // 消费的哪个topic、partition的消息,打印出消息内容
@@ -251,15 +251,29 @@ public class KafkaConsumer {
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                     .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
                     .last("limit 1"));
-            //只有原料车间的设备才需要考虑待机停机
-            if(!eqp.getParentCodes().contains("1501738403312599040")){
-                equipment.setState(OaConstant.NUM_3.toString());
-            }
             if(Objects.isNull(eqp)){
                 log.error(config.getRefContent()+"设备不存在");
                 throw new BusinessException(config.getRefContent()+"设备不存在");
             }
+            //只有原料车间的设备才需要考虑待机停机
+            if(!eqp.getParentCodes().contains("1501738403312599040")){
+                equipment.setState(OaConstant.NUM_3.toString());
+            }
             idSet.add(eqp.getId());
+            //混合机和电机一致
+            if(eqp.getEquipmentCode().equals("TC2_YL1_PL_01_01")||eqp.getEquipmentCode().equals("TC2_YL1_PL_02_03")){
+                MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId, eqp.getParentCode())
+                        .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                        .last("limit 1"));
+                idSet.add(parent.getId());
+                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        .in(MesEquipment::getId,idSet)
+                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                ack.acknowledge();
+                return;
+            }
             //所有下级设备改变状态
             List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
                     .like(MesEquipment::getParentCodes, eqp.getId().toString()+",")
@@ -271,57 +285,87 @@ public class KafkaConsumer {
                     idSet.add(tmp.getId());
                 });
             }
+
             mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
                     .in(MesEquipment::getId,idSet)
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-            //处理该设备的设备树
-            String rootEqpCode = cutString(eqp.getEquipmentCode());
-            MesEquipment eqpRoot = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
-                    .eq(MesEquipment::getEquipmentCode, rootEqpCode)
-                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
-                    .last("limit 1"));
-            if(Objects.nonNull(eqpRoot)){
-                List<MesEquipment> eqpTree = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                        .like(MesEquipment::getParentCodes, eqpRoot.getId().toString()+",")
-                        .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                eqpTree.add(eqpRoot);
-                //对整颗设备树进行处理
-                if(CollUtil.isNotEmpty(eqpTree)){
-                    // 构建树状结构
-                    Map<String, MesEquipment> equipmentMap = Maps.newHashMap();
-                    for (MesEquipment equipmentTmp : eqpTree) {
-                        equipmentMap.put(equipmentTmp.getId().toString(), equipmentTmp);
-                    }
-                    for (MesEquipment equipmentTmp : eqpTree) {
-                        if (equipment.getParentCode() != null) {
-                            MesEquipment parent = equipmentMap.get(equipmentTmp.getParentCode());
-                            if (parent != null) {
-                                parent.getChildren().add(equipment);
-                            }
-                        }
-                    }
-                    MesEquipment root = equipmentMap.get(rootEqpCode);
-                    // 更新节点状态
-                    // map用于记录被更新的节点ID和状态
-                    Map<String,Set<Long>> updatedIds = Maps.newHashMap();
-                    updateState(root,updatedIds);
-                    if(CollUtil.isNotEmpty(updatedIds)){
-                        for(Map.Entry<String,Set<Long>> entry:updatedIds.entrySet()){
-                            MesEquipment eqpTmp = new MesEquipment();
-                            eqpTmp.setState(entry.getKey());
-                            mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                                    .in(MesEquipment::getId,entry.getValue())
-                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                        }
-                    }
-                }else {
-                    log.error(rootEqpCode+"设备树不存在");
+            if(eqp.getParentCodes().contains("1501738403312599040")){
+                //定制化螺旋给料机
+                if(eqp.getEquipmentCode().contains("TC2_YL1_PL_19")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_20")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_21")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_22")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_23")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_24")){
+                    updateScrewEqp(eqp.getParentCode());
                 }
-            }else {
-                log.error(rootEqpCode+"设备不存在");
+                else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_01_02")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_01_03")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_02_01")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_02_02")){
+                    updateScrewEqp(eqp.getParentCode());
+                }else {
+                    //处理该设备的设备树
+                    String rootEqpCode = cutString(eqp.getEquipmentCode());
+                    MesEquipment eqpRoot = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getEquipmentCode, rootEqpCode)
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                            .last("limit 1"));
+                    if(Objects.nonNull(eqpRoot)){
+                        List<MesEquipment> eqpTree = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                                .like(MesEquipment::getParentCodes, eqpRoot.getId().toString()+",")
+                                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                        eqpTree.add(eqpRoot);
+                        //对整颗设备树进行处理
+                        if(CollUtil.isNotEmpty(eqpTree)){
+                            // 构建树状结构
+                            Map<String, MesEquipment> equipmentMap = Maps.newHashMap();
+                            for (MesEquipment equipmentTmp : eqpTree) {
+                                equipmentMap.put(equipmentTmp.getId().toString(), equipmentTmp);
+                            }
+                            for (MesEquipment equipmentTmp : eqpTree) {
+                                if (equipment.getParentCode() != null) {
+                                    MesEquipment parent = equipmentMap.get(equipmentTmp.getParentCode());
+                                    if (parent != null) {
+                                        parent.getChildren().add(equipment);
+                                    }
+                                }
+                            }
+                            MesEquipment root = equipmentMap.get(rootEqpCode);
+                            // 更新节点状态
+                            // map用于记录被更新的节点ID和状态
+                            Map<String,Set<Long>> updatedIds = Maps.newHashMap();
+                            updateState(root,updatedIds);
+                            if(CollUtil.isNotEmpty(updatedIds)){
+                                for(Map.Entry<String,Set<Long>> entry:updatedIds.entrySet()){
+                                    MesEquipment eqpTmp = new MesEquipment();
+                                    eqpTmp.setState(entry.getKey());
+                                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                            .in(MesEquipment::getId,entry.getValue())
+                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                                }
+                            }
+                        }else {
+                            log.error(rootEqpCode+"设备树不存在");
+                        }
+                    }else {
+                        log.error(rootEqpCode+"设备不存在");
+                    }
+
+                }
+
             }
+
 
 
             /*
@@ -376,6 +420,34 @@ public class KafkaConsumer {
 //        }
         ack.acknowledge();
     }
+
+    private void updateScrewEqp(String parentCode){
+        //找到父级
+        MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getId, parentCode)
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                .last("limit 1"));
+        //找到子集
+        List<MesEquipment> childrenTmp = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getParentCode, parent.getId())
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+        //有一个开机则开机,否则关机
+        String state = "0";
+        for(MesEquipment tmp:childrenTmp){
+            if(tmp.getState().equals(OaConstant.NO.toString())||tmp.getState().equals(OaConstant.NO.toString())){
+                state = tmp.getState();
+                break;
+            }else {
+                state = tmp.getState();
+            }
+        }
+        MesEquipment tmp = new MesEquipment();
+        tmp.setId(parent.getId());
+        tmp.setState(state);
+        mesEquipmentService.updateById(tmp);
+    };
 
     protected String cutString(String input) {
         // 找到第三个和第四个_符号的位置

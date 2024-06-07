@@ -7,6 +7,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
@@ -122,6 +123,12 @@ public class ReportController {
     @ApiOperation("运营驾驶舱-深加工-物料消耗")
     public R<EpChartGraphVO<List<String>,List<TripleDTO<String, BigDecimal, String>>>> materialConsumeSjg(@Valid @RequestBody PmsOperateDriverDTO dto){
         return R.success(reportService.materialConsumeSjg(dto));
+    }
+
+    @PostMapping("/manage")
+    @ApiOperation("总经理日报表")
+    public R<List<PmsManageReportVO>> manageReport(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
+        return R.success(reportService.managerReportVO(dto));
     }
 
     /**
