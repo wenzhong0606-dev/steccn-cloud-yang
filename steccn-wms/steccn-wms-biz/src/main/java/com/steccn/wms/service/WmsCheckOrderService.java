@@ -2,12 +2,16 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsCheckOrder;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
+import com.steccn.wms.vo.WmsCheckOrderAreaVO;
 import com.steccn.wms.vo.WmsCheckOrderInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
+import reactor.util.function.Tuple3;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,4 +77,8 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      * @return
      */
     R<Boolean> adjNormalOrDifferenceCheckOrderItem(  Map<String, Object> paramMap);
+
+    List<WmsCheckOrderAreaVO> areaCountList(Long checkOrderId);
+
+    Boolean affirmCheck(WmsCheckOrderDTO dto);
 }
