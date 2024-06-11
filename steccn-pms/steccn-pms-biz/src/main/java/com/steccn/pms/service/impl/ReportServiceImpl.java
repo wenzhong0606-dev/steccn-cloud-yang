@@ -1805,6 +1805,9 @@ public class ReportServiceImpl implements ReportService {
         List<PmsManageReportVO> results = Lists.newArrayList();
         //算环比日期
         long daysBetween = ChronoUnit.DAYS.between(dto.getField1(), dto.getField2());
+        if(dto.getField1().equals(dto.getField2())){
+            daysBetween = 1L;
+        }
         LocalDate previousStart = dto.getField1().minus(daysBetween, ChronoUnit.DAYS);
         LocalDate previousEnd = dto.getField2().minus(daysBetween, ChronoUnit.DAYS);
         //基片拉引量
@@ -1814,7 +1817,7 @@ public class ReportServiceImpl implements ReportService {
         pullAmountVO.setDepartment("基片");
         pullAmountVO.setIndicator("拉引量(T)");
         pullAmountVO.setValue(pullAmount);
-        pullAmountVO.setRelative(BigDecimalUtil.linkRelative(pullAmount,pullAmountCompare,2));
+        pullAmountVO.setRelative(pullAmountCompare);
         pullAmountVO.setDifference(BigDecimalUtil.subtract(pullAmount,pullAmountCompare,2));
         pullAmountVO.setDifferencePercent(BigDecimalUtil.percent(pullAmountVO.getDifference(),pullAmount,2));
         results.add(pullAmountVO);
@@ -1825,7 +1828,7 @@ public class ReportServiceImpl implements ReportService {
         produceNumVO.setDepartment("基片");
         produceNumVO.setIndicator("产量(m²)");
         produceNumVO.setValue(produceNum.get(2));
-        produceNumVO.setRelative(BigDecimalUtil.linkRelative(produceNum.get(2),produceNumCompare.get(2),2));
+        produceNumVO.setRelative(produceNumCompare.get(2));
         produceNumVO.setDifference(BigDecimalUtil.subtract(produceNum.get(2),produceNumCompare.get(2),2));
         produceNumVO.setDifferencePercent(BigDecimalUtil.percent(produceNumVO.getDifference(),produceNum.get(2),2));
         results.add(produceNumVO);
@@ -1835,8 +1838,7 @@ public class ReportServiceImpl implements ReportService {
         finishRateVO.setIndicator("成品率(%)");
         finishRateVO.setValue(BigDecimalUtil.percent(produceNum.get(0),pullAmountVO.getValue(),2));
         BigDecimal finishRateCompare = BigDecimalUtil.percent(produceNumCompare.get(0), pullAmountCompare, 2);
-        finishRateVO.setRelative(BigDecimalUtil.linkRelative(finishRateVO.getValue(),
-                finishRateCompare,2));
+        finishRateVO.setRelative(finishRateCompare);
         finishRateVO.setDifference(BigDecimalUtil.subtract(finishRateVO.getValue(),finishRateCompare,2));
         finishRateVO.setDifferencePercent(BigDecimalUtil.percent(finishRateVO.getDifference(),finishRateVO.getValue(),2));
         results.add(finishRateVO);
@@ -1847,7 +1849,7 @@ public class ReportServiceImpl implements ReportService {
         consumeUnit.setDepartment("基片");
         consumeUnit.setIndicator("单耗");
         consumeUnit.setValue(epPmsConsumeVO.getSum());
-        consumeUnit.setRelative(BigDecimalUtil.linkRelative(epPmsConsumeVO.getSum(),epPmsConsumeVOCompare.getSum(),2));
+        consumeUnit.setRelative(epPmsConsumeVOCompare.getSum());
         consumeUnit.setDifference(BigDecimalUtil.subtract(epPmsConsumeVO.getSum(),epPmsConsumeVOCompare.getSum(),2));
         consumeUnit.setDifferencePercent(BigDecimalUtil.percent(consumeUnit.getDifference(),epPmsConsumeVO.getSum(),2));
         results.add(consumeUnit);
@@ -1858,7 +1860,7 @@ public class ReportServiceImpl implements ReportService {
         produceNumVO2.setDepartment("深加工");
         produceNumVO2.setIndicator("产量(m²)");
         produceNumVO2.setValue(produceNum2.get(2));
-        produceNumVO2.setRelative(BigDecimalUtil.linkRelative(produceNum2.get(2),produceNumCompare2.get(2),2));
+        produceNumVO2.setRelative(produceNumCompare2.get(2));
         produceNumVO2.setDifference(BigDecimalUtil.subtract(produceNum2.get(2),produceNumCompare2.get(2),2));
         produceNumVO2.setDifferencePercent(BigDecimalUtil.percent(produceNumVO2.getDifference(),produceNum2.get(2),2));
         results.add(produceNumVO2);
@@ -1881,7 +1883,7 @@ public class ReportServiceImpl implements ReportService {
             SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVO = sjgMonthCountReportVOCompare.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
             if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
                 sjgFinishRate2 = sjgMonthCountReportTransverseVO.getYieldRate();
-                finishRateVO2.setRelative(BigDecimalUtil.linkRelative(finishRateVO2.getValue(),sjgFinishRate2,2));
+                finishRateVO2.setRelative(sjgFinishRate2);
             }
         }
         finishRateVO2.setDifference(BigDecimalUtil.subtract(sjgFinishRate,sjgFinishRate2,2));
@@ -1894,7 +1896,7 @@ public class ReportServiceImpl implements ReportService {
         consumeUnit2.setDepartment("深加工");
         consumeUnit2.setIndicator("单耗");
         consumeUnit2.setValue(epPmsConsumeVO2.getSum());
-        consumeUnit2.setRelative(BigDecimalUtil.linkRelative(epPmsConsumeVO2.getSum(),epPmsConsumeVOCompare2.getSum(),2));
+        consumeUnit2.setRelative(epPmsConsumeVOCompare2.getSum());
         consumeUnit2.setDifference(BigDecimalUtil.subtract(epPmsConsumeVO2.getSum(),epPmsConsumeVOCompare2.getSum(),2));
         consumeUnit2.setDifferencePercent(BigDecimalUtil.percent(consumeUnit2.getDifference(),epPmsConsumeVO2.getSum(),2));
         results.add(consumeUnit2);
@@ -1905,7 +1907,7 @@ public class ReportServiceImpl implements ReportService {
         sales.setDepartment("销售");
         sales.setIndicator("出库总数(m²)");
         sales.setValue(saleNum);
-        sales.setRelative(BigDecimalUtil.linkRelative(saleNum,saleNumCompare,2));
+        sales.setRelative(saleNumCompare);
         sales.setDifference(BigDecimalUtil.subtract(saleNum,saleNumCompare,2));
         sales.setDifferencePercent(BigDecimalUtil.percent(sales.getDifference(),saleNum,2));
         results.add(sales);
@@ -1916,7 +1918,7 @@ public class ReportServiceImpl implements ReportService {
         inStorageNum.setDepartment("采购");
         inStorageNum.setIndicator("原片采购入库总数(m²)");
         inStorageNum.setValue(inStorage);
-        inStorageNum.setRelative(BigDecimalUtil.linkRelative(inStorage,inStorageCompare,2));
+        inStorageNum.setRelative(inStorageCompare);
         inStorageNum.setDifference(BigDecimalUtil.subtract(inStorage,inStorageCompare,2));
         inStorageNum.setDifferencePercent(BigDecimalUtil.percent(inStorageNum.getDifference(),inStorage,2));
         results.add(inStorageNum);
