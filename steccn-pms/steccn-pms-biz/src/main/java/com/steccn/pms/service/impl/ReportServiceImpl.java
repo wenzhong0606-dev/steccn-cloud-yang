@@ -1853,38 +1853,49 @@ public class ReportServiceImpl implements ReportService {
         consumeUnit.setDifference(BigDecimalUtil.subtract(epPmsConsumeVO.getSum(),epPmsConsumeVOCompare.getSum(),2));
         consumeUnit.setDifferencePercent(BigDecimalUtil.percent(consumeUnit.getDifference(),epPmsConsumeVO.getSum(),2));
         results.add(consumeUnit);
+        //深加工月报表
+        SjgMonthCountReportVO sjgMonthCountReportVO = pmsSjgReportDashboardCtService.monthReport(1, 575, dto.getField1(), dto.getField2());
+        SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVO = null;
+        if(CollUtil.isNotEmpty(sjgMonthCountReportVO.getLeftList())){
+            sjgMonthCountReportTransverseVO = sjgMonthCountReportVO.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
+        }
+        SjgMonthCountReportVO sjgMonthCountReportVOCompare = pmsSjgReportDashboardCtService.monthReport(1, 575, previousStart, previousEnd);
+        SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVOCompare = null;
+        if(CollUtil.isNotEmpty(sjgMonthCountReportVOCompare.getLeftList())){
+            sjgMonthCountReportTransverseVOCompare = sjgMonthCountReportVOCompare.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
+        }
         //深加工产量
-        List<BigDecimal> produceNum2 = pmsReportDashboardService.produceNumDateRange(575, dto.getField1(), dto.getField2());
-        List<BigDecimal> produceNumCompare2 = pmsReportDashboardService.produceNumDateRange(575, previousStart, previousEnd);
+//        List<BigDecimal> produceNum2 = pmsReportDashboardService.produceNumDateRange(575, dto.getField1(), dto.getField2());
+//        List<BigDecimal> produceNumCompare2 = pmsReportDashboardService.produceNumDateRange(575, previousStart, previousEnd);
         PmsManageReportVO produceNumVO2 = new PmsManageReportVO();
         produceNumVO2.setDepartment("深加工");
         produceNumVO2.setIndicator("产量(m²)");
-        produceNumVO2.setValue(produceNum2.get(2));
-        produceNumVO2.setRelative(produceNumCompare2.get(2));
-        produceNumVO2.setDifference(BigDecimalUtil.subtract(produceNum2.get(2),produceNumCompare2.get(2),2));
-        produceNumVO2.setDifferencePercent(BigDecimalUtil.percent(produceNumVO2.getDifference(),produceNum2.get(2),2));
+//        produceNumVO2.setValue(produceNum2.get(2));
+//        produceNumVO2.setRelative(produceNumCompare2.get(2));
+//        produceNumVO2.setDifference(BigDecimalUtil.subtract(produceNum2.get(2),produceNumCompare2.get(2),2));
+//        produceNumVO2.setDifferencePercent(BigDecimalUtil.percent(produceNumVO2.getDifference(),produceNum2.get(2),2));
+        if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
+            produceNumVO2.setValue(sjgMonthCountReportTransverseVO.getInStorageCount());
+        }
+        if(Objects.nonNull(sjgMonthCountReportTransverseVOCompare)){
+            produceNumVO2.setRelative(sjgMonthCountReportTransverseVOCompare.getInStorageCount());
+        }
+        produceNumVO2.setDifference(BigDecimalUtil.subtract(produceNumVO2.getValue(),produceNumVO2.getRelative(),2));
+        produceNumVO2.setDifferencePercent(BigDecimalUtil.percent(produceNumVO2.getDifference(),produceNumVO2.getValue(),2));
         results.add(produceNumVO2);
         //深加工成品率
         PmsManageReportVO finishRateVO2 = new PmsManageReportVO();
         finishRateVO2.setDepartment("深加工");
         finishRateVO2.setIndicator("成品率(%)");
-        SjgMonthCountReportVO sjgMonthCountReportVO = pmsSjgReportDashboardCtService.monthReport(1, 575, dto.getField1(), dto.getField2());
         BigDecimal sjgFinishRate = null;
-        if(CollUtil.isNotEmpty(sjgMonthCountReportVO.getLeftList())){
-            SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVO = sjgMonthCountReportVO.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
-            if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
-                sjgFinishRate = sjgMonthCountReportTransverseVO.getYieldRate();
-                finishRateVO2.setValue(sjgFinishRate);
-            }
+        if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
+            sjgFinishRate = sjgMonthCountReportTransverseVO.getYieldRate();
+            finishRateVO2.setValue(sjgFinishRate);
         }
         BigDecimal sjgFinishRate2 = null;
-        SjgMonthCountReportVO sjgMonthCountReportVOCompare = pmsSjgReportDashboardCtService.monthReport(1, 575, previousStart, previousEnd);
-        if(CollUtil.isNotEmpty(sjgMonthCountReportVOCompare.getLeftList())){
-            SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVO = sjgMonthCountReportVOCompare.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
-            if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
-                sjgFinishRate2 = sjgMonthCountReportTransverseVO.getYieldRate();
-                finishRateVO2.setRelative(sjgFinishRate2);
-            }
+        if(Objects.nonNull(sjgMonthCountReportTransverseVOCompare)){
+            sjgFinishRate2 = sjgMonthCountReportTransverseVOCompare.getYieldRate();
+            finishRateVO2.setRelative(sjgFinishRate2);
         }
         finishRateVO2.setDifference(BigDecimalUtil.subtract(sjgFinishRate,sjgFinishRate2,2));
         finishRateVO2.setDifferencePercent(BigDecimalUtil.percent(finishRateVO2.getDifference(),sjgFinishRate,2));
