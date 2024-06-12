@@ -442,7 +442,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                 .le(Objects.nonNull(dto.getEnd()), PmsPullForce::getPullForceDate, dto.getEnd())
                 .groupBy(PmsPullForce::getPullForceDate));
         if (CollUtil.isNotEmpty(dataList)) {
-            List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
+            List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd().plusDays(1));
             Assert.notEmpty(dataList, "日期区间有误");
             for (int i = 1; i < dateList.size(); i++) {
                 LocalDate left = dateList.get(i - 1);

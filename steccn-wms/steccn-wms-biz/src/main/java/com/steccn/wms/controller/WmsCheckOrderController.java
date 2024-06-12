@@ -4,15 +4,23 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.wms.domain.WmsCheckOrder;
+import com.steccn.wms.domain.WmsCheckOrderScanInfo;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
+import com.steccn.wms.dto.WmsCheckOrderScanInfoDTO;
+import com.steccn.wms.dto.WmsCheckOrderScanInfoListDTO;
+import com.steccn.wms.service.WmsCheckOrderScanInfoService;
 import com.steccn.wms.service.WmsCheckOrderService;
+import com.steccn.wms.vo.WmsCheckOrderAreaVO;
 import com.steccn.wms.vo.WmsCheckOrderInfoVO;
+import com.steccn.wms.vo.WmsCheckOrderScanInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.util.function.Tuple3;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -31,6 +39,7 @@ public class WmsCheckOrderController {
     @Autowired
     private WmsCheckOrderService wmsCheckOrderService;
     private final RemoteMessFeignApi remoteMessFeignApi;
+    private final WmsCheckOrderScanInfoService wmsCheckOrderScanInfoService;
     /**
      * @explain: 获取盘点管理列表
      * @Date
@@ -38,7 +47,6 @@ public class WmsCheckOrderController {
     @PostMapping("/getCheckOrderList")
     @ApiOperation(value = "获取盘点管理列表")
     public R<Page<WmsCheckOrderVO>> getCheckOrderList(@RequestBody WmsCheckOrderDTO dto) {
-
         return R.success(wmsCheckOrderService.getCheckOrderList(dto));
     }
 
@@ -77,7 +85,7 @@ public class WmsCheckOrderController {
 
     /*****
      * 盘点差异调整
-     * @param dto
+     * @param
      * @return
      */
     @GetMapping("/varianceAdjustmentCheckOrder")
@@ -88,7 +96,6 @@ public class WmsCheckOrderController {
 
     /*****
      * 获取盘点单分类列表
-     * @param dto
      * @return
      */
     @GetMapping("/getTypeTreeList")
@@ -99,7 +106,7 @@ public class WmsCheckOrderController {
 
     /*****
      * 手机端 获取盘点单列表
-     * @param dto
+     * @param
      * @return
      */
     @GetMapping("/api/getApiCheckOrderList")
@@ -113,7 +120,7 @@ public class WmsCheckOrderController {
 
     /*****
      * 手机端 获取盘点单明细列表
-     * @param dto
+     * @param
      * @return
      */
     @GetMapping("/api/getApiCheckOrderDetailList")
@@ -126,7 +133,7 @@ public class WmsCheckOrderController {
 
     /*****
      * 手机端 调整盘点单操作正常或者差异调整明细
-     * @param dto
+     * @param
      * @return
      */
     @PostMapping("/api/adjNormalOrDifferenceCheckOrderItem")
@@ -134,6 +141,38 @@ public class WmsCheckOrderController {
     public  R<Boolean> adjNormalOrDifferenceCheckOrderItem(@RequestBody  Map<String, Object> paramMap) {
 
         return   wmsCheckOrderService.adjNormalOrDifferenceCheckOrderItem(paramMap);
+    }
+
+
+    @PostMapping("/add/scan/check/info")
+    @ApiOperation("增加扫描盘点明细")
+    public R<Boolean> addScanCheckInfo(@RequestBody WmsCheckOrderScanInfoDTO dto){
+        return R.success(wmsCheckOrderScanInfoService.addScanCheckInfo(dto));
+    }
+
+
+    @PostMapping("/edit/scan/check/info")
+    @ApiOperation("编辑扫描盘点明细")
+    public R<Boolean> editScanCheckInfo(@RequestBody WmsCheckOrderScanInfoDTO dto){
+        return R.success(wmsCheckOrderScanInfoService.editScanCheckInfo(dto));
+    }
+
+    @PostMapping("/list/scan/check/info")
+    @ApiOperation("扫描盘点明细列表")
+    public R<List<WmsCheckOrderScanInfoVO>> listScanCheckInfo(@RequestBody WmsCheckOrderScanInfoListDTO dto){
+        return R.success(wmsCheckOrderScanInfoService.listScanCheckInfo(dto));
+    }
+
+    @GetMapping("/area/count/list")
+    @ApiOperation("盘点区域盘点数列表")
+    public R<List<WmsCheckOrderAreaVO>> areaCountList(Long checkOrderId){
+        return R.success(wmsCheckOrderService.areaCountList(checkOrderId));
+    }
+
+    @PostMapping("/affirm/check")
+    @ApiOperation("确认盘点")
+    public R<Boolean>  affirmCheck(@RequestBody WmsCheckOrderDTO dto){
+        return R.success(wmsCheckOrderService.affirmCheck(dto));
     }
 
 

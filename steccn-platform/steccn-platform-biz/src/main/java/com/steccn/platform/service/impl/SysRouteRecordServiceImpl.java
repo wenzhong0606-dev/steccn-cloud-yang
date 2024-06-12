@@ -6,12 +6,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
+import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.platform.domain.SysRouteRecord;
 import com.steccn.platform.dto.SysRouteRecordDTO;
 import com.steccn.platform.service.SysRouteRecordService;
 import com.steccn.platform.mapper.SysRouteRecordMapper;
 import com.steccn.platform.vo.SysRouteRecordVO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,8 +27,11 @@ import java.util.List;
 * @createDate 2023-04-19 11:18:38
 */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class SysRouteRecordServiceImpl extends ServiceImpl<SysRouteRecordMapper, SysRouteRecord>
     implements SysRouteRecordService{
+    private final RemoteMesFeignApi remoteMesFeignApi;
 
     @Override
     public Boolean saveRecord(SysRouteRecordDTO dto) {
@@ -45,10 +53,15 @@ public class SysRouteRecordServiceImpl extends ServiceImpl<SysRouteRecordMapper,
         List<SysRouteRecord> list = list(condition);
         List<SysRouteRecordVO> results = Lists.newArrayList();
         if(CollUtil.isNotEmpty(list)){
+            List<Long> menuIds = FeignOptional.of(() -> remoteMesFeignApi.getUserMenuAuth(SecurityUtils.getUser().getUsername()), FeignConstant.STECCN_MES_SERVICE_NAME).get();
             list.forEach(tmp->{
                 SysRouteRecordVO result = new SysRouteRecordVO();
-                result.setRouteData(tmp.getRouteData().toString());
-                results.add(result);
+                String routeData = tmp.getRouteData().toString();
+                Long menuId = com.alibaba.fastjson.JSONObject.parseObject(routeData).getLong("id");
+                if(menuIds.contains(menuId)){
+                    result.setRouteData(routeData);
+                    results.add(result);
+                }
             });
         }
         return results;

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  */
 @Data
 public class WmsWeighbridgeInfoVO implements Serializable {
+    private Long id;
     /**
      * 物料id
      */
@@ -68,6 +69,11 @@ public class WmsWeighbridgeInfoVO implements Serializable {
      * 皮重
      */
     private BigDecimal tareWeight;
+
+    /**
+     * 扣重
+     */
+    private BigDecimal deductWeight;
 
     /**
      * 净重

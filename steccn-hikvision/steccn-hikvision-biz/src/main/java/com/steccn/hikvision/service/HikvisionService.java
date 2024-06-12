@@ -1,6 +1,7 @@
 package com.steccn.hikvision.service;
 
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.hikvision.dto.SysHikEventDTO;
 import com.steccn.hikvision.vo.CameraVO;
 import com.steccn.hikvision.vo.HikCompanyVO;
 
@@ -44,4 +45,11 @@ public interface HikvisionService {
      * @return
      */
     List<HikCompanyVO> getCompanyInfo(TupleDTO<String,String> dto);
+
+    /**
+     * 订阅事件
+     * @param dto 事件订阅
+     * @return
+     */
+    Boolean bookEvent(SysHikEventDTO dto);
 }

@@ -19,6 +19,8 @@ public class WmsInventoryDaySheetVO {
 
     private Integer warehouseId;
 
+    private Integer sort;
+
     private String warehouseName;
 
     private String code;

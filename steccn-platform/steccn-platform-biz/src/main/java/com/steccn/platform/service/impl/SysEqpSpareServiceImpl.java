@@ -361,6 +361,34 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         List<SysEqpSpare> list  =  this.baseMapper.listByProperty(dto.getField1(),dto.getField2());
         return BeanUtil.copyToList(list, EqpSpareVO.class);
     }
+
+    @Override
+    public List<EqpSpareVO> listByTypeId(Set<String> types) {
+        List<EqpSpareVO> res = Lists.newArrayList();
+        List<SysClassification> list = sysClassificationService.list();
+        List<SysClassification> classifications = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            for (String type : types) {
+                classifications.addAll(getClassificationNodes(list, Long.valueOf(type)));
+            }
+            if (CollUtil.isNotEmpty(classifications)) {
+                List<Long> collect = classifications.stream().map(SysClassification::getId).collect(Collectors.toList());
+                List<SysEqpSpare> eqpSpareList = list(new LambdaQueryWrapper<SysEqpSpare>().in(SysEqpSpare::getType, collect));
+                res.addAll(BeanUtil.copyToList(eqpSpareList,EqpSpareVO.class));
+            }
+        }
+        return res;
+    }
+    List<SysClassification> getClassificationNodes(List<SysClassification> list ,Long parentCode){
+        List<SysClassification> result = new ArrayList<>();
+        for (SysClassification sysClassification : list) {
+            if (sysClassification.getParentCode().equals(parentCode)){
+                result.add(sysClassification);
+                result.addAll(getClassificationNodes(list, sysClassification.getId()));
+            }
+        }
+        return result;
+    }
 }
 
 

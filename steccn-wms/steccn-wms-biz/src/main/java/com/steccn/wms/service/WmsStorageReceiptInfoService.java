@@ -1,6 +1,7 @@
 package com.steccn.wms.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
@@ -53,4 +54,11 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
      * @return
      */
     Map<LocalDate, BigDecimal> produceConsumeQuantity(Long materialId, LocalDate start, LocalDate end);
+
+    /**
+     * yuan
+     * @param tupleDTO
+     * @return
+     */
+    BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDateTime, LocalDateTime> tupleDTO);
 }

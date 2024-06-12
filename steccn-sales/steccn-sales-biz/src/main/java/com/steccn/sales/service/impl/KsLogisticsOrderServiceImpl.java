@@ -24,9 +24,11 @@ import com.steccn.sales.domain.*;
 import com.steccn.sales.dto.KsLogisticsDTO;
 import com.steccn.sales.dto.KsLogisticsDashBoardDTO;
 import com.steccn.sales.dto.KsSaleIdAndNameDTO;
+import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.mapper.*;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.vo.KsLogisticsVO;
+import com.steccn.sales.vo.KsShippingReconciliationVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -166,6 +168,18 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
             dataList.add(stackGraphDTO);
         }
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public Page<KsShippingReconciliationVO> shippingReconciliation(KsShippingReconciliationDTO dto) {
+        //自定义sql查询订单信息列表
+       return ksLogisticsOrderMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
+    }
+
+    @Override
+    public BigDecimal salesDeliverySum(TupleDTO<LocalDate, LocalDate> dto) {
+        BigDecimal bigDecimal = ksLogisticsOrderMapper.selectDeliverySum(dto);
+        return bigDecimal;
     }
 }
 

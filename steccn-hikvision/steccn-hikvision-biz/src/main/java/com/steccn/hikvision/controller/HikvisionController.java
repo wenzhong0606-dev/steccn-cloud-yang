@@ -1,10 +1,13 @@
 package com.steccn.hikvision.controller;
 
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 
+import com.steccn.hikvision.dto.SysHikEventDTO;
 import com.steccn.hikvision.service.HikvisionService;
 import com.steccn.hikvision.vo.CameraVO;
+import com.steccn.hikvision.vo.HikCompanyVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,5 +58,19 @@ public class HikvisionController {
     @GetMapping("/sso/login")
     public R<String> ssoLogin() {
         return R.success(hikvisionService.ssoToken());
+    }
+
+    /**
+     * 获取单点登录token
+     * @return
+     */
+    @PostMapping("/bookEvent")
+    public R<Boolean> bookEvent(@RequestBody SysHikEventDTO dto) {
+        return R.success(hikvisionService.bookEvent(dto));
+    }
+
+    @PostMapping("/company")
+    public R<List<HikCompanyVO>> hikCompanyInfo(@RequestBody TupleDTO<String,String> dto) {
+        return R.success(hikvisionService.getCompanyInfo(dto));
     }
 }

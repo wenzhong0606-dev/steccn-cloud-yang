@@ -15,10 +15,7 @@ import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsTransferSlip;
-import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
-import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
-import com.steccn.wms.dto.WmsReportStatisticalDTO;
-import com.steccn.wms.dto.WmsReportWarehouseDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.*;
 import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiOperation;
@@ -215,6 +212,13 @@ public class WmsReportController {
         //获取调拨单据明细总数
         quantityVO.setTransferTotalQuantity(wmsTransferSlipService.totalQuantityM(dto));
         return R.success(quantityVO);
+    }
+
+    @ApiOperation("物流单查询")
+    @PostMapping("/logistics/bill")
+    R<Page<SalesLogisticsBillVO>> logisticsBill(@RequestBody SalesLogisticsBillDTO dto){
+
+        return R.success(wmsDeliveryReceiptService.shippingReconciliation(dto));
     }
 }
 

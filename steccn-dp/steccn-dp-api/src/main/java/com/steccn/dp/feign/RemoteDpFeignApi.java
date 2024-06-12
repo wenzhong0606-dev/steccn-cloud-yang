@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.dp.vo.DpNatureGasVO;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -82,4 +83,13 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/coldEnd/deleteData")
     @ApiOperation(value = "只保留7天的数据")
     R<Boolean> deleteData(@RequestBody TupleDTO<LocalDateTime,String> dto);
+
+    /**
+     * 获取天然气数据
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/dp/gas/data")
+    @ApiOperation(value = "获取天然气数据")
+    R<List<DpNatureGasVO>> natureGasData(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
 }

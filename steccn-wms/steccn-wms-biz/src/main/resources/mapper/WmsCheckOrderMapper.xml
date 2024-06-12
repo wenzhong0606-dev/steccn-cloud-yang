@@ -35,7 +35,7 @@
 
     <select id="getCheckOrderList" resultType="com.steccn.wms.vo.WmsCheckOrderVO">
         select
-           a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,
+           a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,a.warehouse_id,a.warehouse_name,
           ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
              when 4  then   '已归档'	  else '' end ) AS statusName,a.check_area
         from wms_check_order a
@@ -81,7 +81,7 @@
 
     <select id="getApiCheckOrderList" resultType="com.steccn.wms.vo.WmsCheckOrderVO">
         select
-        a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,a.check_area,
+        a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,a.check_area,a.warehouse_id,a.warehouse_name,
         ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
         when 4  then   '已归档' else '' end ) AS statusName
         from wms_check_order a

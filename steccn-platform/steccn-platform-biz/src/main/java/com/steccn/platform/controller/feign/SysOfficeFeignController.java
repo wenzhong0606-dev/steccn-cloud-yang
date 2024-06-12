@@ -50,6 +50,10 @@ public class SysOfficeFeignController {
     public R<String> listFlatDataByType(@RequestParam Integer id) {
         return new R<>(sysOfficeService.findNameById(id));
     }
+    @GetMapping("/code")
+    public R<SysOfficeVO> getByCode(@RequestParam String code) {
+        return R.success(sysOfficeService.getByCode(code));
+    }
 
     @PostMapping("/ids")
     @ApiOperation("根据主键id查询机构的信息")

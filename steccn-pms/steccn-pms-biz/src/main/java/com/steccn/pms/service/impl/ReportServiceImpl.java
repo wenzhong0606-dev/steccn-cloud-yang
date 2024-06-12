@@ -1,16 +1,11 @@
 package com.steccn.pms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
@@ -23,15 +18,17 @@ import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.ems.util.UnitConsumeUtil;
-import com.steccn.mes.dto.SrmQueryDTO;
-import com.steccn.mes.vo.MesSpareSupplierVO;
+import com.steccn.ems.vo.EpPmsConsumeVO;
 import com.steccn.mes.vo.SrmSupplierVO;
 import com.steccn.oa.dto.OaClassUserNameDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
-import com.steccn.platform.vo.*;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.config.SrmUrl;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
@@ -48,21 +45,21 @@ import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.OutputQualityDetailVO;
-import com.steccn.wms.constant.WmsManagerConstant;
+import com.steccn.sales.feign.RemoteSaleFeignApi;
 import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import reactor.util.function.Tuple5;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,15 +92,15 @@ public class ReportServiceImpl implements ReportService {
     private final PmsMaterialRequisitionInfoService pmsMaterialRequisitionInfoService;
     private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
     private final OaInfoService oaInfoService;
-    private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
-    private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
     private final RemoteWmsTransferSlipFeignApi remoteWmsTransferSlipFeignApi;
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
-    private final StringRedisTemplate stringRedisTemplate;
-    private final RemoteSrmFeignApi remoteSrmFeignApi;
-    private final SrmUrl srmConfig;
+    @Lazy
+    @Autowired
+    private PmsReportDashboardService pmsReportDashboardService;
+    private final RemoteSaleFeignApi remoteSaleFeignApi;
+    private final PmsSjgReportDashboardCtService pmsSjgReportDashboardCtService;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -1801,6 +1798,142 @@ public class ReportServiceImpl implements ReportService {
         outputQualitySjgVO1.setFromTableList(getFromData(pmsReportWorkVOS, lineNameMap));
         resList.add(outputQualitySjgVO1);
         return resList;
+    }
+
+    @Override
+    public List<PmsManageReportVO> managerReportVO(TupleDTO<LocalDate, LocalDate> dto) {
+        List<PmsManageReportVO> results = Lists.newArrayList();
+        //算环比日期
+        long daysBetween = ChronoUnit.DAYS.between(dto.getField1(), dto.getField2());
+        if(dto.getField1().equals(dto.getField2())){
+            daysBetween = 1L;
+        }
+        LocalDate previousStart = dto.getField1().minus(daysBetween, ChronoUnit.DAYS);
+        LocalDate previousEnd = dto.getField2().minus(daysBetween, ChronoUnit.DAYS);
+        //基片拉引量
+        BigDecimal pullAmount = pmsReportDashboardService.pullForceDateRange(574, dto.getField1(), dto.getField2());
+        BigDecimal pullAmountCompare = pmsReportDashboardService.pullForceDateRange(574, previousStart, previousEnd);
+        PmsManageReportVO pullAmountVO = new PmsManageReportVO();
+        pullAmountVO.setDepartment("基片");
+        pullAmountVO.setIndicator("拉引量(T)");
+        pullAmountVO.setValue(pullAmount);
+        pullAmountVO.setRelative(pullAmountCompare);
+        pullAmountVO.setDifference(BigDecimalUtil.subtract(pullAmount,pullAmountCompare,2));
+        pullAmountVO.setDifferencePercent(BigDecimalUtil.percent(pullAmountVO.getDifference(),pullAmount,2));
+        results.add(pullAmountVO);
+        //基片产量
+        List<BigDecimal> produceNum = pmsReportDashboardService.produceNumDateRange(574, dto.getField1(), dto.getField2());
+        List<BigDecimal> produceNumCompare = pmsReportDashboardService.produceNumDateRange(574, previousStart, previousEnd);
+        PmsManageReportVO produceNumVO = new PmsManageReportVO();
+        produceNumVO.setDepartment("基片");
+        produceNumVO.setIndicator("产量(m²)");
+        produceNumVO.setValue(produceNum.get(2));
+        produceNumVO.setRelative(produceNumCompare.get(2));
+        produceNumVO.setDifference(BigDecimalUtil.subtract(produceNum.get(2),produceNumCompare.get(2),2));
+        produceNumVO.setDifferencePercent(BigDecimalUtil.percent(produceNumVO.getDifference(),produceNum.get(2),2));
+        results.add(produceNumVO);
+        //基片成品率
+        PmsManageReportVO finishRateVO = new PmsManageReportVO();
+        finishRateVO.setDepartment("基片");
+        finishRateVO.setIndicator("成品率(%)");
+        finishRateVO.setValue(BigDecimalUtil.percent(produceNum.get(0),pullAmountVO.getValue(),2));
+        BigDecimal finishRateCompare = BigDecimalUtil.percent(produceNumCompare.get(0), pullAmountCompare, 2);
+        finishRateVO.setRelative(finishRateCompare);
+        finishRateVO.setDifference(BigDecimalUtil.subtract(finishRateVO.getValue(),finishRateCompare,2));
+        finishRateVO.setDifferencePercent(BigDecimalUtil.percent(finishRateVO.getDifference(),finishRateVO.getValue(),2));
+        results.add(finishRateVO);
+        //基片单耗
+        PmsManageReportVO consumeUnit = new PmsManageReportVO();
+        EpPmsConsumeVO epPmsConsumeVO = FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<Integer, LocalDate, LocalDate>(574, dto.getField1(), dto.getField2())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        EpPmsConsumeVO epPmsConsumeVOCompare = FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<Integer, LocalDate, LocalDate>(574, previousStart, previousEnd)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        consumeUnit.setDepartment("基片");
+        consumeUnit.setIndicator("单耗");
+        consumeUnit.setValue(epPmsConsumeVO.getSum());
+        consumeUnit.setRelative(epPmsConsumeVOCompare.getSum());
+        consumeUnit.setDifference(BigDecimalUtil.subtract(epPmsConsumeVO.getSum(),epPmsConsumeVOCompare.getSum(),2));
+        consumeUnit.setDifferencePercent(BigDecimalUtil.percent(consumeUnit.getDifference(),epPmsConsumeVO.getSum(),2));
+        results.add(consumeUnit);
+        //深加工月报表
+        SjgMonthCountReportVO sjgMonthCountReportVO = pmsSjgReportDashboardCtService.monthReport(1, 575, dto.getField1(), dto.getField2());
+        SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVO = null;
+        if(CollUtil.isNotEmpty(sjgMonthCountReportVO.getLeftList())){
+            sjgMonthCountReportTransverseVO = sjgMonthCountReportVO.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
+        }
+        SjgMonthCountReportVO sjgMonthCountReportVOCompare = pmsSjgReportDashboardCtService.monthReport(1, 575, previousStart, previousEnd);
+        SjgMonthCountReportTransverseVO sjgMonthCountReportTransverseVOCompare = null;
+        if(CollUtil.isNotEmpty(sjgMonthCountReportVOCompare.getLeftList())){
+            sjgMonthCountReportTransverseVOCompare = sjgMonthCountReportVOCompare.getLeftList().stream().filter(v -> v.getOfficeName().equals("合计") && v.getCategoryName().equals("合计")).findFirst().orElse(null);
+        }
+        //深加工产量
+//        List<BigDecimal> produceNum2 = pmsReportDashboardService.produceNumDateRange(575, dto.getField1(), dto.getField2());
+//        List<BigDecimal> produceNumCompare2 = pmsReportDashboardService.produceNumDateRange(575, previousStart, previousEnd);
+        PmsManageReportVO produceNumVO2 = new PmsManageReportVO();
+        produceNumVO2.setDepartment("深加工");
+        produceNumVO2.setIndicator("产量(m²)");
+//        produceNumVO2.setValue(produceNum2.get(2));
+//        produceNumVO2.setRelative(produceNumCompare2.get(2));
+//        produceNumVO2.setDifference(BigDecimalUtil.subtract(produceNum2.get(2),produceNumCompare2.get(2),2));
+//        produceNumVO2.setDifferencePercent(BigDecimalUtil.percent(produceNumVO2.getDifference(),produceNum2.get(2),2));
+        if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
+            produceNumVO2.setValue(sjgMonthCountReportTransverseVO.getInStorageCount());
+        }
+        if(Objects.nonNull(sjgMonthCountReportTransverseVOCompare)){
+            produceNumVO2.setRelative(sjgMonthCountReportTransverseVOCompare.getInStorageCount());
+        }
+        produceNumVO2.setDifference(BigDecimalUtil.subtract(produceNumVO2.getValue(),produceNumVO2.getRelative(),2));
+        produceNumVO2.setDifferencePercent(BigDecimalUtil.percent(produceNumVO2.getDifference(),produceNumVO2.getValue(),2));
+        results.add(produceNumVO2);
+        //深加工成品率
+        PmsManageReportVO finishRateVO2 = new PmsManageReportVO();
+        finishRateVO2.setDepartment("深加工");
+        finishRateVO2.setIndicator("成品率(%)");
+        BigDecimal sjgFinishRate = null;
+        if(Objects.nonNull(sjgMonthCountReportTransverseVO)){
+            sjgFinishRate = sjgMonthCountReportTransverseVO.getYieldRate();
+            finishRateVO2.setValue(sjgFinishRate);
+        }
+        BigDecimal sjgFinishRate2 = null;
+        if(Objects.nonNull(sjgMonthCountReportTransverseVOCompare)){
+            sjgFinishRate2 = sjgMonthCountReportTransverseVOCompare.getYieldRate();
+            finishRateVO2.setRelative(sjgFinishRate2);
+        }
+        finishRateVO2.setDifference(BigDecimalUtil.subtract(sjgFinishRate,sjgFinishRate2,2));
+        finishRateVO2.setDifferencePercent(BigDecimalUtil.percent(finishRateVO2.getDifference(),sjgFinishRate,2));
+        results.add(finishRateVO2);
+        //深加工单耗
+        PmsManageReportVO consumeUnit2 = new PmsManageReportVO();
+        EpPmsConsumeVO epPmsConsumeVO2 = FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<Integer, LocalDate, LocalDate>(575, dto.getField1(), dto.getField2())), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        EpPmsConsumeVO epPmsConsumeVOCompare2 = FeignOptional.of(() -> remoteMeterReadFeignApi.consumeUseUnitConsumeDateRange(new TripleDTO<Integer, LocalDate, LocalDate>(575, previousStart, previousEnd)), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        consumeUnit2.setDepartment("深加工");
+        consumeUnit2.setIndicator("单耗");
+        consumeUnit2.setValue(epPmsConsumeVO2.getSum());
+        consumeUnit2.setRelative(epPmsConsumeVOCompare2.getSum());
+        consumeUnit2.setDifference(BigDecimalUtil.subtract(epPmsConsumeVO2.getSum(),epPmsConsumeVOCompare2.getSum(),2));
+        consumeUnit2.setDifferencePercent(BigDecimalUtil.percent(consumeUnit2.getDifference(),epPmsConsumeVO2.getSum(),2));
+        results.add(consumeUnit2);
+        //销售出库
+        BigDecimal saleNum = FeignOptional.of(() -> remoteSaleFeignApi.salesDeliverySum(new TupleDTO<>(dto.getField1(), dto.getField2())), FeignConstant.STECCN_SALES_NAME).get();
+        BigDecimal saleNumCompare = FeignOptional.of(() -> remoteSaleFeignApi.salesDeliverySum(new TupleDTO<>(previousStart, previousEnd)), FeignConstant.STECCN_SALES_NAME).get();
+        PmsManageReportVO sales = new PmsManageReportVO();
+        sales.setDepartment("销售");
+        sales.setIndicator("出库总数(m²)");
+        sales.setValue(saleNum);
+        sales.setRelative(saleNumCompare);
+        sales.setDifference(BigDecimalUtil.subtract(saleNum,saleNumCompare,2));
+        sales.setDifferencePercent(BigDecimalUtil.percent(sales.getDifference(),saleNum,2));
+        results.add(sales);
+        //采购入库
+        BigDecimal inStorage = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.purchaseInventoryRawGlass(new TupleDTO<>(dto.getField1().atTime(8, 0, 0), dto.getField2().plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        BigDecimal inStorageCompare = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.purchaseInventoryRawGlass(new TupleDTO<>(previousStart.atTime(8, 0, 0), previousEnd.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        PmsManageReportVO inStorageNum = new PmsManageReportVO();
+        inStorageNum.setDepartment("采购");
+        inStorageNum.setIndicator("原片采购入库总数(m²)");
+        inStorageNum.setValue(inStorage);
+        inStorageNum.setRelative(inStorageCompare);
+        inStorageNum.setDifference(BigDecimalUtil.subtract(inStorage,inStorageCompare,2));
+        inStorageNum.setDifferencePercent(BigDecimalUtil.percent(inStorageNum.getDifference(),inStorage,2));
+        results.add(inStorageNum);
+        return results;
     }
 
     @Override

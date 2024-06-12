@@ -63,8 +63,7 @@ public class WmsDeliveryReceiptInfoDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "批次不能为空")
     private String batch;
 
-    @ApiModelProperty("箱号")
-    private String caseNo;
+    @ApiModelProperty("箱号")private String caseNo;
 
     @ApiModelProperty("单位")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "单位不能为空")

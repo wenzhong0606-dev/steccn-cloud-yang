@@ -350,11 +350,18 @@ public class WmsReportServiceImpl implements WmsReportService {
                 typeIds.add(wmsInventoryDaySheetVO.getType());
                 officeIdSet.add(wmsInventoryDaySheetVO.getWarehouseId());
             });
-            Map<String,String> lineNameMap =  FeignOptional.of(()->remoteCompleteStorageFeignApi.storageReceiptCodeGetLineName(codeSet),FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             //获取产线名称
+            Map<String,String> lineNameMap =  FeignOptional.of(()->remoteCompleteStorageFeignApi.storageReceiptCodeGetLineName(codeSet),FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //获取类型名称
             Map<Long, String> typeNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取仓库名称
             Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            daySheetDataList.forEach( wmsInventoryDaySheetVO -> wmsInventoryDaySheetVO.setProductionLineName(lineNameMap.get(wmsInventoryDaySheetVO.getCode())));
+            daySheetDataList.forEach( wmsInventoryDaySheetVO -> {
+                wmsInventoryDaySheetVO.setProductionLineName(lineNameMap.get(wmsInventoryDaySheetVO.getCode()));
+            });
+            Set<String> collect = lineNameMap.values().stream()
+                    .collect(Collectors.toSet());
+            Map<String, SysOfficeVO>  officeMapByLineName = FeignOptional.of(() -> remoteOfficeFeign.listByName(collect), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //根据产线处理数据
             Map<String, List<WmsInventoryDaySheetVO>> lineMap = daySheetDataList.stream()
                     .collect(Collectors.groupingBy(vo -> Optional.ofNullable(vo.getProductionLineName()).orElse("null")));
@@ -366,17 +373,21 @@ public class WmsReportServiceImpl implements WmsReportService {
                     Map<Long, List<WmsInventoryDaySheetVO>> typeMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getType));
                     typeMap.forEach((typeKey,typeValue)->{
                         //根据物料处理数据
-                        Map<String, List<WmsInventoryDaySheetVO>> materialNameMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getMaterialName));
+                        Map<String, List<WmsInventoryDaySheetVO>> materialNameMap = typeValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getMaterialName));
                         materialNameMap.forEach((materialKey,materialValue)->{
                             //根据状态处理数据
-                            Map<String, List<WmsInventoryDaySheetVO>> statusMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getStatus));
+                            Map<String, List<WmsInventoryDaySheetVO>> statusMap = materialValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getStatus));
                             statusMap.forEach((statusKey,statusValue)->{
                                 //根据班次处理数据
-                                Map<String, List<WmsInventoryDaySheetVO>> classesMap = warehouseValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getClasses));
+                                Map<String, List<WmsInventoryDaySheetVO>> classesMap = statusValue.stream().collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getClasses));
                                 classesMap.forEach((classesKey,classesValue)->{
                                     WmsInventoryDaySheetVO wmsInventoryDaySheetVO = new WmsInventoryDaySheetVO();
                                     WmsInventoryDaySheetVO daySheetVO = classesValue.get(0);
                                     wmsInventoryDaySheetVO.setProductionLineName(daySheetVO.getProductionLineName());
+                                    SysOfficeVO sysOfficeVO = officeMapByLineName.get(daySheetVO.getProductionLineName());
+                                    if (Objects.nonNull(sysOfficeVO)) {
+                                        wmsInventoryDaySheetVO.setSort(sysOfficeVO.getTreeSort());
+                                    }
                                     wmsInventoryDaySheetVO.setWarehouseName(officeMap.get(daySheetVO.getWarehouseId()).getOfficeName());
                                     wmsInventoryDaySheetVO.setTypeName(typeNameMap.get(daySheetVO.getType()));
                                     wmsInventoryDaySheetVO.setClasses(daySheetVO.getClasses());
@@ -403,14 +414,19 @@ public class WmsReportServiceImpl implements WmsReportService {
                     });
                 });
             });
-            //
-            if (Objects.nonNull(dto.getProductionLineName())){
-              return resList.stream()
-                        .filter(vo -> !dto.getProductionLineName().equals(vo.getMaterialName()))
-                        .collect(Collectors.toList());
-            }
         }
-        return resList;
+        //排序
+        List<WmsInventoryDaySheetVO> collect = resList.stream().sorted(Comparator.comparing(WmsInventoryDaySheetVO::getSort, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(WmsInventoryDaySheetVO::getType, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(WmsInventoryDaySheetVO::getClasses,Comparator.nullsFirst(Comparator.naturalOrder()))
+        ).collect(Collectors.toList());
+        if (Objects.nonNull(dto.getProductionLineName())){
+            List<WmsInventoryDaySheetVO> voList = collect.stream()
+                    .filter(vo -> dto.getProductionLineName().equals(vo.getProductionLineName()))
+                    .collect(Collectors.toList());
+            return voList;
+        }
+        return collect;
     }
 
     @Override

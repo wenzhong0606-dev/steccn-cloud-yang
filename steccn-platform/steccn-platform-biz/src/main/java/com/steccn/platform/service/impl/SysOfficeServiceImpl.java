@@ -22,6 +22,7 @@ import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.domain.SysClassification;
 import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.service.SysConfigurationService;
@@ -820,6 +821,14 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return result;
     }
 
+    @Override
+    public SysOfficeVO getByCode(String code) {
+        SysOfficeVO sysOfficeVO = new SysOfficeVO();
+        SysOffice one = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, code));
+        BeanUtil.copyProperties(one,sysOfficeVO);
+        return sysOfficeVO;
+    }
+
 
     /**
      * 根据组织机构类型获取数据
@@ -871,11 +880,20 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> listByParentId(SysOfficeParentDTO dto) {
         //1.自定义sql查询数据
-        List<SysOfficeVO> list = this.baseMapper.listByParentId(dto.getId(), dto.getOfficeType());
+//        List<SysOfficeVO> list = this.baseMapper.listByParentId(dto.getId(), dto.getOfficeType());
+        SysOffice office = getById(dto.getId());
+        List<SysOfficeVO> res = Lists.newArrayList();
+        List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().notIn(SysOffice::getOfficeType, 11));
+
         if (CollUtil.isNotEmpty(list)) {
-            return list;
+            List<SysOffice> officeNodes = getOfficeNodes(list, office.getOfficeCode());
+            if (CollUtil.isNotEmpty(officeNodes)){
+                //过滤出符合type的数据
+                List<SysOffice> collect = officeNodes.stream().filter(e -> e.getOfficeType().equals(dto.getOfficeType())).filter(e->!e.getStatus().equals("1")).collect(Collectors.toList());
+                res.addAll(BeanUtil.copyToList(collect,SysOfficeVO.class));
+            }
         }
-        return null;
+        return res;
     }
 
     @Override
@@ -1011,7 +1029,16 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return sysOffice;
     }
 
-
+    List<SysOffice> getOfficeNodes(List<SysOffice> list , String parentCode){
+        List<SysOffice> result = new ArrayList<>();
+        for (SysOffice sysOffice : list) {
+            if (sysOffice.getParentCode().equals(parentCode)){
+                result.add(sysOffice);
+                result.addAll(getOfficeNodes(list, sysOffice.getOfficeCode()));
+            }
+        }
+        return result;
+    }
     /**
      * 根据list递归构造一颗树
      *

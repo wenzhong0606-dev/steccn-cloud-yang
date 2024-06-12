@@ -170,4 +170,11 @@ public class EqpSpareFeignController {
     public R<List<EqpSpareVO>> listByProperty(@RequestBody TupleDTO<String,Integer> dto){
         return R.success(eqpSpareService.listByProperty(dto));
     }
+
+
+    @PostMapping("/listByTypeId")
+    @ApiOperation("根据分类获取物料信息")
+    public R<List<EqpSpareVO>> listByTypeId(@RequestBody  Set<String> types) {
+        return R.success(eqpSpareService.listByTypeId(types));
+    }
 }

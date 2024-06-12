@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,6 +51,8 @@ public interface WmsStorageReceiptInfoMapper extends BaseMapper<WmsStorageReceip
                                                       @Param("materialId")  Long materialId,
                                                       @Param("startTime") LocalDateTime start,
                                                       @Param("endTime") LocalDateTime end);
+
+    BigDecimal purchaseInventoryRawGlass(@Param("startTime")LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") List<Long> materialIds);
 }
 
 

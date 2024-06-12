@@ -6,13 +6,17 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
@@ -45,6 +49,7 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
     private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Map<Long, WmsStorageReceiptInfo> infoMap(List<Long> updateIds) {
@@ -104,6 +109,17 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
             }
         }
         return resMap;
+    }
+
+    @Override
+    public BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDateTime, LocalDateTime> tupleDTO) {
+        //获取物料类型为原片以及下级的物料id
+        List<EqpSpareVO> eqpSpareVOS = FeignOptional.of(() -> remoteSpareFeignApi.listByTypeId(Sets.newHashSet("1551432406889791488")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<Long> materialIds  = eqpSpareVOS.stream().map(EqpSpareVO::getId).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(materialIds)){
+           return this.baseMapper.purchaseInventoryRawGlass(tupleDTO.getField1(),tupleDTO.getField2(),materialIds);
+        }
+        return null;
     }
 }
 

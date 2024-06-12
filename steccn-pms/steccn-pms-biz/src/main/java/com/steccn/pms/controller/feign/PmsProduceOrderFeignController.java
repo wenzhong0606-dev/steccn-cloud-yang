@@ -1,24 +1,17 @@
 package com.steccn.pms.controller.feign;
 
-import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.annotation.SysLog;
-import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
-import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.pms.domain.PmsCompleteStorage;
-import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.*;
+import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.Api;
@@ -27,10 +20,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.tomcat.jni.Local;
 import org.springframework.web.bind.annotation.*;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuple3;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -63,8 +53,6 @@ public class PmsProduceOrderFeignController {
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
 
     private final PmsReportDashboardService pmsReportDashboardService;
-    private final RemoteOfficeFeign remoteOfficeFeign;
-
     @PostMapping("/report")
     @ApiOperation("查询当前班次日期的所有报工记录")
     R<List<DwCurrentReportWorkDTO>> currentDateReportWork(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO){
@@ -153,6 +141,13 @@ public class PmsProduceOrderFeignController {
     public R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo){
         return R.success(pmsBarcodePrintService.getCaseNoFlag(caseNo));
     }
+
+    @GetMapping("/get/caseNo/info")
+    @ApiOperation(("箱号是否存在"))
+    public R<PmsCaseNoInfoVO> getCaseNoInfo(@RequestParam("caseNo") String caseNo){
+        return R.success(pmsBarcodePrintService.getCaseNoInfo(caseNo));
+    }
+
 
 
     @ApiOperation("根据箱号获取生产订单号批次号以及物料名称")

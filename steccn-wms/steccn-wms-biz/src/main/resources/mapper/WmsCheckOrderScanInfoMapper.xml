@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.wms.mapper.WmsCheckOrderScanInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.wms.domain.WmsCheckOrderScanInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+            <result property="checkBy" column="check_by" jdbcType="BIGINT"/>
+            <result property="checkName" column="check_name" jdbcType="VARCHAR"/>
+            <result property="checkTime" column="check_time" jdbcType="TIMESTAMP"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="batch" column="batch" jdbcType="VARCHAR"/>
+            <result property="caseNo" column="case_no" jdbcType="VARCHAR"/>
+            <result property="warehouse" column="warehouse" jdbcType="INTEGER"/>
+            <result property="shelf" column="shelf" jdbcType="INTEGER"/>
+            <result property="checkOrderId" column="check_order_id" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,material_id,material_code,
+        material_name,quantity,unit_id,
+        check_by,check_name,check_time,
+        note,status,batch,
+        case_no,warehouse,shelf,
+        check_order_id,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+    <select id="areaCountList" resultType="com.steccn.wms.vo.WmsCheckOrderAreaVO">
+        select  COUNT(shelf) as count,shelf from  wms_check_order_scan_info where check_order_id = #{checkOrderId}  and del_flag = 0 and shelf in
+        <foreach collection="shelfIds" open="(" close=")" item="shelfId" separator=",">
+            #{shelfId}
+        </foreach>
+
+        GROUP BY shelf
+    </select>
+
+</mapper>

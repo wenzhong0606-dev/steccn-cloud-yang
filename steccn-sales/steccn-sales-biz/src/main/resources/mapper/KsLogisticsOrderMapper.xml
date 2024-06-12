@@ -86,4 +86,30 @@
             AND send_date = #{dto.date}
         GROUP BY logistics_company_id,customer_delivery_id
     </select>
+    <select id="pageList" resultType="com.steccn.sales.vo.KsShippingReconciliationVO">
+        select
+            aa."name" as code,
+            cc."name" as logisticsCompany,
+            b."name" as customerName,
+            aa.model_specs as modelSpecs,
+            aa.driver_adds as driverAdds,
+            aa.driver_name as driverName,
+            aa.car_code as carCode,
+            aa.send_date as sendDate,
+            aa.actual_delivery_date as actualDeliveryDate,
+            aa.piece_qty as pieceQty,
+            aa.sale_qty as saleQty
+        from ks_logistics_order aa
+                 join res_partner b on aa.customer_id = b."id"
+                 JOIN ks_logistics_company cc on aa.logistics_company_id = cc."id"
+    </select>
+
+    <select id="selectDeliverySum" resultType="java.math.BigDecimal">
+        SELECT
+        SUM(price_qty)
+        FROM ks_logistics_order
+        WHERE actual_delivery_date
+        BETWEEN
+              #{dto.field1} AND #{dto.field2}
+    </select>
 </mapper>

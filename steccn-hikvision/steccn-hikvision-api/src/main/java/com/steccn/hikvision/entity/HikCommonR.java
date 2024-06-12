@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Data
 public class HikCommonR<T> {
-    private int code;
+    private Integer code;
     private String msg;
     private HikCommonData<T> data;
 }

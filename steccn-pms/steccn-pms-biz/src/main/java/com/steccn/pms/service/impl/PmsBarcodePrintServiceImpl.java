@@ -41,6 +41,7 @@ import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.WorkOrderMaterialVO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.AllArgsConstructor;
@@ -518,6 +519,16 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         }
         return flag;
 
+    }
+
+    @Override
+    public PmsCaseNoInfoVO getCaseNoInfo(String caseNo) {
+        PmsCaseNoInfoVO vo = new PmsCaseNoInfoVO();
+        PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo).orderByDesc(PmsBarcodePrint::getCreateTime).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)){
+            BeanUtil.copyProperties(one,vo);
+        }
+        return vo;
     }
 
     /**

@@ -2,6 +2,7 @@ package com.steccn.wms.controller.feign;
 
 
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
@@ -67,5 +68,12 @@ public class WmsStorageReceiptFeignController {
     @PostMapping("/weighbridge/save")
     public R<Boolean> weighbridgeSave(@RequestBody WmsWeighbridgeInfoDTO dto) {
         return R.success(wmsWeighbridgeInfoService.saveInfo(dto));
+    }
+
+
+    @ApiOperation("原片采购入库数")
+    @PostMapping("/purchase/inventory/raw/glass")
+    public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody  TupleDTO<LocalDateTime,LocalDateTime> tupleDTO){
+        return R.success(wmsStorageReceiptInfoService.purchaseInventoryRawGlass(tupleDTO));
     }
 }

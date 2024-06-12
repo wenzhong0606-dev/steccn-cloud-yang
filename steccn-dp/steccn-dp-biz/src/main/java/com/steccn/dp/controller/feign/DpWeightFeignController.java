@@ -7,6 +7,8 @@ import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.service.AdsOnOffCountService;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.service.DpColdEndCheckpointValueService;
+import com.steccn.dp.service.NaturalGasFlowCountService;
+import com.steccn.dp.vo.DpNatureGasVO;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -36,6 +38,7 @@ public class DpWeightFeignController {
     private final AdsOpcUaAll3Service adsOpcUaAll3Service;
     private final AdsOnOffCountService adsOnOffCountService;
     private final DpColdEndCheckpointValueService dpColdEndCheckpointValueService;
+    private final NaturalGasFlowCountService naturalGasFlowCountService;
 
     @PostMapping("/weight/count")
     @ApiOperation(value = "电子秤读数")
@@ -71,5 +74,11 @@ public class DpWeightFeignController {
     @ApiOperation(value = "只保留7天的数据")
     public R<Boolean> deleteData(@RequestBody TupleDTO<LocalDateTime,String> dto) {
         return R.success(dpColdEndCheckpointValueService.deleteData(dto.getField1()));
+    }
+
+    @PostMapping("/gas/data")
+    @ApiOperation(value = "获取天然气数据")
+    public R<List<DpNatureGasVO>> natureGasData(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+        return R.success(naturalGasFlowCountService.natureGas(dto));
     }
 }

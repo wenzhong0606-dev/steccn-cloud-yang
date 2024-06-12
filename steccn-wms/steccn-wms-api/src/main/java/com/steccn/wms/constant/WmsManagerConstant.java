@@ -76,6 +76,8 @@ public interface WmsManagerConstant {
 
     String CODE_FIVE = "5";
 
+    String CODE_SEVEN = "7";
+
     /**
      * 采购类型
      */

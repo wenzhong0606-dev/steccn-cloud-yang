@@ -48,6 +48,25 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     Boolean addInfo(List<WmsInventoryDTO> infoList);
 
 
+
+    /**
+     * 添加库存(根据库存id)
+     *
+     * @param infoList
+     * @return
+     */
+    Boolean addInfoByInventoryId(List<WmsInventoryDTO> infoList);
+
+
+    /**
+     * 减少库存(根据库存id)
+     *
+     * @param infoList
+     * @return
+     */
+    Boolean reduceInfoByCaseNoList(List<WmsInventoryDTO> infoList);
+
+
     /**
      * 新增库存(新增)
      *

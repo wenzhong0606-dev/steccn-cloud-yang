@@ -91,7 +91,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceiptMapper, WmsDeliveryReceipt>
-        implements WmsDeliveryReceiptService {
+        implements WmsDeliveryReceiptService  {
 
 
     private final RemoteOfficeFeign remoteOfficeFeign;
@@ -1022,6 +1022,36 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     @Override
     public List<WmsDeliveryReceiptInfoVO> intervalDataVO(LocalDateTime startTime, LocalDateTime endTime) {
         return  this.baseMapper.intervalDataVO(startTime,endTime);
+    }
+
+    @Override
+    public Boolean deleteInfo(WmsDeliveryReceiptDTO dto) {
+       if (CollUtil.isNotEmpty(dto.getList())){
+           List<WmsInventoryDTO> deleteList = Lists.newArrayList();
+           Set<Long> ids = Sets.newHashSet();
+           dto.getList().forEach(info->{
+                       WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                       wmsInventoryDTO.setId(info.getInventoryId());
+                       wmsInventoryDTO.setQuantity(info.getQuantity());
+                       deleteList.add(wmsInventoryDTO);
+                       ids.add(info.getId());
+                   });
+                   wmsInventoryService.addInfoByInventoryId(deleteList);
+                   wmsDeliveryReceiptInfoService.removeByIds(ids);
+               }
+       return true;
+    }
+
+    @Override
+    public Page<SalesLogisticsBillVO> shippingReconciliation(SalesLogisticsBillDTO dto) {
+        //自定义sql查询数据
+        Page<SalesLogisticsBillVO> page = this.baseMapper.shippingReconciliation(new Page(dto.getCurrent(), dto.getSize()), dto);
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            Set<Long> collect = page.getRecords().stream().map(SalesLogisticsBillVO::getTypeId).collect(Collectors.toSet());
+            Map<Long, String> longStringMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(collect), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach( salesLogisticsBillVO -> salesLogisticsBillVO.setType(longStringMap.get(salesLogisticsBillVO.getTypeId())));
+        }
+        return page;
     }
 
     /**

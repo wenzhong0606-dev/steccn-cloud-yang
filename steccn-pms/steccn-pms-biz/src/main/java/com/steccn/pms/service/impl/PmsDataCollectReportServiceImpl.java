@@ -12,15 +12,20 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnRow;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpNatureGasVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.pms.dto.DataCollectDTO;
 import com.steccn.pms.service.PmsDataCollectReportService;
@@ -57,6 +62,7 @@ import java.util.*;
 @Slf4j
 @RequiredArgsConstructor
 public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportService {
+    private final RemoteDpFeignApi remoteDpFeignApi;
     @Override
     public SteccnTableDataDTO<Map<String, String>> turbineReport(LocalDate date) {
         List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("YR_DPU2_AI02_2_METER3"
@@ -605,11 +611,14 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 ,"RY_TEL9_PV"
                 ,"RY_PT511_PV"
                 ,"RY_TE501_PV"
+                ,"RY_TE502_PV"
                 ,"RY_TE503_PV"
+                ,"RY_TE504_PV"
                 ,"RY_TE505_PV"
                 ,"RY_TE506_PV"
                 ,"RY_TE507_PV"
                 ,"RY_TE508_PV"
+                ,"RY_TE509_PV"
                 ,"RY_PIC81_PV_OUT"
                 ,"RY_PIC81_MV"
                 ,"RY_LIC92_PV_OUT"
@@ -621,6 +630,13 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 ,"RY_TE63_PV"
         ));
         SteccnTableAssertUtil.notEmpty(data, "暂无数据");
+        //处理天然气流量数据
+        List<DpNatureGasVO> gasVOs = FeignOptional.of(() -> remoteDpFeignApi.natureGasData(new TupleDTO<>(date.atTime(8, 0, 0), date.plusDays(1).atTime(7, 0, 0))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(gasVOs)){
+            gasVOs.forEach(tmp->{
+                data.get(tmp.getTime().minusHours(8).getHour()).put(tmp.getPointId(),tmp.getValue().toString());
+            });
+        }
         SteccnTableDataDTO<Map<String, String>> tableData = new SteccnTableDataDTO<>();
         //2.1、组表头
         List<SteccnTableColumn> columns = Lists.newArrayList();
@@ -658,9 +674,9 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         columns.add(new SteccnTableColumn("head4","吊墙风压(pa)/温度(℃)",
                 Lists.newArrayList(new SteccnTableColumn("RY_PT511_PV","吊墙风压",null)
                         ,new SteccnTableColumn("steelTemp","钢温度",
-                                Lists.newArrayList(new SteccnTableColumn("RY_TE501_PV","左",null),new SteccnTableColumn("RY_TE503_PV","中",null),new SteccnTableColumn("RY_TE505_PV","右",null)))
+                                Lists.newArrayList(new SteccnTableColumn("RY_TE501_PV","TE501",null),new SteccnTableColumn("RY_TE502_PV","TE502",null),new SteccnTableColumn("RY_TE503_PV","TE503",null),new SteccnTableColumn("RY_TE504_PV","TE504",null)))
                         ,new SteccnTableColumn("turnTemp","砖温度",
-                                Lists.newArrayList(new SteccnTableColumn("RY_TE506_PV","左",null),new SteccnTableColumn("RY_TE507_PV","中",null),new SteccnTableColumn("RY_TE508_PV","右",null))))));
+                                Lists.newArrayList(new SteccnTableColumn("RY_TE506_PV","TE506",null),new SteccnTableColumn("RY_TE507_PV","TE507",null),new SteccnTableColumn("RY_TE508_PV","TE508",null),new SteccnTableColumn("RY_TE509_PV","TE509",null))))));
         columns.add(new SteccnTableColumn("RY_PIC81_PV_OUT","窑压(Pa)",null));
         columns.add(new SteccnTableColumn("RY_PIC81_MV","旋转闸板(%)",null));
         columns.add(new SteccnTableColumn("RY_LIC92_PV_OUT","液面(mm)",null));

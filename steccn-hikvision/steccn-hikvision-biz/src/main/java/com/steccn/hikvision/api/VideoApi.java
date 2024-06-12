@@ -3,6 +3,7 @@ package com.steccn.hikvision.api;
 import com.alibaba.fastjson.JSON;
 import com.hikvision.artemis.sdk.ArtemisHttpUtil;
 import com.hikvision.artemis.sdk.config.ArtemisConfig;
+import com.steccn.hikvision.dto.SysHikEventDTO;
 import com.steccn.hikvision.entity.Cameras;
 import com.steccn.hikvision.entity.PlaybackURLs;
 import com.steccn.hikvision.entity.PreviewURLs;
@@ -99,6 +100,18 @@ public class VideoApi {
             }
         };
         String body = JSON.toJSONString(playbackURLs);
+        String result = ArtemisHttpUtil.doPostStringArtemis(path, body, null, null, "application/json");
+        return result;
+    }
+
+    public String bookEvent(SysHikEventDTO dto) {
+        String getDataApi = ARTEMIS_PATH + "/api/eventService/v1/eventSubscriptionByEventTypes";
+        Map<String, String> path = new HashMap<String, String>(2) {
+            {
+                put("https://", getDataApi);
+            }
+        };
+        String body = JSON.toJSONString(dto);
         String result = ArtemisHttpUtil.doPostStringArtemis(path, body, null, null, "application/json");
         return result;
     }

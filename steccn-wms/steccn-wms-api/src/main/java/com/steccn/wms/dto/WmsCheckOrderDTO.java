@@ -36,6 +36,11 @@ public class WmsCheckOrderDTO  extends BasePageDTO implements Serializable {
     @ApiModelProperty("箱号")
     private String caseNo;
 
+    @ApiModelProperty("仓库id")
+    private Long warehouseId;
+
+    private String warehouseName;
+
     @ApiModelProperty("创建人名字")
     private String createName;
 

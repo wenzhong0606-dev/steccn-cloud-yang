@@ -55,7 +55,7 @@ public class WmsCheckOrderInfoVO implements Serializable {
 
 
     @ApiModelProperty("结果")
-    private BigDecimal result;
+    private BigDecimal result  = BigDecimal.ZERO; ;
 
     @ApiModelProperty("差额")
     private BigDecimal difference;

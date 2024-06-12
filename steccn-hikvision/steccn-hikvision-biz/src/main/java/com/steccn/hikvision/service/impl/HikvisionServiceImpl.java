@@ -8,6 +8,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.hikvision.api.VideoApi;
+import com.steccn.hikvision.dto.SysHikEventDTO;
 import com.steccn.hikvision.entity.Cameras;
 import com.steccn.hikvision.entity.HikCommonR;
 import com.steccn.hikvision.entity.HikvisionR;
@@ -15,6 +16,7 @@ import com.steccn.hikvision.entity.PreviewURLs;
 import com.steccn.hikvision.service.HikvisionService;
 import com.steccn.hikvision.vo.CameraVO;
 import com.steccn.hikvision.vo.HikCompanyVO;
+import com.steccn.oa.constant.OaConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.security.SecurityUtil;
@@ -110,8 +112,19 @@ public class HikvisionServiceImpl implements HikvisionService {
             return Lists.newArrayList();
         }
         String result = videoApi.getCompanyInfo(querys);
-        HikCommonR<HikCompanyVO> r = JSONObject.parseObject(result, HikCommonR.class);
-        return r.getData().getList();
+        List<HikCompanyVO> hikCompanyVOS = JSONObject.parseObject(result).getJSONObject("data").getJSONArray("list").toJavaList(HikCompanyVO.class);
+        return hikCompanyVOS;
+    }
+
+    @Override
+    public Boolean bookEvent(SysHikEventDTO dto) {
+        VideoApi videoApi = new VideoApi();
+        String s = videoApi.bookEvent(dto);
+        HikCommonR r = JSONObject.parseObject(s, HikCommonR.class);
+        if(r.getCode().equals(OaConstant.NO)){
+            return true;
+        }
+        return false;
     }
 
     /**

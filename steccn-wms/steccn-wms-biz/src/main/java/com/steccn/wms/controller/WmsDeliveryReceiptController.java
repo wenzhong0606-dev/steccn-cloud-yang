@@ -113,7 +113,7 @@ public class WmsDeliveryReceiptController {
         return R.success(wmsDeliveryReceiptService.deliveryFlagInfo(dto));
     }
 
-    @ApiOperation("销售出库通过物流单号获取物料明细")
+    @ApiOperation("销售出库通过s物流单号获取物料明细")
     @GetMapping("/delivery/sell/material/info")
     public R<WmsDeliverySellInfoVO> deliverySellMaterialInfo(@ApiParam("物流单号") @RequestParam("number")String number){
         return R.success(wmsDeliveryReceiptService.deliverySellMaterialInfo(number));
@@ -127,6 +127,13 @@ public class WmsDeliveryReceiptController {
         Assert.notNull(wmsDeliveryReceipt, "出库单为空");
         wmsDeliveryReceiptService.affirm(wmsDeliveryReceipt.getId());
         return R.success(code);
+    }
+
+
+    @ApiOperation("删除出库单明细并还原库存")
+    @PostMapping("/delete/info")
+    public R<Boolean> deleteInfo(@RequestBody WmsDeliveryReceiptDTO dto){
+        return R.success(wmsDeliveryReceiptService.deleteInfo(dto));
     }
 
 }

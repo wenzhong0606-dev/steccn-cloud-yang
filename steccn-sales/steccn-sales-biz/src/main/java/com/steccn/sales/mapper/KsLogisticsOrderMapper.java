@@ -1,12 +1,17 @@
 package com.steccn.sales.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.sales.domain.KsLogisticsOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.sales.dto.KsLogisticsDTO;
 import com.steccn.sales.dto.KsLogisticsDashBoardDTO;
+import com.steccn.sales.dto.KsShippingReconciliationDTO;
+import com.steccn.sales.vo.KsShippingReconciliationVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,6 +31,20 @@ public interface KsLogisticsOrderMapper extends BaseMapper<KsLogisticsOrder> {
      */
     List<KsLogisticsDashBoardDTO> selectLogisticsDashBoard(@Param("dto") KsLogisticsDTO dto);
 
+    /**
+     * 销售发货
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<KsShippingReconciliationVO> pageList(Page page,@Param("dto") KsShippingReconciliationDTO dto);
+
+    /**
+     * 查询物流单发货面积
+     * @param dto
+     * @return
+     */
+    BigDecimal selectDeliverySum(@Param("dto") TupleDTO<LocalDate,LocalDate> dto);
 }
 
 

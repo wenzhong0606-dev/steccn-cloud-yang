@@ -13,6 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -184,4 +185,9 @@ public interface RemoteSpareFeignApi {
     @PostMapping("/feign/platform/eqpSpare/listByProperty")
     @ApiOperation("根据产品属性获取物料列表")
     R<List<EqpSpareVO>> listByProperty(@RequestBody TupleDTO<String,Integer> dto);
+
+
+    @PostMapping("/feign/platform/eqpSpare/listByTypeId")
+    @ApiOperation("根据物料类型以及下级获取物料")
+    R<List<EqpSpareVO>> listByTypeId(Set<String> strings);
 }

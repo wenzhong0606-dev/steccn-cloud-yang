@@ -8,7 +8,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.hikvision.feign.RemoteHikFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -29,6 +31,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -63,6 +66,7 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
                 .like(StrUtil.isNotBlank(dto.getLicensePlate()),WmsWeighbridgeInfo::getLicensePlate,dto.getLicensePlate())
                 .like(StrUtil.isNotBlank(dto.getDriverName()),WmsWeighbridgeInfo::getDriverName,dto.getDriverName())
                 .like(StrUtil.isNotBlank(dto.getMaterialName()),WmsWeighbridgeInfo::getMaterialName,dto.getMaterialName())
+                .like(StrUtil.isNotBlank(dto.getCompanyName()),WmsWeighbridgeInfo::getCompanyName,dto.getCompanyName())
                 .ge(Objects.nonNull(dto.getFinishTimeStart()),WmsWeighbridgeInfo::getFinishTime,dto.getFinishTimeStart())
                 .le(Objects.nonNull(dto.getFinishTimeEnd()),WmsWeighbridgeInfo::getFinishTime,dto.getFinishTimeEnd())
                 .eq(Objects.nonNull(dto.getIsGenerateList()),WmsWeighbridgeInfo::getIsGenerateList, dto.getIsGenerateList());
@@ -101,7 +105,11 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
                 wmsStorageReceiptInfoDTO.setMaterialCode(tmp.getMaterialCode());
                 wmsStorageReceiptInfoDTO.setMaterialId(tmp.getMaterialId());
                 wmsStorageReceiptInfoDTO.setMaterialName(tmp.getMaterialName());
-                wmsStorageReceiptInfoDTO.setQuantity(tmp.getNetWeight());
+                if(Objects.nonNull(tmp.getDeductWeight())){
+                    wmsStorageReceiptInfoDTO.setQuantity(BigDecimalUtil.subtract(tmp.getNetWeight(),tmp.getDeductWeight()));
+                }else {
+                    wmsStorageReceiptInfoDTO.setQuantity(tmp.getDeductWeight());
+                }
                 wmsStorageReceiptInfoDTO.setShelfId(dto.getShelfId());
                 wmsStorageReceiptInfoDTO.setShelfName(dto.getShelfName());
                 wmsStorageReceiptInfoDTO.setShelfCode(dto.getShelfCode());
@@ -115,6 +123,19 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
         model.setIsGenerateList(OaConstant.NUM_1);
         model.setReceiptCode(code);
         update(model,new LambdaQueryWrapper<WmsWeighbridgeInfo>().in(WmsWeighbridgeInfo::getId,dto.getIds()));
+        return true;
+    }
+
+    @Override
+    public Boolean changeDeduct(WmsWeighbridgeInfoDTO dto) {
+        WmsWeighbridgeInfo byId = getById(dto.getId());
+        if(byId.getIsGenerateList().equals(OaConstant.NUM_1)){
+            throw new BusinessException("无法修改已生成入库单的记录");
+        }
+        WmsWeighbridgeInfo model = new WmsWeighbridgeInfo();
+        model.setId(dto.getId());
+        model.setDeductWeight(dto.getDeductWeight());
+        updateById(model);
         return true;
     }
 }

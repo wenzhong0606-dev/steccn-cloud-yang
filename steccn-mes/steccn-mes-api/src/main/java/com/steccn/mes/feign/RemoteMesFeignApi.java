@@ -68,4 +68,13 @@ public interface RemoteMesFeignApi {
     @PostMapping("/feign/mes/user/getEmpDepPost")
     @ApiOperation(value = "获取用户所属部门和岗位")
     R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto);
+
+    /**
+     * 获取用户所属菜单id
+     * @param userName
+     * @return
+     */
+    @GetMapping("/feign/mes/user/menuAuth")
+    @ApiOperation(value = "获取用户所属菜单")
+    R<List<Long>> getUserMenuAuth(@RequestParam("userName") String userName);
 }

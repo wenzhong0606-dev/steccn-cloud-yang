@@ -7,10 +7,7 @@ import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.vo.PmRawMaterialVO;
-import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.PmsWorkOrderBatchVO;
-import com.steccn.pms.vo.WorkOrderVO;
+import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -167,6 +164,12 @@ public interface RemotePmsFeignApi {
     @GetMapping("/feign/pms/produce/order/get/caseNo/flag")
     @ApiOperation(("箱号是否存在"))
     R<Boolean> getCaseNo(@RequestParam("caseNo") String caseNo);
+
+
+    @GetMapping("/feign/pms/produce/order/get/caseNo/info")
+    @ApiOperation(("获取箱号信息"))
+    R<PmsCaseNoInfoVO> getCaseNoInfo(@RequestParam("caseNo") String caseNo);
+
 
 
     @ApiOperation("根据产线id查询订单")

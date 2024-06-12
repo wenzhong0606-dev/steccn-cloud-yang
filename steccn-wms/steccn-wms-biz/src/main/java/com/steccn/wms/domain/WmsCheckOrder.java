@@ -59,6 +59,10 @@ public class WmsCheckOrder implements Serializable {
      */
     private Object checkArea;
 
+    private Long warehouseId;
+
+    private String warehouseName;
+
     /**
      * 备注
      */
