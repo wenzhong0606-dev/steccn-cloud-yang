@@ -45,12 +45,12 @@ public class LoginService {
     private final RemoteSysUserClientFeignApi remoteSysUserClientFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final CheckCodeService checkCodeService;
-    private final RedisTemplate<String, Integer> redisTemplate;
+    private final RedisTemplate<String, Long> redisTemplate;
     /**
      * 失败登录最大次数
      */
     @Value("${fail.login.count}")
-    final Integer FAIL_LOGIN_MAX_COUNT = 10;
+    final Long FAIL_LOGIN_MAX_COUNT = 10L;
 
     /**
      * 失败登录最大次数
@@ -74,7 +74,7 @@ public class LoginService {
         }
         //校验阈值
         String redisKey = "LOGIN_FAIL_COUNT:" + username;
-        Integer expire = redisTemplate.opsForValue().get(redisKey);
+        Long expire = redisTemplate.opsForValue().get(redisKey);
         if (Objects.nonNull(expire) && expire >= FAIL_LOGIN_MAX_COUNT) {
             throw new BusinessException("账号已被锁定，请"+ FAIL_LOGIN_MAX_TIME +"分钟后再试");
         }

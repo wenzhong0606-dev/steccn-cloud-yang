@@ -31,12 +31,12 @@ public class RedisConfig extends CachingConfigurerSupport {
     private ApplicationContext applicationContext;
 
     @Bean
-    public RedisTemplate<String, Integer> redisTemplateInt(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<String, Integer> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<String, Long> redisTemplateLong(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Integer.class));
+        redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Long.class));
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<>(Integer.class));
+        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<>(Long.class));
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
     }
