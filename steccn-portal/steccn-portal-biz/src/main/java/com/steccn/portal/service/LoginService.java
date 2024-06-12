@@ -1,17 +1,12 @@
 package com.steccn.portal.service;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
-import com.steccn.oa.dto.OaLoginParam;
-import com.steccn.oa.dto.OaLoginResult;
-import com.steccn.oa.dto.OaSsoTokenResult;
 import com.steccn.oa.dto.OaUserInfo;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysUserClientRefDTO;
@@ -21,11 +16,16 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.portal.constant.TokenConstant;
 import com.steccn.portal.dto.LoginMesUserInfoDTO;
 import com.steccn.portal.feign.RemotePortalMesFeignApi;
+import com.steccn.portal.service.checkcode.CheckCodeService;
 import com.steccn.portal.vo.SteccnTokenVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
@@ -36,25 +36,48 @@ import java.util.Objects;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@RefreshScope
 public class LoginService {
 
     private final RemoteTokenApi remoteTokenApi;
     private final OaInfoService oaInfoService;
-    private final MesMenuService mesMenuService;
     private final RemotePortalMesFeignApi remotePortalMesFeignApi;
     private final RemoteSysUserClientFeignApi remoteSysUserClientFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final CheckCodeService checkCodeService;
+    private final RedisTemplate<String, Integer> redisTemplate;
+    /**
+     * 失败登录最大次数
+     */
+    @Value("${fail.login.count}")
+    final Integer FAIL_LOGIN_MAX_COUNT = 10;
+
+    /**
+     * 失败登录最大次数
+     */
+    @Value("${fail.login.time}")
+    final Integer FAIL_LOGIN_MAX_TIME = 30;
+
 
     /**
      * 登录模块
-     *
      *
      * @param username 用户名
      * @param password 密码
      * @param clientNo 移动端唯一标识
      * @return
      */
-    public R<SteccnTokenVO> login(String username, String password,String clientNo,Integer loginStatus) {
+    public R<SteccnTokenVO> login(String username, String password, String clientNo, Integer loginStatus, String checkKey, String checkCode) {
+        //校验验证码
+        if (StrUtil.isNotBlank(checkKey) && StrUtil.isNotBlank(checkCode) && !checkCodeService.verify(checkKey, checkCode)) {
+            throw new RuntimeException("验证码错误，请重新输入");
+        }
+        //校验阈值
+        String redisKey = "LOGIN_FAIL_COUNT:" + username;
+        Integer expire = redisTemplate.opsForValue().get(redisKey);
+        if (Objects.nonNull(expire) && expire >= FAIL_LOGIN_MAX_COUNT) {
+            throw new BusinessException("账号已被锁定，请"+ FAIL_LOGIN_MAX_TIME +"分钟后再试");
+        }
         //1.定义变量
         //自己系统的token返回
         Object token = null;
@@ -105,23 +128,8 @@ public class LoginService {
                     steccnTokenVO.setDepartmentId(officeMap.getOrDefault(userInfoStr.getOfficeCode(), new SysOfficeVO()).getId());
                 }
             }
-
-//            //3.用户oa登录
-//            OaLoginParam oaLoginParam = new OaLoginParam();
-//            oaLoginParam.setLoginid(username);
-//            oaLoginParam.setUserpassword(password);
-//            R r = oaInfoService.checkLogin(oaLoginParam);
-//            Map oaMap = (Map) r.getData();
-//            OaLoginResult oaLoginResult = new OaLoginResult();
-//            BeanUtil.fillBeanWithMap(oaMap, oaLoginResult, true);
-//            steccnTokenVO.setOaUserId(oaLoginResult.getUserId());
-//            //4.如果oa登录失败，则直接跑异常
-//            if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
-//                log.error("r -> {}",r);
-//                throw new BusinessException("OA用户登录失败");
-//            }
             //将用户和clientNo绑定起来,用于push消息
-            if(StrUtil.isNotBlank(clientNo)){
+            if (StrUtil.isNotBlank(clientNo)) {
                 SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
                 sysUserClientRefDTO.setClientNo(clientNo);
                 sysUserClientRefDTO.setUserId(steccnTokenVO.getOaUserId().longValue());
@@ -129,27 +137,22 @@ public class LoginService {
                 Boolean aBoolean = FeignOptional.of(() -> remoteSysUserClientFeignApi.bind(sysUserClientRefDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 log.info("移动端绑定结果 -> {}", aBoolean);
             }
-//            //5.获取ssotoken
-//            R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
-//            Map ssoMap = (Map) ssoToken.getData();
-//            OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
-//            BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
-//            if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {
-//                log.error(" ssoToken -> {} ", ssoToken);
-//                throw new BusinessException("OA用户获取ssotoken失败");
-//            }
-//            steccnTokenVO.setOaToken(oaSsoTokenResult.getToken());
-//            //6.获取mess的token
-//            String mesToken = mesMenuService.getMesToken(username);
-//            steccnTokenVO.setMessToken(mesToken);
             flag = Boolean.TRUE;
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
+            //失败次数+1
+            redisTemplate.opsForValue().increment(redisKey);
+            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
             throw new BusinessException(e.getLocalizedMessage());
         }
         if (flag) {
+            //删除
+            redisTemplate.delete(redisKey);
             return R.success(steccnTokenVO);
         } else {
+            //失败次数+1
+            redisTemplate.opsForValue().increment(redisKey);
+            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
             return R.failure("用户名密码错误");
         }
     }
