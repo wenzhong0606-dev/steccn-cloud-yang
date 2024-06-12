@@ -131,4 +131,10 @@ public class PmsCompleteStorageFeignController {
         return R.success(pmsCompleteStorageService.storageReceiptCodeGetLineName(codeSet));
     }
 
+    @ApiOperation("根据箱号删除完工入库详情")
+    @PostMapping("/delete/info/caseNo")
+    R<Boolean> deleteInfoByCaseNo(@RequestBody Set<String> caseNos){
+        return R.success(pmsCompleteStorageInfoService.deleteInfoByCaseNo(caseNos));
+    }
+
 }

@@ -125,6 +125,12 @@ public class SysOfficeController {
         return R.success(sysOfficeService.getListSysOfficeList(dto));
     }
 
+    @GetMapping("/code")
+    public R<SysOfficeVO> getByCode(@RequestParam String code) {
+        return R.success(sysOfficeService.getByCode(code));
+    }
+
+
     @PostMapping("/list/listByTypeAndLine")
     @ApiOperation("根据车间编码列表选择产线")
     public R<List<SysOfficeVO>> getListSysOfficeList(@RequestBody SysOfficeDTO dto){

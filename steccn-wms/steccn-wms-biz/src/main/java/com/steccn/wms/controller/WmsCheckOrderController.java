@@ -94,6 +94,19 @@ public class WmsCheckOrderController {
         return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id));
     }
 
+
+    /*****
+     * 盘点差异调整
+     * @param
+     * @return
+     */
+    @GetMapping("/new/varianceAdjustmentCheckOrder")
+    @ApiOperation(value = "盘点差异调整")
+    public R<Boolean> newVarianceAdjustmentCheckOrder(Long id) {
+        return R.success(wmsCheckOrderService.newVarianceAdjustmentCheckOrder(id));
+    }
+
+
     /*****
      * 获取盘点单分类列表
      * @return

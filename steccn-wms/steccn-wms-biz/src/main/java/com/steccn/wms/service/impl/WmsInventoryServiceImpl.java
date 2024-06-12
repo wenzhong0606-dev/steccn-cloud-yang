@@ -372,13 +372,19 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             inventoryDTOList.forEach(wmsInventoryDTO -> ids.add(wmsInventoryDTO.getId()));
             Map<Long, WmsInventory> inventoryMap = getInventoryId(ids);
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            //增加库存数量为0时删除库存的逻辑
+            List<WmsInventory> deleteInventory = Lists.newArrayList();
             inventoryDTOList.forEach(info -> {
                 WmsInventory orDefault = inventoryMap.get(info.getId());
                 orDefault.setLockQuantity(orDefault.getLockQuantity().subtract(info.getQuantity()));
                 orDefault.setTotalQuantity(orDefault.getTotalQuantity().subtract(info.getQuantity()));
                 addWmsInventory.add(orDefault);
+                if (orDefault.getTotalQuantity().compareTo(BigDecimal.ZERO)<= 0) {
+                    deleteInventory.add(orDefault);
+                }
             });
             updateBatchById(addWmsInventory);
+            removeByIds(deleteInventory);
         }
         return true;
     }

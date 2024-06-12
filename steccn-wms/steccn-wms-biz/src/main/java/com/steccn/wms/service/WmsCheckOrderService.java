@@ -81,4 +81,6 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
     List<WmsCheckOrderAreaVO> areaCountList(Long checkOrderId);
 
     Boolean affirmCheck(WmsCheckOrderDTO dto);
+
+    Boolean newVarianceAdjustmentCheckOrder(Long id);
 }
