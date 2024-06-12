@@ -70,7 +70,7 @@ public class LoginService {
     public R<SteccnTokenVO> login(String username, String password, String clientNo, Integer loginStatus, String checkKey, String checkCode) {
         //校验验证码
         if (StrUtil.isNotBlank(checkKey) && StrUtil.isNotBlank(checkCode) && !checkCodeService.verify(checkKey, checkCode)) {
-            throw new RuntimeException("验证码错误，请重新输入");
+            throw new BusinessException("验证码错误，请重新输入");
         }
         //校验阈值
         String redisKey = "LOGIN_FAIL_COUNT:" + username;
