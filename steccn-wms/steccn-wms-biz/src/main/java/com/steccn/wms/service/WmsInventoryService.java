@@ -45,7 +45,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @param infoList
      * @return
      */
-    Boolean addInfo(List<WmsInventoryDTO> infoList);
+    Boolean     addInfo(List<WmsInventoryDTO> infoList);
 
 
 

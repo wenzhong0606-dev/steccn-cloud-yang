@@ -478,7 +478,6 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getId()));
         //获取盘点区域库存信息
         List<WmsCheckAreaVO> checkAreaList = JSON.parseArray(order.getCheckArea().toString(), WmsCheckAreaVO.class);
-        if (CollUtil.isNotEmpty(scanInfoList)) {
             if (CollUtil.isNotEmpty(checkAreaList)) {
                 Set<Long> shelfIds = Sets.newHashSet();
                 //如果盘点范围为货架
@@ -575,7 +574,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                             if (CollUtil.isEmpty(inventoryList1)) {
                                 WmsCheckOrderInfo wmsCheckOrderInfo = new WmsCheckOrderInfo();
                                 wmsCheckOrderInfo.setWarehouse(info.getWarehouse());
-                                wmsCheckOrderInfo.setQuantity(info.getQuantity());
+                                wmsCheckOrderInfo.setQuantity(BigDecimal.ZERO);
                                 wmsCheckOrderInfo.setResult(info.getQuantity());
                                 wmsCheckOrderInfo.setShelf(info.getShelf());
                                 wmsCheckOrderInfo.setBatch(info.getBatch());
@@ -625,7 +624,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                             }
                         });
                     }
-                    //库存中存在，扫描列表中不存在
+                    //盘点范围库存中存在，扫描列表中不存在
                     List<WmsInventory> inventoryInfoList = inventoryList.stream()
                             .filter(inventoryItem ->
                                     scanInfoList.stream()
@@ -658,7 +657,6 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                     }
                     wmsCheckOrderInfoService.saveBatch(checkOrderInfos);
             }
-        }
         return Boolean.TRUE;
     }
 
@@ -755,6 +753,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 });
             }
         }
+        order.setStatus(4);
+        updateById(order);
         return Boolean.TRUE;
     }
 
