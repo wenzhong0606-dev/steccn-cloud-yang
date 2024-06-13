@@ -150,4 +150,6 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return
      */
     List<CommonReportDTO> substrateProduceLine(DpPmsOperateDTO dto);
+
+    Boolean deleteInfoByCaseNo(Set<String> caseNos);
 }

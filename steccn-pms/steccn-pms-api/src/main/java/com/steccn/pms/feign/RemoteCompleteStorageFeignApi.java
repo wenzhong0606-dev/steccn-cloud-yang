@@ -30,6 +30,7 @@ public interface RemoteCompleteStorageFeignApi {
 
     /**
      * 完工入库变更状态
+     *
      * @param dto
      * @return
      */
@@ -47,11 +48,11 @@ public interface RemoteCompleteStorageFeignApi {
 
     @GetMapping("/feign/pms/complete/storage/code")
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
-    R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code);
+    R<Boolean> getCompleteStorageByCode(@RequestParam("code") String code);
 
     @GetMapping("/feign/pms/complete/storage/code/query")
     @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
-    R<PmsCompleteStorageVO> getCompleteStorage(@RequestParam("code")String code);
+    R<PmsCompleteStorageVO> getCompleteStorage(@RequestParam("code") String code);
 
     @PostMapping("/feign/pms/complete/storage/order/num")
     @ApiOperation("查询订单入库量-产线|班次日期|班次|订单")
@@ -59,7 +60,7 @@ public interface RemoteCompleteStorageFeignApi {
 
     @PostMapping("/feign/pms/complete/storage/week/num")
     @ApiOperation("查询订单入库量-产线|周")
-    R<Map<String, BigDecimal>> inStorageWeek(@RequestBody TripleDTO<List<Integer>,LocalDateTime, LocalDateTime> dto);
+    R<Map<String, BigDecimal>> inStorageWeek(@RequestBody TripleDTO<List<Integer>, LocalDateTime, LocalDateTime> dto);
 
     @PostMapping("/feign/pms/complete/storage/month/num")
     @ApiOperation("查询订单入库量-产线|月")
@@ -71,5 +72,9 @@ public interface RemoteCompleteStorageFeignApi {
 
     @ApiOperation("入库单编码获取生产订单产线名称")
     @PostMapping("/feign/pms/complete/storage/storage/receipt/code/get/line/name")
-    R<Map<String,String>> storageReceiptCodeGetLineName(@RequestBody Set<String> codeSet);
+    R<Map<String, String>> storageReceiptCodeGetLineName(@RequestBody Set<String> codeSet);
+
+    @ApiOperation("根据箱号删除生产入库单明细")
+    @PostMapping("/feign/pms/complete/storage/delete/info/caseNo")
+    R<Boolean> deleteInfoByCaseNo(@RequestBody Set<String> caseNos);
 }

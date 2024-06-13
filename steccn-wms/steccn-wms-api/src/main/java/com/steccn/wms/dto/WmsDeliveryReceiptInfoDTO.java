@@ -72,6 +72,8 @@ public class WmsDeliveryReceiptInfoDTO {
     @ApiModelProperty("单位名称")
     private Long unitId;
 
+    private String unitName;
+
     @ApiModelProperty("可用数量")
     private BigDecimal availableQuantity;
 

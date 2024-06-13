@@ -1869,9 +1869,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     @Override
     public Boolean deleteInfo(WmsStorageReceiptDTO dto) {
+
         if (CollUtil.isNotEmpty(dto.getList())) {
+
             List<WmsInventoryDTO> deleteList = Lists.newArrayList();
             Set<Long> ids = Sets.newHashSet();
+            Set<String> caseNos = Sets.newHashSet();
             dto.getList().forEach(info -> {
                 ids.add(info.getId());
                 WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
@@ -1879,10 +1882,20 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 wmsInventoryDTO.setOriginalCaseNo(info.getCaseNo());
                 wmsInventoryDTO.setOriginalQuantity(info.getQuantity());
                 deleteList.add(wmsInventoryDTO);
+                caseNos.add(info.getCaseNo());
             });
             //还原之前的库存信息
             wmsInventoryService.reduceInfoByCaseNoList(deleteList);
             wmsStorageReceiptInfoService.removeByIds(ids);
+            WmsStorageReceipt order = getById(dto.getId());
+            if (Objects.nonNull(order)){
+                SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("0", SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+                if (order.getType().equals(sysDictVO.getId())){
+                    //如果为生产完工入库，删除生产完工入库中的信息
+                    Boolean aBoolean = FeignOptional.of(() -> remoteCompleteStorageFeignApi.deleteInfoByCaseNo(caseNos), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                }
+            }
         }
         return true;
     }

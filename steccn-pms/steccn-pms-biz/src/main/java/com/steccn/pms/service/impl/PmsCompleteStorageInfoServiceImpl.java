@@ -146,7 +146,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         return resMap;
     }
 
-    public Map<String , BigDecimal> materialMap(List<Integer> lineIdList , Set<Long> materialSet, LocalDate date) {
+    public Map<String, BigDecimal> materialMap(List<Integer> lineIdList, Set<Long> materialSet, LocalDate date) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {
             LocalDateTime start = LocalDateUtil.getMorning(date);
@@ -222,7 +222,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     public List<CommonReportDTO> substrate(DpPmsOperateDTO dto) {
         List<CommonReportDTO> resList = Lists.newArrayList();
         //获取车间下的产线
-        List<Integer> officeIds=  Lists.newArrayList(dto.getOfficeId());
+        List<Integer> officeIds = Lists.newArrayList(dto.getOfficeId());
         Map<Integer, List<Integer>> officeMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Integer> integers = officeMap.get(dto.getOfficeId());
         //获取转换单位
@@ -232,12 +232,12 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
 
         //根据班次处理时间并获取数据
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        List<CompleteStorageInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
-        if (CollUtil.isNotEmpty(requisitionInfoList)){
+        List<CompleteStorageInfoDTO> requisitionInfoList = substrateData(granularity, integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        if (CollUtil.isNotEmpty(requisitionInfoList)) {
             Map<String, List<CompleteStorageInfoDTO>> collect = requisitionInfoList.stream().collect(Collectors.groupingBy(CompleteStorageInfoDTO::getMaterialName));
             Set<Long> materialIdSet = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getMaterialId).collect(Collectors.toSet());
             Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            collect.forEach((k,v)->{
+            collect.forEach((k, v) -> {
                 CommonReportDTO commonReportDTOTON = new CommonReportDTO();
                 commonReportDTOTON.setName(k);
                 commonReportDTOTON.setUnit(PmManagerConstant.UNIT_T);
@@ -250,17 +250,17 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 commonReportDTOSlice.setName(k);
                 commonReportDTOSlice.setUnit(PmManagerConstant.MEASURE_UNIT_PIECE);
 
-                Map<String,BigDecimal> valueMapTON = Maps.newHashMap();
-                Map<String,BigDecimal> valueMapM = Maps.newHashMap();
-                Map<String,BigDecimal> valueMapSplice = Maps.newHashMap();
+                Map<String, BigDecimal> valueMapTON = Maps.newHashMap();
+                Map<String, BigDecimal> valueMapM = Maps.newHashMap();
+                Map<String, BigDecimal> valueMapSplice = Maps.newHashMap();
                 v.forEach(completeStorageInfoDTO -> {
                     //单位转换
-                    BigDecimal m= UnitConvertUtil.convertMaterial(materialConvertMap.get(completeStorageInfoDTO.getMaterialId()), unitPiece.getId(), unitSm.getId(), completeStorageInfoDTO.getQuantity(), 4);
+                    BigDecimal m = UnitConvertUtil.convertMaterial(materialConvertMap.get(completeStorageInfoDTO.getMaterialId()), unitPiece.getId(), unitSm.getId(), completeStorageInfoDTO.getQuantity(), 4);
                     BigDecimal ton = UnitConvertUtil.convertMaterial(materialConvertMap.get(completeStorageInfoDTO.getMaterialId()), unitPiece.getId(), unitTon.getId(), completeStorageInfoDTO.getQuantity(), 4);
-                    String convert = MysqlDateKeyUtil.convert(granularity,completeStorageInfoDTO.getTime());
-                    MapUtil.add(valueMapM,convert,m,(x,y)->BigDecimalUtil.add(x,y));
-                    MapUtil.add(valueMapTON,convert,ton,(x,y)->BigDecimalUtil.add(x,y));
-                    MapUtil.add(valueMapSplice,convert,completeStorageInfoDTO.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                    String convert = MysqlDateKeyUtil.convert(granularity, completeStorageInfoDTO.getTime());
+                    MapUtil.add(valueMapM, convert, m, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(valueMapTON, convert, ton, (x, y) -> BigDecimalUtil.add(x, y));
+                    MapUtil.add(valueMapSplice, convert, completeStorageInfoDTO.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
                 });
                 commonReportDTOSlice.setValueMap(valueMapSplice);
                 commonReportDTOM.setValueMap(valueMapM);
@@ -275,15 +275,15 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 List<CommonReportDTO> totalList = Lists.newArrayList();
                 //数据按照单位分类进行合计
                 Map<String, List<CommonReportDTO>> unitMap = resList.stream().collect(Collectors.groupingBy(CommonReportDTO::getUnit));
-                unitMap.forEach((k,v)->{
+                unitMap.forEach((k, v) -> {
                     CommonReportDTO commonReportDTOTON = new CommonReportDTO();
                     commonReportDTOTON.setName(PmManagerConstant.TOTAL);
                     commonReportDTOTON.setUnit(k);
-                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                    Map<String, BigDecimal> valueMap = Maps.newHashMap();
                     v.forEach(reportDTO -> {
                         Map<String, BigDecimal> map = reportDTO.getValueMap();
-                        map.forEach((key,value)->{
-                            MapUtil.add(valueMap,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        map.forEach((key, value) -> {
+                            MapUtil.add(valueMap, key, value, (x, y) -> BigDecimalUtil.add(x, y));
                         });
                     });
                     commonReportDTOTON.setValueMap(valueMap);
@@ -298,29 +298,29 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                 for (String key : spareNameMap.keySet()) {
                     EqpSpareVO eqpSpareVO = spareNameMap.get(key);
                     for (CommonReportDTO commonReportDTO : resList) {
-                        if (commonReportDTO.getName().equals(key)){
-                            typeMap.computeIfAbsent(eqpSpareVO.getTypeName(),k-> new ArrayList<>()).add(commonReportDTO);
+                        if (commonReportDTO.getName().equals(key)) {
+                            typeMap.computeIfAbsent(eqpSpareVO.getTypeName(), k -> new ArrayList<>()).add(commonReportDTO);
                         }
                     }
                 }
-                typeMap.forEach((k,v)->{
+                typeMap.forEach((k, v) -> {
                     CommonReportDTO commonReportDTOM = new CommonReportDTO();
-                    commonReportDTOM.setName(k+PmManagerConstant.SUBTOTAL);
+                    commonReportDTOM.setName(k + PmManagerConstant.SUBTOTAL);
                     commonReportDTOM.setUnit(PmManagerConstant.MEASURE_UNIT_SM);
-                    Map<String,BigDecimal> valueMapM = Maps.newHashMap();
+                    Map<String, BigDecimal> valueMapM = Maps.newHashMap();
                     List<CommonReportDTO> filteredList = v.stream()
-                            .filter(reportDTO-> PmManagerConstant.MEASURE_UNIT_SM.equals(reportDTO.getUnit()))
+                            .filter(reportDTO -> PmManagerConstant.MEASURE_UNIT_SM.equals(reportDTO.getUnit()))
                             .collect(Collectors.toList());
-                    filteredList.forEach( reportDTO->{
+                    filteredList.forEach(reportDTO -> {
                         Map<String, BigDecimal> valueMap = reportDTO.getValueMap();
-                        valueMap.forEach((key,value)->{
-                            MapUtil.add(valueMapM,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        valueMap.forEach((key, value) -> {
+                            MapUtil.add(valueMapM, key, value, (x, y) -> BigDecimalUtil.add(x, y));
                         });
                     });
                     commonReportDTOM.setValueMap(valueMapM);
                     resList.add(commonReportDTOM);
                 });
-            resList.addAll(totalList);
+                resList.addAll(totalList);
             }
         }
         return resList;
@@ -330,12 +330,12 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     public List<CommonReportDTO> substrateProduceLine(DpPmsOperateDTO dto) {
         List<CommonReportDTO> resList = Lists.newArrayList();
         //获取车间下的产线
-        List<Integer> officeIds=  Lists.newArrayList(dto.getOfficeId());
+        List<Integer> officeIds = Lists.newArrayList(dto.getOfficeId());
         Map<Integer, List<Integer>> officeMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Integer> integers = officeMap.get(dto.getOfficeId());
         //根据产线获取对应时间的完工入库的记录
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        List<CompleteStorageInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        List<CompleteStorageInfoDTO> requisitionInfoList = substrateData(granularity, integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
         //根据产线分组
         Map<Integer, List<CompleteStorageInfoDTO>> lineMap = requisitionInfoList.stream().collect(Collectors.groupingBy(CompleteStorageInfoDTO::getProductLineId));
         //获取产线名称
@@ -352,7 +352,7 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         List<Long> materialIds = requisitionInfoList.stream().map(CompleteStorageInfoDTO::getMaterialId).collect(Collectors.toList());
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<CommonReportDTO> pullForceList = Lists.newArrayList();
-        lineMap.forEach((k,v)->{
+        lineMap.forEach((k, v) -> {
             //根据物料的类型数据进行分类
             Map<String, List<CompleteStorageInfoDTO>> typeMap = new HashMap<>();
             for (Long key : spareMap.keySet()) {
@@ -363,18 +363,18 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
                     }
                 }
             }
-            if (CollUtil.isNotEmpty(typeMap)){
-                typeMap.forEach( (typeMapKey,typeMapValue)->{
+            if (CollUtil.isNotEmpty(typeMap)) {
+                typeMap.forEach((typeMapKey, typeMapValue) -> {
                     CommonReportDTO commonReportDTO = new CommonReportDTO();
                     //名称为分类的名称
                     commonReportDTO.setName(typeMapKey);
                     //单位数据为产线名称
                     commonReportDTO.setUnit(lineNameMap.get(k));
-                    Map<String,BigDecimal> valueMap = Maps.newHashMap();
-                    if (CollUtil.isNotEmpty(typeMapValue)){
-                        typeMapValue.forEach( ele->{
+                    Map<String, BigDecimal> valueMap = Maps.newHashMap();
+                    if (CollUtil.isNotEmpty(typeMapValue)) {
+                        typeMapValue.forEach(ele -> {
 //                            String convert = MysqlDateKeyUtil.convert(granularity,ele.getInStorageTime());
-                            MapUtil.add(valueMap,ele.getInStorageTime(),ele.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                            MapUtil.add(valueMap, ele.getInStorageTime(), ele.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
                         });
                     }
                     commonReportDTO.setValueMap(valueMap);
@@ -385,32 +385,32 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
             List<PmsPullForceDataVO> pmsPullForceDataVOS = pullForceData.get(k);
             CommonReportDTO commonReportDTO = new CommonReportDTO();
             //名称为分类的名称
-            commonReportDTO.setName(lineNameMap.get(k)+"拉引量(T)");
+            commonReportDTO.setName(lineNameMap.get(k) + "拉引量(T)");
             commonReportDTO.setUnit(lineNameMap.get(k));
-            Map<String,BigDecimal> valueMap = Maps.newHashMap();
-            pmsPullForceDataVOS.forEach( data->{
-                String convert = MysqlDateKeyUtil.convert(granularity,data.getPullForceDate());
-                MapUtil.add(valueMap,convert,data.getQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+            Map<String, BigDecimal> valueMap = Maps.newHashMap();
+            pmsPullForceDataVOS.forEach(data -> {
+                String convert = MysqlDateKeyUtil.convert(granularity, data.getPullForceDate());
+                MapUtil.add(valueMap, convert, data.getQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
             });
             commonReportDTO.setValueMap(valueMap);
             pullForceList.add(commonReportDTO);
         });
-        if (CollUtil.isNotEmpty(resList)){
+        if (CollUtil.isNotEmpty(resList)) {
             //小计
             //根据产线将数据分类小计
             Map<String, List<CommonReportDTO>> unitMap = resList.stream().collect(Collectors.groupingBy(CommonReportDTO::getUnit));
-            unitMap.forEach( (k,v)->{
+            unitMap.forEach((k, v) -> {
                 CommonReportDTO commonReportDTO = new CommonReportDTO();
                 //名称为分类的名称
-                commonReportDTO.setName(k+PmManagerConstant.SUBTOTAL);
+                commonReportDTO.setName(k + PmManagerConstant.SUBTOTAL);
                 //单位数据为产线名称
                 commonReportDTO.setUnit(k);
-                Map<String,BigDecimal> valueMap = Maps.newHashMap();
-                if (CollUtil.isNotEmpty(v)){
-                    v.forEach( ele->{
+                Map<String, BigDecimal> valueMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(v)) {
+                    v.forEach(ele -> {
                         Map<String, BigDecimal> eleValueMap = ele.getValueMap();
-                        eleValueMap.forEach((key,value)->{
-                            MapUtil.add(valueMap,key,value,(x,y)->BigDecimalUtil.add(x,y));
+                        eleValueMap.forEach((key, value) -> {
+                            MapUtil.add(valueMap, key, value, (x, y) -> BigDecimalUtil.add(x, y));
                         });
                     });
                 }
@@ -438,16 +438,21 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         return resList;
     }
 
-    public  List<CompleteStorageInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity,List<Integer> integers, TupleDTO<LocalDateTime,LocalDateTime> dto){
+    @Override
+    public Boolean deleteInfoByCaseNo(Set<String> caseNos) {
+        return remove(new LambdaQueryWrapper<PmsCompleteStorageInfo>().in(PmsCompleteStorageInfo::getCaseNo, caseNos));
+    }
+
+    public List<CompleteStorageInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity, List<Integer> integers, TupleDTO<LocalDateTime, LocalDateTime> dto) {
         List<CompleteStorageInfoDTO> infoList;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            infoList = this.baseMapper.substrateDayData(integers,dto.getField1(),dto.getField2());
+            infoList = this.baseMapper.substrateDayData(integers, dto.getField1(), dto.getField2());
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
-            infoList = this.baseMapper.substrateWeekData(integers,dto.getField1(),dto.getField2());
+            infoList = this.baseMapper.substrateWeekData(integers, dto.getField1(), dto.getField2());
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
-            infoList = this.baseMapper.substrateMonthData(integers,dto.getField1(),dto.getField2());
+            infoList = this.baseMapper.substrateMonthData(integers, dto.getField1(), dto.getField2());
         } else {
-            infoList = this.baseMapper.substrateYearData(integers,dto.getField1(),dto.getField2());
+            infoList = this.baseMapper.substrateYearData(integers, dto.getField1(), dto.getField2());
         }
         return infoList;
     }

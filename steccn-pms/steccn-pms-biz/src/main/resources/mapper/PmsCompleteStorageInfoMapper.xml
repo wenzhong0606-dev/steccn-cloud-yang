@@ -69,6 +69,7 @@
         where pcs.type_id = #{typeId}
           and pcs.del_flag =0
           and pcs.state != 2
+        and info.del_flag = 0
           AND info.case_no in
         <foreach collection="caseNoSet" item="id"  open="(" close=")" separator=",">
             #{id}

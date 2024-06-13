@@ -325,7 +325,7 @@ public interface WmsManagerConstant {
         TYPE_7("7","生产退料入库","生产退料"),
         TYPE_8("8","其他入库",""),
         TYPE_9("9","调拨入库",""),
-        TYPE_10("10","盘盈入库",""),
+        TYPE_10("10","盘点入库",""),
         TYPE_11("11","期初出库",""),
         TYPE_12("12","生产领料",""),
         TYPE_13("13","采购退货",""),
@@ -333,7 +333,7 @@ public interface WmsManagerConstant {
         TYPE_15("15","冲销出库",""),
         TYPE_16("16","其他出库",""),
         TYPE_17("17","调拨出库",""),
-        TYPE_18("18","盘亏出库","");
+        TYPE_18("18","盘点出库","");
 
         private final String type;
 
