@@ -733,7 +733,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 affirm(model.getId(),dto.getCreateName());
             }
             //同步数据到销售系统
-          logistics(model,customerCodes);
+            logistics(model,customerCodes);
         } finally {
             lock.unlock();
         }
@@ -749,15 +749,21 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         SalesLogisticsSyncDTO dto = new SalesLogisticsSyncDTO();
         List<SalesLogisticsInfoDetailDTO> data = Lists.newArrayList();
         List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS = wmsDeliveryReceiptInfoService.infoList(wmsDeliveryReceipt.getId());
-        BigDecimal sum = wmsDeliveryReceiptInfoVOS.stream().map(WmsDeliveryReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
+//        BigDecimal sum = wmsDeliveryReceiptInfoVOS.stream().map(WmsDeliveryReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
         SalesLogisticsInfoDetailDTO salesLogisticsInfoDetailDTO = new SalesLogisticsInfoDetailDTO();
         salesLogisticsInfoDetailDTO.setState(WmsManagerConstant.LogisticsBillState.OUT_OF_STORAGE.getName());
+        BigDecimal sum = this.baseMapper.getOutSumQuantity(wmsDeliveryReceipt.getSalesOrder());
         salesLogisticsInfoDetailDTO.setOut_qty(sum.intValue());
-        salesLogisticsInfoDetailDTO.setDelivery_code(wmsDeliveryReceipt.getCode());
+
+        //查询该物流单相关的出库单，将出库单号逗号拼接传给销售系统
+        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, wmsDeliveryReceipt.getSalesOrder()));
+        String codes = String.join(",", list.stream().map(WmsDeliveryReceipt::getCode).collect(Collectors.toList()));
+        //查询该物流单相关的出库单箱号,获取箱号相关的客户条码
+        List<String> customerCodes =this.baseMapper.getCustomerBarcodesBySalesOrder(wmsDeliveryReceipt.getSalesOrder());
+        salesLogisticsInfoDetailDTO.setCustomer_barcode(customerCodes);
+        //查询该物流单出库数量
+        salesLogisticsInfoDetailDTO.setDelivery_code(codes);
         salesLogisticsInfoDetailDTO.setLogistics_code(wmsDeliveryReceipt.getSalesOrder());
-        if (CollUtil.isNotEmpty(customerCode)) {
-            salesLogisticsInfoDetailDTO.setCustomer_barcode(customerCode);
-        }
         data.add(salesLogisticsInfoDetailDTO);
         dto.setServer_code(WmsManagerConstant.SERVER_CODE);
         dto.setData(data);

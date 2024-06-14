@@ -190,4 +190,27 @@
         GROUP BY a.associated_no,b.type,date(b.create_time)
         ORDER BY date(b.create_time) DESC,b.type,a.associated_no DESC
     </select>
+    <select id="getCustomerBarcodesBySalesOrder" resultType="java.lang.String">
+        SELECT
+            d.customer_barcode
+        FROM
+            wms_delivery_receipt a
+                JOIN wms_delivery_receipt_info b ON b.delivery_receipt_id = a.id
+                JOIN wms_inventory c ON c.id = b.inventory_id
+                JOIN wms_customer_barcode d ON d.case_no = c.case_no
+        WHERE
+            a.sales_order = #{salesOrder}
+          AND b.del_flag = 0
+          AND d.del_flag = 0
+    </select>
+    <select id="getOutSumQuantity" resultType="java.math.BigDecimal">
+        SELECT
+            sum(b.quantity)
+        FROM
+            wms_delivery_receipt a
+                JOIN wms_delivery_receipt_info b ON b.delivery_receipt_id = a.id
+        WHERE
+            a.sales_order = #{salesOrder}
+          AND b.del_flag = 0
+    </select>
 </mapper>

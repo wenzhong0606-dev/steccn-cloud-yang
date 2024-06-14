@@ -570,7 +570,6 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                         Map<String, List<WmsInventory>> inventoryMap = list.stream().collect(Collectors.groupingBy(WmsInventory::getCaseNo));
                         infoList.forEach(info -> {
                             List<WmsInventory> inventoryList1 = inventoryMap.get(info.getCaseNo());
-
                             if (CollUtil.isEmpty(inventoryList1)) {
                                 WmsCheckOrderInfo wmsCheckOrderInfo = new WmsCheckOrderInfo();
                                 wmsCheckOrderInfo.setWarehouse(info.getWarehouse());

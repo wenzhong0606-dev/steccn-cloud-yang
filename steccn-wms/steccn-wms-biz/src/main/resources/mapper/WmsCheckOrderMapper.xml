@@ -40,6 +40,7 @@
              when 4  then   '已归档'	  else '' end ) AS statusName,a.check_area
         from wms_check_order a
         where  1=1
+        and a.del_flag = 0
         <if test="form.code!=null and form.code!=''">
             and a.code like CONCAT('%',#{form.code},'%')
         </if>

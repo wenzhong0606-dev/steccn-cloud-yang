@@ -13,6 +13,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -69,6 +70,10 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     List<WmsDeliveryReceiptInfoVO> intervalDataVO(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime);
 
     Page<SalesLogisticsBillVO> shippingReconciliation(Page page,@Param("dto") SalesLogisticsBillDTO dto);
+
+    List<String>   getCustomerBarcodesBySalesOrder(@Param("salesOrder") String salesOrder);
+
+    BigDecimal getOutSumQuantity(String salesOrder);
 }
 
 
