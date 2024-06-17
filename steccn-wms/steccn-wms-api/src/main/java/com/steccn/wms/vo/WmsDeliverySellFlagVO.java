@@ -21,7 +21,7 @@ public class WmsDeliverySellFlagVO {
     /**
      * 合同未发货>0
      */
-    private Integer contractNotDeliveredFlag = 1;
+    private Integer contractNotDeliveredFlag = 0;
 
 
 

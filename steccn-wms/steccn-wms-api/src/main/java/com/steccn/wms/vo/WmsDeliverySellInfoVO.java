@@ -25,4 +25,7 @@ public class WmsDeliverySellInfoVO {
 
     @ApiModelProperty("发货数量/片")
     private BigDecimal saleQty;
+
+    @ApiModelProperty("未发货数量")
+    private BigDecimal notYetShippedQuantity;
 }

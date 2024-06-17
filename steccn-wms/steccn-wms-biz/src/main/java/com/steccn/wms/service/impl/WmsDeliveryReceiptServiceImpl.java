@@ -653,19 +653,14 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     if (saleQty.compareTo(BigDecimal.ZERO)==0){
                         wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
                     }else {
-                        //获取物流单关联的出库单
-                        List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, number));
-                        if (CollUtil.isNotEmpty(list)) {
-                            List<Long> receiptIds = list.stream().map(WmsDeliveryReceipt::getId).collect(Collectors.toList());
-                            List<WmsDeliveryReceiptInfo> infolist = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId, receiptIds));
-                            BigDecimal sum = infolist.stream().map(WmsDeliveryReceiptInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add);
-                            if (sum.subtract(saleQty).compareTo(BigDecimal.ZERO) > 0) {
-                                wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
+                        //已发货数量
+                        BigDecimal sum = this.baseMapper.getOutSumQuantity(number);
+                            if (Objects.isNull(sum) || saleQty.subtract(sum).compareTo(BigDecimal.ZERO) > 0) {
+                                wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
                             }
                         }
                     }
                 }
-            }
         } catch (Exception e) {
             throw new BusinessException("物流单不存在");
         }
@@ -807,6 +802,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         dto.setCode(codes);
         String data = remoteSalesFeignApi.queryLogistics(dto);
         JSONObject jsonObject = JSONObject.parseObject(data);
+        //已发货数量
+        BigDecimal sum = Objects.isNull(this.baseMapper.getOutSumQuantity(number)) ? BigDecimal.ZERO : this.baseMapper.getOutSumQuantity(number);
         try {
             List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
             if (CollUtil.isNotEmpty(logisticsVOS)) {
@@ -819,6 +816,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellInfoVO.setMaterialCode(salesLogisticsVO.getProduct_code());
                 wmsDeliverySellInfoVO.setCustomerName(salesLogisticsVO.getCustomer_name());
                 wmsDeliverySellInfoVO.setSaleQty(BigDecimal.valueOf(salesLogisticsVO.getSale_qty()));
+                wmsDeliverySellInfoVO.setNotYetShippedQuantity(BigDecimal.valueOf(salesLogisticsVO.getSale_qty()).subtract(sum));
             }
         } catch (Exception e) {
             throw new BusinessException("物流单号不存在");
