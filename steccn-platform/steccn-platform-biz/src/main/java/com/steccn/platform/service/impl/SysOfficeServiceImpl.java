@@ -734,8 +734,11 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public List<SysOfficeVO> multiTree(SysOfficeMultiTreeDTO dto) {
-        List<SysOfficeVO> sysOfficeVOList = typeDataList(dto.getOfficeTypeList());
-        List<SysOfficeVO> collect = sysOfficeVOList.stream().filter(ele -> dto.getRootCodeList().contains(ele.getOfficeCode())).collect(Collectors.toList());
+        List<SysOfficeVO> collect = typeDataList(dto.getOfficeTypeList());
+        //接口增强 - 如果根节点集合为空，则放弃过滤，直接返回
+        if (CollUtil.isNotEmpty(dto.getRootCodeList())) {
+            collect = collect.stream().filter(ele -> dto.getRootCodeList().contains(ele.getOfficeCode())).collect(Collectors.toList());
+        }
         return collect;
     }
 
