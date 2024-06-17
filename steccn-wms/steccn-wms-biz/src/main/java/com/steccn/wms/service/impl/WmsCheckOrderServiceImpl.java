@@ -633,7 +633,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                         inventoryInfoList.forEach(inventory -> {
                             WmsCheckOrderInfo wmsCheckOrderInfo = new WmsCheckOrderInfo();
                             wmsCheckOrderInfo.setDifference(BigDecimal.ZERO.subtract(inventory.getTotalQuantity()));
-                            wmsCheckOrderInfo.setQuantity(BigDecimal.ZERO);
+                            wmsCheckOrderInfo.setQuantity(inventory.getTotalQuantity());
                             wmsCheckOrderInfo.setResult(BigDecimal.ZERO);
                             wmsCheckOrderInfo.setCaseNo(inventory.getCaseNo());
                             wmsCheckOrderInfo.setWarehouse(inventory.getWarehouseId());
@@ -695,7 +695,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                             wmsDeliveryReceiptInfoDTO.setShelfName(wmsInventory.getShelfName());
                             wmsDeliveryReceiptInfoDTO.setUnit(wmsInventory.getUnit());
                             wmsDeliveryReceiptInfoDTO.setUnitId(wmsInventory.getUnit());
-                            wmsDeliveryReceiptInfoDTO.setUnitName(wmsInventory.getUpdateName());
+//                            wmsDeliveryReceiptInfoDTO.setUnitName(wmsInventory.getUpdateName());
                             deliveryReceiptInfoDTOList.add(wmsDeliveryReceiptInfoDTO);
                         }
                     });
