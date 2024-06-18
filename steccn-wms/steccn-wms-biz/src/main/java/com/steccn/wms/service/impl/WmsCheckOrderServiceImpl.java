@@ -69,6 +69,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
     private final WmsInventoryService wmsInventoryService;
     private final WmsCheckOrderScanInfoService wmsCheckOrderScanInfoService;
+    private final WmsTransferSlipService wmsTransferSlipService;
 
     /***
      * 获取盘点管理列表
@@ -107,6 +108,30 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         if (Objects.isNull(dto.getId())) {
             dto.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_PMS_BATCH, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
             dto.setStatus(0);
+            List<WmsCheckAreaVO> checkAreaList = JSON.parseArray(dto.getCheckArea().toString(), WmsCheckAreaVO.class);
+            if (CollUtil.isNotEmpty(checkAreaList)) {
+                Set<Long> shelfIds = Sets.newHashSet();
+                //如果盘点范围为货架
+                if (dto.getCheckScope().equals(1)) {
+                    shelfIds.addAll(checkAreaList.stream().map(WmsCheckAreaVO::getId).collect(Collectors.toList()));
+                } else if (dto.getCheckScope().equals(0)) {
+                    //盘点范围为仓库，获取仓库下的货架(货架单选)
+                    SysOfficeParentDTO officeParentDTO = new SysOfficeParentDTO();
+                    officeParentDTO.setOfficeType("5");
+                    officeParentDTO.setId(Math.toIntExact(checkAreaList.get(0).getId()));
+                    List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    officeVOS.forEach(office -> shelfIds.add(Long.valueOf(office.getId())));
+                }
+                if (CollUtil.isNotEmpty(shelfIds)){
+                    Integer integer = wmsStorageReceiptService.unAffirmByShelf(shelfIds);
+                    Assert.isFalse(Objects.nonNull(integer) && integer > 0,"有入库单未确认，需要先去确认才可以开始盘点");
+                    Integer deliveryQty = wmsDeliveryReceiptService.unAffirmByShelf(shelfIds);
+                    Assert.isFalse(Objects.nonNull(deliveryQty) && deliveryQty > 0,"有出库单未确认，需要先去确认才可以开始盘点");
+                    Integer transferSlipQty = wmsTransferSlipService.unAffirmByShelf(shelfIds);
+                    Assert.isFalse(Objects.nonNull(transferSlipQty) && transferSlipQty > 0,"有调拨单未确认，需要先去确认才可以开始盘点");
+
+                }
+            }
             result = baseMapper.insert(dto);
         } else {
             result = baseMapper.updateById(dto);

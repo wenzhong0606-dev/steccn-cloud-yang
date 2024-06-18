@@ -1058,6 +1058,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return page;
     }
 
+    @Override
+    public Integer unAffirmByShelf(Set<Long> shelfIds) {
+        return this.baseMapper.unAffirmByShelf(shelfIds);
+    }
+
     /**
      * 当前最大的code值
      *

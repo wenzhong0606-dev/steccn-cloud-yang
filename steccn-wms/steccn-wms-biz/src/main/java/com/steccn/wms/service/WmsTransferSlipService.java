@@ -136,4 +136,6 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
     BigDecimal totalQuantityM(WmsReportWarehouseDTO dto);
 
     Boolean batch(WmsTransferSlipBatchDto dto);
+
+    Integer unAffirmByShelf(Set<Long> shelfIds);
 }

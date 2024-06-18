@@ -75,6 +75,8 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
                                                                          @Param("end") LocalDateTime end,
                                                                          @Param("warehouseIds") List<Integer> wsIdSet,
                                                                          @Param("materialIds") List<Long> materialIds);
+
+    Integer wmsTransferSlipService(@Param("shelfIds") Set<Long> shelfIds);
 }
 
 

@@ -180,4 +180,6 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     Boolean deleteInfo(WmsDeliveryReceiptDTO dto);
 
     Page<SalesLogisticsBillVO> shippingReconciliation(SalesLogisticsBillDTO dto);
+
+    Integer unAffirmByShelf(Set<Long> shelfIds);
 }

@@ -235,4 +235,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Boolean deleteInfo(WmsStorageReceiptDTO dto);
 
     WmsCodeInfoVO codeInfo(WmsStorageReceiptFlagInfoDTO dto);
+
+    Integer unAffirmByShelf(Set<Long> shelfIds);
 }

@@ -1954,6 +1954,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return codeInfoVO;
     }
 
+    @Override
+    public Integer unAffirmByShelf(Set<Long> shelfIds) {
+      return  this.baseMapper.unAffirmByShelf(shelfIds);
+    }
+
     /**
      * 冲销
      * @return

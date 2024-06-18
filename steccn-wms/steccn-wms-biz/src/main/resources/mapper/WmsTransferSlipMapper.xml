@@ -238,4 +238,25 @@
         field1,
         wtsi.material_id
     </select>
+    <select id="wmsTransferSlipService" resultType="java.lang.Integer">
+        SELECT
+            COUNT( a.id )
+        FROM
+            wms_transfer_slip a
+                JOIN wms_transfer_slip_info b ON a.id = b.transfer_slip_id
+        WHERE
+            a.del_flag = 0
+          AND b.del_flag = 0
+          AND a.`status` = 0
+          AND (
+            b.source_shelf IN
+            <foreach collection="shelfIds" item="shelfId" open="(" close=")" separator=",">
+            #{shelfId}
+             </foreach>
+            or b.target_shelf in
+            <foreach collection="shelfIds" item="shelfId" open="(" close=")" separator=",">
+            #{shelfId}
+            </foreach>
+            )
+    </select>
 </mapper>

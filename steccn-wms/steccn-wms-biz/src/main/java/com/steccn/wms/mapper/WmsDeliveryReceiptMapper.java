@@ -74,6 +74,8 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     List<String>   getCustomerBarcodesBySalesOrder(@Param("salesOrder") String salesOrder);
 
     BigDecimal getOutSumQuantity(String salesOrder);
+
+    Integer unAffirmByShelf(@Param("shelfIds")Set<Long> shelfIds);
 }
 
 

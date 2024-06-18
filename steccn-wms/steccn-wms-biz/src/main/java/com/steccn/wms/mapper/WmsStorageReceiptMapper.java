@@ -85,6 +85,8 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
     List<WmsInventoryDaySheetVO> daySheetData(@Param("dto") WmsInventoryDaySheetDTO dto);
 
     List<WmsInventoryDaySheetCaseVO> daySheetCaseList(@Param("dto") WmsInventoryDaySheetDTO dto);
+
+    Integer unAffirmByShelf(@Param("shelfIds") Set<Long> shelfIds);
 }
 
 

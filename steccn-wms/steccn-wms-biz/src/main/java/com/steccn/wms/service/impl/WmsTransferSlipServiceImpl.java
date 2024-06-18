@@ -851,6 +851,11 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         return true;
     }
 
+    @Override
+    public Integer unAffirmByShelf(Set<Long> shelfIds) {
+       return this.baseMapper.wmsTransferSlipService(shelfIds);
+    }
+
 
     /**
      *
