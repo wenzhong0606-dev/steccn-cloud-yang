@@ -34,6 +34,9 @@ public class WmsStorageReceiptVO {
     @ApiModelProperty("仓库Id")
     private Integer warehouseId;
 
+    @ApiModelProperty("仓库编码")
+    private String warehouseCode;
+
     @ApiModelProperty("仓库名称")
     private String warehouseName;
 

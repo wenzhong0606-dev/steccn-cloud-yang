@@ -158,12 +158,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 officeSet.add(receipt.getWarehouseId());
                 officeSet.add(receipt.getShelfId());
             });
-            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             records.forEach(receipt -> {
                 receipt.setTypeName(dictMap.get(receipt.getType()));
-                receipt.setWarehouseName(officeMap.get(receipt.getWarehouseId()));
-                receipt.setShelfName(officeMap.get(receipt.getShelfId()));
+                SysOfficeVO whSysOffice = officeMap.getOrDefault(receipt.getWarehouseId(), new SysOfficeVO());
+                receipt.setWarehouseName(whSysOffice.getOfficeName());
+                receipt.setWarehouseCode(whSysOffice.getOfficeCode());
+                SysOfficeVO shelfSysOffice = officeMap.getOrDefault(receipt.getShelfId(), new SysOfficeVO());
+                receipt.setShelfName(shelfSysOffice.getOfficeName());
+                receipt.setShelfCode(shelfSysOffice.getOfficeCode());
             });
         }
         //返回数据
