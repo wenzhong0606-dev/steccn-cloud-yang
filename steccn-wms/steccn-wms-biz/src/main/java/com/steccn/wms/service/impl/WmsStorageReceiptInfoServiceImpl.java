@@ -20,6 +20,7 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
+import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.mapper.WmsDeliveryReceiptInfoMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;

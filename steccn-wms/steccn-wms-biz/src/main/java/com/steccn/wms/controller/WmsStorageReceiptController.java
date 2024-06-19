@@ -258,4 +258,10 @@ public class WmsStorageReceiptController {
     public R<BigDecimal> purchaseInventoryRawGlass(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO){
         return R.success(wmsStorageReceiptInfoService.purchaseInventoryRawGlass(tupleDTO));
     }
+
+    @ApiOperation("批量确认")
+    @PostMapping("/batch/confirmation")
+    public R<Boolean> batchConfirmation(@RequestBody TupleDTO<LocalDateTime,Long> tupleDTO){
+        return R.success(wmsStorageReceiptService.batchConfirmation(tupleDTO));
+    }
 }

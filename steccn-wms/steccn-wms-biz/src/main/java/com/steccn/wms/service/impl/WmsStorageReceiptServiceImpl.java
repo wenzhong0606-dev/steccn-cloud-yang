@@ -1959,6 +1959,23 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
       return  this.baseMapper.unAffirmByShelf(shelfIds);
     }
 
+    //根据仓库id批量确认入参时间之前的未确认的入库单
+    @Override
+    public Boolean batchConfirmation(TupleDTO<LocalDateTime, Long> tupleDTO) {
+        List<WmsStorageReceipt> list = list(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getWarehouseId, tupleDTO.getField2())
+                .lt(WmsStorageReceipt::getCreateTime, tupleDTO.getField1())
+                .eq(WmsStorageReceipt::getStatus, WmsManagerConstant.OrderStateEnum.ZERO.getCode()));
+        if (CollUtil.isNotEmpty(list)){
+            for (WmsStorageReceipt wmsStorageReceipt : list) {
+                System.out.println("开始"+wmsStorageReceipt.getId());
+                affirm(wmsStorageReceipt.getId(),SecurityUtils.getUser().getName());
+                System.out.println("成功:"+wmsStorageReceipt.getId());
+            }
+        }
+
+        return true;
+    }
+
     /**
      * 冲销
      * @return

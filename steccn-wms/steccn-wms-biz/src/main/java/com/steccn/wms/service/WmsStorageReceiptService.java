@@ -2,6 +2,7 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.pms.dto.PmExcelDTO;
@@ -237,4 +238,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     WmsCodeInfoVO codeInfo(WmsStorageReceiptFlagInfoDTO dto);
 
     Integer unAffirmByShelf(Set<Long> shelfIds);
+
+    Boolean batchConfirmation(TupleDTO<LocalDateTime, Long> tupleDTO);
 }
