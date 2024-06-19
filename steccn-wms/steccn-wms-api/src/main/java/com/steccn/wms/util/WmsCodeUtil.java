@@ -63,6 +63,12 @@ public class WmsCodeUtil {
      * 数字位数-12
      */
     public final static Integer NUM_BIT_12 = 12;
+
+    /**
+     * 数字位数-12
+     */
+    public final static Integer NUM_BIT_10 = 10;
+
     /**
      * @param prefix     前缀
      * @param numBit     数字位数【0填充】

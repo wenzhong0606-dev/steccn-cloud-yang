@@ -123,9 +123,6 @@ public class WmsDeliveryReceiptController {
     @PostMapping("/sell")
     public R<String> sell(@RequestBody WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO){
         String code = wmsDeliveryReceiptService.sell(wmsDeliveryReceiptDTO);
-        WmsDeliveryReceipt wmsDeliveryReceipt = wmsDeliveryReceiptService.getOne(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getCode, code), false);
-        Assert.notNull(wmsDeliveryReceipt, "出库单为空");
-        wmsDeliveryReceiptService.affirm(wmsDeliveryReceipt.getId());
         return R.success(code);
     }
 

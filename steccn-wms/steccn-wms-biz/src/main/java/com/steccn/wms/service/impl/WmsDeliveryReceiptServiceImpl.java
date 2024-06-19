@@ -643,22 +643,17 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String state = salesLogisticsVO.getState();
-                if (WmsManagerConstant.LogisticsBillState.DRAFT.getName().equals(state) ||
-                        WmsManagerConstant.LogisticsBillState.RESERVED.getName().equals(state) ||
-                        WmsManagerConstant.LogisticsBillState.SYN_SENT.getName().equals(state)||
-                        WmsManagerConstant.LogisticsBillState.ALREADY_ENTERED.getName().equals(state)){
-                    wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
-                    BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
+                wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
                     //如果销售数量为0
-                    if (saleQty.compareTo(BigDecimal.ZERO)==0){
+                if (saleQty.compareTo(BigDecimal.ZERO)==0){
                         wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
-                    }else {
+                }else {
                         //已发货数量
                         BigDecimal sum = this.baseMapper.getOutSumQuantity(number);
                             if (Objects.isNull(sum) || saleQty.subtract(sum).compareTo(BigDecimal.ZERO) > 0) {
                                 wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
                             }
-                        }
                     }
                 }
         } catch (Exception e) {
@@ -727,7 +722,6 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
                 affirm(model.getId(),dto.getCreateName());
             }
-            //同步数据到销售系统
             logistics(model,customerCodes);
         } finally {
             lock.unlock();
@@ -748,8 +742,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         SalesLogisticsInfoDetailDTO salesLogisticsInfoDetailDTO = new SalesLogisticsInfoDetailDTO();
         salesLogisticsInfoDetailDTO.setState(WmsManagerConstant.LogisticsBillState.OUT_OF_STORAGE.getName());
         BigDecimal sum = this.baseMapper.getOutSumQuantity(wmsDeliveryReceipt.getSalesOrder());
-        salesLogisticsInfoDetailDTO.setOut_qty(sum.intValue());
-
+        if (Objects.nonNull(sum)){
+            salesLogisticsInfoDetailDTO.setOut_qty(sum.intValue());
+        }
         //查询该物流单相关的出库单，将出库单号逗号拼接传给销售系统
         List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, wmsDeliveryReceipt.getSalesOrder()));
         String codes = String.join(",", list.stream().map(WmsDeliveryReceipt::getCode).collect(Collectors.toList()));
@@ -803,7 +798,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         String data = remoteSalesFeignApi.queryLogistics(dto);
         JSONObject jsonObject = JSONObject.parseObject(data);
         //已发货数量
-        BigDecimal sum = Objects.isNull(this.baseMapper.getOutSumQuantity(number)) ? BigDecimal.ZERO : this.baseMapper.getOutSumQuantity(number);
+        BigDecimal outSumQuantity = this.baseMapper.getOutSumQuantity(number);
+        BigDecimal sum = Objects.isNull(outSumQuantity) ? BigDecimal.ZERO : outSumQuantity;
         try {
             List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
             if (CollUtil.isNotEmpty(logisticsVOS)) {
@@ -1082,7 +1078,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT.length() + WmsCodeUtil.NUM_BIT_12);
+                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT.length() + WmsCodeUtil.NUM_BIT_10);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;
