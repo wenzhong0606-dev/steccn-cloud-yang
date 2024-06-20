@@ -1,7 +1,10 @@
 package com.steccn.wms.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

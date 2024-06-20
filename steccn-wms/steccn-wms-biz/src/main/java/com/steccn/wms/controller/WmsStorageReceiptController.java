@@ -17,6 +17,7 @@ import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.domain.WmsStorageReceipt;
+import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptService;
@@ -62,8 +63,14 @@ public class WmsStorageReceiptController {
 
     @ApiOperation("入库凭证分页列表")
     @PostMapping("/list")
-    public R< Page<WmsStorageReceiptVO>> pageList(@RequestBody WmsStorageReceiptPageDTO dto) {
+    public R<Page<WmsStorageReceiptVO>> pageList(@RequestBody WmsStorageReceiptPageDTO dto) {
         return R.success(wmsStorageReceiptService.pageList(dto));
+    }
+
+    @ApiOperation("入库明细分页")
+    @PostMapping("/info/list")
+    public R<Page<WmsStorageReceiptInfoVO>> infoPageList(@RequestBody WmsStorageReceiptPageDTO dto){
+        return R.success(wmsStorageReceiptInfoService.infoPageList(dto));
     }
 
     @ApiOperation("新增")

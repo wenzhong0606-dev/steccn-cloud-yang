@@ -19,6 +19,8 @@ import java.util.List;
 @ApiModel("入库凭证分页DTO")
 public class WmsStorageReceiptPageDTO extends BasePageDTO {
 
+    private Long id;
+
     @ApiModelProperty("入库单")
     private String code;
 
