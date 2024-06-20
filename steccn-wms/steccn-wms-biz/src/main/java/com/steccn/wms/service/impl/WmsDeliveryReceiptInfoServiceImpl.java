@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author W10
@@ -79,6 +80,17 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
             list.forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
         }
         return list;
+    }
+
+    @Override
+    public Page<WmsDeliveryReceiptInfoVO> infoPageList(WmsDeliveryReceiptPageDTO dto) {
+        Page<WmsDeliveryReceiptInfoVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            Set<Long> dictIds = page.getRecords().stream().map(WmsDeliveryReceiptInfoVO::getUnit).collect(Collectors.toSet());
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
+        }
+        return page;
     }
 }
 
