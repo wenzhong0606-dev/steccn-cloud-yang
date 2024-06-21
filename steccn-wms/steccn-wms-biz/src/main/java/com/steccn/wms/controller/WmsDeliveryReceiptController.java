@@ -8,11 +8,13 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
+import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptFlagInfoDto;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.dto.WmsStorageReceiptFlagInfoDTO;
+import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiOperation;
@@ -38,6 +40,7 @@ import java.util.Map;
 public class WmsDeliveryReceiptController {
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
+    private final WmsDeliveryReceiptInfoService wmsDeliveryReceiptInfoService;
 
     @ApiOperation("出库凭证分页列表")
     @PostMapping("/list")
@@ -57,6 +60,12 @@ public class WmsDeliveryReceiptController {
     @SysLog("出库凭证编辑")
     public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody WmsDeliveryReceiptDTO dto) {
         return R.success(wmsDeliveryReceiptService.edit(dto));
+    }
+
+    @ApiOperation("出库明细分页")
+    @PostMapping("/info/list")
+    public R<Page<WmsDeliveryReceiptInfoVO>> infoPageList(@RequestBody WmsDeliveryReceiptPageDTO dto){
+        return R.success(wmsDeliveryReceiptInfoService.infoPageList(dto));
     }
 
     @ApiOperation("出库凭证确认")

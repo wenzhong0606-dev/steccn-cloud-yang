@@ -60,5 +60,22 @@
             a.affirm_time &gt;= #{startTime} AND
             a.affirm_time &lt; #{endTime}
     </select>
+    <select id="pageList" resultType="com.steccn.wms.vo.WmsDeliveryReceiptInfoVO">
+        SELECT a.id,
+               a.inventory_id,
+               b.material_id,
+               b.material_name,
+               b.material_code,
+               b.shelf_id,
+               b.shelf_name,
+               a.quantity,
+               a.associated_no,
+               b.batch,
+               b.case_no,
+               b.unit
+        FROM wms_delivery_receipt_info a
+                 LEFT JOIN wms_inventory b ON b.id = a.inventory_id
+        WHERE a.delivery_receipt_id = #{dto.id} and a.del_flag = 0
+    </select>
 
 </mapper>

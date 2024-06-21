@@ -1,9 +1,11 @@
 package com.steccn.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -22,11 +24,14 @@ import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.mapper.WmsDeliveryReceiptInfoMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.mapper.WmsStorageReceiptInfoMapper;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -35,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -121,6 +127,31 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
            return this.baseMapper.purchaseInventoryRawGlass(tupleDTO.getField1(),tupleDTO.getField2(),materialIds);
         }
         return null;
+    }
+
+    @Override
+    public Page<WmsStorageReceiptInfoVO> infoPageList(WmsStorageReceiptPageDTO dto) {
+        Page<WmsStorageReceiptInfo> page =   page(new Page(dto.getCurrent(), dto.getSize()),new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                .eq(WmsStorageReceiptInfo::getStorageReceiptId,dto.getId()));
+        Page<WmsStorageReceiptInfoVO> resPage = new Page<>();
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            Set<Long> dictSet = Sets.newHashSet();
+            List<Long> materialIds = Lists.newArrayList();
+            page.getRecords().forEach(wmsStorageReceiptInfo -> {
+                dictSet.add(wmsStorageReceiptInfo.getUnit());
+                materialIds.add(wmsStorageReceiptInfo.getMaterialId());
+            });
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            BeanUtil.copyProperties(page,resPage);
+            List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(page.getRecords(), WmsStorageReceiptInfoVO.class);
+            wmsStorageReceiptInfoVOS.forEach(wmsStorageReceiptInfoVO -> {
+                wmsStorageReceiptInfoVO.setUnitName(dictMap.get(wmsStorageReceiptInfoVO.getUnit()));
+                wmsStorageReceiptInfoVO.setSpecification(materialMap.get(wmsStorageReceiptInfoVO.getMaterialId()).getSpecifications());
+            });
+            resPage.setRecords(wmsStorageReceiptInfoVOS);
+        }
+        return resPage;
     }
 }
 

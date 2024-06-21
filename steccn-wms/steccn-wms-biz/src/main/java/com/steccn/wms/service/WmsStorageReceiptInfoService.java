@@ -1,12 +1,15 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -61,4 +64,6 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
      * @return
      */
     BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDateTime, LocalDateTime> tupleDTO);
+
+    Page<WmsStorageReceiptInfoVO> infoPageList(WmsStorageReceiptPageDTO dto);
 }

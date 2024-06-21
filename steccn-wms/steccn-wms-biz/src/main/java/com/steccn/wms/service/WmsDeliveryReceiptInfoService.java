@@ -1,6 +1,7 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
@@ -33,4 +34,6 @@ public interface WmsDeliveryReceiptInfoService extends IService<WmsDeliveryRecei
      * @return
      */
     List<WmsDeliveryReceiptInfoVO> infoList(Long id);
+
+    Page<WmsDeliveryReceiptInfoVO> infoPageList(WmsDeliveryReceiptPageDTO dto);
 }

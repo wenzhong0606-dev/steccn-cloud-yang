@@ -43,6 +43,8 @@ public interface WmsDeliveryReceiptInfoMapper extends BaseMapper<WmsDeliveryRece
                                                        @Param("materialId") Long materialId,
                                                        @Param("startTime") LocalDateTime start,
                                                        @Param("endTime") LocalDateTime end);
+
+    Page<WmsDeliveryReceiptInfoVO> pageList(@Param("page") Page page,@Param("dto") WmsDeliveryReceiptPageDTO dto);
 }
 
 
