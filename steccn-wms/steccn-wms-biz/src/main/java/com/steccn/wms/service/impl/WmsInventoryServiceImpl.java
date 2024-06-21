@@ -943,7 +943,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     private Map<Long, WmsInventory> getInventoryId(List<Long> ids) {
         Map<Long, WmsInventory> map = Maps.newHashMap();
         if (CollUtil.isNotEmpty(ids)) {
-            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, ids));
+            List<WmsInventory> list =   this.baseMapper.getInventoryIdDelFlag(ids);
+//            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, ids));
             list.forEach(wmsInventory -> {
                 map.put(wmsInventory.getId(), wmsInventory);
             });
