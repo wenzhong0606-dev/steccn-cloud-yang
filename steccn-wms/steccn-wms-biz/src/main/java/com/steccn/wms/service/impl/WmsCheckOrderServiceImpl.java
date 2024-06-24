@@ -38,6 +38,7 @@ import com.steccn.wms.vo.WmsCheckOrderVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.util.function.Tuple3;
 
 import java.math.BigDecimal;
@@ -103,6 +104,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String addOrUpdateCheckOrder(WmsCheckOrder dto) {
         Integer result;
         if (Objects.isNull(dto.getId())) {
