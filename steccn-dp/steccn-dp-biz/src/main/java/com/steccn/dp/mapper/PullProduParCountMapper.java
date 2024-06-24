@@ -1,0 +1,22 @@
+package com.steccn.dp.mapper;
+
+import com.baomidou.dynamic.datasource.annotation.DS;
+import com.steccn.dp.domain.PullProduParCount;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+* @author Admin
+* @description 针对表【pull_produ_par_count】的数据库操作Mapper
+* @createDate 2024-06-24 16:15:14
+* @Entity com.steccn.dp.domain.PullProduParCount
+*/
+@Mapper
+@DS("ch")
+public interface PullProduParCountMapper extends BaseMapper<PullProduParCount> {
+
+}
+
+
+
+

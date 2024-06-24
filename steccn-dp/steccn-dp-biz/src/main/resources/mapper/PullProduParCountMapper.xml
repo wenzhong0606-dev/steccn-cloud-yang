@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.PullProduParCountMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.PullProduParCount">
+            <result property="id" column="id" jdbcType="OTHER"/>
+            <result property="dt1" column="dt1" jdbcType="TIMESTAMP"/>
+            <result property="dt2" column="dt2" jdbcType="TIMESTAMP"/>
+            <result property="idValue" column="id_value" jdbcType="DECIMAL"/>
+            <result property="productLine" column="product_line" jdbcType="OTHER"/>
+            <result property="partitionDatehour" column="partition_dateHour" jdbcType="OTHER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,dt1,dt2,
+        id_value,product_line,partition_dateHour
+    </sql>
+</mapper>

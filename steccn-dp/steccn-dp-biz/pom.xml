@@ -53,7 +53,7 @@
         <dependency>
             <groupId>ru.yandex.clickhouse</groupId>
             <artifactId>clickhouse-jdbc</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.1</version>
         </dependency>
         <!--多数据源-->
         <dependency>
