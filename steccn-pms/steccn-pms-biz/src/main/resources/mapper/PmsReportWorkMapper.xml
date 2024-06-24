@@ -669,6 +669,7 @@
         ON prw.id = prwh.report_work_id
         WHERE
         prw.del_flag = 0
+        AND prwh.del_flag = 0
         AND prw.class_date >= #{dto.startDate}
         AND prw.class_date &lt;= #{dto.endDate}
         AND prwh.start_time IS NOT NULL
