@@ -88,6 +88,8 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
      * @return
      */
     BigDecimal inventory(@Param("warehouseIds")Set<Long> warehouseIds);
+
+    List<WmsInventory> getInventoryIdDelFlag(@Param("ids")  List<Long> ids);
 }
 
 
