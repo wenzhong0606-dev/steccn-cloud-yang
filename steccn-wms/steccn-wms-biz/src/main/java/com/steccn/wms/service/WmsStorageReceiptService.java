@@ -240,4 +240,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Integer unAffirmByShelf(Set<Long> shelfIds);
 
     Boolean batchConfirmation(TupleDTO<LocalDateTime, Long> tupleDTO);
+
+    Boolean batchAffirm(WmsStorageReceiptBatchAffirmDTO dto);
 }

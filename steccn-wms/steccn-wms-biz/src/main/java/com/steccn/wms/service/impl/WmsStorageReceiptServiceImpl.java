@@ -1976,6 +1976,22 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return true;
     }
 
+    @Override
+    public Boolean batchAffirm(WmsStorageReceiptBatchAffirmDTO dto) {
+        if (CollUtil.isNotEmpty(dto.getIdList())){
+            dto.getIdList().forEach(id->{
+                WmsUpdateBatchShelfDTO wmsUpdateBatchShelfDTO = new WmsUpdateBatchShelfDTO();
+                wmsUpdateBatchShelfDTO.setShelfCode(dto.getShelfCode());
+                wmsUpdateBatchShelfDTO.setShelfName(dto.getShelfName());
+                wmsUpdateBatchShelfDTO.setShelfId(dto.getShelfId());
+                wmsUpdateBatchShelfDTO.setId(id);
+                updateBatchShelf(wmsUpdateBatchShelfDTO);
+                affirm(id,SecurityUtils.getUser().getName());
+            });
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * 冲销
      * @return
