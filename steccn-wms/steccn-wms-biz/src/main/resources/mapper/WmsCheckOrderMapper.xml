@@ -87,6 +87,7 @@
         when 4  then   '已归档' else '' end ) AS statusName
         from wms_check_order a
         where 1=1
+          and  a.del_flag = 0
         <if test="status!=null">
             and a.status = #{status}
         </if>
