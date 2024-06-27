@@ -18,5 +18,5 @@ public interface PullProduParCountService extends IService<PullProduParCount> {
      * @param date
      * @return
      */
-    List<DpTheoryPullForceVO> getPullForce(LocalDate date);
+    DpTheoryPullForceVO getPullForce(LocalDate date);
 }
