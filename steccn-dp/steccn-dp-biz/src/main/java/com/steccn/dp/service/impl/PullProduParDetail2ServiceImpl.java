@@ -31,12 +31,12 @@ public class PullProduParDetail2ServiceImpl extends ServiceImpl<PullProduParDeta
     public EpDeepConsumeContrastVO getThickTrend(LocalDate date, Integer productLine) {
         List<PullProduParDetail2> model = list(new QueryWrapper<PullProduParDetail2>()
                 .select("avg(id_value) AS idValue, toHour(dt) AS partitionDatehour")
+                .groupBy("partitionDatehour")
+                .orderBy(true,true,"partitionDatehour")
                 .lambda()
                 .eq(PullProduParDetail2::getProductLine,productLine)
                 .ge(PullProduParDetail2::getDt, date.atTime(8, 0, 0))
-                .le(PullProduParDetail2::getDt, date.plusDays(1).atTime(8, 0, 0))
-                .groupBy(PullProduParDetail2::getPartitionDatehour)
-                .orderBy(true,true,PullProduParDetail2::getPartitionDatehour));
+                .le(PullProduParDetail2::getDt, date.plusDays(1).atTime(8, 0, 0)));
         SteccnTableAssertUtil.notEmpty(model,"数据为空");
         EpDeepConsumeContrastVO vo = new EpDeepConsumeContrastVO();
         List<String> xAxis = Lists.newArrayList();

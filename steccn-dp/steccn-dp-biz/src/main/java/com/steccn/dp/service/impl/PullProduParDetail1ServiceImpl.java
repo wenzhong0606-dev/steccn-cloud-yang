@@ -34,12 +34,12 @@ public class PullProduParDetail1ServiceImpl extends ServiceImpl<PullProduParDeta
     public EpDeepConsumeContrastVO getSpeedTrend(LocalDate date, Integer productLine) {
         List<PullProduParDetail1> model = list(new QueryWrapper<PullProduParDetail1>()
                 .select("avg(id_value) AS idValue, toHour(dt) AS partitionDatehour")
+                .groupBy("partitionDatehour")
+                .orderBy(true,true,"partitionDatehour")
                 .lambda()
                 .eq(PullProduParDetail1::getProductLine,productLine)
                 .ge(PullProduParDetail1::getDt, date.atTime(8, 0, 0))
-                .le(PullProduParDetail1::getDt, date.plusDays(1).atTime(8, 0, 0))
-                .groupBy(PullProduParDetail1::getPartitionDatehour)
-                .orderBy(true,true,PullProduParDetail1::getPartitionDatehour));
+                .le(PullProduParDetail1::getDt, date.plusDays(1).atTime(8, 0, 0)));
         SteccnTableAssertUtil.notEmpty(model,"数据为空");
         EpDeepConsumeContrastVO vo = new EpDeepConsumeContrastVO();
         List<String> xAxis = Lists.newArrayList();
