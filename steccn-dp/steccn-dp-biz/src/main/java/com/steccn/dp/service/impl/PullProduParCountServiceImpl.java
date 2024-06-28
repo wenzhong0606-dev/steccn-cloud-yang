@@ -91,7 +91,7 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
                 //理论拉引量 = 时长 * 速度 * 玻璃板宽 * 2.5 * 厚度
                 DpTheoryPullForceDataVO tmp = new DpTheoryPullForceDataVO();
                 String num = NumberChineseFormatter.format(i,false,false);
-                tmp.setProductLineName("基片"+num+"车间");
+                tmp.setProductLineName("基片"+num+"产线");
                 //厚度
                 int finalI = i;
                 BigDecimal thick = new BigDecimal(cfg.stream().filter(v -> v.getContent()

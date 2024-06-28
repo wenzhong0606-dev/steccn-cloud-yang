@@ -2,6 +2,7 @@ package com.steccn.sales.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,6 +16,7 @@ import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -180,6 +182,27 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     public BigDecimal salesDeliverySum(TupleDTO<LocalDate, LocalDate> dto) {
         BigDecimal bigDecimal = ksLogisticsOrderMapper.selectDeliverySum(dto);
         return bigDecimal;
+    }
+
+    @Override
+    public EpDeepConsumeContrastVO logisticsNum(LocalDate start, LocalDate end) {
+        List<KsLogisticsOrder> data = list(new QueryWrapper<KsLogisticsOrder>()
+                .select("sum(sale_qty) As saleQty,send_date As sendDate")
+                .groupBy("sendDate")
+                .lambda()
+                .ge(KsLogisticsOrder::getSendDate, start)
+                .le(KsLogisticsOrder::getSendDate, end));
+        SteccnTableAssertUtil.notEmpty(data,"数据为空");
+        EpDeepConsumeContrastVO result = new EpDeepConsumeContrastVO();
+        List<String> xAxis = Lists.newArrayList();
+        List<BigDecimal> yData = Lists.newArrayList();
+        data.forEach(tmp->{
+            xAxis.add(tmp.getSendDate().toString());
+            yData.add(tmp.getSaleQty());
+        });
+        result.setXAxis(xAxis);
+        result.setYData(yData);
+        return result;
     }
 }
 

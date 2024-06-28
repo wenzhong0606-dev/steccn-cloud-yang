@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import lombok.Data;
 
@@ -44,7 +46,7 @@ public class KsSendNotice implements Serializable {
     /**
      * 客户
      */
-    private Object customerId;
+    private Integer customerId;
 
     /**
      * 产品
@@ -54,7 +56,7 @@ public class KsSendNotice implements Serializable {
     /**
      * 销售数量(片)
      */
-    private Object saleQty;
+    private BigDecimal saleQty;
 
     /**
      * Created by
@@ -94,7 +96,7 @@ public class KsSendNotice implements Serializable {
     /**
      * 发货日期
      */
-    private Date sendDate;
+    private LocalDate sendDate;
 
     /**
      * 面积(m²)

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.sales.domain.KsLogisticsOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.sales.dto.KsLogisticsDTO;
@@ -48,4 +49,12 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
      * @return
      */
     BigDecimal salesDeliverySum(TupleDTO<LocalDate,LocalDate> dto);
+
+    /**
+     * 物流单发货数
+     * @param start
+     * @param end
+     * @return
+     */
+    EpDeepConsumeContrastVO logisticsNum(LocalDate start,LocalDate end);
 }
