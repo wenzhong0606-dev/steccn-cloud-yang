@@ -111,7 +111,7 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
                 //理论拉引量
                 BigDecimal theoryNum = model.stream().filter(v -> v.getProductLine().equals(finalI)).findFirst().orElse(new PullProduParCount()).getIdValue();
                 theoryNum = BigDecimalUtil.multiply(BigDecimalUtil.multiply(theoryNum,density),thick,2);
-                tmp.setTheoryPullForce(theoryNum);
+                tmp.setTheoryPullForce(BigDecimalUtil.divide(theoryNum,new BigDecimal(1000),2));
                 //实际拉引量
                 BigDecimal actNum = pmsPullForceDataVOS.stream()
                         .filter(v -> v.getProductLineId().equals(productLineIds.get(finalI - 1))
