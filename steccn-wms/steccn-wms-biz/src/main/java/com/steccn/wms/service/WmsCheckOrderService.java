@@ -83,4 +83,6 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
     Boolean affirmCheck(WmsCheckOrderDTO dto);
 
     Boolean newVarianceAdjustmentCheckOrder(Long id);
+
+    Boolean updateStatus(WmsCheckOrderDTO wmsCheckOrderDTO);
 }

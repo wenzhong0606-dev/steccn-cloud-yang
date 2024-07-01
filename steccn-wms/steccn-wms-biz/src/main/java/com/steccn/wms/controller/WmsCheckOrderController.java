@@ -182,6 +182,13 @@ public class WmsCheckOrderController {
         return R.success(wmsCheckOrderService.areaCountList(checkOrderId));
     }
 
+
+    @PostMapping("/update/status")
+    @ApiOperation("修改单据状态为执行中")
+    public R<Boolean> updateStatus(@RequestBody WmsCheckOrderDTO wmsCheckOrderDTO){
+        return R.success(wmsCheckOrderService.updateStatus(wmsCheckOrderDTO));
+    }
+
     @PostMapping("/affirm/check")
     @ApiOperation("确认盘点")
     public R<Boolean>  affirmCheck(@RequestBody WmsCheckOrderDTO dto){
