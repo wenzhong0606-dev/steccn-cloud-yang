@@ -220,5 +220,27 @@ public class WmsReportController {
 
         return R.success(wmsDeliveryReceiptService.shippingReconciliation(dto));
     }
+
+
+    @GetMapping("/finished/product/total/quantity")
+    @ApiOperation("库存实时总数（成品库）")
+    public R<BigDecimal> finishedProductTotalQuantity(){
+        return R.success(wmsReportService.finishedProductTotalQuantity());
+    }
+
+
+    @GetMapping("/finished/product/lock/total/quantity")
+    @ApiOperation("库存实时锁定总数（成品库）")
+    public R<BigDecimal> finishedProductLockTotalQuantity(){
+        return R.success(wmsReportService.finishedProductLockTotalQuantity());
+    }
+
+    @GetMapping("/finished/product/on/the/way/total/quantity")
+    @ApiOperation("库存实时在途总数（成品库）")
+    public R<BigDecimal> finishedProductOnTheWayTotalQuantity(){
+        return R.success(wmsReportService.finishedProductOnTheWayTotalQuantity());
+    }
+
+
 }
 

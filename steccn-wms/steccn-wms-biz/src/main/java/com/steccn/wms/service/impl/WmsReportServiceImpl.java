@@ -32,7 +32,9 @@ import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
+import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsReportService;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.vo.*;
@@ -60,6 +62,7 @@ public class WmsReportServiceImpl implements WmsReportService {
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
     private final WmsStorageReceiptService wmsStorageReceiptService;
+    private final WmsInventoryMapper wmsInventoryMapper;
     private final RemoteDpWmsDataFeignApi remoteDpWmsDataFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
@@ -432,6 +435,43 @@ public class WmsReportServiceImpl implements WmsReportService {
     @Override
     public List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto) {
       return wmsStorageReceiptService.daySheetCaseList(dto);
+    }
+
+    @Override
+    public BigDecimal finishedProductTotalQuantity() {
+        Set<Long> warehouseIds  = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        return wmsInventoryMapper.inventory(warehouseIds);
+    }
+
+    @Override
+    public BigDecimal finishedProductLockTotalQuantity() {
+
+        Set<Long> warehouseIds  = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        return wmsInventoryMapper.lockTotalQuantity(warehouseIds);
+    }
+
+    @Override
+    public BigDecimal finishedProductOnTheWayTotalQuantity() {
+        Set<Long> warehouseIds = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        return wmsInventoryMapper.onTheWayTotalQuantity(warehouseIds);
     }
 
 

@@ -168,4 +168,20 @@
             #{id}
         </foreach>
     </select>
+    <select id="lockTotalQuantity" resultType="java.math.BigDecimal">
+        SELECT SUM(lock_quantity)
+        FROM wms_inventory
+        WHERE del_flag =0 and warehouse_id IN
+        <foreach collection="warehouseIds" open="(" close=")" item="warehouseId" separator=",">
+            #{warehouseId}
+        </foreach>
+    </select>
+    <select id="onTheWayTotalQuantity" resultType="java.math.BigDecimal">
+        SELECT SUM(stock_quantity)
+        FROM wms_inventory
+        WHERE del_flag =0 and warehouse_id IN
+        <foreach collection="warehouseIds" open="(" close=")" item="warehouseId" separator=",">
+            #{warehouseId}
+        </foreach>
+    </select>
 </mapper>
