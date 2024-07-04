@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.*;
@@ -270,7 +271,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
 
 
     @Override
-    public List<OaUserVO> getAllOaUser(TupleDTO<LocalDateTime,LocalDateTime> dto) {
+    public List<OaUserVO> getAllOaUser(TripleDTO<LocalDateTime,LocalDateTime, Set<String>> dto) {
         List<OaUserVO> oaUserVOS = hrmresourceMapper.selectJoinList(OaUserVO.class,
                 new MPJLambdaWrapper<OaUserVO>()
                         .selectAs(Hrmresource::getId, OaUserVO::getId)
@@ -286,6 +287,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
                         .leftJoin(Hrmdepartment.class, Hrmdepartment::getId, Hrmresource::getDepartmentid)
 //                        .ne(Hrmresource::getStatus, OaConstant.NUM_5)
                         .isNull(Hrmjobtitles::getCanceled)
+                        .notIn(CollUtil.isNotEmpty(dto.getField3()),Hrmresource::getCertificatenum,dto.getField3())
                         .le(Hrmresource::getModified, dto.getField2().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .ge(Hrmresource::getModified, dto.getField1().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .orderByDesc(Hrmresource::getModified));

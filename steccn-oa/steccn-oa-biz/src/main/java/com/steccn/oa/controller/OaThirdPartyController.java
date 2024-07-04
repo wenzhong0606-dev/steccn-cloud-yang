@@ -11,6 +11,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * oa第三方接口
@@ -76,7 +78,7 @@ public class OaThirdPartyController {
 
     @PostMapping("/thirdParty/getAllOaUser")
     @ApiOperation(value = "第三方获取所有oa用户")
-    public R<List<OaUserVO>> getAllOaUser(HttpServletRequest request, @RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
+    public R<List<OaUserVO>> getAllOaUser(HttpServletRequest request, @RequestBody TripleDTO<LocalDateTime,LocalDateTime, Set<String>> dto) {
         validRequestHeader(request);
         return R.success(hrmresourceService.getAllOaUser(dto));
     }

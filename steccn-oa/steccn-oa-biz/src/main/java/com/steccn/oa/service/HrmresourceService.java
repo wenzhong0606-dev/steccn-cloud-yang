@@ -1,6 +1,7 @@
 package com.steccn.oa.service;
 
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.domain.Hrmresource;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -110,7 +111,7 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * 获取所有oa用户
      * @return
      */
-    List<OaUserVO> getAllOaUser(TupleDTO<LocalDateTime,LocalDateTime> dto);
+    List<OaUserVO> getAllOaUser(TripleDTO<LocalDateTime,LocalDateTime, Set<String>> dto);
 
     /**
      * 根据登录名获取oa信息
