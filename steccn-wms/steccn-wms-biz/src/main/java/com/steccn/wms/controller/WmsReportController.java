@@ -241,6 +241,33 @@ public class WmsReportController {
         return R.success(wmsReportService.finishedProductOnTheWayTotalQuantity());
     }
 
+    @ApiOperation("库存准确率")
+    @PostMapping("/inventory/accuracy")
+    public R<String> inventoryAccuracy(){
+        return R.success(wmsReportService.inventoryAccuracy());
+    }
+
+
+    @ApiOperation("破损率")
+    @PostMapping("/breakage/rate")
+    public R<String> breakageRate(){
+        return R.success(wmsReportService.breakageRate());
+    }
+
+    @PostMapping("/inaction/stock/proportion")
+    @ApiOperation("呆滞库存占比")
+    public R<String> inactionStockProportion(){
+        return R.success(wmsReportService.inactionStockProportion());
+    }
+
+
+    @ApiOperation("库存周转率")
+    @PostMapping("/inventory/carry/rate")
+    public R<String> inventoryCarryRate(){
+        return R.success(wmsReportService.inventoryCarryRate());
+    }
+
+
 
 }
 

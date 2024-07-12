@@ -131,7 +131,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
         //3.存放生产订单中
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(pmsBarcodePrint.getProduceOrderId());
-        Assert.notNull(pmsProduceOrder, "生产订单不能为空");
+        Assert.notNull(pmsProduceOrder , "生产订单不能为空");
 
         HashSet<Long> set = Sets.newHashSet(pmsProduceOrder.getMaterialId());
         Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = FeignOptional.of(() -> remoteWmsShelfStrategyFeignApi.materialShelfUpInfo(set), FeignConstant.STECCN_WMS_SERVICE_NAME).get();

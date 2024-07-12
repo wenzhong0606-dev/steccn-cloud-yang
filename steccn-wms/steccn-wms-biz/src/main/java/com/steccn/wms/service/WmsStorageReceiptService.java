@@ -242,4 +242,10 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Boolean batchConfirmation(TupleDTO<LocalDateTime, Long> tupleDTO);
 
     Boolean batchAffirm(WmsStorageReceiptBatchAffirmDTO dto);
+
+    BigDecimal monthSum(Set<Long> warehouseIds);
+
+    BigDecimal damagedInventory(Set<Long> warehouseIds);
+
+    BigDecimal salesTotalQuantity(Set<Long> warehouseIds, LocalDate firstDay, LocalDate result);
 }

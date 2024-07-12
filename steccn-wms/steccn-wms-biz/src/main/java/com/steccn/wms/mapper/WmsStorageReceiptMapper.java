@@ -10,6 +10,8 @@ import com.steccn.wms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -87,6 +89,12 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
     List<WmsInventoryDaySheetCaseVO> daySheetCaseList(@Param("dto") WmsInventoryDaySheetDTO dto);
 
     Integer unAffirmByShelf(@Param("shelfIds") Set<Long> shelfIds);
+
+    BigDecimal monthSum( @Param("firstDay")LocalDate firstDay, @Param("lastDay") LocalDate lastDay,@Param("warehouseIds") Set<Long> warehouseIds);
+
+    BigDecimal damagedInventory(@Param("firstDay")LocalDate firstDay, @Param("lastDay") LocalDate lastDay,@Param("warehouseIds") Set<Long> warehouseIds);
+
+    BigDecimal salesTotalQuantity(@Param("warehouseIds")Set<Long> warehouseIds,@Param("firstDay") LocalDate firstDay,@Param("result")  LocalDate result);
 }
 
 

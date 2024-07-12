@@ -56,4 +56,12 @@ public interface WmsReportService {
      * @return
      */
     BigDecimal finishedProductOnTheWayTotalQuantity();
+
+    String inventoryAccuracy();
+
+    String breakageRate();
+
+    String inactionStockProportion();
+
+    String inventoryCarryRate();
 }
