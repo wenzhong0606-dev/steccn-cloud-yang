@@ -518,9 +518,8 @@ public class WmsReportServiceImpl implements WmsReportService {
         BigDecimal storageSum  = wmsStorageReceiptService.monthSum(warehouseIds);
         //本月盘点出入库总数/本月库存总数
         BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.add(deliverySum, storageSum), inventoryQuantity);
-        BigDecimal multiply = BigDecimalUtil.multiply(divide, new BigDecimal("100"));
         DecimalFormat decimalFormat = new DecimalFormat("0.00%");
-        return decimalFormat.format(multiply);
+        return decimalFormat.format(divide);
     }
 
     @Override
@@ -561,9 +560,8 @@ public class WmsReportServiceImpl implements WmsReportService {
         //获取破损出库的数据
         BigDecimal damageInventory =  wmsStorageReceiptService.damagedInventory(warehouseIds);
         BigDecimal divide = BigDecimalUtil.divide(damageInventory, inventoryQuantity);
-        BigDecimal multiply = BigDecimalUtil.multiply(divide, new BigDecimal("100"));
         DecimalFormat decimalFormat = new DecimalFormat("0.00%");
-        return decimalFormat.format(multiply);
+        return decimalFormat.format(divide);
     }
 
     @Override
@@ -600,9 +598,8 @@ public class WmsReportServiceImpl implements WmsReportService {
         BigDecimal totalQuantity = getTotalQuantity();
         //呆滞库存占比 本月呆滞货架库存总数/本月库存总数
         BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.divide(BigDecimalUtil.add(beginQuantity, endQuantity), new BigDecimal(2)),totalQuantity);
-        BigDecimal multiply = BigDecimalUtil.multiply(divide, new BigDecimal("100"));
         DecimalFormat decimalFormat = new DecimalFormat("0.00%");
-        return decimalFormat.format(multiply);
+        return decimalFormat.format(divide);
     }
 
 
