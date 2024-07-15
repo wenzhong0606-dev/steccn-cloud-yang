@@ -496,7 +496,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         //确认盘点  对盘点扫描明细与库存数据进行比对，生成盘点结果
         //获取盘点单信息
         WmsCheckOrder order = getById(dto.getId());
-        order.setStatus(1);
+        order.setStatus(2);
         Assert.notNull(order, "盘点单不存在");
         updateById(order);
         wmsCheckOrderInfoService.remove(new LambdaQueryWrapper<WmsCheckOrderInfo>().eq(WmsCheckOrderInfo::getCheckOrderId, order.getId()));
@@ -540,8 +540,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                                     wmsCheckOrderInfo.setCaseNo(scanInfo.getCaseNo());
                                     wmsCheckOrderInfo.setMaterialId(scanInfo.getMaterialId());
                                     wmsCheckOrderInfo.setCheckTime(LocalDateTime.now());
-                                    wmsCheckOrderInfo.setCheckBy(SecurityUtils.getUser().getUserId());
-                                    wmsCheckOrderInfo.setCheckName(SecurityUtils.getUser().getName());
+                                    wmsCheckOrderInfo.setCheckBy(scanInfo.getCheckBy());
+                                    wmsCheckOrderInfo.setCheckName(scanInfo.getCheckName());
                                     wmsCheckOrderInfo.setCheckOrderId(order.getId());
                                     wmsCheckOrderInfo.setDifference(scanInfo.getQuantity().subtract(inventory.getTotalQuantity()));
                                     wmsCheckOrderInfo.setResult(scanInfo.getQuantity());
@@ -559,8 +559,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                                     wmsCheckOrderInfo.setUnitId(inventory.getUnit());
                                     wmsCheckOrderInfo.setMaterialId(inventory.getMaterialId());
                                     wmsCheckOrderInfo.setCheckTime(LocalDateTime.now());
-                                    wmsCheckOrderInfo.setCheckBy(SecurityUtils.getUser().getUserId());
-                                    wmsCheckOrderInfo.setCheckName(SecurityUtils.getUser().getName());
+                                    wmsCheckOrderInfo.setCheckBy(scanInfo.getCheckBy());
+                                    wmsCheckOrderInfo.setCheckName(scanInfo.getCheckName());
                                     wmsCheckOrderInfo.setCheckOrderId(order.getId());
                                     //
                                     wmsCheckOrderInfo.setDifference(BigDecimal.ZERO.subtract(inventory.getTotalQuantity()));
@@ -782,6 +782,14 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         order.setStatus(4);
         updateById(order);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateStatus(WmsCheckOrderDTO wmsCheckOrderDTO) {
+        WmsCheckOrder checkOrder = getById(wmsCheckOrderDTO.getId());
+        Assert.isTrue(checkOrder.getStatus().equals(0),"当前状态不可确认");
+        checkOrder.setStatus(1);
+        return updateById(checkOrder);
     }
 
 

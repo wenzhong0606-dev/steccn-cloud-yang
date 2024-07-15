@@ -78,6 +78,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -1057,6 +1058,20 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     @Override
     public Integer unAffirmByShelf(Set<Long> shelfIds) {
         return this.baseMapper.unAffirmByShelf(shelfIds);
+    }
+
+    @Override
+    public BigDecimal monthSum(Set<Long> warehouseIds) {
+        LocalDate today = LocalDate.now();
+        // 获取当月的第一天
+        LocalDate firstDay = today.with(TemporalAdjusters.firstDayOfMonth());
+        // 获取当月的最后一天
+        LocalDate lastDay = today.with(TemporalAdjusters.lastDayOfMonth());
+        BigDecimal sum = this.baseMapper.monthSum(warehouseIds,firstDay,lastDay);
+        if (Objects.isNull(sum)){
+            return BigDecimal.ZERO;
+        }
+        return sum;
     }
 
     /**

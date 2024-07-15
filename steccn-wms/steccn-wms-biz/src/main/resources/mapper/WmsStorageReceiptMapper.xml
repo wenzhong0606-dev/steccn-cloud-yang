@@ -318,4 +318,46 @@
             #{shelfId}
         </foreach>
     </select>
+    <select id="monthSum" resultType="java.math.BigDecimal">
+        SELECT
+            sum(b.quantity)
+        FROM
+            wms_storage_receipt a
+                LEFT JOIN wms_storage_receipt_info b ON b.storage_receipt_id = a.id
+        where
+        a.type = 1800831581966123008
+        and  a.warehouse_id in
+        <foreach collection="warehouseIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        and a.affirm_time between  #{firstDay} and #{lastDay}
+    </select>
+    <select id="damagedInventory" resultType="java.math.BigDecimal">
+        SELECT
+        sum(b.quantity)
+        FROM
+        wms_storage_receipt a
+        LEFT JOIN wms_storage_receipt_info b ON b.storage_receipt_id = a.id
+        where
+        a.type = 1810936954646142976
+        and  a.warehouse_id in
+        <foreach collection="warehouseIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        and a.affirm_time between  #{firstDay} and #{lastDay}
+    </select>
+    <select id="salesTotalQuantity" resultType="java.math.BigDecimal">
+        SELECT
+        sum(b.quantity)
+        FROM
+        wms_storage_receipt a
+        LEFT JOIN wms_storage_receipt_info b ON b.storage_receipt_id = a.id
+        where
+        a.type = 1582297407643815936
+        and  a.warehouse_id in
+        <foreach collection="warehouseIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        and a.affirm_time between  #{firstDay} and #{result}
+    </select>
 </mapper>

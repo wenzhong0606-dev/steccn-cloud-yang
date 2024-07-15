@@ -122,6 +122,13 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.updateBatchShelf(dto));
     }
 
+
+    @ApiOperation("批量修改多个入库单的明细货架 以及确认入库单")
+    @PostMapping("/batch/affirm")
+    public R<Boolean> batchAffirm(@RequestBody WmsStorageReceiptBatchAffirmDTO dto){
+        return R.success(wmsStorageReceiptService.batchAffirm(dto));
+    }
+
     @ApiOperation("冲销")
     @PostMapping("/charge/against")
     public R<Boolean> chargeAgainst(@RequestBody WmsStorageReceiptDTO dto){

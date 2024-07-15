@@ -1,5 +1,6 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.vo.SafetyCockpitVO;
 import com.steccn.platform.vo.SafetyTodoListVO;
 
 import java.util.List;
@@ -22,4 +23,6 @@ public interface SafetyTodoListService {
      * @return
      */
     Boolean sendMsg();
+
+    SafetyCockpitVO cockpitDashboard();
 }

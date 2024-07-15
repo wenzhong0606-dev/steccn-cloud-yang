@@ -229,4 +229,18 @@
             #{shelfId}
         </foreach>
     </select>
+    <select id="monthSum" resultType="java.math.BigDecimal">
+        SELECT
+            SUM(quantity)
+        FROM
+            wms_delivery_receipt a
+                LEFT JOIN wms_delivery_receipt_info b ON b.delivery_receipt_id = a.id
+        where
+        a.type = 1800831413027946496
+        and  a.warehouse_id in
+        <foreach collection="warehouseIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        and a.affirm_time between  #{firstDay} and #{lastDay}
+    </select>
 </mapper>

@@ -70,6 +70,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -1974,6 +1975,59 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         }
 
         return true;
+    }
+
+    @Override
+    public Boolean batchAffirm(WmsStorageReceiptBatchAffirmDTO dto) {
+        if (CollUtil.isNotEmpty(dto.getIdList())){
+            dto.getIdList().forEach(id->{
+                WmsUpdateBatchShelfDTO wmsUpdateBatchShelfDTO = new WmsUpdateBatchShelfDTO();
+                wmsUpdateBatchShelfDTO.setShelfCode(dto.getShelfCode());
+                wmsUpdateBatchShelfDTO.setShelfName(dto.getShelfName());
+                wmsUpdateBatchShelfDTO.setShelfId(dto.getShelfId());
+                wmsUpdateBatchShelfDTO.setId(id);
+                updateBatchShelf(wmsUpdateBatchShelfDTO);
+                affirm(id,SecurityUtils.getUser().getName());
+            });
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public BigDecimal monthSum(Set<Long> warehouseIds) {
+        LocalDate today = LocalDate.now();
+        // 获取当月的第一天
+        LocalDate firstDay = today.with(TemporalAdjusters.firstDayOfMonth());
+        // 获取当月的最后一天
+        LocalDate lastDay = today.with(TemporalAdjusters.lastDayOfMonth());
+        BigDecimal bigDecimal = this.baseMapper.monthSum(firstDay, lastDay, warehouseIds);
+        if (Objects.isNull(bigDecimal)){
+            return BigDecimal.ZERO;
+        }
+        return bigDecimal;
+    }
+
+    @Override
+    public BigDecimal damagedInventory(Set<Long> warehouseIds) {
+        LocalDate today = LocalDate.now();
+        // 获取当月的第一天
+        LocalDate firstDay = today.with(TemporalAdjusters.firstDayOfMonth());
+        // 获取当月的最后一天
+        LocalDate lastDay = today.with(TemporalAdjusters.lastDayOfMonth());
+        BigDecimal bigDecimal = this.baseMapper.damagedInventory(firstDay, lastDay, warehouseIds);
+        if (Objects.isNull(bigDecimal)){
+            return BigDecimal.ZERO;
+        }
+        return bigDecimal;
+    }
+
+    @Override
+    public BigDecimal salesTotalQuantity(Set<Long> warehouseIds, LocalDate firstDay, LocalDate result) {
+        BigDecimal bigDecimal = this.baseMapper.salesTotalQuantity(warehouseIds, firstDay, result);
+        if (Objects.isNull(bigDecimal)) {
+            return BigDecimal.ZERO;
+        }
+        return bigDecimal;
     }
 
     /**

@@ -220,5 +220,54 @@ public class WmsReportController {
 
         return R.success(wmsDeliveryReceiptService.shippingReconciliation(dto));
     }
+
+
+    @GetMapping("/finished/product/total/quantity")
+    @ApiOperation("库存实时总数（成品库）")
+    public R<BigDecimal> finishedProductTotalQuantity(){
+        return R.success(wmsReportService.finishedProductTotalQuantity());
+    }
+
+
+    @GetMapping("/finished/product/lock/total/quantity")
+    @ApiOperation("库存实时锁定总数（成品库）")
+    public R<BigDecimal> finishedProductLockTotalQuantity(){
+        return R.success(wmsReportService.finishedProductLockTotalQuantity());
+    }
+
+    @GetMapping("/finished/product/on/the/way/total/quantity")
+    @ApiOperation("库存实时在途总数（成品库）")
+    public R<BigDecimal> finishedProductOnTheWayTotalQuantity(){
+        return R.success(wmsReportService.finishedProductOnTheWayTotalQuantity());
+    }
+
+    @ApiOperation("库存准确率")
+    @PostMapping("/inventory/accuracy")
+    public R<String> inventoryAccuracy(){
+        return R.success(wmsReportService.inventoryAccuracy());
+    }
+
+
+    @ApiOperation("破损率")
+    @PostMapping("/breakage/rate")
+    public R<String> breakageRate(){
+        return R.success(wmsReportService.breakageRate());
+    }
+
+    @PostMapping("/inaction/stock/proportion")
+    @ApiOperation("呆滞库存占比")
+    public R<String> inactionStockProportion(){
+        return R.success(wmsReportService.inactionStockProportion());
+    }
+
+
+    @ApiOperation("库存周转率")
+    @PostMapping("/inventory/carry/rate")
+    public R<String> inventoryCarryRate(){
+        return R.success(wmsReportService.inventoryCarryRate());
+    }
+
+
+
 }
 

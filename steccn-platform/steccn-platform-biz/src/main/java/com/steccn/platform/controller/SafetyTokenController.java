@@ -4,6 +4,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SafetyTodoListService;
 import com.steccn.platform.service.SafetyTokenService;
+import com.steccn.platform.vo.SafetyCockpitVO;
 import com.steccn.platform.vo.SafetyTodoListVO;
 import com.steccn.platform.vo.SafetyTokenVO;
 import io.swagger.annotations.Api;
@@ -49,5 +50,12 @@ public class SafetyTokenController {
     @ResponseBody
     public R<List<SafetyTodoListVO>> getTodoList() {
         return R.success(safetyTodoListService.getTodoList());
+    }
+
+    @GetMapping("/cockpitDashboard")
+    @ApiOperation(value = "获取安环系统看板")
+    @ResponseBody
+    public R<SafetyCockpitVO> cockpitDashboard() {
+        return R.success(safetyTodoListService.cockpitDashboard());
     }
 }

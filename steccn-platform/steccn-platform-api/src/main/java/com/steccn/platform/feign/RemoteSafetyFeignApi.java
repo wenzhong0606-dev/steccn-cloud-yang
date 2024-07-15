@@ -45,4 +45,14 @@ public interface RemoteSafetyFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     String getAllMsg(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取安环系统看板
+     * @param headers obj空对象
+     * @return
+     */
+    @PostMapping(value = "/srp-app/mc/mcCockpit/findCockpitTenminutes")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    String cockpitDashboard(@RequestHeader MultiValueMap<String,String> headers,@RequestBody TupleDTO dto);
 }

@@ -17,6 +17,7 @@ import com.steccn.platform.feign.RemoteSafetyFeignApi;
 import com.steccn.platform.service.SafetyTodoListService;
 import com.steccn.platform.service.SafetyTokenService;
 import com.steccn.platform.service.SysMsgService;
+import com.steccn.platform.vo.SafetyCockpitVO;
 import com.steccn.platform.vo.SafetyTodoListRouterObjVO;
 import com.steccn.platform.vo.SafetyTodoListVO;
 import com.steccn.platform.vo.SafetyTokenVO;
@@ -111,5 +112,24 @@ public class SafetyTodoListServiceImpl implements SafetyTodoListService {
             log.error("接口请求错误",safetyTodoList);
         }
         return true;
+    }
+
+    @Override
+    public SafetyCockpitVO cockpitDashboard() {
+        //获取token
+        SafetyTokenVO safetyToken = safetyTokenService.getSafetyToken(942L);
+        MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
+        headers.set("Authorization",safetyToken.getToken());
+        //拿到值
+        String safetyTodoList = remoteSafetyTokenService.cockpitDashboard(headers,new TupleDTO());
+        JSONObject jsonObject = JSONObject.parseObject(safetyTodoList);
+        Integer status = jsonObject.getInteger("status");
+        if(status.equals(OaConstant.NO)){
+            SafetyCockpitVO vo = jsonObject.getJSONObject("data").getJSONObject("data_0").toJavaObject(SafetyCockpitVO.class);
+            return vo;
+        }else {
+            log.error("接口请求错误",safetyTodoList);
+        }
+        return null;
     }
 }

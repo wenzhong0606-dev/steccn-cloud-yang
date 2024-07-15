@@ -1,10 +1,12 @@
 package com.steccn.platform.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.domain.SysConfiguration;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import org.apache.poi.ss.formula.functions.T;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,4 +50,11 @@ public interface SysConfigurationService extends IService<SysConfiguration> {
      * @return
      */
     List<SysConfigurationDTO> infoByType(String type);
+
+    /**
+     * 修改理论拉引量配置的值
+     * @param dto f1 1-8表示产线,0表示密度 f2 数值
+     * @return
+     */
+    Boolean updateTheoryPullForceConfig(TupleDTO<String, String> dto);
 }

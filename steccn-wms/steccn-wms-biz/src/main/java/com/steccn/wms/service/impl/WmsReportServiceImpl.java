@@ -1,6 +1,7 @@
 package com.steccn.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
@@ -32,7 +33,9 @@ import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
+import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsReportService;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.vo.*;
@@ -44,9 +47,12 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,6 +66,7 @@ public class WmsReportServiceImpl implements WmsReportService {
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
     private final WmsStorageReceiptService wmsStorageReceiptService;
+    private final WmsInventoryMapper wmsInventoryMapper;
     private final RemoteDpWmsDataFeignApi remoteDpWmsDataFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
@@ -432,6 +439,251 @@ public class WmsReportServiceImpl implements WmsReportService {
     @Override
     public List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto) {
       return wmsStorageReceiptService.daySheetCaseList(dto);
+    }
+
+    @Override
+    public BigDecimal finishedProductTotalQuantity() {
+        Set<Long> warehouseIds  = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        return wmsInventoryMapper.inventory(warehouseIds);
+    }
+
+    @Override
+    public BigDecimal finishedProductLockTotalQuantity() {
+
+        Set<Long> warehouseIds  = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        return wmsInventoryMapper.lockTotalQuantity(warehouseIds);
+    }
+
+    @Override
+    public BigDecimal finishedProductOnTheWayTotalQuantity() {
+        Set<Long> warehouseIds = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        return wmsInventoryMapper.onTheWayTotalQuantity(warehouseIds);
+    }
+
+    @Override
+    public String inventoryAccuracy() {
+        Set<Long> warehouseIds = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+
+        //获取本月期初库存
+        LocalDate startDate = LocalDateUtil.getFirstDayOfMonthStr(LocalDate.now()).minusDays(1).toLocalDate();
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        dpWmsDataDTO.setDate(startDate);
+        dpWmsDataDTO.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> adsWmsInventoryVOS = FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal beginQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO adsWmsInventoryVO : adsWmsInventoryVOS) {
+            beginQuantity = BigDecimalUtil.add(beginQuantity, adsWmsInventoryVO.getTotalQuantity1());
+        }
+        //获取本月期末库存
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.equals(today.with(TemporalAdjusters.lastDayOfMonth())) ?
+                today.with(TemporalAdjusters.lastDayOfMonth()) :
+                today.minusDays(1);
+        DpWmsDataDTO dpWmsDataDTO1 = new DpWmsDataDTO();
+        dpWmsDataDTO1.setDate(endDate);
+        dpWmsDataDTO1.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> endAdsWmsInventoryVOS= FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO1), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal endQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO endAdsWmsInventoryVO : endAdsWmsInventoryVOS) {
+            endQuantity =BigDecimalUtil.add(endQuantity,endAdsWmsInventoryVO.getTotalQuantity1());
+        }
+        //本月库存总数 =（本月期初 + 本月期末） / 2
+        BigDecimal inventoryQuantity = BigDecimalUtil.divide(beginQuantity.add(endQuantity),new BigDecimal(2));
+        //本月盘点出入库总数
+        BigDecimal deliverySum =  wmsDeliveryReceiptService.monthSum(warehouseIds);
+        BigDecimal storageSum  = wmsStorageReceiptService.monthSum(warehouseIds);
+        //本月盘点出入库总数/本月库存总数
+        BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.add(deliverySum, storageSum), inventoryQuantity);
+        DecimalFormat decimalFormat = new DecimalFormat("0.00%");
+        return decimalFormat.format(divide);
+    }
+
+    @Override
+    public String breakageRate() {
+        Set<Long> warehouseIds = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+
+        //获取本月期初库存
+        LocalDate startDate = LocalDateUtil.getFirstDayOfMonthStr(LocalDate.now()).minusDays(1).toLocalDate();
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        dpWmsDataDTO.setDate(startDate);
+        dpWmsDataDTO.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> adsWmsInventoryVOS = FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal beginQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO adsWmsInventoryVO : adsWmsInventoryVOS) {
+            beginQuantity = BigDecimalUtil.add(beginQuantity, adsWmsInventoryVO.getTotalQuantity1());
+        }
+        //获取本月期末库存
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.equals(today.with(TemporalAdjusters.lastDayOfMonth())) ?
+                today.with(TemporalAdjusters.lastDayOfMonth()) :
+                today.minusDays(1);
+        DpWmsDataDTO dpWmsDataDTO1 = new DpWmsDataDTO();
+        dpWmsDataDTO1.setDate(endDate);
+        dpWmsDataDTO1.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> endAdsWmsInventoryVOS= FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO1), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal endQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO endAdsWmsInventoryVO : endAdsWmsInventoryVOS) {
+            endQuantity =BigDecimalUtil.add(endQuantity,endAdsWmsInventoryVO.getTotalQuantity1());
+        }
+        //本月库存总数 =（本月期初 + 本月期末） / 2
+        BigDecimal inventoryQuantity = BigDecimalUtil.divide(beginQuantity.add(endQuantity),new BigDecimal(2));
+        //获取破损出库的数据
+        BigDecimal damageInventory =  wmsStorageReceiptService.damagedInventory(warehouseIds);
+        BigDecimal divide = BigDecimalUtil.divide(damageInventory, inventoryQuantity);
+        DecimalFormat decimalFormat = new DecimalFormat("0.00%");
+        return decimalFormat.format(divide);
+    }
+
+    @Override
+    public String inactionStockProportion() {
+        Set<Long> shelfIds = Sets.newHashSet();
+        //成品库-加工/呆滞品
+        shelfIds.add(10468L);
+        //成品库-原片/呆滞品
+        shelfIds.add(10469L);
+        //获取本月呆滞期初库存
+        LocalDate startDate = LocalDateUtil.getFirstDayOfMonthStr(LocalDate.now()).minusDays(1).toLocalDate();
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        dpWmsDataDTO.setDate(startDate);
+        dpWmsDataDTO.setShelfIds(shelfIds);
+        List<AdsWmsInventoryVO> adsWmsInventoryVOS = FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal beginQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO adsWmsInventoryVO : adsWmsInventoryVOS) {
+            beginQuantity = BigDecimalUtil.add(beginQuantity, adsWmsInventoryVO.getTotalQuantity1());
+        }
+        //获取本月呆滞期末库存
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.equals(today.with(TemporalAdjusters.lastDayOfMonth())) ?
+                today.with(TemporalAdjusters.lastDayOfMonth()) :
+                today.minusDays(1);
+        DpWmsDataDTO dpWmsDataDTO1 = new DpWmsDataDTO();
+        dpWmsDataDTO1.setDate(endDate);
+        dpWmsDataDTO1.setShelfIds(shelfIds);
+        List<AdsWmsInventoryVO> endAdsWmsInventoryVOS= FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO1), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal endQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO endAdsWmsInventoryVO : endAdsWmsInventoryVOS) {
+            endQuantity =BigDecimalUtil.add(endQuantity,endAdsWmsInventoryVO.getTotalQuantity1());
+        }
+        //获取本月库存总数 =（本月期初 + 本月期末） / 2；
+        BigDecimal totalQuantity = getTotalQuantity();
+        //呆滞库存占比 本月呆滞货架库存总数/本月库存总数
+        BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.divide(BigDecimalUtil.add(beginQuantity, endQuantity), new BigDecimal(2)),totalQuantity);
+        DecimalFormat decimalFormat = new DecimalFormat("0.00%");
+        return decimalFormat.format(divide);
+    }
+
+
+    /**
+     * 近一周销售发货总数 / （（近一周期初库存 + 近一周期末库存） / 2）
+     * @return
+     */
+    @Override
+    public String inventoryCarryRate() {
+        //获取近一周销售发货总数
+        Set<Long> warehouseIds = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+        //获取本周第一天
+        LocalDate today = LocalDate.now();
+        LocalDate firstDay  = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        //获取本周最后一天
+        LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDate result = today.getDayOfWeek() == DayOfWeek.SUNDAY ? today : endOfWeek;
+
+        BigDecimal storageSum  = wmsStorageReceiptService.salesTotalQuantity(warehouseIds,firstDay,result);
+        //获取本周期初库存
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        dpWmsDataDTO.setDate(firstDay.minusDays(1));
+        dpWmsDataDTO.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> adsWmsInventoryVOS = FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal beginQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO adsWmsInventoryVO : adsWmsInventoryVOS) {
+            beginQuantity = BigDecimalUtil.add(beginQuantity, adsWmsInventoryVO.getTotalQuantity1());
+        }
+        //获取本周期末库存
+        DpWmsDataDTO dpWmsDataDTO1 = new DpWmsDataDTO();
+        dpWmsDataDTO1.setDate(result.minusDays(1));
+        dpWmsDataDTO1.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> endAdsWmsInventoryVOS= FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO1), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal endQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO endAdsWmsInventoryVO : endAdsWmsInventoryVOS) {
+            endQuantity =BigDecimalUtil.add(endQuantity,endAdsWmsInventoryVO.getTotalQuantity1());
+        }
+        BigDecimal divide = BigDecimalUtil.divide(storageSum, BigDecimalUtil.divide(BigDecimalUtil.add(beginQuantity, endQuantity), new BigDecimal(2)));
+        BigDecimal multiply = BigDecimalUtil.multiply(divide, new BigDecimal("100"));
+        DecimalFormat decimalFormat = new DecimalFormat("0.00%");
+        return decimalFormat.format(multiply);
+    }
+
+    BigDecimal getTotalQuantity(){
+        Set<Long> warehouseIds = Sets.newHashSet();
+        //成品库-加工
+        warehouseIds.add(445L);
+        //成品库-原片
+        warehouseIds.add(447L);
+        //成品库-不良
+        warehouseIds.add(448L);
+
+        //获取本月期初库存
+        LocalDate startDate = LocalDateUtil.getFirstDayOfMonthStr(LocalDate.now()).minusDays(1).toLocalDate();
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        dpWmsDataDTO.setDate(startDate);
+        dpWmsDataDTO.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> adsWmsInventoryVOS = FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal beginQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO adsWmsInventoryVO : adsWmsInventoryVOS) {
+            beginQuantity = BigDecimalUtil.add(beginQuantity, adsWmsInventoryVO.getTotalQuantity1());
+        }
+        //获取本月期末库存
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.equals(today.with(TemporalAdjusters.lastDayOfMonth())) ?
+                today.with(TemporalAdjusters.lastDayOfMonth()) :
+                today.minusDays(1);
+        DpWmsDataDTO dpWmsDataDTO1 = new DpWmsDataDTO();
+        dpWmsDataDTO1.setDate(endDate);
+        dpWmsDataDTO1.setWarehouseIds(warehouseIds);
+        List<AdsWmsInventoryVO> endAdsWmsInventoryVOS= FeignOptional.of(() -> remoteDpWmsDataFeignApi.endingData(dpWmsDataDTO1), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal endQuantity = BigDecimal.ZERO;
+        for (AdsWmsInventoryVO endAdsWmsInventoryVO : endAdsWmsInventoryVOS) {
+            endQuantity =BigDecimalUtil.add(endQuantity,endAdsWmsInventoryVO.getTotalQuantity1());
+        }
+        //本月库存总数 =（本月期初 + 本月期末） / 2
+        BigDecimal inventoryQuantity = BigDecimalUtil.divide(beginQuantity.add(endQuantity),new BigDecimal(2));
+        return inventoryQuantity;
     }
 
 

@@ -26,6 +26,8 @@ public class DpWmsDataDTO {
 //    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库不能为空")
     private Set<Long> warehouseIds;
 
+    private Set<Long> shelfIds;
+
     /**
      * 类型id
      */

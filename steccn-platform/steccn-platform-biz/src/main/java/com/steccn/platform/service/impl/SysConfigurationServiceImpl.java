@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.domain.SysConfiguration;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.service.SysConfigurationService;
@@ -16,6 +17,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -111,6 +113,17 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
             });
         }
         return results;
+    }
+
+    @Override
+    public Boolean updateTheoryPullForceConfig(TupleDTO<String, String> dto) {
+        //修改理论值
+        SysConfiguration model = new SysConfiguration();
+        model.setRefContent(dto.getField2());
+        update(model,new LambdaQueryWrapper<SysConfiguration>()
+                .eq(SysConfiguration::getType,"THEORY_PULL_FORCE")
+                .eq(SysConfiguration::getContent,dto.getField1()));
+        return true;
     }
 
 

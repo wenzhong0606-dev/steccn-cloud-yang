@@ -14,6 +14,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -76,6 +77,8 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     BigDecimal getOutSumQuantity(String salesOrder);
 
     Integer unAffirmByShelf(@Param("shelfIds")Set<Long> shelfIds);
+
+    BigDecimal monthSum(@Param("warehouseIds") Set<Long> warehouseIds,@Param("firstDay") LocalDate firstDay,@Param("lastDay") LocalDate lastDay);
 }
 
 

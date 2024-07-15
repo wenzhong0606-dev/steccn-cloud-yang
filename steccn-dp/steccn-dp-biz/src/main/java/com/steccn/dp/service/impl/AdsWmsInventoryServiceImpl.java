@@ -64,6 +64,8 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
         List<AdsWmsInventory> list = list(new LambdaQueryWrapper<AdsWmsInventory>()
                 .eq(AdsWmsInventory::getDt, dto.getDate())
                 .in(CollUtil.isNotEmpty(dto.getMaterialIds()),AdsWmsInventory::getMaterialId,dto.getMaterialIds())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),AdsWmsInventory::getWarehouseId,dto.getWarehouseIds())
+                .in(CollUtil.isNotEmpty(dto.getShelfIds()),AdsWmsInventory::getShelfId,dto.getShelfIds())
         );
         return  BeanUtil.copyToList(list, AdsWmsInventoryVO.class);
     }

@@ -90,6 +90,20 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
     BigDecimal inventory(@Param("warehouseIds")Set<Long> warehouseIds);
 
     List<WmsInventory> getInventoryIdDelFlag(@Param("ids")  List<Long> ids);
+
+    /**
+     * 锁定总数
+     * @param warehouseIds
+     * @return
+     */
+    BigDecimal lockTotalQuantity(@Param("warehouseIds") Set<Long> warehouseIds);
+
+    /**
+     * 在途总数
+     * @param warehouseIds
+     * @return
+     */
+    BigDecimal onTheWayTotalQuantity(@Param("warehouseIds") Set<Long> warehouseIds);
 }
 
 
