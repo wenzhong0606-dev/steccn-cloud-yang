@@ -182,4 +182,6 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     Page<SalesLogisticsBillVO> shippingReconciliation(SalesLogisticsBillDTO dto);
 
     Integer unAffirmByShelf(Set<Long> shelfIds);
+
+    BigDecimal monthSum(Set<Long> warehouseIds);
 }

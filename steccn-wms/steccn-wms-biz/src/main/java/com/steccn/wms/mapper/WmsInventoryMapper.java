@@ -96,14 +96,14 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
      * @param warehouseIds
      * @return
      */
-    BigDecimal lockTotalQuantity(Set<Long> warehouseIds);
+    BigDecimal lockTotalQuantity(@Param("warehouseIds") Set<Long> warehouseIds);
 
     /**
      * 在途总数
      * @param warehouseIds
      * @return
      */
-    BigDecimal onTheWayTotalQuantity(Set<Long> warehouseIds);
+    BigDecimal onTheWayTotalQuantity(@Param("warehouseIds") Set<Long> warehouseIds);
 }
 
 
