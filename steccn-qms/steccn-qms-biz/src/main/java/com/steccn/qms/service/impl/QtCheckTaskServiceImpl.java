@@ -614,19 +614,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
                 //处理落板工位
                 if(CollUtil.isNotEmpty(qtCheckTaskDestoryInfoVOList)){
-                    qtCheckTaskDestoryInfoVOList.forEach(destoryVOInfo->{
+                    List<QtCheckTaskDestoryInfoVO> collect = qtCheckTaskDestoryInfoVOList.stream().filter(ele -> StrUtil.isNotBlank(ele.getDestoryReason())).map(destoryVOInfo -> {
                         Integer workStation = destoryVOInfo.getDestoryWorkStation();
-                        if(workStation!=null){
-                            if(workStation.equals(QtManagerConstant.NUM_3)){
-                                Set<String> checkList = Sets.newHashSet(QtManagerConstant.NUM_1.toString(),QtManagerConstant.NUM_2.toString());
+                        if (workStation != null) {
+                            if (workStation.equals(QtManagerConstant.NUM_3)) {
+                                Set<String> checkList = Sets.newHashSet(QtManagerConstant.NUM_1.toString(), QtManagerConstant.NUM_2.toString());
                                 destoryVOInfo.setCheckList(checkList);
-                            }else {
+                            } else {
                                 destoryVOInfo.setCheckList(Sets.newHashSet(workStation.toString()));
                             }
                         }
-                    });
+                        return destoryVOInfo;
+                    }).collect(Collectors.toList());
+                    qtCheckTaskDetailCopyVO.setQtCheckTaskDestoryInfo(collect);
                 }
-                qtCheckTaskDetailCopyVO.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList);
             }
 
         }
@@ -751,18 +752,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (!qtCheckTaskDestoryInfoList.isEmpty()) {
             List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList1 = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
             //处理落板工位
-            qtCheckTaskDestoryInfoVOList1.forEach(destoryVOInfo->{
+            List<QtCheckTaskDestoryInfoVO> collect = qtCheckTaskDestoryInfoVOList1.stream().filter(ele -> StrUtil.isNotBlank(ele.getDestoryReason())).map(destoryVOInfo -> {
                 Integer workStation = destoryVOInfo.getDestoryWorkStation();
-                if(workStation!=null){
-                    if(workStation.equals(QtManagerConstant.NUM_3)){
-                        Set<String> checkList = Sets.newHashSet(QtManagerConstant.NUM_1.toString(),QtManagerConstant.NUM_2.toString());
+                if (workStation != null) {
+                    if(workStation.equals(QtManagerConstant.NUM_3)) {
+                        Set<String> checkList = Sets.newHashSet(QtManagerConstant.NUM_1.toString(), QtManagerConstant.NUM_2.toString());
                         destoryVOInfo.setCheckList(checkList);
-                    }else {
+                    } else {
                         destoryVOInfo.setCheckList(Sets.newHashSet(workStation.toString()));
                     }
                 }
-            });
-            qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList1);
+                return destoryVOInfo;
+            }).collect(Collectors.toList());
+            qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(collect);
             qtCheckTaskDetailVo.setDestoryInfoRemark(qtCheckTaskDestoryInfoVOList1.get(0).getDestoryInfoRemark());
         }
 
