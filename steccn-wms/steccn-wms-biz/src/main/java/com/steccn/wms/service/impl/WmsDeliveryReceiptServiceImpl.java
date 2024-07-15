@@ -531,23 +531,24 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO));
         WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
         if(Objects.isNull(wmsInventory) ) return R.failure("未查询到此箱号信息，请联系管理员");
-        //检索当前箱号是否已出库
-        LambdaQueryWrapper<WmsDeliveryReceiptInfo> receiptInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        receiptInfoLambdaQueryWrapper.eq(WmsDeliveryReceiptInfo::getInventoryId,wmsInventory.getId());
-        WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = wmsDeliveryReceiptInfoService.getOne(receiptInfoLambdaQueryWrapper,false);
-        if(Objects.nonNull(wmsDeliveryReceiptInfo)){
-            WmsDeliveryReceipt wmsDeliveryReceipt = this.baseMapper.selectById(wmsDeliveryReceiptInfo.getDeliveryReceiptId());
-            BeanUtils.copyProperties(wmsInventory,wmsScanInventoryVO);
-            wmsScanInventoryVO.setStatus(wmsDeliveryReceipt.getStatus());
-            wmsScanInventoryVO.setInventoryId(wmsInventory.getId());
-            List<Long> units = new ArrayList<>();
-            units.add(wmsInventory.getUnit());
-            R<Map<Long, SysDictVO>> sysDicts = remoteDictFeignApi.listById(units);
-            if(sysDicts.getData().size()>0) wmsScanInventoryVO.setUnitName(sysDicts.getData().get(wmsInventory.getUnit()).getName());
-            wmsScanInventoryVO.setDeliveryReceiptCode(wmsDeliveryReceipt.getCode());
-            wmsScanInventoryVO.setDeliveryReceiptTime(wmsDeliveryReceipt.getAffirmTime());
-            return R.success(wmsScanInventoryVO);
-        }
+//        //检索当前箱号是否已出库
+//        LambdaQueryWrapper<WmsDeliveryReceiptInfo> receiptInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
+//        receiptInfoLambdaQueryWrapper.eq(WmsDeliveryReceiptInfo::getInventoryId,wmsInventory.getId());
+//        WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = wmsDeliveryReceiptInfoService.getOne(receiptInfoLambdaQueryWrapper,false);
+//        WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo =  wmsDeliveryReceiptInfoService.getInfoByInventoryId(wmsInventory.getId());
+//        if(Objects.nonNull(wmsDeliveryReceiptInfo)){
+//            WmsDeliveryReceipt wmsDeliveryReceipt = this.baseMapper.selectById(wmsDeliveryReceiptInfo.getDeliveryReceiptId());
+//            BeanUtils.copyProperties(wmsInventory,wmsScanInventoryVO);
+//            wmsScanInventoryVO.setStatus(wmsDeliveryReceipt.getStatus());
+//            wmsScanInventoryVO.setInventoryId(wmsInventory.getId());
+//            List<Long> units = new ArrayList<>();
+//            units.add(wmsInventory.getUnit());
+//            R<Map<Long, SysDictVO>> sysDicts = remoteDictFeignApi.listById(units);
+//            if(sysDicts.getData().size()>0) wmsScanInventoryVO.setUnitName(sysDicts.getData().get(wmsInventory.getUnit()).getName());
+//            wmsScanInventoryVO.setDeliveryReceiptCode(wmsDeliveryReceipt.getCode());
+//            wmsScanInventoryVO.setDeliveryReceiptTime(wmsDeliveryReceipt.getAffirmTime());
+//            return R.success(wmsScanInventoryVO);
+//        }
         if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0 ) {
             if (wmsInventory.getStockQuantity().compareTo(BigDecimal.ZERO)>0){
                 return R.failure("可用库存不足，请联系管理员");
