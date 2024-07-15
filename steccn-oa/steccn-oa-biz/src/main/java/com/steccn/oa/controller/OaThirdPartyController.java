@@ -15,7 +15,6 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.oa.domain.KqGroup;
 import com.steccn.oa.service.HrmdepartmentService;
 import com.steccn.oa.service.HrmjobtitlesService;
 import com.steccn.oa.service.HrmresourceService;
@@ -26,7 +25,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
