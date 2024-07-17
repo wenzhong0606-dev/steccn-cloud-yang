@@ -237,7 +237,7 @@ public class WmsStorageReceiptController {
 
     @ApiOperation("地磅信息分页查询")
     @PostMapping("/weighbridge/page")
-    public R<Page<WmsWeighbridgeInfoVO>> weighbridgePage(@RequestBody WmsWeighbridgeInfoDTO dto){
+    public R<WmsWeighbridgeInfoPageVO<WmsWeighbridgeInfoVO>> weighbridgePage(@RequestBody WmsWeighbridgeInfoDTO dto){
         return R.success(wmsWeighbridgeInfoService.pageList(dto));
     }
 

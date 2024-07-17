@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,6 +25,7 @@ import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.service.WmsWeighbridgeInfoService;
 import com.steccn.wms.mapper.WmsWeighbridgeInfoMapper;
+import com.steccn.wms.vo.WmsWeighbridgeInfoPageVO;
 import com.steccn.wms.vo.WmsWeighbridgeInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +62,7 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
     }
 
     @Override
-    public Page<WmsWeighbridgeInfoVO> pageList(WmsWeighbridgeInfoDTO dto) {
+    public WmsWeighbridgeInfoPageVO<WmsWeighbridgeInfoVO> pageList(WmsWeighbridgeInfoDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<WmsWeighbridgeInfo> condition = new LambdaQueryWrapper<WmsWeighbridgeInfo>()
                 .like(StrUtil.isNotBlank(dto.getLicensePlate()),WmsWeighbridgeInfo::getLicensePlate,dto.getLicensePlate())
@@ -69,7 +71,8 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
                 .like(StrUtil.isNotBlank(dto.getCompanyName()),WmsWeighbridgeInfo::getCompanyName,dto.getCompanyName())
                 .ge(Objects.nonNull(dto.getFinishTimeStart()),WmsWeighbridgeInfo::getFinishTime,dto.getFinishTimeStart())
                 .le(Objects.nonNull(dto.getFinishTimeEnd()),WmsWeighbridgeInfo::getFinishTime,dto.getFinishTimeEnd())
-                .eq(Objects.nonNull(dto.getIsGenerateList()),WmsWeighbridgeInfo::getIsGenerateList, dto.getIsGenerateList());
+                .eq(Objects.nonNull(dto.getIsGenerateList()),WmsWeighbridgeInfo::getIsGenerateList, dto.getIsGenerateList())
+                .orderByDesc(WmsWeighbridgeInfo::getFinishTime);
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //4.查询分页数据
@@ -78,16 +81,36 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的信息
         List<WmsWeighbridgeInfoVO> resRecords = Lists.newArrayList();
+        //算毛重总数和净重总和
+        WmsWeighbridgeInfo countData = new WmsWeighbridgeInfo();
         if (CollUtil.isNotEmpty(resPage.getRecords())) {
             for (WmsWeighbridgeInfo wmsWeighbridgeInfo : resPage.getRecords()) {
                 WmsWeighbridgeInfoVO vo = new WmsWeighbridgeInfoVO();
                 BeanUtils.copyProperties(wmsWeighbridgeInfo, vo);
                 resRecords.add(vo);
             }
+            //算毛重总数和净重总和
+            countData = getOne(new QueryWrapper<WmsWeighbridgeInfo>()
+                    .select("Sum(net_weight) AS netWeight,Sum(gross_weight) AS grossWeight")
+                    .lambda()
+                    .like(StrUtil.isNotBlank(dto.getLicensePlate()), WmsWeighbridgeInfo::getLicensePlate, dto.getLicensePlate())
+                    .like(StrUtil.isNotBlank(dto.getDriverName()), WmsWeighbridgeInfo::getDriverName, dto.getDriverName())
+                    .like(StrUtil.isNotBlank(dto.getMaterialName()), WmsWeighbridgeInfo::getMaterialName, dto.getMaterialName())
+                    .like(StrUtil.isNotBlank(dto.getCompanyName()), WmsWeighbridgeInfo::getCompanyName, dto.getCompanyName())
+                    .ge(Objects.nonNull(dto.getFinishTimeStart()), WmsWeighbridgeInfo::getFinishTime, dto.getFinishTimeStart())
+                    .le(Objects.nonNull(dto.getFinishTimeEnd()), WmsWeighbridgeInfo::getFinishTime, dto.getFinishTimeEnd())
+                    .eq(Objects.nonNull(dto.getIsGenerateList()), WmsWeighbridgeInfo::getIsGenerateList, dto.getIsGenerateList()));
+
         }
         //7.设置数据
         page.setRecords(resRecords);
-        return page;
+        WmsWeighbridgeInfoPageVO result = new WmsWeighbridgeInfoPageVO<WmsWeighbridgeInfoVO>();
+        BeanUtils.copyProperties(page, result);
+        if(Objects.nonNull(countData)){
+            result.setNetWeightCount(countData.getNetWeight());
+            result.setGrossWeightCount(countData.getGrossWeight());
+        }
+        return result;
     }
 
     @Override

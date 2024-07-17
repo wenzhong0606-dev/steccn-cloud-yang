@@ -7,6 +7,7 @@ import com.steccn.wms.domain.WmsWeighbridgeInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsWeighbridgeGerDTO;
 import com.steccn.wms.dto.WmsWeighbridgeInfoDTO;
+import com.steccn.wms.vo.WmsWeighbridgeInfoPageVO;
 import com.steccn.wms.vo.WmsWeighbridgeInfoVO;
 
 import java.math.BigDecimal;
@@ -31,7 +32,7 @@ public interface WmsWeighbridgeInfoService extends IService<WmsWeighbridgeInfo> 
      * @param dto
      * @return
      */
-    Page<WmsWeighbridgeInfoVO> pageList(WmsWeighbridgeInfoDTO dto);
+    WmsWeighbridgeInfoPageVO<WmsWeighbridgeInfoVO> pageList(WmsWeighbridgeInfoDTO dto);
 
     /**
      * 生成采购入库单
