@@ -184,4 +184,34 @@
             #{warehouseId}
         </foreach>
     </select>
+    <select id="sum" resultType="com.steccn.pms.vo.WmsInventoryVO">
+        SELECT SUM(lock_quantity) as lockQuantity,
+               SUM(stock_quantity) as stockQuantity,
+              SUM(total_quantity) as totalQuantity,
+              SUM(freeze_quantity) as freezeQuantity,
+              SUM(available_quantity) as availableQuantity
+        FROM wms_inventory  WHERE del_flag =0
+        <if test="dto.materialCode != null and dto.materialCode != ''">
+            and material_code  LIKE CONCAT('%',#{dto.materialCode},'%')
+        </if>
+        <if test="dto.materialName != null and dto.materialName != ''">
+            and material_name  LIKE CONCAT('%',#{dto.materialName},'%')
+        </if>
+        <if test="dto.caseNo != null and dto.caseNo  != ''">
+            and case_no  LIKE CONCAT('%',#{dto.caseNo},'%')
+        </if>
+        <if test="dto.batch != null and dto.batch != '' ">
+            and batch  LIKE CONCAT('%',#{dto.batch},'%')
+        </if>
+        <if test="dto.shelfName != null and dto.shelfName != ''">
+            and shelf_name  LIKE CONCAT('%',#{dto.shelfName},'%')
+        </if>
+        <if test="dto.warehouseId != null and dto.warehouseId != ''">
+            and warehouse_id = #{dto.warehouseId}
+        </if>
+        <if test="dto.codeOrName != null and dto.codeOrName != ''">
+            and (material_name LIKE CONCAT('%',#{dto.codeOrName},'%')
+                     or material_code LIKE CONCAT('%',#{dto.codeOrName},'%'))
+        </if>
+    </select>
 </mapper>

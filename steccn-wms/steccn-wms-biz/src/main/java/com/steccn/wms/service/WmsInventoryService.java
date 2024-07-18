@@ -303,4 +303,6 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     Page<WmsInventoryVO> pageListAvailableZero(WmsInventoryPageDTO dto);
 
     BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
+
+    WmsInventoryVO sum(WmsInventoryPageDTO dto);
 }

@@ -2,10 +2,12 @@ package com.steccn.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.MaterialStorageDTO;
 import com.steccn.wms.dto.WmsInventoryDTO;
+import com.steccn.wms.dto.WmsInventoryPageDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
@@ -104,6 +106,8 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
      * @return
      */
     BigDecimal onTheWayTotalQuantity(@Param("warehouseIds") Set<Long> warehouseIds);
+
+    WmsInventoryVO sum(@Param("dto") WmsInventoryPageDTO dto);
 }
 
 
