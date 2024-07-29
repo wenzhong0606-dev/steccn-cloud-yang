@@ -9,6 +9,8 @@ import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -305,4 +307,6 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     BigDecimal inventory(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 
     WmsInventoryVO sum(WmsInventoryPageDTO dto);
+
+    void exportData(WmsInventoryPageDTO dto, HttpServletResponse response) throws IOException;
 }

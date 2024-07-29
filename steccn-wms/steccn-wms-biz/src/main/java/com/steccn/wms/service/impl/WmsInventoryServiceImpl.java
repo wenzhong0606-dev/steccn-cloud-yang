@@ -3,6 +3,7 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -25,6 +26,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.CaseSiteDTO;
+import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
@@ -40,7 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -766,6 +771,52 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         WmsInventoryVO sum = this.baseMapper.sum(dto);
         return sum;
     }
+
+    @Override
+    public void exportData(WmsInventoryPageDTO dto, HttpServletResponse response)  throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("仓库清单", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), WmsInventoryExcelDTO.class).sheet("模板").doWrite(getExcelData(dto));
+    }
+     List<WmsInventoryExcelDTO> getExcelData(WmsInventoryPageDTO dto) {
+         //获取数据
+         LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
+                 .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+                 .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                 .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                 .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                 .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                 .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                 .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                 .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                         .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
+                 .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                         .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                         .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                         .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                         .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                         .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO))
+                 .orderByDesc(WmsInventory::getUpdateTime)
+                 .orderByDesc(WmsInventory::getId);
+         List<WmsInventory> list = list(like);
+         List<WmsInventoryExcelDTO> res = BeanUtil.copyToList(list, WmsInventoryExcelDTO.class);
+         Set<Long> dict = Sets.newHashSet();
+         List<Long> materialIds = Lists.newArrayList();
+         Set<String> caseNos = Sets.newHashSet();
+         res.forEach(wmsInventoryVO -> {
+             dict.add(wmsInventoryVO.getUnit());
+             materialIds.add(wmsInventoryVO.getMaterialId());
+             caseNos.add(wmsInventoryVO.getCaseNo());
+         });
+         Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dict), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+         res.forEach(wmsInventoryVO -> {
+             wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
+         });
+         return res;
+     }
 
     @Override
     public Page<WmsInventoryVO> warehouseList(WmsInventoryPageDTO dto) {

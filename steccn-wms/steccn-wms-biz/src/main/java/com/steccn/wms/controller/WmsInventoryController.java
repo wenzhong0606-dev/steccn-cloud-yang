@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,14 @@ public class WmsInventoryController {
     @PostMapping("/list")
     public R<Page<WmsInventoryVO>> pageList(@RequestBody WmsInventoryPageDTO dto) {
         return R.success(wmsInventoryService.pageList(dto));
+    }
+
+
+
+    @ApiOperation("库存导出")
+    @PostMapping("/export/data")
+    public void exportData(@RequestBody WmsInventoryPageDTO dto, HttpServletResponse response) throws IOException {
+        wmsInventoryService.exportData(dto, response);
     }
 
     @ApiOperation("库存总数")
