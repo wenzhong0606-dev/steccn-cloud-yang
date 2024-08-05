@@ -2,6 +2,7 @@ package com.steccn.portal.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.portal.vo.SteccnTokenVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,5 +17,10 @@ public interface RemoteLoginFeign {
      * @return r
      */
     @GetMapping("/portal/login")
-    R login(@RequestParam("username") String username, @RequestParam("password") String password);
+    R<SteccnTokenVO> login(@RequestParam("username") String username,
+                           @RequestParam("password") String password,
+                           @RequestParam(value = "clientNo", required = false) String clientNo,
+                           @RequestParam(value = "loginStatus", required = false) Integer loginStatus,
+                           @RequestParam(value = "checkKey", required = false) String checkKey,
+                           @RequestParam(value = "checkCode", required = false) String checkCode);
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.KsAbnormalCauseKsLogisticsOrderRelMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.KsAbnormalCauseKsLogisticsOrderRel">
+            <id property="ksLogisticsOrderId" column="ks_logistics_order_id" jdbcType="OTHER"/>
+            <id property="ksAbnormalCauseId" column="ks_abnormal_cause_id" jdbcType="OTHER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ks_logistics_order_id,ks_abnormal_cause_id
+    </sql>
+</mapper>
