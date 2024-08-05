@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.ResPartnerResPartnerCategoryRelMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.ResPartnerResPartnerCategoryRel">
+            <id property="categoryId" column="category_id" jdbcType="OTHER"/>
+            <id property="partnerId" column="partner_id" jdbcType="OTHER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        category_id,partner_id
+    </sql>
+</mapper>

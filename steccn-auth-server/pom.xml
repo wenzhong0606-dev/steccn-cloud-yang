@@ -95,6 +95,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-oa-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-sales-api</artifactId>
+        </dependency>
         <!--添加actuator依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

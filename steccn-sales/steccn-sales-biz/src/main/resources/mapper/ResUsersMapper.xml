@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.ResUsersMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.ResUsers">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="companyId" column="company_id" jdbcType="OTHER"/>
+            <result property="partnerId" column="partner_id" jdbcType="OTHER"/>
+            <result property="active" column="active" jdbcType="BOOLEAN"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="login" column="login" jdbcType="VARCHAR"/>
+            <result property="password" column="password" jdbcType="VARCHAR"/>
+            <result property="actionId" column="action_id" jdbcType="OTHER"/>
+            <result property="createUid" column="create_uid" jdbcType="OTHER"/>
+            <result property="writeUid" column="write_uid" jdbcType="OTHER"/>
+            <result property="signature" column="signature" jdbcType="VARCHAR"/>
+            <result property="share" column="share" jdbcType="BOOLEAN"/>
+            <result property="writeDate" column="write_date" jdbcType="TIMESTAMP"/>
+            <result property="totpSecret" column="totp_secret" jdbcType="VARCHAR"/>
+            <result property="notificationType" column="notification_type" jdbcType="VARCHAR"/>
+            <result property="odoobotState" column="odoobot_state" jdbcType="VARCHAR"/>
+            <result property="odoobotFailed" column="odoobot_failed" jdbcType="BOOLEAN"/>
+            <result property="saleTeamId" column="sale_team_id" jdbcType="OTHER"/>
+            <result property="targetSalesWon" column="target_sales_won" jdbcType="OTHER"/>
+            <result property="targetSalesDone" column="target_sales_done" jdbcType="OTHER"/>
+            <result property="targetSalesInvoiced" column="target_sales_invoiced" jdbcType="OTHER"/>
+            <result property="oauthProviderId" column="oauth_provider_id" jdbcType="OTHER"/>
+            <result property="oauthUid" column="oauth_uid" jdbcType="VARCHAR"/>
+            <result property="oauthAccessToken" column="oauth_access_token" jdbcType="VARCHAR"/>
+            <result property="logisticsCompanyId" column="logistics_company_id" jdbcType="OTHER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,company_id,partner_id,
+        active,create_date,login,
+        password,action_id,create_uid,
+        write_uid,signature,share,
+        write_date,totp_secret,notification_type,
+        odoobot_state,odoobot_failed,sale_team_id,
+        target_sales_won,target_sales_done,target_sales_invoiced,
+        oauth_provider_id,oauth_uid,oauth_access_token,
+        logistics_company_id
+    </sql>
+</mapper>
