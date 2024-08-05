@@ -48,7 +48,7 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         implements EpMeterCollectService {
 
     private final ConcurrentHashMap<String, LocalDateTime> lastRecordTimeMap = new ConcurrentHashMap<>(1024);
-    private LocalDateTime lastRecordTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+    private LocalDateTime lastRecordTime = LocalDateTime.of(LocalDate.now().minusMonths(2), LocalTime.MIN);
     @Autowired
     private RemoteSysConfigurationFeignApi sysConfigurationFeignApi;
 
@@ -115,7 +115,7 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         //如果集合不为空
         if (CollUtil.isNotEmpty(dbList)) {
             dbList.forEach(ele -> {
-                if (LocalDateUtil.gt(ele.getRecordTime(), lastRecordTime)) {
+                if (Objects.nonNull(ele.getRecordTime()) && LocalDateUtil.gt(ele.getRecordTime(), lastRecordTime)) {
                     lastRecordTime = ele.getRecordTime();
                 }
                 lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());

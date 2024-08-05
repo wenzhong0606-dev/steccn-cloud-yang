@@ -27,8 +27,12 @@ public class LastRecordTimeServiceImpl implements InitializingBean {
     public void afterPropertiesSet() {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         executor.scheduleAtFixedRate(() -> {
-            LocalDateTime lastRecordTime = epMeterCollectService.getLastRecordTime();
-            epMeterCollectService.refreshLastReadTime(lastRecordTime);
+            try {
+                LocalDateTime lastRecordTime = epMeterCollectService.getLastRecordTime();
+                epMeterCollectService.refreshLastReadTime(lastRecordTime);
+            } catch (Exception e) {
+                log.error("{}", e.getCause());
+            }
         }, 30, 400, TimeUnit.SECONDS);
     }
 }
