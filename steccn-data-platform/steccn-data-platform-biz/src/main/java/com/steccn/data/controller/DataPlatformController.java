@@ -50,6 +50,18 @@ public class DataPlatformController {
         return R.success(epMeterCollectService.lastReadTime(distantCodeSet));
     }
 
+    @PostMapping("/meter/last/read/time/show")
+    @ApiOperation(value = "最近抄表时间-show")
+    R<Map<String, LocalDateTime>> lastReadTimeShow(){
+        return R.success(epMeterCollectService.lastReadTimeShow());
+    }
+
+    @PostMapping("/meter/last/read/time/reset")
+    @ApiOperation(value = "最近抄表时间-show")
+    R<Boolean> lastReadTimeReset(){
+        return R.success(epMeterCollectService.lastReadTimeReset());
+    }
+
     @GetMapping("/meter/refresh")
     @ApiOperation(value = "最近抄表时间")
     R<Boolean> lastReadTime(@RequestParam("curTime") LocalDateTime curTime){

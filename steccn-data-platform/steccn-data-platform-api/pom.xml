@@ -54,6 +54,13 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-platform-api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-ems-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
     </dependencies>
 
     <properties>

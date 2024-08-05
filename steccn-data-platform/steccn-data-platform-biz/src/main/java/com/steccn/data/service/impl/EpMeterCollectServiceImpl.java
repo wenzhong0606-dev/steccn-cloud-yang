@@ -23,6 +23,7 @@ import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.vo.DwEpMeterCollectVO;
+import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -35,7 +36,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author yequan
@@ -51,6 +56,8 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     private LocalDateTime lastRecordTime = LocalDateTime.of(LocalDate.now().minusMonths(2), LocalTime.MIN);
     @Autowired
     private RemoteSysConfigurationFeignApi sysConfigurationFeignApi;
+    @Autowired
+    private RemoteMeterReadFeignApi remoteMeterReadFeignApi;
 
 
     @Override
@@ -108,19 +115,37 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
 
     @Override
     public Boolean refreshLastReadTime(LocalDateTime curTime) {
-        List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
-                .lambda()
-                .between(EpMeterCollect::getRecordTime, curTime.plusSeconds(1L), LocalDateTime.now())
-                .groupBy(EpMeterCollect::getCode));
-        //如果集合不为空
-        if (CollUtil.isNotEmpty(dbList)) {
-            dbList.forEach(ele -> {
-                if (Objects.nonNull(ele.getRecordTime()) && LocalDateUtil.gt(ele.getRecordTime(), lastRecordTime)) {
-                    lastRecordTime = ele.getRecordTime();
+        AtomicBoolean flag = new AtomicBoolean(false);
+        //1.获取所有的code
+        List<String> accountList = FeignOptional.of(() -> remoteMeterReadFeignApi.accountList(), FeignConstant.STECCN_EMS_SERVICE_NAME).get();
+        CountDownLatch countDownLatch = new CountDownLatch(accountList.size());
+        for (String accountCode : accountList) {
+            CompletableFuture.supplyAsync(() -> {
+                EpMeterCollect one = getOne(new QueryWrapper<EpMeterCollect>().select("max(record_time) as recordTime")
+                        .lambda()
+                        .between(EpMeterCollect::getRecordTime, curTime.plusSeconds(1L), LocalDateTime.now())
+                        .eq(EpMeterCollect::getCode, accountCode));
+                return one;
+            }).handle((ele, ex) ->{
+                log.debug("执行结果 -> {}",ele);
+                if (Objects.isNull(ex) && Objects.nonNull(ele)) {
+                    flag.set(true);
+                    if (Objects.nonNull(ele.getRecordTime()) && LocalDateUtil.gt(ele.getRecordTime(), lastRecordTime)) {
+                        lastRecordTime = ele.getRecordTime();
+                    }
+                    lastRecordTimeMap.put(accountCode, ele.getRecordTime());
                 }
-                lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
+                countDownLatch.countDown();
+                return null;
             });
-        } else {
+        }
+       try {
+           countDownLatch.await(4, TimeUnit.MINUTES);
+       }catch (Exception e){
+       }
+
+        //如果集合不为空
+        if (!flag.get()) {
             //如果db集合为空 ，此时去查询最近抄表时间，大于阈值则会发送钉钉消息
             LocalDateTime lastRecordTime = getLastRecordTime();
             long between = LocalDateTimeUtil.between(lastRecordTime, LocalDateTime.now(), ChronoUnit.SECONDS);
@@ -131,9 +156,9 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
                 if (CollUtil.isNotEmpty(maxTimeList)) {
                     Integer maxTime = maxTimeList.get(0);
                     if (between > maxTime) {
-                        Long minutes =  between / 60 ;
+                        Long minutes = between / 60;
                         try {
-                            DingDingUtils.sendTextMsg("监控告警-数采数据断传时间已超过"+ minutes +"分钟", Lists.newArrayList("13601717164"), null, false);
+                            DingDingUtils.sendTextMsg("监控告警-数采数据断传时间已超过" + minutes + "分钟", Lists.newArrayList("13601717164"), null, false);
                         } catch (Exception e) {
                             log.error("{}", e.getLocalizedMessage());
                         }
@@ -208,6 +233,17 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
             }
         }
         return resValue;
+    }
+
+    @Override
+    public Map<String, LocalDateTime> lastReadTimeShow() {
+        return lastRecordTimeMap;
+    }
+
+    @Override
+    public Boolean lastReadTimeReset() {
+        lastRecordTime = LocalDateTime.of(LocalDate.now().minusMonths(2), LocalTime.MIN);
+        return Boolean.TRUE;
     }
 
     /**

@@ -479,6 +479,20 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return resMap;
     }
 
+    @Override
+    public List<String> remoteAccountList() {
+        List<String> accountList = Lists.newArrayList();
+        List<EpInstrumentAccount> dbList = list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getEntityTable, 0)
+                .isNotNull(EpInstrumentAccount::getDistantMapCode));
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                accountList.add(ele.getDistantMapCode());
+            });
+        }
+        return accountList;
+    }
+
     /**
      * 根据条件判断是否抛出异常
      *

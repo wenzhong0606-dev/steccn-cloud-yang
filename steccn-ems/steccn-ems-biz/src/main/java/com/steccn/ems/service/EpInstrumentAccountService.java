@@ -92,4 +92,11 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      */
     Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeterFilter(Integer energyType,Set<Long> partitionIdSet);
 
+
+    /**
+     * 获取所有的远传仪表
+     * @return
+     */
+    List<String> remoteAccountList();
+
 }

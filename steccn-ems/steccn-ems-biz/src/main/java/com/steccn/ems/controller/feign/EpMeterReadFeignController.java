@@ -1,24 +1,22 @@
 package com.steccn.ems.controller.feign;
 
 import cn.hutool.core.lang.Assert;
-import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.Tuple5DTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
-import com.steccn.ems.dto.EpMeterReadAddDTO;
-import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.service.EpDayReportService;
+import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPmsConsumeReportService;
-import com.steccn.ems.vo.EpMeterReadDetailsVO;
-import com.steccn.ems.vo.EpMeterReadVO;
 import com.steccn.ems.vo.EpPmsConsumeVO;
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +35,7 @@ public class EpMeterReadFeignController {
     private final EpMeterReadService epMeterReadService;
     private final EpDayReportService epDayReportService;
     private final EpPmsConsumeReportService consumeReportService;
+    private final EpInstrumentAccountService accountService;
 
     /**
      * 获取指定能源的耗用数
@@ -102,6 +101,16 @@ public class EpMeterReadFeignController {
     R<List<CommonReportDTO>> scList(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto) {
         Assert.isTrue(LocalDateUtil.le(dto.getField1(), dto.getField2()), "结束时间必须小于等于开始时间");
         return R.success(epDayReportService.scList(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
+
+    /**
+     * 获取所有远传仪表的code
+     *
+     * @return
+     */
+    @PostMapping("/account")
+    R<List<String>> accountList() {
+        return R.success(accountService.remoteAccountList());
     }
 
 }

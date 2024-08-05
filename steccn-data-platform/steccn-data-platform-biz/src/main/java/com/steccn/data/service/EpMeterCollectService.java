@@ -75,4 +75,15 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
     BigDecimal heatPower(LocalDate date);
 
 
+    /**
+     * 最近抄表时间show
+     * @return
+     */
+    Map<String, LocalDateTime> lastReadTimeShow();
+
+    /**
+     * 重置最近抄表时间
+     * @return
+     */
+    Boolean lastReadTimeReset();
 }

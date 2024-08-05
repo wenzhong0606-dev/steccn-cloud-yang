@@ -91,4 +91,12 @@ public interface RemoteMeterReadFeignApi {
      */
     @PostMapping("/feign/ems/meter/read/sc")
     R<List<CommonReportDTO>> scList(@RequestBody TripleDTO<LocalDate, LocalDate, Integer> dto);
+
+
+    /**
+     * 获取所有远传仪表的code
+     * @return
+     */
+    @PostMapping("/feign/ems/meter/read/account")
+    R<List<String>> accountList();
 }
