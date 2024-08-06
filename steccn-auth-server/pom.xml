@@ -98,6 +98,7 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-sales-api</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <!--添加actuator依赖-->
         <dependency>
