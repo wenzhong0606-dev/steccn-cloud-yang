@@ -54,10 +54,11 @@ public class MyUserDetailsService implements UserDetailsService {
             if (Objects.isNull(resUserVO)) {
                 throw new UsernameNotFoundException("查无此人");
             }
+            String desPassword = resUserVO.getPassword().split("\\$")[4];
             return new SteccnUser(resUserVO.getUserId(),
                     resUserVO.getName(),
-                    resUserVO.getUsername(),
-                    resUserVO.getPassword().split("\\$")[4],
+                    username,
+                    desPassword,
                     AuthorityUtils.createAuthorityList("admin"));
         }else {
             R<OaUserDTO> r = oaInfoService.loadByUsername(username);

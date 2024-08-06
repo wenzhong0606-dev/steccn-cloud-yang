@@ -35,5 +35,5 @@ public interface RemoteSaleFeignApi {
 
     @GetMapping("/feign/sales/user/info")
     @ApiOperation("获取销售用户信息")
-    R<ResUserVO> salesUserInfo(@RequestParam String username);
+    R<ResUserVO> salesUserInfo(@RequestParam("name") String username);
 }
