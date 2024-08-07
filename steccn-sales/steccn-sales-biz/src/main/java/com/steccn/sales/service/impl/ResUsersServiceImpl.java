@@ -90,7 +90,7 @@ public class ResUsersServiceImpl extends ServiceImpl<ResUsersMapper, ResUsers>
         steccnTokenVO.setRefreshToken(map.get(TokenConstant.STR_REFRESH_TOKEN));
         steccnTokenVO.setExpiresIn(Long.valueOf(String.valueOf(map.get(TokenConstant.STR_EXPIRES_IN))));
         steccnTokenVO.setScope(map.get(TokenConstant.STR_SCOPE));
-        steccnTokenVO.setUsername(username);
+        steccnTokenVO.setUsername(resUsers.getLogin());
         return steccnTokenVO;
     }
 
