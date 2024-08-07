@@ -1,26 +1,16 @@
 package com.steccn.sales.service.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.FeignOptional;
-import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.constant.ResultCode;
-import com.steccn.common.vo.R;
-import com.steccn.oa.dto.OaUserInfo;
-import com.steccn.platform.dto.SysUserClientRefDTO;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.portal.constant.TokenConstant;
-import com.steccn.portal.dto.LoginMesUserInfoDTO;
-import com.steccn.portal.service.RemoteTokenApi;
 import com.steccn.portal.vo.SteccnTokenVO;
 import com.steccn.sales.domain.ResPartner;
 import com.steccn.sales.domain.ResUsers;
+import com.steccn.sales.mapper.ResUsersMapper;
+import com.steccn.sales.service.RemoteSalesTokenApi;
 import com.steccn.sales.service.ResPartnerService;
 import com.steccn.sales.service.ResUsersService;
-import com.steccn.sales.mapper.ResUsersMapper;
 import com.steccn.sales.vo.ResUserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -28,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +32,7 @@ import java.util.Objects;
 @RefreshScope
 public class ResUsersServiceImpl extends ServiceImpl<ResUsersMapper, ResUsers>
     implements ResUsersService{
-    private final RemoteTokenApi remoteTokenApi;
+    private final RemoteSalesTokenApi remoteTokenApi;
     private final ResPartnerService resPartnerService;
 
     @Override
