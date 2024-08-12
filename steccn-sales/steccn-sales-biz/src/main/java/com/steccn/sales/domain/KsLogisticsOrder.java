@@ -254,6 +254,8 @@ public class KsLogisticsOrder implements Serializable {
      */
     private String warehouseNames;
 
+    private LocalDateTime allocationDate;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
