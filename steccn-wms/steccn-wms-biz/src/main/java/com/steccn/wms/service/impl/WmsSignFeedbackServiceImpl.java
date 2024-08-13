@@ -1,0 +1,130 @@
+package com.steccn.wms.service.impl;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
+import com.steccn.minio.fegin.RemoteFileFeignApi;
+import com.steccn.minio.vo.FileInfoVO;
+import com.steccn.platform.feign.RemoteSalesFeignApi;
+import com.steccn.sales.dto.KsLogisticsOrderDTO;
+import com.steccn.sales.feign.RemoteSaleFeignApi;
+import com.steccn.wms.domain.WmsSignFeedback;
+import com.steccn.wms.domain.WmsStorageReceiptInfo;
+import com.steccn.wms.dto.WmsSignFeedbackDTO;
+import com.steccn.wms.service.WmsSignFeedbackService;
+import com.steccn.wms.mapper.WmsSignFeedbackMapper;
+import com.steccn.wms.vo.WmsSignFeedbackVO;
+import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+/**
+* @author 34872
+* @description 针对表【wms_sign_feedback】的数据库操作Service实现
+* @createDate 2024-08-06 16:49:20
+*/
+@Service
+@RequiredArgsConstructor
+public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMapper, WmsSignFeedback>
+    implements WmsSignFeedbackService{
+
+    private final RemoteFileFeignApi remoteFileFeignApi;
+    private final RemoteSaleFeignApi remoteSaleFeignApi;
+
+    @Override
+    public Boolean add(WmsSignFeedbackDTO dto) {
+        WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
+        wmsSignFeedback.setState(0);
+        Set<String> orders  = Sets.newHashSet();
+        orders.add(wmsSignFeedback.getSalesOrder());
+        KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+        ksLogisticsOrderDTO.setSalesOrders(orders);
+        Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+        wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
+        return save(wmsSignFeedback);
+    }
+
+    @Override
+    public Boolean updateSignFeedback(WmsSignFeedbackDTO dto) {
+        WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
+        wmsSignFeedback.setState(0);
+        return updateById(wmsSignFeedback);
+    }
+
+    @Override
+    public WmsSignFeedbackVO get(Long id) {
+        WmsSignFeedback wmsSignFeedback = getById(id);
+        WmsSignFeedbackVO wmsSignFeedbackVO = BeanUtil.copyProperties(wmsSignFeedback, WmsSignFeedbackVO.class);
+        if (Objects.nonNull(wmsSignFeedbackVO.getFileId())){
+            List<Long> fileIds = Lists.newArrayList();
+            fileIds.add(wmsSignFeedbackVO.getFileId());
+            Map<Long, FileInfoVO> longFileInfoVOMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
+            wmsSignFeedbackVO.setFileUrl(longFileInfoVOMap.get(wmsSignFeedbackVO.getFileId()).getFileUrl());
+        }
+        return wmsSignFeedbackVO;
+    }
+
+    @Override
+    public Page<WmsSignFeedbackVO> pageList(WmsSignFeedbackDTO dto) {
+        Page page = page(new Page(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<WmsSignFeedback>()
+                .like(Objects.nonNull(dto.getSalesOrder()),WmsSignFeedback::getSalesOrder,dto.getSalesOrder())
+                .like(Objects.nonNull(dto.getProduct()),WmsSignFeedback::getProduct,dto.getProduct())
+                .like(Objects.nonNull(dto.getLogisticsCompany()),WmsSignFeedback::getLogisticsCompany,dto.getLogisticsCompany())
+                .like(Objects.nonNull(dto.getCarCode()),WmsSignFeedback::getCarCode,dto.getCarCode())
+                .eq(Objects.nonNull(dto.getSignedQuantity()),WmsSignFeedback::getSignedQuantity,dto.getSignedQuantity())
+                .eq(Objects.nonNull(dto.getSignedPriceQuantity()),WmsSignFeedback::getSignedPriceQuantity,dto.getSignedPriceQuantity())
+                .eq(Objects.nonNull(dto.getSignatureType()),WmsSignFeedback::getSignatureType,dto.getSignatureType())
+                .eq(Objects.nonNull(dto.getSendQuantity()),WmsSignFeedback::getSendQuantity,dto.getSendQuantity())
+                .eq(Objects.nonNull(dto.getPriceQuantity()),WmsSignFeedback::getPriceQuantity,dto.getPriceQuantity())
+                .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()),WmsSignFeedback::getSignedDate,dto.getStartDate(),dto.getEndDate())
+                .eq(Objects.nonNull(dto.getState()),WmsSignFeedback::getState,dto.getState())
+        );
+        Page<WmsSignFeedbackVO> resPage = new Page<>();
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            BeanUtil.copyProperties(page,resPage);
+            List<WmsSignFeedbackVO> wmsSignFeedbackVOList = BeanUtil.copyToList(page.getRecords(), WmsSignFeedbackVO.class);
+            Set<String> orders = Sets.newHashSet();
+            for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
+                orders.add(wmsSignFeedbackVO.getSalesOrder());
+            }
+            KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+            ksLogisticsOrderDTO.setSalesOrders(orders);
+            Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+            for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
+                wmsSignFeedbackVO.setCarCode(carCodeMap.get(wmsSignFeedbackVO.getSalesOrder()));
+            }
+            resPage.setRecords(wmsSignFeedbackVOList);
+        }
+        return resPage;
+    }
+
+    @Override
+    public Boolean affirm(WmsSignFeedbackDTO dto) {
+        Assert.notNull(dto.getId(),"反馈id不能为空");
+        WmsSignFeedback order = getById(dto.getId());
+        KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+        ksLogisticsOrderDTO.setName(order.getSalesOrder());
+        ksLogisticsOrderDTO.setSignType(order.getSignatureType());
+        ksLogisticsOrderDTO.setSignQty(order.getSignedQuantity());
+        ksLogisticsOrderDTO.setPieceQty(order.getPriceQuantity());
+        ksLogisticsOrderDTO.setSignDate(order.getSignedDate());
+        ksLogisticsOrderDTO.setAbnormalCause(order.getAbnormalCause());
+        FeignOptional.of(() -> remoteSaleFeignApi.update(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+        order.setState(1);
+        return updateById(order);
+    }
+}
+
+
+
+

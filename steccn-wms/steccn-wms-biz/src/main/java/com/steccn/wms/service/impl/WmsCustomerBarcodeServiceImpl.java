@@ -3,12 +3,17 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.platform.dto.SalesLogisticsDTO;
+import com.steccn.platform.feign.RemoteSalesFeignApi;
+import com.steccn.platform.vo.SalesLogisticsVO;
 import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.wms.constant.WmsManagerConstant;
@@ -22,13 +27,16 @@ import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.mapper.WmsCustomerBarcodeMapper;
+import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.vo.WmsCustomerBarcodeVO;
 import com.steccn.wms.vo.WmsDeliveryCustomerBarCodeVO;
+import com.steccn.wms.vo.WmsDeliverySellFlagVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +57,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     private final WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
     private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
     private final WmsInventoryMapper wmsInventoryMapper;
+    private final RemoteSalesFeignApi remoteSalesFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -206,6 +215,43 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
             results.add(result);
         }
         return results;
+    }
+
+    @Override
+    public WmsDeliverySellFlagVO customerBarcode(String customerBarcode) {
+        WmsDeliverySellFlagVO wmsDeliverySellFlagVO = new WmsDeliverySellFlagVO();
+        //根据客户条码获取物流单号
+         String salesOrder =   wmsDeliveryReceiptMapper.getSalesOrderByCustomerBarcode(customerBarcode);
+         if (Objects.nonNull(salesOrder)){
+             //调用物流单明细查询接口
+             SalesLogisticsDTO dto = new SalesLogisticsDTO();
+             dto.setServer_code(WmsManagerConstant.SERVER_CODE1);
+             List<String> codes = Lists.newArrayList();
+             codes.add(salesOrder);
+             dto.setCode(codes);
+             String data = remoteSalesFeignApi.queryLogistics(dto);
+             JSONObject jsonObject = JSONObject.parseObject(data);
+             try {
+                 List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
+                 if (CollUtil.isNotEmpty(logisticsVOS)){
+                     wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
+                     SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
+                     wmsDeliverySellFlagVO.setSalesOrder(salesLogisticsVO.getName());
+                     wmsDeliverySellFlagVO.setClient(salesLogisticsVO.getCustomer_name());
+                     wmsDeliverySellFlagVO.setSendQuantity(new BigDecimal(salesLogisticsVO.getSale_qty()));
+                     wmsDeliverySellFlagVO.setPriceQuantity(salesLogisticsVO.getPrice_qty());
+                     wmsDeliverySellFlagVO.setProduct(salesLogisticsVO.getProduct_name());
+//                     wmsDeliverySellFlagVO.setCarCode(salesLogisticsVO.get);
+                     String state = salesLogisticsVO.getState();
+                     if (state.equals("已离厂")) {
+                         wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                     }
+                 }
+             } catch (Exception e) {
+                 throw new BusinessException("物流单不存在");
+             }
+         }
+        return wmsDeliverySellFlagVO;
     }
 }
 

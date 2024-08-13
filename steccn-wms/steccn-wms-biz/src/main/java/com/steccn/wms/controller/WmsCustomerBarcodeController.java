@@ -18,6 +18,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.vo.WmsCustomerBarcodeVO;
 import com.steccn.wms.vo.WmsDeliveryCustomerBarCodeVO;
+import com.steccn.wms.vo.WmsDeliverySellFlagVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,14 @@ public class WmsCustomerBarcodeController {
     public R<WmsCustomerBarcodeVO> getCaseNoCustomerBarcode(@ApiParam("客户条码") @RequestParam("customerBarcode") String customerBarcode) {
         return R.success(wmsCustomerBarcodeService.CustomerBarcodeByCaseNO(customerBarcode));
     }
+
+
+    @ApiOperation("根据客户条码获取物流信息")
+    @GetMapping("/customerBarcode")
+    public R<WmsDeliverySellFlagVO> customerBarcode(@ApiParam("客户条码") @RequestParam("customerBarcode") String customerBarcode) {
+        return R.success(wmsCustomerBarcodeService.customerBarcode(customerBarcode));
+    }
+
 
     @PostMapping("/thirdParty/logistics")
     @ApiOperation("三方根据物流单号获取客户条码")

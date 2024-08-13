@@ -646,6 +646,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String state = salesLogisticsVO.getState();
                 wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                if (state.equals("已离厂")){
+                    wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(1);
+                }
                 BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
                     //如果销售数量为0
                 if (saleQty.compareTo(BigDecimal.ZERO)==0){

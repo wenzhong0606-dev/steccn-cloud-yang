@@ -2,6 +2,7 @@ package com.steccn.sales.controller.feign;
 
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.service.ResUsersService;
 import com.steccn.sales.vo.ResUserVO;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -40,5 +43,18 @@ public class SalesLogisticsFeignController {
     @ApiOperation("获取销售用户信息")
     R<ResUserVO> salesUserInfo(@RequestParam("name") String username){
         return R.success(resUsersService.userInfo(username));
+    }
+
+    @PostMapping("/update")
+    @ApiOperation("修改物流单信息")
+    R<Boolean> update(@RequestBody KsLogisticsOrderDTO dto){
+        return R.success(ksLogisticsOrderService.updateOrderByOrderCode(dto));
+    }
+
+
+    @PostMapping("/sales/order/car/code")
+    @ApiOperation("获取物流单车牌号")
+    R<Map<String,String>> salesOrderCarCode (@RequestBody  KsLogisticsOrderDTO dto){
+        return R.success(ksLogisticsOrderService.salesOrderCarCode(dto.getSalesOrders()));
     }
 }

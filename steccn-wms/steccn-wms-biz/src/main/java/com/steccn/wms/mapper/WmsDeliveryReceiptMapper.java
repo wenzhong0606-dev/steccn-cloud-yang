@@ -79,6 +79,8 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     Integer unAffirmByShelf(@Param("shelfIds")Set<Long> shelfIds);
 
     BigDecimal monthSum(@Param("warehouseIds") Set<Long> warehouseIds,@Param("firstDay") LocalDate firstDay,@Param("lastDay") LocalDate lastDay);
+
+    String getSalesOrderByCustomerBarcode(@Param("customerBarcode") String customerBarcode);
 }
 
 

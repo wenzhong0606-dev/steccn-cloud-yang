@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
@@ -23,11 +24,11 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.sales.constant.SalesConstant;
 import com.steccn.sales.domain.*;
-import com.steccn.sales.dto.KsLogisticsDTO;
-import com.steccn.sales.dto.KsLogisticsDashBoardDTO;
-import com.steccn.sales.dto.KsSaleIdAndNameDTO;
-import com.steccn.sales.dto.KsShippingReconciliationDTO;
+import com.steccn.sales.dto.*;
 import com.steccn.sales.mapper.*;
+import com.steccn.sales.service.KsAbnormalCauseKsLogisticsOrderRelService;
+import com.steccn.sales.service.KsAbnormalCauseService;
+import com.steccn.sales.service.KsLogisticsCompanyService;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.vo.KsLogisticsVO;
 import com.steccn.sales.vo.KsShippingReconciliationVO;
@@ -60,6 +61,8 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     private final KsLogisticsOrderMapper ksLogisticsOrderMapper;
     private final KsLogisticsCompanyMapper ksLogisticsCompanyMapper;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final KsAbnormalCauseService ksAbnormalCauseService;
+    private final KsAbnormalCauseKsLogisticsOrderRelService ksAbnormalCauseKsLogisticsOrderRelService;
 
     @Override
     public Page<KsLogisticsVO> getLogisticsRecord(KsLogisticsDTO dto) {
@@ -203,6 +206,38 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         result.setXAxis(xAxis);
         result.setYData(yData);
         return result;
+    }
+
+    @Override
+    public Boolean updateOrderByOrderCode(KsLogisticsOrderDTO dto) {
+        KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, dto.getName()));
+        one.setState("已反馈");
+        one.setSignType(dto.getSignType());
+        one.setSignQty(dto.getSignQty());
+        one.setPieceQty(dto.getPieceQty());
+        one.setSignDate(dto.getSignDate());
+        updateById(one);
+        KsAbnormalCause ksAbnormalCause = new KsAbnormalCause();
+        ksAbnormalCause.setName(dto.getAbnormalCause());
+        ksAbnormalCauseService.save(ksAbnormalCause);
+        Integer ksAbnormalCauseId = ksAbnormalCause.getId();
+        KsAbnormalCauseKsLogisticsOrderRel ksAbnormalCauseKsLogisticsOrderRel = new KsAbnormalCauseKsLogisticsOrderRel();
+        ksAbnormalCauseKsLogisticsOrderRel.setKsLogisticsOrderId(Math.toIntExact(one.getId()));
+        ksAbnormalCauseKsLogisticsOrderRel.setKsAbnormalCauseId(ksAbnormalCauseId);
+        ksAbnormalCauseKsLogisticsOrderRelService.save(ksAbnormalCauseKsLogisticsOrderRel);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Map<String, String> salesOrderCarCode(Set<String> salesOrders) {
+        Map<String, String> res = Maps.newHashMap();
+        List<KsLogisticsOrder> list = list(new LambdaQueryWrapper<KsLogisticsOrder>().in(KsLogisticsOrder::getName, salesOrders));
+        if (CollUtil.isNotEmpty(list)){
+            list.forEach( ksLogisticsOrder -> {
+                res.put(ksLogisticsOrder.getName(),ksLogisticsOrder.getCarCode());
+            });
+        }
+        return res;
     }
 }
 

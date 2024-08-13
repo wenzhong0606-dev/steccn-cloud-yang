@@ -243,4 +243,17 @@
         </foreach>
         and a.affirm_time between  #{firstDay} and #{lastDay}
     </select>
+    <select id="getSalesOrderByCustomerBarcode" resultType="java.lang.String">
+        SELECT
+            b.associated_no
+        FROM
+            wms_delivery_receipt a
+                JOIN wms_delivery_receipt_info b ON b.delivery_receipt_id = a.id
+                JOIN wms_inventory c ON c.id = b.inventory_id
+                JOIN wms_customer_barcode d ON d.case_no = c.case_no
+        WHERE
+            d.customer_barcode = #{customerBarcode}
+          AND b.del_flag = 0
+          AND d.del_flag = 0
+    </select>
 </mapper>

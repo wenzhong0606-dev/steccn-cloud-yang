@@ -4,6 +4,9 @@ package com.steccn.wms.vo;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Data
 @ApiModel("销售出库标识VO")
 public class WmsDeliverySellFlagVO {
@@ -17,11 +20,28 @@ public class WmsDeliverySellFlagVO {
      */
     private Integer createStateFlag = 0;
 
+    private Integer leaveTheFactoryStateFlag = 0;
+
 
     /**
      * 合同未发货>0
      */
     private Integer contractNotDeliveredFlag = 0;
+
+    private String salesOrder;
+
+    private String client;
+
+    private LocalDateTime sendDate;
+
+    private BigDecimal sendQuantity;
+
+    private BigDecimal priceQuantity;
+
+    private String carCode;
+
+    private String product;
+
 
 
 

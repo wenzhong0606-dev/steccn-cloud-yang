@@ -8,12 +8,15 @@ import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.sales.domain.KsLogisticsOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.sales.dto.KsLogisticsDTO;
+import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.vo.KsLogisticsVO;
 import com.steccn.sales.vo.KsShippingReconciliationVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -57,4 +60,8 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
      * @return
      */
     EpDeepConsumeContrastVO logisticsNum(LocalDate start,LocalDate end);
+
+    Boolean updateOrderByOrderCode(KsLogisticsOrderDTO dto);
+
+    Map<String,String> salesOrderCarCode(Set<String> salesOrders);
 }
