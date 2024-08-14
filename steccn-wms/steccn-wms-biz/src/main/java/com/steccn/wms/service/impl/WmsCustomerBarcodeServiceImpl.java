@@ -243,7 +243,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
                      wmsDeliverySellFlagVO.setProduct(salesLogisticsVO.getProduct_name());
 //                     wmsDeliverySellFlagVO.setCarCode(salesLogisticsVO.get);
                      String state = salesLogisticsVO.getState();
-                     if (state.equals("sync")) {
+                     if (state.equals("已离厂")) {
                          wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
                      }
                  }
