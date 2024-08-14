@@ -119,6 +119,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         ksLogisticsOrderDTO.setPieceQty(order.getPriceQuantity());
         ksLogisticsOrderDTO.setSignDate(order.getSignedDate());
         ksLogisticsOrderDTO.setAbnormalCause(order.getAbnormalCause());
+        ksLogisticsOrderDTO.setState("sync");
         FeignOptional.of(() -> remoteSaleFeignApi.update(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
         order.setState(1);
         return updateById(order);
