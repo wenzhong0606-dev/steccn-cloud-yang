@@ -645,6 +645,12 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String state = salesLogisticsVO.getState();
+                wmsDeliverySellFlagVO.setSalesOrder(salesLogisticsVO.getName());
+                wmsDeliverySellFlagVO.setSalesOrder(salesLogisticsVO.getName());
+                wmsDeliverySellFlagVO.setClient(salesLogisticsVO.getCustomer_name());
+                wmsDeliverySellFlagVO.setSendQuantity(new BigDecimal(salesLogisticsVO.getSale_qty()));
+                wmsDeliverySellFlagVO.setPriceQuantity(salesLogisticsVO.getPrice_qty());
+                wmsDeliverySellFlagVO.setProduct(salesLogisticsVO.getProduct_name());
                 wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
                 if (state.equals("已离厂")){
                     wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(1);
