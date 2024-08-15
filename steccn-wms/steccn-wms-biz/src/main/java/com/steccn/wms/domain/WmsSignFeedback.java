@@ -19,7 +19,7 @@ public class WmsSignFeedback implements Serializable {
     /**
      * 
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
