@@ -46,7 +46,7 @@ public class KafkaConsumer {
      *
      * @param record
      */
-    @KafkaListener(topics = "opc_ua_all_topic", concurrency = "4")
+    @KafkaListener(topics = "cold_data", concurrency = "4")
     @Transactional(rollbackFor = Exception.class)
     public void tpFirst(ConsumerRecord<Object, String> record, Acknowledgment ack) {
         // 消费的哪个topic、partition的消息,打印出消息内容
