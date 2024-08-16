@@ -17,7 +17,7 @@ public class KsAbnormalCauseKsLogisticsOrderRel implements Serializable {
     /**
      * 
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Integer ksLogisticsOrderId;
 
     /**

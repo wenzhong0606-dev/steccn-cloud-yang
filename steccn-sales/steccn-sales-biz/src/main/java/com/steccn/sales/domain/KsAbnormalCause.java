@@ -19,7 +19,7 @@ public class KsAbnormalCause implements Serializable {
     /**
      * 
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Integer id;
 
     /**

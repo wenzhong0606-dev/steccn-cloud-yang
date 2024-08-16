@@ -211,7 +211,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     @Override
     public Boolean updateOrderByOrderCode(KsLogisticsOrderDTO dto) {
         KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, dto.getName()));
-        one.setState("已反馈");
+        one.setState("feedback");
         one.setSignType(dto.getSignType());
         one.setSignQty(dto.getSignQty());
         one.setPieceQty(dto.getPieceQty());
