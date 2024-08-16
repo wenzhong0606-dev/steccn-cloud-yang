@@ -241,6 +241,8 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
                      wmsDeliverySellFlagVO.setSendQuantity(new BigDecimal(salesLogisticsVO.getSale_qty()));
                      wmsDeliverySellFlagVO.setPriceQuantity(salesLogisticsVO.getPrice_qty());
                      wmsDeliverySellFlagVO.setProduct(salesLogisticsVO.getProduct_name());
+                     wmsDeliverySellFlagVO.setSendDate(salesLogisticsVO.getSend_date());
+                     //根据物料名称获取单片面积
 //                     wmsDeliverySellFlagVO.setCarCode(salesLogisticsVO.get);
                      String state = salesLogisticsVO.getState();
                      if (state.equals("已离厂")) {

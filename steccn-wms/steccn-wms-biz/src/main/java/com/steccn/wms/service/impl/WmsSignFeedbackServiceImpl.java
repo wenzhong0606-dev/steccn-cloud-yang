@@ -19,6 +19,7 @@ import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.dto.WmsSignFeedbackDTO;
 import com.steccn.wms.service.WmsSignFeedbackService;
 import com.steccn.wms.mapper.WmsSignFeedbackMapper;
+import com.steccn.wms.vo.WmsOutInWarehouseInfoVO;
 import com.steccn.wms.vo.WmsSignFeedbackVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author 34872
@@ -103,7 +105,17 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
             for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
                 wmsSignFeedbackVO.setCarCode(carCodeMap.get(wmsSignFeedbackVO.getSalesOrder()));
             }
-            resPage.setRecords(wmsSignFeedbackVOList);
+            wmsSignFeedbackVOList.sort(Comparator.comparing(WmsSignFeedbackVO::getSignedDate)
+            );
+
+            List<WmsSignFeedbackVO> collect = wmsSignFeedbackVOList.stream()
+                    .sorted(Comparator.comparing(WmsSignFeedbackVO::getSignedDate, Comparator.nullsLast(Comparator.reverseOrder()))
+                            .thenComparing(WmsSignFeedbackVO::getLogisticsCompany, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(WmsSignFeedbackVO::getClient, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(WmsSignFeedbackVO::getProduct, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(WmsSignFeedbackVO::getSendDate, Comparator.nullsLast(Comparator.reverseOrder()))
+                            .thenComparing(WmsSignFeedbackVO::getSalesOrder, Comparator.nullsLast(Comparator.reverseOrder()))).collect(Collectors.toList());
+            resPage.setRecords(collect);
         }
         return resPage;
     }
