@@ -16,4 +16,8 @@
         path,id,id_value,
         dt,id_category
     </sql>
+    <select id="detail" resultType="com.steccn.dp.domain.OpcUaDataCount">
+        select ct.id as id , psm.site as path , sum(id_value) as id_value  from point_site_map psm join opc_ua_data_count ct on ct.id = psm.id  where ct.dt = #{time} and ct.id_category  = #{category}
+        group by ct.id , psm.site
+    </select>
 </mapper>
