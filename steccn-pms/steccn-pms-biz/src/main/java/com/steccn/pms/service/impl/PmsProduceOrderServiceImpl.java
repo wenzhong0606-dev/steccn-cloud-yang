@@ -84,6 +84,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -2183,7 +2186,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      * @return
      */
     private Map<Long, BigDecimal> getCurrentProduction(Set<Long> orderIdSet) {
-        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        Map<Long, BigDecimal> resMap = Maps.newConcurrentMap();
         if (CollUtil.isNotEmpty(orderIdSet)) {
             //获取订单的执行工位
             Map<Long, Set<Integer>> stationMap = getStation(orderIdSet);
@@ -2209,44 +2212,36 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 }
             }
             log.info("请求数仓前——>"+LocalDateTime.now());
+            CountDownLatch countDownLatch = new CountDownLatch(orderIdSet.size());
             for (Long orderId : orderIdSet) {
-                BigDecimal currentProduction = BigDecimal.ZERO;
-                PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
-                List<String> codes = orderReportCodeMap.get(orderId);
-                if (CollUtil.isNotEmpty(codes)){
-                    for (String code : codes) {
-                        pmReportWorkPreloadDTO.setCode(code);
-                        BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-                        if (Objects.nonNull(bigDecimal)) {
-                            currentProduction = currentProduction.add(bigDecimal);
+                CompletableFuture.supplyAsync(() -> {
+                    BigDecimal currentProduction = BigDecimal.ZERO;
+                    PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
+                    List<String> codes = orderReportCodeMap.get(orderId);
+                    if (CollUtil.isNotEmpty(codes)) {
+                        for (String code : codes) {
+                            pmReportWorkPreloadDTO.setCode(code);
+                            BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+                            if (Objects.nonNull(bigDecimal)) {
+                                currentProduction = currentProduction.add(bigDecimal);
+                            }
                         }
                     }
-                }
-                resMap.put(orderId,currentProduction);
+                    return currentProduction;
+                }).handle((value,ex) ->{
+                    if(Objects.isNull(ex)){
+                        resMap.put(orderId, value);
+                    }
+                    countDownLatch.countDown();
+                    return null;
+                });
+            }
+            try {
+                countDownLatch.await(20, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             log.info("请求数仓后——>"+","+LocalDateTime.now());
-//            for (Long orderId : orderIdSet) {
-//                PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
-//                Set<Integer> stationSet = stationMap.get(orderId);
-//                BigDecimal currentProduction = BigDecimal.ZERO;
-//                if (CollUtil.isNotEmpty(stationSet)) {
-//                    for (Integer stationId : stationSet) {
-//                        if (Objects.nonNull(codeMap.get(stationId))) {
-//                            List<String> codes = codeMap.get(stationId);
-//                            if (CollUtil.isNotEmpty(codes)){
-//                                for (String code : codes) {
-//                                    pmReportWorkPreloadDTO.setCode(code);
-//                                    BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-//                                    if (Objects.nonNull(bigDecimal)) {
-//                                        currentProduction = currentProduction.add(bigDecimal);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//                resMap.put(orderId,currentProduction);
-//            }
         }
         return resMap;
     }
