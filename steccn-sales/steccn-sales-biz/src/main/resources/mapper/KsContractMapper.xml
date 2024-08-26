@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.sales.mapper.KsContractMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.sales.domain.KsContract">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="messageMainAttachmentId" column="message_main_attachment_id" jdbcType="OTHER"/>
+            <result property="frameContractId" column="frame_contract_id" jdbcType="OTHER"/>
+            <result property="companyId" column="company_id" jdbcType="OTHER"/>
+            <result property="customerId" column="customer_id" jdbcType="OTHER"/>
+            <result property="paymentTermId" column="payment_term_id" jdbcType="OTHER"/>
+            <result property="saleDepartmentId" column="sale_department_id" jdbcType="OTHER"/>
+            <result property="saleId" column="sale_id" jdbcType="OTHER"/>
+            <result property="createUid" column="create_uid" jdbcType="OTHER"/>
+            <result property="writeUid" column="write_uid" jdbcType="OTHER"/>
+            <result property="orderType" column="order_type" jdbcType="VARCHAR"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="customerCode" column="customer_code" jdbcType="VARCHAR"/>
+            <result property="contractName" column="contract_name" jdbcType="VARCHAR"/>
+            <result property="businessType" column="business_type" jdbcType="VARCHAR"/>
+            <result property="deliveryMethod" column="delivery_method" jdbcType="VARCHAR"/>
+            <result property="placeDelivery" column="place_delivery" jdbcType="VARCHAR"/>
+            <result property="settleCurrency" column="settle_currency" jdbcType="VARCHAR"/>
+            <result property="checkMethod" column="check_method" jdbcType="VARCHAR"/>
+            <result property="orderStatus" column="order_status" jdbcType="VARCHAR"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="state" column="state" jdbcType="VARCHAR"/>
+            <result property="contractDate" column="contract_date" jdbcType="DATE"/>
+            <result property="isTax" column="is_tax" jdbcType="BOOLEAN"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="writeDate" column="write_date" jdbcType="TIMESTAMP"/>
+            <result property="approveResult" column="approve_result" jdbcType="VARCHAR"/>
+            <result property="requestId" column="request_id" jdbcType="OTHER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,message_main_attachment_id,frame_contract_id,
+        company_id,customer_id,payment_term_id,
+        sale_department_id,sale_id,create_uid,
+        write_uid,order_type,name,
+        customer_code,contract_name,business_type,
+        delivery_method,place_delivery,settle_currency,
+        check_method,order_status,note,
+        state,contract_date,is_tax,
+        create_date,write_date,approve_result,
+        request_id
+    </sql>
+
+    <select id="contractCountDay" resultType="com.steccn.common.dto.TupleDTO">
+        SELECT
+            b.contract_date AS field1,
+            sum( a.sale_qty ) AS field2
+        FROM
+            ks_contract_details a
+                LEFT JOIN ks_contract b
+                          ON a.contract_id = b.id
+        WHERE
+          b.contract_date &gt;= #{start}
+          AND b.contract_date &lt; #{end}
+          AND b.state != 'draft'
+        GROUP BY field1
+    </select>
+    <select id="contractCountMonth" resultType="com.steccn.common.dto.TupleDTO">
+        SELECT
+        to_char(b.contract_date,'YYYY-MM') AS field1,
+        sum( a.sale_qty ) AS field2
+        FROM
+        ks_contract_details a
+        LEFT JOIN ks_contract b
+        ON a.contract_id = b.id
+        WHERE
+        b.contract_date &gt;= #{start}
+        AND b.contract_date &lt; #{end}
+        AND b.state != 'draft'
+        GROUP BY field1
+    </select>
+
+    <select id="contractCountWeek" resultType="com.steccn.common.dto.TupleDTO">
+        SELECT
+        EXTRACT(YEAR FROM b.contract_date + INTERVAL '1 day' * (7 - EXTRACT(DOW FROM b.contract_date)::int))::int * 100 +
+        EXTRACT(WEEK FROM b.contract_date + INTERVAL '1 day' * (7 - EXTRACT(DOW FROM b.contract_date)::int))::int AS field1,
+        sum( a.sale_qty ) AS field2
+        FROM
+        ks_contract_details a
+        LEFT JOIN ks_contract b
+        ON a.contract_id = b.id
+        WHERE
+          b.contract_date &gt;= #{start}
+          AND b.contract_date &lt; #{end}
+          AND b.state != 'draft'
+        GROUP BY field1
+    </select>
+    <select id="contractCountYear" resultType="com.steccn.common.dto.TupleDTO">
+        SELECT
+            to_char(b.contract_date,'YYYY') AS field1,
+            sum( a.sale_qty ) AS field2
+        FROM
+            ks_contract_details a
+            LEFT JOIN ks_contract b
+        ON a.contract_id = b.id
+        WHERE
+          b.contract_date &gt;= #{start}
+          AND b.contract_date &lt; #{end}
+          AND b.state != 'draft'
+        GROUP BY field1
+    </select>
+</mapper>

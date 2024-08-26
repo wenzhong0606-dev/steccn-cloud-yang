@@ -3,9 +3,11 @@ package com.steccn.sales.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.sales.dto.KsLogisticsDTO;
 import com.steccn.sales.dto.KsShippingReconciliationDTO;
+import com.steccn.sales.service.KsContractService;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.service.KsSendNoticeService;
 import com.steccn.sales.vo.KsLogisticsVO;
@@ -31,6 +33,7 @@ import java.time.LocalDate;
 public class SalesLogisticsController {
     private final KsLogisticsOrderService ksLogisticsOrderService;
     private final KsSendNoticeService ksSendNoticeService;
+    private final KsContractService ksContractService;
 
     @PostMapping("/page")
     @ApiOperation("物流单")
@@ -42,6 +45,12 @@ public class SalesLogisticsController {
     @ApiOperation("图表")
     R<QtLineChartBarDTO> logisticsRecordDashBoard(@Valid @RequestBody KsLogisticsDTO dto){
         return R.success(ksLogisticsOrderService.logisticsRecordDashBoard(dto));
+    }
+
+    @PostMapping("/contract/dashBoard")
+    @ApiOperation("下单量图表")
+    R<QtLineChartBarDTO> contractDashboard(@RequestBody @Valid DpPmsOperateDTO dto){
+        return R.success(ksContractService.contractSum(dto));
     }
 
     @PostMapping("/shipping/reconciliation")
