@@ -309,6 +309,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<SalesContractClassDTO> productClass = jsonObject.getJSONObject("result")
                 .getJSONObject("mdMappings").getJSONArray("class").toJavaList(SalesContractClassDTO.class);
         SteccnTableAssertUtil.notEmpty(customers, "暂无数据");
+        customers = customers.stream().sorted(Comparator.comparing(SalesContractCustomerDTO::getQty).reversed()).collect(Collectors.toList());
         //开始组数据 customers
         //柱状图 + 折线图
         CommonBarLineVO commonBarLineVO1 = new CommonBarLineVO();
@@ -335,6 +336,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<String> xAisList2 = Lists.newArrayList();
         List<BigDecimal> quantityList2 = Lists.newArrayList();
         List<BigDecimal> rateList2 = Lists.newArrayList();
+        models = models.stream().sorted(Comparator.comparing(SalesContractModelDTO::getQty).reversed()).collect(Collectors.toList());
         models.forEach(tmp->{
             xAisList2.add(tmp.getModel_specs());
             quantityList2.add(tmp.getQty());
@@ -354,6 +356,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<String> xAisList3 = Lists.newArrayList();
         List<BigDecimal> quantityList3 = Lists.newArrayList();
         List<BigDecimal> rateList3 = Lists.newArrayList();
+        productClass = productClass.stream().sorted(Comparator.comparing(SalesContractClassDTO::getQty).reversed()).collect(Collectors.toList());
         productClass.forEach(tmp->{
             xAisList3.add(tmp.getProduct_class());
             quantityList3.add(tmp.getQty());
