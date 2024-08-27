@@ -21,6 +21,7 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.sales.domain.KsContract;
+import com.steccn.sales.dto.KsContractCountDTO;
 import com.steccn.sales.service.KsContractService;
 import com.steccn.sales.mapper.KsContractMapper;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,7 @@ public class KsContractServiceImpl extends ServiceImpl<KsContractMapper, KsContr
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
         //获取数据
-        List<TupleDTO<String,BigDecimal>> contractCount;
+        List<KsContractCountDTO> contractCount;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
             contractCount = ksContractMapper.contractCountDay(dto.getStart(),dto.getEnd());
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
@@ -64,14 +65,13 @@ public class KsContractServiceImpl extends ServiceImpl<KsContractMapper, KsContr
         if(CollUtil.isEmpty(contractCount)){
             SteccnTableAssertUtil.notEmpty(Lists.newArrayList(), "暂无数据");
         }
-        BigDecimal totalQty = contractCount.stream().map(TupleDTO::getField2).reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal totalQty = contractCount.stream().map(KsContractCountDTO::getField2).reduce(BigDecimal.ZERO,BigDecimal::add);
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
         List<LocalDate> dateList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
 //        if(dto.getStart().equals(dto.getEnd())&&CollUtil.isEmpty(dateList)){
 //            dateList.add(dto.getStart());
 //        }
         //
-        Map<Integer,BigDecimal> weightCountMap = Maps.newHashMap();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate start = dateList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
@@ -80,10 +80,9 @@ public class KsContractServiceImpl extends ServiceImpl<KsContractMapper, KsContr
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
             //下单量
             BigDecimal weightCountTmp = BigDecimal.ZERO;
-            TupleDTO<String,BigDecimal> valueDateVO = contractCount.stream().filter(v -> v.getField1().equals(key)).findFirst().orElse(null);
+            KsContractCountDTO valueDateVO = contractCount.stream().filter(v -> v.getField1().equals(key)).findFirst().orElse(null);
             if(Objects.nonNull(valueDateVO)){
                 weightCountTmp = valueDateVO.getField2();
-                BigDecimalUtil.accumulate(weightCountMap,1,weightCountTmp);
             }
             datList.add(new TupleDTO<>("下单量", weightCountTmp));
             datList.add(new TupleDTO<>("百分比", BigDecimalUtil.percent(weightCountTmp,totalQty,2)));

@@ -48,7 +48,7 @@
         request_id
     </sql>
 
-    <select id="contractCountDay" resultType="com.steccn.common.dto.TupleDTO">
+    <select id="contractCountDay" resultType="com.steccn.sales.dto.KsContractCountDTO">
         SELECT
             b.contract_date AS field1,
             sum( a.sale_qty ) AS field2
@@ -62,7 +62,7 @@
           AND b.state != 'draft'
         GROUP BY field1
     </select>
-    <select id="contractCountMonth" resultType="com.steccn.common.dto.TupleDTO">
+    <select id="contractCountMonth" resultType="com.steccn.sales.dto.KsContractCountDTO">
         SELECT
         to_char(b.contract_date,'YYYY-MM') AS field1,
         sum( a.sale_qty ) AS field2
@@ -77,7 +77,7 @@
         GROUP BY field1
     </select>
 
-    <select id="contractCountWeek" resultType="com.steccn.common.dto.TupleDTO">
+    <select id="contractCountWeek" resultType="com.steccn.sales.dto.KsContractCountDTO">
         SELECT
         EXTRACT(YEAR FROM b.contract_date + INTERVAL '1 day' * (7 - EXTRACT(DOW FROM b.contract_date)::int))::int * 100 +
         EXTRACT(WEEK FROM b.contract_date + INTERVAL '1 day' * (7 - EXTRACT(DOW FROM b.contract_date)::int))::int AS field1,
@@ -92,7 +92,7 @@
           AND b.state != 'draft'
         GROUP BY field1
     </select>
-    <select id="contractCountYear" resultType="com.steccn.common.dto.TupleDTO">
+    <select id="contractCountYear" resultType="com.steccn.sales.dto.KsContractCountDTO">
         SELECT
             to_char(b.contract_date,'YYYY') AS field1,
             sum( a.sale_qty ) AS field2

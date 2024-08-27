@@ -4,6 +4,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.sales.domain.KsContract;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.sales.dto.KsContractCountDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -27,7 +28,7 @@ public interface KsContractMapper extends BaseMapper<KsContract> {
      * @param end 结束
      * @return
      */
-    List<TupleDTO<String,BigDecimal>> contractCountDay(@Param("start") LocalDate start,
+    List<KsContractCountDTO> contractCountDay(@Param("start") LocalDate start,
                                                                  @Param("end") LocalDate end);
     /**
      * 按月分类
@@ -35,7 +36,7 @@ public interface KsContractMapper extends BaseMapper<KsContract> {
      * @param end 结束
      * @return
      */
-    List<TupleDTO<String,BigDecimal>> contractCountMonth(@Param("start") LocalDate start,
+    List<KsContractCountDTO> contractCountMonth(@Param("start") LocalDate start,
                                                        @Param("end") LocalDate end);
 
     /**
@@ -44,7 +45,7 @@ public interface KsContractMapper extends BaseMapper<KsContract> {
      * @param end 结束
      * @return
      */
-    List<TupleDTO<String,BigDecimal>> contractCountWeek(@Param("start") LocalDate start,
+    List<KsContractCountDTO> contractCountWeek(@Param("start") LocalDate start,
                                                        @Param("end") LocalDate end);
 
     /**
@@ -53,8 +54,8 @@ public interface KsContractMapper extends BaseMapper<KsContract> {
      * @param end 结束
      * @return
      */
-    List<TupleDTO<String,BigDecimal>> contractCountYear(@Param("start") LocalDate start,
-                                                       @Param("end") LocalDate end);
+    List<KsContractCountDTO> contractCountYear(@Param("start") LocalDate start,
+                                               @Param("end") LocalDate end);
 }
 
 
