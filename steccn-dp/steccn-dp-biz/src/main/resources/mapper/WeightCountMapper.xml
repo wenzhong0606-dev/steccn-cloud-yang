@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.WeightCountMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.WeightCount">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="date" column="date" jdbcType="DATE"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+            <result property="value" column="value" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,date,del_flag,
+        value
+    </sql>
+</mapper>

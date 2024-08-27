@@ -9,6 +9,7 @@ import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.service.AdsOnOffCountService;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.vo.DpOnOffCountVO;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -78,6 +79,12 @@ public class DpWeightController {
     @ApiOperation(value = "玻璃片数光电信号")
     public R<List<DpOnOffCountVO>> onOffList(@RequestBody TupleDTO<LocalDate,LocalDate> dto) {
         return R.success(adsOnOffCountService.onOffList(dto));
+    }
+
+    @PostMapping("/test3")
+    @ApiOperation(value = "电子秤读数图表")
+    public R<List<DpValueDateVO>> test3(@RequestBody DpPmsOperateDTO dto) {
+        return R.success(adsOpcUaAll3Service.weightCountAsDay(dto));
     }
 
 }

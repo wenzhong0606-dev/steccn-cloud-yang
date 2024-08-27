@@ -24,12 +24,15 @@ import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.AdsOpcUaAll3;
+import com.steccn.dp.domain.WeightCount;
 import com.steccn.dp.dto.*;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
+import com.steccn.dp.service.WeightCountService;
 import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SalesContractDTO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
@@ -64,6 +67,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final RemoteSalesFeignApi remoteSalesFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
+    private final WeightCountService weightCountService;
 
     @Override
     public List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime, LocalDateTime> dto) {
@@ -164,7 +168,24 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<DpValueDateVO> result = Lists.newArrayList();
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
+        //如果type不为空则
         result = weightCountAsDayTool(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        if(Objects.nonNull(dto.getType())&&dto.getType().equals(OaConstant.NO)){
+            if(CollUtil.isNotEmpty(result)){
+//                List<WeightCount> models = Lists.newArrayList();
+//                result.forEach(tmp->{
+//                    WeightCount count = new WeightCount();
+//                    count.setValue(tmp.getValue());
+//                    count.setDate(LocalDate.parse(tmp.getDateStr()));
+//                    models.add(count);
+//                });
+//                weightCountService.saveBatch(models);
+                WeightCount model  = new WeightCount();
+                model.setValue(result.get(0).getValue());
+                model.setDate(LocalDate.parse(result.get(0).getDateStr()));
+                weightCountService.save(model);
+            }
+        }
         return result;
     }
 
