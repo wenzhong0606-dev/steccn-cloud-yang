@@ -35,7 +35,7 @@
 
     <select id="selectWeightCountByMonth" resultType="com.steccn.dp.vo.DpValueDateVO">
         SELECT SUM(value) AS value,
-        DATE_FORMAT(pull_force_date,'%Y-%m') dateStr
+        DATE_FORMAT(date,'%Y-%m') dateStr
         FROM weight_count
         WHERE del_flag = 0
         AND date between #{start} AND #{end}
@@ -44,7 +44,7 @@
 
     <select id="selectWeightCountByYear" resultType="com.steccn.dp.vo.DpValueDateVO">
         SELECT SUM(value) AS value,
-        DATE_FORMAT(pull_force_date,'%Y') dateStr
+        DATE_FORMAT(date,'%Y') dateStr
         FROM weight_count
         WHERE del_flag = 0
           AND date between #{start} AND #{end}

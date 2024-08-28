@@ -568,6 +568,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
         //获取电子秤读数
+        dto.setType(1);
         List<DpValueDateVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.countAsDay(dto), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //拉引量(基片车间)
         List<PmsPullForceDayCountDTO> pullAmountCount;
