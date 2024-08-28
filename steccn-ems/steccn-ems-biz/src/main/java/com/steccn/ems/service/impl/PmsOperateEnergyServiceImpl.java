@@ -302,9 +302,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         List<EpMeterReadAllDataVO> gasAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), gas.getType(), Arrays.asList(gas.getId()));
         List<EpMeterReadAllDataVO> oilAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), oil.getType(), Arrays.asList(oil.getId()));
         List<EpMeterReadAllDataVO> lngAllData = epMeterReadService.classDateAllData(Sets.newHashSet(conditionDt), lng.getType(), Arrays.asList(lng.getId()));
-        SteccnTableAssertUtil.notEmpty(gasAllData, "全量数据表为空");
-        SteccnTableAssertUtil.notEmpty(oilAllData, "全量数据表为空");
-        SteccnTableAssertUtil.notEmpty(lngAllData, "全量数据表为空");
+
         //获取拉引量
         PullForceSumDTO pullForceSumDTO = new PullForceSumDTO();
         pullForceSumDTO.setStart(dto.getStart());
@@ -312,7 +310,7 @@ public class PmsOperateEnergyServiceImpl implements PmsOperateEnergyService {
         pullForceSumDTO.setGranularity(dto.getGranularity());
         pullForceSumDTO.setWorkshopIdSet(wsIdSet);
 
-        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        Map<String, BigDecimal> pullForceMap = FeignOptional.of(() -> remotePullForceFeignApi.pullForceSum(pullForceSumDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
         Map<String, BigDecimal> gasValueMap = Maps.newHashMap();
         gasAllData.forEach(ele -> {
