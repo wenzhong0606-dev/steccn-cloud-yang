@@ -3,6 +3,7 @@ package com.steccn.qms.scheduled;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -57,7 +58,8 @@ public class PullAmountCalculateTask {
         dto.setStart(LocalDate.now().minusDays(1));
         dto.setEnd(LocalDate.now().minusDays(1));
         dto.setType(0);
-        remoteDpFeignApi.countAsDay(dto);
+//        List<DpValueDateVO> vos = remoteDpFeignApi.countAsDay(dto).getData();
+//        log.info(vos.toString());
         XxlJobHelper.log("计算电子称-任务开始");
     }
 }

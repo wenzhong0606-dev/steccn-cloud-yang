@@ -46,7 +46,7 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
 
     /**
      * 合计每天的电子秤读数
-     * @param dto
+     * @param dto type = 0则走的是定时任务 1则走的是统计
      * @return
      */
     List<DpValueDateVO> weightCountAsDay(DpPmsOperateDTO dto);

@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -26,9 +25,9 @@ import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.domain.WeightCount;
 import com.steccn.dp.dto.*;
-import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
-import com.steccn.dp.service.WeightCountService;
+import com.steccn.dp.mapper.WeightCountMapper;
+import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -43,6 +42,7 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -61,13 +61,14 @@ import java.util.stream.Collectors;
 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, AdsOpcUaAll3>
     implements AdsOpcUaAll3Service{
     private final AdsOpcUaAll3Mapper adsOpcUaAll3Mapper;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final RemoteSalesFeignApi remoteSalesFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
-    private final WeightCountService weightCountService;
+    private final WeightCountMapper weightCountMapper;
 
     @Override
     public List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime, LocalDateTime> dto) {
@@ -168,8 +169,20 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         List<DpValueDateVO> result = Lists.newArrayList();
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
-        //如果type不为空则
-        result = weightCountAsDayTool(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        //type = 0则走的是定时任务 1则走的是统计
+        if(Objects.nonNull(dto.getType())&&dto.getType().equals(OaConstant.NUM_1)){
+            if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
+                result = weightCountMapper.selectWeightCountByDay(dto.getStart(),dto.getEnd());
+            } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
+                result = weightCountMapper.selectWeightCountByWeek(dto.getStart(),dto.getEnd());
+            } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
+                result = weightCountMapper.selectWeightCountByMonth(dto.getStart(),dto.getEnd());
+            } else {
+                result = weightCountMapper.selectWeightCountByYear(dto.getStart(),dto.getEnd());
+            }
+        }else {
+            result = weightCountAsDayTool(granularity, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        }
         if(Objects.nonNull(dto.getType())&&dto.getType().equals(OaConstant.NO)){
             if(CollUtil.isNotEmpty(result)){
 //                List<WeightCount> models = Lists.newArrayList();
@@ -183,7 +196,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 WeightCount model  = new WeightCount();
                 model.setValue(result.get(0).getValue());
                 model.setDate(LocalDate.parse(result.get(0).getDateStr()));
-                weightCountService.save(model);
+//                log.info(model.toString());
+                weightCountMapper.insert(model);
             }
         }
         return result;
