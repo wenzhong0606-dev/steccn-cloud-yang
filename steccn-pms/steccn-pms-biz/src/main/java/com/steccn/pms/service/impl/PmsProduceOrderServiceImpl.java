@@ -2187,62 +2187,62 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     private Map<Long, BigDecimal> getCurrentProduction(Set<Long> orderIdSet) {
         Map<Long, BigDecimal> resMap = Maps.newConcurrentMap();
-        if (CollUtil.isNotEmpty(orderIdSet)) {
-            //获取订单的执行工位
-            Map<Long, Set<Integer>> stationMap = getStation(orderIdSet);
-            //获取订单的批次时间
-            Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
-            //获取工位绑定的的采集点
-            Set<Integer> stationIdSet = Sets.newHashSet();
-            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
-                stationIdSet.addAll(entry.getValue());
-            }
-            Map<Integer, List<String>> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Long,List<String>> orderReportCodeMap = Maps.newHashMap();
-            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
-                if (CollUtil.isNotEmpty(entry.getValue())){
-                    for (Integer stationId : entry.getValue()) {
-                        if (Objects.nonNull(codeMap.get(stationId))){
-                            List<String> codes = codeMap.get(stationId);
-                            if (CollUtil.isNotEmpty(codes)){
-                                orderReportCodeMap.put(entry.getKey(),codes);
-                            }
-                        }
-                    }
-                }
-            }
-            log.info("请求数仓前——>"+LocalDateTime.now());
-            CountDownLatch countDownLatch = new CountDownLatch(orderIdSet.size());
-            for (Long orderId : orderIdSet) {
-                CompletableFuture.supplyAsync(() -> {
-                    BigDecimal currentProduction = BigDecimal.ZERO;
-                    PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
-                    List<String> codes = orderReportCodeMap.get(orderId);
-                    if (CollUtil.isNotEmpty(codes)) {
-                        for (String code : codes) {
-                            pmReportWorkPreloadDTO.setCode(code);
-                            BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-                            if (Objects.nonNull(bigDecimal)) {
-                                currentProduction = currentProduction.add(bigDecimal);
-                            }
-                        }
-                    }
-                    return currentProduction;
-                }).handle((value,ex) ->{
-                    if(Objects.isNull(ex)){
-                        resMap.put(orderId, value);
-                    }
-                    countDownLatch.countDown();
-                    return null;
-                });
-            }
-            try {
-                countDownLatch.await(20, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            log.info("请求数仓后——>"+","+LocalDateTime.now());
-        }
+//        if (CollUtil.isNotEmpty(orderIdSet)) {
+//            //获取订单的执行工位
+//            Map<Long, Set<Integer>> stationMap = getStation(orderIdSet);
+//            //获取订单的批次时间
+//            Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
+//            //获取工位绑定的的采集点
+//            Set<Integer> stationIdSet = Sets.newHashSet();
+//            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
+//                stationIdSet.addAll(entry.getValue());
+//            }
+//            Map<Integer, List<String>> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//            Map<Long,List<String>> orderReportCodeMap = Maps.newHashMap();
+//            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
+//                if (CollUtil.isNotEmpty(entry.getValue())){
+//                    for (Integer stationId : entry.getValue()) {
+//                        if (Objects.nonNull(codeMap.get(stationId))){
+//                            List<String> codes = codeMap.get(stationId);
+//                            if (CollUtil.isNotEmpty(codes)){
+//                                orderReportCodeMap.put(entry.getKey(),codes);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            log.info("请求数仓前——>"+LocalDateTime.now());
+//            CountDownLatch countDownLatch = new CountDownLatch(orderIdSet.size());
+//            for (Long orderId : orderIdSet) {
+//                CompletableFuture.supplyAsync(() -> {
+//                    BigDecimal currentProduction = BigDecimal.ZERO;
+//                    PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
+//                    List<String> codes = orderReportCodeMap.get(orderId);
+//                    if (CollUtil.isNotEmpty(codes)) {
+//                        for (String code : codes) {
+//                            pmReportWorkPreloadDTO.setCode(code);
+//                            BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+//                            if (Objects.nonNull(bigDecimal)) {
+//                                currentProduction = currentProduction.add(bigDecimal);
+//                            }
+//                        }
+//                    }
+//                    return currentProduction;
+//                }).handle((value,ex) ->{
+//                    if(Objects.isNull(ex)){
+//                        resMap.put(orderId, value);
+//                    }
+//                    countDownLatch.countDown();
+//                    return null;
+//                });
+//            }
+//            try {
+//                countDownLatch.await(20, TimeUnit.SECONDS);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            log.info("请求数仓后——>"+","+LocalDateTime.now());
+//        }
         return resMap;
     }
 
