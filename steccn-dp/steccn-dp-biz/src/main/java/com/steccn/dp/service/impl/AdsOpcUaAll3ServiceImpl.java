@@ -193,9 +193,10 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
 //                    models.add(count);
 //                });
 //                weightCountService.saveBatch(models);
+                DpValueDateVO voTmp = result.stream().filter(v->v.getDateStr().equals(dto.getStart().toString())).findFirst().orElse(null);
                 WeightCount model  = new WeightCount();
-                model.setValue(result.get(0).getValue());
-                model.setDate(LocalDate.parse(result.get(0).getDateStr()));
+                model.setValue(voTmp.getValue());
+                model.setDate(LocalDate.parse(voTmp.getDateStr()));
 //                log.info(model.toString());
                 weightCountMapper.insert(model);
             }

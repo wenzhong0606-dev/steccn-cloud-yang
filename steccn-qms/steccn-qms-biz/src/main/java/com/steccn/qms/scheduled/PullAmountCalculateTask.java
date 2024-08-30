@@ -58,8 +58,8 @@ public class PullAmountCalculateTask {
         dto.setStart(LocalDate.now().minusDays(1));
         dto.setEnd(LocalDate.now().minusDays(1));
         dto.setType(0);
-//        List<DpValueDateVO> vos = remoteDpFeignApi.countAsDay(dto).getData();
-//        log.info(vos.toString());
+        List<DpValueDateVO> vos = remoteDpFeignApi.countAsDay(dto).getData();
+        log.info(vos.toString());
         XxlJobHelper.log("计算电子称-任务开始");
     }
 }
