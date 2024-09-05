@@ -97,4 +97,6 @@ public class PmsProduceOrderPageDTO  extends BasePageDTO {
 
     @ApiModelProperty("结束日期")
     private LocalDate endDate;
+
+    private Long planId;
 }

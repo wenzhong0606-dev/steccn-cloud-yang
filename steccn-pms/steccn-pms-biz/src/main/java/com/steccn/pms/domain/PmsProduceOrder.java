@@ -122,6 +122,8 @@ public class PmsProduceOrder implements Serializable {
      */
     private String note;
 
+    private Long planId;
+
     /**
      * 创建人id
      */

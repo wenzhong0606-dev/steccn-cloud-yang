@@ -110,7 +110,7 @@ public class PmsProduceOrderDTO {
 
     @ApiModelProperty("最小包装数量单位")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "最小包装数量单位不能为空")
-    private BigDecimal minPackageUnitId;
+    private Long minPackageUnitId;
 
     @ApiModelProperty("工序信息")
     @Valid
@@ -119,4 +119,6 @@ public class PmsProduceOrderDTO {
     @Valid
     @ApiModelProperty("物料信息")
     private List<PmsWorkOrderBomDTO> materialList;
+
+    private Long planId;
 }

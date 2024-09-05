@@ -83,6 +83,9 @@
             <if test="dto.productionLineId != null and dto.productionLineId != ''">
                 and production_line_id = #{dto.productionLineId}
             </if>
+            <if test="dto.planId!= null and dto.planId != ''">
+                and plan_id = #{dto.planId}
+            </if>
             <if test="dto.planStartTimeStart !=null and dto.planStartTimeEnd !=null">
                 and plan_start_time between #{dto.planStartTimeStart} and #{dto.planStartTimeEnd}
             </if>

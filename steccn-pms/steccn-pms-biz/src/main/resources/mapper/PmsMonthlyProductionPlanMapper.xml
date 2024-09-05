@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsMonthlyProductionPlanMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMonthlyProductionPlan">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="client" column="client" jdbcType="VARCHAR"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="monthly" column="monthly" jdbcType="VARCHAR"/>
+            <result property="state" column="state" jdbcType="INTEGER"/>
+            <result property="plannedQuantity" column="planned_quantity" jdbcType="DECIMAL"/>
+            <result property="transferredQuantity" column="transferred_quantity" jdbcType="DECIMAL"/>
+            <result property="completionQuantity" column="completion_quantity" jdbcType="DECIMAL"/>
+            <result property="processVersion" column="process_version" jdbcType="VARCHAR"/>
+            <result property="minimumPackingQuantity" column="minimum_packing_quantity" jdbcType="DECIMAL"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,client,material_id,
+        monthly,state,planned_quantity,
+        transferred_quantity,completion_quantity,process_version,
+        minimum_packing_quantity,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>

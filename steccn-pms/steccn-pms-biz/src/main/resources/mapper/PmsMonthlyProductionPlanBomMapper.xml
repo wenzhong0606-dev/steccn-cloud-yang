@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsMonthlyProductionPlanBomMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMonthlyProductionPlanBom">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="moduleId" column="module_id" jdbcType="BIGINT"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+            <result property="processId" column="process_id" jdbcType="BIGINT"/>
+            <result property="fixedQuantityFlag" column="fixed_quantity_flag" jdbcType="TINYINT"/>
+            <result property="coproductFlag" column="coproduct_flag" jdbcType="TINYINT"/>
+            <result property="backCalculateFlag" column="back_calculate_flag" jdbcType="TINYINT"/>
+            <result property="jointProductFlag" column="joint_product_flag" jdbcType="TINYINT"/>
+            <result property="processScrapingPercent" column="process_scraping_percent" jdbcType="FLOAT"/>
+            <result property="componentScrapingPercent" column="component_scraping_percent" jdbcType="FLOAT"/>
+            <result property="monthlyProductionPlanId" column="monthly_production_plan_id" jdbcType="BIGINT"/>
+            <result property="craftRouteModuleId" column="craft_route_module_id" jdbcType="BIGINT"/>
+            <result property="recycleFlag" column="recycle_flag" jdbcType="TINYINT"/>
+            <result property="mainMaterialFlag" column="main_material_flag" jdbcType="TINYINT"/>
+            <result property="source" column="source" jdbcType="TINYINT"/>
+            <result property="sourceId" column="source_id" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,module_id,quantity,
+        unit_id,process_id,fixed_quantity_flag,
+        coproduct_flag,back_calculate_flag,joint_product_flag,
+        process_scraping_percent,component_scraping_percent,monthly_production_plan_id,
+        craft_route_module_id,recycle_flag,main_material_flag,
+        source,source_id,create_by,
+        create_name,create_time,update_by,
+        update_name,update_time,del_flag
+    </sql>
+</mapper>
