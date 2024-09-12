@@ -245,9 +245,9 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
                      //根据物料名称获取单片面积
 //                     wmsDeliverySellFlagVO.setCarCode(salesLogisticsVO.get);
                      String state = salesLogisticsVO.getState();
-                     if (state.equals("已离厂")) {
-                         wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
-                     }
+//                     if (state.equals("已离厂")) {
+//                         wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+//                     }
                  }
              } catch (Exception e) {
                  throw new BusinessException("物流单不存在");
