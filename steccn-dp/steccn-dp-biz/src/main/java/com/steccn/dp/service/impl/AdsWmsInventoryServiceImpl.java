@@ -66,6 +66,7 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
                 .in(CollUtil.isNotEmpty(dto.getMaterialIds()),AdsWmsInventory::getMaterialId,dto.getMaterialIds())
                 .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),AdsWmsInventory::getWarehouseId,dto.getWarehouseIds())
                 .in(CollUtil.isNotEmpty(dto.getShelfIds()),AdsWmsInventory::getShelfId,dto.getShelfIds())
+                .like(Objects.nonNull(dto.getMaterialName()),AdsWmsInventory::getMaterialName,dto.getMaterialName())
         );
         return  BeanUtil.copyToList(list, AdsWmsInventoryVO.class);
     }

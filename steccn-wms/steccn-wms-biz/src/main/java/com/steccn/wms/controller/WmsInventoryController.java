@@ -11,6 +11,7 @@ import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryService;
+import com.steccn.wms.vo.WmsHistoricalInventoryVO;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -142,4 +143,12 @@ public class WmsInventoryController {
     public R<Page<WmsInventoryVO>> shelfList(@RequestBody WmsInventoryPageDTO dto) {
         return R.success(wmsInventoryService.shelfList(dto));
     }
+
+
+    @ApiOperation("历史库存查询")
+    @PostMapping("/historical")
+    public R<Page<WmsHistoricalInventoryVO>> historical(@RequestBody WmsInventoryPageDTO dto){
+        return R.success(wmsInventoryService.historical(dto));
+    }
+
 }

@@ -50,4 +50,6 @@ public class DpWmsDataDTO {
 
 
     private Set<Long> materialIds;
+
+    private String materialName;
 }

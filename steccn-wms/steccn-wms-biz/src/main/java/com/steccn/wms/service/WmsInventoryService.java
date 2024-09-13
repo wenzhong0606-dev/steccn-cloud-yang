@@ -8,6 +8,7 @@ import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.vo.WmsHistoricalInventoryVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -309,4 +310,6 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     WmsInventoryVO sum(WmsInventoryPageDTO dto);
 
     void exportData(WmsInventoryPageDTO dto, HttpServletResponse response) throws IOException;
+
+    Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto);
 }

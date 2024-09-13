@@ -86,6 +86,37 @@
             where id = #{item.id}
         </foreach>
     </update>
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index" separator=";" open="" close="">
+            UPDATE wms_inventory
+            SET
+            id = #{item.id},
+            material_id = #{item.materialId},
+            material_name = #{item.materialName},
+            material_code = #{item.materialCode},
+            warehouse_id = #{item.warehouseId},
+            warehouse_name = #{item.warehouseName},
+            shelf_id = #{item.shelfId},
+            shelf_code = #{item.shelfCode},
+            shelf_name = #{item.shelfName},
+            total_quantity = #{item.totalQuantity},
+            available_quantity = #{item.availableQuantity},
+            stock_quantity = #{item.stockQuantity},
+            freeze_quantity = #{item.freezeQuantity},
+            lock_quantity = #{item.lockQuantity},
+            detection_quantity = #{item.detectionQuantity},
+            unit = #{item.unit},
+            case_no = #{item.caseNo},
+            create_by = #{item.createBy},
+            create_name = #{item.createName},
+            create_time = #{item.createTime},
+            update_by = #{item.updateBy},
+            update_name = #{item.updateName},
+            update_time = #{item.updateTime},
+            del_flag = #{item.delFlag}
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
     <select id="listMaterialInventory" resultType="com.steccn.wms.domain.WmsInventory">
         SELECT
         a.material_id,

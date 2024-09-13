@@ -108,6 +108,8 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
     BigDecimal onTheWayTotalQuantity(@Param("warehouseIds") Set<Long> warehouseIds);
 
     WmsInventoryVO sum(@Param("dto") WmsInventoryPageDTO dto);
+
+    void updateBatch(@Param("list") List<WmsInventory> addWmsInventory);
 }
 
 

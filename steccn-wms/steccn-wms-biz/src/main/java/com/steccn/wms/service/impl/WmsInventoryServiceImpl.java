@@ -14,6 +14,9 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.dp.dto.DpWmsDataDTO;
+import com.steccn.dp.feign.RemoteDpWmsDataFeignApi;
+import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -37,6 +40,7 @@ import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
+import com.steccn.wms.vo.WmsHistoricalInventoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -74,6 +78,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     private final WmsInventoryRecordService wmsInventoryRecordService;
     
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+
+    private final RemoteDpWmsDataFeignApi remoteDpWmsDataFeignApi;
 
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
@@ -198,9 +204,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 WmsInventory orDefault = map.get(info.getId());
                     orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
                     orDefault.setTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
-                addWmsInventory.add(orDefault);
+                    orDefault.setDelFlag(0);
+                    addWmsInventory.add(orDefault);
             });
-            updateBatchById(addWmsInventory);
+            this.baseMapper.updateBatch(addWmsInventory);
+//            updateBatchById(addWmsInventory);
         }
         return true;
     }
@@ -781,7 +789,23 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         EasyExcel.write(response.getOutputStream(), WmsInventoryExcelDTO.class).sheet("模板").doWrite(getExcelData(dto));
     }
-     List<WmsInventoryExcelDTO> getExcelData(WmsInventoryPageDTO dto) {
+
+    @Override
+    public Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto) {
+        SparePageDTO sparePageDTO = new SparePageDTO();
+        sparePageDTO.setName(dto.getMaterialName());
+        //获取备件分页
+        Page<EqpSpareVO> eqpSpareVOPage = FeignOptional.of(() -> remoteSpareFeignApi.listPage(sparePageDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //获取期初期末库存数据
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        Set<Long> warehouseId = Sets.newHashSet(dto.getWarehouseId());
+        dpWmsDataDTO.setWarehouseIds(warehouseId);
+//        remoteDpWmsDataFeignApi.endingData()
+        return null;
+    }
+
+    List<WmsInventoryExcelDTO> getExcelData(WmsInventoryPageDTO dto) {
          //获取数据
          LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
                  .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
