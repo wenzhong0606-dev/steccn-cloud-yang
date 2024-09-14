@@ -1,5 +1,6 @@
 package com.steccn.dp.controller.feign;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.domain.AdsWmsInventory;
@@ -28,5 +29,12 @@ public class RemoteDpWmsDataFeignController {
     @PostMapping("/endingData")
     public R<List<AdsWmsInventoryVO>> endingData(@Valid @RequestBody DpWmsDataDTO dto) {
         return R.success(adsWmsInventoryService.endingData(dto));
+    }
+
+
+    @ApiOperation("获取期初期末库存分页数据")
+    @PostMapping("/feign/dp/wms/data/endingData/page")
+   public R<Page<AdsWmsInventoryVO>> dataPage (@Valid @RequestBody DpWmsDataDTO dto){
+        return R.success(adsWmsInventoryService.dataPage(dto));
     }
 }

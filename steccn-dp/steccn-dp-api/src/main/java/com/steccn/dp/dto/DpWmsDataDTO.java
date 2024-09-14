@@ -1,6 +1,7 @@
 package com.steccn.dp.dto;
 
 
+import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
-public class DpWmsDataDTO {
+public class DpWmsDataDTO extends BasePageDTO {
 
 
     /**
@@ -25,6 +26,9 @@ public class DpWmsDataDTO {
      */
 //    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库不能为空")
     private Set<Long> warehouseIds;
+
+
+    private Long warehouseId;
 
     private Set<Long> shelfIds;
 

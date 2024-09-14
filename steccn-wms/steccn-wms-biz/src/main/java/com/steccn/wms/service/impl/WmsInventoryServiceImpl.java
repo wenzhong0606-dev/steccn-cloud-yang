@@ -792,10 +792,14 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto) {
-        SparePageDTO sparePageDTO = new SparePageDTO();
-        sparePageDTO.setName(dto.getMaterialName());
-        //获取备件分页
-        Page<EqpSpareVO> eqpSpareVOPage = FeignOptional.of(() -> remoteSpareFeignApi.listPage(sparePageDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        Page<WmsHistoricalInventoryVO> resPage = new Page<>();
+//        SparePageDTO sparePageDTO = new SparePageDTO();
+//        sparePageDTO.setName(dto.getMaterialName());
+//        //获取备件分页
+//        Page<EqpSpareVO> eqpSpareVOPage = FeignOptional.of(() -> remoteSpareFeignApi.listPage(sparePageDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//        BeanUtil.copyProperties(eqpSpareVOPage,resPage);
+//        eqpSpareVOPage.getRecords().forEach();
 
         //获取期初期末库存数据
         DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();

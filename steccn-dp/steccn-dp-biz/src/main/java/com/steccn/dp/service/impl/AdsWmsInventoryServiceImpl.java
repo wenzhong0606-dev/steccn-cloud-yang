@@ -3,6 +3,7 @@ package com.steccn.dp.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
@@ -69,6 +70,16 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
                 .like(Objects.nonNull(dto.getMaterialName()),AdsWmsInventory::getMaterialName,dto.getMaterialName())
         );
         return  BeanUtil.copyToList(list, AdsWmsInventoryVO.class);
+    }
+
+    @Override
+    public Page<AdsWmsInventoryVO> dataPage(DpWmsDataDTO dto) {
+        Page<AdsWmsInventory> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<AdsWmsInventory>()
+                .like(Objects.nonNull(dto.getMaterialName()), AdsWmsInventory::getMaterialName, dto.getMaterialName())
+                .in(Objects.nonNull(dto.getWarehouseId()), AdsWmsInventory::getWarehouseId, dto.getWarehouseId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), AdsWmsInventory::getDt, dto.getStartTime(), dto.getEndTime()));
+
+        return null;
     }
 }
 

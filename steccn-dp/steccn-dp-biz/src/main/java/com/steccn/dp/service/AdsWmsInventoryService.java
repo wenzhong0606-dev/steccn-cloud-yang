@@ -1,5 +1,6 @@
 package com.steccn.dp.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.AdsWmsInventory;
@@ -22,4 +23,6 @@ public interface AdsWmsInventoryService extends IService<AdsWmsInventory> {
     TupleDTO<BigDecimal,BigDecimal> openning(DpWmsDataDTO dto);
 
     List<AdsWmsInventoryVO> endingData(DpWmsDataDTO dto);
+
+    Page<AdsWmsInventoryVO> dataPage(DpWmsDataDTO dto);
 }
