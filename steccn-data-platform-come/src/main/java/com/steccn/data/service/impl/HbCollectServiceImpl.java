@@ -3,6 +3,7 @@ package com.steccn.data.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -31,6 +32,7 @@ import com.steccn.platform.feign.RemoteMsgFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +72,7 @@ public class HbCollectServiceImpl implements HbCollectService {
     private final OaInfoService oaInfoService;
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
+    private final KafkaTemplate<String,String> kafkaTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -147,6 +150,9 @@ public class HbCollectServiceImpl implements HbCollectService {
             BeanUtils.copyProperties(data, pmStationCollect);
             pmStationCollect.setCreateTime(now);
             pmStationCollect.setRecordTime(data.getTimestamp());
+            if(data.getCode().contains("_MB1JK")||data.getCode().contains("_XP1")){
+                kafkaTemplate.send("pm_station",pmStationCollect.getCode(), JSONObject.toJSONString(pmStationCollect));
+            }
             batchList.add(pmStationCollect);
         }
         return pmStationCollectService.saveBatch(batchList);
