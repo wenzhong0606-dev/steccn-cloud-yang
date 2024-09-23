@@ -2,6 +2,7 @@ package com.steccn.dp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.NumberChineseFormatter;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,9 +12,12 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.dp.domain.PullProduParCount;
 import com.steccn.dp.domain.PullProduParDetail1;
 import com.steccn.dp.domain.PullProduParDetail2;
+import com.steccn.dp.dto.DpValueDTO;
 import com.steccn.dp.mapper.PullProduParCountMapper;
 import com.steccn.dp.service.PullProduParCountService;
 import com.steccn.dp.service.PullProduParDetail1Service;
@@ -26,10 +30,12 @@ import com.steccn.pms.dto.PmsPullForceQueryDTO;
 import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.pms.vo.PmsPullForceDataVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,6 +53,7 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final PullProduParDetail1Service pullProduParDetail1Service;
     private final PullProduParDetail2Service pullProduParDetail2Service;
+    private final KafkaTemplate<String,String> kafkaTemplate;
 
     @Override
     public DpTheoryPullForceVO getPullForce(LocalDate date) {
@@ -128,6 +135,47 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
             throw new BusinessException("数据为空");
         }
         return result;
+    }
+
+    @Override
+    public Boolean sendPullForce() {
+        QtTaskClassCalculate classDate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        //获取理论拉引量汇总
+        List<PullProduParCount> model = list(new QueryWrapper<PullProduParCount>()
+                .select("product_line AS productLine", "sum(id_value) AS idValue")
+                .lambda()
+                .ge(PullProduParCount::getDt1, classDate.getClassDate().toLocalDate().atTime(8, 0, 0))
+                .le(PullProduParCount::getDt1, LocalDateTime.now())
+                .groupBy(PullProduParCount::getProductLine));
+        if(CollUtil.isNotEmpty(model)){
+            //拉引总量
+            BigDecimal pullAmountAll = BigDecimal.ZERO;
+            List<SysConfigurationDTO> cfg = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByType("THEORY_PULL_FORCE"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //密度
+            SysConfigurationDTO densityDTO = cfg.stream().filter(v -> v.getContent().equals("0")).findFirst().orElse(null);
+            BigDecimal density = new BigDecimal(densityDTO.getRefContent());
+            //8条产线计算
+            for(int i=1;i<=8;i++){
+                //理论拉引量 = 时长 * 速度 * 玻璃板宽 * 2.5 * 厚度
+                DpTheoryPullForceDataVO tmp = new DpTheoryPullForceDataVO();
+                String num = NumberChineseFormatter.format(i,false,false);
+                tmp.setProductLineName("基片"+num+"产线");
+                //厚度
+                int finalI = i;
+                BigDecimal thick = new BigDecimal(cfg.stream().filter(v -> v.getContent()
+                                .equals(String.valueOf(finalI)))
+                        .findFirst().orElse(null).getRefContent());
+                tmp.setGlassThick(thick);
+                //理论拉引量
+                BigDecimal theoryNum = model.stream().filter(v -> v.getProductLine().equals(finalI)).findFirst().orElse(new PullProduParCount()).getIdValue();
+                theoryNum = BigDecimalUtil.multiply(BigDecimalUtil.multiply(theoryNum,density),thick,2);
+                BigDecimalUtil.add(theoryNum,pullAmountAll);
+            }
+            DpValueDTO value = new DpValueDTO();
+            value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
+            kafkaTemplate.send("opcData_kiln","pullAmount_all", JSONObject.toJSONString(pullAmountAll));
+        }
+        return true;
     }
 }
 

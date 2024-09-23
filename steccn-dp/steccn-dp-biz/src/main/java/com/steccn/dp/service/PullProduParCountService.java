@@ -19,4 +19,10 @@ public interface PullProduParCountService extends IService<PullProduParCount> {
      * @return
      */
     DpTheoryPullForceVO getPullForce(LocalDate date);
+
+    /**
+     * 发送理论拉引量
+     * @return
+     */
+    Boolean sendPullForce();
 }
