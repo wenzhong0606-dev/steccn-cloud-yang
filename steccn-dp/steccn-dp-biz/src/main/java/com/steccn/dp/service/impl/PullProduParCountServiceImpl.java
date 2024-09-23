@@ -173,6 +173,7 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
             }
             DpValueDTO value = new DpValueDTO();
             value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
+            value.setTagId("pullAmount_all");
             kafkaTemplate.send("opcData_kiln","pullAmount_all", JSONObject.toJSONString(pullAmountAll));
         }
         return true;

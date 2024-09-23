@@ -13,4 +13,5 @@ import java.math.BigDecimal;
 @Data
 public class DpValueDTO {
     private BigDecimal value;
+    private String tagId;
 }
