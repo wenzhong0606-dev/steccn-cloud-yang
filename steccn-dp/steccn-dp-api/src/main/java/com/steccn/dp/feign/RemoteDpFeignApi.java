@@ -11,6 +11,7 @@ import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -55,6 +56,10 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/weight/countAsDay")
     @ApiOperation(value = "电子秤读数按天")
     R<List<DpValueDateVO>> countAsDay(@RequestBody DpPmsOperateDTO dto);
+
+    @GetMapping("/feign/dp/weight/push")
+    @ApiOperation(value = "推送电子秤读数")
+    R<Boolean> push();
 
     /**
      * 耗料数

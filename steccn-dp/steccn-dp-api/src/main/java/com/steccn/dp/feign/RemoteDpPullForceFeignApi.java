@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPullForceDTO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -28,4 +29,8 @@ public interface RemoteDpPullForceFeignApi {
     @PostMapping("/feign/dp/pull/force/sum")
     @ApiOperation(value = "拉引量汇总")
     R<Map<String, BigDecimal>> pullForceSum(@RequestBody DpPullForceDTO dto);
+
+    @GetMapping("/feign/dp/pull/force/push")
+    @ApiOperation(value = "给卡夫卡推送理论拉引量数据")
+    R<Boolean> pushPullForce();
 }

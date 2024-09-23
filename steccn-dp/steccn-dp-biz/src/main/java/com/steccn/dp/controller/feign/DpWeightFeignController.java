@@ -14,10 +14,7 @@ import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -80,5 +77,11 @@ public class DpWeightFeignController {
     @ApiOperation(value = "获取天然气数据")
     public R<List<DpNatureGasVO>> natureGasData(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto) {
         return R.success(naturalGasFlowCountService.natureGas(dto));
+    }
+
+    @GetMapping("/weight/push")
+    @ApiOperation(value = "推送电子秤读数")
+    public R<Boolean> push() {
+        return R.success(adsOpcUaAll3Service.pushWeightSum());
     }
 }

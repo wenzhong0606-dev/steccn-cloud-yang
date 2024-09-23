@@ -14,4 +14,5 @@ import java.math.BigDecimal;
 public class DpValueDTO {
     private BigDecimal value;
     private String tagId;
+    private String serverTime;
 }

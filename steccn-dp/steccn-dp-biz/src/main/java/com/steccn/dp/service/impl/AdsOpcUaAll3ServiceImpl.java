@@ -16,11 +16,13 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseValueNameVO;
 import com.steccn.common.vo.BaseValueVO;
 import com.steccn.common.vo.CommonBarLineVO;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.AdsOpcUaAll3;
 import com.steccn.dp.domain.WeightCount;
@@ -43,6 +45,7 @@ import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -69,6 +72,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     private final RemoteSalesFeignApi remoteSalesFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
     private final WeightCountMapper weightCountMapper;
+    private final KafkaTemplate<String,String> kafkaTemplate;
 
     @Override
     public List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime, LocalDateTime> dto) {
@@ -744,6 +748,24 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         result.setTableList(tableList);
         result.setColumns(columns);
         return result;
+    }
+
+    @Override
+    public Boolean pushWeightSum() {
+        LocalDateTime now = LocalDateTime.now();
+        QtTaskClassCalculate classDate = CalculateDateUtil.calculateClassTime(now);
+        Map<String, BigDecimal> value = postWeightCount(new TupleDTO<LocalDateTime, LocalDateTime>(classDate.getClassDate().toLocalDate().atTime(8, 0, 0), now));
+        if(CollUtil.isNotEmpty(value)){
+            BigDecimal total = value.values().stream()
+                    .filter(v -> Objects.nonNull(v)) // 过滤掉null
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            DpValueDTO valueDTO = new DpValueDTO();
+            valueDTO.setValue(BigDecimalUtil.divide(total,new BigDecimal(1000),2));
+            valueDTO.setTagId("weightSum_all");
+            valueDTO.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            kafkaTemplate.send("opcData_kiln","weightSum_all",JSONObject.toJSONString(valueDTO));
+        }
+        return true;
     }
 
     public List<DpWeightVO> weightCount(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto) {

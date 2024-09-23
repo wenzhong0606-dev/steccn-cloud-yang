@@ -3,7 +3,9 @@ package com.steccn.qms.scheduled;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.dp.vo.DpValueDateVO;
+import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -32,6 +34,7 @@ public class PullAmountCalculateTask {
 
     private final QtChartGenerateService qtChartGenerateService;
     private final RemoteDpFeignApi remoteDpFeignApi;
+    private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
 
     /**
      * @desc 每天 8点10分 20点10分执行一次
@@ -61,5 +64,23 @@ public class PullAmountCalculateTask {
         List<DpValueDateVO> vos = remoteDpFeignApi.countAsDay(dto).getData();
         log.info(vos.toString());
         XxlJobHelper.log("计算电子称-任务开始");
+    }
+
+    /**
+     * @desc 每10s推送实时拉引量
+     *
+     */
+    @XxlJob("pushPullAmount")
+    public void pushPullAmount() {
+        remoteDpPullForceFeignApi.pushPullForce();
+    }
+
+    /**
+     * @desc 每10s推送实时拉引量
+     *
+     */
+    @XxlJob("pushWeightSum")
+    public void pushWeightSum() {
+        remoteDpFeignApi.push();
     }
 }

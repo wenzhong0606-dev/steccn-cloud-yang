@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -139,13 +140,14 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
 
     @Override
     public Boolean sendPullForce() {
-        QtTaskClassCalculate classDate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        QtTaskClassCalculate classDate = CalculateDateUtil.calculateClassTime(now);
         //获取理论拉引量汇总
         List<PullProduParCount> model = list(new QueryWrapper<PullProduParCount>()
                 .select("product_line AS productLine", "sum(id_value) AS idValue")
                 .lambda()
                 .ge(PullProduParCount::getDt1, classDate.getClassDate().toLocalDate().atTime(8, 0, 0))
-                .le(PullProduParCount::getDt1, LocalDateTime.now())
+                .le(PullProduParCount::getDt1, now)
                 .groupBy(PullProduParCount::getProductLine));
         if(CollUtil.isNotEmpty(model)){
             //拉引总量
@@ -174,6 +176,7 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
             DpValueDTO value = new DpValueDTO();
             value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
             value.setTagId("pullAmount_all");
+            value.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             kafkaTemplate.send("opcData_kiln","pullAmount_all", JSONObject.toJSONString(pullAmountAll));
         }
         return true;
