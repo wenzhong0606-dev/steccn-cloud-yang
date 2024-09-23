@@ -171,13 +171,13 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
                 //理论拉引量
                 BigDecimal theoryNum = model.stream().filter(v -> v.getProductLine().equals(finalI)).findFirst().orElse(new PullProduParCount()).getIdValue();
                 theoryNum = BigDecimalUtil.multiply(BigDecimalUtil.multiply(theoryNum,density),thick,2);
-                BigDecimalUtil.add(theoryNum,pullAmountAll);
+                pullAmountAll = BigDecimalUtil.add(theoryNum,pullAmountAll);
             }
             DpValueDTO value = new DpValueDTO();
             value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
             value.setTagId("pullAmount_all");
             value.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln","pullAmount_all", JSONObject.toJSONString(pullAmountAll));
+            kafkaTemplate.send("opcData_kiln","pullAmount_all", JSONObject.toJSONString(value));
         }
         return true;
     }

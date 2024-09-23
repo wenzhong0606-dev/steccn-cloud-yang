@@ -8,6 +8,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.service.AdsOnOffCountService;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
+import com.steccn.dp.service.PullProduParCountService;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
@@ -36,6 +37,7 @@ import java.util.Map;
 public class DpWeightController {
     private final AdsOpcUaAll3Service adsOpcUaAll3Service;
     private final AdsOnOffCountService adsOnOffCountService;
+    private final PullProduParCountService pullProduParCountService;
 
     @PostMapping("/count")
     @ApiOperation(value = "电子秤读数")
@@ -87,4 +89,9 @@ public class DpWeightController {
         return R.success(adsOpcUaAll3Service.weightCountAsDay(dto));
     }
 
+    @GetMapping("/test4")
+    @ApiOperation(value = "玻璃片数光电信号")
+    public R<Boolean> test4() {
+        return R.success(pullProduParCountService.sendPullForce());
+    }
 }

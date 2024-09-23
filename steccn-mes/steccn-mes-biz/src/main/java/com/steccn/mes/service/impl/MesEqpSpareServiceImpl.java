@@ -136,6 +136,11 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     JsSysDictData measureUnit1 = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
                             .eq(JsSysDictData::getDictLabel, tmp.getFvolumename())
                             .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    if(Objects.isNull(measureUnit1)){
+                        measureUnit1 = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                                .eq(JsSysDictData::getDictLabel, tmp.getFprounitname())
+                                .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    }
                     model.setLengthQuantity(tmp.getFlength());
                     model.setLengthUnitId(Long.parseLong(measureUnit1.getDictCode()));
                     model.setWideQuantity(tmp.getFwidth());
@@ -155,6 +160,11 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     JsSysDictData measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
                             .eq(JsSysDictData::getDictLabel, tmp.getFbaseunitname())
                             .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    if(Objects.isNull(measureUnit)){
+                        measureUnit = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
+                                .eq(JsSysDictData::getDictLabel, tmp.getFprounitname())
+                                .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    }
                     model.setUnit(measureUnit.getDictLabel());
                     model.setUnitId(Long.parseLong(measureUnit.getDictCode()));
                     save(model);
