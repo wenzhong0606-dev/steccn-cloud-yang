@@ -761,9 +761,9 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             DpValueDTO valueDTO = new DpValueDTO();
             valueDTO.setValue(BigDecimalUtil.divide(total,new BigDecimal(1000),2));
-            valueDTO.setTagId("weightSum_all");
+            valueDTO.setTagId("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
             valueDTO.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln",JSONObject.toJSONString(valueDTO));
+            kafkaTemplate.send("opcData_kiln_in_out",JSONObject.toJSONString(valueDTO));
         }
         return true;
     }

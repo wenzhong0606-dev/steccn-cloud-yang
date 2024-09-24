@@ -175,9 +175,9 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
             }
             DpValueDTO value = new DpValueDTO();
             value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
-            value.setTagId("pullAmount_all");
+            value.setTagId("LD1-4.LD.DEEP03_Produ_par_Pulling_speed");
             value.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln", JSONObject.toJSONString(value));
+            kafkaTemplate.send("opcData_kiln_in_out", JSONObject.toJSONString(value));
         }
         return true;
     }

@@ -139,17 +139,19 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                     //完成数
                     BigDecimalUtil.accumulate(countMap,2,new BigDecimal(finishedTaskMap.getOrDefault(tmp.getOfficeCode(),0L)));
                 });
-                //组数据
-                StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-                stackGraphDTO.setXAxis(officeName);
-                List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-                BigDecimal all = countMap.get(1);
-                BigDecimal finished = countMap.get(2);
-                datList.add(new TupleDTO<>("任务总数", all));
-                datList.add(new TupleDTO<>("完成数", finished));
-                datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all)));
-                stackGraphDTO.setData(datList);
-                dataList.add(stackGraphDTO);
+                if(!officeName.equals("原料二车间")){
+                    //组数据
+                    StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
+                    stackGraphDTO.setXAxis(officeName);
+                    List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
+                    BigDecimal all = countMap.get(1);
+                    BigDecimal finished = countMap.get(2);
+                    datList.add(new TupleDTO<>("任务总数", all));
+                    datList.add(new TupleDTO<>("完成数", finished));
+                    datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all)));
+                    stackGraphDTO.setData(datList);
+                    dataList.add(stackGraphDTO);
+                }
             }
         });
 //        jsSysOffices.forEach(ele->{
