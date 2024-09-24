@@ -177,7 +177,7 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
             value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
             value.setTagId("pullAmount_all");
             value.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln","pullAmount_all", JSONObject.toJSONString(value));
+            kafkaTemplate.send("opcData_kiln", JSONObject.toJSONString(value));
         }
         return true;
     }

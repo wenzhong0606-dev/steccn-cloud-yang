@@ -763,7 +763,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             valueDTO.setValue(BigDecimalUtil.divide(total,new BigDecimal(1000),2));
             valueDTO.setTagId("weightSum_all");
             valueDTO.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln","weightSum_all",JSONObject.toJSONString(valueDTO));
+            kafkaTemplate.send("opcData_kiln",JSONObject.toJSONString(valueDTO));
         }
         return true;
     }
