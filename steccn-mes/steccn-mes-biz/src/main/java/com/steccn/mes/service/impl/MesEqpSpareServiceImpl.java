@@ -244,8 +244,8 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                             dicModel.setStatus("0");
                             dicModel.setCreateBy("system");
                             dicModel.setUpdateBy("system");
-                            dicModel.setCreateDate(new Date());
-                            dicModel.setUpdateDate(new Date());
+                            dicModel.setCreateDate(LocalDateTime.now());
+                            dicModel.setUpdateDate(LocalDateTime.now());
                             jsSysDictDataService.save(dicModel);
                             model.setUnit(dicModel.getDictLabel());
                             model.setUnitId(Long.parseLong(dicModel.getDictCode()));
