@@ -86,4 +86,6 @@ public class WmsStorageReceiptPageDTO extends BasePageDTO {
     private LocalDateTime affirmEndTime;
 
     private List<String> orderCodes;
+
+    private String remark;
 }

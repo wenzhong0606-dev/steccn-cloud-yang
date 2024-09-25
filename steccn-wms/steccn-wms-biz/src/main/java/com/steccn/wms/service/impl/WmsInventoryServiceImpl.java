@@ -646,6 +646,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
                 .like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                        .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
                 .select(WmsInventory::getId, WmsInventory::getMaterialId, WmsInventory::getMaterialName, WmsInventory::getMaterialCode, WmsInventory::getWarehouseId,
                         WmsInventory::getWarehouseName,WmsInventory::getTotalQuantity,WmsInventory::getAvailableQuantity,WmsInventory::getStockQuantity,WmsInventory::getFreezeQuantity,WmsInventory::getLockQuantity));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
@@ -851,6 +853,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         //获取查询的物料列表
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
                 .like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
+                .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                        .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
                 .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventory::getWarehouseId, dto.getWarehouseId()));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
@@ -875,7 +879,9 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
                 .like(Objects.nonNull(dto.getMaterialName()),WmsInventory::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getWarehouseId()),WmsInventory::getWarehouseId, dto.getWarehouseId())
-                .like(Objects.nonNull(dto.getShelfName()),WmsInventory::getShelfName, dto.getShelfName()));
+                .like(Objects.nonNull(dto.getShelfName()),WmsInventory::getShelfName, dto.getShelfName())
+                .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                        .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName())));
         List<WmsInventoryVO> inventoryList = summarizationList(list);
         //逻辑分页
         return LogicalPageUtil.page(inventoryList, dto.getCurrent(), dto.getSize());

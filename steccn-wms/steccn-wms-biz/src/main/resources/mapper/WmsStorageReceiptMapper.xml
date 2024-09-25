@@ -70,6 +70,9 @@
             <if test="dto.shelfName != null and dto.shelfName != ''">
                 and b.shelf_name LIKE CONCAT('%',#{dto.shelfName},'%')
             </if>
+            <if test="dto.remark != null and dto.remark != ''">
+                and a.note LIKE CONCAT('%',#{dto.remark},'%')
+            </if>
             <if test="dto.warehouseIds != null and dto.warehouseIds.size > 0">
                 and a.warehouse_id in
                 <foreach collection="dto.warehouseIds" item="id" open="(" close=")" separator=",">
