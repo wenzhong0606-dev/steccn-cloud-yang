@@ -133,12 +133,38 @@ public class MesEqpSpareServiceImpl extends ServiceImpl<MesEqpSpareMapper, MesEq
                     model.setUpdateBy("erp");
                     model.setUpdateDate(LocalDateTime.now());
                     //操作长宽厚
+                    String unitName;
+                    if(StrUtil.isNotBlank(tmp.getFprounitname())){
+                        unitName = tmp.getFprounitname();
+                    }else {
+                        unitName = tmp.getFvolumename();
+                    }
                     JsSysDictData measureUnit1 = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
-                            .eq(JsSysDictData::getDictLabel, tmp.getFvolumename())
+                            .eq(JsSysDictData::getDictLabel, unitName)
                             .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
+                    //如果还是为空则加入
                     if(Objects.isNull(measureUnit1)){
+                        JsSysDictData insertModel = new JsSysDictData();
+                        insertModel.setParentCode("0");
+                        insertModel.setParentCodes("0");
+                        insertModel.setTreeSort(1565);
+                        insertModel.setTreeSorts("0000001565,");
+                        insertModel.setTreeLeaf("1");
+                        insertModel.setTreeLevel(0);
+                        insertModel.setTreeNames(unitName);
+                        insertModel.setDictLabel(unitName);
+                        insertModel.setDictValue(unitName);
+                        insertModel.setDictType("measure_unit");
+                        insertModel.setIsSys("1");
+                        insertModel.setStatus("0");
+                        insertModel.setCreateBy("system");
+                        insertModel.setCreateDate(LocalDateTime.now());
+                        insertModel.setUpdateBy("system");
+                        insertModel.setUpdateDate(LocalDateTime.now());
+                        insertModel.setCorpCode("0");
+                        jsSysDictDataService.save(insertModel);
                         measureUnit1 = jsSysDictDataService.getOne(new LambdaQueryWrapper<JsSysDictData>()
-                                .eq(JsSysDictData::getDictLabel, tmp.getFprounitname())
+                                .eq(JsSysDictData::getDictLabel, unitName)
                                 .eq(JsSysDictData::getDictType, "measure_unit").last("LIMIT 1"));
                     }
                     model.setLengthQuantity(tmp.getFlength());
