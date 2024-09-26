@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -97,4 +98,9 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/gas/data")
     @ApiOperation(value = "获取天然气数据")
     R<List<DpNatureGasVO>> natureGasData(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
+
+
+    @PostMapping("/feign/dp/output")
+    @ApiOperation(value = "产量")
+    R<Map<Long,BigDecimal>> output(@RequestBody Set<Long> orderIds);
 }

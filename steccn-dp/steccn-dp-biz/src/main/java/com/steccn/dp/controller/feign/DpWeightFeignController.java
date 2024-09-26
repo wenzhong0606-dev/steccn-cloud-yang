@@ -2,12 +2,10 @@ package com.steccn.dp.controller.feign;
 
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.domain.ExitStationCount;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
-import com.steccn.dp.service.AdsOnOffCountService;
-import com.steccn.dp.service.AdsOpcUaAll3Service;
-import com.steccn.dp.service.DpColdEndCheckpointValueService;
-import com.steccn.dp.service.NaturalGasFlowCountService;
+import com.steccn.dp.service.*;
 import com.steccn.dp.vo.DpNatureGasVO;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.dp.vo.DpValueDateVO;
@@ -21,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -36,6 +35,7 @@ public class DpWeightFeignController {
     private final AdsOnOffCountService adsOnOffCountService;
     private final DpColdEndCheckpointValueService dpColdEndCheckpointValueService;
     private final NaturalGasFlowCountService naturalGasFlowCountService;
+    private final ExitStationCountService exitStationCountService;
 
     @PostMapping("/weight/count")
     @ApiOperation(value = "电子秤读数")
@@ -83,5 +83,12 @@ public class DpWeightFeignController {
     @ApiOperation(value = "推送电子秤读数")
     public R<Boolean> push() {
         return R.success(adsOpcUaAll3Service.pushWeightSum());
+    }
+
+
+    @PostMapping("/output")
+    @ApiOperation(value = "产量")
+    public R<Map<Long,BigDecimal>> output(@RequestBody Set<Long> orderIds){
+        return R.success(exitStationCountService.output(orderIds));
     }
 }

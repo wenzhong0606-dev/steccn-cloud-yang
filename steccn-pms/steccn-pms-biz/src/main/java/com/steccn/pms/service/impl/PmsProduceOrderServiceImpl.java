@@ -29,6 +29,7 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpOnOffCountVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
@@ -120,6 +121,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
     private final PmsWorkOrderBatchMapper pmsWorkOrderBatchMapper;
     private final PmsPullForceService pullForceService;
+    private final RemoteDpFeignApi remoteDpFeignApi;
 
     @Autowired
     @Lazy
@@ -1180,7 +1182,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public List<ProduceOrderDataInfoVO> getExecuteOrderInfo() {
+    public List<ProduceOrderDataInfoVO>       getExecuteOrderInfo() {
         //1.获取16条产线的信息
         SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
         sysOfficeTypeKeyDTO.setType(Lists.newArrayList(PmManagerConstant.NUM_9));
@@ -1194,8 +1196,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<ProduceOrderDataInfoVO> infoVOList = Lists.newArrayList();
         //4.处理数据
         if (CollUtil.isNotEmpty(list)) {
+//            Map<Long, BigDecimal> currentProductionMap = getCurrentProduction(list.stream().map(PmsProduceOrder::getId).collect(Collectors.toSet()));
             //获取当前产量
-            Map<Long, BigDecimal> currentProductionMap = getCurrentProduction(list.stream().map(PmsProduceOrder::getId).collect(Collectors.toSet()));
+            Map<Long, BigDecimal> currentProductionMap = FeignOptional.of(() -> remoteDpFeignApi.output(list.stream().map(PmsProduceOrder::getId).collect(Collectors.toSet())), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+
             for (PmsProduceOrder pmsProduceOrder : list) {
                 ProduceOrderDataInfoVO produceOrderDataInfoVO = BeanUtil.copyProperties(pmsProduceOrder, ProduceOrderDataInfoVO.class);
                 produceOrderDataInfoVO.setProductionLineName(officeNameMap.get(produceOrderDataInfoVO.getProductionLineId()));
