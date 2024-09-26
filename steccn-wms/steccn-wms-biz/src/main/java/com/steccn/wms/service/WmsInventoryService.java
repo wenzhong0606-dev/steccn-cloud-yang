@@ -311,5 +311,5 @@ public interface WmsInventoryService extends IService<WmsInventory> {
 
     void exportData(WmsInventoryPageDTO dto, HttpServletResponse response) throws IOException;
 
-    Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto);
+
 }

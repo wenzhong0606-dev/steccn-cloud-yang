@@ -24,5 +24,5 @@ public interface AdsWmsInventoryService extends IService<AdsWmsInventory> {
 
     List<AdsWmsInventoryVO> endingData(DpWmsDataDTO dto);
 
-    Page<AdsWmsInventoryVO> dataPage(DpWmsDataDTO dto);
+    List<AdsWmsInventoryVO> dataPage(DpWmsDataDTO dto);
 }

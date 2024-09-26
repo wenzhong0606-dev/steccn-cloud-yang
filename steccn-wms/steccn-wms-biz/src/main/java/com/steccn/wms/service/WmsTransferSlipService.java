@@ -138,4 +138,12 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
     Boolean batch(WmsTransferSlipBatchDto dto);
 
     Integer unAffirmByShelf(Set<Long> shelfIds);
+
+    Map<Long, BigDecimal>  intervalEnterQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    Map<Long, BigDecimal>  intervalOutQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    Map<Long, Integer> intervalOutOrder(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    Map<Long, Integer> intervalEnterOrder(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
 }

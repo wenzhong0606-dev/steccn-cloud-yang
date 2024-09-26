@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * 库存分页DTO
@@ -44,4 +45,9 @@ public class WmsInventoryPageDTO  extends BasePageDTO {
 
     @ApiModelProperty("库存id")
     private Long inventoryId;
+
+
+    private LocalDate startTime;
+
+    private LocalDate endTime;
 }

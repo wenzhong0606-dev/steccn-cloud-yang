@@ -145,10 +145,6 @@ public class WmsInventoryController {
     }
 
 
-    @ApiOperation("历史库存查询")
-    @PostMapping("/historical")
-    public R<Page<WmsHistoricalInventoryVO>> historical(@RequestBody WmsInventoryPageDTO dto){
-        return R.success(wmsInventoryService.historical(dto));
-    }
+
 
 }

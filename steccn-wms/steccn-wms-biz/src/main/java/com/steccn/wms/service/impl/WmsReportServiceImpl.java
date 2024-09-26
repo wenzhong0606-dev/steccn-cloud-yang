@@ -1,7 +1,9 @@
 package com.steccn.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
@@ -18,6 +20,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -28,16 +31,11 @@ import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
-import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
-import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
-import com.steccn.wms.dto.WmsReportStatisticalDTO;
-import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
+import com.steccn.wms.domain.WmsTransferSlip;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.mapper.WmsInventoryMapper;
-import com.steccn.wms.service.WmsDeliveryReceiptService;
-import com.steccn.wms.service.WmsInventoryService;
-import com.steccn.wms.service.WmsReportService;
-import com.steccn.wms.service.WmsStorageReceiptService;
+import com.steccn.wms.service.*;
 import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +71,7 @@ public class WmsReportServiceImpl implements WmsReportService {
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final WmsTransferSlipService wmsTransferSlipService;
     @Override
     public SteccnTableDataDTO statisticalData(WmsReportStatisticalDTO dto) {
 
@@ -647,6 +646,118 @@ public class WmsReportServiceImpl implements WmsReportService {
         BigDecimal multiply = BigDecimalUtil.multiply(divide, new BigDecimal("100"));
         DecimalFormat decimalFormat = new DecimalFormat("0.00%");
         return decimalFormat.format(multiply);
+    }
+    @Override
+    public Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto) {
+        //开始时间
+        LocalDateTime startTime = dto.getStartTime().atTime(8, 0, 0);
+        //结束时间
+        LocalDateTime endTime = dto.getEndTime().plusDays(1).atTime(8, 0, 0);
+        //获取期初期末库存数据
+        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
+        dpWmsDataDTO.setWarehouseId(dto.getWarehouseId());
+        dpWmsDataDTO.setMaterialName(dto.getMaterialName());
+        dpWmsDataDTO.setStartTime(startTime);
+        dpWmsDataDTO.setEndTime(endTime);
+        List<AdsWmsInventoryVO> adsWmsInventoryVOS = FeignOptional.of(() -> remoteDpWmsDataFeignApi.datalist(dpWmsDataDTO), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        List<AdsWmsInventoryVO> dataList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(adsWmsInventoryVOS)){
+            //同一仓库，相同物料，相同日期的物料合并计算（不同货架数据的合并）
+            Map<Long, List<AdsWmsInventoryVO>> materialMap = adsWmsInventoryVOS.stream().collect(Collectors.groupingBy(AdsWmsInventoryVO::getMaterialId));
+            for (Map.Entry<Long, List<AdsWmsInventoryVO>> entry : materialMap.entrySet()) {
+                Map<Date, List<AdsWmsInventoryVO>> dateMap = entry.getValue().stream().collect(Collectors.groupingBy(AdsWmsInventoryVO::getDt));
+                for (Map.Entry<Date, List<AdsWmsInventoryVO>> dateListEntry : dateMap.entrySet()) {
+                    AdsWmsInventoryVO adsWmsInventoryVO = new AdsWmsInventoryVO();
+                    BigDecimal quantity = BigDecimal.ZERO;
+                    for (AdsWmsInventoryVO wmsInventoryVO : dateListEntry.getValue()) {
+                        BeanUtil.copyProperties(wmsInventoryVO,adsWmsInventoryVO);
+                        quantity = quantity.add(wmsInventoryVO.getTotalQuantity1());
+                    }
+                    adsWmsInventoryVO.setTotalQuantity1(quantity);
+                    dataList.add(adsWmsInventoryVO);
+                }
+            }
+        }
+        //取同一物料，最大日期和最小日期的数据，合并成一条数据
+        List<AdsWmsInventoryVO> process = process(dataList);
+        //逻辑排序
+        Page<WmsHistoricalInventoryVO> page = LogicalPageUtil.page(BeanUtil.copyToList(process, WmsHistoricalInventoryVO.class), dto.getCurrent(), dto.getSize());
+        //获取对应物料的出入库调拨数据
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            Set<Long> materialIds = page.getRecords().stream().map(WmsHistoricalInventoryVO::getMaterialId).collect(Collectors.toSet());
+            //入库数
+            Map<Long, BigDecimal> deliveryQuantityMap =  wmsDeliveryReceiptService.intervalDataQuantity(startTime, endTime, materialIds, dto.getWarehouseId());
+            //入库单据数
+            Map<Long,Integer>  deliveryOrderQuantityMap =  wmsDeliveryReceiptService.intervalOrderQuantity(startTime, endTime, materialIds, dto.getWarehouseId());
+            //出库数
+            Map<Long, BigDecimal> storageMap = wmsStorageReceiptService.intervalDataQuantity(startTime, endTime, materialIds, dto.getWarehouseId());
+
+            //出库单据数
+            Map<Long,Integer>  storageOrderQuantityMap =  wmsStorageReceiptService.intervalOrderQuantity(startTime, endTime, materialIds, dto.getWarehouseId());
+            //调入数
+            Map<Long, BigDecimal>  enterMap = wmsTransferSlipService.intervalEnterQuantity(startTime, endTime, materialIds, dto.getWarehouseId());
+
+            //调出数
+            Map<Long, BigDecimal>  outMap = wmsTransferSlipService.intervalOutQuantity(startTime, endTime, materialIds, dto.getWarehouseId());
+            //调入单数
+            Map<Long,Integer> outOrderMap = wmsTransferSlipService.intervalOutOrder(startTime, endTime, materialIds, dto.getWarehouseId());
+            //调出单数
+            Map<Long,Integer> enterOrderMap = wmsTransferSlipService.intervalEnterOrder(startTime, endTime, materialIds, dto.getWarehouseId());
+            Map<Long, EqpSpareVO> eqpSpareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach(e->{
+                e.setEntryTotalQuantity(deliveryQuantityMap.get(e.getMaterialId()));
+                e.setWarehousingEntry(deliveryOrderQuantityMap.get(e.getMaterialId()));
+                e.setWarehousingOutbound(storageOrderQuantityMap.get(e.getMaterialId()));
+                e.setWarehousingOutboundTotalQuantity(storageMap.get(e.getMaterialId()));
+                e.setTransferDocument(outOrderMap.get(e.getMaterialId()));
+                e.setTransferQuantity(enterMap.get(e.getMaterialId()));
+                e.setTransferLeaveQuantity(outMap.get(e.getMaterialId()));
+                e.setTransferLeaveDocument(enterOrderMap.get(e.getMaterialId()));
+                e.setUnit(eqpSpareVOMap.get(e.getMaterialId()).getUnit());
+            });
+            page.getRecords().sort(Comparator.comparing(WmsHistoricalInventoryVO::getEntryTotalQuantity,Comparator.nullsLast(Comparator.reverseOrder())));
+        }
+        return page;
+    }
+
+    public List<AdsWmsInventoryVO> process(List<AdsWmsInventoryVO> list) {
+        return list.stream()
+                .collect(Collectors.groupingBy(AdsWmsInventoryVO::getMaterialId))
+                .entrySet().stream()
+                .map(entry -> {
+                    List<AdsWmsInventoryVO> groupedList = entry.getValue();
+
+                    AdsWmsInventoryVO minVo = groupedList.stream()
+                            .min(Comparator.comparing(AdsWmsInventoryVO::getDt))
+                            .orElse(null);
+
+                    AdsWmsInventoryVO maxVo = groupedList.stream()
+                            .max(Comparator.comparing(AdsWmsInventoryVO::getDt))
+                            .orElse(null);
+                    if (minVo == null || maxVo == null) {
+                        return null;
+                    }
+
+                    AdsWmsInventoryVO resultVo = new AdsWmsInventoryVO();
+                    resultVo.setMaterialId(minVo.getMaterialId());
+                    resultVo.setOpeningInventory(minVo.getTotalQuantity1());
+                    resultVo.setEndingInventory(maxVo.getTotalQuantity1());
+                    resultVo.setUnit1(minVo.getUnit1());
+                    resultVo.setUnit2(minVo.getUnit2());
+                    resultVo.setUnit3(minVo.getUnit3());
+                    resultVo.setMaterialCode(minVo.getMaterialCode());
+                    resultVo.setMaterialName(minVo.getMaterialName());
+                    resultVo.setWarehouseId(minVo.getWarehouseId());
+                    resultVo.setWarehouseCode(minVo.getWarehouseCode());
+                    resultVo.setWarehouseName(minVo.getWarehouseName());
+                    resultVo.setShelfId(minVo.getShelfId());
+                    resultVo.setShelfCode(minVo.getShelfCode());
+                    resultVo.setShelfName(minVo.getShelfName());
+
+                    return resultVo;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     BigDecimal getTotalQuantity(){

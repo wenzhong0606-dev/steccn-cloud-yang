@@ -95,6 +95,18 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
     BigDecimal damagedInventory(@Param("firstDay")LocalDate firstDay, @Param("lastDay") LocalDate lastDay,@Param("warehouseIds") Set<Long> warehouseIds);
 
     BigDecimal salesTotalQuantity(@Param("warehouseIds")Set<Long> warehouseIds,@Param("firstDay") LocalDate firstDay,@Param("result")  LocalDate result);
+
+    /**
+     * 区间数据
+     * @param startTime
+     * @param endTime
+     * @param materialIds
+     * @param warehouseId
+     * @return
+     */
+    List<WmsStorageReceiptInfo> intervalDataQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    List<WmsDeliveryReceiptInfoVO> intervalOrderQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
 }
 
 

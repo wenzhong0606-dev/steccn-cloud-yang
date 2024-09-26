@@ -1,5 +1,6 @@
 package com.steccn.dp.vo;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -87,4 +88,10 @@ public class AdsWmsInventoryVO {
      *
      */
     private Long unit3;
+
+    @ApiModelProperty("期初库存")
+    private BigDecimal openingInventory;
+
+    @ApiModelProperty("期末库存")
+    private BigDecimal endingInventory;
 }

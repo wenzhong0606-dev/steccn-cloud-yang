@@ -33,8 +33,8 @@ public class RemoteDpWmsDataFeignController {
 
 
     @ApiOperation("获取期初期末库存分页数据")
-    @PostMapping("/feign/dp/wms/data/endingData/page")
-   public R<Page<AdsWmsInventoryVO>> dataPage (@Valid @RequestBody DpWmsDataDTO dto){
+    @PostMapping("/endingData/list")
+   public R<List<AdsWmsInventoryVO>> dataPage (@Valid @RequestBody DpWmsDataDTO dto){
         return R.success(adsWmsInventoryService.dataPage(dto));
     }
 }

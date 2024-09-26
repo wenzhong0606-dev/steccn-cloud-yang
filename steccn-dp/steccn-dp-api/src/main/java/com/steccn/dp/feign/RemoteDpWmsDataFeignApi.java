@@ -26,4 +26,9 @@ public interface RemoteDpWmsDataFeignApi {
     @PostMapping("/feign/dp/wms/data/endingData")
     R<List<AdsWmsInventoryVO>> endingData(@Valid @RequestBody DpWmsDataDTO dto) ;
 
+
+    @ApiOperation("获取期初期末库存分页数据")
+    @PostMapping("/feign/dp/wms/data/endingData/list")
+    R<List<AdsWmsInventoryVO>> datalist (@Valid @RequestBody DpWmsDataDTO dto);
+
 }

@@ -792,25 +792,6 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         EasyExcel.write(response.getOutputStream(), WmsInventoryExcelDTO.class).sheet("模板").doWrite(getExcelData(dto));
     }
 
-    @Override
-    public Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto) {
-
-        Page<WmsHistoricalInventoryVO> resPage = new Page<>();
-//        SparePageDTO sparePageDTO = new SparePageDTO();
-//        sparePageDTO.setName(dto.getMaterialName());
-//        //获取备件分页
-//        Page<EqpSpareVO> eqpSpareVOPage = FeignOptional.of(() -> remoteSpareFeignApi.listPage(sparePageDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-//        BeanUtil.copyProperties(eqpSpareVOPage,resPage);
-//        eqpSpareVOPage.getRecords().forEach();
-
-        //获取期初期末库存数据
-        DpWmsDataDTO dpWmsDataDTO = new DpWmsDataDTO();
-        Set<Long> warehouseId = Sets.newHashSet(dto.getWarehouseId());
-        dpWmsDataDTO.setWarehouseIds(warehouseId);
-//        remoteDpWmsDataFeignApi.endingData()
-        return null;
-    }
-
     List<WmsInventoryExcelDTO> getExcelData(WmsInventoryPageDTO dto) {
          //获取数据
          LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
@@ -911,8 +892,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 wmsInventoryVO.setTotalQuantity(totalQuantity.get());
                 wmsInventoryVO.setAvailableQuantity(availableQuantity.get());
                 wmsInventoryVO.setStockQuantity(stockQuantity.get());
-                wmsInventoryVO.setFreezeQuantity(stockQuantity.get());
-                wmsInventoryVO.setLockQuantity(stockQuantity.get());
+                wmsInventoryVO.setFreezeQuantity(freezeQuantity.get());
+                wmsInventoryVO.setLockQuantity(lockQuantity.get());
                 inventoryList.add(wmsInventoryVO);
             });
             //获取单位物料名称

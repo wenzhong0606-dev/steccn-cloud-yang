@@ -61,4 +61,7 @@ public class WmsTransferSlipInfoVO {
     @ApiModelProperty("单位名称")
     private String unitName;
 
+
+    private Integer count;
+
 }

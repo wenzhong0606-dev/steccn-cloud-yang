@@ -1084,6 +1084,30 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return sum;
     }
 
+    @Override
+    public Map<Long, BigDecimal>  intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseIds) {
+        Map<Long, BigDecimal> map = new HashMap<>();
+        List<WmsDeliveryReceiptInfo> infos = this.baseMapper.intervalDataQuantity(startTime, endTime, materialIds, warehouseIds);
+        infos.forEach(info->{
+            map.put(info.getMaterialId(),info.getQuantity());
+        });
+        return  map;
+    }
+
+    @Override
+    public Map<Long, Integer> intervalOrderQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId) {
+        //获取对应的入库单的单数
+        List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS =
+                this.baseMapper.intervalOrderQuantity(startTime, endTime, materialIds, warehouseId);
+        Map<Long, Integer> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(wmsDeliveryReceiptInfoVOS)){
+            wmsDeliveryReceiptInfoVOS.forEach(
+                    e-> map.put(e.getMaterialId(),e.getCount())
+            );
+        }
+        return map;
+    }
+
     /**
      * 当前最大的code值
      *

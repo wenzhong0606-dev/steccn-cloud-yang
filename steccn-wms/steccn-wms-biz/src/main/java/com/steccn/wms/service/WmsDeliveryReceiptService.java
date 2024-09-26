@@ -184,4 +184,16 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     Integer unAffirmByShelf(Set<Long> shelfIds);
 
     BigDecimal monthSum(Set<Long> warehouseIds);
+
+    /**
+     * 获取区间时间的入库单物料数据总和
+     * @param startTime
+     * @param endTime
+     * @param materialIds
+     * @param warehouseIds
+     * @return
+     */
+    Map<Long, BigDecimal>  intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds,Long warehouseIds);
+
+    Map<Long, Integer> intervalOrderQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
 }

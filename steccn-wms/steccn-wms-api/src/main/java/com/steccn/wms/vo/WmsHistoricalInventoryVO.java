@@ -46,13 +46,15 @@ public class WmsHistoricalInventoryVO {
     private Integer transferDocument;
 
     @ApiModelProperty("调入数量")
-    private Integer transferQuantity;
+    private BigDecimal transferQuantity;
 
     @ApiModelProperty("调出单据数量")
     private Integer transferLeaveDocument;
 
     @ApiModelProperty("调出数量")
-    private Integer transferLeaveQuantity;
+    private BigDecimal transferLeaveQuantity;
+
+    private String unit;
 
 
 }

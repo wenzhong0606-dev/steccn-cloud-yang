@@ -51,10 +51,7 @@ import com.steccn.wms.service.WmsTransferSlipInfoService;
 import com.steccn.wms.service.WmsTransferSlipService;
 import com.steccn.wms.mapper.WmsTransferSlipMapper;
 import com.steccn.wms.util.WmsCodeUtil;
-import com.steccn.wms.vo.WmsReportWarehouseVO;
-import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
-import com.steccn.wms.vo.WmsTransferSlipInfoVO;
-import com.steccn.wms.vo.WmsTransferSlipVO;
+import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -854,6 +851,52 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     @Override
     public Integer unAffirmByShelf(Set<Long> shelfIds) {
        return this.baseMapper.wmsTransferSlipService(shelfIds);
+    }
+
+    @Override
+    public Map<Long, BigDecimal>  intervalEnterQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId) {
+        Map<Long, BigDecimal> map = new HashMap<>();
+        List<WmsTransferSlipInfoVO> infos = this.baseMapper.WmsTransferSlipInfoVO(startTime, endTime, materialIds, warehouseId);
+        infos.forEach(info->{
+            map.put(info.getMaterialId(),info.getQuantity());
+        });
+        return  map;
+    }
+
+    @Override
+    public Map<Long, BigDecimal>  intervalOutQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId) {
+        Map<Long, BigDecimal> map = new HashMap<>();
+        List<WmsTransferSlipInfoVO> infos = this.baseMapper.intervalOutQuantity(startTime, endTime, materialIds, warehouseId);
+        infos.forEach(info->{
+            map.put(info.getMaterialId(),info.getQuantity());
+        });
+        return  map;
+    }
+
+    @Override
+    public Map<Long, Integer> intervalOutOrder(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId) {
+        List<WmsTransferSlipInfoVO> wmsDeliveryReceiptInfoVOS =
+                this.baseMapper.intervalOutOrder(startTime, endTime, materialIds, warehouseId);
+        Map<Long, Integer> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(wmsDeliveryReceiptInfoVOS)){
+            wmsDeliveryReceiptInfoVOS.forEach(
+                    e-> map.put(e.getMaterialId(),e.getCount())
+            );
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, Integer> intervalEnterOrder(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId) {
+        List<WmsTransferSlipInfoVO> wmsDeliveryReceiptInfoVOS =
+                this.baseMapper.intervalEnterOrder(startTime, endTime, materialIds, warehouseId);
+        Map<Long, Integer> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(wmsDeliveryReceiptInfoVOS)){
+            wmsDeliveryReceiptInfoVOS.forEach(
+                    e-> map.put(e.getMaterialId(),e.getCount())
+            );
+        }
+        return map;
     }
 
 

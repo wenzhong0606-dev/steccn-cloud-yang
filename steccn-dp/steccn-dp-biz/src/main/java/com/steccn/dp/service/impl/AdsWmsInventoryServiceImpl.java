@@ -73,13 +73,12 @@ public class AdsWmsInventoryServiceImpl extends ServiceImpl<AdsWmsInventoryMappe
     }
 
     @Override
-    public Page<AdsWmsInventoryVO> dataPage(DpWmsDataDTO dto) {
-        Page<AdsWmsInventory> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<AdsWmsInventory>()
-                .like(Objects.nonNull(dto.getMaterialName()), AdsWmsInventory::getMaterialName, dto.getMaterialName())
+    public List<AdsWmsInventoryVO> dataPage(DpWmsDataDTO dto) {
+        List<AdsWmsInventory> list = list( new LambdaQueryWrapper<AdsWmsInventory>()
+                .like(Objects.nonNull(dto.getMaterialName()), AdsWmsInventory::getMaterialCode, dto.getMaterialName())
                 .in(Objects.nonNull(dto.getWarehouseId()), AdsWmsInventory::getWarehouseId, dto.getWarehouseId())
                 .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), AdsWmsInventory::getDt, dto.getStartTime(), dto.getEndTime()));
-
-        return null;
+        return BeanUtil.copyToList(list,AdsWmsInventoryVO.class);
     }
 }
 

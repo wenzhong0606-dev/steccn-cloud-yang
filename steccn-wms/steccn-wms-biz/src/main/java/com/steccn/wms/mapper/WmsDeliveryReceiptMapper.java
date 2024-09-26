@@ -81,6 +81,18 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     BigDecimal monthSum(@Param("warehouseIds") Set<Long> warehouseIds,@Param("firstDay") LocalDate firstDay,@Param("lastDay") LocalDate lastDay);
 
     String getSalesOrderByCustomerBarcode(@Param("customerBarcode") String customerBarcode);
+
+    /**
+     * 获取区间内的物料在对应仓库的单据数据
+     * @param startTime
+     * @param endTime
+     * @param materialIds
+     * @param warehouseId
+     * @return
+     */
+    List<WmsDeliveryReceiptInfo> intervalDataQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    List<WmsDeliveryReceiptInfoVO> intervalOrderQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
 }
 
 

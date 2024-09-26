@@ -10,6 +10,7 @@ import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -77,6 +78,14 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
                                                                          @Param("materialIds") List<Long> materialIds);
 
     Integer wmsTransferSlipService(@Param("shelfIds") Set<Long> shelfIds);
+
+    List<WmsTransferSlipInfoVO> WmsTransferSlipInfoVO(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    List<WmsTransferSlipInfoVO> intervalOutQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    List<WmsTransferSlipInfoVO> intervalOutOrder(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    List<WmsTransferSlipInfoVO> intervalEnterOrder(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
 }
 
 

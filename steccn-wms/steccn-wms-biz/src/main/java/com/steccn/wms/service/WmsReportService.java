@@ -1,10 +1,13 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
+import com.steccn.wms.dto.WmsInventoryPageDTO;
 import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
+import com.steccn.wms.vo.WmsHistoricalInventoryVO;
 import com.steccn.wms.vo.WmsInventoryDaySheetCaseVO;
 import com.steccn.wms.vo.WmsInventoryDaySheetVO;
 
@@ -64,4 +67,11 @@ public interface WmsReportService {
     String inactionStockProportion();
 
     String inventoryCarryRate();
+
+    /**
+     * 仓库历史库存查询
+     * @param dto
+     * @return
+     */
+    Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto);
 }

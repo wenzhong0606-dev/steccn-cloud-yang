@@ -248,4 +248,8 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     BigDecimal damagedInventory(Set<Long> warehouseIds);
 
     BigDecimal salesTotalQuantity(Set<Long> warehouseIds, LocalDate firstDay, LocalDate result);
+
+    Map<Long, BigDecimal> intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    Map<Long, Integer> intervalOrderQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
 }
