@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.ExitStationCountMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.ExitStationCount">
+            <id property="produceOrderId" column="produce_order_id" jdbcType="INTEGER"/>
+            <result property="productionLineId" column="production_line_id" jdbcType="INTEGER"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="valueCount" column="value_count" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        produce_order_id,production_line_id,code,
+        value_count
+    </sql>
+</mapper>
