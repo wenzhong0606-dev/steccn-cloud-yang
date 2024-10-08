@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
@@ -88,6 +89,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final OaInfoService oaInfoService;
+    private final QtLossDataService qtLossDataService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId, String source) {
@@ -1689,13 +1691,19 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             });
             dto.setProductLineIds(officeSet);
         }
-        for (Integer tmp : dto.getProductLineIds()) {
-            chartParam.setProductLineId(tmp);
-            chartParam.setDateStart(dto.getStartDate());
-            chartParam.setDateEnd(dto.getEndDate());
-            List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(chartParam);
-            allData.addAll(qtChartSubDetailDTOS);
-        }
+        List<QtLossData> lossDataList = qtLossDataService.list(new LambdaQueryWrapper<QtLossData>()
+                .between(QtLossData::getWorkOrderTime,dto.getStartDate(),dto.getEndDate())
+//                .ge(QtLossData::getWorkOrderTime, dto.getStartDate())
+//                .le(QtLossData::getWorkOrderTime, dto.getEndDate())
+                .in(QtLossData::getProductLineId, dto.getProductLineIds()));
+        allData = BeanUtil.copyToList(lossDataList,QtChartSubDetailDTO.class);
+//        for (Integer tmp : dto.getProductLineIds()) {
+//            chartParam.setProductLineId(tmp);
+//            chartParam.setDateStart(dto.getStartDate());
+//            chartParam.setDateEnd(dto.getEndDate());
+//            List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(chartParam);
+//            allData.addAll(qtChartSubDetailDTOS);
+//        }
         allData.forEach(v -> v.setWorkOrderDate(LocalDate.parse(v.getWorkOrderTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
         int dayCount;
         if (!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())) {

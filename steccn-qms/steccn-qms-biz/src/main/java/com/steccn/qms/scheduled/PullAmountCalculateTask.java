@@ -1,11 +1,13 @@
 package com.steccn.qms.scheduled;
 
+import com.google.common.collect.Lists;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.pms.feign.RemotePullForceFeignApi;
+import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -82,5 +84,29 @@ public class PullAmountCalculateTask {
     @XxlJob("pushWeightSum")
     public void pushWeightSum() {
         remoteDpFeignApi.push();
+    }
+
+    /**
+     * @desc 计算损耗 每天 8点01分 20:01:00 执行一次
+     * 08:01:00 20:01:00
+     */
+    @XxlJob("calculateLossHandler")
+    public void calculateLoss() {
+        XxlJobHelper.log("计算损耗-任务开始");
+        List<Integer> productIds = Lists.newArrayList(179,467,180,468,214,461,174,175);
+        QtChartParamDTO dto = new QtChartParamDTO();
+        LocalDateTime now = LocalDateTime.now();
+        if(now.getHour()==8){
+            dto.setDateStart(now.toLocalDate().minusDays(1L));
+            dto.setDateEnd(now.toLocalDate().minusDays(1L));
+        }else {
+            dto.setDateStart(now.toLocalDate());
+            dto.setDateEnd(now.toLocalDate());
+        }
+        for(Integer tmp:productIds){
+            dto.setProductLineId(tmp);
+            qtChartGenerateService.generateSubstrateLossData(dto);
+        }
+        XxlJobHelper.log("计算损耗-任务结束");
     }
 }

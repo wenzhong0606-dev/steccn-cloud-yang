@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
@@ -41,6 +42,7 @@ import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.mapper.QtLossDataMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.*;
@@ -99,6 +101,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
+
+    private final QtLossDataService qtLossDataService;
     /**
      * 生产基片损耗数据
      *
@@ -1263,6 +1267,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 tmp.setClassGroupName(oaGroupCountDTO.getGroupName());
             }
         });
+        List<QtLossData> qtLossData = BeanUtil.copyToList(resultList, QtLossData.class);
+        if(LocalDateTime.now().getHour()==8){
+            //早8算的是前一天晚班
+            qtLossData = qtLossData.stream().filter(v->v.getWorkOrder().equals("晚班")).collect(Collectors.toList());
+        }else {
+            //否则算的是早班
+            qtLossData = qtLossData.stream().filter(v->v.getWorkOrder().equals("早班")).collect(Collectors.toList());
+        }
+        qtLossDataService.saveBatch(qtLossData);
         return resultList;
     }
 
@@ -1766,7 +1779,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      */
     @Override
     public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
-        List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        List<QtLossData> lossData = qtLossDataService.list(new LambdaQueryWrapper<QtLossData>()
+                .between(QtLossData::getWorkOrderTime, dto.getDateStart(), dto.getDateEnd()));
+        List<QtChartSubDetailDTO> data = Lists.newArrayList();
+        data = BeanUtil.copyToList(lossData,QtChartSubDetailDTO.class);
         //班组为后期加上，所以需要过滤班组
         if(dto.getClassGroupId()!=null){
             data = data.stream().filter(v->v.getClassGroupId()!=null && v.getClassGroupId().equals(dto.getClassGroupId())).collect(Collectors.toList());
@@ -2090,7 +2106,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      */
     @Override
     public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
-        List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        List<QtLossData> lossData = qtLossDataService.list(new LambdaQueryWrapper<QtLossData>()
+                .between(QtLossData::getWorkOrderTime, dto.getDateStart(), dto.getDateEnd()));
+        List<QtChartSubDetailDTO> data = Lists.newArrayList();
+        data = BeanUtil.copyToList(lossData,QtChartSubDetailDTO.class);
         //过滤班次
         if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare()!=null&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
             data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());

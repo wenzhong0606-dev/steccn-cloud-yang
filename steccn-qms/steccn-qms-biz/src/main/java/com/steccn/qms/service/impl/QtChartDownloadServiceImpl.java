@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.EnumUtil;
@@ -14,6 +15,7 @@ import com.alibaba.excel.util.MapUtils;
 import com.alibaba.excel.util.StyleUtil;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.steccn.common.util.BigDecimalUtil;
@@ -24,11 +26,13 @@ import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtLossData;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.service.QtChartDownloadService;
 import com.steccn.qms.service.QtChartGenerateService;
+import com.steccn.qms.service.QtLossDataService;
 import com.steccn.qms.util.DownloadModelUtil;
 import com.steccn.qms.util.DownloadUtil;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +66,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
     private final QtChartGenerateService qtChartGenerateService;
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+
+    private final QtLossDataService qtLossDataService;
 
     /**
      * 下载基片详情
@@ -252,9 +258,10 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
      */
     @Override
     public Page<QtChartSubDetailDTO> lossDetails(QtChartYieldDownloadDTO dto) {
-        QtChartParamDTO paramDTO = new QtChartParamDTO();
-        BeanUtils.copyProperties(dto,paramDTO);
-        List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(paramDTO);
+        List<QtLossData> lossData = qtLossDataService.list(new LambdaQueryWrapper<QtLossData>()
+                .between(QtLossData::getWorkOrderTime, dto.getDateStart(), dto.getDateEnd()));
+        List<QtChartSubDetailDTO> qtChartSubDetailDTOS = Lists.newArrayList();
+        qtChartSubDetailDTOS = BeanUtil.copyToList(lossData,QtChartSubDetailDTO.class);
         //过滤图表数据
         if(CollUtil.isNotEmpty(qtChartSubDetailDTOS)&&CollUtil.isNotEmpty(dto.getFilters())){
             //不对比为null

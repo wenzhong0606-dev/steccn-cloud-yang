@@ -1,5 +1,6 @@
 package com.steccn.qms.controller;
 
+import com.google.common.collect.Lists;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 基片成品率图表相关controller
@@ -83,4 +85,17 @@ public class QtChartSubController {
         qtChartGenerateService.calculatePullAmountTask(LocalDateTime.now(), LocalDate.now());
     }
 
+    /**
+     * 基片损耗分布
+     * @return
+     */
+    @PostMapping("/sub/data")
+    public R calculateLossData(@RequestBody QtChartParamDTO dto){
+        List<Integer> productIds = Lists.newArrayList(179,467,180,468,214,461,174,175);
+        for(Integer tmp:productIds){
+            dto.setProductLineId(tmp);
+            qtChartGenerateService.generateSubstrateLossData(dto);
+        }
+        return R.success();
+    }
 }
