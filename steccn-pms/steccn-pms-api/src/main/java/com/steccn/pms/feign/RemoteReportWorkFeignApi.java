@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
 import com.steccn.pms.dto.SubstrateDataDTO;
@@ -110,5 +111,9 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("获取钢化工位的报工产量")
     @PostMapping("/feign/pms/report/work/ghgw/quantity")
     R<Map<Integer, BigDecimal>> getGhQuantity(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tripleDTO);
+
+    @ApiOperation("按班次获取入库量(吨)")
+    @PostMapping("/feign/pms/report/work/instorage/dateClassLine")
+    R<Map<String, BigDecimal>> dateClassLineInStorageUnit(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tripleDTO);
 
 }
