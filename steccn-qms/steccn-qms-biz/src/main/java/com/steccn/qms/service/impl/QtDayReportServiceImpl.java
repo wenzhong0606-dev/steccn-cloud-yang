@@ -2058,6 +2058,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 } else {
                     lineDataLossTmp1.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(baiLossAmountAll, pullAmountAll, 4)));
                     lineDataPullTmp1.add("");
+                    lineInStorageTmp1.add("");
                 }
                 //查看该产线是否有数据(小计上报损耗率)
                 if (!haveData) {
