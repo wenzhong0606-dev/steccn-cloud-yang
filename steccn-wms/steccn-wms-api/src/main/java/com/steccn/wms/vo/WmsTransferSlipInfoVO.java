@@ -64,4 +64,6 @@ public class WmsTransferSlipInfoVO {
 
     private Integer count;
 
+    private String specifications;
+
 }

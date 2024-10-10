@@ -509,11 +509,19 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //5.处理详情数据
         if (CollUtil.isNotEmpty(list)) {
             Set<Long> dictSet = Sets.newHashSet();
+            List<Long> materialIds = Lists.newArrayList();
             List<WmsTransferSlipInfoVO> infoVOList = BeanUtil.copyToList(list, WmsTransferSlipInfoVO.class);
-            infoVOList.forEach(info -> dictSet.add(info.getUnit()));
+            infoVOList.forEach(info ->{
+                dictSet.add(info.getUnit());
+                materialIds.add(info.getMaterialId());
+            });
             wmsTransferSlipVO.setList(infoVOList);
             Map<Long, String> dict = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            infoVOList.forEach(info -> info.setUnitName(dict.get(info.getUnit())));
+            Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            infoVOList.forEach(info -> {
+                info.setUnitName(dict.get(info.getUnit()));
+                info.setSpecifications(spareMap.get(info.getMaterialId()).getSpecifications());
+            });
         }
         return wmsTransferSlipVO;
     }
