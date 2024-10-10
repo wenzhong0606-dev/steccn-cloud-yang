@@ -1990,6 +1990,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         lineDataPullTmp.add(pullAmount.toString());
                         lineDataPullTmp.add("");
                         lineDataPullTmp.add("");
+                        if(Objects.isNull(inStorageAmount)){
+                            inStorageAmount = BigDecimal.ZERO;
+                        }
                         lineDataInStorageTmp.add(inStorageAmount.toString());
                         lineDataInStorageTmp.add("");
                         lineDataInStorageTmp.add("");
@@ -2336,9 +2339,21 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                     //如果是班次报表则需要空一行
                     if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=defectAmountAll.size()-1){
-                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList("",decimal.toString(),percent.toString()+"%")));
+                        //算上报损耗率
+                        //上报损耗率：(上述重量值 / 对应的损耗总计) * (对应的拉引量总计 - 对应的入库量总计) / 对应的拉引量总计 * 100%
+                        BigDecimal step1 = BigDecimalUtil.divide(decimal,new BigDecimal(lossAllLine.getModule().get(i).getValue().get(1)),4);
+                        BigDecimal step2 = BigDecimalUtil.subtract(laAmountAll.get(i),inStorageAll.get(i));
+                        BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
+                        String inStorageNum = new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, laAmountAll.get(i), 4));
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList("",decimal.toString(),percent.toString()+"%",inStorageNum)));
                     }else {
-                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%")));
+                        //算上报损耗率
+                        //上报损耗率：(上述重量值 / 对应的损耗总计) * (对应的拉引量总计 - 对应的入库量总计) / 对应的拉引量总计 * 100%
+                        BigDecimal step1 = BigDecimalUtil.divide(decimal,new BigDecimal(lossAllLine.getModule().get(i).getValue().get(0)),4);
+                        BigDecimal step2 = BigDecimalUtil.subtract(laAmountAll.get(i),inStorageAll.get(i));
+                        BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
+                        String inStorageNum = new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, laAmountAll.get(i), 4));
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%",inStorageNum)));
                     }
                 }
                 defectLine.setModule(defectModule);
