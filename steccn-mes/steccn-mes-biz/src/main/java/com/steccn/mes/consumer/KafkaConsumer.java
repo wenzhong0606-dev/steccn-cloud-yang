@@ -286,9 +286,42 @@ public class KafkaConsumer {
                 });
             }
 
+            //混合机开则电机开
+            if(idSet.contains(1554749971972489216L) || idSet.contains(1554750034203377664L)){
+                idSet.add(1731569543175426048L);
+            }else if(idSet.contains(1552858842006159360L) || idSet.contains(1554749911603871744L)){
+                idSet.add(1554750094693629952L);
+            }
             mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
                     .in(MesEquipment::getId,idSet)
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+
+            //1#混合机油泵电机只有一台开
+            if(idSet.contains(1554749971972489216L)){
+                Long eqpId = 1554750034203377664L;
+                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId)
+                        .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+            } else if(idSet.contains(1554750034203377664L)){
+                Long eqpId = 1554749971972489216L;
+                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId)
+                        .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+            }
+
+            //2#混合机油泵电机只有一台开
+            if(idSet.contains(1552858842006159360L)){
+                Long eqpId = 1554749911603871744L;
+                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId)
+                        .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+            } else if(idSet.contains(1554749911603871744L)){
+                Long eqpId = 1552858842006159360L;
+                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId)
+                        .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+            }
+
             if(eqp.getParentCodes().contains("1501738403312599040")){
                 //定制化螺旋给料机
                 if(eqp.getEquipmentCode().contains("TC2_YL1_PL_19")){
