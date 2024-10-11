@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.dto.ProcessReportWorkHourQmsDTO;
 import com.steccn.pms.dto.SubstrateDataDTO;
@@ -111,5 +112,11 @@ public class PmsReportWorkFeignController {
     @PostMapping("/ghgw/quantity")
     R<Map<Integer, BigDecimal>> getGhQuantity(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tripleDTO) {
         return R.success(pmsReportWorkService.getGhQuantity(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
+
+    @ApiOperation("按班次获取入库量(吨)")
+    @PostMapping("/instorage/dateClassLine")
+    R<Map<String, BigDecimal>> dateClassLineInStorageUnit(@RequestBody TripleDTO<LocalDate, LocalDate, List<Integer>> tripleDTO) {
+        return R.success(pmsReportWorkService.dateClassLineInStorageUnit(tripleDTO.getField3(), tripleDTO.getField1(), tripleDTO.getField2(), PmManagerConstant.MEASURE_UNIT_TON));
     }
 }

@@ -286,9 +286,72 @@ public class KafkaConsumer {
                 });
             }
 
+            //混合机开则电机开
+            if(idSet.contains(1554749971972489216L) || idSet.contains(1554750034203377664L)){
+                if(equipment.getState().equals(OaConstant.NO.toString())){
+                    idSet.add(1731569543175426048L);
+                }
+
+            }else if(idSet.contains(1552858842006159360L) || idSet.contains(1554749911603871744L)){
+                if(equipment.getState().equals(OaConstant.NO.toString())){
+                    idSet.add(1554750094693629952L);
+                }
+            }
             mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
                     .in(MesEquipment::getId,idSet)
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+
+            //1#混合机油泵电机只有一台开
+            if(idSet.contains(1554749971972489216L)){
+                Long eqpId = 1554750034203377664L;
+                MesEquipment equipmentTmp = new MesEquipment();
+                if(equipment.getState().equals(OaConstant.NO.toString())
+                        ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                    equipmentTmp.setState(OaConstant.NUM_3.toString());
+                }else {
+                    equipmentTmp.setState(OaConstant.NO.toString());
+                }
+                mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId));
+
+            } else if(idSet.contains(1554750034203377664L)){
+                Long eqpId = 1554749971972489216L;
+                MesEquipment equipmentTmp = new MesEquipment();
+                if(equipment.getState().equals(OaConstant.NO.toString())
+                        ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                    equipmentTmp.setState(OaConstant.NUM_3.toString());
+                }else {
+                    equipmentTmp.setState(OaConstant.NO.toString());
+                }
+                mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId));
+            }
+
+            //2#混合机油泵电机只有一台开
+            if(idSet.contains(1552858842006159360L)){
+                Long eqpId = 1554749911603871744L;
+                MesEquipment equipmentTmp = new MesEquipment();
+                if(equipment.getState().equals(OaConstant.NO.toString())
+                        ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                    equipmentTmp.setState(OaConstant.NUM_3.toString());
+                }else {
+                    equipmentTmp.setState(OaConstant.NO.toString());
+                }
+                mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId));
+            } else if(idSet.contains(1554749911603871744L)){
+                Long eqpId = 1552858842006159360L;
+                MesEquipment equipmentTmp = new MesEquipment();
+                if(equipment.getState().equals(OaConstant.NO.toString())
+                        ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                    equipmentTmp.setState(OaConstant.NUM_3.toString());
+                }else {
+                    equipmentTmp.setState(OaConstant.NO.toString());
+                }
+                mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getId,eqpId));
+            }
+
             if(eqp.getParentCodes().contains("1501738403312599040")){
                 //定制化螺旋给料机
                 if(eqp.getEquipmentCode().contains("TC2_YL1_PL_19")){
