@@ -195,7 +195,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         localDateSet.add(selectDate);
         List<Integer> officeIdList = new ArrayList<>();
         officeIdList.add(79);
-        officeIdList.add(80);
+        officeIdList.add(193);
 
         BigDecimal thick;
         Long thickId;
