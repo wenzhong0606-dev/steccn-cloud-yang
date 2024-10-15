@@ -126,7 +126,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //根据缺陷code获取缺陷
         Set<String> defectCodeSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCode).collect(Collectors.toSet());
         //根据缺陷code获取缺陷信息
-        Map<String, QtDefectiveItem> defectCodeMap = qtDefectiveItemService.listByCodeSort(defectCodeSet);
+        Map<String, QtDefectiveItem> defectCodeMap = qtDefectiveItemService.listByCode(defectCodeSet);
         for (QtDefectiveItem ele : defectCodeMap.values()) {
             MapUtil.compute(categoryDefectMap, ele.getCategoryId(), ele);
         }
