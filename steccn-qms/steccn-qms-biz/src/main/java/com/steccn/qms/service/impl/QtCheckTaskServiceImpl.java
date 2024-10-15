@@ -2523,7 +2523,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //完成时间范围
                 .ge(Objects.nonNull(dto.getStartTime()),QtCheckTask::getDefectStartTime, dto.getStartTime())
-                .le(Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getEndTime())
+                .lt(Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getEndTime())
                 //班次
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //检验类型
