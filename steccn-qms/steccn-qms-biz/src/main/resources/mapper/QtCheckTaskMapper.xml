@@ -743,7 +743,7 @@
             #{item}
         </foreach>
         AND task.defect_start_time &gt;= #{start}
-        AND task.defect_end_time &lt; #{end}
+        AND task.defect_end_time &lt;= #{end}
         GROUP BY
         task.product_line ->> '$.id',
         EXTRACT(YEAR_MONTH from (task.class_time)),

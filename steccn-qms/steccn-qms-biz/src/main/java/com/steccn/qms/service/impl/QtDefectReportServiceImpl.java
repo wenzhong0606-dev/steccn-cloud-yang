@@ -1213,10 +1213,12 @@ public class QtDefectReportServiceImpl implements QtDefectReportService {
             String lineName = lineIdNameMap.get(line);
             for (int i = 1; i < timeList.size(); i++) {
                 LocalDateTime startTmp = timeList.get(i - 1);
+                LocalDateTime endTmp = timeList.get(i);
                 LocalDate classDate = LocalDateUtil.getClassDate(startTmp, Boolean.FALSE);
                 Integer classId = LocalDateUtil.getClassId(startTmp, Boolean.FALSE);
                 //获取满足条件的批次
-                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.isRange(startTmp, ele.getStartTime(), Objects.nonNull(ele.getEndTime()) ? ele.getEndTime() : LocalDateTime.now().plusDays(1), Boolean.TRUE, Boolean.FALSE) && ele.getProductLineId().equals(line)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
+                //考虑时间交叉
+                Set<String> orderNoSet = pmsList.stream().filter(ele -> LocalDateUtil.ldtOverlapping(startTmp, endTmp, ele.getStartTime(), Objects.nonNull(ele.getEndTime()) ? ele.getEndTime() : LocalDateTime.now().plusDays(1)) && ele.getProductLineId().equals(line)).map(PmsDefectDayOrderBasicDTO::getProduceOrderCode).collect(Collectors.toSet());
                 List<String> orderNoList = new ArrayList<>(orderNoSet);
                 Collections.sort(orderNoList);
                 String classDateStr = XAxisUtil.convert(QtManagerConstant.QtGranularityEnum.DAY, startTmp);
