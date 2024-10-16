@@ -343,6 +343,23 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
+    public Map<String, QtDefectiveItem> listByCode(Set<String> defectCodeSet) {
+        Map<String, QtDefectiveItem> resMap = Maps.newLinkedHashMap();
+        if (CollUtil.isNotEmpty(defectCodeSet)) {
+            List<QtDefectiveItem> qtDefectiveItems = list(new LambdaQueryWrapper<QtDefectiveItem>()
+                    .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
+                    .in(QtDefectiveItem::getCode, defectCodeSet)
+                    .orderByAsc(QtDefectiveItem::getCreateTime));
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                qtDefectiveItems.forEach(ele -> {
+                    resMap.put(ele.getCode(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<String, TupleDTO<Integer, Integer>> firstSnapshotData(Set<String> defectiveCodeSet) {
         Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(defectiveCodeSet)) {

@@ -654,4 +654,23 @@ public class LocalDateUtil {
         result.setField2(end.minusDays(between + 1));
         return result;
     }
+
+    /**
+     * 判断两个时间段是否重叠
+     *
+     * @param start1 时间1开始
+     * @param end1   时间1结束
+     * @param start2 时间2开始
+     * @param end2   时间2结束
+     * @return
+     */
+    public static boolean ldtOverlapping(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
+        // 如果开始时间1在结束时间2之后，或开始时间2在结束时间1之后，则时间不重叠
+        if (start1.isAfter(end2) || start2.isAfter(end1)) {
+            return false;
+        }
+        // 否则时间重叠
+        return true;
+    }
+
 }
