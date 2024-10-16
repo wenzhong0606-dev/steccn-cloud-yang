@@ -616,7 +616,7 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum PmRequisitionWorkFlow {
-        PRODUCT(0, "生产领料"), DEPARTMENT(1, "部门领料"), OTHER(2, "其他领料"), FIX(3, "维修领料"), UPKEEP(4, "保养领料");
+        PRODUCT(0, "生产领料"), DEPARTMENT(1, "部门领料"), OTHER(2, "其他领料"), FIX(3, "维修领料"), UPKEEP(4, "保养领料"),LABOR(5, "劳保用品领用"),SLABOR(5, "特殊劳保领用");
 
         private Integer code;
         private String name;
