@@ -41,6 +41,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsMaterialRequisitionMapper;
 import com.steccn.pms.util.PmsCodeUtil;
@@ -84,6 +85,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     private final OaInfoService oaInfoService;
     private final PmsMaterialRequisitionDemanderService pmsMaterialRequisitionDemanderService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final PmsLaborProtectionRecordMapper pmsLaborProtectionRecordMapper;
 
     @Override
     public Page<MaterialRequisitionVO> pageList(MaterialRequisitionPageDTO dto) {
@@ -241,6 +243,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         if (code.equals(PmManagerConstant.MRBS_CREATED) || code.equals(PmManagerConstant.MRBS_APPROVAL_FAIL)) {
             boolean b = removeById(id);
             if (b) {
+                //删除对应的领用记录
+                pmsLaborProtectionRecordMapper.delete(new LambdaQueryWrapper<PmsLaborProtectionRecord>()
+                        .eq(PmsLaborProtectionRecord::getReceiptId,id));
                 pmsMaterialRequisitionInfoService.remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>().eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, id));
             }
             return b;
