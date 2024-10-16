@@ -443,6 +443,53 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     @Override
+    public Boolean checkDeepOnline(QtAddCheckTaskDTO dto) {
+        Assert.notNull(dto.getProductWorkshop().getId(),"车间不能为空");
+        Assert.notNull(dto.getProductLine().getId(),"产线不能为空");
+        Assert.notNull(dto.getDefectStartTime(),"缺陷开始时间不能为空");
+        Assert.notNull(dto.getDefectStartTime(),"缺陷结束时间不能为空");
+        //深加工二车间id为79 三车间为80
+        if(!dto.getProductWorkshop().getId().equals(79)||dto.getProductWorkshop().getId().equals(80)){
+            throw new BusinessException("必须为深加工二车间、深加工三车间才可校验");
+        }
+//        点击“保存”时，检查选中的产线在B的前一个班次时段内是否存在已检验的在线检任务，若不是，弹框提示“前一班次尚未检验，是否为前一班次新建任务？”
+//        点击“是”，弹框消失，“缺陷记录时段”字段的值更新为前一班次的起止时间
+//        点击“否”，弹框消失，“缺陷记录时段”字段的值不变，保存成功
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(dto.getDefectStartTime());
+        //前一段缺陷记录时段
+        LocalDateTime preClassDateTime1 = LocalDateTime.now();
+        LocalDateTime preClassDateTime2 = LocalDateTime.now();
+        if(qtTaskClassCalculate.getClassType().equals(OaConstant.NO)){
+            //早班 0 晚班 1
+            preClassDateTime1 = qtTaskClassCalculate.getClassDate().toLocalDate().minusDays(1).atTime(20,0,0);
+            preClassDateTime2 = qtTaskClassCalculate.getClassDate().toLocalDate().atTime(8,0,0);
+        }else {
+            preClassDateTime1 = qtTaskClassCalculate.getClassDate().toLocalDate().atTime(8,0,0);
+            preClassDateTime2 = qtTaskClassCalculate.getClassDate().toLocalDate().atTime(20,0,0);
+        }
+        QtCheckTask taskOne = getOne(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getProductLineId, dto.getProductLine().getId())
+                .ge(QtCheckTask::getDefectStartTime,preClassDateTime1)
+                .lt(QtCheckTask::getDefectStartTime,preClassDateTime2)
+                .last("LIMIT 1"));
+        if(Objects.isNull(taskOne)){
+            taskOne = getOne(new LambdaQueryWrapper<QtCheckTask>()
+                    .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                    .eq(QtCheckTask::getProductLineId, dto.getProductLine().getId())
+                    .ge(QtCheckTask::getDefectEndTime,preClassDateTime1)
+                    .lt(QtCheckTask::getDefectEndTime,preClassDateTime2)
+                    .last("LIMIT 1"));
+        }
+        if(Objects.isNull(taskOne)){
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public Long checkFinishedOnline(QtAddCheckTaskDTO dto) {
         Assert.notNull(dto.getProductLine().getId(),"产线不能为空");
         Assert.notNull(dto.getDefectStartTime(),"缺陷开始时间不能为空");

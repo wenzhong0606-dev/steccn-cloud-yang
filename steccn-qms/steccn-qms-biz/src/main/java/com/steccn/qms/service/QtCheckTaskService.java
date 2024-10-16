@@ -35,6 +35,15 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     QtCheckOnlineTaskVO checkOnline(QtAddCheckTaskDTO dto);
 
+
+    /**
+     * 校验深加工在线检
+     * @param defectStartTime
+     * @param defectEndTime
+     * @return
+     */
+    Boolean checkDeepOnline(QtAddCheckTaskDTO dto);
+
     /**
      * 校验完成的在线检
      * @param dto

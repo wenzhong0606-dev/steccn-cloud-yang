@@ -59,6 +59,13 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.checkOnline(dto));
     }
 
+    @PostMapping("/checkDeepOnline")
+    @ApiOperation(value = "检验深加工在线检缺陷记录时段")
+    @SysLog("检验深加工在线检缺陷记录时段")
+    public R<Boolean> checkDeepOnline(@RequestBody QtAddCheckTaskDTO dto) {
+        return R.success(qtCheckTaskService.checkDeepOnline(dto));
+    }
+
     @PostMapping("/checkFinishedOnline")
     @ApiOperation(value = "检验缺陷记录时段内在线检的完成情况")
     @SysLog("检验缺陷记录时段内在线检的完成情况")
