@@ -196,7 +196,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
             if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
-                affirm(model.getId(),dto.getCreateName());
+                affirm(model.getId(),dto.getCreateName(),null);
             }
         } finally {
             lock.unlock();
@@ -246,7 +246,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
             if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
-                affirm(model.getId(),dto.getCreateName());
+                affirm(model.getId(),dto.getCreateName(),dto.getAffirmedTime());
             }
         } finally {
             lock.unlock();
@@ -254,7 +254,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return id;
     }
 
-    public Boolean affirm(Long id,String affirmName) {
+    public Boolean affirm(Long id,String affirmName,LocalDateTime affirmTime) {
         //1.查询出库单
         WmsDeliveryReceipt receipt = getById(id);
         //2.判断单状态
@@ -277,7 +277,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         }
         //4.修改确认单状态
         receipt.setAffirmName(affirmName);
-        receipt.setAffirmTime(LocalDateTime.now());
+        if(Objects.isNull(affirmTime)){
+            affirmTime = LocalDateTime.now();
+        }
+        receipt.setAffirmTime(affirmTime);
         receipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
         return updateById(receipt);
     }
@@ -731,7 +734,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
             if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
-                affirm(model.getId(),dto.getCreateName());
+                affirm(model.getId(),dto.getCreateName(),null);
             }
             logistics(model,customerCodes);
         } finally {

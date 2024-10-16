@@ -8,6 +8,7 @@ import com.steccn.pms.service.PmRawMaterialCountService;
 import com.steccn.pms.vo.PmRawMaterialVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.jni.Local;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,5 +35,16 @@ public class PmsRawMaterialController {
     @ApiOperation("根据日期检索合计值")
     public R<Boolean> listByDate(@RequestBody @Valid PmsRawMaterialCountDTO dto) {
         return R.success(pmRawMaterialCountService.generateDeliveryAndSave(dto));
+    }
+
+    @PostMapping("/generate")
+    @ApiOperation("根据日期检索合计值")
+    public R<Boolean> generate(@RequestBody @Valid TupleDTO<LocalDate,LocalDate> dto) {
+        LocalDate startDate = dto.getField1();
+        while (startDate.isBefore(dto.getField2())||startDate.isEqual(dto.getField2())){
+            pmRawMaterialCountService.autoDelivery(startDate);
+            startDate = startDate.plusDays(1);
+        }
+        return R.success(true);
     }
 }

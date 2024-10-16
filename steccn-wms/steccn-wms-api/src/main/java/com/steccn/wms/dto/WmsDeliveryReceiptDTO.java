@@ -73,4 +73,6 @@ public class WmsDeliveryReceiptDTO {
      */
     private String logisticsNumber;
 
+    private LocalDateTime affirmedTime;
+
 }

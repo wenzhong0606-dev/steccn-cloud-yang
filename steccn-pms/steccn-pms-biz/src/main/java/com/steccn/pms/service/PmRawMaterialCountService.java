@@ -28,4 +28,11 @@ public interface PmRawMaterialCountService extends IService<PmRawMaterialCount> 
      * @return
      */
     Boolean generateDeliveryAndSave(PmsRawMaterialCountDTO pmsRawMaterialCountDTO);
+
+    /**
+     *
+     * @param time
+     * @return
+     */
+    Boolean autoDelivery(LocalDate time);
 }

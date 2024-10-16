@@ -1,5 +1,6 @@
 package com.steccn.dp.controller.feign;
 
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.domain.ExitStationCount;
@@ -12,6 +13,7 @@ import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -90,5 +92,11 @@ public class DpWeightFeignController {
     @ApiOperation(value = "产量")
     public R<Map<Long,BigDecimal>> output(@RequestBody Set<Long> orderIds){
         return R.success(exitStationCountService.output(orderIds));
+    }
+
+    @PostMapping("/weightSum")
+    @ApiOperation(value = "获取原料配料聚合数据")
+    public R<SteccnTableDataDTO> weightSum(@RequestBody TupleDTO<LocalDate,LocalDate> dto){
+        return R.success(adsOpcUaAll3Service.weightSum(dto.getField1()));
     }
 }

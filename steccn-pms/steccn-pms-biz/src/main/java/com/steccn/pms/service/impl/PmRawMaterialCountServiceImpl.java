@@ -11,9 +11,11 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.dp.DpConstant;
+import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SysConfigurationDTO;
@@ -50,6 +52,7 @@ public class PmRawMaterialCountServiceImpl extends ServiceImpl<PmRawMaterialCoun
     private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final RemoteDpFeignApi remoteDpFeignApi;
 
     @Override
     public List<PmRawMaterialVO> getListByDate(TupleDTO<LocalDate,LocalDate> dto) {
@@ -137,6 +140,7 @@ public class PmRawMaterialCountServiceImpl extends ServiceImpl<PmRawMaterialCoun
             }
         }
         deliveryDTO.setList(deliveryInfoDTOs);
+        deliveryDTO.setAffirmedTime(dto.getDate().atTime(8,0,0));
         Long deliveryId = FeignOptional.of(() -> remoteWmsInventoryFeignApi.createDeliveryId(deliveryDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         //不为空则需要冲销
         if(Objects.nonNull(one)&&one.getDeliveryId()!=null){
@@ -162,6 +166,58 @@ public class PmRawMaterialCountServiceImpl extends ServiceImpl<PmRawMaterialCoun
             models.add(model);
         });
         saveBatch(models);
+        return true;
+    }
+
+    @Override
+    public Boolean autoDelivery(LocalDate time) {
+        SteccnTableDataDTO<Map<String,String>> steccnTableDataDTO = FeignOptional.of(() -> remoteDpFeignApi.weightSum(new TupleDTO<>(time,null)), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        PmsRawMaterialCountDTO dto = new PmsRawMaterialCountDTO();
+        Map<String, String> type = steccnTableDataDTO.getTableList().stream().filter(map -> "2".equals(map.get("type"))).findFirst().orElse(null);
+        List<TupleDTO<String, BigDecimal>> data = Lists.newArrayList();
+        TupleDTO<String, BigDecimal> tmp1 = new TupleDTO<>();
+        tmp1.setField1("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
+        tmp1.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh1_FLOAT")));
+        data.add(tmp1);
+        TupleDTO<String, BigDecimal> tmp2 = new TupleDTO<>();
+        tmp2.setField1("Raw_YL.CS.ZHM.fact_weigh2_FLOAT");
+        tmp2.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh1_FLOAT")));
+        data.add(tmp2);
+        TupleDTO<String, BigDecimal> tmp3 = new TupleDTO<>();
+        tmp3.setField1("Raw_YL.CS.ZHM.fact_weigh3_FLOAT");
+        tmp3.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh3_FLOAT")));
+        data.add(tmp3);
+        TupleDTO<String, BigDecimal> tmp4 = new TupleDTO<>();
+        tmp4.setField1("Raw_YL.CS.ZHM.fact_weigh4_FLOAT");
+        tmp4.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh4_FLOAT")));
+        data.add(tmp4);
+        TupleDTO<String, BigDecimal> tmp5 = new TupleDTO<>();
+        tmp5.setField1("Raw_YL.CS.ZHM.fact_weigh5_FLOAT");
+        tmp5.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh5_FLOAT")));
+        data.add(tmp5);
+        TupleDTO<String, BigDecimal> tmp6 = new TupleDTO<>();
+        tmp6.setField1("Raw_YL.CS.ZHM.fact_weigh6_FLOAT");
+        tmp6.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh6_FLOAT")));
+        data.add(tmp6);
+        TupleDTO<String, BigDecimal> tmp7 = new TupleDTO<>();
+        tmp7.setField1("Raw_YL.CS.ZHM.fact_weigh7_FLOAT");
+        tmp7.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh7_FLOAT")));
+        data.add(tmp7);
+        TupleDTO<String, BigDecimal> tmp8 = new TupleDTO<>();
+        tmp8.setField1("Raw_YL.CS.ZHM.fact_weigh8_FLOAT");
+        tmp8.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh8_FLOAT")));
+        data.add(tmp8);
+        TupleDTO<String, BigDecimal> tmp9 = new TupleDTO<>();
+        tmp9.setField1("Raw_YL.CS.ZHM.fact_weigh9_FLOAT");
+        tmp9.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh9_FLOAT")));
+        data.add(tmp9);
+        TupleDTO<String, BigDecimal> tmp10 = new TupleDTO<>();
+        tmp10.setField1("Raw_YL.CS.ZHM.fact_weigh10_FLOAT");
+        tmp10.setField2(new BigDecimal(type.get("Raw_YL.CS.ZHM.fact_weigh9_FLOAT")));
+        data.add(tmp10);
+        dto.setDate(time);
+        dto.setData(data);
+        generateDeliveryAndSave(dto);
         return true;
     }
 }

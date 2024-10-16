@@ -1,6 +1,7 @@
 package com.steccn.dp.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
@@ -14,6 +15,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -103,4 +105,8 @@ public interface RemoteDpFeignApi {
     @PostMapping("/feign/dp/output")
     @ApiOperation(value = "产量")
     R<Map<Long,BigDecimal>> output(@RequestBody Set<Long> orderIds);
+
+    @PostMapping("/feign/dp/weightSum")
+    @ApiOperation(value = "获取原料配料聚合数据")
+    R<SteccnTableDataDTO> weightSum(@RequestBody TupleDTO<LocalDate,LocalDate> dto);
 }
