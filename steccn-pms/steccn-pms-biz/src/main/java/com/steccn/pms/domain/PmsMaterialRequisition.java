@@ -52,6 +52,8 @@ public class PmsMaterialRequisition implements Serializable {
      */
     private String associatedNo;
 
+    private Long fileId;
+
     /**
      * 备注
      */

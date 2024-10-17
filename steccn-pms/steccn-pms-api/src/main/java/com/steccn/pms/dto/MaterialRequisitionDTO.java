@@ -9,6 +9,7 @@ import org.hibernate.validator.constraints.Length;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.File;
 import java.util.List;
 
 
@@ -41,6 +42,10 @@ public class MaterialRequisitionDTO {
     @ApiModelProperty("备注")
     @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注长度不超过100个中文")
     private String note;
+
+    private String type;
+
+    private Long fileId;
 
     /**
      * 关联单据

@@ -23,6 +23,8 @@ import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.vo.DpWeightVO;
+import com.steccn.minio.fegin.RemoteFileFeignApi;
+import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
@@ -86,6 +88,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     private final PmsMaterialRequisitionDemanderService pmsMaterialRequisitionDemanderService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final PmsLaborProtectionRecordMapper pmsLaborProtectionRecordMapper;
+    private final RemoteFileFeignApi remoteFileFeignApi;
 
     @Override
     public Page<MaterialRequisitionVO> pageList(MaterialRequisitionPageDTO dto) {
@@ -339,6 +342,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //2.校验领料单是否存在
         Assert.notNull(pmsMaterialRequisition, "该领料单不存在");
         //3.根据审批状态修改审批单
+
+        //获取文件url 用于oa
+        List<Long> fileIds = Lists.newArrayList();
+        fileIds.add(pmsMaterialRequisition.getFileId());
+        Map<Long, FileInfoVO> fileMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
         //如果传0则是审批中
         if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)) {
             //调用oa接口发起流程
@@ -375,6 +383,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_ZSL, quantity.toString()));
                 //领料单编码
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LLDBM, pmsMaterialRequisition.getCode()));
+                //附件
+                OaWorkFlowNameFileDTO oaWorkFlowNameFileDTO = new OaWorkFlowNameFileDTO(fileMap.get(pmsMaterialRequisition.getFileId()).getFileUrl(),fileMap.get(pmsMaterialRequisition.getFileId()).getFileName());
+
+                List<OaWorkFlowNameFileDTO> fileList = Lists.newArrayList();
+                fileList.add(oaWorkFlowNameFileDTO);
+
+                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ, fileList.toString()));
                 //申请部门
                 Set<Integer> officeIdSet = Sets.newHashSet();
                 officeIdSet.add(pmsMaterialRequisition.getDepartmentId());

@@ -126,9 +126,10 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             SysOfficeVO office = officeMap.get(tmp.getKey());
             materialRequisitionDTO.setDepartmentId(office.getId());
             //部门领料
-            materialRequisitionDTO.setTypeId(1588003364973592576L);
+            materialRequisitionDTO.setTypeId(dto.getTypeId());
             //备品备件库
             materialRequisitionDTO.setWarehouseId(440L);
+            materialRequisitionDTO.setId(dto.getFileId());
             //详情
             List<MaterialRequisitionInfoDTO> detailList = Lists.newArrayList();
             //劳保领用记录

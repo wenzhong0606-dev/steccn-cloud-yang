@@ -465,6 +465,12 @@ public interface PmManagerConstant {
      */
     String WORKFLOW_LLDBM = "lldbm";
 
+
+    /**
+     * 流程字段-附件
+     */
+    String WORKFLOW_FJ = "fj";
+
     /**
      * 详情表名
      */

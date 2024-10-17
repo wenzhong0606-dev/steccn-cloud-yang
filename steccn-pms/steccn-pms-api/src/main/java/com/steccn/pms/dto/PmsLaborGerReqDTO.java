@@ -3,6 +3,7 @@ package com.steccn.pms.dto;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -16,5 +17,7 @@ import java.util.Map;
 @Data
 public class PmsLaborGerReqDTO implements Serializable {
     private List<Map<String,String>>  details;
+    private Long typeId;
+    private Long fileId;
 //    private List<PmsLaborGerReqDetailDTO> details;
 }
