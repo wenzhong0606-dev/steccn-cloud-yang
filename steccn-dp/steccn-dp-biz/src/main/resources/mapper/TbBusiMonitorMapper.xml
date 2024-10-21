@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.dp.mapper.TbBusiMonitorMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.dp.domain.TbBusiMonitor">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="category" column="category" jdbcType="INTEGER"/>
+            <result property="alarmCode" column="alarm_code" jdbcType="VARCHAR"/>
+            <result property="state" column="state" jdbcType="INTEGER"/>
+            <result property="upValue" column="up_value" jdbcType="DECIMAL"/>
+            <result property="lowValue" column="low_value" jdbcType="DECIMAL"/>
+            <result property="monitorRange" column="monitor_range" jdbcType="OTHER"/>
+            <result property="notifyMan" column="notify_man" jdbcType="OTHER"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,category,alarm_code,
+        state,up_value,low_value,
+        monitor_range,notify_man,create_by,
+        create_name,create_time,update_by,
+        update_name,update_time,del_flag
+    </sql>
+</mapper>
