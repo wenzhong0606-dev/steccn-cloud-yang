@@ -11,8 +11,8 @@
             <result property="state" column="state" jdbcType="INTEGER"/>
             <result property="upValue" column="up_value" jdbcType="DECIMAL"/>
             <result property="lowValue" column="low_value" jdbcType="DECIMAL"/>
-            <result property="monitorRange" column="monitor_range" jdbcType="OTHER"/>
-            <result property="notifyMan" column="notify_man" jdbcType="OTHER"/>
+            <result property="monitorRange" column="monitor_range" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
+            <result property="notifyMan" column="notify_man" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="createBy" column="create_by" jdbcType="BIGINT"/>
             <result property="createName" column="create_name" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
