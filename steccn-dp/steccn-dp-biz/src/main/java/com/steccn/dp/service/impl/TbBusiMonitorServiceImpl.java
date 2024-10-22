@@ -5,13 +5,19 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.TbBusiMonitor;
 import com.steccn.dp.dto.DpBusiMonitorDTO;
-import com.steccn.dp.service.TbBusiMonitorService;
 import com.steccn.dp.mapper.TbBusiMonitorMapper;
+import com.steccn.dp.service.TbBusiMonitorService;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,8 +31,12 @@ import java.util.stream.Collectors;
  * @createDate 2024-10-21 16:20:05
  */
 @Service
+@RequiredArgsConstructor
 public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, TbBusiMonitor>
         implements TbBusiMonitorService {
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final OaInfoService oaInfoService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -84,23 +94,50 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
         });
         List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> resList = Lists.newArrayList();
         List<TbBusiMonitor> dbList = list();
-        Map<Integer, List<TbBusiMonitor>> categoryMap = dbList.stream().collect(Collectors.groupingBy(TbBusiMonitor::getCategory));
+        //获取回显的用户名称和监控范围名称
+        Set<Integer> officeIdSet = dbList.stream().map(TbBusiMonitor::getMonitorRange).filter(ele -> CollUtil.isNotEmpty(ele)).flatMap(Collection::stream).collect(Collectors.toSet());
+        List<Long> manIdList = dbList.stream().map(TbBusiMonitor::getNotifyMan).filter(ele -> CollUtil.isNotEmpty(ele)).flatMap(Collection::stream).map(ele -> ele.longValue()).distinct().collect(Collectors.toList());
+        Map<Integer, String> officeIdNameMap = Maps.newHashMap();
+        Map<Long, String> manIdNameMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            officeIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+        if (CollUtil.isNotEmpty(manIdList)) {
+            manIdNameMap = FeignOptional.of(() -> oaInfoService.listByIdCh(manIdList), FeignConstant.OA_SERVICE_NAME).get();
+        }
+        //将dbList 转换为自己的dto
+        List<DpBusiMonitorDTO> dtoList = BeanUtil.copyToList(dbList, DpBusiMonitorDTO.class);
+        for (DpBusiMonitorDTO busiMonitorDTO : dtoList) {
+            if (CollUtil.isNotEmpty(busiMonitorDTO.getMonitorRange())) {
+                List<TupleDTO<Integer, String>> monitorRangeIdNameList = Lists.newArrayList();
+                for (Integer ele : busiMonitorDTO.getMonitorRange()) {
+                    monitorRangeIdNameList.add(new TupleDTO<>(ele, officeIdNameMap.get(ele)));
+                }
+                busiMonitorDTO.setMonitorRangeIdNameList(monitorRangeIdNameList);
+            }
+            List<TupleDTO<Integer, String>> notifyManIdNameList = Lists.newArrayList();
+            for (Integer ele : busiMonitorDTO.getNotifyMan()) {
+                notifyManIdNameList.add(new TupleDTO<>(ele, manIdNameMap.get(ele.longValue())));
+            }
+            busiMonitorDTO.setNotifyManIdNameList(notifyManIdNameList);
+        }
+
+        Map<Integer, List<DpBusiMonitorDTO>> categoryMap = dtoList.stream().collect(Collectors.groupingBy(DpBusiMonitorDTO::getCategory));
         for (DpConstant.BusiMonitorCategoryEnum categoryEnum : DpConstant.BusiMonitorCategoryEnum.values()) {
-            List<TbBusiMonitor> categoryList = categoryMap.get(categoryEnum.getCode());
+            List<DpBusiMonitorDTO> categoryList = categoryMap.get(categoryEnum.getCode());
             if (CollUtil.isNotEmpty(categoryList) && categoryEnumSet.contains(categoryEnum)) {
                 TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>> firstTupleDTO = new TupleDTO<>();
                 resList.add(firstTupleDTO);
                 firstTupleDTO.setField1(categoryEnum.getCode());
                 List<TupleDTO<String, List<DpBusiMonitorDTO>>> field2List = Lists.newArrayList();
                 firstTupleDTO.setField2(field2List);
-                Map<String, List<TbBusiMonitor>> alarmMap = categoryList.stream().collect(Collectors.groupingBy(TbBusiMonitor::getAlarmCode));
+                Map<String, List<DpBusiMonitorDTO>> alarmMap = categoryList.stream().collect(Collectors.groupingBy(DpBusiMonitorDTO::getAlarmCode));
                 for (DpConstant.BusiMonitorAlarmEnum alarmEnum : DpConstant.BusiMonitorAlarmEnum.getByCategory(categoryEnum)) {
-                    List<TbBusiMonitor> alarmList = alarmMap.get(alarmEnum.toString());
+                    List<DpBusiMonitorDTO> alarmList = alarmMap.get(alarmEnum.toString());
                     if (CollUtil.isNotEmpty(alarmList) && alarmEnumSet.contains(alarmEnum)) {
-                        List<DpBusiMonitorDTO> alarmCopyList = BeanUtil.copyToList(alarmList, DpBusiMonitorDTO.class);
                         TupleDTO<String, List<DpBusiMonitorDTO>> thirdTupleDTO = new TupleDTO<>();
                         thirdTupleDTO.setField1(alarmEnum.toString());
-                        thirdTupleDTO.setField2(alarmCopyList);
+                        thirdTupleDTO.setField2(alarmList);
                         field2List.add(thirdTupleDTO);
                     }
                 }

@@ -1,5 +1,6 @@
 package com.steccn.dp.dto;
 
+import com.steccn.common.dto.TupleDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
@@ -22,6 +23,11 @@ public class DpBusiMonitorDTO implements Serializable {
      * 主键
      */
     private Integer id;
+
+    /**
+     * 类别
+     */
+    private Integer category;
 
     /**
      * 告警code
@@ -50,10 +56,13 @@ public class DpBusiMonitorDTO implements Serializable {
      */
     private List<Integer> monitorRange;
 
+    private List<TupleDTO<Integer, String>> monitorRangeIdNameList;
+
     /**
      * 通知人员
      */
     @NotEmpty(message = "告警接收人员不能为空")
     private Set<Integer> notifyMan;
 
+    private List<TupleDTO<Integer, String>> notifyManIdNameList;
 }
