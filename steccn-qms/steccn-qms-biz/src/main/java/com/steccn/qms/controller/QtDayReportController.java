@@ -2,8 +2,11 @@ package com.steccn.qms.controller;
 
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtDayReportOnlineDTO;
 import com.steccn.qms.dto.QtLossReportDTO;
@@ -21,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -109,6 +113,13 @@ public class QtDayReportController {
     @ApiOperation("配料含水率-")
     public R<QtLineChartBarDTO> samplingWaterRateSi(@RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(qtDayReportService.samplingWaterRateSi(start, end));
+    }
+
+    @GetMapping("/sampling/water/rate/si/monitor")
+    @ApiOperation("配料含水率-")
+    public R<Void> samplingWaterRateSiMonitor(@RequestParam("start") LocalDateTime start, @RequestParam("end") LocalDateTime end) {
+        qtDayReportService.samplingWaterRateSiMonitor(start, end, "GS_WATER");
+        return R.success();
     }
 
     @GetMapping("/sampling/water/rate/batch")

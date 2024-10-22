@@ -115,9 +115,9 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
                 }
                 busiMonitorDTO.setMonitorRangeIdNameList(monitorRangeIdNameList);
             }
-            List<TupleDTO<Integer, String>> notifyManIdNameList = Lists.newArrayList();
-            for (Integer ele : busiMonitorDTO.getNotifyMan()) {
-                notifyManIdNameList.add(new TupleDTO<>(ele, manIdNameMap.get(ele.longValue())));
+            List<TupleDTO<Long, String>> notifyManIdNameList = Lists.newArrayList();
+            for (Long ele : busiMonitorDTO.getNotifyMan()) {
+                notifyManIdNameList.add(new TupleDTO<>(ele, manIdNameMap.get(ele)));
             }
             busiMonitorDTO.setNotifyManIdNameList(notifyManIdNameList);
         }
@@ -142,6 +142,20 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
                     }
                 }
             }
+        }
+        return resList;
+    }
+
+    @Override
+    public List<DpBusiMonitorDTO> getBusiMonitorAlarm(String alarmCode) {
+        List<DpBusiMonitorDTO> resList = Lists.newArrayList();
+        List<TbBusiMonitor> dbList = list(new LambdaQueryWrapper<TbBusiMonitor>().eq(TbBusiMonitor::getAlarmCode, alarmCode));
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                DpBusiMonitorDTO res = new DpBusiMonitorDTO();
+                BeanUtil.copyProperties(ele, res);
+                resList.add(res);
+            });
         }
         return resList;
     }

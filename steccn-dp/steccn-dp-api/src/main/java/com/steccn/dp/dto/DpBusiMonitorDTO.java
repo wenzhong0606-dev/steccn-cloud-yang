@@ -62,7 +62,7 @@ public class DpBusiMonitorDTO implements Serializable {
      * 通知人员
      */
     @NotEmpty(message = "告警接收人员不能为空")
-    private Set<Integer> notifyMan;
+    private Set<Long> notifyMan;
 
-    private List<TupleDTO<Integer, String>> notifyManIdNameList;
+    private List<TupleDTO<Long, String>> notifyManIdNameList;
 }

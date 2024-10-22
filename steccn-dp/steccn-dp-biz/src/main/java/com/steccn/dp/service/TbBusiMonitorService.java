@@ -29,4 +29,11 @@ public interface TbBusiMonitorService extends IService<TbBusiMonitor> {
      * @return
      */
     List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> showAll(List<String> alarmCodeList);
+
+    /**
+     * 获取监控信息
+     * @param alarmCode 监控code
+     * @return
+     */
+    List<DpBusiMonitorDTO> getBusiMonitorAlarm(String alarmCode);
 }

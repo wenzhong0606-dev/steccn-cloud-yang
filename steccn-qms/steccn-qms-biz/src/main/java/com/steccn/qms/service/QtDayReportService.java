@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
 import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.dto.QtReportFirstPatrolDTO;
 import com.steccn.qms.vo.*;
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -83,6 +85,16 @@ public interface QtDayReportService {
     QtLineChartBarDTO samplingWaterRateSi(LocalDate start, LocalDate end);
 
     /**
+     * 配料含水率-硅砂
+     *
+     * @param start 开始日期
+     * @param end   结束日期
+     * @param alarmCode 告警code
+     * @return
+     */
+    void samplingWaterRateSiMonitor(LocalDateTime start, LocalDateTime end, String alarmCode);
+
+    /**
      * 配料含水率-配合料
      *
      * @param start 开始日期
@@ -111,4 +123,5 @@ public interface QtDayReportService {
      * @return
      */
     void lossDownload(QtLossReportDTO dto, HttpServletResponse response) throws IOException;
+
 }

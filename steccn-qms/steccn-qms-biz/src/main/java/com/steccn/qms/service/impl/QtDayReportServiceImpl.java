@@ -14,6 +14,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
@@ -23,15 +24,16 @@ import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
+import com.steccn.dp.feign.RemoteBusiMonitorFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
@@ -47,6 +49,7 @@ import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.*;
+import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -83,7 +86,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtDefectiveItemService qtDefectiveItemService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
-    private final QtChartGenerateService qtChartGenerateService;
     private final QtCheckTaskMapper qtCheckTaskMapper;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
@@ -92,6 +94,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final OaInfoService oaInfoService;
     private final QtLossDataService qtLossDataService;
     private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
+    private final RemoteBusiMonitorFeignApi remoteBusiMonitorFeignApi;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, List<Integer> productLineId, String source) {
@@ -134,7 +138,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
         //根据部门不同选择不同的班组类型 0为基片班组 1为深加工班组
         int officeType = 0;
-        if(!sysOfficeVOMap.get(productLineId.get(0)).getOfficeName().contains("基片")){
+        if (!sysOfficeVOMap.get(productLineId.get(0)).getOfficeName().contains("基片")) {
             officeType = 1;
         }
         TripleDTO<LocalDate, LocalDate, Integer> dateDTO = new TripleDTO<>(date, date, officeType);
@@ -263,7 +267,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 return o1.getDataSource() - o2.getDataSource();
             }
             //对比type
-            if(o1.getType() != o2.getType()){
+            if (o1.getType() != o2.getType()) {
                 return o1.getType() - o2.getType();
             }
             //对比缺陷记录时段
@@ -278,15 +282,16 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead(source));
         //落板原因
-        resVo.setFallList(fallList(date, manData, sysOfficeVOMap,dateDTO));
+        resVo.setFallList(fallList(date, manData, sysOfficeVOMap, dateDTO));
         return resVo;
     }
 
     /**
      * 在线检
-     * @param date 日期
+     *
+     * @param date       日期
      * @param lineIdList 产线
-     * @param source 配置
+     * @param source     配置
      */
     public void onlineDownload(LocalDate date, List<Integer> lineIdList, String source, HttpServletResponse response) throws IOException {
         QtDayReportOnlineVO online = online(date, lineIdList, source);
@@ -298,7 +303,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<List<String>> list1 = new ArrayList<>();
         //落板记录
         List<List<String>> list2 = new ArrayList<>();
-        Arrays.asList("产线","班次","班组","落板记录时段","落板工位","落板原因","备注").forEach(ele -> list2.add(Lists.newArrayList(ele)));
+        Arrays.asList("产线", "班次", "班组", "落板记录时段", "落板工位", "落板原因", "备注").forEach(ele -> list2.add(Lists.newArrayList(ele)));
 
         List<QtSpcHeadTitleVO> common = headers.getCommon();
         common.forEach(ele -> {
@@ -315,7 +320,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         response.setCharacterEncoding("utf-8");
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
         String fileName = URLEncoder.encode("质量日报表(人工)", "UTF-8");
-        fileName += LocalDateUtil.localDateFormat(LocalDate.now(),"yyyy-MM-dd");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         //数据
         List<List<Object>> dataList1 = Lists.newArrayList();
@@ -346,7 +351,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 dataEle.add("合计(单产线)");
                 dataEle.add("合计(单产线)");
                 dataEle.add("合计(单产线)");
-            }else if(ele.getType() == 3){
+            } else if (ele.getType() == 3) {
                 dataEle.add("总计");
                 dataEle.add("总计");
                 dataEle.add("总计");
@@ -399,14 +404,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param manDataList 人工检测数据
      * @return 落板原因集合
      */
-    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList, Map<Integer, SysOfficeVO> lineIdNameMap,TripleDTO<LocalDate, LocalDate, Integer> tDateDTO) {
+    private List<QtCheckTaskDestoryOnlineVO> fallList(LocalDate curDate, List<QtCheckTaskDetailReportVO> manDataList, Map<Integer, SysOfficeVO> lineIdNameMap, TripleDTO<LocalDate, LocalDate, Integer> tDateDTO) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         Map<String, OaGroupCountDTO> groupInfoMap;
         if (CollUtil.isNotEmpty(manDataList)) {
-            if(Objects.isNull(tDateDTO)){
+            if (Objects.isNull(tDateDTO)) {
                 TupleDTO<LocalDate, LocalDate> dateDTO = new TupleDTO(curDate, curDate);
                 groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(dateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-            }else {
+            } else {
                 groupInfoMap = FeignOptional.of(() -> oaInfoService.getGroupInfoJp(tDateDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             }
             OaGroupCountDTO defaultOaGroupCountDTO = new OaGroupCountDTO();
@@ -514,8 +519,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     /**
      * 生成静态表头
      *
-     * @return list
      * @param source
+     * @return list
      */
     private List<QtSpcHeadTitleVO> generateCommonHead(String source) {
         List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
@@ -636,9 +641,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         Set<Integer> itemSet = taskDetailList.stream().map(QtCheckTaskDetail::getItemId).collect(Collectors.toSet());
         Set<Integer> groupSet = taskDetailList.stream().map(QtCheckTaskDetail::getGroupId).collect(Collectors.toSet());
         List<QtCheckPlanGroupItem> qtCheckPlanGroupItems = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(itemSet)&&CollUtil.isNotEmpty(groupSet)){
+        if (CollUtil.isNotEmpty(itemSet) && CollUtil.isNotEmpty(groupSet)) {
             qtCheckPlanGroupItems = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
-                    .select(QtCheckPlanGroupItem::getGroupId,QtCheckPlanGroupItem::getCheckItemId,QtCheckPlanGroupItem::getStandardValue,QtCheckPlanGroupItem::getLowerValue,QtCheckPlanGroupItem::getUpperValue)
+                    .select(QtCheckPlanGroupItem::getGroupId, QtCheckPlanGroupItem::getCheckItemId, QtCheckPlanGroupItem::getStandardValue, QtCheckPlanGroupItem::getLowerValue, QtCheckPlanGroupItem::getUpperValue)
                     .in(QtCheckPlanGroupItem::getGroupId, groupSet)
                     .in(QtCheckPlanGroupItem::getCheckItemId, itemSet));
         }
@@ -845,9 +850,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //先根据班次排序再根据完成时间排序
             productLineTaskList = productLineTaskList.stream().sorted(Comparator.comparing(QtCheckTaskListVO::getClassesId)
                     .thenComparing((o1, o2) -> {
-                        if(Objects.isNull(o1.getStationId()) && Objects.isNull(o2.getStationId())){
+                        if (Objects.isNull(o1.getStationId()) && Objects.isNull(o2.getStationId())) {
                             return 0;
-                        }else if(Objects.isNull(o1.getStationId()) || Objects.isNull(o2.getStationId())){
+                        } else if (Objects.isNull(o1.getStationId()) || Objects.isNull(o2.getStationId())) {
                             return 1;
                         }
                         return o2.getStationId().compareTo(o1.getStationId());
@@ -933,7 +938,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                         BigDecimal checkResultNum = new BigDecimal(checkResult);
                                         //查上下偏差
                                         QtCheckPlanGroupItem planGroupItem = qtCheckPlanGroupItems.stream()
-                                                .filter(v->v.getGroupId().equals(copyTmp.getGroupId())&&v.getCheckItemId().equals(copyTmp.getItemId())).findFirst().orElse(new QtCheckPlanGroupItem());
+                                                .filter(v -> v.getGroupId().equals(copyTmp.getGroupId()) && v.getCheckItemId().equals(copyTmp.getItemId())).findFirst().orElse(new QtCheckPlanGroupItem());
 //                                                qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
 //                                                .eq(QtCheckPlanGroupItem::getGroupId, copyTmp.getGroupId())
 //                                                .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
@@ -995,7 +1000,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
             if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(dto.getCheckTaskType())) {
                 //落板原因
-                luoData.addAll(fallList(dto.getDate(), manData, officeVoMap,null));
+                luoData.addAll(fallList(dto.getDate(), manData, officeVoMap, null));
                 //缺陷表格
             }
 
@@ -1019,10 +1024,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     /**
      * 巡检下载
+     *
      * @param dto
      * @param response
      */
-    private void patrolCheckDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException{
+    private void patrolCheckDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException {
         QtDayReportFirstVO first = first(dto);
         List<QtDayReportFirstDataVO> tableData = first.getTableData();
         SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
@@ -1049,7 +1055,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         response.setCharacterEncoding("utf-8");
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
         String fileName = URLEncoder.encode("巡检", "UTF-8");
-        fileName += LocalDateUtil.localDateFormat(LocalDate.now(),"yyyy-MM-dd");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         //数据
         List<List<Object>> dataList1 = Lists.newArrayList();
@@ -1075,7 +1081,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             dataEle.add(ele.getProductLine());
             dataEle.add(ele.getClassName());
             dataEle.add(ele.getClassGroupName());
-            dataEle.add(LocalDateUtil.format(ele.getSpotTime(),"MM-dd HH:mm"));
+            dataEle.add(LocalDateUtil.format(ele.getSpotTime(), "MM-dd HH:mm"));
             dataEle.add(ele.getStation());
             dataEle.add(ele.getMaterialName());
             dataEle.add(ele.getCustomerName());
@@ -1104,7 +1110,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex1))
                 .build();
         excelWriter.write(dataList1, writeSheet1);
-        if(CollUtil.isNotEmpty(first.getFallList())){
+        if (CollUtil.isNotEmpty(first.getFallList())) {
             WriteSheet writeSheet2 = EasyExcel.writerSheet(1, "落板记录")
                     .head(list2)
                     .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
@@ -1120,6 +1126,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     /**
      * 首检下载
+     *
      * @param dto
      * @param response
      */
@@ -1453,24 +1460,24 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //1.获取早班和晚班时间
         LocalDateTime morning = LocalDateUtil.getMorning(start);
         LocalDateTime night = LocalDateUtil.getMorning(end).plusDays(1);
-        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night,Lists.newArrayList("JYX000147","JYX000152","JYX000153"));
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night, Lists.newArrayList("JYX000147", "JYX000152", "JYX000153"));
         //3.如果原始数据集合不为空，则继续执行
         SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
         List<SamplingWaterRateDTO> dataList = Lists.newArrayList();
         //根据检验任务区分
         Map<Long, List<QtDaySamplingDTO>> sourceMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
-        sourceMap.forEach((k,v) ->{
+        sourceMap.forEach((k, v) -> {
             //①考虑是配合料
             //②考虑是硅砂水分
             Optional<QtDaySamplingDTO> eleOp = v.stream().filter(aa -> "JYX000153".equals(aa.getNote())).findFirst();
-            if(eleOp.isPresent()){
+            if (eleOp.isPresent()) {
                 QtDaySamplingDTO qtDaySamplingDTO = eleOp.get();
                 SamplingWaterRateDTO rateDTO = new SamplingWaterRateDTO();
                 rateDTO.setValue3(new BigDecimal(qtDaySamplingDTO.getCheckResult()));
                 rateDTO.setSamplingTime(qtDaySamplingDTO.getSamplingTime());
                 rateDTO.setTaskId(k);
                 dataList.add(rateDTO);
-            }else {
+            } else {
                 QtDaySamplingDTO common = v.get(0);
                 Map<Integer, List<QtDaySamplingDTO>> copyMap = v.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getCopy));
                 SamplingWaterRateDTO rateDTO = new SamplingWaterRateDTO();
@@ -1524,13 +1531,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //1.获取早班和晚班时间
         LocalDateTime morning = LocalDateUtil.getMorning(start);
         LocalDateTime night = LocalDateUtil.getMorning(end).plusDays(1);
-        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night,Lists.newArrayList("JYX000147","JYX000152"));
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night, Lists.newArrayList("JYX000147", "JYX000152"));
         //3.如果原始数据集合不为空，则继续执行
         SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
         List<SamplingWaterRateDTO> dataList = Lists.newArrayList();
         //根据检验任务区分
         Map<Long, List<QtDaySamplingDTO>> sourceMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
-        sourceMap.forEach((k,v) ->{
+        sourceMap.forEach((k, v) -> {
             //②考虑是硅砂水分
             QtDaySamplingDTO common = v.get(0);
             Map<Integer, List<QtDaySamplingDTO>> copyMap = v.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getCopy));
@@ -1579,18 +1586,118 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     }
 
     @Override
+    public void samplingWaterRateSiMonitor(LocalDateTime start, LocalDateTime end, String alarmCode) {
+        List<DpBusiMonitorDTO> gsWaterList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        for (DpBusiMonitorDTO monitor : gsWaterList) {
+            //当前页面（原料驾驶舱）顶部已选中时间范围为D1~D2，查询“取样时间”在区间[D1 8:00, D2+1 8:00]内的所有已检验的配料抽检任务，汇总成如下表格（一条检验任务对应一行）
+            //1.获取早班和晚班时间
+            LocalDateTime morning = LocalDateUtil.getMorning(start);
+            LocalDateTime night = LocalDateUtil.getMorning(end).plusDays(1);
+            List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night, Lists.newArrayList("JYX000147", "JYX000152"));
+            //3.如果原始数据集合不为空，则继续执行
+            SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
+            List<SamplingWaterRateDTO> dataList = Lists.newArrayList();
+            //根据检验任务区分
+            Map<Long, List<QtDaySamplingDTO>> sourceMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
+            sourceMap.forEach((k, v) -> {
+                //②考虑是硅砂水分
+                QtDaySamplingDTO common = v.get(0);
+                Map<Integer, List<QtDaySamplingDTO>> copyMap = v.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getCopy));
+                SamplingWaterRateDTO rateDTO = new SamplingWaterRateDTO();
+                rateDTO.setSamplingTime(common.getSamplingTime());
+                rateDTO.setTaskId(k);
+                dataList.add(rateDTO);
+                //对copy进行遍历
+                copyMap.forEach((m, n) -> {
+                    Optional<QtDaySamplingDTO> copyCwOp = n.stream().filter(aa -> "JYX000147".equals(aa.getNote())).findFirst();
+                    Optional<QtDaySamplingDTO> copySfOp = n.stream().filter(aa -> "JYX000152".equals(aa.getNote())).findFirst();
+                    if (copyCwOp.isPresent() && copySfOp.isPresent()) {
+                        QtDaySamplingDTO copyCw = copyCwOp.get();
+                        QtDaySamplingDTO copySf = copySfOp.get();
+                        if ("1#".equals(copyCw.getCheckResult())) {
+                            rateDTO.setValue1(new BigDecimal(copySf.getCheckResult()));
+                        } else {
+                            rateDTO.setValue2(new BigDecimal(copySf.getCheckResult()));
+                        }
+                    }
+                });
+
+            });
+            List<SamplingWaterRateDTO> newDataList = dataList.stream().filter(ele -> LocalDateUtil.isRange(ele.getSamplingTime(), start, end, true, false)).collect(Collectors.toList());
+            //按照抽样时间排序
+            Collections.sort(newDataList, Comparator.comparing(SamplingWaterRateDTO::getSamplingTime));
+            //判断是否超过
+            BigDecimal upValue = GetValueUtil.get(monitor.getUpValue(), x -> x, BigDecimal.ZERO);
+            BigDecimal lowValue = GetValueUtil.get(monitor.getLowValue(), x -> x, BigDecimalUtil.HUNDRED);
+            newDataList.forEach(ele -> {
+                //高于上限
+                StringBuilder contentSb = new StringBuilder();
+                String template = SysMsgConstant.MsgTypeEnum.GS_WATER_ALARM.getTemplate();
+                if (BigDecimalUtil.gt(ele.getValue1(), upValue)) {
+                    //例如，【2022-09-21 08:34:34】1#料仓硅砂含水率为8%，高于上限值6%
+                    String ts1 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "1#", BigDecimalUtil.format(ele.getValue1()), "高", upValue);
+                    contentSb.append(ts1).append("\n");;
+                }else if (BigDecimalUtil.lt(ele.getValue1(), lowValue)) {
+                    String ts3 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "1#", BigDecimalUtil.format(ele.getValue1()), "低", lowValue);
+                    contentSb.append(ts3).append("\n");
+                }
+                //低于下限
+                if (BigDecimalUtil.lt(ele.getValue2(), lowValue)) {
+                    String ts4 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "2#", BigDecimalUtil.format(ele.getValue2()), "低", lowValue);
+                    contentSb.append(ts4).append("\n");;
+                } else if (BigDecimalUtil.gt(ele.getValue2(), upValue)) {
+                    String ts2 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "2#", BigDecimalUtil.format(ele.getValue2()), "高", upValue);
+                    contentSb.append(ts2).append("\n");;
+                }
+                if(contentSb.length() > 0){
+                    Set<Long> notifyMan = monitor.getNotifyMan();
+                    SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.GS_WATER_ALARM.getCode());
+                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.GS_WATER_ALARM.getTitle());
+                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.GS_WATER_ALARM.getWarnFlag());
+                    sysMsgDTO.setUserList(notifyMan);
+                    sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 2));
+                    sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                }
+            });
+        }
+
+//        //生成图表
+//        //存放数据的map
+//        List<StackGraphDTO<String, Integer>> stackGraphList = Lists.newArrayList();
+//        Map<LocalDateTime, SamplingWaterRateDTO> map = Maps.newLinkedHashMap();
+//        dataList.forEach(ele -> {
+//            map.put(ele.getSamplingTime(), ele);
+//        });
+//        //根据x轴分组
+//        for (Map.Entry<LocalDateTime, SamplingWaterRateDTO> entry : map.entrySet()) {
+//            StackGraphDTO stackGraphDTO = new StackGraphDTO();
+//            SamplingWaterRateDTO value = entry.getValue();
+//            List<TupleDTO<String, BigDecimal>> data = Lists.newArrayList(
+//                    new TupleDTO<>("1#料仓硅砂", value.getValue1()),
+//                    new TupleDTO<>("2#料仓硅砂", value.getValue2())
+//            );
+//            stackGraphDTO.setData(data);
+//            stackGraphDTO.setXAxis(LocalDateUtil.format(entry.getKey(), "yyyy-MM-dd HH:mm"));
+//            stackGraphList.add(stackGraphDTO);
+//        }
+
+    }
+
+    @Override
     public QtLineChartBarDTO samplingWaterRateBatch(LocalDate start, LocalDate end) {
         //当前页面（原料驾驶舱）顶部已选中时间范围为D1~D2，查询“取样时间”在区间[D1 8:00, D2+1 8:00]内的所有已检验的配料抽检任务，汇总成如下表格（一条检验任务对应一行）
         //1.获取早班和晚班时间
         LocalDateTime morning = LocalDateUtil.getMorning(start);
         LocalDateTime night = LocalDateUtil.getMorning(end).plusDays(1);
-        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night,Lists.newArrayList("JYX000153"));
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingWaterRate(morning, night, Lists.newArrayList("JYX000153"));
         //3.如果原始数据集合不为空，则继续执行
         SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
         List<SamplingWaterRateDTO> dataList = Lists.newArrayList();
         //根据检验任务区分
         Map<Long, List<QtDaySamplingDTO>> sourceMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
-        sourceMap.forEach((k,v) ->{
+        sourceMap.forEach((k, v) -> {
             //①考虑是配合料
             QtDaySamplingDTO qtDaySamplingDTO = v.get(0);
             SamplingWaterRateDTO rateDTO = new SamplingWaterRateDTO();
@@ -1694,11 +1801,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //获取损耗数据
         List<QtChartSubDetailDTO> allData = Lists.newArrayList();
         List<QtLossData> lossDataList = qtLossDataService.list(new LambdaQueryWrapper<QtLossData>()
-                .between(QtLossData::getWorkOrderTime,dto.getStartDate(),dto.getEndDate())
+                .between(QtLossData::getWorkOrderTime, dto.getStartDate(), dto.getEndDate())
 //                .ge(QtLossData::getWorkOrderTime, dto.getStartDate())
 //                .le(QtLossData::getWorkOrderTime, dto.getEndDate())
                 .in(QtLossData::getProductLineId, dto.getProductLineIds()));
-        allData = BeanUtil.copyToList(lossDataList,QtChartSubDetailDTO.class);
+        allData = BeanUtil.copyToList(lossDataList, QtChartSubDetailDTO.class);
 //        for (Integer tmp : dto.getProductLineIds()) {
 //            chartParam.setProductLineId(tmp);
 //            chartParam.setDateStart(dto.getStartDate());
@@ -1783,15 +1890,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         allData.forEach(tmp -> {
             defectAndLuo.add(tmp.getReason());
             //转换localDate
-            if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
+            if (dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())) {
                 tmp.setWorkOrderTime(tmp.getWorkOrderDate().toString());
-            }else {
+            } else {
                 tmp.setWorkOrderDate(LocalDate.parse(tmp.getWorkOrderTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             }
         });
         //拿到所有的缺陷项code
         LambdaQueryWrapper defectCondition = new LambdaQueryWrapper<QtDefectiveItem>()
-                .select(QtDefectiveItem::getName, QtDefectiveItem::getCode,QtDefectiveItem::getCreateTime)
+                .select(QtDefectiveItem::getName, QtDefectiveItem::getCode, QtDefectiveItem::getCreateTime)
                 .in(QtDefectiveItem::getName, defectAndLuo)
                 .eq(QtDefectiveItem::getShowFlag, QtManagerConstant.NUM_1)
                 .orderByAsc(QtDefectiveItem::getCode);
@@ -1896,7 +2003,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 }
                 if (CollUtil.isNotEmpty(destroyReasonTmp)) {
                     destroyReasonTmp.forEach(v -> {
-                        if(!reasonStr.contains(v.getName())){
+                        if (!reasonStr.contains(v.getName())) {
                             reasonStr.add(v.getName());
                         }
                     });
@@ -1974,23 +2081,23 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             lossAmount = BigDecimalUtil.add(lossAmount, pullAndLoss.getLossWeight());
                             //操作入库量
                             if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
-                                inStorageAmount = inStorageData.get(pullAndLoss.getProductLineId()+"_"+dto.getStartDate().plusDays(i)+"_"+(className.equals("早班") ? morningStr :eveningStr));
-                            }else if(dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())){
-                                inStorageAmount = inStorageData.get(pullAndLoss.getProductLineId()+"_"+dto.getStartDate().plusDays(i)+"_"+morningStr);
-                                inStorageAmount = BigDecimalUtil.add(inStorageAmount,inStorageData.get(pullAndLoss.getProductLineId()+"_"+dto.getStartDate().plusDays(i)+"_"+eveningStr));
-                            }else {
+                                inStorageAmount = inStorageData.get(pullAndLoss.getProductLineId() + "_" + dto.getStartDate().plusDays(i) + "_" + (className.equals("早班") ? morningStr : eveningStr));
+                            } else if (dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())) {
+                                inStorageAmount = inStorageData.get(pullAndLoss.getProductLineId() + "_" + dto.getStartDate().plusDays(i) + "_" + morningStr);
+                                inStorageAmount = BigDecimalUtil.add(inStorageAmount, inStorageData.get(pullAndLoss.getProductLineId() + "_" + dto.getStartDate().plusDays(i) + "_" + eveningStr));
+                            } else {
                                 String dateStr = dto.getStartDate().plusDays(i).format(DateTimeFormatter.ofPattern("yyyy-MM"));
                                 inStorageAmount = inStorageData.entrySet().stream()
-                                        .filter(entry->entry.getKey().contains(pullAndLoss.getProductLineId()+"_"+dateStr))
+                                        .filter(entry -> entry.getKey().contains(pullAndLoss.getProductLineId() + "_" + dateStr))
                                         .map(Map.Entry::getValue)
-                                        .reduce(BigDecimal.ZERO,BigDecimal::add);
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
                             }
                             haveData = true;
                         }
                         lineDataPullTmp.add(pullAmount.toString());
                         lineDataPullTmp.add("");
                         lineDataPullTmp.add("");
-                        if(Objects.isNull(inStorageAmount)){
+                        if (Objects.isNull(inStorageAmount)) {
                             inStorageAmount = BigDecimal.ZERO;
                         }
                         lineDataInStorageTmp.add(inStorageAmount.toString());
@@ -2012,10 +2119,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 .filter(v -> v.getWorkOrder().equals(className) && !v.getReason().equals("拉引量"))
                                 .map(QtChartSubDetailDTO::getLossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
                         //上报损耗率 = (单个缺陷的损耗重量 / 对应的损耗重量加总) * (拉引量 - 入库量) / 拉引量 * 100%
-                        BigDecimal step1 = BigDecimalUtil.divide(lossAmount,lossAll,4);
-                        BigDecimal step2 = BigDecimalUtil.subtract(pullAmount,inStorageAmount);
-                        BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
-                        lineDataLossTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3,pullAmount)));
+                        BigDecimal step1 = BigDecimalUtil.divide(lossAmount, lossAll, 4);
+                        BigDecimal step2 = BigDecimalUtil.subtract(pullAmount, inStorageAmount);
+                        BigDecimal step3 = BigDecimalUtil.multiply(step1, step2, 4);
+                        lineDataLossTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, pullAmount)));
                     }
 //                    if(CollUtil.isEmpty(dayData)){
 //                        modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
@@ -2073,9 +2180,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     //对应的损耗小计
                     allLossData = allData.stream().filter(v -> v.getProductLineId().equals(productLine.getId()) && v.getWorkOrder().equals(className) && !v.getReason().equals("拉引量"))
                             .map(QtChartSubDetailDTO::getLossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal step1 = BigDecimalUtil.divide(baiLossAmountAll,allLossData,4);
-                    BigDecimal step2 = BigDecimalUtil.subtract(pullAmountAll,inStorageAmountAll);
-                    BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
+                    BigDecimal step1 = BigDecimalUtil.divide(baiLossAmountAll, allLossData, 4);
+                    BigDecimal step2 = BigDecimalUtil.subtract(pullAmountAll, inStorageAmountAll);
+                    BigDecimal step3 = BigDecimalUtil.multiply(step1, step2, 4);
                     lineDataLossTmp1.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, pullAmountAll, 4)));
                     lineDataPullTmp1.add("");
                     lineInStorageTmp1.add("");
@@ -2148,12 +2255,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                     }
                                     lossAmount = BigDecimalUtil.add(lossAmount, amountDay.getLossWeight());
                                     //找到当天的拉引量,同一天取相同的拉引量
-                                    if(Objects.nonNull(pullAmountDay)&&pullAmountDay.getPullAmount()!=null){
+                                    if (Objects.nonNull(pullAmountDay) && pullAmountDay.getPullAmount() != null) {
                                         pullAmount = BigDecimalUtil.add(pullAmount, pullAmountDay.getPullAmount());
-                                    }else {
+                                    } else {
                                         pullAmount = BigDecimalUtil.add(pullAmount, amountDay.getPullAmount());
                                     }
-                                }else {
+                                } else {
                                     //没有数据需要加入班组数据
                                     if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
                                         lineDataTmp.add(dayData.stream().filter(v -> v.getWorkOrder().equals(className)).findFirst().orElse(new QtChartSubDetailDTO()).getClassGroupName());
@@ -2172,26 +2279,26 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                         .filter(v -> v.getWorkOrder().equals(className) && !v.getReason().equals("拉引量"))
                                         .map(QtChartSubDetailDTO::getLossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
                                 //上报损耗率 = (单个缺陷的损耗重量 / 对应的损耗重量加总) * (拉引量 - 入库量) / 拉引量 * 100%
-                                BigDecimal step1 = BigDecimalUtil.divide(lossAmount,lossAll,4);
+                                BigDecimal step1 = BigDecimalUtil.divide(lossAmount, lossAll, 4);
                                 //操作入库量
                                 BigDecimal inStorageAmount = BigDecimal.ZERO;
-                                if(Objects.nonNull(amountDay)){
+                                if (Objects.nonNull(amountDay)) {
                                     if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())) {
-                                        inStorageAmount = inStorageData.get(amountDay.getProductLineId()+"_"+dto.getStartDate().plusDays(i)+"_"+(className.equals("早班") ? morningStr :eveningStr));
-                                    }else if(dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())){
-                                        inStorageAmount = inStorageData.get(amountDay.getProductLineId()+"_"+dto.getStartDate().plusDays(i)+"_"+morningStr);
-                                        inStorageAmount = BigDecimalUtil.add(inStorageAmount,inStorageData.get(amountDay.getProductLineId()+"_"+dto.getStartDate().plusDays(i)+"_"+eveningStr));
-                                    }else {
+                                        inStorageAmount = inStorageData.get(amountDay.getProductLineId() + "_" + dto.getStartDate().plusDays(i) + "_" + (className.equals("早班") ? morningStr : eveningStr));
+                                    } else if (dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())) {
+                                        inStorageAmount = inStorageData.get(amountDay.getProductLineId() + "_" + dto.getStartDate().plusDays(i) + "_" + morningStr);
+                                        inStorageAmount = BigDecimalUtil.add(inStorageAmount, inStorageData.get(amountDay.getProductLineId() + "_" + dto.getStartDate().plusDays(i) + "_" + eveningStr));
+                                    } else {
                                         String dateStr = dto.getStartDate().plusDays(i).format(DateTimeFormatter.ofPattern("yyyy-MM"));
                                         inStorageAmount = inStorageData.entrySet().stream()
-                                                .filter(entry->entry.getKey().contains(amountDay.getProductLineId()+"_"+dateStr))
+                                                .filter(entry -> entry.getKey().contains(amountDay.getProductLineId() + "_" + dateStr))
                                                 .map(Map.Entry::getValue)
-                                                .reduce(BigDecimal.ZERO,BigDecimal::add);
+                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
                                     }
                                 }
-                                BigDecimal step2 = BigDecimalUtil.subtract(pullAmount,inStorageAmount);
-                                BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
-                                lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3,pullAmount)));
+                                BigDecimal step2 = BigDecimalUtil.subtract(pullAmount, inStorageAmount);
+                                BigDecimal step3 = BigDecimalUtil.multiply(step1, step2, 4);
+                                lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, pullAmount)));
                             } else {
                                 lineDataTmp.add(null);
                                 lineDataTmp.add(null);
@@ -2207,9 +2314,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         //上报损耗率小计
                         //上报损耗率：(所在行单项损耗重量小计 / 对应的损耗小计 * (对应的拉引量小计 - 对应的入库量小计) / 对应的拉引量小计 * 100%
                         //对应的损耗小计
-                        BigDecimal step1 = BigDecimalUtil.divide(lossAmountAll,allLossData,4);
-                        BigDecimal step2 = BigDecimalUtil.subtract(pullAmountAll,inStorageAmountAll);
-                        BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
+                        BigDecimal step1 = BigDecimalUtil.divide(lossAmountAll, allLossData, 4);
+                        BigDecimal step2 = BigDecimalUtil.subtract(pullAmountAll, inStorageAmountAll);
+                        BigDecimal step3 = BigDecimalUtil.multiply(step1, step2, 4);
                         lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, pullAmountAll, 4)));
                         moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
                         defectLine.setModule(moduleTmp);
@@ -2250,11 +2357,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 List<QtDayReportLossDataVO> tableDataTmp = Lists.newArrayList();
                 //如果是班次报表则算损耗合计，否则算损耗总计
                 //把拉引量和小计数据放入
-                tableDataTmp = tableData.stream().filter(v->(v.getDefectName()!=null&&v.getDefectName().equals("拉引量"))
-                        &&(v.getProductLineName()!=null&&v.getProductLineName().equals(productLine.getOfficeName()))
+                tableDataTmp = tableData.stream().filter(v -> (v.getDefectName() != null && v.getDefectName().equals("拉引量"))
+                        && (v.getProductLineName() != null && v.getProductLineName().equals(productLine.getOfficeName()))
                         || (v.getType().equals(QtManagerConstant.NUM_1))).collect(Collectors.toList());
-                tableDataTmp.addAll(tableData.stream().filter(v->(v.getDefectName()!=null&&v.getDefectName().equals("入库量"))
-                        &&(v.getProductLineName()!=null&&v.getProductLineName().equals(productLine.getOfficeName()))).collect(Collectors.toList()));
+                tableDataTmp.addAll(tableData.stream().filter(v -> (v.getDefectName() != null && v.getDefectName().equals("入库量"))
+                        && (v.getProductLineName() != null && v.getProductLineName().equals(productLine.getOfficeName()))).collect(Collectors.toList()));
                 //size小于4说明没有数据
                 if (tableDataTmp.size() > QtManagerConstant.NUM_4) {
                     QtDayReportLossDataVO lossLine = countAmount(tableDataTmp, dto.getType());
@@ -2286,11 +2393,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             laAmountAllLine.setProductLineName("拉引量总计");
             laAmountAllLine.setType(QtManagerConstant.NUM_3);
             List<FurtherValueStrVO> laAmountModule = Lists.newArrayList();
-            for(int i = 0; i < laAmountAll.size(); i++){
-                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=laAmountAll.size()-1){
-                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("",laAmountAll.get(i).toString(),"","")));
-                }else {
-                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(laAmountAll.get(i).toString(),"","")));
+            for (int i = 0; i < laAmountAll.size(); i++) {
+                if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode()) && i != laAmountAll.size() - 1) {
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList("", laAmountAll.get(i).toString(), "", "")));
+                } else {
+                    laAmountModule.add(new FurtherValueStrVO(Lists.newArrayList(laAmountAll.get(i).toString(), "", "")));
                 }
             }
 //            laAmountAll.forEach(tmp->{
@@ -2311,49 +2418,49 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             inStorageAllLine.setProductLineName("入库量总计");
             inStorageAllLine.setType(QtManagerConstant.NUM_3);
             List<FurtherValueStrVO> inStorageModule = Lists.newArrayList();
-            for(int i = 0; i < inStorageAll.size(); i++){
-                if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=inStorageAll.size()-1){
-                    inStorageModule.add(new FurtherValueStrVO(Lists.newArrayList("",inStorageAll.get(i).toString(),"","")));
-                }else {
-                    inStorageModule.add(new FurtherValueStrVO(Lists.newArrayList(inStorageAll.get(i).toString(),"","")));
+            for (int i = 0; i < inStorageAll.size(); i++) {
+                if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode()) && i != inStorageAll.size() - 1) {
+                    inStorageModule.add(new FurtherValueStrVO(Lists.newArrayList("", inStorageAll.get(i).toString(), "", "")));
+                } else {
+                    inStorageModule.add(new FurtherValueStrVO(Lists.newArrayList(inStorageAll.get(i).toString(), "", "")));
                 }
             }
             inStorageAllLine.setModule(inStorageModule);
             tableData.add(inStorageAllLine);
             //算其他损耗
             List<String> defectList = tableData.stream()
-                    .filter(v -> v.getDefectName() != null && !v.getDefectName().equals("拉引量") && !v.getDefectName().equals("拉引量总计")&& !v.getDefectName().equals("入库量") && !v.getDefectName().equals("入库量总计"))
+                    .filter(v -> v.getDefectName() != null && !v.getDefectName().equals("拉引量") && !v.getDefectName().equals("拉引量总计") && !v.getDefectName().equals("入库量") && !v.getDefectName().equals("入库量总计"))
                     .map(QtDayReportLossDataVO::getDefectName).distinct().collect(Collectors.toList());
             defectList.forEach(tmp -> {
                 QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
-                defectLine.setDefectName(tmp+"总计");
-                defectLine.setProductLineName(tmp+"总计");
+                defectLine.setDefectName(tmp + "总计");
+                defectLine.setProductLineName(tmp + "总计");
                 defectLine.setType(QtManagerConstant.NUM_3);
                 List<BigDecimal> defectAmountAll = countColumn(tableData.stream().filter(v -> v.getDefectName() != null && v.getDefectName().equals(tmp)).collect(Collectors.toList()));
                 List<FurtherValueStrVO> defectModule = Lists.newArrayList();
-                for(int i = 0; i < defectAmountAll.size(); i++){
+                for (int i = 0; i < defectAmountAll.size(); i++) {
                     BigDecimal decimal = defectAmountAll.get(i);
                     BigDecimal percent = BigDecimalUtil.percent(decimal, laAmountAll.get(i), 2);
-                    if(Objects.isNull(percent)){
+                    if (Objects.isNull(percent)) {
                         percent = BigDecimal.ZERO;
                     }
                     //如果是班次报表则需要空一行
-                    if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())&&i!=defectAmountAll.size()-1){
+                    if (dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode()) && i != defectAmountAll.size() - 1) {
                         //算上报损耗率
                         //上报损耗率：(上述重量值 / 对应的损耗总计) * (对应的拉引量总计 - 对应的入库量总计) / 对应的拉引量总计 * 100%
-                        BigDecimal step1 = BigDecimalUtil.divide(decimal,new BigDecimal(lossAllLine.getModule().get(i).getValue().get(1)),4);
-                        BigDecimal step2 = BigDecimalUtil.subtract(laAmountAll.get(i),inStorageAll.get(i));
-                        BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
+                        BigDecimal step1 = BigDecimalUtil.divide(decimal, new BigDecimal(lossAllLine.getModule().get(i).getValue().get(1)), 4);
+                        BigDecimal step2 = BigDecimalUtil.subtract(laAmountAll.get(i), inStorageAll.get(i));
+                        BigDecimal step3 = BigDecimalUtil.multiply(step1, step2, 4);
                         String inStorageNum = new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, laAmountAll.get(i), 4));
-                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList("",decimal.toString(),percent.toString()+"%",inStorageNum)));
-                    }else {
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList("", decimal.toString(), percent.toString() + "%", inStorageNum)));
+                    } else {
                         //算上报损耗率
                         //上报损耗率：(上述重量值 / 对应的损耗总计) * (对应的拉引量总计 - 对应的入库量总计) / 对应的拉引量总计 * 100%
-                        BigDecimal step1 = BigDecimalUtil.divide(decimal,new BigDecimal(lossAllLine.getModule().get(i).getValue().get(0)),4);
-                        BigDecimal step2 = BigDecimalUtil.subtract(laAmountAll.get(i),inStorageAll.get(i));
-                        BigDecimal step3 = BigDecimalUtil.multiply(step1,step2,4);
+                        BigDecimal step1 = BigDecimalUtil.divide(decimal, new BigDecimal(lossAllLine.getModule().get(i).getValue().get(0)), 4);
+                        BigDecimal step2 = BigDecimalUtil.subtract(laAmountAll.get(i), inStorageAll.get(i));
+                        BigDecimal step3 = BigDecimalUtil.multiply(step1, step2, 4);
                         String inStorageNum = new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step3, laAmountAll.get(i), 4));
-                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(),percent.toString()+"%",inStorageNum)));
+                        defectModule.add(new FurtherValueStrVO(Lists.newArrayList(decimal.toString(), percent.toString() + "%", inStorageNum)));
                     }
                 }
                 defectLine.setModule(defectModule);
@@ -2389,6 +2496,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     /**
      * 下载
+     *
      * @param dto
      * @param response
      * @throws IOException
@@ -2401,7 +2509,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<List<String>> list = new ArrayList<>();
         QtDayReportTableHeadersVO headers = loss.getHeaders();
         headers.getCommon().forEach(ele -> list.add(Lists.newArrayList(ele.getLabel())));
-        headers.getModule().forEach(ele -> ele.getValue().forEach(aa -> list.add(Lists.newArrayList(ele.getLabel(),aa))));
+        headers.getModule().forEach(ele -> ele.getValue().forEach(aa -> list.add(Lists.newArrayList(ele.getLabel(), aa))));
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
@@ -2413,13 +2521,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         tableData.forEach(ele -> {
             List<Object> dataEle = Lists.newArrayList();
             //0正常元素  1合计 2总计 3小计
-            if(ele.getType() == 1) {
+            if (ele.getType() == 1) {
                 dataEle.add(ele.getProductLineName());
                 if (dto.getType() == 0) {
                     dataEle.add("损耗小计(单班次)");
                 }
                 dataEle.add("损耗小计(单班次)");
-            }else if(ele.getType() ==2){
+            } else if (ele.getType() == 2) {
                 dataEle.add("损耗合计(单产线)");
                 if (dto.getType() == 0) {
                     dataEle.add("损耗合计(单产线)");
@@ -2444,7 +2552,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         });
         int[] mergeColumnIndex = {0, 1};
         int[] mergeColumnIndex2 = {0, 1, 2};
-        if(dto.getType() ==0){
+        if (dto.getType() == 0) {
             mergeColumnIndex = mergeColumnIndex2;
         }
         ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
@@ -2550,11 +2658,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //复原tableData
             if (valueSize1 != valueSize2) {
                 String classNameTmp = "";
-                for(QtDayReportLossDataVO tableTmp:tableData){
+                for (QtDayReportLossDataVO tableTmp : tableData) {
                     int moduleSize = tableTmp.getModule().size();
                     //不包括最有一个
                     for (int i = 0; i < moduleSize - 1; i++) {
-                        if(classNameList.size()!=0){
+                        if (classNameList.size() != 0) {
                             classNameTmp = classNameList.remove(0);
                         }
                         tableTmp.getModule().get(i).getValue().add(0, classNameTmp);
@@ -2615,7 +2723,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             } else {
                 lossAmount.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(bigDecimalList.get(i), pullAmountBigDecimal.get(i), 4)));
                 //上报损耗率：(对应的拉引量或拉引量小计 - 对应的入库量或入库量小计) / 对应的拉引重量或拉引重量小计 * 100%
-                BigDecimal step1 = BigDecimalUtil.subtract(pullAmountBigDecimal.get(i),inStorageBigDecimal.get(i),4);
+                BigDecimal step1 = BigDecimalUtil.subtract(pullAmountBigDecimal.get(i), inStorageBigDecimal.get(i), 4);
                 lossAmount.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(step1, pullAmountBigDecimal.get(i), 4)));
             }
             lossLineModule.add(new FurtherValueStrVO(lossAmount));

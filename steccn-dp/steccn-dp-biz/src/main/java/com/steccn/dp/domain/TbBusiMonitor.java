@@ -59,7 +59,7 @@ public class TbBusiMonitor implements Serializable {
      * 通知人员
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private Set<Integer> notifyMan;
+    private Set<Long> notifyMan;
 
     /**
      * 是否删除 0 否 1是
