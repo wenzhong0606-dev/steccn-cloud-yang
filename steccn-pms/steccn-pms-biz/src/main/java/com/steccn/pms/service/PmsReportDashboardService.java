@@ -206,4 +206,13 @@ public interface PmsReportDashboardService {
      * @return
      */
     void analysisReportDownload(Integer workshopId, LocalDate start, LocalDate end, HttpServletResponse response) throws IOException;
+
+    /**
+     *
+     *
+     * @param workShopId 车间id
+     * @param date       班次日期
+     * @return
+     */
+//    TripleDTO<BigDecimal,BigDecimal,BigDecimal> meltingRate(Integer workShopId, LocalDate date);
 }
