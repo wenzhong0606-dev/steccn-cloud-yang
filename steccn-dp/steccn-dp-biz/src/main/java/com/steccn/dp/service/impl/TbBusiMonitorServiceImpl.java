@@ -96,7 +96,7 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
         List<TbBusiMonitor> dbList = list();
         //获取回显的用户名称和监控范围名称
         Set<Integer> officeIdSet = dbList.stream().map(TbBusiMonitor::getMonitorRange).filter(ele -> CollUtil.isNotEmpty(ele)).flatMap(Collection::stream).collect(Collectors.toSet());
-        List<Long> manIdList = dbList.stream().map(TbBusiMonitor::getNotifyMan).filter(ele -> CollUtil.isNotEmpty(ele)).flatMap(Collection::stream).map(ele -> ele.longValue()).distinct().collect(Collectors.toList());
+        List<Long> manIdList = dbList.stream().map(TbBusiMonitor::getNotifyMan).filter(ele -> CollUtil.isNotEmpty(ele)).flatMap(Collection::stream).distinct().collect(Collectors.toList());
         Map<Integer, String> officeIdNameMap = Maps.newHashMap();
         Map<Long, String> manIdNameMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(officeIdSet)) {
