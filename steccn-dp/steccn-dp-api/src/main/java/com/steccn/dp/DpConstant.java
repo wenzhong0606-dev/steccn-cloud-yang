@@ -1,7 +1,10 @@
 package com.steccn.dp;
 
+import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.List;
 
 import static com.steccn.dp.DpConstant.BusiMonitorCategoryEnum.*;
 
@@ -73,6 +76,16 @@ public interface DpConstant {
                 }
             }
             return null;
+        }
+
+        public static List<BusiMonitorAlarmEnum> getByCategory(BusiMonitorCategoryEnum categoryEnum) {
+            List<BusiMonitorAlarmEnum> resList = Lists.newArrayList();
+            for (BusiMonitorAlarmEnum value : BusiMonitorAlarmEnum.values()) {
+                if (value.getCategory().equals(categoryEnum)) {
+                    resList.add(value);
+                }
+            }
+            return resList;
         }
     }
 

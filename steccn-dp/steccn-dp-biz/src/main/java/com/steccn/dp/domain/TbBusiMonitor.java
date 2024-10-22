@@ -15,7 +15,7 @@ import lombok.Data;
  * 
  * @TableName tb_busi_monitor
  */
-@TableName(value ="tb_busi_monitor")
+@TableName(value ="tb_busi_monitor",autoResultMap = true)
 @Data
 public class TbBusiMonitor implements Serializable {
     /**

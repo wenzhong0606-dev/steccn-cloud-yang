@@ -14,7 +14,7 @@ import java.util.Set;
  * @desc 业务监控
  */
 @Data
-public class DpBusiMonitorSaveDTO implements Serializable {
+public class DpBusiMonitorDTO implements Serializable {
 
     private final static long serialVersionUID = 1L;
 
