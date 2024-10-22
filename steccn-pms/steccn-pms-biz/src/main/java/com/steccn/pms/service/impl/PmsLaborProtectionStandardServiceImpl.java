@@ -377,6 +377,11 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
                         column.put(detailTmp.getMaterialId()+"_claimNum",availNum.toString());
                         column.put(detailTmp.getMaterialId()+"_availNum",availNum.toString());
                         column.put(detailTmp.getMaterialId()+"_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }else {
+                        column.put("materialId",detailTmp.getMaterialId().toString());
+                        column.put(detailTmp.getMaterialId()+"_claimNum",BigDecimal.ZERO.toString());
+                        column.put(detailTmp.getMaterialId()+"_availNum",BigDecimal.ZERO.toString());
+                        column.put(detailTmp.getMaterialId()+"_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     }
                 }else {
                     column.put("materialId",detailTmp.getMaterialId().toString());
