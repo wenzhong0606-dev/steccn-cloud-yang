@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Sets;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.TbBusiMonitor;
@@ -15,10 +16,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,13 +72,22 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
     }
 
     @Override
-    public List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> showAll() {
+    public List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> showAll(List<String> alarmCodeList) {
+        //根据code获取枚举
+        Set<DpConstant.BusiMonitorAlarmEnum> alarmEnumSet = Sets.newHashSet();
+        Set<DpConstant.BusiMonitorCategoryEnum> categoryEnumSet = Sets.newHashSet();
+        alarmCodeList.forEach(ele -> {
+            DpConstant.BusiMonitorAlarmEnum alarm = DpConstant.BusiMonitorAlarmEnum.getByCode(ele);
+            Assert.notNull(alarm, "告警编码不存在");
+            alarmEnumSet.add(alarm);
+            categoryEnumSet.add(alarm.getCategory());
+        });
         List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> resList = Lists.newArrayList();
         List<TbBusiMonitor> dbList = list();
         Map<Integer, List<TbBusiMonitor>> categoryMap = dbList.stream().collect(Collectors.groupingBy(TbBusiMonitor::getCategory));
         for (DpConstant.BusiMonitorCategoryEnum categoryEnum : DpConstant.BusiMonitorCategoryEnum.values()) {
             List<TbBusiMonitor> categoryList = categoryMap.get(categoryEnum.getCode());
-            if (CollUtil.isNotEmpty(categoryList)) {
+            if (CollUtil.isNotEmpty(categoryList) && categoryEnumSet.contains(categoryEnum)) {
                 TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>> firstTupleDTO = new TupleDTO<>();
                 resList.add(firstTupleDTO);
                 firstTupleDTO.setField1(categoryEnum.getCode());
@@ -89,7 +96,7 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
                 Map<String, List<TbBusiMonitor>> alarmMap = categoryList.stream().collect(Collectors.groupingBy(TbBusiMonitor::getAlarmCode));
                 for (DpConstant.BusiMonitorAlarmEnum alarmEnum : DpConstant.BusiMonitorAlarmEnum.getByCategory(categoryEnum)) {
                     List<TbBusiMonitor> alarmList = alarmMap.get(alarmEnum.toString());
-                    if (CollUtil.isNotEmpty(alarmList)) {
+                    if (CollUtil.isNotEmpty(alarmList) && alarmEnumSet.contains(alarmEnum)) {
                         List<DpBusiMonitorDTO> alarmCopyList = BeanUtil.copyToList(alarmList, DpBusiMonitorDTO.class);
                         TupleDTO<String, List<DpBusiMonitorDTO>> thirdTupleDTO = new TupleDTO<>();
                         thirdTupleDTO.setField1(alarmEnum.toString());

@@ -5,6 +5,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.TbBusiMonitor;
 import com.steccn.dp.dto.DpBusiMonitorDTO;
+
 import java.util.List;
 
 /**
@@ -24,7 +25,8 @@ public interface TbBusiMonitorService extends IService<TbBusiMonitor> {
 
     /**
      * 显示所有的业务监控配置
+     *
      * @return
      */
-    List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> showAll();
+    List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>> showAll(List<String> alarmCodeList);
 }

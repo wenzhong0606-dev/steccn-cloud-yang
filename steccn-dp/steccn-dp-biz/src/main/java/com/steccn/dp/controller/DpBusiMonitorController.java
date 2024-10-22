@@ -30,9 +30,9 @@ public class DpBusiMonitorController {
         return R.success(busiMonitorService.saveList(validList.getList()));
     }
 
-    @GetMapping
+    @PostMapping("/show")
     @ApiOperation(value = "业务监控-显示所有配置")
-    public R<List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>>> showAll() {
-        return R.success(busiMonitorService.showAll());
+    public R<List<TupleDTO<Integer, List<TupleDTO<String, List<DpBusiMonitorDTO>>>>>> showAll(@RequestBody List<String> alarmCodeList) {
+        return R.success(busiMonitorService.showAll(alarmCodeList));
     }
 }
