@@ -21,7 +21,7 @@ public class TbBusiMonitor implements Serializable {
     /**
      * 
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**
