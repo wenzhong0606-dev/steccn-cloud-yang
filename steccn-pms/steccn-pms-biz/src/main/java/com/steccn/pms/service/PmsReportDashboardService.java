@@ -55,6 +55,15 @@ public interface PmsReportDashboardService {
     BigDecimal meltingRate(Integer workShopId, LocalDate date);
 
     /**
+     * 融化率监控
+     * @param workShopId 车间id
+     * @param date 日期
+     * @param alarmCode 告警code
+     */
+    void meltingRateMonitor(Integer workShopId, LocalDate date, String alarmCode);
+
+
+    /**
      * 今日产量（单位/T/片/㎡）
      *
      * @param workShopId 车间id

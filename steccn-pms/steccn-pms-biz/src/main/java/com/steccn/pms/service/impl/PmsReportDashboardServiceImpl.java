@@ -19,13 +19,17 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.feign.RemoteBusiMonitorFeignApi;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
 import com.steccn.ems.vo.EpPmsConsumeVO;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
@@ -48,6 +52,7 @@ import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
 import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.qms.util.XAxisUtil;
+import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import lombok.RequiredArgsConstructor;
@@ -94,6 +99,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
     private final static ThreadPoolExecutor MY_POOL = ThreadUtil.newExecutor(0, Runtime.getRuntime().availableProcessors() * 2);
+    private final RemoteBusiMonitorFeignApi remoteBusiMonitorFeignApi;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Override
     public BigDecimal pullForceToday(Integer workShopId, LocalDate date) {
@@ -138,6 +145,40 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         BigDecimal divide = BigDecimalUtil.divide(weight, new BigDecimal(1000));
         BigDecimal result = BigDecimalUtil.percent(pullForce, divide, 2);
         return result;
+    }
+
+    @Override
+    public void meltingRateMonitor(Integer workShopId, LocalDate date, String alarmCode) {
+        //根据告警code获取
+        List<DpBusiMonitorDTO> meltingRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        for (DpBusiMonitorDTO monitor : meltingRateList) {
+            BigDecimal result = meltingRate(workShopId, date);
+            //判断是否超过
+            BigDecimal upValue = monitor.getUpValue();
+            BigDecimal lowValue = monitor.getLowValue() ;
+            //高于上限
+            StringBuilder contentSb = new StringBuilder();
+            String template = SysMsgConstant.MsgTypeEnum.JP_RH_RATE_ALARM.getTemplate();
+            if (Objects.nonNull(result) && Objects.nonNull(upValue) && BigDecimalUtil.gt(result, upValue)) {
+                String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "高", upValue);
+                contentSb.append(ts1);
+            } else if (Objects.nonNull(result) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(result, lowValue)) {
+                String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "低", lowValue);
+                contentSb.append(ts3);
+            }
+            if (contentSb.length() > 0) {
+                Set<Long> notifyMan = monitor.getNotifyMan();
+                SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.JP_RH_RATE_ALARM.getCode());
+                sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.JP_RH_RATE_ALARM.getTitle());
+                sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.JP_RH_RATE_ALARM.getWarnFlag());
+                sysMsgDTO.setUserList(notifyMan);
+                sysMsgDTO.setContent(contentSb.substring(0, contentSb.length()));
+                sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                log.info("meltingRateMonitor方法消息发送 -> {}", aBoolean);
+            }
+        }
     }
 
     @Override
