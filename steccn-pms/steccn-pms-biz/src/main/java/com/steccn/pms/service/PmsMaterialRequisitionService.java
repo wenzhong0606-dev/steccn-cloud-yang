@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.vo.R;
@@ -11,6 +12,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -60,7 +62,7 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @param dto
      * @return
      */
-    Boolean approval(MaterialRequisitionApprovalDTO dto);
+    Boolean approval(MaterialRequisitionApprovalDTO dto) throws IOException;
 
     /**
      * 领料计划

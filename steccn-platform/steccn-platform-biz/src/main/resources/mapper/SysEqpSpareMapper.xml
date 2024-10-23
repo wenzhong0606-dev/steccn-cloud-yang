@@ -137,4 +137,15 @@
             AND product_property = #{field2}
         </if>
     </select>
+    <select id="listBySpecification" resultType="java.lang.Long">
+        SELECT
+        id
+        FROM
+        sys_eqp_spare
+        WHERE
+        state = 1
+        <if test="specification != null and specification != ''">
+            AND SPECIFICATIONS LIKE CONCAT('%', #{specification},'%')
+        </if>
+    </select>
 </mapper>

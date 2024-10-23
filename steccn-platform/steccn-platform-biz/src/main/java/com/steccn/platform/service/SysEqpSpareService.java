@@ -154,4 +154,6 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
     List<EqpSpareVO> listByProperty(TupleDTO<String, Integer> dto);
 
     List<EqpSpareVO> listByTypeId(Set<String> types);
+
+    List<Long> listBySpecification(String specification);
 }

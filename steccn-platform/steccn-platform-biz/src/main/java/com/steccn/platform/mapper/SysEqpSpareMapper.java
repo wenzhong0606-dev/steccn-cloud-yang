@@ -43,6 +43,8 @@ public interface SysEqpSpareMapper extends BaseMapper<SysEqpSpare> {
     Collection<SysEqpSpare> listByCode(@Param("codeList") List<String> codeList);
 
     List<SysEqpSpare>  listByProperty(@Param("field1") String field1,@Param("field2")Integer field2 );
+
+    List<Long> listBySpecification(@Param("specification") String specification);
 }
 
 

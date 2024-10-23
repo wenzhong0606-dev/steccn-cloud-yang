@@ -47,6 +47,8 @@ public class SalesLogisticsVO {
     private String model_specs;
     private LocalDate send_date;
 
+    private String logisticsCompany;
+
     /**
      * 发货数量 片
      */

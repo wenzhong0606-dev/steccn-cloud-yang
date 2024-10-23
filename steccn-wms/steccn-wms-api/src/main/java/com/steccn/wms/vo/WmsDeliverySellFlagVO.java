@@ -43,6 +43,8 @@ public class WmsDeliverySellFlagVO {
 
     private String product;
 
+    private String logisticsCompany;
+
 
 
 

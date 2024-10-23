@@ -177,4 +177,11 @@ public class EqpSpareFeignController {
     public R<List<EqpSpareVO>> listByTypeId(@RequestBody  Set<String> types) {
         return R.success(eqpSpareService.listByTypeId(types));
     }
+
+
+    @GetMapping("/listBySpecification")
+    @ApiOperation("根据规格获取物料")
+    public R<List<Long>> listBySpecification(@RequestParam("specification") String specification){
+        return R.success(eqpSpareService.listBySpecification(specification));
+    }
 }

@@ -129,7 +129,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             materialRequisitionDTO.setTypeId(dto.getTypeId());
             //备品备件库
             materialRequisitionDTO.setWarehouseId(440L);
-            materialRequisitionDTO.setId(dto.getFileId());
+            materialRequisitionDTO.setFileId(dto.getFileId());
             //详情
             List<MaterialRequisitionInfoDTO> detailList = Lists.newArrayList();
             //劳保领用记录

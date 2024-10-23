@@ -379,6 +379,13 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         }
         return res;
     }
+
+    @Override
+    public List<Long> listBySpecification(String specification) {
+        return this.baseMapper.listBySpecification(specification);
+
+    }
+
     List<SysClassification> getClassificationNodes(List<SysClassification> list ,Long parentCode){
         List<SysClassification> result = new ArrayList<>();
         for (SysClassification sysClassification : list) {

@@ -1,5 +1,6 @@
 package com.steccn.pms.controller.feign;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.valid.UpdateGroup;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -35,7 +37,7 @@ public class MaterialRequisitionFeignController {
     @ApiOperation("领料单审批")
     @PutMapping("/approval")
     @SysLog("领料单审批")
-    public R<Boolean> approval(@RequestBody MaterialRequisitionApprovalDTO dto) {
+    public R<Boolean> approval(@RequestBody MaterialRequisitionApprovalDTO dto) throws IOException {
         return R.success(pmsMaterialRequisitionService.approval(dto));
     }
 

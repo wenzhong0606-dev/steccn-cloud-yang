@@ -84,24 +84,49 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
-        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
-                .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
-                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
-                .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
-                .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
-                .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
-                .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
-                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
-                .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
-                        .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
-                .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
-                        .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
-                        .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO))
-                .orderByDesc(WmsInventory::getUpdateTime)
-                .orderByDesc(WmsInventory::getId);
+        LambdaQueryWrapper<WmsInventory> like;
+        //规格筛选
+        if (Objects.nonNull(dto.getSpecification())){
+            List<Long> materialIds = FeignOptional.of(() -> remoteSpareFeignApi.listBySpecification(dto.getSpecification()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            like  = new LambdaQueryWrapper<WmsInventory>()
+                    .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+                    .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                    .in(WmsInventory::getMaterialId,materialIds)
+                    .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                    .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                    .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                    .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                    .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                    .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                            .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
+                    .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                            .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO))
+                    .orderByDesc(WmsInventory::getUpdateTime)
+                    .orderByDesc(WmsInventory::getId);
+        }else {
+                    like = new LambdaQueryWrapper<WmsInventory>()
+                    .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+                    .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                    .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                    .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                    .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                    .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                    .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                    .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                            .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
+                    .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                            .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO))
+                    .orderByDesc(WmsInventory::getUpdateTime)
+                    .orderByDesc(WmsInventory::getId);
+        }
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);

@@ -5,9 +5,13 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.json.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
@@ -56,10 +60,18 @@ import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.security.SecurityUtil;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.logging.log4j.util.Base64Util;
+import org.springframework.boot.json.GsonJsonParser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Base64Utils;
 
+
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -336,7 +348,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approval(MaterialRequisitionApprovalDTO dto) {
+    public Boolean approval(MaterialRequisitionApprovalDTO dto) throws IOException {
         //1.根据id获取领料单
         PmsMaterialRequisition pmsMaterialRequisition = getById(dto.getId());
         //2.校验领料单是否存在
@@ -383,13 +395,26 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_ZSL, quantity.toString()));
                 //领料单编码
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LLDBM, pmsMaterialRequisition.getCode()));
+//                JSONObject jsonObject = new JSONObject();
+//                FileInfoVO fileInfoVO = fileMap.get(pmsMaterialRequisition.getFileId());
+//                jsonObject.put("fileName", fileInfoVO.getFileName());
+//                jsonObject.put("filePath", fileInfoVO.getFileUrl());
+//                List<JSONObject> list = new ArrayList<>();
+//                list.add(jsonObject);
                 //附件
+//
                 OaWorkFlowNameFileDTO oaWorkFlowNameFileDTO = new OaWorkFlowNameFileDTO(fileMap.get(pmsMaterialRequisition.getFileId()).getFileUrl(),fileMap.get(pmsMaterialRequisition.getFileId()).getFileName());
 
                 List<OaWorkFlowNameFileDTO> fileList = Lists.newArrayList();
                 fileList.add(oaWorkFlowNameFileDTO);
+//                JSONObject jsonObject = new JSONObject();
+//                jsonObject.put( PmManagerConstant.WORKFLOW_FJ,JSONObject.toJSONString(fileList));
 
-                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ, fileList.toString()));
+                OaWorkFlowNameValueDTO oaWorkFlowNameValueDTO = new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ, JSONObject.toJSONString(fileList));
+//                new OaWorkFlowFileDTO(PmManagerConstant.WORKFLOW_FJ,)
+                new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ,JSONObject.toJSONString(fileList));
+
+                mainDataList.add(oaWorkFlowNameValueDTO);
                 //申请部门
                 Set<Integer> officeIdSet = Sets.newHashSet();
                 officeIdSet.add(pmsMaterialRequisition.getDepartmentId());

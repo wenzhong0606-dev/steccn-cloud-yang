@@ -4,10 +4,51 @@ import com.steccn.pms.constant.PmManagerConstant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 /**
  * @desc 仓储管理的常量接口
  */
 public interface WmsManagerConstant {
+
+
+    String SALES_ORDER = "salesOrder";
+
+    String CLIENT = "client";
+
+    String PRODUCT = "product";
+
+    String SEND_DATE = "sendDate";
+
+    String LOGISTICS_COMPANY = "logisticsCompany";
+
+    String CAR_CODE = "carCode";
+
+    String SEND_QUANTITY = "sendQuantity";
+
+    String PRICE_QUANTITY= "priceQuantity";
+
+
+    /**
+     * 签收类型
+     */
+     String SIGNATURE_TYPE = "signatureType";
+
+    /**
+     * 签收数量
+     */
+    String SIGNED_QUANTITY = "signedQuantity";
+
+    /**
+     * 签收面积
+     */
+    String SIGNED_PRICE_QUANTITY = "signedPriceQuantity";
+
+    /**
+     * 签收日期
+     */
+    String SIGNED_DATE  = "signedDate";
 
 
     String MATERIAL_DEPOT ="主要材料库";

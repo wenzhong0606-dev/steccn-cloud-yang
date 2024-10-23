@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -83,7 +85,7 @@ public class MaterialRequisitionController {
     @ApiOperation("领料单审批")
     @PutMapping("/approval")
     @SysLog("领料单审批")
-    public R<Boolean> approval(@Validated(UpdateGroup.class) @RequestBody MaterialRequisitionApprovalDTO dto) {
+    public R<Boolean> approval(@Validated(UpdateGroup.class) @RequestBody MaterialRequisitionApprovalDTO dto) throws IOException {
         return R.success(pmsMaterialRequisitionService.approval(dto));
     }
 

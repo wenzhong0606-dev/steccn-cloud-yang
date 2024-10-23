@@ -1,5 +1,6 @@
 package com.steccn.oa.dto;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -26,6 +27,8 @@ public class OaWorkFlowParamDTO implements Serializable {
      * 主要数据
      */
     private List<OaWorkFlowNameValueDTO> mainData;
+
+    private List<JSONObject> jsonList;
     /**
      * 工作流id
      */

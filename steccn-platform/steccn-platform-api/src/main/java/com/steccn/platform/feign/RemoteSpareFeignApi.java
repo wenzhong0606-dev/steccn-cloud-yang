@@ -190,4 +190,8 @@ public interface RemoteSpareFeignApi {
     @PostMapping("/feign/platform/eqpSpare/listByTypeId")
     @ApiOperation("根据物料类型以及下级获取物料")
     R<List<EqpSpareVO>> listByTypeId(Set<String> strings);
+
+
+    @GetMapping("/feign/platform/eqpSpare/listBySpecification")
+    R<List<Long>> listBySpecification(@RequestParam("specification") String specification);
 }

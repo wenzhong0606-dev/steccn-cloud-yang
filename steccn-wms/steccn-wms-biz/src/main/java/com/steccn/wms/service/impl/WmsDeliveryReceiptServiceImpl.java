@@ -648,7 +648,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String state = salesLogisticsVO.getState();
-                wmsDeliverySellFlagVO.setSalesOrder(salesLogisticsVO.getName());
+                wmsDeliverySellFlagVO.setSendDate(salesLogisticsVO.getSend_date());
+                wmsDeliverySellFlagVO.setLogisticsCompany(salesLogisticsVO.getLogisticsCompany());
                 wmsDeliverySellFlagVO.setSalesOrder(salesLogisticsVO.getName());
                 wmsDeliverySellFlagVO.setClient(salesLogisticsVO.getCustomer_name());
                 wmsDeliverySellFlagVO.setSendQuantity(new BigDecimal(salesLogisticsVO.getSale_qty()));
