@@ -11,6 +11,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,14 +28,9 @@ public class WaterRateTask {
     @XxlJob("GS_WATER")
     public void GS_WATER() {
         XxlJobHelper.log("GS_WATER-任务开始");
-        List<DpBusiMonitorDTO> gsWaterList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm("GS_WATER"), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusMinutes(10);
-        if (CollUtil.isNotEmpty(gsWaterList)) {
-            gsWaterList.forEach(ele ->{
-                qtDayReportService.samplingWaterRateSiMonitor(start, end, "GS_WATER");
-            });
-        }
+        qtDayReportService.samplingWaterRateSiMonitor(start, end, "GS_WATER");
         XxlJobHelper.log("GS_WATER-任务完成，执行结果 -> {}", true);
     }
 }

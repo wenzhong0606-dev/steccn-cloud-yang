@@ -104,6 +104,15 @@ public interface QtDayReportService {
     QtLineChartBarDTO samplingWaterRateBatch(LocalDate start, LocalDate end);
 
     /**
+     * 配料含水率-配合料 监控
+     * @param start 开始日期
+     * @param end   结束日期
+     * @param alarmCode 告警code
+     */
+    void samplingWaterRateBatchMonitor(LocalDateTime start, LocalDateTime end, String alarmCode);
+
+
+    /**
      * 配料抽检日报表-下载
      * @param date 日期
      * @return 报表

@@ -61,7 +61,9 @@ public interface SysMsgConstant {
         EQP_NOTICE(24,"设备故障报警",MsgCategoryEnum.SYS_REMIND.code,"设备:%s故障报警",0),
         SAFETY_NOTICE(25,"安环代办提醒",MsgCategoryEnum.SYS_REMIND.code,"您有一个未完成的安环代办任务",0),
         EP_CONSUME_ALARM(26,"能耗超标",MsgCategoryEnum.SYS_REMIND.code,"%s能耗%s，超过%s",0),
-        GS_WATER_ALARM(27,"硅砂含水率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s料仓硅砂含水率为%s%%，%s于上限值%s%%",0)
+        GS_WATER_ALARM(27,"硅砂含水率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s料仓硅砂含水率为%s%%，%s于上限值%s%%",0),
+        PHL_WATER_ALARM(28,"配合料含水率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】配合料含水率为%s%%，%s于上限值%s%%",0)
+
         ;
 
         private Integer code;

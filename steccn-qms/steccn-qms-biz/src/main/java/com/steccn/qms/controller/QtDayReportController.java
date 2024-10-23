@@ -128,6 +128,13 @@ public class QtDayReportController {
         return R.success(qtDayReportService.samplingWaterRateBatch(start, end));
     }
 
+    @GetMapping("/sampling/water/rate/batch/monitor")
+    @ApiOperation("配料含水率-")
+    public R<Void> samplingWaterRateBatchMonitor(@RequestParam("start") LocalDateTime start, @RequestParam("end") LocalDateTime end) {
+        qtDayReportService.samplingWaterRateBatchMonitor(start, end, "PHL_WATER");
+        return R.success();
+    }
+
     @GetMapping("/sampling/download")
     @ApiOperation("配料抽检日报表")
     public void samplingDownload(@RequestParam("date") LocalDate date, HttpServletResponse response) throws IOException {
