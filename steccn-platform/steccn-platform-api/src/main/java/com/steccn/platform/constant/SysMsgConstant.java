@@ -64,6 +64,7 @@ public interface SysMsgConstant {
         GS_WATER_ALARM(27,"硅砂含水率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s料仓硅砂含水率为%s%%，%s于上限值%s%%",0),
         PHL_WATER_ALARM(28,"配合料含水率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】配合料含水率为%s%%，%s于上限值%s%%",0),
         JP_RH_RATE_ALARM(29,"融化率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】融化率为%s%%，%s于上限值%s%%",0),
+        JP_PRODUCT_PASS_RATE_ALARM(30,"产线合格率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s产量合格率为%s%%，%s于上限值%s%%",0),
 
         ;
 

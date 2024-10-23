@@ -550,6 +550,92 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public void lineCompleteMonitor(LocalDate date, String alarmCode) {
+        //根据告警code获取
+        List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        if(CollUtil.isEmpty(passRateList)) {
+            return ;
+        }
+        //获取基片二车间和基片一车间
+        Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC001001","STEC001002")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        //获取两个车间的所有产线
+        Map<Integer, SysOfficeVO> wsLineMap = Maps.newHashMap();
+        for (Map.Entry<String, SysOfficeVO> wsOffice : sysOfficeMap.entrySet()) {
+            Map<Integer, SysOfficeVO> tmpLineMap = getWsLineMap(wsOffice.getValue());
+            wsLineMap.putAll(tmpLineMap);
+            Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        }
+        int type = 0 ;
+        //获取班次产量
+        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, type, PmManagerConstant.MEASURE_UNIT_TON);
+        SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
+        List<PmsPullForce> list = pmsPullForceService.list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getPullForceDate, date).in(PmsPullForce::getProductLineId, wsLineMap.keySet()));
+        Map<String, BigDecimal> pfMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(ele -> pfMap.put(ele.getProductLineId() + "_" + ele.getClassesId(), ele.getQuantity()));
+        }
+        //获取早晚班
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        //根据产量map获取合格率
+        Map<Integer,BigDecimal> valueMap = Maps.newHashMap();
+        sortLineList.forEach(x -> {
+            Integer ele = x.getId();
+            BigDecimal morning = productNumMap.get(ele + "_" + morningDict.getId());
+            BigDecimal night = productNumMap.get(ele + "_" + nightDict.getId());
+            BigDecimal sum = BigDecimalUtil.add(morning, night);
+            BigDecimal pfMorning = pfMap.get(ele + "_" + morningDict.getId());
+            BigDecimal pfNight = pfMap.get(ele + "_" + nightDict.getId());
+            BigDecimal pfSum = BigDecimalUtil.add(pfMorning, pfNight);
+            valueMap.put(ele, BigDecimalUtil.percent(sum, pfSum, 2));
+        });
+        //获取两个车间的合格率
+        sysOfficeMap.forEach((k,v) ->{
+            BigDecimal wsPm = produceNumRate(v.getId(), date);
+            valueMap.put(v.getId(),wsPm);
+        });
+        for (DpBusiMonitorDTO monitor : passRateList) {
+            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+                StringBuilder contentSb = new StringBuilder();
+                BigDecimal upValue = monitor.getUpValue();
+                BigDecimal lowValue = monitor.getLowValue();
+                Map<Integer, SysOfficeVO> officeIdMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(monitor.getMonitorRange())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                for (SysOfficeVO office : officeIdMap.values()) {
+                    //第一种情况，是车间集合
+                    //第二种情况，是产线集合告警
+                    //第三种情况，是车间+产线告警
+                    BigDecimal currentPmRate = valueMap.get(office.getId());
+                     //高于上限
+                    String template = SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getTemplate();
+                    if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        contentSb.append(ts1).append("\n");
+                    } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        contentSb.append(ts3).append("\n");
+                    }
+                }
+                if (contentSb.length() > 0) {
+                    Set<Long> notifyMan = monitor.getNotifyMan();
+                    SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getCode());
+                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getTitle());
+                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getWarnFlag());
+                    sysMsgDTO.setUserList(notifyMan);
+                    sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
+                    sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    log.info("lineCompleteMonitor方法消息发送 -> {}", aBoolean);
+                }
+            }
+        }
+    }
+
+    @Override
     public QtLineChartBarDTO lineInStorage(Integer workShopId, LocalDate date) {
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(workShopId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeMap, "车间不能为空");

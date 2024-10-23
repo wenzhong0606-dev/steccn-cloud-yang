@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -159,6 +160,13 @@ public interface PmsReportDashboardService {
      * @return
      */
     QtLineChartBarDTO lineComplete(Integer workShopId, LocalDate date);
+
+    /**
+     * 产线完工信息
+     *
+     * @param date 日期
+     */
+    void lineCompleteMonitor(LocalDate date, String alarmCode);
 
     /**
      * 产线入库信息
