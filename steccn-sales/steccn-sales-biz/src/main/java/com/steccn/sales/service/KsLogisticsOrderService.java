@@ -64,4 +64,6 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
     Boolean updateOrderByOrderCode(KsLogisticsOrderDTO dto);
 
     Map<String,String> salesOrderCarCode(Set<String> salesOrders);
+
+   String salesOrderCompany(String salesOrders);
 }

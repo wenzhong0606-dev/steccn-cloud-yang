@@ -63,6 +63,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final KsAbnormalCauseService ksAbnormalCauseService;
     private final KsAbnormalCauseKsLogisticsOrderRelService ksAbnormalCauseKsLogisticsOrderRelService;
+    private final KsLogisticsCompanyService ksLogisticsCompanyService;
 
     @Override
     public Page<KsLogisticsVO> getLogisticsRecord(KsLogisticsDTO dto) {
@@ -238,6 +239,16 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
             });
         }
         return res;
+    }
+
+    @Override
+    public  String salesOrderCompany(String salesOrder) {
+        String company = null;
+        if (Objects.nonNull(salesOrder)){
+            KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, salesOrder));
+            company = ksLogisticsCompanyService.getOne(new LambdaQueryWrapper<KsLogisticsCompany>().eq(KsLogisticsCompany::getId, one.getLogisticsCompanyId())).getName();
+        }
+        return company;
     }
 }
 

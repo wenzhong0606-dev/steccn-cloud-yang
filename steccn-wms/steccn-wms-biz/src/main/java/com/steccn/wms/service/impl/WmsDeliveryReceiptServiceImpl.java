@@ -33,6 +33,8 @@ import com.steccn.platform.vo.*;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.util.UnitConvertUtil;
+import com.steccn.sales.dto.KsLogisticsOrderDTO;
+import com.steccn.sales.feign.RemoteSaleFeignApi;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
@@ -106,6 +108,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final WmsDeliveryReceiptInfoService wmsDeliveryReceiptInfoService;
 
     private final RemoteSalesFeignApi remoteSalesFeignApi;
+
+    private final RemoteSaleFeignApi remoteSaleFeignApi;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
@@ -648,8 +652,12 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String state = salesLogisticsVO.getState();
+                KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+                ksLogisticsOrderDTO.setName(number);
+                String company = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompany(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+                //根据物流单单号获取物流公司
                 wmsDeliverySellFlagVO.setSendDate(salesLogisticsVO.getSend_date());
-                wmsDeliverySellFlagVO.setLogisticsCompany(salesLogisticsVO.getLogisticsCompany());
+                wmsDeliverySellFlagVO.setLogisticsCompany(company);
                 wmsDeliverySellFlagVO.setSalesOrder(salesLogisticsVO.getName());
                 wmsDeliverySellFlagVO.setClient(salesLogisticsVO.getCustomer_name());
                 wmsDeliverySellFlagVO.setSendQuantity(new BigDecimal(salesLogisticsVO.getSale_qty()));
