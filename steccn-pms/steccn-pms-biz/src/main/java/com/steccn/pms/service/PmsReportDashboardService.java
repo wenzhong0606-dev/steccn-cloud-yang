@@ -177,6 +177,13 @@ public interface PmsReportDashboardService {
     QtLineChartBarDTO lineInStorage(Integer workShopId, LocalDate date);
 
     /**
+     * 产线入库信息 - 监控
+     * @param date 日期
+     * @param alarmCode 告警code
+     */
+    void lineInStorageMonitor(LocalDate date, String alarmCode);
+
+    /**
      * 拉引量熔化率
      * @param dto
      * @return

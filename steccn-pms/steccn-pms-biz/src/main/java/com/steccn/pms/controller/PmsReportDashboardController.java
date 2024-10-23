@@ -148,6 +148,13 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.lineInStorage(workShopId, date));
     }
 
+    @GetMapping("/line/in/storage/monitor")
+    @ApiOperation("产线入库信息-监控")
+    public R<Void> lineInStorageMonitor(@RequestParam("date") LocalDate date) {
+        pmsReportDashboardService.lineInStorageMonitor(date, "JP_IN_STORAGE_RATE");
+        return R.success();
+    }
+
     @PostMapping("/line/pull/force/melting")
     @ApiOperation("拉引量/熔化率")
     public R<QtLineChartBarDTO> pullForceMelting(@RequestBody @Valid DpPmsOperateDTO dto) {
