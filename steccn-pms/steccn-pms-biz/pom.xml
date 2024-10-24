@@ -176,6 +176,11 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+        <!--xxl-job-->
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-xxljob</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

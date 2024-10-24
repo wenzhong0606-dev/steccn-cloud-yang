@@ -64,8 +64,8 @@ public class PmsReportDashboardController {
 
     @GetMapping("/pull/melting/today/monitor")
     @ApiOperation("熔化率（单位/T）-监控")
-    public R<Void> meltingRateMonitor(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
-        pmsReportDashboardService.meltingRateMonitor(workShopId, date, "JP_RH_RATE");
+    public R<Void> meltingRateMonitor(@RequestParam("date") LocalDate date) {
+        pmsReportDashboardService.meltingRateMonitor(date, "JP_RH_RATE");
         return R.success();
     }
 

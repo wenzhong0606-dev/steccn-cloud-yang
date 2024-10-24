@@ -148,7 +148,11 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
-    public void meltingRateMonitor(Integer workShopId, LocalDate date, String alarmCode) {
+    public void meltingRateMonitor(LocalDate date, String alarmCode) {
+        //获取基片二车间
+        SysOfficeVO officeVO = FeignOptional.of(() -> remoteOfficeFeign.getByCode("STEC001002"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(officeVO, "目标车间为空");
+        Integer workShopId = officeVO.getId();
         //根据告警code获取
         List<DpBusiMonitorDTO> meltingRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         for (DpBusiMonitorDTO monitor : meltingRateList) {

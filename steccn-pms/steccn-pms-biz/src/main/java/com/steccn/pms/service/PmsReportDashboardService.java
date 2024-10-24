@@ -57,11 +57,10 @@ public interface PmsReportDashboardService {
 
     /**
      * 融化率监控
-     * @param workShopId 车间id
      * @param date 日期
      * @param alarmCode 告警code
      */
-    void meltingRateMonitor(Integer workShopId, LocalDate date, String alarmCode);
+    void meltingRateMonitor(LocalDate date, String alarmCode);
 
 
     /**
