@@ -282,11 +282,15 @@ public class KafkaConsumer {
                     //如果都一致如果状态都一致那么其上级设备也改变
                     int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
                     if(offNum == brotherList.size()){
-                        mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        MesEquipment eqpTmp1 = new MesEquipment();
+                        eqpTmp1.setState(OaConstant.NUM_3.toString());
+                        mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
                                 .eq(MesEquipment::getId,"1590633171971465216")
-                                .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
                     }else {
-                        mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        MesEquipment eqpTmp1 = new MesEquipment();
+                        eqpTmp1.setState(OaConstant.NO.toString());
+                        mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
                                 .eq(MesEquipment::getId,"1590633171971465216")
                                 .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
                     }
@@ -432,11 +436,15 @@ public class KafkaConsumer {
                                     1548586975526834176L));
                         }
                         if(offNum == brotherList.size()){
-                            mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            MesEquipment eqpTmp1 = new MesEquipment();
+                            eqpTmp1.setState(OaConstant.NUM_3.toString());
+                            mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
                                     .in(MesEquipment::getId,eqpIdSetTmp)
-                                    .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
                         }else {
-                            mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            MesEquipment eqpTmp1 = new MesEquipment();
+                            eqpTmp1.setState(OaConstant.NO.toString());
+                            mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
                                     .in(MesEquipment::getId,eqpIdSetTmp)
                                     .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
                         }
@@ -458,11 +466,15 @@ public class KafkaConsumer {
                             if(CollUtil.isNotEmpty(pBrotherList)){
                                 int offNum = (int)pBrotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
                                 if(offNum == brotherList.size()){
-                                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                    MesEquipment eqpTmp1 = new MesEquipment();
+                                    eqpTmp1.setState(OaConstant.NUM_3.toString());
+                                    mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
                                             .eq(MesEquipment::getId,pBrotherList.get(0).getParentCode())
-                                            .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
                                 }else {
-                                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                    MesEquipment eqpTmp1 = new MesEquipment();
+                                    eqpTmp1.setState(OaConstant.NO.toString());
+                                    mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
                                             .in(MesEquipment::getId,pBrotherList.get(0).getParentCode())
                                             .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
                                 }
