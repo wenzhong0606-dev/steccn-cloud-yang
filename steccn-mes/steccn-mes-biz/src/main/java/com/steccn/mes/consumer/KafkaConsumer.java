@@ -68,7 +68,7 @@ public class KafkaConsumer {
      *
      * @param record
      */
-    @KafkaListener(topics = "eqp_signal_data", concurrency = "1")
+    @KafkaListener(topics = "eqp_signal_data_order", concurrency = "1")
     @Transactional(rollbackFor = Exception.class)
     public void tpFirst(ConsumerRecord<Object, String> record, Acknowledgment ack) {
         // 消费的哪个topic、partition的消息,打印出消息内容
@@ -260,6 +260,101 @@ public class KafkaConsumer {
                 if(!equipment.getState().equals(OaConstant.NO.toString())){
                     equipment.setState(OaConstant.NUM_3.toString());
                 }
+                //特殊处理一号强制式混合机、二号强制式混合机、缓冲仓闸门（混合机)
+                if(eqp.getId().equals(1543243396975095808L)
+                        ||eqp.getId().equals(1543243870138724352L)
+                        ||eqp.getId().equals(1548571027763810304L)
+                        ||eqp.getId().equals(1747819792324792320L)){
+                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                            .like(MesEquipment::getParentCodes, eqp.getId())
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                    idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
+                    idSet.add(eqp.getId());
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .in(MesEquipment::getId,idSet)
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                    //查看混合机是否一致
+                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getParentCode, "1590633171971465216")
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                    //如果都一致如果状态都一致那么其上级设备也改变
+                    int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
+                    if(offNum == brotherList.size()){
+                        mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                .eq(MesEquipment::getId,"1590633171971465216")
+                                .eq(MesEquipment::getStatus, OaConstant.NUM_3.toString()));
+                    }else {
+                        mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                .eq(MesEquipment::getId,"1590633171971465216")
+                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                    }
+                    ack.acknowledge();
+                    return;
+
+                }
+                //1#混合机油泵电机只有一台开
+                if(eqp.getId().equals(1554749971972489216L)){
+                    Long eqpIdTmp = 1554750034203377664L;
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,"1554749971972489216"));
+                    MesEquipment equipmentTmp = new MesEquipment();
+                    if(equipment.getState().equals(OaConstant.NO.toString())
+                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+                    }else {
+                        equipmentTmp.setState(OaConstant.NO.toString());
+                    }
+                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,eqpIdTmp));
+                    ack.acknowledge();
+                    return;
+                } else if(eqp.getId().equals(1554750034203377664L)){
+                    Long eqpIdTmp = 1554749971972489216L;
+                    MesEquipment equipmentTmp = new MesEquipment();
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,"1554750034203377664"));
+                    if(equipment.getState().equals(OaConstant.NO.toString())
+                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+                    }else {
+                        equipmentTmp.setState(OaConstant.NO.toString());
+                    }
+                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,eqpIdTmp));
+                    ack.acknowledge();
+                    return;
+                }
+
+                //2#混合机油泵电机只有一台开
+                if(eqp.getId().equals(1552858842006159360L)){
+                    Long eqpIdTmp = 1554749911603871744L;
+                    MesEquipment equipmentTmp = new MesEquipment();
+                    if(equipment.getState().equals(OaConstant.NO.toString())
+                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+                    }else {
+                        equipmentTmp.setState(OaConstant.NO.toString());
+                    }
+                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,eqpIdTmp));
+                    ack.acknowledge();
+                    return;
+                } else if(eqp.getId().equals(1554749911603871744L)){
+                    Long eqpIdTmp = 1552858842006159360L;
+                    MesEquipment equipmentTmp = new MesEquipment();
+                    if(equipment.getState().equals(OaConstant.NO.toString())
+                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+                    }else {
+                        equipmentTmp.setState(OaConstant.NO.toString());
+                    }
+                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,eqpIdTmp));
+                    ack.acknowledge();
+                    return;
+                }
                 //1、一停(开)下级设备全停(停)
                 //称量皮带 窑头布料小车
                 Set<Long> eqpId =Sets.newHashSet(1548573570782908416L,1793533390992564224L);
@@ -301,7 +396,7 @@ public class KafkaConsumer {
                 if(eqpId2.contains(eqp.getId())||eqpId3.contains(eqp.getId())){
                     //修改其下级设备
                     List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId, eqp.getParentCode())
+                            .like(MesEquipment::getParentCodes, eqp.getParentCode())
                             .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                             .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
                     if(CollUtil.isNotEmpty(childrenList)){

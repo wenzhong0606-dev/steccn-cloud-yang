@@ -4,6 +4,7 @@ package com.steccn.pms.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.vo.JpAnalysisReportVO;
@@ -54,6 +55,15 @@ public interface PmsReportDashboardService {
      * @return
      */
     BigDecimal meltingRate(Integer workShopId, LocalDate date);
+
+    /**
+     * 每日熔化率，拉引量
+     * f1 拉引量 f2入料量
+     * @param workShopId
+     * @param date
+     * @return
+     */
+    TupleDTO<BigDecimal,BigDecimal> dayPullWeight(Integer workShopId, LocalDate date);
 
     /**
      * 融化率监控

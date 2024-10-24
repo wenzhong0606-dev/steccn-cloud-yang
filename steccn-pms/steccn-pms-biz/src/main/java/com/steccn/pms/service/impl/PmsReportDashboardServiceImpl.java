@@ -148,6 +148,18 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public TupleDTO<BigDecimal, BigDecimal> dayPullWeight(Integer workShopId, LocalDate date) {
+        BigDecimal pullForce = pullForceToday(workShopId, date);
+        List<DpWeightVO> dpWeightVOS = FeignOptional.of(() -> remoteDpFeignApi.count(new TupleDTO<>(date.atTime(8, 0, 0)
+                , date.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        BigDecimal weight = dpWeightVOS.stream().map(DpWeightVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        TupleDTO<BigDecimal,BigDecimal> result = new TupleDTO<>();
+        result.setField1(pullForce);
+        result.setField2(BigDecimalUtil.divide(pullForce,weight));
+        return result;
+    }
+
+    @Override
     public void meltingRateMonitor(LocalDate date, String alarmCode) {
         //获取基片二车间
         SysOfficeVO officeVO = FeignOptional.of(() -> remoteOfficeFeign.getByCode("STEC001002"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
