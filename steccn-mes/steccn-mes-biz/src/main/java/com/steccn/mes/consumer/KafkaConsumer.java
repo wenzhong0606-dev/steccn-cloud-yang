@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -400,6 +401,41 @@ public class KafkaConsumer {
                 //白云石大螺旋 白云石小螺旋 纯碱大螺旋 石灰石大螺旋 石灰石小螺旋
                 // 配合料1#皮带 配合料3#皮带 碎玻璃7#皮带
                 // 配合料2#皮带 配合料4#皮带 碎玻璃8#皮带
+
+                //碎玻璃7#皮带 碎玻璃8#皮带 关联CH35和CH36
+                if(eqp.getId().equals(1548589026927366144L)||eqp.getId().equals(1548590147603451904L)){
+                    Long eqpTmp = 1552936564324741120L;
+                    if(!eqp.getId().equals(1548589026927366144L)){
+                        eqpTmp = 1552938001553338368L;
+                    }
+                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getParentCode, eqpTmp)
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                    Set<Long> eqpIdTmp2 = Sets.newHashSet();
+                    if(CollUtil.isNotEmpty(childrenList)){
+                        eqpIdTmp2.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
+                    }
+                    eqpIdTmp2.add(eqpTmp);
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .in(MesEquipment::getId,eqpIdTmp2)
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                    //校验父级
+                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getParentCode, "1592305077745344512")
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                    int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
+                    MesEquipment equipment1 = new MesEquipment();
+                    if(brotherList.size()==offNum){
+                        equipment1.setState(OaConstant.NUM_3.toString());
+                    }else {
+                        equipment1.setState(OaConstant.NO.toString());
+                    }
+                    mesEquipmentService.update(equipment1,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,brotherList.get(0).getParentCode())
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                }
                 Set<Long> eqpId3 =Sets.newHashSet(1731573403747045376L,1731573432738074624L,1731579657513029632L,1731579686487281664L,1731580128638226432L,1731580172787470336L
                 ,1548575683441250304L,1548583156571099136L,1548589026927366144L
                 ,1548582353395437568L,1548584532931956736L,1548590147603451904L);
