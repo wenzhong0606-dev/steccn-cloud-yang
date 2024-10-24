@@ -15,6 +15,8 @@ import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
+import com.steccn.dp.feign.RemoteBusiMonitorFeignApi;
 import com.steccn.mes.constant.MesManagerConstant;
 import com.steccn.mes.domain.JsSysOffice;
 import com.steccn.mes.domain.MesEqpInsPlanSchedule;
@@ -32,11 +34,15 @@ import com.steccn.mes.vo.MesTempLineXDataVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaTodayClassVO;
+import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -67,6 +73,8 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final OaInfoService oaInfoService;
     private final MesEqpInsPlanScheduleMapper mesEqpInsPlanScheduleMapper;
+    private final RemoteBusiMonitorFeignApi remoteBusiMonitorFeignApi;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Override
     public QtLineChartBarDTO taskComplete(LocalDateTime startTime, LocalDateTime endTime,Integer type) {
@@ -154,20 +162,101 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                 }
             }
         });
-//        jsSysOffices.forEach(ele->{
-//            String officeName = ele.getOfficeName();
-//            StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
-//            stackGraphDTO.setXAxis(officeName);
-//            List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
-//            BigDecimal all = new BigDecimal(allTaskMap.get(ele.getOfficeCode()));
-//            BigDecimal finished = new BigDecimal(finishedTaskMap.getOrDefault(ele.getOfficeCode(),0L));
-//            datList.add(new TupleDTO<>("任务总数", all));
-//            datList.add(new TupleDTO<>("完成数", finished));
-//            datList.add(new TupleDTO<>("完成率", BigDecimalUtil.percent(finished,all,2)));
-//            stackGraphDTO.setData(datList);
-//            dataList.add(stackGraphDTO);
-//        });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public void taskCompleteMonitor(LocalDate date, String alarmCode) {
+        //根据告警code获取
+        List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        if(CollUtil.isEmpty(passRateList)) {
+            return ;
+        }
+        //获取数据
+        MesInsTaskParamDTO dto = new MesInsTaskParamDTO();
+        dto.setEndTime(LocalDateTime.of(date, LocalTime.MIN));
+        dto.setStartTime(dto.getEndTime().minusDays(1));
+        dto.setEndTime(dto.getEndTime().minusMinutes(1L));
+        dto.setStatusNe(OaConstant.NUM_1);
+        //所有任务数据
+        List<MesInsTaskCountDTO> allTask = mesEqpInsTaskMapper.findTaskCount(dto);
+        Assert.notEmpty(allTask, "数据为空");
+        Map<String, Long> allTaskMap = allTask.stream().filter(v -> v.getOfficeCode() != null).collect(Collectors.toMap(MesInsTaskCountDTO::getOfficeCode, MesInsTaskCountDTO::getNum));
+        List<String> officeCodes = allTask.stream().filter(v -> v.getOfficeCode() != null).map(MesInsTaskCountDTO::getOfficeCode).collect(Collectors.toList());
+        dto.setStatusNe(null);
+        dto.setStatus(OaConstant.NO);
+        //完成任务数据
+        List<MesInsTaskCountDTO> finishedTask = mesEqpInsTaskMapper.findTaskCount(dto);
+        Map<String, Long> finishedTaskMap = finishedTask.stream().filter(v -> v.getOfficeCode() != null)
+                .collect(Collectors.toMap(
+                        MesInsTaskCountDTO::getOfficeCode,
+                        MesInsTaskCountDTO::getNum
+                ));
+        //组成图表数据
+        List<JsSysOffice> jsSysOffices = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                .select(JsSysOffice::getOfficeCode, JsSysOffice::getOfficeName, JsSysOffice::getParentCodes)
+                .in(JsSysOffice::getOfficeCode, officeCodes).eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0));
+        List<JsSysOffice> officeList = jsSysOfficeMapper.selectList(new LambdaQueryWrapper<JsSysOffice>()
+                .select(JsSysOffice::getOfficeCode, JsSysOffice::getOfficeName)
+                .eq(JsSysOffice::getOfficeType, QtManagerConstant.NUM_8)
+                .eq(JsSysOffice::getStatus, QtManagerConstant.NUM_0)
+                .orderByAsc(JsSysOffice::getTreeSort));
+        Assert.notEmpty(officeList, "数据为空");
+        Map<String, BigDecimal> finishRateMap = Maps.newHashMap();
+        officeList.forEach(ele -> {
+            String officeName = ele.getOfficeName();
+            //聚合粒度下所有的数据
+            List<JsSysOffice> officeTmp = jsSysOffices.stream().filter(v -> v.getParentCodes().contains(ele.getOfficeCode())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(officeTmp)) {
+                //加总产线下所有 1任务总数 2完成数
+                Map<Integer, BigDecimal> countMap = Maps.newHashMap();
+                officeTmp.forEach(tmp -> {
+                    //任务总数
+                    BigDecimalUtil.accumulate(countMap, 1, new BigDecimal(allTaskMap.get(tmp.getOfficeCode())));
+                    //完成数
+                    BigDecimalUtil.accumulate(countMap, 2, new BigDecimal(finishedTaskMap.getOrDefault(tmp.getOfficeCode(), 0L)));
+                });
+                if (!officeName.equals("原料二车间")) {
+                    BigDecimal all = countMap.get(1);
+                    BigDecimal finished = countMap.get(2);
+                    BigDecimal finishRate = BigDecimalUtil.percent(finished, all);
+                    finishRateMap.put(ele.getOfficeCode(), finishRate);
+                }
+            }
+        });
+        for (DpBusiMonitorDTO monitor : passRateList) {
+            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+                StringBuilder contentSb = new StringBuilder();
+                BigDecimal upValue = monitor.getUpValue();
+                BigDecimal lowValue = monitor.getLowValue();
+                Map<Integer, SysOfficeVO> officeIdMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(monitor.getMonitorRange())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                for (SysOfficeVO office : officeIdMap.values()) {
+                    //唯一情况 车间集合
+                    BigDecimal currentPmRate = finishRateMap.get(office.getOfficeCode());
+                    //高于上限
+                    String template = SysMsgConstant.MsgTypeEnum.SPOT_CHECK_RATE_ALARM.getTemplate();
+                    if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        contentSb.append(ts1).append("\n");
+                    } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        contentSb.append(ts3).append("\n");
+                    }
+                }
+                if (contentSb.length() > 0) {
+                    Set<Long> notifyMan = monitor.getNotifyMan();
+                    SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.SPOT_CHECK_RATE_ALARM.getCode());
+                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.SPOT_CHECK_RATE_ALARM.getTitle());
+                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.SPOT_CHECK_RATE_ALARM.getWarnFlag());
+                    sysMsgDTO.setUserList(notifyMan);
+                    sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
+                    sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    log.info("taskCompleteMonitor方法消息发送 -> {}", aBoolean);
+                }
+            }
+        }
     }
 
     @Override

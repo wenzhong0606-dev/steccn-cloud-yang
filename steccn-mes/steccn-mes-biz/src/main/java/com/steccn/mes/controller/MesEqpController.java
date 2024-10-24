@@ -63,6 +63,13 @@ public class MesEqpController {
         return R.success(mesEqpInsTaskService.taskComplete(startTime,endTime,type));
     }
 
+    @GetMapping("/dashboard/task/monitor")
+    @ApiOperation(value = "点检任务图表 - 监控")
+    public R<Void> taskCompleteChartMonitor(@RequestParam("date") LocalDate date) {
+        mesEqpInsTaskService.taskCompleteMonitor(date, "SPOT_CHECK_RATE");
+        return R.success();
+    }
+
     @GetMapping("/dashboard/item")
     @ApiOperation(value = "点检项图表")
     public R<QtLineChartBarDTO> itemCompleteChart(@RequestParam("startTime")LocalDateTime startTime,@RequestParam("endTime") LocalDateTime endTime, @RequestParam("type")Integer type) {

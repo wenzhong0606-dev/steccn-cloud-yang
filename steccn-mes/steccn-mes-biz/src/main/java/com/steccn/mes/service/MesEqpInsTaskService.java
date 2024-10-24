@@ -8,6 +8,7 @@ import com.steccn.mes.dto.MesInsTaskTmpDTO;
 import com.steccn.mes.dto.MesInsTaskTmpParamDTO;
 import com.steccn.mes.vo.MesItemIdNameVO;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,14 @@ public interface MesEqpInsTaskService extends IService<MesEqpInsTask> {
      * @return
      */
     QtLineChartBarDTO taskComplete(LocalDateTime startTime,LocalDateTime endTime,Integer type);
+
+    /**
+     * 获取任务完成数据 - 监控
+     *
+     * @param date 日期
+     * @param alarmCode 告警code
+     */
+    void taskCompleteMonitor(LocalDate date, String alarmCode);
 
     /**
      * 点检项完成
@@ -53,4 +62,5 @@ public interface MesEqpInsTaskService extends IService<MesEqpInsTask> {
      * @return
      */
     QtLineChartBarDTO tempLineChart(MesInsTaskTmpParamDTO dto);
+
 }
