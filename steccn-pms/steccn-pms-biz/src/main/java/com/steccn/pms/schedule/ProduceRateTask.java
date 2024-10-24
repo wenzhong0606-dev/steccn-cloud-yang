@@ -1,6 +1,7 @@
 package com.steccn.pms.schedule;
 
 import com.steccn.pms.service.PmsReportDashboardService;
+import com.steccn.pms.service.PmsSjgReportDashboardService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 public class ProduceRateTask {
 
     private final PmsReportDashboardService pmsReportDashboardService;
+    private final PmsSjgReportDashboardService pmsSjgReportDashboardService;
 
     @XxlJob("JP_RH_RATE")
     public void JP_RH_RATE() {
@@ -22,4 +24,38 @@ public class ProduceRateTask {
         pmsReportDashboardService.meltingRateMonitor(date, "JP_RH_RATE");
         XxlJobHelper.log("JP_RH_RATE-任务完成");
     }
+
+    @XxlJob("JP_PRODUCT_PASS_RATE")
+    public void JP_PRODUCT_PASS_RATE() {
+        XxlJobHelper.log("JP_PRODUCT_PASS_RATE-任务开始");
+        LocalDate date = LocalDate.now().minusDays(1L);
+        pmsReportDashboardService.lineCompleteMonitor(date, "JP_PRODUCT_PASS_RATE");
+        XxlJobHelper.log("JP_PRODUCT_PASS_RATE-任务完成");
+    }
+
+    @XxlJob("JP_IN_STORAGE_RATE")
+    public void JP_IN_STORAGE_RATE() {
+        XxlJobHelper.log("JP_IN_STORAGE_RATE-任务开始");
+        LocalDate date = LocalDate.now().minusDays(1L);
+        pmsReportDashboardService.lineInStorageMonitor(date, "JP_IN_STORAGE_RATE");
+        XxlJobHelper.log("JP_IN_STORAGE_RATE-任务完成");
+    }
+
+    @XxlJob("DEEP_PRODUCT_PASS_RATE")
+    public void DEEP_PRODUCT_PASS_RATE() {
+        XxlJobHelper.log("DEEP_PRODUCT_PASS_RATE-任务开始");
+        LocalDate date = LocalDate.now().minusDays(1L);
+        pmsSjgReportDashboardService.lineCompleteMonitor(date, "DEEP_PRODUCT_PASS_RATE");
+        XxlJobHelper.log("DEEP_PRODUCT_PASS_RATE-任务完成");
+    }
+
+    @XxlJob("DEEP_IN_STORAGE_PASS_RATE")
+    public void DEEP_IN_STORAGE_PASS_RATE() {
+        XxlJobHelper.log("DEEP_IN_STORAGE_PASS_RATE-任务开始");
+        LocalDate date = LocalDate.now().minusDays(1L);
+        pmsSjgReportDashboardService.lineInStorageMonitor(date, "DEEP_IN_STORAGE_PASS_RATE");
+        XxlJobHelper.log("DEEP_IN_STORAGE_PASS_RATE-任务完成");
+    }
+
+
 }
