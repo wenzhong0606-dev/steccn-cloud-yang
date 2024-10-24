@@ -26,18 +26,28 @@ public class WaterRateTask {
     @XxlJob("GS_WATER")
     public void GS_WATER() {
         XxlJobHelper.log("GS_WATER-任务开始");
-        LocalDateTime end = LocalDateTime.now();
-        LocalDateTime start = end.minusMinutes(10);
-        qtDayReportService.samplingWaterRateSiMonitor(start, end, "GS_WATER");
+        try {
+            LocalDateTime end = LocalDateTime.now();
+            LocalDateTime start = end.minusMinutes(10);
+            qtDayReportService.samplingWaterRateSiMonitor(start, end, "GS_WATER");
+        } catch (RuntimeException e) {
+            log.error("业务执行异常 ->  {}", e.getCause());
+            XxlJobHelper.log("业务执行异常 -> {}", e.getCause());
+        }
         XxlJobHelper.log("GS_WATER-任务完成");
     }
 
     @XxlJob("PHL_WATER_ALARM")
     public void PHL_WATER_ALARM() {
         XxlJobHelper.log("PHL_WATER-任务开始");
-        LocalDateTime end = LocalDateTime.now();
-        LocalDateTime start = end.minusMinutes(10);
-        qtDayReportService.samplingWaterRateBatchMonitor(start, end, "PHL_WATER");
+        try {
+            LocalDateTime end = LocalDateTime.now();
+            LocalDateTime start = end.minusMinutes(10);
+            qtDayReportService.samplingWaterRateBatchMonitor(start, end, "PHL_WATER");
+        } catch (RuntimeException e) {
+            log.error("业务执行异常 ->  {}", e.getCause());
+            XxlJobHelper.log("业务执行异常 -> {}", e.getCause());
+        }
         XxlJobHelper.log("PHL_WATER-任务完成");
     }
 }

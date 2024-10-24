@@ -51,7 +51,7 @@ public class SysOfficeFeignController {
         return new R<>(sysOfficeService.findNameById(id));
     }
     @GetMapping("/code")
-    public R<SysOfficeVO> getByCode(@RequestParam String code) {
+    public R<SysOfficeVO> getByCode(@RequestParam("code") String code) {
         return R.success(sysOfficeService.getByCode(code));
     }
 
