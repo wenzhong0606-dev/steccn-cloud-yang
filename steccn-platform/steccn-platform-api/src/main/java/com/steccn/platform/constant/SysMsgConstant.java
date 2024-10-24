@@ -66,6 +66,9 @@ public interface SysMsgConstant {
         JP_RH_RATE_ALARM(29,"融化率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】融化率为%s%%，%s于上限值%s%%",0),
         PRODUCT_PASS_RATE_ALARM(30,"产线合格率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s产量合格率为%s%%，%s于上限值%s%%",0),
         IN_STORAGE_RATE_ALARM(31,"入库合格率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s入库合格率为%s%%，%s于上限值%s%%",0),
+        DELIVERY_OVERDUE_ALARM(32,"发货逾期告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%d张发货通知单已逾期：%s",0),
+        SAFETY_STOCK_ALARM(33,"安全库存告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s可用库存低于安全库存",0),
+        SPOT_CHECK_RATE_ALARM(34,"点检完成率超标告警",MsgCategoryEnum.SYS_REMIND.code,"【%s】%s点检合格率为%s%%，%s于上限值%s%%",0),
         ;
 
         private Integer code;
