@@ -79,7 +79,7 @@ public class PmsSjgReportDashboardController {
 
     @GetMapping("/line/complete/monitor")
     @ApiOperation("产线完工信息-监控")
-    public R<Void> lineComplete(@RequestParam("date") LocalDate date) {
+    public R<Void> lineCompleteMonitor(@RequestParam("date") LocalDate date) {
         pmsSjgReportDashboardService.lineCompleteMonitor(date, "DEEP_PRODUCT_PASS_RATE");
         return R.success();
     }
@@ -90,5 +90,11 @@ public class PmsSjgReportDashboardController {
         return R.success(pmsSjgReportDashboardService.lineInStorage(workShopId, date));
     }
 
+    @GetMapping("/line/in/storage/monitor")
+    @ApiOperation("产线入库信息 - 监控")
+    public R<Void> lineInStorageMonitor(@RequestParam("date") LocalDate date) {
+        pmsSjgReportDashboardService.lineInStorageMonitor(date, "DEEP_IN_STORAGE_PASS_RATE");
+        return R.success();
+    }
 
 }
