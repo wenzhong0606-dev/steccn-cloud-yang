@@ -44,7 +44,7 @@ public class WmsSignFeedbackDTO extends BasePageDTO implements Serializable {
     /**
      * 发货日期
      */
-    private Date sendDate;
+    private LocalDate sendDate;
 
     /**
      * 发货数量
