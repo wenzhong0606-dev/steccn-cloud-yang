@@ -19,8 +19,13 @@ public class SpotCheckTask {
     @XxlJob("SPOT_CHECK_RATE")
     public void JP_RH_RATE() {
         XxlJobHelper.log("SPOT_CHECK_RATE-任务开始");
-        LocalDate date = LocalDate.now().minusDays(1L);
-        mesEqpInsTaskService.taskCompleteMonitor(date, "SPOT_CHECK_RATE");
+        try {
+            LocalDate date = LocalDate.now().minusDays(1L);
+            mesEqpInsTaskService.taskCompleteMonitor(date, "SPOT_CHECK_RATE");
+        } catch (RuntimeException e) {
+            log.error("业务运行异常 -> {}", e.getCause());
+            XxlJobHelper.log("业务运行异常 -> {}", e.getCause());
+        }
         XxlJobHelper.log("SPOT_CHECK_RATE-任务完成");
     }
 

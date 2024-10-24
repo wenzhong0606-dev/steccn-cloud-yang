@@ -106,7 +106,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
 
     @Override
     public List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date) {
-        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.info(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(wsOffice, "车间不能为空");
         List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(wsOffice.getId());
         Assert.notEmpty(wsLineList, "车间下暂无产线");
@@ -149,7 +149,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
 
     @Override
     public List<BigDecimal> inStorageToday(Integer workShopId, LocalDate date) {
-        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeVO wsOffice = FeignOptional.of(() -> remoteOfficeFeign.info(workShopId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(wsOffice, "车间不能为空");
         List<SysOfficeVO> wsLineList = pmsOfficeManager.getWsLineList(wsOffice.getId());
         Assert.notEmpty(wsLineList, "车间下暂无产线");
