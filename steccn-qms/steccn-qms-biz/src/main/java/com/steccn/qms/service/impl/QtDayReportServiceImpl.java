@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -35,6 +36,7 @@ import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
@@ -1658,6 +1660,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                    sysMsgAdditionDTO.setCode(LocalDateUtil.format(start, DatePattern.NORM_DATE_PATTERN));
+                    sysMsgDTO.setAddition(sysMsgAdditionDTO);
                     Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     log.info("samplingWaterRateSiMonitor方法消息发送 -> {}", aBoolean);
                 }
@@ -1759,6 +1764,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length()));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                    sysMsgAdditionDTO.setCode(LocalDateUtil.format(start, DatePattern.NORM_DATE_PATTERN));
+                    sysMsgDTO.setAddition(sysMsgAdditionDTO);
                     Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     log.info("samplingWaterRateBatchMonitor方法消息发送 -> {}", aBoolean);
                 }

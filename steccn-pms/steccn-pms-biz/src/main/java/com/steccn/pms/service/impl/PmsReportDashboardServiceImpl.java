@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.excel.EasyExcel;
@@ -191,6 +192,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 sysMsgDTO.setUserList(notifyMan);
                 sysMsgDTO.setContent(contentSb.substring(0, contentSb.length()));
                 sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                sysMsgAdditionDTO.setCode(LocalDateUtil.format(date, DatePattern.NORM_DATE_PATTERN));
+                sysMsgDTO.setAddition(sysMsgAdditionDTO);
                 Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 log.info("meltingRateMonitor方法消息发送 -> {}", aBoolean);
             }
@@ -644,6 +648,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                    sysMsgAdditionDTO.setCode(LocalDateUtil.format(date, DatePattern.NORM_DATE_PATTERN));
+                    sysMsgDTO.setAddition(sysMsgAdditionDTO);
                     Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     log.info("lineCompleteMonitor方法消息发送 -> {}", aBoolean);
                 }
@@ -784,6 +791,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                    sysMsgAdditionDTO.setCode(LocalDateUtil.format(date, DatePattern.NORM_DATE_PATTERN));
+                    sysMsgDTO.setAddition(sysMsgAdditionDTO);
                     Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     log.info("lineInStorageMonitor方法消息发送 -> {}", aBoolean);
                 }

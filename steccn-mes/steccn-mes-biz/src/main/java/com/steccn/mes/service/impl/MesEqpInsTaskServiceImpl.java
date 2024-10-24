@@ -1,6 +1,7 @@
 package com.steccn.mes.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
@@ -38,6 +39,7 @@ import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.LineProduceClassGroupVO;
@@ -252,6 +254,9 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                    sysMsgAdditionDTO.setCode(LocalDateUtil.format(date, DatePattern.NORM_DATE_PATTERN));
+                    sysMsgDTO.setAddition(sysMsgAdditionDTO);
                     Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     log.info("taskCompleteMonitor方法消息发送 -> {}", aBoolean);
                 }
