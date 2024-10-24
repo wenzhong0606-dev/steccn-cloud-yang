@@ -140,47 +140,25 @@ public class PullProduParCountServiceImpl extends ServiceImpl<PullProduParCountM
 
     @Override
     public Boolean sendPullForce() {
-        LocalDateTime now = LocalDateTime.now();
-        QtTaskClassCalculate classDate = CalculateDateUtil.calculateClassTime(now);
-        //获取理论拉引量汇总
-        List<PullProduParCount> model = list(new QueryWrapper<PullProduParCount>()
-                .select("product_line AS productLine", "sum(id_value) AS idValue")
-                .lambda()
-                .ge(PullProduParCount::getDt1, classDate.getClassDate().toLocalDate().atTime(8, 0, 0))
-                .le(PullProduParCount::getDt1, now)
-                .groupBy(PullProduParCount::getProductLine));
-        if(CollUtil.isNotEmpty(model)){
-            //拉引总量
-            BigDecimal pullAmountAll = BigDecimal.ZERO;
-            List<SysConfigurationDTO> cfg = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByType("THEORY_PULL_FORCE"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            //密度
-            SysConfigurationDTO densityDTO = cfg.stream().filter(v -> v.getContent().equals("0")).findFirst().orElse(null);
-            BigDecimal density = new BigDecimal(densityDTO.getRefContent());
-            //8条产线计算
-            for(int i=1;i<=8;i++){
-                //理论拉引量 = 时长 * 速度 * 玻璃板宽 * 2.5 * 厚度
-                DpTheoryPullForceDataVO tmp = new DpTheoryPullForceDataVO();
-                String num = NumberChineseFormatter.format(i,false,false);
-                tmp.setProductLineName("基片"+num+"产线");
-                //厚度
-                int finalI = i;
-                BigDecimal thick = new BigDecimal(cfg.stream().filter(v -> v.getContent()
-                                .equals(String.valueOf(finalI)))
-                        .findFirst().orElse(null).getRefContent());
-                tmp.setGlassThick(thick);
-                //理论拉引量
-                BigDecimal theoryNum = model.stream().filter(v -> v.getProductLine().equals(finalI)).findFirst().orElse(new PullProduParCount()).getIdValue();
-                theoryNum = BigDecimalUtil.multiply(BigDecimalUtil.multiply(theoryNum,density),thick,2);
-                pullAmountAll = BigDecimalUtil.add(theoryNum,pullAmountAll);
-            }
-            DpValueDTO value = new DpValueDTO();
-            value.setValue(BigDecimalUtil.divide(pullAmountAll,new BigDecimal(1000),2));
-            value.setTagId("LD1-4.LD.DEEP03_Produ_par_Pulling_speed");
-            value.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln_in_out", JSONObject.toJSONString(value));
-        }
+        LocalDate date = LocalDate.now().minusDays(1);
+        PmsPullForceQueryDTO queryDTO = new PmsPullForceQueryDTO();
+        queryDTO.setStartDate(date);
+        queryDTO.setEndDate(date);
+        List<Integer> productLineIds = Lists.newArrayList(174,175,179,180,461,467,468,214);
+        queryDTO.setProductLineIds(Sets.newHashSet(productLineIds));
+        List<PmsPullForceDataVO> pmsPullForceDataVOS = FeignOptional.of(() -> remotePullForceFeignApi.getDataFromPeriods(queryDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        BigDecimal actNum = pmsPullForceDataVOS.stream()
+                .filter(v -> Objects.nonNull(v.getQuantity()))
+                .map(PmsPullForceDataVO::getQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        DpValueDTO value = new DpValueDTO();
+        value.setValue(BigDecimalUtil.setScale(actNum,2));
+        value.setTagId("LD1-4.LD.DEEP03_Produ_par_Pulling_speed");
+        value.setServerTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        kafkaTemplate.send("opcData_kiln_in_out", JSONObject.toJSONString(value));
         return true;
     }
+
 }
 
 

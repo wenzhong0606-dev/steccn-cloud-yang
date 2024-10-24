@@ -752,19 +752,15 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
 
     @Override
     public Boolean pushWeightSum() {
-        LocalDateTime now = LocalDateTime.now();
-        QtTaskClassCalculate classDate = CalculateDateUtil.calculateClassTime(now);
-        Map<String, BigDecimal> value = postWeightCount(new TupleDTO<LocalDateTime, LocalDateTime>(classDate.getClassDate().toLocalDate().atTime(8, 0, 0), now));
-        if(CollUtil.isNotEmpty(value)){
-            BigDecimal total = value.values().stream()
-                    .filter(v -> Objects.nonNull(v)) // 过滤掉null
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            DpValueDTO valueDTO = new DpValueDTO();
-            valueDTO.setValue(BigDecimalUtil.divide(total,new BigDecimal(1000),2));
-            valueDTO.setTagId("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
-            valueDTO.setServerTime(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            kafkaTemplate.send("opcData_kiln_in_out",JSONObject.toJSONString(valueDTO));
-        }
+        LocalDate date = LocalDate.now().minusDays(1);
+        List<DpWeightVO> dpWeightVOS = this.getWeighCount(new TupleDTO<>(date.atTime(8, 0, 0)
+                , date.plusDays(1).atTime(7, 59, 59)));
+        BigDecimal weight = dpWeightVOS.stream().map(DpWeightVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        DpValueDTO valueDTO = new DpValueDTO();
+        valueDTO.setValue(BigDecimalUtil.divide(weight,new BigDecimal(1000),2));
+        valueDTO.setTagId("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
+        valueDTO.setServerTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        kafkaTemplate.send("opcData_kiln_in_out",JSONObject.toJSONString(valueDTO));
         return true;
     }
 
