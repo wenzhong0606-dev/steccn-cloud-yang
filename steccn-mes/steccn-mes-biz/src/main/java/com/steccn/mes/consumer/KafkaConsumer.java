@@ -257,7 +257,9 @@ public class KafkaConsumer {
             }
             //写死原料车间设备
             if(eqp.getParentCodes().contains("1501738403312599040")){
-                if(!equipment.getState().equals(OaConstant.NO.toString())){
+                if(eqpListenerDTO.getValueAsString().equals("true")) {
+                    equipment.setState(OaConstant.NO.toString());
+                }else {
                     equipment.setState(OaConstant.NUM_3.toString());
                 }
                 //特殊处理一号强制式混合机、二号强制式混合机、缓冲仓闸门（混合机)
@@ -333,6 +335,8 @@ public class KafkaConsumer {
 
                 //2#混合机油泵电机只有一台开
                 if(eqp.getId().equals(1552858842006159360L)){
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,"1552858842006159360"));
                     Long eqpIdTmp = 1554749911603871744L;
                     MesEquipment equipmentTmp = new MesEquipment();
                     if(equipment.getState().equals(OaConstant.NO.toString())
@@ -346,6 +350,8 @@ public class KafkaConsumer {
                     ack.acknowledge();
                     return;
                 } else if(eqp.getId().equals(1554749911603871744L)){
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId,"1554749911603871744"));
                     Long eqpIdTmp = 1552858842006159360L;
                     MesEquipment equipmentTmp = new MesEquipment();
                     if(equipment.getState().equals(OaConstant.NO.toString())
@@ -451,6 +457,30 @@ public class KafkaConsumer {
                     }
                     //操作第三层
                     if(eqpId3.contains(eqp.getId())){
+                        //定制螺旋给料机
+                        if(eqp.getEquipmentName().contains("螺旋给料机")){
+                            List<MesEquipment> luoList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                                    .like(MesEquipment::getEquipmentName,"螺旋给料机")
+                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                                    .eq(MesEquipment::getState,OaConstant.NUM_3.toString()));
+                            luoList = luoList.stream().filter(v->!v.getEquipmentName().equals("螺旋给料机")).collect(Collectors.toList());
+                            if(CollUtil.isNotEmpty(luoList)&&luoList.size()==6){
+                                MesEquipment eqpTmp1 = new MesEquipment();
+                                eqpTmp1.setState(OaConstant.NUM_3.toString());
+                                mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+                                        .eq(MesEquipment::getId,"1592083143237558272")
+                                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                            }else {
+                                MesEquipment eqpTmp1 = new MesEquipment();
+                                eqpTmp1.setState(OaConstant.NO.toString());
+                                mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+                                        .eq(MesEquipment::getId,"1592083143237558272")
+                                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                            }
+                            ack.acknowledge();
+                            return;
+                        }
                         //找到他的父亲节点
                         MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
                                 .eq(MesEquipment::getId, eqp.getParentCode())
