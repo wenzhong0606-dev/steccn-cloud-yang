@@ -610,7 +610,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     //第三种情况，是车间+产线告警
                     BigDecimal currentPmRate = valueMap.get(office.getId());
                      //高于上限
-                    String template = SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getTemplate();
+                    String template = SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
                         String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
                         contentSb.append(ts1).append("\n");
@@ -622,9 +622,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 if (contentSb.length() > 0) {
                     Set<Long> notifyMan = monitor.getNotifyMan();
                     SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
-                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getCode());
-                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getTitle());
-                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getWarnFlag());
+                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getCode());
+                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getTitle());
+                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getWarnFlag());
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
@@ -750,7 +750,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     //第三种情况，是车间+产线告警
                     BigDecimal currentPmRate = valueMap.get(office.getId());
                     //高于上限
-                    String template = SysMsgConstant.MsgTypeEnum.JP_IN_STORAGE_RATE_ALARM.getTemplate();
+                    String template = SysMsgConstant.MsgTypeEnum.IN_STORAGE_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
                         String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
                         contentSb.append(ts1).append("\n");
@@ -762,9 +762,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                 if (contentSb.length() > 0) {
                     Set<Long> notifyMan = monitor.getNotifyMan();
                     SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
-                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.JP_IN_STORAGE_RATE_ALARM.getCode());
-                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.JP_IN_STORAGE_RATE_ALARM.getTitle());
-                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.JP_IN_STORAGE_RATE_ALARM.getWarnFlag());
+                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.IN_STORAGE_RATE_ALARM.getCode());
+                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.IN_STORAGE_RATE_ALARM.getTitle());
+                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.IN_STORAGE_RATE_ALARM.getWarnFlag());
                     sysMsgDTO.setUserList(notifyMan);
                     sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
                     sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());

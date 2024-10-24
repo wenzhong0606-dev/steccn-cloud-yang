@@ -77,6 +77,13 @@ public class PmsSjgReportDashboardController {
         return R.success(pmsSjgReportDashboardService.lineComplete(workShopId, date));
     }
 
+    @GetMapping("/line/complete/monitor")
+    @ApiOperation("产线完工信息-监控")
+    public R<Void> lineComplete(@RequestParam("date") LocalDate date) {
+        pmsSjgReportDashboardService.lineCompleteMonitor(date, "DEEP_PRODUCT_PASS_RATE");
+        return R.success();
+    }
+
     @GetMapping("/line/in/storage")
     @ApiOperation("产线入库信息")
     public R<QtLineChartBarDTO> lineInStorage(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {

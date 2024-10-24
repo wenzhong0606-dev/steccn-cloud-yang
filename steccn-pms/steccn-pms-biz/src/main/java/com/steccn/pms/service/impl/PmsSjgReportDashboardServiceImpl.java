@@ -2,7 +2,6 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -13,24 +12,24 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.*;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
+import com.steccn.dp.feign.RemoteBusiMonitorFeignApi;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
-import com.steccn.platform.feign.RemoteStationWarehouseFeignApi;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.platform.vo.SysStationWarehouseVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
-import com.steccn.pms.dto.DashboardProducePageDTO;
 import com.steccn.pms.service.PmsOfficeManager;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
 import com.steccn.pms.util.UnitConvertUtil;
-import com.steccn.pms.vo.DashboardProducePageVO;
+import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.wms.feign.RemoteWmsTransferSlipFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,6 +58,8 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     private final RemoteSpareUnitConvertFeignApi spareUnitConvertFeignApi;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsOfficeManager pmsOfficeManager;
+    private final RemoteBusiMonitorFeignApi remoteBusiMonitorFeignApi;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Override
     public BigDecimal slip(Integer workShopId, LocalDate date) {
@@ -277,6 +277,88 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             dataList.add(stackGraphDTO);
         });
         return StackGraphUtil.convertData(dataList, Boolean.TRUE);
+    }
+
+    @Override
+    public void lineCompleteMonitor(LocalDate date, String alarmCode) {
+        //根据告警code获取
+        List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        if(CollUtil.isEmpty(passRateList)) {
+            return ;
+        }
+        //获取深加工一车间,深加工二车间（东线）,深加工三车间（西线）
+        Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC002", "STEC003", "STEC015")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(sysOfficeMap, "车间不能为空");
+        //获取两个车间的所有产线
+        Map<Integer, SysOfficeVO> wsLineMap = Maps.newHashMap();
+        for (Map.Entry<String, SysOfficeVO> wsOffice : sysOfficeMap.entrySet()) {
+            Map<Integer, SysOfficeVO> tmpLineMap = getWsLineMap(wsOffice.getValue());
+            wsLineMap.putAll(tmpLineMap);
+            Assert.notEmpty(wsLineMap, "车间下暂无产线");
+        }
+        int type = 1 ;
+        //获取班次产量
+        Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, type, PmManagerConstant.MEASURE_UNIT_TON);
+        SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
+        Map<String, BigDecimal> pfMap = pmsReportWorkService.lineClassUseCount(wsLineMap.keySet(), date, date, PmManagerConstant.MEASURE_UNIT_TON);
+        //获取早晚班
+        SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(morningDict, "早班数据字典不存在");
+        Assert.notNull(nightDict, "晚班数据字典不存在");
+        List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+        //根据产量map获取合格率
+        Map<Integer,BigDecimal> valueMap = Maps.newHashMap();
+        sortLineList.forEach(x -> {
+            Integer ele = x.getId();
+            BigDecimal morning = productNumMap.get(ele + "_" + morningDict.getId());
+            BigDecimal night = productNumMap.get(ele + "_" + nightDict.getId());
+            BigDecimal sum = BigDecimalUtil.add(morning, night);
+            BigDecimal pfMorning = pfMap.get(ele + "_" + morningDict.getId());
+            BigDecimal pfNight = pfMap.get(ele + "_" + nightDict.getId());
+            BigDecimal pfSum = BigDecimalUtil.add(pfMorning, pfNight);
+            valueMap.put(ele, BigDecimalUtil.percent(sum, pfSum, 2));
+        });
+        //获取三个车间的合格率
+        sysOfficeMap.forEach((k,v) ->{
+            BigDecimal wsPm = produceNumRate(v.getId(), date);
+            valueMap.put(v.getId(),wsPm);
+        });
+        for (DpBusiMonitorDTO monitor : passRateList) {
+            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+                StringBuilder contentSb = new StringBuilder();
+                BigDecimal upValue = monitor.getUpValue();
+                BigDecimal lowValue = monitor.getLowValue();
+                Map<Integer, SysOfficeVO> officeIdMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(monitor.getMonitorRange())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                for (SysOfficeVO office : officeIdMap.values()) {
+                    //第一种情况，是车间集合
+                    //第二种情况，是产线集合告警
+                    //第三种情况，是车间+产线告警
+                    BigDecimal currentPmRate = valueMap.get(office.getId());
+                    //高于上限
+                    String template = SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getTemplate();
+                    if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        contentSb.append(ts1).append("\n");
+                    } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        contentSb.append(ts3).append("\n");
+                    }
+                }
+                if (contentSb.length() > 0) {
+                    Set<Long> notifyMan = monitor.getNotifyMan();
+                    SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getCode());
+                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getTitle());
+                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.PRODUCT_PASS_RATE_ALARM.getWarnFlag());
+                    sysMsgDTO.setUserList(notifyMan);
+                    sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
+                    sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                    Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    log.info("lineCompleteMonitor方法消息发送 -> {}", aBoolean);
+                }
+            }
+        }
     }
 
     @Override

@@ -89,6 +89,14 @@ public interface PmsSjgReportDashboardService {
     QtLineChartBarDTO lineComplete(Integer workShopId, LocalDate date);
 
     /**
+     * 产线完工信息 - 监控
+     *
+     * @param date      日期
+     * @param alarmCode 告警code
+     */
+    void lineCompleteMonitor(LocalDate date, String alarmCode);
+
+    /**
      * 产线入库信息
      * @param workShopId 车间
      * @param date 日期
