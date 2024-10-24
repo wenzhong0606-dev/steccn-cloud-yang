@@ -21,8 +21,6 @@ import java.util.List;
 @Component
 public class WaterRateTask {
 
-    private final RemoteBusiMonitorFeignApi remoteBusiMonitorFeignApi;
-
     private final QtDayReportService qtDayReportService;
 
     @XxlJob("GS_WATER")
@@ -31,6 +29,15 @@ public class WaterRateTask {
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusMinutes(10);
         qtDayReportService.samplingWaterRateSiMonitor(start, end, "GS_WATER");
-        XxlJobHelper.log("GS_WATER-任务完成，执行结果 -> {}", true);
+        XxlJobHelper.log("GS_WATER-任务完成");
+    }
+
+    @XxlJob("PHL_WATER_ALARM")
+    public void PHL_WATER_ALARM() {
+        XxlJobHelper.log("PHL_WATER-任务开始");
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusMinutes(10);
+        qtDayReportService.samplingWaterRateBatchMonitor(start, end, "PHL_WATER");
+        XxlJobHelper.log("PHL_WATER-任务完成");
     }
 }
