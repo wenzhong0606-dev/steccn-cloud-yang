@@ -319,9 +319,12 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         if (CollUtil.isNotEmpty(infoList)) {
             for (MaterialRequisitionInfoVO infoVO : infoList) {
                 EqpSpareVO orDefault = materialMap.getOrDefault(infoVO.getMaterialId(), eqpSpareVO);
+                SysOfficeVO sysOfficeVO = officeMap.get(infoVO.getShelfId());
                 infoVO.setMaterialName(orDefault.getName());
-                infoVO.setShelfName(officeMap.get(infoVO.getShelfId()).getOfficeName());
-                infoVO.setShelfCode(officeMap.get(infoVO.getShelfId()).getOfficeCode());
+                if (Objects.nonNull(sysOfficeVO)) {
+                    infoVO.setShelfName(sysOfficeVO.getOfficeName());
+                    infoVO.setShelfCode(officeMap.get(infoVO.getShelfId()).getOfficeCode());
+                }
 //                infoVO.setUnitName(dictMap.get(infoVO.getUnitId()));
                 infoVO.setUnitName(materialMap.get(infoVO.getMaterialId()).getUnit());
                 //3.3.1处理机构数据
