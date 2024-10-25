@@ -405,19 +405,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 //                List<JSONObject> list = new ArrayList<>();
 //                list.add(jsonObject);
                 //附件
-//
-                OaWorkFlowNameFileDTO oaWorkFlowNameFileDTO = new OaWorkFlowNameFileDTO(fileMap.get(pmsMaterialRequisition.getFileId()).getFileUrl(),fileMap.get(pmsMaterialRequisition.getFileId()).getFileName());
-
-                List<OaWorkFlowNameFileDTO> fileList = Lists.newArrayList();
-                fileList.add(oaWorkFlowNameFileDTO);
-//                JSONObject jsonObject = new JSONObject();
-//                jsonObject.put( PmManagerConstant.WORKFLOW_FJ,JSONObject.toJSONString(fileList));
-
-                OaWorkFlowNameValueDTO oaWorkFlowNameValueDTO = new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ, JSONObject.toJSONString(fileList));
-//                new OaWorkFlowFileDTO(PmManagerConstant.WORKFLOW_FJ,)
-                new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ,JSONObject.toJSONString(fileList));
-
-                mainDataList.add(oaWorkFlowNameValueDTO);
+                if (Objects.nonNull(pmsMaterialRequisition.getFileId())){
+                    OaWorkFlowNameFileDTO oaWorkFlowNameFileDTO = new OaWorkFlowNameFileDTO(fileMap.get(pmsMaterialRequisition.getFileId()).getFileUrl(),fileMap.get(pmsMaterialRequisition.getFileId()).getFileName());
+                    List<OaWorkFlowNameFileDTO> fileList = Lists.newArrayList();
+                    fileList.add(oaWorkFlowNameFileDTO);
+                    OaWorkFlowNameValueDTO oaWorkFlowNameValueDTO = new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ, JSONObject.toJSONString(fileList));
+                    mainDataList.add(oaWorkFlowNameValueDTO);
+                }
                 //申请部门
                 Set<Integer> officeIdSet = Sets.newHashSet();
                 officeIdSet.add(pmsMaterialRequisition.getDepartmentId());
