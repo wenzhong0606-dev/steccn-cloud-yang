@@ -241,6 +241,18 @@ public class WmsStorageReceiptController {
         return R.success(wmsWeighbridgeInfoService.pageList(dto));
     }
 
+    @ApiOperation("供应商名称下拉框")
+    @GetMapping("/weighbridge/companyName")
+    public R<List<String>> companyName(){
+        return R.success(wmsWeighbridgeInfoService.companyName());
+    }
+
+    @ApiOperation("物料名称下拉框")
+    @GetMapping("/weighbridge/materialName")
+    public R<List<String>> materialName(){
+        return R.success(wmsWeighbridgeInfoService.materialName());
+    }
+
     @ApiOperation("地磅信息分页查询")
     @PutMapping("/weighbridge/deduct")
     public R<Boolean> changeDeduct(@RequestBody WmsWeighbridgeInfoDTO dto){

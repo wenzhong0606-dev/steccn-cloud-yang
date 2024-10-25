@@ -34,12 +34,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
 * @author Admin
@@ -111,6 +113,22 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
             result.setGrossWeightCount(countData.getGrossWeight());
         }
         return result;
+    }
+
+    @Override
+    public List<String> companyName() {
+        List<WmsWeighbridgeInfo> companyName = list(new QueryWrapper<WmsWeighbridgeInfo>()
+                .select("DISTINCT company_name AS companyName")
+                .lambda());
+        return companyName.stream().filter(Objects::nonNull).map(WmsWeighbridgeInfo::getCompanyName).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> materialName() {
+        List<WmsWeighbridgeInfo> materialName = list(new QueryWrapper<WmsWeighbridgeInfo>()
+                .select("DISTINCT material_name AS materialName")
+                .lambda());
+        return materialName.stream().filter(Objects::nonNull).map(WmsWeighbridgeInfo::getMaterialName).collect(Collectors.toList());
     }
 
     @Override
