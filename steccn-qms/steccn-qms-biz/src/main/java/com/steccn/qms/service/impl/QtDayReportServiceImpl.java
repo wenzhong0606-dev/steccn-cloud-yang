@@ -1629,26 +1629,26 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //按照抽样时间排序
             Collections.sort(newDataList, Comparator.comparing(SamplingWaterRateDTO::getSamplingTime));
             //判断是否超过
-            BigDecimal upValue = GetValueUtil.get(monitor.getUpValue(), x -> x, BigDecimal.ZERO);
-            BigDecimal lowValue = GetValueUtil.get(monitor.getLowValue(), x -> x, BigDecimalUtil.HUNDRED);
+            BigDecimal upValue = monitor.getUpValue();
+            BigDecimal lowValue = monitor.getLowValue();
             newDataList.forEach(ele -> {
                 //高于上限
                 StringBuilder contentSb = new StringBuilder();
                 String template = SysMsgConstant.MsgTypeEnum.GS_WATER_ALARM.getTemplate();
-                if (BigDecimalUtil.gt(ele.getValue1(), upValue)) {
+                if (Objects.nonNull(upValue) && Objects.nonNull(ele.getValue1()) && BigDecimalUtil.gt(ele.getValue1(), upValue)) {
                     //例如，【2022-09-21 08:34:34】1#料仓硅砂含水率为8%，高于上限值6%
-                    String ts1 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "1#", BigDecimalUtil.format(ele.getValue1()), "高", upValue);
+                    String ts1 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "1#", BigDecimalUtil.format(ele.getValue1()), "高","上", upValue);
                     contentSb.append(ts1).append("\n");
-                }else if (BigDecimalUtil.lt(ele.getValue1(), lowValue)) {
-                    String ts3 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "1#", BigDecimalUtil.format(ele.getValue1()), "低", lowValue);
+                }else if (Objects.nonNull(lowValue) && Objects.nonNull(ele.getValue1()) && BigDecimalUtil.lt(ele.getValue1(), lowValue)) {
+                    String ts3 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "1#", BigDecimalUtil.format(ele.getValue1()), "低", "下", lowValue);
                     contentSb.append(ts3).append("\n");
                 }
                 //低于下限
-                if (BigDecimalUtil.lt(ele.getValue2(), lowValue)) {
-                    String ts4 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "2#", BigDecimalUtil.format(ele.getValue2()), "低", lowValue);
+                if (Objects.nonNull(lowValue) && Objects.nonNull(ele.getValue2()) && BigDecimalUtil.lt(ele.getValue2(), lowValue)) {
+                    String ts4 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "2#", BigDecimalUtil.format(ele.getValue2()), "低", "下", lowValue);
                     contentSb.append(ts4).append("\n");
-                } else if (BigDecimalUtil.gt(ele.getValue2(), upValue)) {
-                    String ts2 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "2#", BigDecimalUtil.format(ele.getValue2()), "高", upValue);
+                } else if (Objects.nonNull(upValue) && Objects.nonNull(ele.getValue2()) && BigDecimalUtil.gt(ele.getValue2(), upValue)) {
+                    String ts2 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), "2#", BigDecimalUtil.format(ele.getValue2()), "高", "上", upValue);
                     contentSb.append(ts2).append("\n");
                 }
                 if(contentSb.length() > 0){
@@ -1742,17 +1742,17 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //按照抽样时间排序
             Collections.sort(newDataList, Comparator.comparing(SamplingWaterRateDTO::getSamplingTime));
             //判断是否超过
-            BigDecimal upValue = GetValueUtil.get(monitor.getUpValue(), x -> x, BigDecimal.ZERO);
-            BigDecimal lowValue = GetValueUtil.get(monitor.getLowValue(), x -> x, BigDecimalUtil.HUNDRED);
+            BigDecimal upValue = monitor.getUpValue();
+            BigDecimal lowValue = monitor.getLowValue();
             newDataList.forEach(ele -> {
                 //高于上限
                 StringBuilder contentSb = new StringBuilder();
                 String template = SysMsgConstant.MsgTypeEnum.PHL_WATER_ALARM.getTemplate();
-                if (BigDecimalUtil.gt(ele.getValue3(), upValue)) {
-                    String ts1 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), BigDecimalUtil.format(ele.getValue3()), "高", upValue);
+                if (Objects.nonNull(upValue) && BigDecimalUtil.gt(ele.getValue3(), upValue)) {
+                    String ts1 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), BigDecimalUtil.format(ele.getValue3()), "高", "上", upValue);
                     contentSb.append(ts1);
-                }else if (BigDecimalUtil.lt(ele.getValue3(), lowValue)) {
-                    String ts3 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), BigDecimalUtil.format(ele.getValue3()), "低", lowValue);
+                }else if(Objects.nonNull(lowValue) && BigDecimalUtil.lt(ele.getValue3(), lowValue)) {
+                    String ts3 = String.format(template, LocalDateUtil.format(ele.getSamplingTime(), "yyyy-MM-dd HH:mm:ss"), BigDecimalUtil.format(ele.getValue3()), "低", "下", lowValue);
                     contentSb.append(ts3);
                 }
                 if(contentSb.length() > 0){

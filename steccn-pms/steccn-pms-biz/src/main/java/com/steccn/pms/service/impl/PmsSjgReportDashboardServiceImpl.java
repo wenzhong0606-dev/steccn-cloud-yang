@@ -282,8 +282,8 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     public void lineCompleteMonitor(LocalDate date, String alarmCode) {
         //根据告警code获取
         List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-        if(CollUtil.isEmpty(passRateList)) {
-            return ;
+        if (CollUtil.isEmpty(passRateList)) {
+            return;
         }
         //获取深加工一车间,深加工二车间（东线）,深加工三车间（西线）
         Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC002", "STEC003", "STEC015")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -295,7 +295,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             wsLineMap.putAll(tmpLineMap);
             Assert.notEmpty(wsLineMap, "车间下暂无产线");
         }
-        int type = 1 ;
+        int type = 1;
         //获取班次产量
         Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, type, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
@@ -307,7 +307,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         Assert.notNull(nightDict, "晚班数据字典不存在");
         List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
         //根据产量map获取合格率
-        Map<Integer,BigDecimal> valueMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> valueMap = Maps.newHashMap();
         sortLineList.forEach(x -> {
             Integer ele = x.getId();
             BigDecimal morning = productNumMap.get(ele + "_" + morningDict.getId());
@@ -319,12 +319,12 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             valueMap.put(ele, BigDecimalUtil.percent(sum, pfSum, 2));
         });
         //获取三个车间的合格率
-        sysOfficeMap.forEach((k,v) ->{
+        sysOfficeMap.forEach((k, v) -> {
             BigDecimal wsPm = produceNumRate(v.getId(), date);
-            valueMap.put(v.getId(),wsPm);
+            valueMap.put(v.getId(), wsPm);
         });
         for (DpBusiMonitorDTO monitor : passRateList) {
-            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+            if (CollUtil.isNotEmpty(monitor.getMonitorRange())) {
                 StringBuilder contentSb = new StringBuilder();
                 BigDecimal upValue = monitor.getUpValue();
                 BigDecimal lowValue = monitor.getLowValue();
@@ -337,10 +337,10 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.SJG_PRODUCT_PASS_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
                         contentSb.append(ts3).append("\n");
                     }
                 }
@@ -418,8 +418,8 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
     public void lineInStorageMonitor(LocalDate date, String alarmCode) {
         //根据告警code获取
         List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-        if(CollUtil.isEmpty(passRateList)) {
-            return ;
+        if (CollUtil.isEmpty(passRateList)) {
+            return;
         }
         //获取深加工一车间,深加工二车间（东线）,深加工三车间（西线）
         Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC002", "STEC003", "STEC015")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -442,7 +442,7 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
         Assert.notNull(nightDict, "晚班数据字典不存在");
         List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
         //根据产量map获取合格率
-        Map<Integer,BigDecimal> valueMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> valueMap = Maps.newHashMap();
         sortLineList.forEach(x -> {
             Integer ele = x.getId();
             BigDecimal morning = inStorageMap.get(ele + "_" + morningDict.getId());
@@ -454,12 +454,12 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
             valueMap.put(ele, BigDecimalUtil.percent(sum, pfSum, 2));
         });
         //获取两个车间的合格率
-        sysOfficeMap.forEach((k,v) ->{
+        sysOfficeMap.forEach((k, v) -> {
             BigDecimal wsInStorage = inStorageRate(v.getId(), date);
-            valueMap.put(v.getId(),wsInStorage);
+            valueMap.put(v.getId(), wsInStorage);
         });
         for (DpBusiMonitorDTO monitor : passRateList) {
-            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+            if (CollUtil.isNotEmpty(monitor.getMonitorRange())) {
                 StringBuilder contentSb = new StringBuilder();
                 BigDecimal upValue = monitor.getUpValue();
                 BigDecimal lowValue = monitor.getLowValue();
@@ -472,10 +472,10 @@ public class PmsSjgReportDashboardServiceImpl implements PmsSjgReportDashboardSe
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.SJG_IN_STORAGE_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
                         contentSb.append(ts3).append("\n");
                     }
                 }

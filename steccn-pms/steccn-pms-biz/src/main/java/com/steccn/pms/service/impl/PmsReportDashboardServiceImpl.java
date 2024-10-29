@@ -154,9 +154,9 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         List<DpWeightVO> dpWeightVOS = FeignOptional.of(() -> remoteDpFeignApi.count(new TupleDTO<>(date.atTime(8, 0, 0)
                 , date.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         BigDecimal weight = dpWeightVOS.stream().map(DpWeightVO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-        TupleDTO<BigDecimal,BigDecimal> result = new TupleDTO<>();
+        TupleDTO<BigDecimal, BigDecimal> result = new TupleDTO<>();
         result.setField1(pullForce);
-        result.setField2(BigDecimalUtil.divide(pullForce,weight));
+        result.setField2(BigDecimalUtil.divide(pullForce, weight));
         return result;
     }
 
@@ -172,15 +172,15 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             BigDecimal result = meltingRate(workShopId, date);
             //判断是否超过
             BigDecimal upValue = monitor.getUpValue();
-            BigDecimal lowValue = monitor.getLowValue() ;
+            BigDecimal lowValue = monitor.getLowValue();
             //高于上限
             StringBuilder contentSb = new StringBuilder();
             String template = SysMsgConstant.MsgTypeEnum.JP_RH_RATE_ALARM.getTemplate();
             if (Objects.nonNull(result) && Objects.nonNull(upValue) && BigDecimalUtil.gt(result, upValue)) {
-                String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "高", upValue);
+                String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "高", "上", upValue);
                 contentSb.append(ts1);
             } else if (Objects.nonNull(result) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(result, lowValue)) {
-                String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "低", lowValue);
+                String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "低", "下", lowValue);
                 contentSb.append(ts3);
             }
             if (contentSb.length() > 0) {
@@ -388,8 +388,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     @Override
     public BigDecimal inStorageRateDateRange(Integer partId, LocalDate start, LocalDate end) {
-        BigDecimal num = inStorageDateRange(partId,start,end).get(0);
-        BigDecimal pullForce = pullForceDateRange(partId,start,end);
+        BigDecimal num = inStorageDateRange(partId, start, end).get(0);
+        BigDecimal pullForce = pullForceDateRange(partId, start, end);
         return BigDecimalUtil.percent(num, pullForce);
     }
 
@@ -573,11 +573,11 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     public void lineCompleteMonitor(LocalDate date, String alarmCode) {
         //根据告警code获取
         List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-        if(CollUtil.isEmpty(passRateList)) {
-            return ;
+        if (CollUtil.isEmpty(passRateList)) {
+            return;
         }
         //获取基片二车间和基片一车间
-        Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC001001","STEC001002")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC001001", "STEC001002")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeMap, "车间不能为空");
         //获取两个车间的所有产线
         Map<Integer, SysOfficeVO> wsLineMap = Maps.newHashMap();
@@ -586,7 +586,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             wsLineMap.putAll(tmpLineMap);
             Assert.notEmpty(wsLineMap, "车间下暂无产线");
         }
-        int type = 0 ;
+        int type = 0;
         //获取班次产量
         Map<String, BigDecimal> productNumMap = pmsReportWorkService.lineClassPm(wsLineMap.keySet(), date, date, type, PmManagerConstant.MEASURE_UNIT_TON);
         SteccnTableAssertUtil.notEmpty(productNumMap, "暂无数据");
@@ -602,7 +602,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Assert.notNull(nightDict, "晚班数据字典不存在");
         List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
         //根据产量map获取合格率
-        Map<Integer,BigDecimal> valueMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> valueMap = Maps.newHashMap();
         sortLineList.forEach(x -> {
             Integer ele = x.getId();
             BigDecimal morning = productNumMap.get(ele + "_" + morningDict.getId());
@@ -614,12 +614,12 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             valueMap.put(ele, BigDecimalUtil.percent(sum, pfSum, 2));
         });
         //获取两个车间的合格率
-        sysOfficeMap.forEach((k,v) ->{
+        sysOfficeMap.forEach((k, v) -> {
             BigDecimal wsPm = produceNumRate(v.getId(), date);
-            valueMap.put(v.getId(),wsPm);
+            valueMap.put(v.getId(), wsPm);
         });
         for (DpBusiMonitorDTO monitor : passRateList) {
-            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+            if (CollUtil.isNotEmpty(monitor.getMonitorRange())) {
                 StringBuilder contentSb = new StringBuilder();
                 BigDecimal upValue = monitor.getUpValue();
                 BigDecimal lowValue = monitor.getLowValue();
@@ -629,13 +629,13 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     //第二种情况，是产线集合告警
                     //第三种情况，是车间+产线告警
                     BigDecimal currentPmRate = valueMap.get(office.getId());
-                     //高于上限
+                    //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
                         contentSb.append(ts3).append("\n");
                     }
                 }
@@ -717,11 +717,11 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     public void lineInStorageMonitor(LocalDate date, String alarmCode) {
         //根据告警code获取
         List<DpBusiMonitorDTO> passRateList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode), FeignConstant.STECCN_DP_SERVICE_NAME).get();
-        if(CollUtil.isEmpty(passRateList)) {
-            return ;
+        if (CollUtil.isEmpty(passRateList)) {
+            return;
         }
         //获取基片二车间和基片一车间
-        Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC001001","STEC001002")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet("STEC001001", "STEC001002")), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeMap, "车间不能为空");
         //获取两个车间的所有产线
         Map<Integer, SysOfficeVO> wsLineMap = Maps.newHashMap();
@@ -745,7 +745,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Assert.notNull(nightDict, "晚班数据字典不存在");
         List<SysOfficeVO> sortLineList = wsLineMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
         //根据产量map获取合格率
-        Map<Integer,BigDecimal> valueMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> valueMap = Maps.newHashMap();
         sortLineList.forEach(x -> {
             Integer ele = x.getId();
             BigDecimal morning = inStorageMap.get(ele + "_" + morningDict.getId());
@@ -757,12 +757,12 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             valueMap.put(ele, BigDecimalUtil.percent(sum, pfSum, 2));
         });
         //获取两个车间的合格率
-        sysOfficeMap.forEach((k,v) ->{
+        sysOfficeMap.forEach((k, v) -> {
             BigDecimal wsInStorage = inStorageRate(v.getId(), date);
-            valueMap.put(v.getId(),wsInStorage);
+            valueMap.put(v.getId(), wsInStorage);
         });
         for (DpBusiMonitorDTO monitor : passRateList) {
-            if(CollUtil.isNotEmpty(monitor.getMonitorRange())){
+            if (CollUtil.isNotEmpty(monitor.getMonitorRange())) {
                 StringBuilder contentSb = new StringBuilder();
                 BigDecimal upValue = monitor.getUpValue();
                 BigDecimal lowValue = monitor.getLowValue();
@@ -775,10 +775,10 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.JP_IN_STORAGE_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"),office.getOfficeName(),  BigDecimalUtil.format(currentPmRate), "低", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
                         contentSb.append(ts3).append("\n");
                     }
                 }
@@ -811,16 +811,16 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //拉引量(基片车间)
         List<PmsPullForceDayCountDTO> pullAmountCount;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            pullAmountCount = pmsPullForceMapper.selectPullForceByDay(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
+            pullAmountCount = pmsPullForceMapper.selectPullForceByDay(dto.getStart(), dto.getEnd(), Sets.newHashSet(75, 76));
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
-            pullAmountCount = pmsPullForceMapper.selectPullForceByWeek(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
+            pullAmountCount = pmsPullForceMapper.selectPullForceByWeek(dto.getStart(), dto.getEnd(), Sets.newHashSet(75, 76));
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
-            pullAmountCount = pmsPullForceMapper.selectPullForceByMonth(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
+            pullAmountCount = pmsPullForceMapper.selectPullForceByMonth(dto.getStart(), dto.getEnd(), Sets.newHashSet(75, 76));
         } else {
-            pullAmountCount = pmsPullForceMapper.selectPullForceByYear(dto.getStart(),dto.getEnd(),Sets.newHashSet(75,76));
+            pullAmountCount = pmsPullForceMapper.selectPullForceByYear(dto.getStart(), dto.getEnd(), Sets.newHashSet(75, 76));
         }
 
-        if(CollUtil.isEmpty(weightCount)&&CollUtil.isEmpty(pullAmountCount)){
+        if (CollUtil.isEmpty(weightCount) && CollUtil.isEmpty(pullAmountCount)) {
             SteccnTableAssertUtil.notEmpty(Lists.newArrayList(), "暂无数据");
         }
         List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
@@ -829,7 +829,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 //            dateList.add(dto.getStart());
 //        }
         //投料量接口问题,算总数
-        Map<Integer,BigDecimal> weightCountMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> weightCountMap = Maps.newHashMap();
         for (int i = 1; i < dateList.size(); i++) {
             LocalDate start = dateList.get(i - 1);
             StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
@@ -838,44 +838,44 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             List<TupleDTO<String, BigDecimal>> datList = Lists.newArrayList();
             //耗料总量
             BigDecimal weightCountTmp = BigDecimal.ZERO;
-            if(CollUtil.isNotEmpty(weightCount)){
+            if (CollUtil.isNotEmpty(weightCount)) {
                 DpValueDateVO valueDateVO = weightCount.stream().filter(v -> v.getDateStr().equals(key)).findFirst().orElse(null);
-                if(Objects.nonNull(valueDateVO)){
-                    weightCountTmp = BigDecimalUtil.divide(valueDateVO.getValue(),new BigDecimal(1000),2) ;
-                    BigDecimalUtil.accumulate(weightCountMap,1,weightCountTmp);
+                if (Objects.nonNull(valueDateVO)) {
+                    weightCountTmp = BigDecimalUtil.divide(valueDateVO.getValue(), new BigDecimal(1000), 2);
+                    BigDecimalUtil.accumulate(weightCountMap, 1, weightCountTmp);
                 }
             }
             //拉引总量
             BigDecimal pullCountTmp = BigDecimal.ZERO;
-            if(CollUtil.isNotEmpty(pullAmountCount)){
+            if (CollUtil.isNotEmpty(pullAmountCount)) {
                 PmsPullForceDayCountDTO pmsPullForce = pullAmountCount.stream().filter(v -> v.getPullForceDateStr().equals(key)).findFirst().orElse(null);
-                if(Objects.nonNull(pmsPullForce)){
+                if (Objects.nonNull(pmsPullForce)) {
                     pullCountTmp = pmsPullForce.getQuantity();
                 }
             }
             datList.add(new TupleDTO<>("料耗总量", weightCountTmp));
             datList.add(new TupleDTO<>("拉引量T", pullCountTmp));
-            datList.add(new TupleDTO<>("熔化率", BigDecimalUtil.percent(pullCountTmp,weightCountTmp,2)));
+            datList.add(new TupleDTO<>("熔化率", BigDecimalUtil.percent(pullCountTmp, weightCountTmp, 2)));
             stackGraphDTO.setData(datList);
             dataList.add(stackGraphDTO);
         }
         //算总和
         PmsPullForceMeltingNumVO allNum = new PmsPullForceMeltingNumVO();
-        if(CollUtil.isNotEmpty(weightCount)){
+        if (CollUtil.isNotEmpty(weightCount)) {
 //            BigDecimal sum = weightCount.stream()
 //                    .map(DpValueDateVO::getValue)
 //                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 //            allNum.setWeightCount(BigDecimalUtil.divide(sum,new BigDecimal(1000),2));
             allNum.setWeightCount(weightCountMap.get(1));
         }
-        if(CollUtil.isNotEmpty(pullAmountCount)){
+        if (CollUtil.isNotEmpty(pullAmountCount)) {
             BigDecimal sum = pullAmountCount.stream()
                     .map(PmsPullForceDayCountDTO::getQuantity)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             allNum.setPullForce(sum);
         }
-        allNum.setPercent(BigDecimalUtil.percent(allNum.getPullForce(),allNum.getWeightCount(),2));
-        QtLineChartBarDTO<String,PmsPullForceMeltingNumVO> chat = StackGraphUtil.convertData(dataList, Boolean.TRUE);
+        allNum.setPercent(BigDecimalUtil.percent(allNum.getPullForce(), allNum.getWeightCount(), 2));
+        QtLineChartBarDTO<String, PmsPullForceMeltingNumVO> chat = StackGraphUtil.convertData(dataList, Boolean.TRUE);
         chat.setOther(allNum);
         return chat;
     }
@@ -886,20 +886,20 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         //获取电子秤读数
         List<DpWeightVO> weightCount = FeignOptional.of(() -> remoteDpFeignApi.count(new TupleDTO<LocalDateTime, LocalDateTime>(start.atTime(8, 0, 0), end.plusDays(1).atTime(7, 59, 59))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
         //拉引量(基片车间)
-        List<PmsPullForceDayCountDTO> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(start,end,Sets.newHashSet(75,76));
-        if(CollUtil.isNotEmpty(weightCount)){
+        List<PmsPullForceDayCountDTO> pullAmountCount = pmsPullForceMapper.selectPullForceByDay(start, end, Sets.newHashSet(75, 76));
+        if (CollUtil.isNotEmpty(weightCount)) {
             BigDecimal sum = weightCount.stream()
                     .map(DpWeightVO::getValue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            result.setWeightCount(BigDecimalUtil.divide(sum,new BigDecimal(1000),2));
+            result.setWeightCount(BigDecimalUtil.divide(sum, new BigDecimal(1000), 2));
         }
-        if(CollUtil.isNotEmpty(pullAmountCount)){
+        if (CollUtil.isNotEmpty(pullAmountCount)) {
             BigDecimal sum = pullAmountCount.stream()
                     .map(PmsPullForceDayCountDTO::getQuantity)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             result.setPullForce(sum);
         }
-        result.setPercent(BigDecimalUtil.percent(result.getPullForce(),result.getWeightCount(),2));
+        result.setPercent(BigDecimalUtil.percent(result.getPullForce(), result.getWeightCount(), 2));
         return result;
     }
 
@@ -914,7 +914,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Integer, List<SysStationWarehouseVO>> stationMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Integer> warehouseIds = stationMap.values().stream().flatMap(List::stream).map(SysStationWarehouseVO::getWarehouseId).collect(Collectors.toList());
         //获取生产订单的执行时间为当前时间段的生产订单生产物料的主物料
-        List<Long> materialIds =  pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(),dto.getEnd());
+        List<Long> materialIds = pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(), dto.getEnd());
         //获取调拨单目标货架为线边仓的指定物料数
         RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
         rawMaterialReportDTO.setStartDate(dto.getStart());
@@ -928,8 +928,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         BigDecimal receiveQuantity = BigDecimal.ZERO;
         for (WmsTransferSlipInfoVO value : receiveMap.values()) {
-            BigDecimal m= UnitConvertUtil.convertMaterial(materialConvertMap.get(value.getMaterialId()), value.getUnit(), sqSysDict.getId(), value.getQuantity(), 4);
-            receiveQuantity = BigDecimalUtil.add(receiveQuantity,m);
+            BigDecimal m = UnitConvertUtil.convertMaterial(materialConvertMap.get(value.getMaterialId()), value.getUnit(), sqSysDict.getId(), value.getQuantity(), 4);
+            receiveQuantity = BigDecimalUtil.add(receiveQuantity, m);
         }
         resVO.setReceiveQuantity(receiveQuantity);
         //耗用总数（取报工物料耗用总数）
@@ -945,22 +945,22 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
         Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Integer> lineIdList = Lists.newArrayList();
-        sysOfficeVOMap.values().forEach(e->lineIdList.add(e.getId()));
-        Map<Integer, BigDecimal> consumptionMap  = pmsReportWorkService.getDateRangeUseCountUnit(lineIdList, dto.getStart(), dto.getEnd(), PmManagerConstant.MEASURE_UNIT_SM);
+        sysOfficeVOMap.values().forEach(e -> lineIdList.add(e.getId()));
+        Map<Integer, BigDecimal> consumptionMap = pmsReportWorkService.getDateRangeUseCountUnit(lineIdList, dto.getStart(), dto.getEnd(), PmManagerConstant.MEASURE_UNIT_SM);
         BigDecimal consumptionQuantity = BigDecimal.ZERO;
         for (BigDecimal value : consumptionMap.values()) {
-            BigDecimalUtil.add(consumptionQuantity,value);
+            BigDecimalUtil.add(consumptionQuantity, value);
         }
         resVO.setConsumptionQuantity(consumptionQuantity);
-        resVO.setUseQuantity(BigDecimalUtil.subtract(receiveQuantity,consumptionQuantity));
+        resVO.setUseQuantity(BigDecimalUtil.subtract(receiveQuantity, consumptionQuantity));
         return resVO;
     }
 
     @Override
-    public EpChartGraphVO<List<String>,TripleDTO<BigDecimal,BigDecimal,BigDecimal>> deepProcessingHistogram(PmsOperateDriverDTO dto) {
+    public EpChartGraphVO<List<String>, TripleDTO<BigDecimal, BigDecimal, BigDecimal>> deepProcessingHistogram(PmsOperateDriverDTO dto) {
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         Assert.notNull(granularity, "粒度不存在");
-        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(),dto.getEnd());
+        List<LocalDate> timeList = ShardTimeUtil.cutDate(granularity.getType(), dto.getStart(), dto.getEnd());
         //领用总数
         //获取深加工车间下的工位绑定的线边仓
         List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listWorkshop(1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -969,7 +969,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         Map<Integer, List<SysStationWarehouseVO>> stationMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<Integer> warehouseIds = stationMap.values().stream().flatMap(List::stream).map(SysStationWarehouseVO::getWarehouseId).collect(Collectors.toList());
         //获取生产订单的执行时间为当前时间段的生产订单生产物料的主物料
-        List<Long> materialIds =  pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(),dto.getEnd());
+        List<Long> materialIds = pmsProduceOrderService.listOrderMaterialIdByDate(dto.getStart(), dto.getEnd());
         //获取调拨单目标货架为线边仓的指定物料数
         RawMaterialReportDTO rawMaterialReportDTO = new RawMaterialReportDTO();
         rawMaterialReportDTO.setStartDate(dto.getStart());
@@ -992,12 +992,12 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
         Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Integer> lineIdSet = Sets.newHashSet();
-        sysOfficeVOMap.values().forEach(e->lineIdSet.add(e.getId()));
+        sysOfficeVOMap.values().forEach(e -> lineIdSet.add(e.getId()));
         Map<String, BigDecimal> consumptionMap = pmsReportWorkService.lineUseCount(lineIdSet, edgingStationIds, dto.getStart(), dto.getEnd(), granularity);
         //不良数
         Map<String, BigDecimal> badnessQuantityMap = pmsReportWorkService.badnessQuantity(lineIdSet, edgingStationIds, dto.getStart(), dto.getEnd(), granularity);
         //组数据
-        EpChartGraphVO<List<String>,TripleDTO<BigDecimal,BigDecimal,BigDecimal>> res = new EpChartGraphVO<>();
+        EpChartGraphVO<List<String>, TripleDTO<BigDecimal, BigDecimal, BigDecimal>> res = new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> receiveQuantityList = Lists.newArrayList();
@@ -1014,7 +1014,7 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             //耗用数
             BigDecimal consumption = consumptionMap.get(key) == null ? BigDecimal.ZERO : consumptionMap.get(key);
             //不良数
-            BigDecimal badness = badnessQuantityMap.get(key)== null ? BigDecimal.ZERO : badnessQuantityMap.get(key);
+            BigDecimal badness = badnessQuantityMap.get(key) == null ? BigDecimal.ZERO : badnessQuantityMap.get(key);
             //实际使用数（耗用数-不良数）
             BigDecimal use = BigDecimalUtil.subtract(consumption, badness, 3);
             receiveQuantityList.add(receive);
@@ -1022,17 +1022,17 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             badnessQuantityList.add(badness);
             useQuantityList.add(use);
         }
-        QtSeriesDataDTO<String,BigDecimal> receiveDataVO = new QtSeriesDataDTO<String,BigDecimal>();
-        receiveDataVO.setName("领用数量"+PmManagerConstant.MEASURE_UNIT_SM);
+        QtSeriesDataDTO<String, BigDecimal> receiveDataVO = new QtSeriesDataDTO<String, BigDecimal>();
+        receiveDataVO.setName("领用数量" + PmManagerConstant.MEASURE_UNIT_SM);
         receiveDataVO.setData(receiveQuantityList);
-        QtSeriesDataDTO<String,BigDecimal> consumptionDataVO = new QtSeriesDataDTO<String,BigDecimal>();
-        consumptionDataVO.setName("耗用数"+PmManagerConstant.MEASURE_UNIT_SM);
+        QtSeriesDataDTO<String, BigDecimal> consumptionDataVO = new QtSeriesDataDTO<String, BigDecimal>();
+        consumptionDataVO.setName("耗用数" + PmManagerConstant.MEASURE_UNIT_SM);
         consumptionDataVO.setData(consumptionQuantityList);
-        QtSeriesDataDTO<String,BigDecimal> badnessDataVO = new QtSeriesDataDTO<String,BigDecimal>();
-        badnessDataVO.setName("原片不良"+PmManagerConstant.MEASURE_UNIT_SM);
+        QtSeriesDataDTO<String, BigDecimal> badnessDataVO = new QtSeriesDataDTO<String, BigDecimal>();
+        badnessDataVO.setName("原片不良" + PmManagerConstant.MEASURE_UNIT_SM);
         badnessDataVO.setData(badnessQuantityList);
-        QtSeriesDataDTO<String,BigDecimal> useDataVO = new QtSeriesDataDTO<String,BigDecimal>();
-        useDataVO.setName("实际使用数"+PmManagerConstant.MEASURE_UNIT_SM);
+        QtSeriesDataDTO<String, BigDecimal> useDataVO = new QtSeriesDataDTO<String, BigDecimal>();
+        useDataVO.setName("实际使用数" + PmManagerConstant.MEASURE_UNIT_SM);
         useDataVO.setData(useQuantityList);
         seriesDataVO.add(receiveDataVO);
         seriesDataVO.add(consumptionDataVO);
@@ -1040,28 +1040,28 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         seriesDataVO.add(useDataVO);
         res.setSeriesDataVO(seriesDataVO);
         res.setXData(xAisList);
-        List<String> legends =   Arrays.asList( "领用数量"+PmManagerConstant.MEASURE_UNIT_SM,"原片不良"+PmManagerConstant.MEASURE_UNIT_SM,"耗用数"+PmManagerConstant.MEASURE_UNIT_SM,"实际使用数"+PmManagerConstant.MEASURE_UNIT_SM);
+        List<String> legends = Arrays.asList("领用数量" + PmManagerConstant.MEASURE_UNIT_SM, "原片不良" + PmManagerConstant.MEASURE_UNIT_SM, "耗用数" + PmManagerConstant.MEASURE_UNIT_SM, "实际使用数" + PmManagerConstant.MEASURE_UNIT_SM);
         res.setLegend(legends);
         //数据合计
         //领用总数
         BigDecimal receiveQuantity = BigDecimal.ZERO;
         for (BigDecimal value : receiveMap.values()) {
-            receiveQuantity = BigDecimalUtil.add(receiveQuantity,value);
+            receiveQuantity = BigDecimalUtil.add(receiveQuantity, value);
         }
         //耗用总数
         BigDecimal consumptionQuantity = BigDecimal.ZERO;
         for (BigDecimal value : consumptionMap.values()) {
-            consumptionQuantity = BigDecimalUtil.add(consumptionQuantity,value);
+            consumptionQuantity = BigDecimalUtil.add(consumptionQuantity, value);
         }
         //不良数
         BigDecimal badnessQuantity = BigDecimal.ZERO;
         for (BigDecimal value : badnessQuantityMap.values()) {
-            badnessQuantity =  BigDecimalUtil.add(badnessQuantity,value);
+            badnessQuantity = BigDecimalUtil.add(badnessQuantity, value);
         }
         TripleDTO<BigDecimal, BigDecimal, BigDecimal> tripleDTO = new TripleDTO<>();
         tripleDTO.setField1(receiveQuantity);
         tripleDTO.setField2(consumptionQuantity);
-        tripleDTO.setField3(BigDecimalUtil.subtract(consumptionQuantity,badnessQuantity));
+        tripleDTO.setField3(BigDecimalUtil.subtract(consumptionQuantity, badnessQuantity));
         res.setOther(tripleDTO);
         return res;
     }
@@ -1086,8 +1086,8 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
         CompletableFuture<Map<String, BigDecimal>> pmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
         CompletableFuture<JpAnalysisReportVO> pmVoFuture = pmVoFuture1.thenCombineAsync(pmVoFuture2, (a, b) -> getJpAnalysisReportVO("总产量（T）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
         //总产量（㎡）
-        CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_SM),MY_POOL);
-        CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_SM),MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, start, end, 0, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
+        CompletableFuture<Map<String, BigDecimal>> pmSmVoFuture2 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLinePmUnit(lineIdList, prevStart, prevEnd, 0, PmManagerConstant.MEASURE_UNIT_SM), MY_POOL);
         CompletableFuture<JpAnalysisReportVO> pmSmVoFuture = pmSmVoFuture1.thenCombineAsync(pmSmVoFuture2, (a, b) -> getJpAnalysisReportVO("总产量（㎡）", BigDecimalUtil.sum(a.values()), BigDecimalUtil.sum(b.values())), MY_POOL);
 //        //总入库量（T）
 //        CompletableFuture<Map<String, BigDecimal>> inStorageVoFuture1 = CompletableFuture.supplyAsync(() -> pmsReportWorkService.dateLineInStorageUnit(lineIdList, start, end, PmManagerConstant.MEASURE_UNIT_TON), MY_POOL);
@@ -1186,17 +1186,18 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
 
     /**
      * 获取分析报表对象
+     *
      * @param name
      * @param currentValue
      * @param prevValue
      * @return
      */
-    private JpAnalysisReportVO getJpAnalysisReportVO(String name, BigDecimal currentValue, BigDecimal prevValue){
+    private JpAnalysisReportVO getJpAnalysisReportVO(String name, BigDecimal currentValue, BigDecimal prevValue) {
         JpAnalysisReportVO reportVo = new JpAnalysisReportVO();
         reportVo.setName(name);
         reportVo.setCurrentValue(currentValue);
         reportVo.setPreValue(prevValue);
-        reportVo.setDiffValue(BigDecimalUtil.subtract(reportVo.getCurrentValue(), reportVo.getPreValue(),2));
+        reportVo.setDiffValue(BigDecimalUtil.subtract(reportVo.getCurrentValue(), reportVo.getPreValue(), 2));
         reportVo.setDiffValueRate(BigDecimalUtil.percent(reportVo.getDiffValue(), reportVo.getCurrentValue()));
         return reportVo;
     }
