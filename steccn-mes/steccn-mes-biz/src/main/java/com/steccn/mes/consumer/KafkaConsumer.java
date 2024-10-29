@@ -258,356 +258,360 @@ public class KafkaConsumer {
             }
             //写死原料车间设备
             if(eqp.getParentCodes().contains("1501738403312599040")){
-                if(eqpListenerDTO.getValueAsString().equals("true")) {
-                    equipment.setState(OaConstant.NO.toString());
-                }else {
-                    equipment.setState(OaConstant.NUM_3.toString());
-                }
-                //特殊处理一号强制式混合机、二号强制式混合机、缓冲仓闸门（混合机)
-                if(eqp.getId().equals(1543243396975095808L)
-                        ||eqp.getId().equals(1543243870138724352L)
-                        ||eqp.getId().equals(1548571027763810304L)
-                        ||eqp.getId().equals(1747819792324792320L)){
-                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .like(MesEquipment::getParentCodes, eqp.getId())
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
-                    idSet.add(eqp.getId());
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .in(MesEquipment::getId,idSet)
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                    //查看混合机是否一致
-                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getParentCode, "1590633171971465216")
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    //如果都一致如果状态都一致那么其上级设备也改变
-                    int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
-                    if(offNum == brotherList.size()){
-                        MesEquipment eqpTmp1 = new MesEquipment();
-                        eqpTmp1.setState(OaConstant.NUM_3.toString());
-                        mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                .eq(MesEquipment::getId,"1590633171971465216")
-                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                    }else {
-                        MesEquipment eqpTmp1 = new MesEquipment();
-                        eqpTmp1.setState(OaConstant.NO.toString());
-                        mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                .eq(MesEquipment::getId,"1590633171971465216")
-                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                    }
-                    ack.acknowledge();
-                    return;
 
-                }
-                //1#混合机油泵电机只有一台开
-                if(eqp.getId().equals(1554749971972489216L)){
-                    Long eqpIdTmp = 1554750034203377664L;
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,"1554749971972489216"));
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                } else if(eqp.getId().equals(1554750034203377664L)){
-                    Long eqpIdTmp = 1554749971972489216L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,"1554750034203377664"));
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                }
-
-                //2#混合机油泵电机只有一台开
-                if(eqp.getId().equals(1552858842006159360L)){
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,"1552858842006159360"));
-                    Long eqpIdTmp = 1554749911603871744L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                } else if(eqp.getId().equals(1554749911603871744L)){
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,"1554749911603871744"));
-                    Long eqpIdTmp = 1552858842006159360L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                }
-                //1、一停(开)下级设备全停(停)
-                //称量皮带 窑头布料小车
-                Set<Long> eqpId =Sets.newHashSet(1548573570782908416L,1793533390992564224L);
-                if(eqpId.contains(eqp.getId())){
-                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId, eqp.getParentCode())
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    if(CollUtil.isNotEmpty(childrenList)){
-                        idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
-                    }
-                    idSet.add(eqp.getId());
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .in(MesEquipment::getId,idSet)
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                    ack.acknowledge();
-                    return;
-                }
-                //2、一个停需要看他上级以及下级(2层)
-                //1#强制式混合机 2#强制式混合机
-                // 1#硅砂喂料皮带 2#硅砂喂料皮带
-                // 破碎玻璃喂料 缓冲仓闸门
-                // 复合澄清剂螺旋给料机	 铝粉螺旋给料机 小料螺旋给料机
-                //硅砂2#排料电磁振动给料机 白云石排料电磁振动给料机 纯碱排料电磁振动给料机 石灰石排料电磁振动给料机
-                //硅砂1#活化料斗 硅砂2#活化料斗 纯碱活化料斗 复合澄清剂活化料斗 小料活化料斗
-                Set<Long> eqpId2 =Sets.newHashSet(1543243396975095808L,1543243870138724352L,
-                        1548571027763810304L,1548572780831887360L,
-                        1548607109662429184L,1548869435598753792L,1548869791401562112L,1548869874788519936L,
-                        1551474111896023040L,1551474428196876288L,1551474615883591680L,
-                        1552943093476143104L,1592324192488906752L,1592326468393754624L,1592327036235407360L,
-                        1555023219150815232L,1555026576456286208L,1555026819172270080L,1555028579710402560L,1555029030027657216L);
-                //3层
-                //白云石大螺旋 白云石小螺旋 纯碱大螺旋 石灰石大螺旋 石灰石小螺旋
-                // 配合料1#皮带 配合料3#皮带 碎玻璃7#皮带
-                // 配合料2#皮带 配合料4#皮带 碎玻璃8#皮带
-
-                //碎玻璃7#皮带 碎玻璃8#皮带 关联CH35和CH36
-                if(eqp.getId().equals(1548589026927366144L)||eqp.getId().equals(1548590147603451904L)){
-                    Long eqpTmp = 1552936564324741120L;
-                    if(!eqp.getId().equals(1548589026927366144L)){
-                        eqpTmp = 1552938001553338368L;
-                    }
-                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getParentCode, eqpTmp)
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    Set<Long> eqpIdTmp2 = Sets.newHashSet();
-                    if(CollUtil.isNotEmpty(childrenList)){
-                        eqpIdTmp2.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
-                    }
-                    eqpIdTmp2.add(eqpTmp);
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .in(MesEquipment::getId,eqpIdTmp2)
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                    //校验父级
-                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getParentCode, "1592305077745344512")
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
-                    MesEquipment equipment1 = new MesEquipment();
-                    if(brotherList.size()==offNum){
-                        equipment1.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipment1.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipment1,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,brotherList.get(0).getParentCode())
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                }
-                Set<Long> eqpId3 =Sets.newHashSet(1731573403747045376L,1731573432738074624L,1731579657513029632L,1731579686487281664L,1731580128638226432L,1731580172787470336L
-                ,1548575683441250304L,1548583156571099136L,1548589026927366144L
-                ,1548582353395437568L,1548584532931956736L,1548590147603451904L);
-                if(eqpId2.contains(eqp.getId())||eqpId3.contains(eqp.getId())){
-                    //修改其下级设备
-                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .like(MesEquipment::getParentCodes, eqp.getParentCode())
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    if(CollUtil.isNotEmpty(childrenList)){
-                        idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
-                    }
-                    idSet.add(eqp.getId());
-                    //对油泵电机进行操作 1#
-                    if(equipment.getState().equals(OaConstant.NUM_3.toString())&&idSet.contains(1543243396975095808L)){
-                        idSet.add(1554749971972489216L);
-                        idSet.add(1554750034203377664L);
-
-                    } //2#
-                    if(equipment.getState().equals(OaConstant.NUM_3.toString())&&idSet.contains(1543243870138724352L)){
-                        idSet.add(1554749911603871744L);
-                        idSet.add(1552858842006159360L);
-
-                    }
-                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                            .in(MesEquipment::getId,idSet)
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getParentCode, eqp.getParentCode())
-                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                    //如果都一致如果状态都一致那么其上级设备也改变
-                    if(CollUtil.isNotEmpty(brotherList)){
-                        int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
-                        //窑头布料皮带与混合机一致
-                        Set<Long> eqpIdSetTmp = Sets.newHashSet();
-                        eqpIdSetTmp.add(Long.parseLong(eqp.getParentCode()));
-                        if(eqp.getParentCode().equals("1590633171971465216")){
-                            eqpIdSetTmp.addAll(Sets.newHashSet(1548585834533539840L,1678677285362327552L,
-                                    1548586975526834176L));
-                        }
-                        if(offNum == brotherList.size()){
-                            MesEquipment eqpTmp1 = new MesEquipment();
-                            eqpTmp1.setState(OaConstant.NUM_3.toString());
-                            mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                    .in(MesEquipment::getId,eqpIdSetTmp)
-                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                        }else {
-                            MesEquipment eqpTmp1 = new MesEquipment();
-                            eqpTmp1.setState(OaConstant.NO.toString());
-                            mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                    .in(MesEquipment::getId,eqpIdSetTmp)
-                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                        }
-                    }
-                    //操作第三层
-                    if(eqpId3.contains(eqp.getId())){
-                        //定制螺旋给料机
-                        if(eqp.getEquipmentName().contains("螺旋给料机")){
-                            List<MesEquipment> luoList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                                    .like(MesEquipment::getEquipmentName,"螺旋给料机")
-                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
-                                    .eq(MesEquipment::getState,OaConstant.NUM_3.toString()));
-                            luoList = luoList.stream().filter(v->!v.getEquipmentName().equals("螺旋给料机")).collect(Collectors.toList());
-                            if(CollUtil.isNotEmpty(luoList)&&luoList.size()==6){
-                                MesEquipment eqpTmp1 = new MesEquipment();
-                                eqpTmp1.setState(OaConstant.NUM_3.toString());
-                                mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                        .eq(MesEquipment::getId,"1592083143237558272")
-                                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                            }else {
-                                MesEquipment eqpTmp1 = new MesEquipment();
-                                eqpTmp1.setState(OaConstant.NO.toString());
-                                mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                        .eq(MesEquipment::getId,"1592083143237558272")
-                                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                            }
-                            ack.acknowledge();
-                            return;
-                        }
-                        //找到他的父亲节点
-                        MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
-                                .eq(MesEquipment::getId, eqp.getParentCode())
-                                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
-                                .last("limit 1"));
-                        if(Objects.nonNull(parent)){
-                            //找到兄弟节点
-                            List<MesEquipment> pBrotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                                    .eq(MesEquipment::getParentCode, parent.getParentCode())
-                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                            if(CollUtil.isNotEmpty(pBrotherList)){
-                                int offNum = (int)pBrotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
-                                if(offNum == brotherList.size()){
-                                    MesEquipment eqpTmp1 = new MesEquipment();
-                                    eqpTmp1.setState(OaConstant.NUM_3.toString());
-                                    mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                            .eq(MesEquipment::getId,pBrotherList.get(0).getParentCode())
-                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                                }else {
-                                    MesEquipment eqpTmp1 = new MesEquipment();
-                                    eqpTmp1.setState(OaConstant.NO.toString());
-                                    mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
-                                            .in(MesEquipment::getId,pBrotherList.get(0).getParentCode())
-                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                                }
-                            }
-                        }
-                    }
-                    ack.acknowledge();
-                    return;
-                }
-                //1#混合机油泵电机只有一台开
-                if(eqp.getId().equals(1554749971972489216L)){
-                    Long eqpIdTmp = 1554750034203377664L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                } else if(eqp.getId().equals(1554750034203377664L)){
-                    Long eqpIdTmp = 1554749971972489216L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                }
-
-                //2#混合机油泵电机只有一台开
-                if(eqp.getId().equals(1552858842006159360L)){
-                    Long eqpIdTmp = 1554749911603871744L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                } else if(eqp.getId().equals(1552858842006159360L)){
-                    Long eqpIdTmp = 1552858842006159360L;
-                    MesEquipment equipmentTmp = new MesEquipment();
-                    if(equipment.getState().equals(OaConstant.NO.toString())
-                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
-                        equipmentTmp.setState(OaConstant.NUM_3.toString());
-                    }else {
-                        equipmentTmp.setState(OaConstant.NO.toString());
-                    }
-                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getId,eqpIdTmp));
-                    ack.acknowledge();
-                    return;
-                }
             }
+
+//            if(eqp.getParentCodes().contains("1501738403312599040")){
+//                if(eqpListenerDTO.getValueAsString().equals("true")) {
+//                    equipment.setState(OaConstant.NO.toString());
+//                }else {
+//                    equipment.setState(OaConstant.NUM_3.toString());
+//                }
+//                //特殊处理一号强制式混合机、二号强制式混合机、缓冲仓闸门（混合机)
+//                if(eqp.getId().equals(1543243396975095808L)
+//                        ||eqp.getId().equals(1543243870138724352L)
+//                        ||eqp.getId().equals(1548571027763810304L)
+//                        ||eqp.getId().equals(1747819792324792320L)){
+//                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .like(MesEquipment::getParentCodes, eqp.getId())
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
+//                    idSet.add(eqp.getId());
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .in(MesEquipment::getId,idSet)
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                    //查看混合机是否一致
+//                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getParentCode, "1590633171971465216")
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    //如果都一致如果状态都一致那么其上级设备也改变
+//                    int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
+//                    if(offNum == brotherList.size()){
+//                        MesEquipment eqpTmp1 = new MesEquipment();
+//                        eqpTmp1.setState(OaConstant.NUM_3.toString());
+//                        mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                .eq(MesEquipment::getId,"1590633171971465216")
+//                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                    }else {
+//                        MesEquipment eqpTmp1 = new MesEquipment();
+//                        eqpTmp1.setState(OaConstant.NO.toString());
+//                        mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                .eq(MesEquipment::getId,"1590633171971465216")
+//                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                    }
+//                    ack.acknowledge();
+//                    return;
+//
+//                }
+//                //1#混合机油泵电机只有一台开
+//                if(eqp.getId().equals(1554749971972489216L)){
+//                    Long eqpIdTmp = 1554750034203377664L;
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,"1554749971972489216"));
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                } else if(eqp.getId().equals(1554750034203377664L)){
+//                    Long eqpIdTmp = 1554749971972489216L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,"1554750034203377664"));
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                }
+//
+//                //2#混合机油泵电机只有一台开
+//                if(eqp.getId().equals(1552858842006159360L)){
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,"1552858842006159360"));
+//                    Long eqpIdTmp = 1554749911603871744L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                } else if(eqp.getId().equals(1554749911603871744L)){
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,"1554749911603871744"));
+//                    Long eqpIdTmp = 1552858842006159360L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                }
+//                //1、一停(开)下级设备全停(停)
+//                //称量皮带 窑头布料小车
+//                Set<Long> eqpId =Sets.newHashSet(1548573570782908416L,1793533390992564224L);
+//                if(eqpId.contains(eqp.getId())){
+//                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId, eqp.getParentCode())
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    if(CollUtil.isNotEmpty(childrenList)){
+//                        idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
+//                    }
+//                    idSet.add(eqp.getId());
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .in(MesEquipment::getId,idSet)
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                    ack.acknowledge();
+//                    return;
+//                }
+//                //2、一个停需要看他上级以及下级(2层)
+//                //1#强制式混合机 2#强制式混合机
+//                // 1#硅砂喂料皮带 2#硅砂喂料皮带
+//                // 破碎玻璃喂料 缓冲仓闸门
+//                // 复合澄清剂螺旋给料机	 铝粉螺旋给料机 小料螺旋给料机
+//                //硅砂2#排料电磁振动给料机 白云石排料电磁振动给料机 纯碱排料电磁振动给料机 石灰石排料电磁振动给料机
+//                //硅砂1#活化料斗 硅砂2#活化料斗 纯碱活化料斗 复合澄清剂活化料斗 小料活化料斗
+//                Set<Long> eqpId2 =Sets.newHashSet(1543243396975095808L,1543243870138724352L,
+//                        1548571027763810304L,1548572780831887360L,
+//                        1548607109662429184L,1548869435598753792L,1548869791401562112L,1548869874788519936L,
+//                        1551474111896023040L,1551474428196876288L,1551474615883591680L,
+//                        1552943093476143104L,1592324192488906752L,1592326468393754624L,1592327036235407360L,
+//                        1555023219150815232L,1555026576456286208L,1555026819172270080L,1555028579710402560L,1555029030027657216L);
+//                //3层
+//                //白云石大螺旋 白云石小螺旋 纯碱大螺旋 石灰石大螺旋 石灰石小螺旋
+//                // 配合料1#皮带 配合料3#皮带 碎玻璃7#皮带
+//                // 配合料2#皮带 配合料4#皮带 碎玻璃8#皮带
+//
+//                //碎玻璃7#皮带 碎玻璃8#皮带 关联CH35和CH36
+//                if(eqp.getId().equals(1548589026927366144L)||eqp.getId().equals(1548590147603451904L)){
+//                    Long eqpTmp = 1552936564324741120L;
+//                    if(!eqp.getId().equals(1548589026927366144L)){
+//                        eqpTmp = 1552938001553338368L;
+//                    }
+//                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getParentCode, eqpTmp)
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    Set<Long> eqpIdTmp2 = Sets.newHashSet();
+//                    if(CollUtil.isNotEmpty(childrenList)){
+//                        eqpIdTmp2.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
+//                    }
+//                    eqpIdTmp2.add(eqpTmp);
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .in(MesEquipment::getId,eqpIdTmp2)
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                    //校验父级
+//                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getParentCode, "1592305077745344512")
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
+//                    MesEquipment equipment1 = new MesEquipment();
+//                    if(brotherList.size()==offNum){
+//                        equipment1.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipment1.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipment1,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,brotherList.get(0).getParentCode())
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                }
+//                Set<Long> eqpId3 =Sets.newHashSet(1731573403747045376L,1731573432738074624L,1731579657513029632L,1731579686487281664L,1731580128638226432L,1731580172787470336L
+//                ,1548575683441250304L,1548583156571099136L,1548589026927366144L
+//                ,1548582353395437568L,1548584532931956736L,1548590147603451904L);
+//                if(eqpId2.contains(eqp.getId())||eqpId3.contains(eqp.getId())){
+//                    //修改其下级设备
+//                    List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .like(MesEquipment::getParentCodes, eqp.getParentCode())
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    if(CollUtil.isNotEmpty(childrenList)){
+//                        idSet.addAll(childrenList.stream().map(MesEquipment::getId).collect(Collectors.toSet()));
+//                    }
+//                    idSet.add(eqp.getId());
+//                    //对油泵电机进行操作 1#
+//                    if(equipment.getState().equals(OaConstant.NUM_3.toString())&&idSet.contains(1543243396975095808L)){
+//                        idSet.add(1554749971972489216L);
+//                        idSet.add(1554750034203377664L);
+//
+//                    } //2#
+//                    if(equipment.getState().equals(OaConstant.NUM_3.toString())&&idSet.contains(1543243870138724352L)){
+//                        idSet.add(1554749911603871744L);
+//                        idSet.add(1552858842006159360L);
+//
+//                    }
+//                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+//                            .in(MesEquipment::getId,idSet)
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                    List<MesEquipment> brotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getParentCode, eqp.getParentCode())
+//                            .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                            .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                    //如果都一致如果状态都一致那么其上级设备也改变
+//                    if(CollUtil.isNotEmpty(brotherList)){
+//                        int offNum = (int)brotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
+//                        //窑头布料皮带与混合机一致
+//                        Set<Long> eqpIdSetTmp = Sets.newHashSet();
+//                        eqpIdSetTmp.add(Long.parseLong(eqp.getParentCode()));
+//                        if(eqp.getParentCode().equals("1590633171971465216")){
+//                            eqpIdSetTmp.addAll(Sets.newHashSet(1548585834533539840L,1678677285362327552L,
+//                                    1548586975526834176L));
+//                        }
+//                        if(offNum == brotherList.size()){
+//                            MesEquipment eqpTmp1 = new MesEquipment();
+//                            eqpTmp1.setState(OaConstant.NUM_3.toString());
+//                            mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                    .in(MesEquipment::getId,eqpIdSetTmp)
+//                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                        }else {
+//                            MesEquipment eqpTmp1 = new MesEquipment();
+//                            eqpTmp1.setState(OaConstant.NO.toString());
+//                            mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                    .in(MesEquipment::getId,eqpIdSetTmp)
+//                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                        }
+//                    }
+//                    //操作第三层
+//                    if(eqpId3.contains(eqp.getId())){
+//                        //定制螺旋给料机
+//                        if(eqp.getEquipmentName().contains("螺旋给料机")){
+//                            List<MesEquipment> luoList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                                    .like(MesEquipment::getEquipmentName,"螺旋给料机")
+//                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+//                                    .eq(MesEquipment::getState,OaConstant.NUM_3.toString()));
+//                            luoList = luoList.stream().filter(v->!v.getEquipmentName().equals("螺旋给料机")).collect(Collectors.toList());
+//                            if(CollUtil.isNotEmpty(luoList)&&luoList.size()==6){
+//                                MesEquipment eqpTmp1 = new MesEquipment();
+//                                eqpTmp1.setState(OaConstant.NUM_3.toString());
+//                                mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                        .eq(MesEquipment::getId,"1592083143237558272")
+//                                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                            }else {
+//                                MesEquipment eqpTmp1 = new MesEquipment();
+//                                eqpTmp1.setState(OaConstant.NO.toString());
+//                                mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                        .eq(MesEquipment::getId,"1592083143237558272")
+//                                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                            }
+//                            ack.acknowledge();
+//                            return;
+//                        }
+//                        //找到他的父亲节点
+//                        MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+//                                .eq(MesEquipment::getId, eqp.getParentCode())
+//                                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+//                                .last("limit 1"));
+//                        if(Objects.nonNull(parent)){
+//                            //找到兄弟节点
+//                            List<MesEquipment> pBrotherList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+//                                    .eq(MesEquipment::getParentCode, parent.getParentCode())
+//                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+//                                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+//                            if(CollUtil.isNotEmpty(pBrotherList)){
+//                                int offNum = (int)pBrotherList.stream().filter(v->v.getState().equals(OaConstant.NUM_3.toString())).count();
+//                                if(offNum == brotherList.size()){
+//                                    MesEquipment eqpTmp1 = new MesEquipment();
+//                                    eqpTmp1.setState(OaConstant.NUM_3.toString());
+//                                    mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                            .eq(MesEquipment::getId,pBrotherList.get(0).getParentCode())
+//                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                                }else {
+//                                    MesEquipment eqpTmp1 = new MesEquipment();
+//                                    eqpTmp1.setState(OaConstant.NO.toString());
+//                                    mesEquipmentService.update(eqpTmp1,new LambdaQueryWrapper<MesEquipment>()
+//                                            .in(MesEquipment::getId,pBrotherList.get(0).getParentCode())
+//                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+//                                }
+//                            }
+//                        }
+//                    }
+//                    ack.acknowledge();
+//                    return;
+//                }
+//                //1#混合机油泵电机只有一台开
+//                if(eqp.getId().equals(1554749971972489216L)){
+//                    Long eqpIdTmp = 1554750034203377664L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                } else if(eqp.getId().equals(1554750034203377664L)){
+//                    Long eqpIdTmp = 1554749971972489216L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                }
+//
+//                //2#混合机油泵电机只有一台开
+//                if(eqp.getId().equals(1552858842006159360L)){
+//                    Long eqpIdTmp = 1554749911603871744L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                } else if(eqp.getId().equals(1552858842006159360L)){
+//                    Long eqpIdTmp = 1552858842006159360L;
+//                    MesEquipment equipmentTmp = new MesEquipment();
+//                    if(equipment.getState().equals(OaConstant.NO.toString())
+//                            ||equipment.getState().equals(OaConstant.NUM_2.toString())){
+//                        equipmentTmp.setState(OaConstant.NUM_3.toString());
+//                    }else {
+//                        equipmentTmp.setState(OaConstant.NO.toString());
+//                    }
+//                    mesEquipmentService.update(equipmentTmp,new LambdaQueryWrapper<MesEquipment>()
+//                            .eq(MesEquipment::getId,eqpIdTmp));
+//                    ack.acknowledge();
+//                    return;
+//                }
+//            }
             //只有原料车间的设备才需要考虑待机停机
 //            if(!eqp.getParentCodes().contains("1501738403312599040")){
 //                equipment.setState(OaConstant.NUM_3.toString());
