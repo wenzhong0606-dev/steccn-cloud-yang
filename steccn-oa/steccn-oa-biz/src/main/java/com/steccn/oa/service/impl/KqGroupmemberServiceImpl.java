@@ -46,6 +46,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -371,6 +372,12 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
                     .eq(KqFormatDetail::getWorkbegintime, time.toString())
                     .in(KqFormatDetail::getGroupid, kqGroups.stream().map(KqGroup::getId).collect(Collectors.toSet()))
                     .last("LIMIT 1"));
+            if(Objects.isNull(kqFormatDetail)){
+                result.setClassGroup("暂无排班信息");
+                result.setClassLeader("暂无排班信息");
+                results.add(result);
+                continue;
+            }
             KqGroup kqGroup = kqGroups.stream().filter(v->v.getId().equals(kqFormatDetail.getGroupid())).findFirst().orElse(null);
             if(kqGroup.getGroupname().contains(OaConstant.CLASS_A)){
                 result.setClassGroup(OaConstant.CLASS_A);
@@ -439,6 +446,12 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
                     .eq(KqFormatDetail::getWorkbegintime, time.toString())
                     .in(KqFormatDetail::getGroupid, Sets.newHashSet(56, 57, 58))
                     .last("LIMIT 1"));
+            if(Objects.isNull(kqFormatDetail)){
+                result.setClassGroup("暂无排班信息");
+                result.setClassLeader("暂无排班信息");
+                results.add(result);
+                continue;
+            }
             KqGroup kqGroup = kqGroupService.getOne(new LambdaQueryWrapper<KqGroup>()
                     .eq(KqGroup::getId, kqFormatDetail.getGroupid()), false);
             String[] split = kqGroup.getGroupname().split("-");
