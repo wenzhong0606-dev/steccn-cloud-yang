@@ -258,7 +258,14 @@ public class KafkaConsumer {
             }
             //写死原料车间设备
             if(eqp.getParentCodes().contains("1501738403312599040")){
-
+                if(eqpListenerDTO.getValueAsString().equals("true")) {
+                    equipment.setState(OaConstant.NO.toString());
+                }else {
+                    equipment.setState(OaConstant.NUM_3.toString());
+                }
+                //注:eqp是传过来的设备信息,equipment代表设备的改变状态
+                ack.acknowledge();
+                return;
             }
 
 //            if(eqp.getParentCodes().contains("1501738403312599040")){
