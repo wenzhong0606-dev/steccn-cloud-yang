@@ -30,6 +30,7 @@ import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -178,15 +179,18 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
     }
 
     @Override
-    public Boolean sendBack(Long id) {
-        WmsSignFeedback order = getById(id);
+    public Boolean sendBack(WmsSignFeedbackDTO dto) {
+        Assert.notNull(dto.getId(),"反馈id不能为空");
+        WmsSignFeedback order = getById(dto.getId());
         Assert.notNull(order,"反馈的物流单不存在");
+        Assert.notBlank(dto.getSendBackReason(),"退回理由不能为空");
         if(!order.getState().equals(OaConstant.NO)){
             throw new BusinessException("只有待确认反馈状态的物流单才可退回");
         }
         WmsSignFeedback model = new WmsSignFeedback();
         model.setId(order.getId());
         model.setState(OaConstant.NUM_2);
+        model.setSendBackReason(dto.getSendBackReason());
         updateById(model);
         return true;
     }

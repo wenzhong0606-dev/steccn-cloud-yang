@@ -65,9 +65,9 @@ public class WmsSignFeedbackController {
     }
 
     @ApiOperation("退回")
-    @GetMapping("/sendBack/{id}")
-    public R<Boolean> sendBack(@PathVariable("id") Long id){
-        return R.success(wmsSignFeedbackService.sendBack(id));
+    @PostMapping("/sendBack")
+    public R<Boolean> sendBack(@RequestBody WmsSignFeedbackDTO dto){
+        return R.success(wmsSignFeedbackService.sendBack(dto));
     }
 
     @ApiOperation("已退回数量")

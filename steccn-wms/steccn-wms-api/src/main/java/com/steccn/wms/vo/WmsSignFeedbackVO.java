@@ -81,4 +81,6 @@ public class WmsSignFeedbackVO {
     private String product;
 
     private  String logisticsCompany;
+
+    private String sendBackReason;
 }

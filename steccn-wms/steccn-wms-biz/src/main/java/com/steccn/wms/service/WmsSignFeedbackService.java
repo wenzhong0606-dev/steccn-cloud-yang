@@ -6,6 +6,7 @@ import com.steccn.wms.domain.WmsSignFeedback;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsSignFeedbackDTO;
 import com.steccn.wms.vo.WmsSignFeedbackVO;
+import org.springframework.web.bind.annotation.RequestBody;
 
 /**
 * @author 34872
@@ -24,7 +25,7 @@ public interface WmsSignFeedbackService extends IService<WmsSignFeedback> {
 
     Boolean affirm(WmsSignFeedbackDTO dto);
 
-    Boolean sendBack(Long id);
+    Boolean sendBack(WmsSignFeedbackDTO dto);
 
     Long countSendBack();
 

@@ -93,6 +93,11 @@ public class WmsSignFeedback implements Serializable {
     private Long fileId;
 
     /**
+     * 退回原因
+     */
+    private String sendBackReason;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
