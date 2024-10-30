@@ -264,9 +264,36 @@ public class KafkaConsumer {
                     equipment.setState(OaConstant.NUM_3.toString());
                 }
                 //注:eqp是传过来的设备信息,equipment代表设备的改变状态
+
+
+                //修改当前设备状态
+                if(eqpListenerDTO.getValueAsString().equals("true")) {
+                    eqp.setState(OaConstant.NO.toString());
+                }else {
+                    eqp.setState(OaConstant.NUM_3.toString());
+                }
+                mesEquipmentService.updateById(eqp);
+                //判断当前设备是否末节点
+                if (!eqp.getTreeLeaf().equals("1")){
+                    //不是末节点，需要同时考虑向上和向下
+                    //向下，获取设备下级设备，并修改所有下级设备状态
+                    //递归更新所有子节点的状态
+                    updateChildrenStatus(equipment, eqpListenerDTO.getValueAsString());
+                }
+                //向上
+                List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, eqp.getParentCode()));
+                if (CollUtil.isNotEmpty(list)){
+                    if (checkSiblingsStatusConsistency(list, eqp)) {
+                        MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getEquipmentCode, eqp.getParentCode()));
+                        updateParentStatus(one, eqpListenerDTO.getValueAsString());
+                    }
+                }
                 ack.acknowledge();
                 return;
             }
+
+
+
 
 //            if(eqp.getParentCodes().contains("1501738403312599040")){
 //                if(eqpListenerDTO.getValueAsString().equals("true")) {
@@ -856,6 +883,55 @@ public class KafkaConsumer {
                 node.setState(firstChildState);
                 changeEqp.computeIfAbsent(firstChildState, k -> new HashSet<>()).add(node.getId());
             }
+        }
+    }
+
+    //更新设备父节点的状态
+    private void updateParentStatus(MesEquipment equipment, String status) {
+        equipment.setStatus(status);
+        if(status.equals("true")) {
+            equipment.setState(OaConstant.NO.toString());
+        }else {
+            equipment.setState(OaConstant.NUM_3.toString());
+        }
+        //修改设备状态
+        mesEquipmentService.updateById(equipment);
+        List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, equipment.getParentCode()));
+        //判断父节点是否存在兄弟节点并且判断状态一致性
+        if (checkSiblingsStatusConsistency(list,equipment)){
+            //一致， 继续向上检查
+            updateParentStatus(findParent(equipment), status);
+        }
+    }
+    //检查设备同一层级节点状态一致性
+    private boolean checkSiblingsStatusConsistency(List<MesEquipment> nodes, MesEquipment equipment) {
+        for (MesEquipment node : nodes) {
+            if (!node.getEquipmentCode().equals(equipment.getEquipmentCode()) && node.getState().equals(equipment.getState())){
+                //存在状态不一致的兄弟节点
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 查找设备父节点
+    private MesEquipment findParent(MesEquipment equipment) {
+        return mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getEquipmentCode,equipment.getParentCode()));
+    }
+
+
+    // 递归更新子节点的状态
+    private void updateChildrenStatus(MesEquipment equipment, String status) {
+        List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, equipment.getEquipmentCode()));
+        for (MesEquipment mesEquipment : list) {
+            if(status.equals("true")) {
+                equipment.setState(OaConstant.NO.toString());
+            }else {
+                equipment.setState(OaConstant.NUM_3.toString());
+            }
+            //修改设备状态
+            mesEquipmentService.updateById(equipment);
+            updateChildrenStatus(mesEquipment, status);
         }
     }
 }
