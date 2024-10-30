@@ -23,4 +23,10 @@ public interface WmsSignFeedbackService extends IService<WmsSignFeedback> {
     Page<WmsSignFeedbackVO> pageList(WmsSignFeedbackDTO dto);
 
     Boolean affirm(WmsSignFeedbackDTO dto);
+
+    Boolean sendBack(Long id);
+
+    Long countSendBack();
+
+    Page<WmsSignFeedbackVO> sendBackList(WmsSignFeedbackDTO dto);
 }

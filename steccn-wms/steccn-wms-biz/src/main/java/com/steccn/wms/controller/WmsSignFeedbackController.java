@@ -64,4 +64,21 @@ public class WmsSignFeedbackController {
         return R.success(wmsSignFeedbackService.affirm(dto));
     }
 
+    @ApiOperation("退回")
+    @GetMapping("/sendBack/{id}")
+    public R<Boolean> sendBack(@PathVariable("id") Long id){
+        return R.success(wmsSignFeedbackService.sendBack(id));
+    }
+
+    @ApiOperation("已退回数量")
+    @GetMapping("/sendBack/count")
+    public R<Long> sendBackCount(){
+        return R.success(wmsSignFeedbackService.countSendBack());
+    }
+
+    @ApiOperation("已退回分页列表")
+    @PostMapping("sendBack/list")
+    public R<Page<WmsSignFeedbackVO>> sendBackPageList(@RequestBody WmsSignFeedbackDTO dto) {
+        return R.success(wmsSignFeedbackService.sendBackList(dto));
+    }
 }

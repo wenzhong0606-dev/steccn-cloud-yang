@@ -7,10 +7,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.sales.dto.KsLogisticsOrderDTO;
@@ -172,6 +175,44 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         FeignOptional.of(() -> remoteSaleFeignApi.update(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
         order.setState(1);
         return updateById(order);
+    }
+
+    @Override
+    public Boolean sendBack(Long id) {
+        WmsSignFeedback order = getById(id);
+        Assert.notNull(order,"反馈的物流单不存在");
+        if(!order.getState().equals(OaConstant.NO)){
+            throw new BusinessException("只有待确认反馈状态的物流单才可退回");
+        }
+        WmsSignFeedback model = new WmsSignFeedback();
+        model.setId(order.getId());
+        model.setState(OaConstant.NUM_2);
+        updateById(model);
+        return true;
+    }
+
+    @Override
+    public Long countSendBack() {
+        long count = count(new LambdaQueryWrapper<WmsSignFeedback>()
+                .eq(WmsSignFeedback::getCreateBy, SecurityUtils.getUser().getUserId())
+                .eq(WmsSignFeedback::getState, OaConstant.NUM_2));
+        return count;
+    }
+
+    @Override
+    public Page<WmsSignFeedbackVO> sendBackList(WmsSignFeedbackDTO dto) {
+        LambdaQueryWrapper<WmsSignFeedback> between = new LambdaQueryWrapper<WmsSignFeedback>()
+                .eq(WmsSignFeedback::getCreateBy, SecurityUtils.getUser().getUserId())
+                .eq(WmsSignFeedback::getState, OaConstant.NUM_2)
+                .orderByDesc(WmsSignFeedback::getUpdateTime);
+        Page page = page(new Page(dto.getCurrent(), dto.getSize()), between);
+        Page<WmsSignFeedbackVO> resPage = new Page<>();
+        if (CollUtil.isNotEmpty(page.getRecords())){
+            BeanUtil.copyProperties(page,resPage);
+            List<WmsSignFeedbackVO> wmsSignFeedbackVOList = BeanUtil.copyToList(page.getRecords(), WmsSignFeedbackVO.class);
+            resPage.setRecords(wmsSignFeedbackVOList);
+        }
+        return resPage;
     }
 }
 
