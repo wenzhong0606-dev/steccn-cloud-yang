@@ -888,29 +888,31 @@ public class KafkaConsumer {
 
     //更新设备父节点的状态
     private void updateParentStatus(MesEquipment equipment, String status) {
-        equipment.setStatus(status);
-        if(status.equals("true")) {
-            equipment.setState(OaConstant.NO.toString());
-        }else {
-            equipment.setState(OaConstant.NUM_3.toString());
-        }
-        //修改设备状态
-        mesEquipmentService.updateById(equipment);
-        List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, equipment.getParentCode()));
-        //判断父节点是否存在兄弟节点并且判断状态一致性
-        if (checkSiblingsStatusConsistency(list,equipment)){
-            //一致， 继续向上检查
-            updateParentStatus(findParent(equipment), status);
+        if (equipment.getIsEqp().equals("1")) {
+            equipment.setStatus(status);
+            if (status.equals("true")) {
+                equipment.setState(OaConstant.NO.toString());
+            } else {
+                equipment.setState(OaConstant.NUM_3.toString());
+            }
+            //修改设备状态
+            mesEquipmentService.updateById(equipment);
+            List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, equipment.getParentCode()));
+            //判断父节点是否存在兄弟节点并且判断状态一致性
+            if (checkSiblingsStatusConsistency(list, equipment)) {
+                //一致， 继续向上检查
+                updateParentStatus(findParent(equipment), status);
+            }
         }
     }
     //检查设备同一层级节点状态一致性
     private boolean checkSiblingsStatusConsistency(List<MesEquipment> nodes, MesEquipment equipment) {
-        for (MesEquipment node : nodes) {
-            if (!node.getEquipmentCode().equals(equipment.getEquipmentCode()) && node.getState().equals(equipment.getState())){
-                //存在状态不一致的兄弟节点
-                return false;
+            for (MesEquipment node : nodes) {
+                if (!node.getEquipmentCode().equals(equipment.getEquipmentCode()) && node.getState().equals(equipment.getState())) {
+                    //存在状态不一致的兄弟节点
+                    return false;
+                }
             }
-        }
         return true;
     }
 
