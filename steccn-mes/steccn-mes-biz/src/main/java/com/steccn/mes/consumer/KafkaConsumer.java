@@ -285,7 +285,9 @@ public class KafkaConsumer {
                 if (CollUtil.isNotEmpty(list)){
                     if (checkSiblingsStatusConsistency(list, eqp)) {
                         MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getEquipmentCode, eqp.getParentCode()));
-                        updateParentStatus(one, eqpListenerDTO.getValueAsString());
+                        if (Objects.nonNull(one)) {
+                            updateParentStatus(one, eqpListenerDTO.getValueAsString());
+                        }
                     }
                 }
                 ack.acknowledge();
