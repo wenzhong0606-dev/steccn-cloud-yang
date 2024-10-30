@@ -9,6 +9,7 @@
             <result property="category" column="category" jdbcType="INTEGER"/>
             <result property="alarmCode" column="alarm_code" jdbcType="VARCHAR"/>
             <result property="state" column="state" jdbcType="INTEGER"/>
+            <result property="granularity" column="granularity" jdbcType="INTEGER"/>
             <result property="upValue" column="up_value" jdbcType="DECIMAL"/>
             <result property="lowValue" column="low_value" jdbcType="DECIMAL"/>
             <result property="monitorRange" column="monitor_range" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
@@ -24,7 +25,7 @@
 
     <sql id="Base_Column_List">
         id,category,alarm_code,
-        state,up_value,low_value,
+        state,granularity,up_value,low_value,
         monitor_range,notify_man,create_by,
         create_name,create_time,update_by,
         update_name,update_time,del_flag

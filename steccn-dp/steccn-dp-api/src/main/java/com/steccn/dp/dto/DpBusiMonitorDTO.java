@@ -42,6 +42,12 @@ public class DpBusiMonitorDTO implements Serializable {
     private Integer state;
 
     /**
+     * 粒度
+     * @see com.steccn.qms.constant.QtManagerConstant.QtGranularityEnum
+     */
+    private Integer granularity;
+
+    /**
      * 上限值
      */
     private BigDecimal upValue;

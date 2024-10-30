@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.Data;
 
 /**
@@ -38,6 +39,12 @@ public class TbBusiMonitor implements Serializable {
      * 0-停用 1-启用
      */
     private Integer state;
+
+    /**
+     * 粒度
+     * @see QtManagerConstant.QtGranularityEnum
+     */
+    private Integer granularity;
 
     /**
      * 上限值
