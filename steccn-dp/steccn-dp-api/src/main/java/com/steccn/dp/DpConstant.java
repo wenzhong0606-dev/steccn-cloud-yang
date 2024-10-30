@@ -60,12 +60,14 @@ public interface DpConstant {
         JP_IN_STORAGE_RATE("入库合格率告警", SUBSTRATE),
         DEEP_PRODUCT_PASS_RATE("产量合格率告警", DEEP_PROCESS),
         DEEP_IN_STORAGE_PASS_RATE("入库合格率告警", DEEP_PROCESS),
+        DEEP_REPORT_WORK_FINISH_NUM("报工完成量告警", DEEP_PROCESS),
         DELIVERY_OVERDUE("发货逾期告警", SALE),
         SAFETY_STOCK("安全库存告警", WAREHOUSE),
         SPC_CONTROL("SPC控制告警", QUALITY),
         UNIT_CONSUME_ALARM("单耗告警", QUALITY),
         ENERGY_ALARM("能耗告警", QUALITY),
-        SPOT_CHECK_RATE("点检完成率告警", DEVICE);
+        SPOT_CHECK_RATE("点检完成率告警", DEVICE),
+        ;
         private String name;
         private BusiMonitorCategoryEnum category;
 
