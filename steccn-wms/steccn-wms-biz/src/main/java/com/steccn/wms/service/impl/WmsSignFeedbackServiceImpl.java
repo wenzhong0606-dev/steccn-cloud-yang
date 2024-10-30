@@ -167,7 +167,11 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         WmsSignFeedback order = getById(dto.getId());
         KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
         ksLogisticsOrderDTO.setName(order.getSalesOrder());
-        ksLogisticsOrderDTO.setSignType(order.getSignatureType());
+        if (order.getSignatureType().equals("正常签收")){
+            ksLogisticsOrderDTO.setSignType("normal");
+        }else {
+            ksLogisticsOrderDTO.setSignType("abnormal");
+        }
         ksLogisticsOrderDTO.setSignQty(order.getSignedQuantity());
         ksLogisticsOrderDTO.setPieceQty(order.getPriceQuantity());
         ksLogisticsOrderDTO.setSignDate(order.getSignedDate());
