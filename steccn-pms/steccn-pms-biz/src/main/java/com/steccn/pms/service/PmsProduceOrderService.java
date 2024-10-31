@@ -50,6 +50,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Map<Long, List<PmsProduceOrderCraftVO>> processList(Set<Long> produceOderIdSet);
 
     /**
+     * 根据生产订单id获取生产订单集合
+     * @param orderIdSet 生产订单id集合
+     * @return
+     */
+    Map<Long, PmsProduceOrderVO> listById(Set<Long> orderIdSet);
+
+    /**
      * 获取生产订单详情
      * @param id
      * @return

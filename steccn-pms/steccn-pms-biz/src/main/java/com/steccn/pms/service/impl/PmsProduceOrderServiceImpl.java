@@ -298,6 +298,23 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
+    public Map<Long, PmsProduceOrderVO> listById(Set<Long> orderIdSet) {
+        Map<Long, PmsProduceOrderVO> resMap = Maps.newHashMap();
+        if (CollUtil.isEmpty(orderIdSet)) {
+            return resMap;
+        }
+        List<PmsProduceOrder> orderList = listByIds(orderIdSet);
+        if (CollUtil.isNotEmpty(orderList)) {
+            orderList.forEach(ele -> {
+                PmsProduceOrderVO resVo = new PmsProduceOrderVO();
+                BeanUtil.copyProperties(ele, resVo);
+                resMap.put(ele.getId(), resVo);
+            });
+        }
+        return resMap;
+    }
+
+    @Override
     public PmsProduceOrderVO info(Long id) {
         //1、获取一条详情
         PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();

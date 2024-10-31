@@ -285,13 +285,24 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             //从生产订单中获取产线、报工的工序
             List<PmsDefectDayOrderBasicDTO> productBatchList = pmsWorkOrderBatchService.defectDay(lineIdList, start, end);
             //获取产线需要报工的工序集合
-            List<Long> produceOrderIdList = productBatchList.stream().map(PmsDefectDayOrderBasicDTO::getProduceOrderId).collect(Collectors.toList());
+            Set<Long> produceOrderIdSet = productBatchList.stream().map(PmsDefectDayOrderBasicDTO::getProduceOrderId).collect(Collectors.toSet());
             //根据生产订单获取报工工序集合
-            Map<Long, List<PmsProduceOrderCraftVO>> orderProcessMap = produceOrderService.processList(Sets.newHashSet(produceOrderIdList));
-            //获取需要报工的工序集合
-            List<String> processNameList = orderProcessMap.values().stream().flatMap(Collection::stream).filter(v -> MpConstant.YES.equals(v.getReportWorkFlag()))
-                    .sorted(Comparator.comparing(PmsProduceOrderCraftVO::getSort))
-                    .map(PmsProduceOrderCraftVO::getName).distinct().collect(Collectors.toList());
+            Map<Long, List<PmsProduceOrderCraftVO>> orderProcessMap = produceOrderService.processList(produceOrderIdSet);
+            Map<Long, PmsProduceOrderVO> orderIdMap = produceOrderService.listById(produceOrderIdSet);
+            Map<Integer, Set<Long>> orderLineMap = Maps.newHashMap();
+            Map<Integer,List<String>> lineProcessMap = Maps.newHashMap();
+            orderIdMap.forEach((k, v) -> {
+                MapUtil.computeSet(orderLineMap, v.getProductionLineId(), k);
+            });
+            //根据产线
+            lineIdMap.forEach((k, u) -> {
+                Set<Long> orderIdSet = orderLineMap.getOrDefault(k,Sets.newHashSet());
+                //获取需要报工的工序集合
+                List<String> processNameListTmp = orderProcessMap.values().stream().flatMap(Collection::stream).filter(v -> orderIdSet.contains(v.getProduceOrderId()) && MpConstant.YES.equals(v.getReportWorkFlag()))
+                        .sorted(Comparator.comparing(PmsProduceOrderCraftVO::getSort))
+                        .map(PmsProduceOrderCraftVO::getName).distinct().collect(Collectors.toList());
+                lineProcessMap.put(k, processNameListTmp);
+            });
             //获取全量数据
             ProcessReportWorkPageDTO dto = new ProcessReportWorkPageDTO();
             dto.setStartDtStart(start.toLocalDate());
@@ -308,7 +319,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             for (SysOfficeVO ele : lineIdMap.values()) {
                 List<ProcessReportWorkPageVO> lineData = reportWorkList.stream().filter(v -> v.getProductLineId().equals(ele.getId())).collect(Collectors.toList());
                 //对工序进行分组
-                for (String name : processNameList) {
+                for (String name : lineProcessMap.get(ele.getId())) {
                     List<ProcessReportWorkPageVO> processData = lineData.stream().filter(v -> v.getProcessName().equals(name)).collect(Collectors.toList());
                     if (CollUtil.isNotEmpty(processData)) {
                         BigDecimal pqToday = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
@@ -325,7 +336,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             BigDecimal lowValue = monitor.getLowValue();
             for (Integer lineId : lineIdList) {
                 SysOfficeVO office = lineIdMap.get(lineId);
-                for (String process : processNameList) {
+                for (String process : lineProcessMap.get(lineId)) {
                     //唯一一种情况，仅仅产线集合告警
                     BigDecimal currentPmNum = resMap.get(office.getOfficeName() + "_" + process + "_" + GetValueUtil.get(classNameId, x -> x, Strings.EMPTY));
                     currentPmNum = GetValueUtil.get(currentPmNum, x -> x, BigDecimal.ZERO);
