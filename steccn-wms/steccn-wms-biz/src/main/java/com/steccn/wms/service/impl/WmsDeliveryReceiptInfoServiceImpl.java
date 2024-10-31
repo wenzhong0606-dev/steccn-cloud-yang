@@ -14,6 +14,8 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
@@ -54,6 +56,7 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
         implements WmsDeliveryReceiptInfoService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Map<Long, BigDecimal> originalQuantity(List<Long> updateIds) {
@@ -86,9 +89,20 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
     public Page<WmsDeliveryReceiptInfoVO> infoPageList(WmsDeliveryReceiptPageDTO dto) {
         Page<WmsDeliveryReceiptInfoVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
         if (CollUtil.isNotEmpty(page.getRecords())){
-            Set<Long> dictIds = page.getRecords().stream().map(WmsDeliveryReceiptInfoVO::getUnit).collect(Collectors.toSet());
+            Set<Long> dictIds = Sets.newHashSet();
+            List<Long> materialIds = Lists.newArrayList();
+            for (WmsDeliveryReceiptInfoVO record : page.getRecords()) {
+                dictIds.add(record.getUnit());
+                materialIds.add(record.getMaterialId());
+            }
             Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            page.getRecords().forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach(
+                    info -> {
+                        info.setUnitName(dictMap.get(info.getUnit()));
+                        info.setSpecifications(materialMap.get(info.getMaterialId()).getSpecifications());
+                    }
+            );
         }
         return page;
     }
