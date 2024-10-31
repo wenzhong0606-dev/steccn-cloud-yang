@@ -26,7 +26,7 @@ public class DpBusiMonitorFeignController {
 
     @GetMapping("/alarmCode")
     @ApiOperation(value = "根据报警类型获取报警配置")
-    public R<List<DpBusiMonitorDTO>> getBusiMonitorAlarm(@RequestParam("alarmCode") String alarmCode) {
-        return R.success(busiMonitorService.getBusiMonitorAlarm(alarmCode));
+    public R<List<DpBusiMonitorDTO>> getBusiMonitorAlarm(@RequestParam("alarmCode") String alarmCode, @RequestParam(value = "granularity", required = false) Integer granularity) {
+        return R.success(busiMonitorService.getBusiMonitorAlarm(alarmCode, granularity));
     }
 }

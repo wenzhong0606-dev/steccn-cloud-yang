@@ -1,5 +1,6 @@
 package com.steccn.pms.controller;
 
+import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.steccn.common.dto.QtLineChartBarDTO;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -72,6 +75,16 @@ public class PmsSjgReportDashboardCtController {
     @ApiOperation("产线合格率")
     public R<QtLineChartBarDTO> linePassRate(@RequestParam("workShopId") Integer workShopId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {
         return R.success(pmsSjgReportDashboardService.linePassRate(workShopId, start, end));
+    }
+
+    @GetMapping("/line/produce/passRate/monitor")
+    @ApiOperation("产线合格率-监控")
+    public R<Void> linePassRateMonitor(@RequestParam("start") LocalDateTime start, @RequestParam("end") LocalDateTime end, @RequestParam("granularity") Integer granularity) {
+        //获取粒度
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByCode(granularity);
+        Assert.notNull(granularityEnum, "粒度不存在");
+        pmsSjgReportDashboardService.linePassRateMonitor(start, end, "DEEP_REPORT_WORK_FINISH_NUM", granularityEnum);
+        return R.success();
     }
 
     @GetMapping("/line/produce/passRate/detail")

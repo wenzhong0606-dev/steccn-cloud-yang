@@ -1,7 +1,6 @@
 package com.steccn.dp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.domain.TbBusiMonitor;
 import com.steccn.dp.dto.DpBusiMonitorDTO;
@@ -33,7 +32,8 @@ public interface TbBusiMonitorService extends IService<TbBusiMonitor> {
     /**
      * 获取监控信息
      * @param alarmCode 监控code
+     * @param granularity 粒度
      * @return
      */
-    List<DpBusiMonitorDTO> getBusiMonitorAlarm(String alarmCode);
+    List<DpBusiMonitorDTO> getBusiMonitorAlarm(String alarmCode, Integer granularity);
 }

@@ -1,20 +1,20 @@
 package com.steccn.pms.service;
 
-import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
-import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.pms.vo.SjgCountReportStopVO;
 import com.steccn.pms.vo.SjgCountReportVO;
 import com.steccn.pms.vo.SjgDashboardLineProduceVO;
 import com.steccn.pms.vo.SjgMonthCountReportVO;
+import com.steccn.qms.constant.QtManagerConstant;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -79,6 +79,16 @@ public interface PmsSjgReportDashboardCtService {
      * @return
      */
     QtLineChartBarDTO linePassRate(Integer workShopId, LocalDate start, LocalDate end);
+
+    /**
+     * 产线成品率 - 监控
+     * @param start 开始时间
+     * @param end 截止时间
+     * @param alarmCode 报警code
+     * @param granularityEnum 粒度枚举
+     * @return
+     */
+    void linePassRateMonitor(LocalDateTime start, LocalDateTime end, String alarmCode, QtManagerConstant.QtGranularityEnum granularityEnum);
 
     /**
      * 产线成品率表格

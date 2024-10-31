@@ -71,6 +71,7 @@ public interface SysMsgConstant {
         DELIVERY_OVERDUE_ALARM(34, "发货逾期告警", MsgCategoryEnum.SYS_REMIND.code, "【%s】%d张发货通知单已逾期：%s", 0),
         SAFETY_STOCK_ALARM(35, "安全库存告警", MsgCategoryEnum.SYS_REMIND.code, "【%s】%s可用库存低于安全库存", 0),
         SPOT_CHECK_RATE_ALARM(36, "点检完成率超标告警", MsgCategoryEnum.SYS_REMIND.code, "【%s】%s点检完成率为%s%%，%s于%s限值%s%%", 0),
+        DEEP_REPORT_WORK_FINISH_NUM_ALARM(37, "报工完成量告警", MsgCategoryEnum.SYS_REMIND.code, "【%s%s】%s%s报工累计加工数为%s，%s于%s限值%s", 0),
         ;
 
         private Integer code;

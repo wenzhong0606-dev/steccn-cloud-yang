@@ -147,10 +147,12 @@ public class TbBusiMonitorServiceImpl extends ServiceImpl<TbBusiMonitorMapper, T
     }
 
     @Override
-    public List<DpBusiMonitorDTO> getBusiMonitorAlarm(String alarmCode) {
+    public List<DpBusiMonitorDTO> getBusiMonitorAlarm(String alarmCode, Integer granularity) {
         List<DpBusiMonitorDTO> resList = Lists.newArrayList();
-        List<TbBusiMonitor> dbList = list(new LambdaQueryWrapper<TbBusiMonitor>().eq(TbBusiMonitor::getAlarmCode, alarmCode)
-                .eq(TbBusiMonitor::getState,1));
+        List<TbBusiMonitor> dbList = list(new LambdaQueryWrapper<TbBusiMonitor>()
+                .eq(TbBusiMonitor::getAlarmCode, alarmCode)
+                .eq(Objects.nonNull(granularity), TbBusiMonitor::getGranularity, granularity)
+                .eq(TbBusiMonitor::getState, 1));
         if (CollUtil.isNotEmpty(dbList)) {
             dbList.forEach(ele -> {
                 DpBusiMonitorDTO res = new DpBusiMonitorDTO();

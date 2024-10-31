@@ -21,4 +21,9 @@ public interface RemoteBusiMonitorFeignApi {
     @GetMapping("/feign/dp/busi/monitor/alarmCode")
     @ApiOperation(value = "根据报警类型获取报警配置")
     R<List<DpBusiMonitorDTO>> getBusiMonitorAlarm(@RequestParam("alarmCode") String alarmCode);
+
+    @GetMapping("/feign/dp/busi/monitor/alarmCode")
+    @ApiOperation(value = "根据报警类型获取报警配置")
+    R<List<DpBusiMonitorDTO>> getBusiMonitorAlarm(@RequestParam("alarmCode") String alarmCode, @RequestParam(value = "granularity", required = false) Integer granularity);
+
 }

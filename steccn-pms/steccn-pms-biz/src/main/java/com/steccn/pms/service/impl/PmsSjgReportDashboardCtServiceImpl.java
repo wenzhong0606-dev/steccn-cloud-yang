@@ -1,55 +1,62 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.write.handler.WriteHandler;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.*;
+import com.steccn.dp.dto.DpBusiMonitorDTO;
+import com.steccn.dp.feign.RemoteBusiMonitorFeignApi;
 import com.steccn.ems.feign.RemoteMeterReadFeignApi;
-import com.steccn.ems.vo.EpDayReportCountRowVO;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysProductionCapacityFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysProductionCapacityDetailVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.PmsDefectDayOrderBasicDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkHourMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
-import com.steccn.pms.service.PmsCompleteDeliveryService;
-import com.steccn.pms.service.PmsOfficeManager;
-import com.steccn.pms.service.PmsReportWorkService;
-import com.steccn.pms.service.PmsSjgReportDashboardCtService;
+import com.steccn.pms.service.*;
 import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
 import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
 import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
-import com.steccn.qms.vo.QtDaySamplingDataVO;
-import com.steccn.qms.vo.QtDaySamplingVO;
+import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +81,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     private final RemoteSysProductionCapacityFeignApi sysProductionCapacityFeignApi;
     private final RemoteMeterReadFeignApi remoteMeterReadFeignApi;
     private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+    private final RemoteBusiMonitorFeignApi remoteBusiMonitorFeignApi;
+    private final PmsProduceOrderService produceOrderService;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     @Override
     public QtLineChartBarDTO lineProduce(Integer workShopId, LocalDate start, LocalDate end, String unit, Integer bit) {
@@ -125,10 +137,10 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             consumeList.add(BigDecimalUtil.setScale(dateRangeUseCountMap.get(ele.getId()), bit));
         });
         resVo.setHeadList(headList);
-        List<SteccnRow<String,List<BigDecimal>>> rowList = Lists.newArrayList();
-        rowList.add(new SteccnRow<>("产量",pmList));
-        rowList.add(new SteccnRow<>("入库",inStorageList));
-        rowList.add(new SteccnRow<>("耗用",consumeList));
+        List<SteccnRow<String, List<BigDecimal>>> rowList = Lists.newArrayList();
+        rowList.add(new SteccnRow<>("产量", pmList));
+        rowList.add(new SteccnRow<>("入库", inStorageList));
+        rowList.add(new SteccnRow<>("耗用", consumeList));
         resVo.setRowList(rowList);
         return resVo;
     }
@@ -193,10 +205,10 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             }
         });
         resVo.setHeadList(headList);
-        List<SteccnRow<String,List<BigDecimal>>> rowList = Lists.newArrayList();
-        rowList.add(new SteccnRow<>("产量",pmList));
-        rowList.add(new SteccnRow<>("入库",inStorageList));
-        rowList.add(new SteccnRow<>("耗用",consumeList));
+        List<SteccnRow<String, List<BigDecimal>>> rowList = Lists.newArrayList();
+        rowList.add(new SteccnRow<>("产量", pmList));
+        rowList.add(new SteccnRow<>("入库", inStorageList));
+        rowList.add(new SteccnRow<>("耗用", consumeList));
         resVo.setRowList(rowList);
         return resVo;
     }
@@ -223,27 +235,27 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
             List<ProcessReportWorkPageVO> lineData = processReportWorkPageVOS.stream().filter(v -> v.getProductLineId().equals(ele.getId())).collect(Collectors.toList());
             //对工序进行分组
-            for(String name:processNames){
+            for (String name : processNames) {
                 List<ProcessReportWorkPageVO> processData = lineData.stream().filter(v -> v.getProcessName().equals(name)).collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(processData)){
+                if (CollUtil.isNotEmpty(processData)) {
                     BigDecimal processQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                     BigDecimal badnessQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
-                    BigDecimal minus = BigDecimalUtil.subtract(processQuantity,badnessQuantity);
-                    dataList.add(new TupleDTO<>(name, BigDecimalUtil.divide(minus,processQuantity,4)));
-                }else {
+                    BigDecimal minus = BigDecimalUtil.subtract(processQuantity, badnessQuantity);
+                    dataList.add(new TupleDTO<>(name, BigDecimalUtil.divide(minus, processQuantity, 4)));
+                } else {
                     dataList.add(new TupleDTO<>(name, null));
                 }
             }
             List<ProcessReportWorkPageVO> moData = lineData.stream().filter(v -> v.getProcessName().equals("磨边工序")).collect(Collectors.toList());
             List<ProcessReportWorkPageVO> gangData = lineData.stream().filter(v -> v.getProcessName().equals("钢化工序")).collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(moData)&&CollUtil.isNotEmpty(gangData)){
+            if (CollUtil.isNotEmpty(moData) && CollUtil.isNotEmpty(gangData)) {
                 BigDecimal moProcessQuantity = BigDecimalUtil.sum(moData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                 BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                 BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
-                BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
+                BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity, gangBadnessQuantity);
                 //校验是否比1大
                 BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
-                if(divide.compareTo(new BigDecimal(1))==1){
+                if (divide.compareTo(new BigDecimal(1)) == 1) {
                     divide = BigDecimal.ONE;
                 }
                 dataList.add(new TupleDTO<>("合计", divide));
@@ -253,6 +265,98 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             stackGraphDTOList.add(stackGraphDTO);
         });
         return StackGraphUtil.convertData(stackGraphDTOList);
+    }
+
+    @Override
+    public void linePassRateMonitor(LocalDateTime start, LocalDateTime end, String alarmCode, QtManagerConstant.QtGranularityEnum granularityEnum) {
+        //获取早班还是晚班还是不分班
+        String classNameOrNot = Strings.EMPTY;
+        Integer classNameId = null;
+        if (QtManagerConstant.QtGranularityEnum.CLASS.equals(granularityEnum)) {
+            classNameId = LocalDateUtil.getClassId(start, Boolean.FALSE);
+            classNameOrNot = classNameId == 0 ? "早班" : "晚班";
+        }
+        //获取监控信息中的产线
+        List<DpBusiMonitorDTO> pmNumAlarmList = FeignOptional.of(() -> remoteBusiMonitorFeignApi.getBusiMonitorAlarm(alarmCode, granularityEnum.getCode()), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        for (DpBusiMonitorDTO monitor : pmNumAlarmList) {
+            Map<String, BigDecimal> resMap = Maps.newHashMap();
+            List<Integer> lineIdList = monitor.getMonitorRange();
+            Map<Integer, SysOfficeVO> lineIdMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(lineIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //从生产订单中获取产线、报工的工序
+            List<PmsDefectDayOrderBasicDTO> productBatchList = pmsWorkOrderBatchService.defectDay(lineIdList, start, end);
+            //获取产线需要报工的工序集合
+            List<Long> produceOrderIdList = productBatchList.stream().map(PmsDefectDayOrderBasicDTO::getProduceOrderId).collect(Collectors.toList());
+            //根据生产订单获取报工工序集合
+            Map<Long, List<PmsProduceOrderCraftVO>> orderProcessMap = produceOrderService.processList(Sets.newHashSet(produceOrderIdList));
+            //获取需要报工的工序集合
+            List<String> processNameList = orderProcessMap.values().stream().flatMap(Collection::stream).filter(v -> MpConstant.YES.equals(v.getReportWorkFlag()))
+                    .sorted(Comparator.comparing(PmsProduceOrderCraftVO::getSort))
+                    .map(PmsProduceOrderCraftVO::getName).distinct().collect(Collectors.toList());
+            //获取全量数据
+            ProcessReportWorkPageDTO dto = new ProcessReportWorkPageDTO();
+            dto.setStartDtStart(start.toLocalDate());
+            dto.setStartDtEnd(start.toLocalDate());
+            dto.setProductLineIds(lineIdList);
+            List<ProcessReportWorkPageVO> reportWorkList = pmsReportWorkMapper.processReportDashBoard(dto);
+            reportWorkList = GetValueUtil.get(reportWorkList, x -> x, Lists.newArrayList());
+            //获取早班&晚班的数据字典
+            SysDictVO morningDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_0, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(morningDict, "早班数据字典不存在");
+            Assert.notNull(nightDict, "晚班数据字典不存在");
+            //开始组数据
+            for (SysOfficeVO ele : lineIdMap.values()) {
+                List<ProcessReportWorkPageVO> lineData = reportWorkList.stream().filter(v -> v.getProductLineId().equals(ele.getId())).collect(Collectors.toList());
+                //对工序进行分组
+                for (String name : processNameList) {
+                    List<ProcessReportWorkPageVO> processData = lineData.stream().filter(v -> v.getProcessName().equals(name)).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(processData)) {
+                        BigDecimal pqToday = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
+                        resMap.put(ele.getOfficeName() + "_" + name + "_", BigDecimalUtil.setScale(pqToday, 0));
+                        BigDecimal pqMorning = BigDecimalUtil.sum(processData.stream().filter(v -> v.getClassesId().equals(morningDict.getId())).map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
+                        resMap.put(ele.getOfficeName() + "_" + name + "_" + morningDict.getCode(), BigDecimalUtil.setScale(pqMorning, 0));
+                        BigDecimal pqNight = BigDecimalUtil.sum(processData.stream().filter(v -> v.getClassesId().equals(nightDict.getId())).map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
+                        resMap.put(ele.getOfficeName() + "_" + name + "_" + nightDict.getCode(), BigDecimalUtil.setScale(pqNight, 0));
+                    }
+                }
+            }
+            StringBuilder contentSb = new StringBuilder();
+            BigDecimal upValue = monitor.getUpValue();
+            BigDecimal lowValue = monitor.getLowValue();
+            for (Integer lineId : lineIdList) {
+                SysOfficeVO office = lineIdMap.get(lineId);
+                for (String process : processNameList) {
+                    //唯一一种情况，仅仅产线集合告警
+                    BigDecimal currentPmNum = resMap.get(office.getOfficeName() + "_" + process + "_" + GetValueUtil.get(classNameId, x -> x, Strings.EMPTY));
+                    currentPmNum = GetValueUtil.get(currentPmNum, x -> x, BigDecimal.ZERO);
+                    //高于上限
+                    String template = SysMsgConstant.MsgTypeEnum.DEEP_REPORT_WORK_FINISH_NUM_ALARM.getTemplate();
+                    if (Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmNum, upValue)) {
+                        String ts1 = String.format(template, LocalDateUtil.format(start, "yyyy-MM-dd"), classNameOrNot, office.getOfficeName(), process, BigDecimalUtil.format(currentPmNum), "高", "上", upValue);
+                        contentSb.append(ts1).append("\n");
+                    } else if (Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmNum, lowValue)) {
+                        String ts3 = String.format(template, LocalDateUtil.format(start, "yyyy-MM-dd"), classNameOrNot, office.getOfficeName(), process, BigDecimalUtil.format(currentPmNum), "低", "下", lowValue);
+                        contentSb.append(ts3).append("\n");
+                    }
+                }
+            }
+            //根据阈值前来报警
+            if (contentSb.length() > 0) {
+                Set<Long> notifyMan = monitor.getNotifyMan();
+                SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.DEEP_REPORT_WORK_FINISH_NUM_ALARM.getCode());
+                sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEEP_REPORT_WORK_FINISH_NUM_ALARM.getTitle());
+                sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.DEEP_REPORT_WORK_FINISH_NUM_ALARM.getWarnFlag());
+                sysMsgDTO.setUserList(notifyMan);
+                sysMsgDTO.setContent(contentSb.substring(0, contentSb.length() - 1));
+                sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+                SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                sysMsgAdditionDTO.setCode(LocalDateUtil.format(start, DatePattern.NORM_DATE_PATTERN));
+                sysMsgDTO.setAddition(sysMsgAdditionDTO);
+                Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                log.info("linePassRateMonitor方法消息发送 -> {}", aBoolean);
+            }
+        }
     }
 
     @Override
@@ -270,25 +374,25 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //开始组数据
         SjgDashboardLineProduceVO result = new SjgDashboardLineProduceVO();
         List<String> headList = Lists.newArrayList();
-        List<SteccnRow<String,List<BigDecimal>>> rowList = Lists.newArrayList();
+        List<SteccnRow<String, List<BigDecimal>>> rowList = Lists.newArrayList();
         List<String> processNames = processReportWorkPageVOS.stream().map(ProcessReportWorkPageVO::getProcessName).distinct().collect(Collectors.toList());
         //组表头
         wsLineList.forEach(ele -> {
             headList.add(ele.getOfficeName());
         });
         //对工序进行分组
-        for(String name:processNames){
-            SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
+        for (String name : processNames) {
+            SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
             List<BigDecimal> rowData = Lists.newArrayList();
-            for(SysOfficeVO tmp:wsLineList){
+            for (SysOfficeVO tmp : wsLineList) {
                 List<ProcessReportWorkPageVO> processData = processReportWorkPageVOS.stream()
-                        .filter(v -> v.getProcessName().equals(name)&&v.getProductLineId().equals(tmp.getId())).collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(processData)){
+                        .filter(v -> v.getProcessName().equals(name) && v.getProductLineId().equals(tmp.getId())).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(processData)) {
                     BigDecimal processQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                     BigDecimal badnessQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
-                    BigDecimal minus = BigDecimalUtil.subtract(processQuantity,badnessQuantity);
-                    rowData.add(BigDecimalUtil.divide(minus,processQuantity,4));
-                }else {
+                    BigDecimal minus = BigDecimalUtil.subtract(processQuantity, badnessQuantity);
+                    rowData.add(BigDecimalUtil.divide(minus, processQuantity, 4));
+                } else {
                     rowData.add(null);
                 }
             }
@@ -297,25 +401,25 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             rowList.add(row);
         }
         //算合计
-        SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
+        SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
         List<BigDecimal> rowData = Lists.newArrayList();
-        for(SysOfficeVO tmp:wsLineList){
+        for (SysOfficeVO tmp : wsLineList) {
             List<ProcessReportWorkPageVO> processData = processReportWorkPageVOS.stream()
                     .filter(v -> v.getProductLineId().equals(tmp.getId())).collect(Collectors.toList());
             List<ProcessReportWorkPageVO> moData = processData.stream().filter(v -> v.getProcessName().equals("磨边工序")).collect(Collectors.toList());
             List<ProcessReportWorkPageVO> gangData = processData.stream().filter(v -> v.getProcessName().equals("钢化工序")).collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(moData)&&CollUtil.isNotEmpty(gangData)){
+            if (CollUtil.isNotEmpty(moData) && CollUtil.isNotEmpty(gangData)) {
                 BigDecimal moProcessQuantity = BigDecimalUtil.sum(moData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                 BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                 BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
-                BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
+                BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity, gangBadnessQuantity);
                 //校验是否比1大
                 BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
-                if(divide.compareTo(new BigDecimal(1))==1){
+                if (divide.compareTo(new BigDecimal(1)) == 1) {
                     divide = BigDecimal.ONE;
                 }
                 rowData.add(divide);
-            }else {
+            } else {
                 rowData.add(null);
             }
         }
@@ -353,30 +457,30 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                 StackGraphDTO<String, BigDecimal> stackGraphDTO = new StackGraphDTO<>();
                 List<TupleDTO<String, BigDecimal>> dataList = Lists.newArrayList();
                 stackGraphDTO.setXAxis(sysDict.getName());
-                List<ProcessReportWorkPageVO> classOrderData = processReportWorkPageVOS.stream().filter(v -> v.getProductLineId().equals(ele.getId())&&v.getClassesId().equals(sysDict.getId())).collect(Collectors.toList());
+                List<ProcessReportWorkPageVO> classOrderData = processReportWorkPageVOS.stream().filter(v -> v.getProductLineId().equals(ele.getId()) && v.getClassesId().equals(sysDict.getId())).collect(Collectors.toList());
                 //对工序进行分组
-                for(String name:processNames){
+                for (String name : processNames) {
                     List<ProcessReportWorkPageVO> processData = classOrderData.stream().filter(v -> v.getProcessName().equals(name)).collect(Collectors.toList());
-                    if(CollUtil.isNotEmpty(processData)){
+                    if (CollUtil.isNotEmpty(processData)) {
                         BigDecimal processQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                         BigDecimal badnessQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
-                        BigDecimal minus = BigDecimalUtil.subtract(processQuantity,badnessQuantity);
-                        dataList.add(new TupleDTO<>(name, BigDecimalUtil.divide(minus,processQuantity,4)));
-                    }else {
+                        BigDecimal minus = BigDecimalUtil.subtract(processQuantity, badnessQuantity);
+                        dataList.add(new TupleDTO<>(name, BigDecimalUtil.divide(minus, processQuantity, 4)));
+                    } else {
                         dataList.add(new TupleDTO<>(name, null));
                     }
                 }
                 //算合计
                 List<ProcessReportWorkPageVO> moData = classOrderData.stream().filter(v -> v.getProcessName().equals("磨边工序")).collect(Collectors.toList());
                 List<ProcessReportWorkPageVO> gangData = classOrderData.stream().filter(v -> v.getProcessName().equals("钢化工序")).collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(moData)&&CollUtil.isNotEmpty(gangData)){
+                if (CollUtil.isNotEmpty(moData) && CollUtil.isNotEmpty(gangData)) {
                     BigDecimal moProcessQuantity = BigDecimalUtil.sum(moData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                     BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                     BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
-                    BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
+                    BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity, gangBadnessQuantity);
                     //校验是否比1大
                     BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
-                    if(divide.compareTo(new BigDecimal(1))==1){
+                    if (divide.compareTo(new BigDecimal(1)) == 1) {
                         divide = BigDecimal.ONE;
                     }
                     dataList.add(new TupleDTO<>("合计", divide));
@@ -410,28 +514,28 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //开始组数据
         SjgDashboardLineProduceVO result = new SjgDashboardLineProduceVO();
         List<String> headList = Lists.newArrayList();
-        List<SteccnRow<String,List<BigDecimal>>> rowList = Lists.newArrayList();
+        List<SteccnRow<String, List<BigDecimal>>> rowList = Lists.newArrayList();
         List<String> processNames = processReportWorkPageVOS.stream().map(ProcessReportWorkPageVO::getProcessName).distinct().collect(Collectors.toList());
         //组表头
         wsLineList.forEach(ele -> {
             headList.add(ele.getOfficeName());
         });
         //对工序进行分组
-        for(String name:processNames){
-            SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
+        for (String name : processNames) {
+            SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
             List<BigDecimal> rowData = Lists.newArrayList();
-            for(SysOfficeVO tmp:wsLineList){
-                for(SysDictVO dicTmp:sysDictList){
+            for (SysOfficeVO tmp : wsLineList) {
+                for (SysDictVO dicTmp : sysDictList) {
                     List<ProcessReportWorkPageVO> processData = processReportWorkPageVOS.stream()
                             .filter(v -> v.getProcessName().equals(name)
-                                    &&v.getProductLineId().equals(tmp.getId())
-                                    &&v.getClassesId().equals(dicTmp.getId())).collect(Collectors.toList());
-                    if(CollUtil.isNotEmpty(processData)){
+                                    && v.getProductLineId().equals(tmp.getId())
+                                    && v.getClassesId().equals(dicTmp.getId())).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(processData)) {
                         BigDecimal processQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                         BigDecimal badnessQuantity = BigDecimalUtil.sum(processData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
-                        BigDecimal minus = BigDecimalUtil.subtract(processQuantity,badnessQuantity);
-                        rowData.add(BigDecimalUtil.divide(minus,processQuantity,4));
-                    }else {
+                        BigDecimal minus = BigDecimalUtil.subtract(processQuantity, badnessQuantity);
+                        rowData.add(BigDecimalUtil.divide(minus, processQuantity, 4));
+                    } else {
                         rowData.add(null);
                     }
                 }
@@ -441,27 +545,27 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             rowList.add(row);
         }
         //算合计
-        SteccnRow<String,List<BigDecimal>> row = new SteccnRow<>();
+        SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
         List<BigDecimal> rowData = Lists.newArrayList();
-        for(SysOfficeVO tmp:wsLineList){
-            for(SysDictVO dicTmp:sysDictList){
+        for (SysOfficeVO tmp : wsLineList) {
+            for (SysDictVO dicTmp : sysDictList) {
                 List<ProcessReportWorkPageVO> processData = processReportWorkPageVOS.stream()
                         .filter(v -> v.getProductLineId().equals(tmp.getId())
-                                &&v.getClassesId().equals(dicTmp.getId())).collect(Collectors.toList());
+                                && v.getClassesId().equals(dicTmp.getId())).collect(Collectors.toList());
                 List<ProcessReportWorkPageVO> moData = processData.stream().filter(v -> v.getProcessName().equals("磨边工序")).collect(Collectors.toList());
                 List<ProcessReportWorkPageVO> gangData = processData.stream().filter(v -> v.getProcessName().equals("钢化工序")).collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(moData)&&CollUtil.isNotEmpty(gangData)){
+                if (CollUtil.isNotEmpty(moData) && CollUtil.isNotEmpty(gangData)) {
                     BigDecimal moProcessQuantity = BigDecimalUtil.sum(moData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
                     BigDecimal gangBadnessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getBadnessQuantity).collect(Collectors.toList()));
                     BigDecimal gangProcessQuantity = BigDecimalUtil.sum(gangData.stream().map(ProcessReportWorkPageVO::getProcessQuantity).collect(Collectors.toList()));
-                    BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity,gangBadnessQuantity);
+                    BigDecimal minus = BigDecimalUtil.subtract(gangProcessQuantity, gangBadnessQuantity);
                     //校验是否比1大
                     BigDecimal divide = BigDecimalUtil.divide(minus, moProcessQuantity, 4);
-                    if(divide.compareTo(new BigDecimal(1))==1){
+                    if (divide.compareTo(new BigDecimal(1)) == 1) {
                         divide = BigDecimal.ONE;
                     }
                     rowData.add(divide);
-                }else {
+                } else {
                     rowData.add(null);
                 }
             }
@@ -507,16 +611,16 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             BigDecimal currentValueSumRate = BigDecimalUtil.percent(curWeekProcess, curWeekSum);
             BigDecimal preValueSumRate = BigDecimalUtil.percent(preWeekProcess, preWeekSum);
             BigDecimal valueDiffSum = BigDecimalUtil.subtract(curWeekProcess, preWeekProcess, BigDecimalUtil.SCALE_2);
-            BigDecimal valueDiffSumRate = BigDecimalUtil.subtract(currentValueSumRate, preValueSumRate,2);
+            BigDecimal valueDiffSumRate = BigDecimalUtil.subtract(currentValueSumRate, preValueSumRate, 2);
             for (SysOfficeVO line : lineList) {
                 SjgCountReportRowVO row = new SjgCountReportRowVO();
                 row.setLineId(line.getId());
                 row.setCategoryName(process.getName());
                 row.setLineName(line.getOfficeName());
-                row.setCurrentValue(currentPmMap.getOrDefault(process.getId() + "_" + line.getId(),new TupleDTO<>()).getField1());
+                row.setCurrentValue(currentPmMap.getOrDefault(process.getId() + "_" + line.getId(), new TupleDTO<>()).getField1());
                 BigDecimal currentProcessQuantity = currentPmMap.getOrDefault(process.getId() + "_" + line.getId(), new TupleDTO<>()).getField2();
                 row.setCurrentValueRate(BigDecimalUtil.percent(row.getCurrentValue(), currentProcessQuantity));
-                row.setPreValue(prePmMap.getOrDefault(process.getId() + "_" + line.getId(),new TupleDTO<>()).getField1());
+                row.setPreValue(prePmMap.getOrDefault(process.getId() + "_" + line.getId(), new TupleDTO<>()).getField1());
                 BigDecimal preProcessQuantity = prePmMap.getOrDefault(process.getId() + "_" + line.getId(), new TupleDTO<>()).getField2();
                 row.setPreValueRate(BigDecimalUtil.percent(row.getPreValue(), preProcessQuantity));
                 row.setValueDiff(BigDecimalUtil.subtract(row.getCurrentValue(), row.getPreValue(), 2));
@@ -541,11 +645,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         BigDecimal preWeekInStorage = sjgInStorageSum(preInStorageMap, lineList, x -> x.getId());
         BigDecimal preWeekMbQuantity = sjgInStorageSum(mbProcessQuantityMap, lineList, x -> x.getId() + "_PRE");
         BigDecimal curWeekInStorage = sjgInStorageSum(currentInStorageMap, lineList, x -> x.getId());
-        BigDecimal curWeekMbQuantity =  sjgInStorageSum(mbProcessQuantityMap, lineList, x -> x.getId() + "_CUR");
+        BigDecimal curWeekMbQuantity = sjgInStorageSum(mbProcessQuantityMap, lineList, x -> x.getId() + "_CUR");
         BigDecimal currentValueSumRate = BigDecimalUtil.percent(curWeekInStorage, curWeekMbQuantity);
         BigDecimal preValueSumRate = BigDecimalUtil.percent(preWeekInStorage, preWeekMbQuantity);
         BigDecimal valueDiffSum = BigDecimalUtil.subtract(curWeekInStorage, preWeekInStorage, BigDecimalUtil.SCALE_2);
-        BigDecimal valueDiffSumRate = BigDecimalUtil.subtract(currentValueSumRate, preValueSumRate,2);
+        BigDecimal valueDiffSumRate = BigDecimalUtil.subtract(currentValueSumRate, preValueSumRate, 2);
         for (SysOfficeVO line : lineList) {
             SjgCountReportRowVO row = new SjgCountReportRowVO();
             row.setCategoryName("产线入库产量");
@@ -622,7 +726,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     @Override
     public SjgMonthCountReportVO monthReport(Integer type, Integer officeId, LocalDate start, LocalDate end) {
-        if(type == 1) {
+        if (type == 1) {
             return monthReportWorkshop(officeId, start, end);
         }
         return monthReportLine(officeId, start, end);
@@ -694,6 +798,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     /**
      * 深加工月度统计报表 - 产线粒度
+     *
      * @param officeId 组织机构主键
      * @param start    开始日期
      * @param end      结束日期
@@ -710,7 +815,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         Map<Integer, List<Integer>> wsLinkLineMap = pmsOfficeManager.childType(workshopIdList, SysOfficeConstant.PRODUCT_LINE);
         //获取车间下的所有产线
         List<Integer> lineIdList = wsLinkLineMap.values().stream().flatMap(Collection::stream).filter(ele -> Objects.nonNull(ele)).collect(Collectors.toList());
-        Assert.notEmpty(lineIdList,"制造部下暂无产线");
+        Assert.notEmpty(lineIdList, "制造部下暂无产线");
         List<Integer> wsIdList = Lists.newArrayList();
         List<String> workshopNameList = Lists.newArrayList();
         workshopList.forEach(ele -> {
@@ -725,15 +830,15 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //考虑产线，类别
         Set<String> specSet = Sets.newHashSet(useCountMap.keySet());
         specSet.addAll(inStorageMap.keySet());
-        List<String> thickList = getProperty(specSet,1);
+        List<String> thickList = getProperty(specSet, 1);
         List<String> productPropertyList = getProperty(specSet, 2);
         List<SjgMonthCountReportTransverseVO> leftList = Lists.newArrayList();
-        Map<String,BigDecimal> sumMap1 = Maps.newLinkedHashMap();
-        Map<String,BigDecimal> sumMap2 = Maps.newLinkedHashMap();
+        Map<String, BigDecimal> sumMap1 = Maps.newLinkedHashMap();
+        Map<String, BigDecimal> sumMap2 = Maps.newLinkedHashMap();
         for (SysOfficeVO office : workshopList) {
             //根据车间获取产线集合
             List<Integer> lineIdListTmp = wsLinkLineMap.get(office.getId());
-            if(Objects.isNull(lineIdListTmp)){
+            if (Objects.isNull(lineIdListTmp)) {
                 lineIdListTmp = Lists.newArrayList();
             }
             boolean flagSum = Boolean.FALSE;
@@ -742,9 +847,9 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             BigDecimal inStorageOfficeSum = null;
             for (String thick : thickList) {
                 for (String productProperty : productPropertyList) {
-                    BigDecimal useCountSource = null,inStorageSource = null;
+                    BigDecimal useCountSource = null, inStorageSource = null;
                     for (Integer lineId : lineIdListTmp) {
-                        useCountSource = BigDecimalUtil.add(useCountSource,useCountMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, thick, productProperty)));
+                        useCountSource = BigDecimalUtil.add(useCountSource, useCountMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, thick, productProperty)));
                         inStorageSource = BigDecimalUtil.add(inStorageSource, inStorageMap.get(JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, thick, productProperty)));
                     }
                     BigDecimal useCount = BigDecimalUtil.setScale(useCountSource, 2);
@@ -752,11 +857,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                     if (Objects.nonNull(useCount) || Objects.nonNull(inStorage)) {
                         flagSum = Boolean.TRUE;
                         SjgMonthCountReportTransverseVO row = new SjgMonthCountReportTransverseVO();
-                        if(!"null".equals(productProperty)){
+                        if (!"null".equals(productProperty)) {
                             int productPropertyInt = Integer.parseInt(productProperty);
                             String propertyName = ProductPropertyEnum.property(productPropertyInt).getName();
                             row.setCategoryName(thick + propertyName);
-                        }else{
+                        } else {
                             row.setCategoryName(thick);
                         }
                         row.setOfficeName(office.getOfficeName());
@@ -765,13 +870,13 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                         row.setYieldRate(BigDecimalUtil.percent(inStorage, useCount));
                         useCountOfficeSum = BigDecimalUtil.add(useCountOfficeSum, row.getUseCount());
                         inStorageOfficeSum = BigDecimalUtil.add(inStorageOfficeSum, row.getInStorageCount());
-                        MapUtil.add(sumMap1, row.getCategoryName(), row.getUseCount(), (x, y) -> BigDecimalUtil.add(x, y,2));
+                        MapUtil.add(sumMap1, row.getCategoryName(), row.getUseCount(), (x, y) -> BigDecimalUtil.add(x, y, 2));
                         MapUtil.add(sumMap2, row.getCategoryName(), row.getInStorageCount(), (x, y) -> BigDecimalUtil.add(x, y, 2));
                         leftList.add(row);
                     }
                 }
             }
-            if(flagSum){
+            if (flagSum) {
                 //添加组织机构级别的合计
                 SjgMonthCountReportTransverseVO officeSum = new SjgMonthCountReportTransverseVO();
                 officeSum.setOfficeName(office.getOfficeName());
@@ -792,8 +897,8 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             officeTotal.setUseCount(entry.getValue());
             officeTotal.setInStorageCount(sumMap2.get(entry.getKey()));
             officeTotal.setYieldRate(BigDecimalUtil.percent(officeTotal.getInStorageCount(), officeTotal.getUseCount()));
-            useCountOfficeTotalSum = BigDecimalUtil.add(useCountOfficeTotalSum,officeTotal.getUseCount());
-            inStorageOfficeTotalSum = BigDecimalUtil.add(inStorageOfficeTotalSum,officeTotal.getInStorageCount());
+            useCountOfficeTotalSum = BigDecimalUtil.add(useCountOfficeTotalSum, officeTotal.getUseCount());
+            inStorageOfficeTotalSum = BigDecimalUtil.add(inStorageOfficeTotalSum, officeTotal.getInStorageCount());
             leftList.add(officeTotal);
         }
         //添加合计的合计
@@ -866,6 +971,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
 
     /**
      * 深加工月度统计报表 - 产线粒度
+     *
      * @param officeId 组织机构主键
      * @param start    开始日期
      * @param end      结束日期
@@ -879,7 +985,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         Assert.notEmpty(wsLineList, "车间下暂无产线");
         List<Integer> lineIdList = Lists.newArrayList();
         List<String> lineNameList = Lists.newArrayList();
-        wsLineList.forEach(ele ->{
+        wsLineList.forEach(ele -> {
             lineIdList.add(ele.getId());
             lineNameList.add(ele.getOfficeName());
         });
@@ -891,11 +997,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         //考虑产线，类别
         Set<String> specSet = Sets.newHashSet(useCountMap.keySet());
         specSet.addAll(inStorageMap.keySet());
-        List<String> thickList = getProperty(specSet,1);
+        List<String> thickList = getProperty(specSet, 1);
         List<String> productPropertyList = getProperty(specSet, 2);
         List<SjgMonthCountReportTransverseVO> leftList = Lists.newArrayList();
-        Map<String,BigDecimal> sumMap1 = Maps.newLinkedHashMap();
-        Map<String,BigDecimal> sumMap2 = Maps.newLinkedHashMap();
+        Map<String, BigDecimal> sumMap1 = Maps.newLinkedHashMap();
+        Map<String, BigDecimal> sumMap2 = Maps.newLinkedHashMap();
         for (SysOfficeVO office : wsLineList) {
             boolean flagSum = Boolean.FALSE;
             //组织机构级别的合计
@@ -910,11 +1016,11 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                     if (Objects.nonNull(useCount) || Objects.nonNull(inStorage)) {
                         flagSum = Boolean.TRUE;
                         SjgMonthCountReportTransverseVO row = new SjgMonthCountReportTransverseVO();
-                        if(!"null".equals(productProperty)){
+                        if (!"null".equals(productProperty)) {
                             int productPropertyInt = Integer.parseInt(productProperty);
                             String propertyName = ProductPropertyEnum.property(productPropertyInt).getName();
                             row.setCategoryName(thick + propertyName);
-                        }else{
+                        } else {
                             row.setCategoryName(thick);
                         }
                         row.setOfficeName(office.getOfficeName());
@@ -923,13 +1029,13 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                         row.setYieldRate(BigDecimalUtil.percent(inStorage, useCount));
                         useCountOfficeSum = BigDecimalUtil.add(useCountOfficeSum, row.getUseCount());
                         inStorageOfficeSum = BigDecimalUtil.add(inStorageOfficeSum, row.getInStorageCount());
-                        MapUtil.add(sumMap1, row.getCategoryName(), row.getUseCount(), (x, y) -> BigDecimalUtil.add(x, y,2));
+                        MapUtil.add(sumMap1, row.getCategoryName(), row.getUseCount(), (x, y) -> BigDecimalUtil.add(x, y, 2));
                         MapUtil.add(sumMap2, row.getCategoryName(), row.getInStorageCount(), (x, y) -> BigDecimalUtil.add(x, y, 2));
                         leftList.add(row);
                     }
                 }
             }
-            if(flagSum){
+            if (flagSum) {
                 //添加组织机构级别的合计
                 SjgMonthCountReportTransverseVO officeSum = new SjgMonthCountReportTransverseVO();
                 officeSum.setOfficeName(office.getOfficeName());
@@ -950,8 +1056,8 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             officeTotal.setUseCount(entry.getValue());
             officeTotal.setInStorageCount(sumMap2.get(entry.getKey()));
             officeTotal.setYieldRate(BigDecimalUtil.percent(officeTotal.getInStorageCount(), officeTotal.getUseCount()));
-            useCountOfficeTotalSum = BigDecimalUtil.add(useCountOfficeTotalSum,officeTotal.getUseCount());
-            inStorageOfficeTotalSum = BigDecimalUtil.add(inStorageOfficeTotalSum,officeTotal.getInStorageCount());
+            useCountOfficeTotalSum = BigDecimalUtil.add(useCountOfficeTotalSum, officeTotal.getUseCount());
+            inStorageOfficeTotalSum = BigDecimalUtil.add(inStorageOfficeTotalSum, officeTotal.getInStorageCount());
             leftList.add(officeTotal);
         }
         //添加合计的合计
@@ -993,7 +1099,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
             return reportWorkService.processYieldLine(lineIdList, start, end, "GHGX");
         });
         CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, unitConsumeFuture, materialConsumeListFuture,
-                 mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
+                mbMapFuture, dkMapFuture, syMapFuture, dmMapFuture, ghMapFuture);
         completableFuture.isDone();
 
         List<SteccnRow<String, List<BigDecimal>>> rightList = Lists.newArrayList();
@@ -1052,7 +1158,7 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
         SteccnRow<String, List<BigDecimal>> row = new SteccnRow<>();
         row.setFixRow(category);
         //避免空指针异常
-        if(Objects.isNull(valueMap)){
+        if (Objects.isNull(valueMap)) {
             valueMap = Maps.newHashMap();
         }
         List<BigDecimal> valueList = Lists.newArrayList();
@@ -1097,10 +1203,10 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
      * @param function  函数
      * @return
      */
-    private BigDecimal sjgProcessSum(Map<String, TupleDTO<BigDecimal, BigDecimal>> valueMap, Integer processId, List<SysOfficeVO> lineList, Function<TupleDTO<BigDecimal,BigDecimal>, BigDecimal> function) {
+    private BigDecimal sjgProcessSum(Map<String, TupleDTO<BigDecimal, BigDecimal>> valueMap, Integer processId, List<SysOfficeVO> lineList, Function<TupleDTO<BigDecimal, BigDecimal>, BigDecimal> function) {
         List<BigDecimal> sumList = Lists.newArrayList();
         lineList.forEach(line -> {
-            TupleDTO<BigDecimal, BigDecimal> tupleDTO = valueMap.getOrDefault(processId + "_" + line.getId(),new TupleDTO<>());
+            TupleDTO<BigDecimal, BigDecimal> tupleDTO = valueMap.getOrDefault(processId + "_" + line.getId(), new TupleDTO<>());
             sumList.add(function.apply(tupleDTO));
         });
         return BigDecimalUtil.sum(sumList);
@@ -1109,8 +1215,8 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
     /**
      * 深加工入库数量汇总
      *
-     * @param valueMap  值集合
-     * @param lineList  产线集合
+     * @param valueMap 值集合
+     * @param lineList 产线集合
      * @return
      */
     private BigDecimal sjgInStorageSum(Map<? extends Object, BigDecimal> valueMap, List<SysOfficeVO> lineList, Function<SysOfficeVO, Object> function) {

@@ -282,14 +282,30 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
+    public Map<Long, List<PmsProduceOrderCraftVO>> processList(Set<Long> produceOderIdSet) {
+        Map<Long, List<PmsProduceOrderCraftVO>> resMap = Maps.newHashMap();
+        Set<Long> craftSet = Sets.newHashSet();
+        produceOderIdSet.forEach(ele -> {
+            //获取工序信息
+            craftSet.add(ele);
+        });
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(craftSet);
+        produceOderIdSet.forEach(ele -> {
+            List<PmsProduceOrderCraftVO> processList = craftMap.getOrDefault(ele, Lists.newArrayList());
+            resMap.put(ele, processList);
+        });
+        return resMap;
+    }
+
+    @Override
     public PmsProduceOrderVO info(Long id) {
         //1、获取一条详情
         PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
         PmsProduceOrder pmsProduceOrder = getById(id);
-        BeanUtil.copyProperties(pmsProduceOrder,pmsProduceOrderVO);
+        BeanUtil.copyProperties(pmsProduceOrder, pmsProduceOrderVO);
         //3.处理数据
-        Set<Long> dictIds = Sets.newHashSet(Sets.newHashSet(pmsProduceOrderVO.getTypeId(),pmsProduceOrderVO.getUnitId()));
-        Set<Integer> officeIds = Sets.newHashSet(pmsProduceOrderVO.getProductionLineId(),pmsProduceOrderVO.getCustomerId());
+        Set<Long> dictIds = Sets.newHashSet(Sets.newHashSet(pmsProduceOrderVO.getTypeId(), pmsProduceOrderVO.getUnitId()));
+        Set<Integer> officeIds = Sets.newHashSet(pmsProduceOrderVO.getProductionLineId(), pmsProduceOrderVO.getCustomerId());
         Set<Long> craftIds = Sets.newHashSet(pmsProduceOrderVO.getCraftId());
         Set<Long> orderSet = Sets.newHashSet(pmsProduceOrderVO.getId());
         Set<Long> craftSet = Sets.newHashSet(pmsProduceOrderVO.getId());
@@ -423,19 +439,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public Boolean editPlanTime(PmsProduceOrderDTO dto) {
-        Assert.notNull(dto.getId(),"id不能为空");
-        Assert.notNull(dto.getPlanStartTime(),"计划开始时间不能为空");
-        Assert.notNull(dto.getPlanEndTime(),"计划结束时间不能为空");
+        Assert.notNull(dto.getId(), "id不能为空");
+        Assert.notNull(dto.getPlanStartTime(), "计划开始时间不能为空");
+        Assert.notNull(dto.getPlanEndTime(), "计划结束时间不能为空");
         //1、先根据Id查询
         PmsProduceOrder produceOrder = getById(dto.getId());
         //只有已创建和已下达状态才可以修改
-        if(produceOrder.getState().equals(OaConstant.NO)){
+        if (produceOrder.getState().equals(OaConstant.NO)) {
             PmsProduceOrder model = new PmsProduceOrder();
             model.setId(dto.getId());
             model.setPlanStartTime(dto.getPlanStartTime());
             model.setPlanEndTime(dto.getPlanEndTime());
             updateById(model);
-        }else if(produceOrder.getState().equals(OaConstant.NUM_1)){
+        } else if (produceOrder.getState().equals(OaConstant.NUM_1)) {
             //如果是已下达，则取消下达
             cancelTheOrder(dto.getId());
             //修改时间
@@ -444,7 +460,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             model.setPlanStartTime(dto.getPlanStartTime());
             model.setPlanEndTime(dto.getPlanEndTime());
             updateById(model);
-        }else {
+        } else {
             throw new BusinessException("执行中、已完成的订单无法修改计划时间");
         }
         return true;
@@ -497,7 +513,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public PmsProduceOrderGanttChartVO produceOrderGanttChart(PmsProduceOrderGanttChartDTO dto) {
         List<SysOfficeVO> sysOfficeVOS = Lists.newArrayList();
-        if(dto.getType().equals(OaConstant.NO)){
+        if (dto.getType().equals(OaConstant.NO)) {
             //基片
             SysOfficeDTO officeDTO = new SysOfficeDTO();
             officeDTO.setOfficeType("9");
@@ -508,14 +524,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             officeDTO.setOfficeName(PmManagerConstant.DEEP_PROCESSING);
             List<SysOfficeVO> sysOfficeVOTmp2 = FeignOptional.of(() -> remoteOfficeFeign.getByTypeAndLine(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             sysOfficeVOS.addAll(sysOfficeVOTmp2.stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList()));
-        }else if(dto.getType().equals(OaConstant.YES)){
+        } else if (dto.getType().equals(OaConstant.YES)) {
             //深加工
             SysOfficeDTO officeDTO = new SysOfficeDTO();
             officeDTO.setOfficeType("9");
             officeDTO.setOfficeName(PmManagerConstant.DEEP_PROCESSING);
             List<SysOfficeVO> sysOfficeVOTmp = FeignOptional.of(() -> remoteOfficeFeign.getByTypeAndLine(officeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             sysOfficeVOS.addAll(sysOfficeVOTmp.stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList()));
-        }else if(dto.getType().equals(OaConstant.NUM_2)){
+        } else if (dto.getType().equals(OaConstant.NUM_2)) {
             //基片
             SysOfficeDTO officeDTO = new SysOfficeDTO();
             officeDTO.setOfficeType("9");
@@ -533,59 +549,59 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsProduceOrderGanttRowsVO> rows = Lists.newArrayList();
         //过滤掉车间
         sysOfficeVOS = sysOfficeVOS.stream().filter(v -> !v.getOfficeType().equals("8")).collect(Collectors.toList());
-        sysOfficeVOS.forEach(tmp->{
-            rows.add(new PmsProduceOrderGanttRowsVO(PmManagerConstant.GANTT_PREFIX+tmp.getId(), tmp.getOfficeName()));
+        sysOfficeVOS.forEach(tmp -> {
+            rows.add(new PmsProduceOrderGanttRowsVO(PmManagerConstant.GANTT_PREFIX + tmp.getId(), tmp.getOfficeName()));
         });
         result.setRows(rows);
         //信息
         //1、执行中的批次信息
         LocalDateTime now = LocalDateTime.now();
         List<PmsProduceOrderGanttInfoVO> infos = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)){
-            for(PmsDefectDayOrderBasicDTO tmp:pmsDefectDayOrderBasicDTOS){
-                if(tmp.getProductLineId().equals(170)
-                        ||tmp.getProductLineId().equals(171)
-                        ||tmp.getProductLineId().equals(172)
-                        ||tmp.getProductLineId().equals(173)){
+        if (CollUtil.isNotEmpty(pmsDefectDayOrderBasicDTOS)) {
+            for (PmsDefectDayOrderBasicDTO tmp : pmsDefectDayOrderBasicDTOS) {
+                if (tmp.getProductLineId().equals(170)
+                        || tmp.getProductLineId().equals(171)
+                        || tmp.getProductLineId().equals(172)
+                        || tmp.getProductLineId().equals(173)) {
                     continue;
                 }
                 PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
                 info.setId(tmp.getProduceOrderId());
                 info.setLabel(tmp.getProduceOrderCode());
-                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductLineId());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX + tmp.getProductLineId());
                 info.setStatus(tmp.getState());
                 //若结束时间为空则取当前时间
-                if(Objects.isNull(tmp.getEndTime())){
-                    if(Objects.nonNull(tmp.getPlanEndTime())){
+                if (Objects.isNull(tmp.getEndTime())) {
+                    if (Objects.nonNull(tmp.getPlanEndTime())) {
                         tmp.setEndTime(tmp.getPlanEndTime());
-                    }else {
+                    } else {
                         tmp.setEndTime(now);
                     }
                 }
-                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), tmp.getEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
                 info.setTime(timeStamp);
                 infos.add(info);
             }
         }
         //2、找到计划中的订单(已创建，已下达)
         List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
-                .and(lq->lq.between(PmsProduceOrder::getPlanStartTime, dto.getStartTime(), dto.getEndTime()).or().between(PmsProduceOrder::getPlanEndTime, dto.getStartTime(), dto.getEndTime()))
-                .and(lq->lq.eq(PmsProduceOrder::getState, OaConstant.NO).or().eq(PmsProduceOrder::getState, OaConstant.YES))
+                .and(lq -> lq.between(PmsProduceOrder::getPlanStartTime, dto.getStartTime(), dto.getEndTime()).or().between(PmsProduceOrder::getPlanEndTime, dto.getStartTime(), dto.getEndTime()))
+                .and(lq -> lq.eq(PmsProduceOrder::getState, OaConstant.NO).or().eq(PmsProduceOrder::getState, OaConstant.YES))
                 .in(PmsProduceOrder::getProductionLineId, officeIds));
-        if(CollUtil.isNotEmpty(orderList)){
-            for(PmsProduceOrder tmp:orderList){
-                if(tmp.getProductionLineId().equals(170)
-                        ||tmp.getProductionLineId().equals(171)
-                        ||tmp.getProductionLineId().equals(172)
-                        ||tmp.getProductionLineId().equals(173)){
+        if (CollUtil.isNotEmpty(orderList)) {
+            for (PmsProduceOrder tmp : orderList) {
+                if (tmp.getProductionLineId().equals(170)
+                        || tmp.getProductionLineId().equals(171)
+                        || tmp.getProductionLineId().equals(172)
+                        || tmp.getProductionLineId().equals(173)) {
                     continue;
                 }
                 PmsProduceOrderGanttInfoVO info = new PmsProduceOrderGanttInfoVO();
                 info.setId(tmp.getId());
                 info.setLabel(tmp.getCode());
-                info.setRowId(PmManagerConstant.GANTT_PREFIX+tmp.getProductionLineId());
+                info.setRowId(PmManagerConstant.GANTT_PREFIX + tmp.getProductionLineId());
                 info.setStatus(tmp.getState());
-                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getPlanStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),tmp.getPlanEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                PmsProduceOrderGanttTimeVO timeStamp = new PmsProduceOrderGanttTimeVO(tmp.getPlanStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), tmp.getPlanEndTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
                 info.setTime(timeStamp);
                 infos.add(info);
             }
@@ -1116,10 +1132,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 for (PmsWorkOrderBatch batch : batchList) {
                     //过滤时间-批次的开始时间为空，或者批次的结束开始
-                    if(Objects.isNull(batch.getStartTime()) || LocalDateUtil.gt(batch.getStartTime(),end)){
+                    if (Objects.isNull(batch.getStartTime()) || LocalDateUtil.gt(batch.getStartTime(), end)) {
                         continue;
                     }
-                    if(Objects.nonNull(batch.getEndTime()) && LocalDateUtil.lt(batch.getEndTime(),start)){
+                    if (Objects.nonNull(batch.getEndTime()) && LocalDateUtil.lt(batch.getEndTime(), start)) {
                         continue;
                     }
                     //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end,共计有六种情况
@@ -1182,7 +1198,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public List<ProduceOrderDataInfoVO>       getExecuteOrderInfo() {
+    public List<ProduceOrderDataInfoVO> getExecuteOrderInfo() {
         //1.获取16条产线的信息
         SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
         sysOfficeTypeKeyDTO.setType(Lists.newArrayList(PmManagerConstant.NUM_9));
@@ -1242,62 +1258,62 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public Page<PanoramicTracingVO> tracing(PanoramicTracingDTO panoramicTracingDTO) {
         List<PanoramicTracingVO> tracingVOList = null;
-        if (Objects.nonNull(panoramicTracingDTO.getCustomerBarcode())){
+        if (Objects.nonNull(panoramicTracingDTO.getCustomerBarcode())) {
             List<String> caseNos = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.listByCustomerBarcode(panoramicTracingDTO.getCustomerBarcode()), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             panoramicTracingDTO.setCaseNos(caseNos);
-            if (CollUtil.isNotEmpty(panoramicTracingDTO.getCaseNos())){
+            if (CollUtil.isNotEmpty(panoramicTracingDTO.getCaseNos())) {
                 //查询客户条码相关生产订单数据
                 tracingVOList = baseMapper.tracingCustomerBarcode(panoramicTracingDTO);
             }
-        }else {
+        } else {
             //查询生产订单数据
             tracingVOList = baseMapper.tracing(panoramicTracingDTO);
         }
-       if (CollUtil.isNotEmpty(tracingVOList)) {
-           if (Objects.nonNull(panoramicTracingDTO.getSortField())) {
-               //自定义定义排序条件
-               if (PmManagerConstant.PMS_ORDER_CODE.equals(panoramicTracingDTO.getSortField())) {
-                   tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)));
-                   if (!panoramicTracingDTO.getAscFlag()) {
-                       tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed());
-                   }
-               } else if (PmManagerConstant.PMS_ORDER_BATCH_NO.equals(panoramicTracingDTO.getSortField())) {
-                   tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)));
-                   if (!panoramicTracingDTO.getAscFlag()) {
-                       tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed());
-                   }
-               } else if (PmManagerConstant.PMS_ORDER_CASE_NO.equals(panoramicTracingDTO.getSortField())) {
-                   tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)));
-                   if (!panoramicTracingDTO.getAscFlag()) {
-                       tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
-                   }
-               } else if (PmManagerConstant.PMS_MATERIAL_NAME.equals(panoramicTracingDTO.getSortField())) {
-                   tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName, Comparator.nullsFirst(String::compareTo)));
-                   if (!panoramicTracingDTO.getAscFlag()) {
-                       tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName, Comparator.nullsFirst(String::compareTo)).reversed());
-                   }
-               } else if (PmManagerConstant.PMS_MATERIAL_CODE.equals(panoramicTracingDTO.getSortField())) {
-                   tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode, Comparator.nullsFirst(String::compareTo)));
-                   if (!panoramicTracingDTO.getAscFlag()) {
-                       tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode, Comparator.nullsFirst(String::compareTo)).reversed());
-                   }
-               }
-           } else {
-               //默认排序
-               tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
-                       .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
-                       .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
-           }
+        if (CollUtil.isNotEmpty(tracingVOList)) {
+            if (Objects.nonNull(panoramicTracingDTO.getSortField())) {
+                //自定义定义排序条件
+                if (PmManagerConstant.PMS_ORDER_CODE.equals(panoramicTracingDTO.getSortField())) {
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)));
+                    if (!panoramicTracingDTO.getAscFlag()) {
+                        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed());
+                    }
+                } else if (PmManagerConstant.PMS_ORDER_BATCH_NO.equals(panoramicTracingDTO.getSortField())) {
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)));
+                    if (!panoramicTracingDTO.getAscFlag()) {
+                        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed());
+                    }
+                } else if (PmManagerConstant.PMS_ORDER_CASE_NO.equals(panoramicTracingDTO.getSortField())) {
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)));
+                    if (!panoramicTracingDTO.getAscFlag()) {
+                        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+                    }
+                } else if (PmManagerConstant.PMS_MATERIAL_NAME.equals(panoramicTracingDTO.getSortField())) {
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName, Comparator.nullsFirst(String::compareTo)));
+                    if (!panoramicTracingDTO.getAscFlag()) {
+                        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialName, Comparator.nullsFirst(String::compareTo)).reversed());
+                    }
+                } else if (PmManagerConstant.PMS_MATERIAL_CODE.equals(panoramicTracingDTO.getSortField())) {
+                    tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode, Comparator.nullsFirst(String::compareTo)));
+                    if (!panoramicTracingDTO.getAscFlag()) {
+                        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getMaterialCode, Comparator.nullsFirst(String::compareTo)).reversed());
+                    }
+                }
+            } else {
+                //默认排序
+                tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
+                        .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
+                        .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+            }
 
-       }
+        }
         //逻辑分页
         Page<PanoramicTracingVO> page = LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
 
-        if (CollUtil.isNotEmpty(page.getRecords())){
+        if (CollUtil.isNotEmpty(page.getRecords())) {
             //获取客户条码数据
             Set<String> caseNos = page.getRecords().stream().map(PanoramicTracingVO::getCaseNo).collect(Collectors.toSet());
             Map<String, String> customerBarcodeMap = FeignOptional.of(() -> remoteWmsCustomerBarcodeFeignApi.customerBarcodeByCaseNos(caseNos), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-            page.getRecords().forEach( panoramicTracingVO -> {
+            page.getRecords().forEach(panoramicTracingVO -> {
                 panoramicTracingVO.setCustomerBarcode(customerBarcodeMap.get(panoramicTracingVO.getCaseNo()));
             });
         }
@@ -1309,36 +1325,36 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     public CustomerIdAndNameVO getCustomer(QmsCustomerDTO dto) {
         CustomerIdAndNameVO result = new CustomerIdAndNameVO();
         PmsProduceOrder one = new PmsProduceOrder();
-        if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_2))){
+        if (dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_2))) {
             //2）仅当手动输入生产订单号后校验为有效单号且该订单上的客户非空，预填该客户（若字段已填值，覆盖已填值）
-            if(StrUtil.isNotBlank(dto.getProductOrder())){
+            if (StrUtil.isNotBlank(dto.getProductOrder())) {
                 one = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, dto.getProductOrder()), false);
-            }else {
+            } else {
                 throw new BusinessException("生产订单不能为空");
             }
-        }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_3))){
+        } else if (dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_3))) {
             //3）仅当生产产线的值更新且值非空且检验类型为首检、巡检时，查询生产管理系统当前产线、当前时间执行中的生产订单的“客户”属性，若非空，系统自动带出该值（若字段已填值，覆盖已填值)
-            if(Objects.nonNull(dto.getProductLineId())){
+            if (Objects.nonNull(dto.getProductLineId())) {
                 one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                         .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
-                        .eq(PmsProduceOrder::getState,PmManagerConstant.OrderStateEnum.TWO.getCode()), false);
-            }else {
+                        .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode()), false);
+            } else {
                 throw new BusinessException("产线不能为空");
             }
-        }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_4))){
-            if(Objects.nonNull(dto.getTimeSpot())&&Objects.nonNull(dto.getProductLineId())){
+        } else if (dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_4))) {
+            if (Objects.nonNull(dto.getTimeSpot()) && Objects.nonNull(dto.getProductLineId())) {
                 one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                        .and(wrapper->wrapper.eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
-                                .lt(PmsProduceOrder::getActualStartTime,dto.getTimeSpot()))
-                        .and(wrapper->wrapper.gt(PmsProduceOrder::getActualEndTime,dto.getTimeSpot())
-                                .or()
-                                .isNull(PmsProduceOrder::getActualEndTime))
+                                .and(wrapper -> wrapper.eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
+                                        .lt(PmsProduceOrder::getActualStartTime, dto.getTimeSpot()))
+                                .and(wrapper -> wrapper.gt(PmsProduceOrder::getActualEndTime, dto.getTimeSpot())
+                                        .or()
+                                        .isNull(PmsProduceOrder::getActualEndTime))
                         , false);
-            }else {
+            } else {
                 throw new BusinessException("产线、时间点不能为空");
             }
         }
-        if(Objects.isNull(one) || one.getCustomerId()==null){
+        if (Objects.isNull(one) || one.getCustomerId() == null) {
             return result;
         }
         result.setCustomerId(one.getCustomerId());
@@ -1354,9 +1370,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             List<PmsWorkOrderBom> list = pmsWorkOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
                     .in(PmsWorkOrderBom::getWorkProduceId, orderIds)
                     .eq(PmsWorkOrderBom::getMainMaterialFlag, 1));
-            if (CollUtil.isNotEmpty(list)){
+            if (CollUtil.isNotEmpty(list)) {
                 for (PmsWorkOrderBom pmsWorkOrderBom : list) {
-                    map.put(pmsWorkOrderBom.getWorkProduceId(),pmsWorkOrderBom.getModuleId());
+                    map.put(pmsWorkOrderBom.getWorkProduceId(), pmsWorkOrderBom.getModuleId());
                 }
             }
         }
@@ -1366,7 +1382,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public List<PmsProduceOrderVO> listOrderByProduceLineId(Integer productLineId) {
         List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getProductionLineId, productLineId));
-        return BeanUtil.copyToList(list,PmsProduceOrderVO.class);
+        return BeanUtil.copyToList(list, PmsProduceOrderVO.class);
     }
 
     @Override
@@ -1426,7 +1442,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         SysDictVO nightDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.NUM_1, PmManagerConstant.SYS_SHIFT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(morningDict, "早班数据字典不存在");
         Assert.notNull(nightDict, "晚班数据字典不存在");
-        List<SysDictVO> classList = Lists.newArrayList(morningDict,nightDict);
+        List<SysDictVO> classList = Lists.newArrayList(morningDict, nightDict);
 
         //获取物料转换单位数据字典数据及单位转换逻辑
         SysDictVO pieceSysDict = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -1516,10 +1532,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             for (QtDefectiveItemVO defectItem : defectItemList) {
                                 List<Integer> valueList = checkTaskList.stream().filter(ele ->
                                         ele.getDefectCode().equals(defectItem.getCode()) &&
-                                        ele.getProductLineId().equals(line.getId()) &&
-                                        Objects.equals(ele.getProductBatch(),resVo.getBatchNo()) &&
-                                        ele.getClassId().equals(resVo.getClassId()) &&
-                                        LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
+                                                ele.getProductLineId().equals(line.getId()) &&
+                                                Objects.equals(ele.getProductBatch(), resVo.getBatchNo()) &&
+                                                ele.getClassId().equals(resVo.getClassId()) &&
+                                                LocalDateUtil.isRange(ele.getDefectStartTime(), split[0], split[1], true, true)
                                 ).map(QtCheckTaskDetailReportVO::getDefectNum).collect(Collectors.toList());
                                 Integer sumDefect = IntegerUtil.sum(valueList);
                                 MapUtil.add(specDefectSumMap, defectItem.getCode(), sumDefect, (x, y) -> IntegerUtil.add(x, y));
@@ -1535,13 +1551,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     }
                 }
             }
-            if(CollUtil.isNotEmpty(resList)){
+            if (CollUtil.isNotEmpty(resList)) {
                 //插入合计行
                 resList.add(rowCount(1, specSumUsePiece, specSumUseSquare, defectItemList, specDefectSumMap));
             }
         }
         //插入总计行
-        if(CollUtil.isNotEmpty(resList)){
+        if (CollUtil.isNotEmpty(resList)) {
             resList.add(rowCount(2, sumUsePiece, sumUseSquare, defectItemList, defectSumMap));
         }
         return resVO;
@@ -1577,14 +1593,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         rowList.forEach(ele -> {
             List<Object> dataEle = Lists.newArrayList();
             dataEle.add(ele.getSpecifications());
-            dataEle.add(LocalDateUtil.format(ele.getClassDate(),"yyyy-MM-dd"));
+            dataEle.add(LocalDateUtil.format(ele.getClassDate(), "yyyy-MM-dd"));
             dataEle.add(ele.getProductLineName());
             dataEle.add(ele.getClassName());
             dataEle.add(ele.getClassGroupName());
             dataEle.add(ele.getProduceOrderNo());
             dataEle.add(ele.getMaterialName());
-            ele.getModule().forEach(aa ->{
-                aa.getValue().forEach(bb ->{
+            ele.getModule().forEach(aa -> {
+                aa.getValue().forEach(bb -> {
                     dataEle.add(bb);
                 });
             });
@@ -1793,7 +1809,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
 
     @Override
-    public Map<String, BigDecimal> orderDetailOtherEnergy(LocalDate start ,LocalDate end, List<Integer> officeIdList) {
+    public Map<String, BigDecimal> orderDetailOtherEnergy(LocalDate start, LocalDate end, List<Integer> officeIdList) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         if (Objects.nonNull(start) && Objects.nonNull(end) && CollUtil.isNotEmpty(officeIdList)) {
             //考虑日期范围
@@ -1838,7 +1854,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
                             } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
                                 Integer lineId = parentLineMap.get(officeId);
-                                if(Objects.nonNull(lineId)){
+                                if (Objects.nonNull(lineId)) {
                                     String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate);
                                     BigDecimal bigDecimal1 = valueMap1.get(joint);
                                     BigDecimal bigDecimal2 = valueMap2.get(joint);
@@ -1865,7 +1881,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public Map<String, BigDecimal> orderDetailOtherEnergyPf(LocalDate start ,LocalDate end, List<Integer> officeIdList) {
+    public Map<String, BigDecimal> orderDetailOtherEnergyPf(LocalDate start, LocalDate end, List<Integer> officeIdList) {
         Map<String, BigDecimal> resMap = Maps.newHashMap();
         if (Objects.nonNull(start) && Objects.nonNull(end) && CollUtil.isNotEmpty(officeIdList)) {
             //考虑日期范围
@@ -1905,7 +1921,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                 resMap.put(joint, valueMap.get(joint));
                             } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
                                 Integer lineId = parentLineMap.get(officeId);
-                                if(Objects.nonNull(lineId)){
+                                if (Objects.nonNull(lineId)) {
                                     String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, lineId, classDate);
                                     resMap.put(joint, valueMap.get(joint));
                                 }
@@ -1975,7 +1991,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                         BigDecimal bigDecimal1 = valueMap1.get(joint);
                                         BigDecimal bigDecimal2 = valueMap2.get(joint);
                                         BigDecimal add = BigDecimalUtil.add(bigDecimal1, bigDecimal2);
-                                        if(Objects.nonNull(add)){
+                                        if (Objects.nonNull(add)) {
                                             resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
                                         }
                                     } else if (SysOfficeConstant.STATION.equals(currentNode.getOfficeType())) {
@@ -1985,7 +2001,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                             BigDecimal bigDecimal1 = valueMap1.get(tmpJoint);
                                             BigDecimal bigDecimal2 = valueMap2.get(tmpJoint);
                                             BigDecimal add = BigDecimalUtil.add(bigDecimal1, bigDecimal2);
-                                            if(Objects.nonNull(add)){
+                                            if (Objects.nonNull(add)) {
                                                 String joint = JointUtil.joint(JointUtil.SEPARATOR_UNDERLINE, currentNode.getId(), classDate, classEnum.getCode(), thick);
                                                 resMap.put(joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2));
                                             }
@@ -1999,7 +2015,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                                 BigDecimal bigDecimal1 = valueMap1.get(tmpJoint);
                                                 BigDecimal bigDecimal2 = valueMap2.get(tmpJoint);
                                                 BigDecimal add = BigDecimalUtil.add(bigDecimal1, bigDecimal2);
-                                                if(Objects.nonNull(add)){
+                                                if (Objects.nonNull(add)) {
                                                     MapUtil.add(resMap, joint, BigDecimalUtil.add(bigDecimal1, bigDecimal2), (x, y) -> BigDecimalUtil.add(x, y));
                                                 }
                                             });
@@ -2019,6 +2035,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 获取生产订单生产的物料所使用的主物料
+     *
      * @param start
      * @param end
      * @return
@@ -2026,7 +2043,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public List<Long> listOrderMaterialIdByDate(LocalDate start, LocalDate end) {
         //自定义sql获取生产订单生产的物料所使用的主物料
-        List<Long>  materialIds =  this.baseMapper.listOrderMaterialIdByDate(start,end);
+        List<Long> materialIds = this.baseMapper.listOrderMaterialIdByDate(start, end);
         return materialIds;
     }
 
@@ -2044,7 +2061,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             lineNames.add(PmManagerConstant.DeepProcessingLine.SEVEN.getName());
             lineNames.add(PmManagerConstant.DeepProcessingLine.EIGHT.getName());
             Map<String, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(lineNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            dpOnOffCountVOS.forEach( dpOnOffCountVO -> dpOnOffCountVO.setProductLineId(sysOfficeVOMap.get(dpOnOffCountVO.getProductLineNum()).getId()));
+            dpOnOffCountVOS.forEach(dpOnOffCountVO -> dpOnOffCountVO.setProductLineId(sysOfficeVOMap.get(dpOnOffCountVO.getProductLineNum()).getId()));
 //            //根据产线id和时间确定生产订单的主物料
 //            lineNames.
         }
@@ -2053,12 +2070,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 外购原片不良日报表插入小计行
-     * @param type 类型
-     * @param supplierName 供应商名称
-     * @param spec 规格
+     *
+     * @param type           类型
+     * @param supplierName   供应商名称
+     * @param spec           规格
      * @param defectItemList 缺陷项
-     * @param bdMap 统计map
-     * @param intMap 统计map
+     * @param bdMap          统计map
+     * @param intMap         统计map
      * @return
      */
     private OutSourcingListDTO outSourcingCountRow(Integer type, String supplierName, String spec, List<QtDefectiveItemVO> defectItemList, Map<String, BigDecimal> bdMap, Map<String, Integer> intMap) {
@@ -2081,6 +2099,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 获取总计行或者单规格行
+     *
      * @param type
      * @param usePiece
      * @param useSquare
@@ -2129,9 +2148,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
 
-
     /**
      * 根据班次切分班次日期
+     *
      * @param type 班次 0 ， 1 早班 晚班
      * @param date 班次日期
      * @return
@@ -2142,7 +2161,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         LocalDateTime x = night.plusHours(type == 0 ? -12 : 12);
         return type == 1 ? new LocalDateTime[]{night, x} : new LocalDateTime[]{x, night};
     }
-
 
 
 //    /**
@@ -2180,7 +2198,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 //        }
 //        return resMap;
 //    }
-
 
 
     /**
@@ -2251,9 +2268,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
 
-
     /**
      * 根据订单ID集合获取工位信息:获取订单最后一个工序的执行工位(20230511改为取下片工序)
+     *
      * @param orderIdSet 订单ID集合
      * @return 工位信息Map，key为订单ID，value为工位ID集合
      */
@@ -2279,7 +2296,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         }
         return map; // 返回工位信息Map
     }
-
 
 
     /**
