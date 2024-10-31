@@ -507,6 +507,11 @@ public interface PmManagerConstant {
     String WORKFLOW_BZ = "bz";
 
     /**
+     * 领用人
+     */
+    String WORKFLOW_LYR = "lyr";
+
+    /**
      * 成功
      */
     String WORKFLOW_SUCCESS = "SUCCESS";
