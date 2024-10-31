@@ -218,6 +218,11 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         if (CollUtil.isNotEmpty(page.getRecords())){
             BeanUtil.copyProperties(page,resPage);
             List<WmsSignFeedbackVO> wmsSignFeedbackVOList = BeanUtil.copyToList(page.getRecords(), WmsSignFeedbackVO.class);
+            List<Long> fileId = wmsSignFeedbackVOList.stream().filter(v -> Objects.nonNull(v.getFileId())).map(WmsSignFeedbackVO::getFileId).collect(Collectors.toList());
+            Map<Long, FileInfoVO> longFileInfoVOMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileId), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
+            wmsSignFeedbackVOList.forEach(tmp->{
+                tmp.setFileUrl(longFileInfoVOMap.get(tmp.getFileId()).getFileUrl());
+            });
             resPage.setRecords(wmsSignFeedbackVOList);
         }
         return resPage;
