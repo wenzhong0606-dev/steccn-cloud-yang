@@ -611,11 +611,11 @@
         <foreach collection="dto.productLineIds" item="lineId" open="(" close=")" separator=",">
             #{lineId}
         </foreach>
-        <if test="dto.startTimeStart != null">
-            AND prw.class_date &gt;= #{dto.startTimeStart}
+        <if test="dto.startDtStart != null">
+            AND prw.class_date &gt;= #{dto.startDtStart}
         </if>
-        <if test="dto.startTimeEnd != null">
-            AND prw.class_date &lt;= #{dto.startTimeEnd}
+        <if test="dto.startDtEnd != null">
+            AND prw.class_date &lt;= #{dto.startDtEnd}
         </if>
         GROUP BY prw.product_line_id,prw.classes_id,name
         ORDER BY prw.product_line_id
