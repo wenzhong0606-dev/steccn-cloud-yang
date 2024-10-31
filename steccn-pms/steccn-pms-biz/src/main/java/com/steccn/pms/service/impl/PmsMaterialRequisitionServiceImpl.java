@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -29,6 +30,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
@@ -449,20 +451,33 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 List<PmsMaterialRequisitionInfo> detailList = pmsMaterialRequisitionInfoService.list(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>().eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, dto.getId()));
                 if (CollUtil.isNotEmpty(detailList)) {
                     List<Long> materialIdSet = Lists.newArrayList();
+                    Set<Long> detailId = Sets.newHashSet();
                     detailList.forEach(tmp -> {
                         materialIdSet.add(tmp.getMaterialId());
+                        detailId.add(tmp.getId());
                     });
+                    //获取领用人
+                    List<PmsMaterialRequisitionDemander> demanderList = pmsMaterialRequisitionDemanderService.list(new LambdaQueryWrapper<PmsMaterialRequisitionDemander>()
+                            .in(PmsMaterialRequisitionDemander::getRequisitionInfoId, detailId));
+                    Map<Long,String> demanderMap = Maps.newHashMap();
+                    if(CollUtil.isNotEmpty(demanderList)){
+                        for(PmsMaterialRequisitionDemander tmp:demanderList){
+                            demanderMap.put(tmp.getRequisitionInfoId(),tmp.getDemanderName());
+                        }
+                    }
                     Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                    Integer order = 0;
                     for (PmsMaterialRequisitionInfo tmp : detailList) {
                         OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
-                        oaWorkFlowDetailDataListDTO.setRecordOrder(order.toString());
-                        order++;
+                        oaWorkFlowDetailDataListDTO.setRecordOrder(OaConstant.NO.toString());
                         //组装详情数据
                         List<OaWorkFlowNameValueDTO> workFlowNameValueDTOS = Lists.newArrayList();
                         EqpSpareVO eqpSpareVO = materialMap.get(tmp.getMaterialId());
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLBM, eqpSpareVO.getCode()));
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC, eqpSpareVO.getName()));
+                        //领用人
+                        if(StrUtil.isNotBlank(demanderMap.get(tmp.getId()))){
+                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId())));
+                        }
                         if (Objects.nonNull(eqpSpareVO.getSpecifications())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH, eqpSpareVO.getSpecifications()));
                         }
