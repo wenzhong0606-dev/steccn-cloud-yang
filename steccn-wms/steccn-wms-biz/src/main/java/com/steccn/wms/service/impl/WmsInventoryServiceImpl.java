@@ -244,13 +244,19 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
             List<String> caseNoList = infoList.stream().map(WmsInventoryDTO::getCaseNo).collect(Collectors.toList());
             Map<String, WmsInventory> map = getInventoryByCaseNo(caseNoList);
+            List<Long> deleteInventory = Lists.newArrayList();
             infoList.forEach(info -> {
                 WmsInventory orDefault = map.get(info.getOriginalCaseNo());
                 orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().subtract(info.getQuantity()));
                 orDefault.setTotalQuantity(orDefault.getTotalQuantity().subtract(info.getQuantity()));
-                addWmsInventory.add(orDefault);
+                if (orDefault.getTotalQuantity().compareTo(BigDecimal.ZERO)>0) {
+                    addWmsInventory.add(orDefault);
+                }else {
+                    deleteInventory.add(orDefault.getId());
+                }
             });
             updateBatchById(addWmsInventory);
+            removeByIds(deleteInventory);
         }
         return true;
     }
