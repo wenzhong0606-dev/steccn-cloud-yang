@@ -60,7 +60,7 @@ public class WmsDeliveryReceiptInfoVO {
     @ApiModelProperty("确认时间")
     private LocalDateTime affirmTime;
 
-    private String specifications;
+    private String specification;
 
     private Integer count;
 

@@ -100,7 +100,7 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
             page.getRecords().forEach(
                     info -> {
                         info.setUnitName(dictMap.get(info.getUnit()));
-                        info.setSpecifications(materialMap.get(info.getMaterialId()).getSpecifications());
+                        info.setSpecification(materialMap.get(info.getMaterialId()).getSpecifications());
                     }
             );
         }
