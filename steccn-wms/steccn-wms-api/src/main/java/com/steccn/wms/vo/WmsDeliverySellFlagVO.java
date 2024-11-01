@@ -23,6 +23,8 @@ public class WmsDeliverySellFlagVO {
 
     private Integer leaveTheFactoryStateFlag = 0;
 
+    private Integer feedbackFlag = 0;
+
 
     /**
      * 合同未发货>0
