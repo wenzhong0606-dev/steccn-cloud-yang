@@ -248,6 +248,9 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
 //                     if (state.equals("已离厂")) {
 //                         wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
 //                     }
+                     if (state.equals("已反馈")) {
+                         wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                     }
                  }
              } catch (Exception e) {
                  throw new BusinessException("物流单不存在");
