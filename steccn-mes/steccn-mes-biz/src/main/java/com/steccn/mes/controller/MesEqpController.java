@@ -106,6 +106,12 @@ public class MesEqpController {
         return R.success(mesEquipmentService.dashBoard(dto));
     }
 
+    @PostMapping("/test")
+    @ApiOperation(value = "测试设备启停状态")
+    public R<Boolean> test(@RequestBody TupleDTO<String,String> dto){
+        return R.success(mesEquipmentService.test(dto));
+    }
+
     @PostMapping("/operation/report")
     @ApiOperation(value = "获取设备运行报表")
     public R<Page<EqpOperationReportVO>> getOperationReport(@RequestBody EqpOperationReportDTO dto) {

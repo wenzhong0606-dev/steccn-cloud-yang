@@ -1,5 +1,6 @@
 package com.steccn.mes.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.MesEquipment;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -39,4 +40,6 @@ public interface MesEquipmentService extends IService<MesEquipment> {
      * @return
      */
     YlEqpDashboardVO dashBoard(TupleDTO<LocalDate,LocalDate> dto);
+
+    Boolean test(TupleDTO<String, String> dto);
 }

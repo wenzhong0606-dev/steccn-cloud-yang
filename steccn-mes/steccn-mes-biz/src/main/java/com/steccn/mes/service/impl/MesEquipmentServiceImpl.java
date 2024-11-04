@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, MesEquipment>
-    implements MesEquipmentService{
+    implements MesEquipmentService {
     private final MesEqpServicePlanService mesEqpServicePlanService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final JsSysOfficeMapper jsSysOfficeMapper;
@@ -68,15 +68,15 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
                 .select(MesEquipment::getId, MesEquipment::getEquipmentCode, MesEquipment::getEquipmentName, MesEquipment::getRemarks, MesEquipment::getModel)
                 .eq(MesEquipment::getStatus, MpConstant.NO.toString())
                 .eq(MesEquipment::getIsEqp, MpConstant.NO.toString()));
-        mesEquipments.forEach(tmp ->{
+        mesEquipments.forEach(tmp -> {
             MesEqpVO vo = new MesEqpVO();
-            BeanUtil.copyProperties(tmp,vo);
+            BeanUtil.copyProperties(tmp, vo);
             List<MesEqpServicePlan> collect = servicePlan.stream().filter(v -> v.getEqpId().equals(tmp.getId().toString())).collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(collect)){
+            if (CollUtil.isNotEmpty(collect)) {
                 List<MesEqpPartVO> part = Lists.newArrayList();
-                collect.forEach(collectTmp->{
+                collect.forEach(collectTmp -> {
                     MesEqpPartVO partVO = new MesEqpPartVO();
-                    BeanUtil.copyProperties(collectTmp,partVO);
+                    BeanUtil.copyProperties(collectTmp, partVO);
                     part.add(partVO);
                 });
                 vo.setParts(part);
@@ -93,7 +93,7 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
                 .eq(MesEquipment::getStatus, MpConstant.NO.toString())
                 .last("limit 1"));
         MesEqpVO vo = new MesEqpVO();
-        BeanUtil.copyProperties(one,vo);
+        BeanUtil.copyProperties(one, vo);
         return vo;
     }
 
@@ -112,9 +112,9 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
                 .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                 .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
                 .last("limit 1"));
-        if(Objects.isNull(eqp)){
-            log.error(dto.getField1()+"设备不存在");
-            throw new BusinessException(dto.getField1()+"设备不存在");
+        if (Objects.isNull(eqp)) {
+            log.error(dto.getField1() + "设备不存在");
+            throw new BusinessException(dto.getField1() + "设备不存在");
         }
         idSet.add(eqp.getId());
         MesEquipment parent = getOne(new LambdaQueryWrapper<MesEquipment>()
@@ -123,16 +123,16 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
                 .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
                 .last("limit 1"));
         //设备停止时，1)下级设备全部停止 2)同级是否是否都停止，若都停止则上级也停止
-        if(equipment.getState().equals(OaConstant.NUM_1.toString())){
+        if (equipment.getState().equals(OaConstant.NUM_1.toString())) {
             //1)下级设备全部停止
             List<MesEquipment> childrenList = list(new LambdaQueryWrapper<MesEquipment>()
                     .eq(MesEquipment::getParentCode, dto.getField1())
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                     .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-            if(CollUtil.isNotEmpty(childrenList)){
+            if (CollUtil.isNotEmpty(childrenList)) {
                 //仅对设备信号外的设备有效
-                childrenList.forEach(tmp->{
-                    if(!signalCode.contains(tmp.getEquipmentCode())){
+                childrenList.forEach(tmp -> {
+                    if (!signalCode.contains(tmp.getEquipmentCode())) {
                         idSet.add(tmp.getId());
                     }
                 });
@@ -142,18 +142,18 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
                     .eq(MesEquipment::getParentCode, eqp.getParentCode())
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                     .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-            if(CollUtil.isNotEmpty(platList)){
+            if (CollUtil.isNotEmpty(platList)) {
                 //判断同级设备是否都停止
                 int size = platList.size();
-                platList = platList.stream().filter(v->v.getState().equals(OaConstant.NUM_1.toString())).collect(Collectors.toList());
-                if(size == platList.size()&&!signalCode.contains(parent.getEquipmentCode())){
+                platList = platList.stream().filter(v -> v.getState().equals(OaConstant.NUM_1.toString())).collect(Collectors.toList());
+                if (size == platList.size() && !signalCode.contains(parent.getEquipmentCode())) {
                     idSet.add(parent.getId());
                 }
             }
 
         }
-        return update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                .in(MesEquipment::getId,idSet)
+        return update(equipment, new LambdaQueryWrapper<MesEquipment>()
+                .in(MesEquipment::getId, idSet)
                 .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
     }
 
@@ -168,51 +168,169 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
         departments.add("STEC001003");
         //获取设备信息
         List<MesEqpCountDTO> eqpCount = mesEquipmentMapper.findEqpCount(departments);
-        if(CollUtil.isNotEmpty(eqpCount)){
+        if (CollUtil.isNotEmpty(eqpCount)) {
             result.setEqpAllNum(eqpCount.stream().mapToInt(MesEqpCountDTO::getNum).sum());
             Map<Integer, Integer> stateNumMap = eqpCount.stream()
                     .collect(Collectors.toMap(MesEqpCountDTO::getState, MesEqpCountDTO::getNum, Integer::sum));
-            result.setEqpRunningPercent(BigDecimalUtil.percent(new BigDecimal(stateNumMap.getOrDefault(0,0)+stateNumMap.getOrDefault(2,0)),
-                    new BigDecimal(result.getEqpAllNum()),2));
+            result.setEqpRunningPercent(BigDecimalUtil.percent(new BigDecimal(stateNumMap.getOrDefault(0, 0) + stateNumMap.getOrDefault(2, 0)),
+                    new BigDecimal(result.getEqpAllNum()), 2));
             //组图表
             List<StackGraphDTO<String, Integer>> dataList = Lists.newArrayList();
             List<TupleDTO<String, Integer>> datList1 = Lists.newArrayList();
             StackGraphDTO<String, Integer> stackGraphDTO1 = new StackGraphDTO<>();
             stackGraphDTO1.setXAxis("待机数");
-            datList1.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(2,0)));
+            datList1.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(2, 0)));
             stackGraphDTO1.setData(datList1);
             dataList.add(stackGraphDTO1);
 
             List<TupleDTO<String, Integer>> datList2 = Lists.newArrayList();
             StackGraphDTO<String, Integer> stackGraphDTO2 = new StackGraphDTO<>();
             stackGraphDTO2.setXAxis("运行数");
-            datList2.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(0,0)));
+            datList2.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(0, 0)));
             stackGraphDTO2.setData(datList2);
             dataList.add(stackGraphDTO2);
 
             StackGraphDTO<String, Integer> stackGraphDTO3 = new StackGraphDTO<>();
             stackGraphDTO3.setXAxis("停机数");
             List<TupleDTO<String, Integer>> datList3 = Lists.newArrayList();
-            datList3.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(3,0)));
+            datList3.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(3, 0)));
             stackGraphDTO3.setData(datList3);
             dataList.add(stackGraphDTO3);
 
             StackGraphDTO<String, Integer> stackGraphDTO4 = new StackGraphDTO<>();
             stackGraphDTO4.setXAxis("故障数");
             List<TupleDTO<String, Integer>> datList4 = Lists.newArrayList();
-            datList4.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(1,0)));
+            datList4.add(new TupleDTO<>("数量", stateNumMap.getOrDefault(1, 0)));
             stackGraphDTO4.setData(datList4);
             dataList.add(stackGraphDTO4);
             result.setEqpDashBoard(StackGraphUtil.convertData(dataList, Boolean.TRUE));
         }
         //获取点检任务信息
-        List<MesEqpCountDTO> taskCount = mesEqpInsTaskMapper.findTaskCount2(departments,dto.getField1().atTime(8,0,0),dto.getField2().plusDays(1).atTime(8,0,0));
-        if(CollUtil.isNotEmpty(taskCount)){
+        List<MesEqpCountDTO> taskCount = mesEqpInsTaskMapper.findTaskCount2(departments, dto.getField1().atTime(8, 0, 0), dto.getField2().plusDays(1).atTime(8, 0, 0));
+        if (CollUtil.isNotEmpty(taskCount)) {
             result.setInsNum(taskCount.stream().mapToInt(MesEqpCountDTO::getNum).sum());
-            result.setInsFinishedPercent(BigDecimalUtil.percent(new BigDecimal(taskCount.stream().filter(v->v.getState().equals(0)).findFirst().orElse(new MesEqpCountDTO(0,0)).getNum()),
-                    new BigDecimal(result.getInsNum()),2));
+            result.setInsFinishedPercent(BigDecimalUtil.percent(new BigDecimal(taskCount.stream().filter(v -> v.getState().equals(0)).findFirst().orElse(new MesEqpCountDTO(0, 0)).getNum()),
+                    new BigDecimal(result.getInsNum()), 2));
         }
         return result;
+    }
+
+    @Override
+    public Boolean test(TupleDTO<String, String> dto) {
+        //测试设备启停状态变更
+        //获取设备自身信息和上级信息
+        MesEquipment eqp = getOne(new LambdaQueryWrapper<MesEquipment>()
+                .eq(MesEquipment::getEquipmentCode, dto.getField1())
+                .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                .last("limit 1"));
+        if (Objects.isNull(eqp)) {
+            log.error(dto.getField1() + "设备不存在");
+            throw new BusinessException(dto.getField1() + "设备不存在");
+        }
+        //写死原料车间设备
+        if (eqp.getParentCodes().contains("1501738403312599040")) {
+            if (dto.getField2().equals("true")) {
+                eqp.setState(OaConstant.NO.toString());
+            } else {
+                eqp.setState(OaConstant.NUM_3.toString());
+            }
+            //注:eqp是传过来的设备信息,equipment代表设备的改变状态
+            //修改当前设备状态
+            updateById(eqp);
+            //判断当前设备是否末节点
+            if (!eqp.getTreeLeaf().equals("1")) {
+                //不是末节点，需要同时考虑向上和向下
+                //向下，获取设备下级设备，并修改所有下级设备状态
+                //递归更新所有子节点的状态
+                updateChildrenStatus(eqp, dto.getField2());
+            }
+            //向上
+            List<MesEquipment> list = list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, eqp.getParentCode()));
+            if (CollUtil.isNotEmpty(list)) {
+                //检查设备同一层级节点状态一致性
+                if (checkSiblingsStatusConsistency(list, eqp)) {
+                    MesEquipment one = getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getId, eqp.getParentCode()));
+                    if (Objects.nonNull(one)) {
+                        updateParentStatus(one, dto.getField2());
+                    }
+                }else {
+                    //向上，确保当前设备开时，父设备也在开启状态，直到根状态也为开启状态，如果当前设备状态为关闭，则不用变更状态
+                    if (eqp.getState().equals(OaConstant.NO.toString())){
+                        MesEquipment one = getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getId, eqp.getParentCode()));
+                        //不需要考虑父状态一致性
+                        updateParentStatusTree(one, dto.getField2());
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+
+    //更新设备父节点的状态，不考虑父状态一致性，直到根节点
+    private void updateParentStatusTree(MesEquipment equipment, String status) {
+        if (equipment.getIsEqp().equals("0")) {
+            if (status.equals("true")) {
+                equipment.setState(OaConstant.NO.toString());
+            } else {
+                equipment.setState(OaConstant.NUM_3.toString());
+            }
+            //修改设备状态
+            updateById(equipment);
+            //一致， 继续向上检查
+            updateParentStatusTree(findParent(equipment), status);
+        }
+    }
+
+    //更新设备父节点的状态
+    private void updateParentStatus(MesEquipment equipment, String status) {
+        if (equipment.getIsEqp().equals("0")) {
+            if (status.equals("true")) {
+                equipment.setState(OaConstant.NO.toString());
+            } else {
+                equipment.setState(OaConstant.NUM_3.toString());
+            }
+            //修改设备状态
+            updateById(equipment);
+            List<MesEquipment> list = list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, equipment.getParentCode()));
+            //判断父节点是否存在兄弟节点并且判断状态一致性
+            if (checkSiblingsStatusConsistency(list, equipment)) {
+                //一致， 继续向上检查
+                updateParentStatus(findParent(equipment), status);
+            }
+        }
+    }
+    //检查设备同一层级节点状态一致性
+    private boolean checkSiblingsStatusConsistency(List<MesEquipment> nodes, MesEquipment equipment) {
+        for (MesEquipment node : nodes) {
+            if (!node.getEquipmentCode().equals(equipment.getEquipmentCode()) && !node.getState().equals(equipment.getState())) {
+                //存在状态不一致的兄弟节点
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 查找设备父节点
+    private MesEquipment findParent(MesEquipment equipment) {
+        return getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getId,equipment.getParentCode()));
+    }
+
+
+    // 递归更新子节点的状态
+    private void updateChildrenStatus(MesEquipment equipment, String status) {
+        if(status.equals("true")) {
+            equipment.setState(OaConstant.NO.toString());
+        }else {
+            equipment.setState(OaConstant.NUM_3.toString());
+        }
+        updateById(equipment);
+        List<MesEquipment> list = list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, equipment.getId()));
+        for (MesEquipment mesEquipment : list) {
+            //修改设备状态
+            updateChildrenStatus(mesEquipment, status);
+        }
     }
 }
 
