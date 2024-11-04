@@ -278,7 +278,7 @@ public class KafkaConsumer {
                     //不是末节点，需要同时考虑向上和向下
                     //向下，获取设备下级设备，并修改所有下级设备状态
                     //递归更新所有子节点的状态
-                    updateChildrenStatus(equipment, eqpListenerDTO.getValueAsString());
+                    updateChildrenStatus(eqp, eqpListenerDTO.getValueAsString());
                 }
                 //向上
                 List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, eqp.getParentCode()));
