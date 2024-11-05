@@ -18,10 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -99,6 +96,22 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
             BeanUtils.copyProperties(config, result);
         }
         return result;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "ConfigTypeContentList")
+    public List<SysConfigurationDTO> infoByTypeAndContentList(String type, String content) {
+        List<SysConfigurationDTO> results = Lists.newArrayList();
+        List<SysConfiguration> configs = list(new LambdaQueryWrapper<SysConfiguration>().eq(SysConfiguration::getType, type)
+                .eq(SysConfiguration::getContent,content));
+        if(CollUtil.isNotEmpty(configs)){
+            for(SysConfiguration config:configs){
+                SysConfigurationDTO result = new SysConfigurationDTO();
+                BeanUtils.copyProperties(config, result);
+                results.add(result);
+            }
+        }
+        return results;
     }
 
     @Override

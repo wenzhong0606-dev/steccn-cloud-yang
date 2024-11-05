@@ -97,210 +97,223 @@ public class KafkaConsumer {
         }
         //获取消息对应的类型
         String redisResult = stringRedisTemplate.opsForValue().get("KafkaEqpSignal::" + eqpListenerDTO.getTagId());
-        SysConfigurationDTO config = new SysConfigurationDTO();
+        List<SysConfigurationDTO> configs = Lists.newArrayList();
         if(StrUtil.isNotBlank(redisResult)){
-            config = JSONObject.parseObject(redisResult,SysConfigurationDTO.class);
+            configs = JSONObject.parseArray(redisResult,SysConfigurationDTO.class);
         }else {
-            config = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndType(new TupleDTO<>("KAFKA_EQP_SIGNAL", eqpListenerDTO.getTagId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if(StrUtil.isBlank(config.getContent())){
+            configs = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndTypeList(new TupleDTO<>("KAFKA_EQP_SIGNAL", eqpListenerDTO.getTagId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isEmpty(configs)){
                 log.error(eqpListenerDTO.getTagId()+"不存在对应的设备");
                 ack.acknowledge();
                 return;
             }
-            stringRedisTemplate.opsForValue().set("KafkaEqpSignal::"+config.getContent(),JSONObject.toJSONString(config));
+            stringRedisTemplate.opsForValue().set("KafkaEqpSignal::"+configs.get(0).getContent(),JSONObject.toJSONString(configs));
         }
-        //先处理故障状态
-        if(config.getOtherContent().equals(OaConstant.NUM_1.toString())){
-            //如果出现故障则修改状态并发送消息
-            MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
-                    .eq(MesEquipment::getEquipmentCode, config.getRefContent())
-                    .eq(MesEquipment::getStatus, OaConstant.NO)
-                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
-                    .last("limit 1"), false);
-            if(eqpListenerDTO.getValueAsString().equals("true")){
-                MesEquipment eqpTmp = new MesEquipment();
-                eqpTmp.setState(OaConstant.NUM_1.toString());
-                mesEquipmentService.update(eqpTmp,new LambdaQueryWrapper<MesEquipment>()
-                        .eq(MesEquipment::getEquipmentCode,config.getRefContent())
-                        .eq(MesEquipment::getStatus,OaConstant.NO));
-                //给设备所属部门的人发送消息
-                if(Objects.nonNull(one)&&StrUtil.isNotBlank(one.getDepartment())){
-                    poolExecutor.execute(()->{
-                        //若部门的上级包含(设备动力部、深加工制造部、基片制造部)则发给下面的所有人
-                        JsSysOffice officeOne = jsSysOfficeService.getOne(new LambdaQueryWrapper<JsSysOffice>()
-                                .eq(JsSysOffice::getOfficeCode, one.getDepartment())
-                                .eq(JsSysOffice::getStatus, OaConstant.NO)
-                                .last("LIMIT 1"));
-                        String departmentStr = "";
-                        if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER)||
-                        officeOne.getParentCodes().contains(MesManagerConstant.PLANT_POWER+",")){
-                            departmentStr = MesManagerConstant.PLANT_POWER+",";
-                        }else if (officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING)||
-                                officeOne.getParentCodes().contains(MesManagerConstant.DEEP_PROCESSING+",")){
-                            departmentStr = MesManagerConstant.DEEP_PROCESSING+",";
-                        }else if (officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC)||
-                                officeOne.getParentCodes().contains(MesManagerConstant.SUB_MANU_FAC+",")){
-                            departmentStr = MesManagerConstant.SUB_MANU_FAC+",";
-                        }
-                        //获取部门及部门下的岗位
-                        List<JsSysOffice> sysOffices = Lists.newArrayList();
-                        if(StrUtil.isNotBlank(departmentStr)){
-                            if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER)
-                                    ||officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING)
-                                    ||officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC)){
-                                sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
-                                        .select(JsSysOffice::getOfficeCode)
-                                        .like(JsSysOffice::getParentCodes, departmentStr)
-                                        .eq(JsSysOffice::getStatus,OaConstant.NO));
-                            }else {
-                                //加逻辑，若设备的使用部门是设备动力部、深加工制造部、基片制造部的下级，则只需要发给设备动力部岗位下的人和自身部门下的人
-                                if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER+",")){
-                                    departmentStr = departmentStr+MesManagerConstant.PLANT_POWER_POST+",";
-                                }else if (officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING+",")){
-                                    departmentStr = departmentStr+MesManagerConstant.DEEP_PROCESSING_POST+",";
-                                }else if (officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC+",")){
-                                    departmentStr = departmentStr+MesManagerConstant.SUB_MANU_FAC_POST+",";
-                                }
-                                sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
-                                        .select(JsSysOffice::getOfficeCode)
-                                        .like(JsSysOffice::getParentCodes, departmentStr)
-                                        .eq(JsSysOffice::getStatus,OaConstant.NO));
-                                //自身使用部门下的人
-                                List<JsSysOffice> office2 = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
-                                        .select(JsSysOffice::getOfficeCode)
-                                        .like(JsSysOffice::getParentCodes, one.getDepartment() + ",")
-                                        .eq(JsSysOffice::getStatus, OaConstant.NO));
-                                sysOffices.addAll(office2);
-                            }
-                        }
-                        Set<String> officeCodes = Sets.newHashSet();
-                        if(CollUtil.isNotEmpty(sysOffices)){
-                            officeCodes = sysOffices.stream().map(JsSysOffice::getOfficeCode).collect(Collectors.toSet());
-                        }
-                        officeCodes.add(one.getDepartment());
-                        //若部门的上级包含(设备动力部、深加工制造部、基片制造部)则发给下面的所有人
-                        //获取人
-                        List<JsSysEmployee> employees = jsSysEmployeeService.list(new LambdaQueryWrapper<JsSysEmployee>()
-                                .select(JsSysEmployee::getEmpCode)
-                                .in(JsSysEmployee::getOfficeCode, officeCodes)
-                                .eq(JsSysEmployee::getStatus, OaConstant.NO));
-                        if(CollUtil.isNotEmpty(employees)){
-                            List<String> userNames = Lists.newArrayList();
-                            employees.forEach(tmp->{
-                                userNames.add(tmp.getEmpCode().split("_")[0]);
-                            });
-                            List<Integer> userIds = FeignOptional.of(() -> oaInfoService.getIdByWorkCode(userNames), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                            //发送消息
-                            if(CollUtil.isNotEmpty(userIds)){
-                                SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
-                                sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getCode());
-                                sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getTitle());
-                                sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getWarnFlag());
-                                sysMsgDTO.setUserList(userIds.stream()
-                                        .map(Integer::longValue)
-                                        .collect(Collectors.toSet()));
-                                String content = SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getTemplate();
-                                sysMsgDTO.setContent(String.format(content, one.getEquipmentName()));
-                                sysMsgDTO.setPushType(OaConstant.NUM_1);
-                                FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                            }
-                        }
-
-                    });
-                }
-
-            }else {
-                //如果设备为正常状态则不动
-                //如果是告警状态则改成运行状态
-                if(Objects.nonNull(one)&&one.getState().equals(OaConstant.NUM_1.toString())){
+        for(SysConfigurationDTO config:configs){
+//        SysConfigurationDTO config = new SysConfigurationDTO();
+//        if(StrUtil.isNotBlank(redisResult)){
+//            config = JSONObject.parseObject(redisResult,SysConfigurationDTO.class);
+//        }else {
+//            config = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndType(new TupleDTO<>("KAFKA_EQP_SIGNAL", eqpListenerDTO.getTagId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//            if(StrUtil.isBlank(config.getContent())){
+//                log.error(eqpListenerDTO.getTagId()+"不存在对应的设备");
+//                ack.acknowledge();
+//                return;
+//            }
+//            stringRedisTemplate.opsForValue().set("KafkaEqpSignal::"+config.getContent(),JSONObject.toJSONString(config));
+//        }
+            //先处理故障状态
+            if(config.getOtherContent().equals(OaConstant.NUM_1.toString())){
+                //如果出现故障则修改状态并发送消息
+                MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getEquipmentCode, config.getRefContent())
+                        .eq(MesEquipment::getStatus, OaConstant.NO)
+                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                        .last("limit 1"), false);
+                if(eqpListenerDTO.getValueAsString().equals("true")){
                     MesEquipment eqpTmp = new MesEquipment();
-                    eqpTmp.setState(OaConstant.NO.toString());
+                    eqpTmp.setState(OaConstant.NUM_1.toString());
                     mesEquipmentService.update(eqpTmp,new LambdaQueryWrapper<MesEquipment>()
                             .eq(MesEquipment::getEquipmentCode,config.getRefContent())
                             .eq(MesEquipment::getStatus,OaConstant.NO));
-                }
-            }
-        }else if(config.getOtherContent().equals(OaConstant.NO.toString())){
-            //找到设备code信号
-            Set<String> signalCode = FeignOptional.of(() -> remoteSysConfigurationFeignApi.contentByType("EQP_SIGNAL"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            //运行状态
-            //先获取脉冲状态
-            Boolean pulse;
-            String pulseStr = stringRedisTemplate.opsForValue().get("KafkaEqpSignal::pulse");
-            if(StrUtil.isNotBlank(pulseStr)&&pulseStr.equals("true")){
-                pulse = true;
-            }else {
-                pulse = false;
-            }
-            //修改的对象
-            MesEquipment equipment = new MesEquipment();
-            if(eqpListenerDTO.getValueAsString().equals("true")||eqpListenerDTO.getValueAsString().equals("1")) {
-                equipment.setState(OaConstant.NO.toString());
-            }else {
-                //判断启动/停止信号：信号为启动，更新设备状态为待机，否则为停机
-                if(pulse){
-                    equipment.setState(OaConstant.NUM_2.toString());
+                    //给设备所属部门的人发送消息
+                    if(Objects.nonNull(one)&&StrUtil.isNotBlank(one.getDepartment())){
+                        poolExecutor.execute(()->{
+                            //若部门的上级包含(设备动力部、深加工制造部、基片制造部)则发给下面的所有人
+                            JsSysOffice officeOne = jsSysOfficeService.getOne(new LambdaQueryWrapper<JsSysOffice>()
+                                    .eq(JsSysOffice::getOfficeCode, one.getDepartment())
+                                    .eq(JsSysOffice::getStatus, OaConstant.NO)
+                                    .last("LIMIT 1"));
+                            String departmentStr = "";
+                            if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER)||
+                                    officeOne.getParentCodes().contains(MesManagerConstant.PLANT_POWER+",")){
+                                departmentStr = MesManagerConstant.PLANT_POWER+",";
+                            }else if (officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING)||
+                                    officeOne.getParentCodes().contains(MesManagerConstant.DEEP_PROCESSING+",")){
+                                departmentStr = MesManagerConstant.DEEP_PROCESSING+",";
+                            }else if (officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC)||
+                                    officeOne.getParentCodes().contains(MesManagerConstant.SUB_MANU_FAC+",")){
+                                departmentStr = MesManagerConstant.SUB_MANU_FAC+",";
+                            }
+                            //获取部门及部门下的岗位
+                            List<JsSysOffice> sysOffices = Lists.newArrayList();
+                            if(StrUtil.isNotBlank(departmentStr)){
+                                if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER)
+                                        ||officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING)
+                                        ||officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC)){
+                                    sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                            .select(JsSysOffice::getOfficeCode)
+                                            .like(JsSysOffice::getParentCodes, departmentStr)
+                                            .eq(JsSysOffice::getStatus,OaConstant.NO));
+                                }else {
+                                    //加逻辑，若设备的使用部门是设备动力部、深加工制造部、基片制造部的下级，则只需要发给设备动力部岗位下的人和自身部门下的人
+                                    if(officeOne.getOfficeCode().equals(MesManagerConstant.PLANT_POWER+",")){
+                                        departmentStr = departmentStr+MesManagerConstant.PLANT_POWER_POST+",";
+                                    }else if (officeOne.getOfficeCode().equals(MesManagerConstant.DEEP_PROCESSING+",")){
+                                        departmentStr = departmentStr+MesManagerConstant.DEEP_PROCESSING_POST+",";
+                                    }else if (officeOne.getOfficeCode().equals(MesManagerConstant.SUB_MANU_FAC+",")){
+                                        departmentStr = departmentStr+MesManagerConstant.SUB_MANU_FAC_POST+",";
+                                    }
+                                    sysOffices = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                            .select(JsSysOffice::getOfficeCode)
+                                            .like(JsSysOffice::getParentCodes, departmentStr)
+                                            .eq(JsSysOffice::getStatus,OaConstant.NO));
+                                    //自身使用部门下的人
+                                    List<JsSysOffice> office2 = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                                            .select(JsSysOffice::getOfficeCode)
+                                            .like(JsSysOffice::getParentCodes, one.getDepartment() + ",")
+                                            .eq(JsSysOffice::getStatus, OaConstant.NO));
+                                    sysOffices.addAll(office2);
+                                }
+                            }
+                            Set<String> officeCodes = Sets.newHashSet();
+                            if(CollUtil.isNotEmpty(sysOffices)){
+                                officeCodes = sysOffices.stream().map(JsSysOffice::getOfficeCode).collect(Collectors.toSet());
+                            }
+                            officeCodes.add(one.getDepartment());
+                            //若部门的上级包含(设备动力部、深加工制造部、基片制造部)则发给下面的所有人
+                            //获取人
+                            List<JsSysEmployee> employees = jsSysEmployeeService.list(new LambdaQueryWrapper<JsSysEmployee>()
+                                    .select(JsSysEmployee::getEmpCode)
+                                    .in(JsSysEmployee::getOfficeCode, officeCodes)
+                                    .eq(JsSysEmployee::getStatus, OaConstant.NO));
+                            if(CollUtil.isNotEmpty(employees)){
+                                List<String> userNames = Lists.newArrayList();
+                                employees.forEach(tmp->{
+                                    userNames.add(tmp.getEmpCode().split("_")[0]);
+                                });
+                                List<Integer> userIds = FeignOptional.of(() -> oaInfoService.getIdByWorkCode(userNames), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                                //发送消息
+                                if(CollUtil.isNotEmpty(userIds)){
+                                    SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+                                    sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getCode());
+                                    sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getTitle());
+                                    sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getWarnFlag());
+                                    sysMsgDTO.setUserList(userIds.stream()
+                                            .map(Integer::longValue)
+                                            .collect(Collectors.toSet()));
+                                    String content = SysMsgConstant.MsgTypeEnum.EQP_NOTICE.getTemplate();
+                                    sysMsgDTO.setContent(String.format(content, one.getEquipmentName()));
+                                    sysMsgDTO.setPushType(OaConstant.NUM_1);
+                                    FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                                }
+                            }
+
+                        });
+                    }
+
                 }else {
-                    equipment.setState(OaConstant.NUM_3.toString());
+                    //如果设备为正常状态则不动
+                    //如果是告警状态则改成运行状态
+                    if(Objects.nonNull(one)&&one.getState().equals(OaConstant.NUM_1.toString())){
+                        MesEquipment eqpTmp = new MesEquipment();
+                        eqpTmp.setState(OaConstant.NO.toString());
+                        mesEquipmentService.update(eqpTmp,new LambdaQueryWrapper<MesEquipment>()
+                                .eq(MesEquipment::getEquipmentCode,config.getRefContent())
+                                .eq(MesEquipment::getStatus,OaConstant.NO));
+                    }
                 }
-            }
-            //需要修改的id
-            Set<Long> idSet = Sets.newHashSet();
-            //获取设备自身信息和上级信息
-            MesEquipment eqp = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
-                    .eq(MesEquipment::getEquipmentCode, config.getRefContent())
-                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
-                    .last("limit 1"));
-            if(Objects.isNull(eqp)){
-                log.error(config.getRefContent()+"设备不存在");
-                throw new BusinessException(config.getRefContent()+"设备不存在");
-            }
-            //写死原料车间设备
-            if(eqp.getParentCodes().contains("1501738403312599040")){
+            }else if(config.getOtherContent().equals(OaConstant.NO.toString())){
+                //找到设备code信号
+                Set<String> signalCode = FeignOptional.of(() -> remoteSysConfigurationFeignApi.contentByType("EQP_SIGNAL"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //运行状态
+                //先获取脉冲状态
+                Boolean pulse;
+                String pulseStr = stringRedisTemplate.opsForValue().get("KafkaEqpSignal::pulse");
+                if(StrUtil.isNotBlank(pulseStr)&&pulseStr.equals("true")){
+                    pulse = true;
+                }else {
+                    pulse = false;
+                }
+                //修改的对象
+                MesEquipment equipment = new MesEquipment();
+                if(eqpListenerDTO.getValueAsString().equals("true")||eqpListenerDTO.getValueAsString().equals("1")) {
+                    equipment.setState(OaConstant.NO.toString());
+                }else {
+                    //判断启动/停止信号：信号为启动，更新设备状态为待机，否则为停机
+                    if(pulse){
+                        equipment.setState(OaConstant.NUM_2.toString());
+                    }else {
+                        equipment.setState(OaConstant.NUM_3.toString());
+                    }
+                }
+                //需要修改的id
+                Set<Long> idSet = Sets.newHashSet();
+                //获取设备自身信息和上级信息
+                MesEquipment eqp = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                        .eq(MesEquipment::getEquipmentCode, config.getRefContent())
+                        .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                        .last("limit 1"));
+                if(Objects.isNull(eqp)){
+                    log.error(config.getRefContent()+"设备不存在");
+                    throw new BusinessException(config.getRefContent()+"设备不存在");
+                }
+                //写死原料车间设备
+                if(eqp.getParentCodes().contains("1501738403312599040")){
 //                if(eqpListenerDTO.getValueAsString().equals("true")) {
 //                    equipment.setState(OaConstant.NO.toString());
 //                }else {
 //                    equipment.setState(OaConstant.NUM_3.toString());
 //                }
-                //注:eqp是传过来的设备信息,equipment代表设备的改变状态
+                    //注:eqp是传过来的设备信息,equipment代表设备的改变状态
 
 
-                //修改当前设备状态
-                if(eqpListenerDTO.getValueAsString().equals("true")) {
-                    eqp.setState(OaConstant.NO.toString());
-                }else {
-                    eqp.setState(OaConstant.NUM_3.toString());
-                }
-                mesEquipmentService.updateById(eqp);
-                //判断当前设备是否末节点
-                if (!eqp.getTreeLeaf().equals("1")){
-                    //不是末节点，需要同时考虑向上和向下
-                    //向下，获取设备下级设备，并修改所有下级设备状态
-                    //递归更新所有子节点的状态
-                    updateChildrenStatus(eqp, eqpListenerDTO.getValueAsString());
-                }
-                //向上
-                List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, eqp.getParentCode()));
-                if (CollUtil.isNotEmpty(list)){
-                    if (checkSiblingsStatusConsistency(list, eqp)) {
-                        MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getId, eqp.getParentCode()));
-                        if (Objects.nonNull(one)) {
-                            updateParentStatus(one, eqpListenerDTO.getValueAsString());
-                        }
-                    } else {
-                        //向上，确保当前设备开时，父设备也在开启状态，直到根状态也为开启状态，如果当前设备状态为关闭，则不用变更状态
-                        if (eqp.getState().equals(OaConstant.NO.toString())){
+                    //修改当前设备状态
+                    if(eqpListenerDTO.getValueAsString().equals("true")) {
+                        eqp.setState(OaConstant.NO.toString());
+                    }else {
+                        eqp.setState(OaConstant.NUM_3.toString());
+                    }
+                    mesEquipmentService.updateById(eqp);
+                    //判断当前设备是否末节点
+                    if (!eqp.getTreeLeaf().equals("1")){
+                        //不是末节点，需要同时考虑向上和向下
+                        //向下，获取设备下级设备，并修改所有下级设备状态
+                        //递归更新所有子节点的状态
+                        updateChildrenStatus(eqp, eqpListenerDTO.getValueAsString());
+                    }
+                    //向上
+                    List<MesEquipment> list = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getParentCode, eqp.getParentCode()));
+                    if (CollUtil.isNotEmpty(list)){
+                        if (checkSiblingsStatusConsistency(list, eqp)) {
                             MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getId, eqp.getParentCode()));
-                            //不需要考虑父状态一致性
-                            updateParentStatusTree(one, eqpListenerDTO.getValueAsString());
+                            if (Objects.nonNull(one)) {
+                                updateParentStatus(one, eqpListenerDTO.getValueAsString());
+                            }
+                        } else {
+                            //向上，确保当前设备开时，父设备也在开启状态，直到根状态也为开启状态，如果当前设备状态为关闭，则不用变更状态
+                            if (eqp.getState().equals(OaConstant.NO.toString())){
+                                MesEquipment one = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>().eq(MesEquipment::getId, eqp.getParentCode()));
+                                //不需要考虑父状态一致性
+                                updateParentStatusTree(one, eqpListenerDTO.getValueAsString());
+                            }
                         }
                     }
-                }
-                ack.acknowledge();
-                return;
+                    ack.acknowledge();
+                    return;
 
-            }
+                }
 
 
 
@@ -656,129 +669,129 @@ public class KafkaConsumer {
 //                    return;
 //                }
 //            }
-            //只有原料车间的设备才需要考虑待机停机
+                //只有原料车间的设备才需要考虑待机停机
 //            if(!eqp.getParentCodes().contains("1501738403312599040")){
 //                equipment.setState(OaConstant.NUM_3.toString());
 //
 //            }
-            idSet.add(eqp.getId());
-            //混合机和电机一致
-            if(eqp.getEquipmentCode().equals("TC2_YL1_PL_01_01")||eqp.getEquipmentCode().equals("TC2_YL1_PL_02_03")){
-                MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
-                        .eq(MesEquipment::getId, eqp.getParentCode())
-                        .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
-                        .last("limit 1"));
-                idSet.add(parent.getId());
-                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                        .in(MesEquipment::getId,idSet)
-                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-                ack.acknowledge();
-                return;
-            }
-            //所有下级设备改变状态
-            List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                    .like(MesEquipment::getParentCodes, eqp.getId().toString()+",")
-                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-            if(CollUtil.isNotEmpty(childrenList)){
-                //仅对设备信号外的设备有效
-                childrenList.forEach(tmp->{
-                    idSet.add(tmp.getId());
-                });
-            }
-
-            //混合机开则电机开
-            if(idSet.contains(1554749971972489216L) || idSet.contains(1554750034203377664L)){
-                if(equipment.getState().equals(OaConstant.NO.toString())){
-                    idSet.add(1731569543175426048L);
-                }
-
-            }else if(idSet.contains(1552858842006159360L) || idSet.contains(1554749911603871744L)){
-                if(equipment.getState().equals(OaConstant.NO.toString())){
-                    idSet.add(1554750094693629952L);
-                }
-            }
-            mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                    .in(MesEquipment::getId,idSet)
-                    .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
-
-            if(eqp.getParentCodes().contains("1501738403312599040")){
-                //定制化螺旋给料机
-                if(eqp.getEquipmentCode().contains("TC2_YL1_PL_19")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_20")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_21")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_22")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_23")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_24")){
-                    updateScrewEqp(eqp.getParentCode());
-                }
-                else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_01_02")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_01_03")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_02_01")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_02_02")){
-                    updateScrewEqp(eqp.getParentCode());
-                }else {
-                    //处理该设备的设备树
-                    String rootEqpCode = cutString(eqp.getEquipmentCode());
-                    MesEquipment eqpRoot = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
-                            .eq(MesEquipment::getEquipmentCode, rootEqpCode)
+                idSet.add(eqp.getId());
+                //混合机和电机一致
+                if(eqp.getEquipmentCode().equals("TC2_YL1_PL_01_01")||eqp.getEquipmentCode().equals("TC2_YL1_PL_02_03")){
+                    MesEquipment parent = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                            .eq(MesEquipment::getId, eqp.getParentCode())
                             .eq(MesEquipment::getStatus, OaConstant.NO.toString())
                             .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
                             .last("limit 1"));
-                    if(Objects.nonNull(eqpRoot)){
-                        List<MesEquipment> eqpTree = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
-                                .like(MesEquipment::getParentCodes, eqpRoot.getId().toString()+",")
+                    idSet.add(parent.getId());
+                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                            .in(MesEquipment::getId,idSet)
+                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                    ack.acknowledge();
+                    return;
+                }
+                //所有下级设备改变状态
+                List<MesEquipment> childrenList = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                        .like(MesEquipment::getParentCodes, eqp.getId().toString()+",")
+                        .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                        .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                if(CollUtil.isNotEmpty(childrenList)){
+                    //仅对设备信号外的设备有效
+                    childrenList.forEach(tmp->{
+                        idSet.add(tmp.getId());
+                    });
+                }
+
+                //混合机开则电机开
+                if(idSet.contains(1554749971972489216L) || idSet.contains(1554750034203377664L)){
+                    if(equipment.getState().equals(OaConstant.NO.toString())){
+                        idSet.add(1731569543175426048L);
+                    }
+
+                }else if(idSet.contains(1552858842006159360L) || idSet.contains(1554749911603871744L)){
+                    if(equipment.getState().equals(OaConstant.NO.toString())){
+                        idSet.add(1554750094693629952L);
+                    }
+                }
+                mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                        .in(MesEquipment::getId,idSet)
+                        .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+
+                if(eqp.getParentCodes().contains("1501738403312599040")){
+                    //定制化螺旋给料机
+                    if(eqp.getEquipmentCode().contains("TC2_YL1_PL_19")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_20")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_21")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_22")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_23")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_24")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }
+                    else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_01_02")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_01_03")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_02_01")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else if(eqp.getEquipmentCode().contains("TC2_YL1_PL_02_02")){
+                        updateScrewEqp(eqp.getParentCode());
+                    }else {
+                        //处理该设备的设备树
+                        String rootEqpCode = cutString(eqp.getEquipmentCode());
+                        MesEquipment eqpRoot = mesEquipmentService.getOne(new LambdaQueryWrapper<MesEquipment>()
+                                .eq(MesEquipment::getEquipmentCode, rootEqpCode)
                                 .eq(MesEquipment::getStatus, OaConstant.NO.toString())
-                                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
-                        eqpTree.add(eqpRoot);
-                        //对整颗设备树进行处理
-                        if(CollUtil.isNotEmpty(eqpTree)){
-                            // 构建树状结构
-                            Map<String, MesEquipment> equipmentMap = Maps.newHashMap();
-                            for (MesEquipment equipmentTmp : eqpTree) {
-                                equipmentMap.put(equipmentTmp.getId().toString(), equipmentTmp);
-                            }
-                            for (MesEquipment equipmentTmp : eqpTree) {
-                                if (equipment.getParentCode() != null) {
-                                    MesEquipment parent = equipmentMap.get(equipmentTmp.getParentCode());
-                                    if (parent != null) {
-                                        parent.getChildren().add(equipment);
+                                .eq(MesEquipment::getIsEqp, OaConstant.NO.toString())
+                                .last("limit 1"));
+                        if(Objects.nonNull(eqpRoot)){
+                            List<MesEquipment> eqpTree = mesEquipmentService.list(new LambdaQueryWrapper<MesEquipment>()
+                                    .like(MesEquipment::getParentCodes, eqpRoot.getId().toString()+",")
+                                    .eq(MesEquipment::getStatus, OaConstant.NO.toString())
+                                    .eq(MesEquipment::getIsEqp, OaConstant.NO.toString()));
+                            eqpTree.add(eqpRoot);
+                            //对整颗设备树进行处理
+                            if(CollUtil.isNotEmpty(eqpTree)){
+                                // 构建树状结构
+                                Map<String, MesEquipment> equipmentMap = Maps.newHashMap();
+                                for (MesEquipment equipmentTmp : eqpTree) {
+                                    equipmentMap.put(equipmentTmp.getId().toString(), equipmentTmp);
+                                }
+                                for (MesEquipment equipmentTmp : eqpTree) {
+                                    if (equipment.getParentCode() != null) {
+                                        MesEquipment parent = equipmentMap.get(equipmentTmp.getParentCode());
+                                        if (parent != null) {
+                                            parent.getChildren().add(equipment);
+                                        }
                                     }
                                 }
-                            }
-                            MesEquipment root = equipmentMap.get(rootEqpCode);
-                            // 更新节点状态
-                            // map用于记录被更新的节点ID和状态
-                            Map<String,Set<Long>> updatedIds = Maps.newHashMap();
-                            updateState(root,updatedIds);
-                            if(CollUtil.isNotEmpty(updatedIds)){
-                                for(Map.Entry<String,Set<Long>> entry:updatedIds.entrySet()){
-                                    MesEquipment eqpTmp = new MesEquipment();
-                                    eqpTmp.setState(entry.getKey());
-                                    mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
-                                            .in(MesEquipment::getId,entry.getValue())
-                                            .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                                MesEquipment root = equipmentMap.get(rootEqpCode);
+                                // 更新节点状态
+                                // map用于记录被更新的节点ID和状态
+                                Map<String,Set<Long>> updatedIds = Maps.newHashMap();
+                                updateState(root,updatedIds);
+                                if(CollUtil.isNotEmpty(updatedIds)){
+                                    for(Map.Entry<String,Set<Long>> entry:updatedIds.entrySet()){
+                                        MesEquipment eqpTmp = new MesEquipment();
+                                        eqpTmp.setState(entry.getKey());
+                                        mesEquipmentService.update(equipment,new LambdaQueryWrapper<MesEquipment>()
+                                                .in(MesEquipment::getId,entry.getValue())
+                                                .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
+                                    }
                                 }
+                            }else {
+                                log.error(rootEqpCode+"设备树不存在");
                             }
                         }else {
-                            log.error(rootEqpCode+"设备树不存在");
+                            log.error(rootEqpCode+"设备不存在");
                         }
-                    }else {
-                        log.error(rootEqpCode+"设备不存在");
+
                     }
 
                 }
-
-            }
 
 
 
@@ -820,7 +833,10 @@ public class KafkaConsumer {
                     .in(MesEquipment::getId,idSet)
                     .eq(MesEquipment::getStatus, OaConstant.NO.toString()));
              */
+            }
         }
+
+
         //找到对应关系
 //        //然后发送到websocket中
 //        if (CollUtil.isNotEmpty(msgPushDTO.getUserIdList())) {
