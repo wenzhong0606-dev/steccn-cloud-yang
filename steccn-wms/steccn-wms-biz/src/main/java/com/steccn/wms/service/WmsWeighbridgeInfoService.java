@@ -52,4 +52,6 @@ public interface WmsWeighbridgeInfoService extends IService<WmsWeighbridgeInfo> 
      */
     Boolean changeDeduct(WmsWeighbridgeInfoDTO dto);
 
+    String weighRegUrl();
+
 }

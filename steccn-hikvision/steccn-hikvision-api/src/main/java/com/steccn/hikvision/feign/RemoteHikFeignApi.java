@@ -6,7 +6,9 @@ import com.steccn.common.vo.R;
 import com.steccn.hikvision.vo.HikCompanyVO;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -25,4 +27,12 @@ public interface RemoteHikFeignApi {
      */
     @PostMapping("/feign/hikvision/company")
     R<List<HikCompanyVO>> hikCompanyInfo(@RequestBody TupleDTO<String,String> dto);
+
+    /**
+     * 根据流程单号匹配图片URL
+     * @param weighNo
+     * @return
+     */
+    @GetMapping("/feign/hikvision/weighRegUrl")
+    R<String> weighRegUrl(@RequestParam("weighNo") String weighNo);
 }

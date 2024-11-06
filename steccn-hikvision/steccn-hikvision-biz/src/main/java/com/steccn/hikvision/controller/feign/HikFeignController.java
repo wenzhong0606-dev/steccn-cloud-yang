@@ -25,4 +25,9 @@ public class HikFeignController {
     public R<List<HikCompanyVO>> hikCompanyInfo(@RequestBody TupleDTO<String,String> dto) {
         return R.success(hikvisionService.getCompanyInfo(dto));
     }
+
+    @GetMapping("/weighRegUrl")
+    public R<String> weighRegUrl(@RequestParam("weighNo") String weighNo) {
+        return R.success(hikvisionService.weighRegUrl(weighNo));
+    }
 }

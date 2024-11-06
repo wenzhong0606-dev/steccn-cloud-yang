@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.hikvision.feign.RemoteHikFeignApi;
@@ -54,6 +56,7 @@ import java.util.stream.Collectors;
 public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInfoMapper, WmsWeighbridgeInfo>
     implements WmsWeighbridgeInfoService{
     private final WmsStorageReceiptService wmsStorageReceiptService;
+    private final RemoteHikFeignApi remoteHikFeignApi;
 
     @Override
     public Boolean saveInfo(WmsWeighbridgeInfoDTO dto) {
@@ -178,6 +181,15 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
         model.setDeductWeight(dto.getDeductWeight());
         updateById(model);
         return true;
+    }
+
+    @Override
+    public String weighRegUrl() {
+        WmsWeighbridgeInfo one = getOne(new LambdaQueryWrapper<WmsWeighbridgeInfo>()
+                .orderByDesc(WmsWeighbridgeInfo::getFinishTime)
+                .last("limit 1"));
+        String s = FeignOptional.of(() -> remoteHikFeignApi.weighRegUrl(one.getFlowCode()), FeignConstant.STECCN_HIK_SERVICE_NAME).get();
+        return s;
     }
 }
 

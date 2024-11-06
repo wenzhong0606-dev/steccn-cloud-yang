@@ -290,4 +290,10 @@ public class WmsStorageReceiptController {
     public R<Boolean> batchConfirmation(@RequestBody TupleDTO<LocalDateTime,Long> tupleDTO){
         return R.success(wmsStorageReceiptService.batchConfirmation(tupleDTO));
     }
+
+    @ApiOperation("获取最新地磅url")
+    @GetMapping("/weighbridge/weighUrl")
+    public R<String> weighbridgePage(){
+        return R.success(wmsWeighbridgeInfoService.weighRegUrl());
+    }
 }

@@ -127,6 +127,14 @@ public class HikvisionServiceImpl implements HikvisionService {
         return false;
     }
 
+    @Override
+    public String weighRegUrl(String weighNo) {
+        VideoApi videoApi = new VideoApi();
+        String s = videoApi.queryWeighUrl(weighNo);
+        String result = JSONObject.parseObject(s).getJSONObject("data").getString("url");
+        return result;
+    }
+
     /**
      * 将 CameraVO 列表转换为树形结构
      * @param cameraList CameraVO 列表

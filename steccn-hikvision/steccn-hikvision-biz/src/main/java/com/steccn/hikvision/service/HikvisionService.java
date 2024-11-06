@@ -52,4 +52,6 @@ public interface HikvisionService {
      * @return
      */
     Boolean bookEvent(SysHikEventDTO dto);
+
+    String weighRegUrl(String weighNo);
 }

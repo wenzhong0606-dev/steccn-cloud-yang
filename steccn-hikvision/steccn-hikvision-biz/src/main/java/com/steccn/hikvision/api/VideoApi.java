@@ -1,6 +1,7 @@
 package com.steccn.hikvision.api;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Maps;
 import com.hikvision.artemis.sdk.ArtemisHttpUtil;
 import com.hikvision.artemis.sdk.config.ArtemisConfig;
 import com.steccn.hikvision.dto.SysHikEventDTO;
@@ -139,6 +140,24 @@ public class VideoApi {
      */
     public String getCompanyInfo(Map<String,String> querys) {
         String getDataApi = ARTEMIS_PATH + "/api/open/v1/allType/companyQuery";
+        Map<String, String> path = new HashMap<String, String>(2) {
+            {
+                put("https://", getDataApi);
+            }
+        };
+        String result = ArtemisHttpUtil.doGetArtemis(path,querys,null,"application/json");
+        return result;
+    }
+
+    /**
+     * 查询榜单URL
+     * @param 称重流程单号
+     * @return
+     */
+    public String queryWeighUrl(String weighNo) {
+        Map<String,String> querys = Maps.newHashMap();
+        querys.put("weighNo",weighNo);
+        String getDataApi = ARTEMIS_PATH + "/api/open/v2/wreg/weigh/getWeighRegUrl";
         Map<String, String> path = new HashMap<String, String>(2) {
             {
                 put("https://", getDataApi);
