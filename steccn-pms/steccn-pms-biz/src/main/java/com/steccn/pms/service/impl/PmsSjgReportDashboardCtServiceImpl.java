@@ -343,10 +343,10 @@ public class PmsSjgReportDashboardCtServiceImpl implements PmsSjgReportDashboard
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.DEEP_REPORT_WORK_FINISH_NUM_ALARM.getTemplate();
                     if (Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmNum, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(start, "yyyy-MM-dd"), classNameOrNot, office.getOfficeName(), process, BigDecimalUtil.format(currentPmNum), "高", "上", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(start, "yyyy-MM-dd"), classNameOrNot, office.getOfficeName(), process, BigDecimalUtil.format(currentPmNum), "高", "上", BigDecimalUtil.format(upValue));
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmNum, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(start, "yyyy-MM-dd"), classNameOrNot, office.getOfficeName(), process, BigDecimalUtil.format(currentPmNum), "低", "下", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(start, "yyyy-MM-dd"), classNameOrNot, office.getOfficeName(), process, BigDecimalUtil.format(currentPmNum), "低", "下", BigDecimalUtil.format(lowValue));
                         contentSb.append(ts3).append("\n");
                     }
                 }

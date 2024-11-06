@@ -177,10 +177,10 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             StringBuilder contentSb = new StringBuilder();
             String template = SysMsgConstant.MsgTypeEnum.JP_RH_RATE_ALARM.getTemplate();
             if (Objects.nonNull(result) && Objects.nonNull(upValue) && BigDecimalUtil.gt(result, upValue)) {
-                String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "高", "上", upValue);
+                String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "高", "上", BigDecimalUtil.format(upValue));
                 contentSb.append(ts1);
             } else if (Objects.nonNull(result) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(result, lowValue)) {
-                String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "低", "下", lowValue);
+                String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), BigDecimalUtil.format(result), "低", "下", BigDecimalUtil.format(lowValue));
                 contentSb.append(ts3);
             }
             if (contentSb.length() > 0) {
@@ -632,10 +632,10 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.JP_PRODUCT_PASS_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", BigDecimalUtil.format(upValue));
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", BigDecimalUtil.format(lowValue));
                         contentSb.append(ts3).append("\n");
                     }
                 }
@@ -775,10 +775,10 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.JP_IN_STORAGE_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", BigDecimalUtil.format(upValue));
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", BigDecimalUtil.format(lowValue));
                         contentSb.append(ts3).append("\n");
                     }
                 }

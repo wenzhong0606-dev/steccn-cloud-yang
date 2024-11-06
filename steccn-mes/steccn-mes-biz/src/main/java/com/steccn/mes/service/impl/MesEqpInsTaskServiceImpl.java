@@ -238,10 +238,10 @@ public class MesEqpInsTaskServiceImpl extends ServiceImpl<MesEqpInsTaskMapper, M
                     //高于上限
                     String template = SysMsgConstant.MsgTypeEnum.SPOT_CHECK_RATE_ALARM.getTemplate();
                     if (Objects.nonNull(currentPmRate) && Objects.nonNull(upValue) && BigDecimalUtil.gt(currentPmRate, upValue)) {
-                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", upValue);
+                        String ts1 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "高", "上", BigDecimalUtil.format(upValue));
                         contentSb.append(ts1).append("\n");
                     } else if (Objects.nonNull(currentPmRate) && Objects.nonNull(lowValue) && BigDecimalUtil.lt(currentPmRate, lowValue)) {
-                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", lowValue);
+                        String ts3 = String.format(template, LocalDateUtil.format(date, "yyyy-MM-dd"), office.getOfficeName(), BigDecimalUtil.format(currentPmRate), "低", "下", BigDecimalUtil.format(lowValue));
                         contentSb.append(ts3).append("\n");
                     }
                 }
