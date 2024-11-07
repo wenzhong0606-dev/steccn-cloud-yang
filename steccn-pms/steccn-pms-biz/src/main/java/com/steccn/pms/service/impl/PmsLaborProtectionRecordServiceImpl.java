@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
@@ -143,8 +144,11 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 detailModel.setMaterialId(spare.getId());
                 detailModel.setUnitId(spare.getUnitId().toString());
                 detailModel.setUnitName(spare.getUnit());
+                if(detailTmp.getNum().compareTo(BigDecimal.ZERO)==0){
+                    continue;
+                }
                 detailModel.setQuantity(detailTmp.getNum());
-                detailModel.setReceiveQuantity(detailTmp.getNum());
+                detailModel.setReceiveQuantity(BigDecimal.ZERO);
                 detailModel.setRequireDate(LocalDate.now());
                 OaUserInfo oaUserInfo = FeignOptional.of(() -> oaInfoService.getOaUserInfo(detailTmp.getLoginCode()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                 List<MaterialRequisitionDemanderDTO> demanderList = Lists.newArrayList(new MaterialRequisitionDemanderDTO(oaUserInfo.getOaUserId().longValue(),oaUserInfo.getName()));
@@ -165,6 +169,9 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 recordModel.setReceiptPersonCode(SecurityUtils.getUser().getUsername());
                 recordModel.setReceiptPersonName(SecurityUtils.getUser().getName());
                 modelList.add(recordModel);
+            }
+            if(CollUtil.isEmpty(detailList)){
+                throw new BusinessException("物料数都为0");
             }
             materialRequisitionDTO.setList(detailList);
             Long id = pmsMaterialRequisitionService.add(materialRequisitionDTO);
