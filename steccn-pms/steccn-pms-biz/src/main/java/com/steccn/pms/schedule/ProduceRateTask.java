@@ -126,7 +126,7 @@ public class ProduceRateTask {
             LocalDateTime start, end;
             start = LocalDateUtil.getMorning(date);
             end = start.plusDays(1);
-            pmsSjgReportDashboardCtService.linePassRateMonitor(start, end, "DEEP_REPORT_WORK_FINISH_NUM_DAY", QtManagerConstant.QtGranularityEnum.DAY);
+            pmsSjgReportDashboardCtService.linePassRateMonitor(start, end, "DEEP_REPORT_WORK_FINISH_NUM", QtManagerConstant.QtGranularityEnum.DAY);
         } catch (RuntimeException e) {
             log.error("业务运行异常 -> {}", e.getCause());
             XxlJobHelper.log("业务运行异常 -> {}", e.getCause());
