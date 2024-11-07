@@ -119,6 +119,16 @@ public class WmsWeighbridgeInfoServiceImpl extends ServiceImpl<WmsWeighbridgeInf
     }
 
     @Override
+    public WmsWeighbridgeInfoVO firstWeighBridge() {
+        WmsWeighbridgeInfo one = getOne(new LambdaQueryWrapper<WmsWeighbridgeInfo>()
+                .orderByDesc(WmsWeighbridgeInfo::getFinishTime)
+                .last("limit 1"));
+        WmsWeighbridgeInfoVO vo = new WmsWeighbridgeInfoVO();
+        BeanUtil.copyProperties(one,vo);
+        return vo;
+    }
+
+    @Override
     public List<String> companyName() {
         List<WmsWeighbridgeInfo> companyName = list(new QueryWrapper<WmsWeighbridgeInfo>()
                 .select("DISTINCT company_name AS companyName")

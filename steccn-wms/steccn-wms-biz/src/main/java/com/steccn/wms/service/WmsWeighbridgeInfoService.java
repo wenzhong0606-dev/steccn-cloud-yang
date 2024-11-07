@@ -34,6 +34,8 @@ public interface WmsWeighbridgeInfoService extends IService<WmsWeighbridgeInfo> 
      */
     WmsWeighbridgeInfoPageVO<WmsWeighbridgeInfoVO> pageList(WmsWeighbridgeInfoDTO dto);
 
+    WmsWeighbridgeInfoVO firstWeighBridge();
+
     List<String> companyName();
 
     List<String> materialName();

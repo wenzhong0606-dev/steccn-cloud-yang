@@ -72,9 +72,19 @@ public class WmsWeighbridgeInfo implements Serializable {
     private BigDecimal grossWeight;
 
     /**
+     * 毛重时间
+     */
+    private LocalDateTime grossWeightTime;
+
+    /**
      * 皮重
      */
     private BigDecimal tareWeight;
+
+    /**
+     * 皮重时间
+     */
+    private LocalDateTime tareWeightTime;
 
     /**
      * 净重

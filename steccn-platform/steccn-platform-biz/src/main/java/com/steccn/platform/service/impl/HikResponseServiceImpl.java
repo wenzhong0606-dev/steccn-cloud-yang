@@ -86,8 +86,14 @@ public class HikResponseServiceImpl extends ServiceImpl<HikResponseMapper, HikRe
                 }
                 //毛重
                 weighbridgeDTO.setGrossWeight(weighCommits.get(0).getWeight());
+                if(StrUtil.isNotBlank(weighCommits.get(0).getCommit_time())){
+                    weighbridgeDTO.setGrossWeightTime(OffsetDateTime.parse(weighCommits.get(0).getCommit_time()).toLocalDateTime());
+                }
                 //皮重
                 weighbridgeDTO.setTareWeight(weighCommits.get(1).getWeight());
+                if(StrUtil.isNotBlank(weighCommits.get(1).getCommit_time())){
+                    weighbridgeDTO.setGrossWeightTime(OffsetDateTime.parse(weighCommits.get(1).getCommit_time()).toLocalDateTime());
+                }
                 //净重
                 weighbridgeDTO.setNetWeight(weighCommits.get(1).getResult());
                 if(StrUtil.isNotBlank(weighReg.getEnd_time())){

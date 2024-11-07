@@ -293,7 +293,13 @@ public class WmsStorageReceiptController {
 
     @ApiOperation("获取最新地磅url")
     @GetMapping("/weighbridge/weighUrl")
-    public R<String> weighbridgePage(){
+    public R<String> weighRegUrl(){
         return R.success(wmsWeighbridgeInfoService.weighRegUrl());
+    }
+
+    @ApiOperation("获取最新地磅单信息")
+    @GetMapping("/weighbridge/weighInfo")
+    public R<WmsWeighbridgeInfoVO> weighbridgeInfo(){
+        return R.success(wmsWeighbridgeInfoService.firstWeighBridge());
     }
 }
