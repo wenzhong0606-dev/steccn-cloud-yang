@@ -1,19 +1,18 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.dto.MaterialRequisitionInfoPlanDTO;
 import com.steccn.pms.dto.MaterialRequisitionPlanDTO;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
+import com.steccn.pms.vo.MaterialRequisitionViewDTO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -41,6 +40,13 @@ public class MaterialRequisitionPlanController {
     @PostMapping
     public R<String> create(@RequestBody List<MaterialRequisitionInfoPlanDTO> dtoList) {
         return pmsMaterialRequisitionService.create(dtoList);
+    }
+
+
+    @ApiOperation("领用单明细视图")
+    @GetMapping("/view")
+    public R<SteccnTableDataDTO> view(@RequestParam("id") Long id){
+        return pmsMaterialRequisitionService.view(id);
     }
 
 }

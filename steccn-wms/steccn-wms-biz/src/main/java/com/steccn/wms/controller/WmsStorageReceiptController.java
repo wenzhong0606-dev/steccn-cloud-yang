@@ -32,6 +32,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -164,6 +165,11 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.excelImportData(dto));
     }
 
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) throws IOException {
+        wmsStorageReceiptService.download(response);
+    }
     @ApiOperation("入库凭证同步erp")
     @GetMapping("/linkErp")
     public R<Boolean> linkErp(@ApiParam("入库单id") @RequestParam("id") Long id){

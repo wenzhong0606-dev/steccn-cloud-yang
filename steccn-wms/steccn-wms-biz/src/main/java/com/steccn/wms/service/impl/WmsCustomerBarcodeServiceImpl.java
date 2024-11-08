@@ -248,6 +248,9 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
 //                     if (state.equals("已离厂")) {
 //                         wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
 //                     }
+                     if (state.equals("已预约")) {
+                         wmsDeliverySellFlagVO.setMakeAnAppointmentFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                     }
                      if (state.equals("已反馈")) {
                          wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
                      }

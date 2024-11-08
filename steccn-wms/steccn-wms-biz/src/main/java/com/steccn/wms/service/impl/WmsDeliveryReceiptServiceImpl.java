@@ -670,6 +670,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 if (state.equals("已反馈")){
                     wmsDeliverySellFlagVO.setFeedbackFlag(1);
                 }
+                if (state.equals("已预约")) {
+                    wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                }
                 BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
                     //如果销售数量为0
                 if (saleQty.compareTo(BigDecimal.ZERO)==0){

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.domain.PmsMaterialRequisition;
@@ -11,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
+import com.steccn.pms.vo.MaterialRequisitionViewDTO;
 
 import java.io.IOException;
 import java.util.List;
@@ -93,4 +95,6 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @return
      */
     List<CommonReportDTO> substrate(DpPmsOperateDTO dto);
+
+    R<SteccnTableDataDTO> view(Long id);
 }

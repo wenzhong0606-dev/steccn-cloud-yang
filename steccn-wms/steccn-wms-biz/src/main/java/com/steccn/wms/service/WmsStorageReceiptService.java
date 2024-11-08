@@ -13,6 +13,7 @@ import com.steccn.wms.dto.*;
 import com.steccn.wms.vo.*;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -252,4 +253,6 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
     Map<Long, BigDecimal> intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
 
     Map<Long, Integer> intervalOrderQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    void download(HttpServletResponse response) throws IOException;
 }

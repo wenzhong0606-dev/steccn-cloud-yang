@@ -2,6 +2,9 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.util.ListUtils;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,8 +15,8 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.vo.R;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.dto.OaUserInfo;
@@ -23,19 +26,25 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsLaborProtectionRecord;
+import com.steccn.pms.domain.PmsLaborProtectionStandardDetail;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
+import com.steccn.pms.service.PmsLaborProtectionStandardDetailService;
+import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
-import com.steccn.pms.vo.MaterialRequisitionVO;
+import com.steccn.pms.vo.PmsLaborExcelDTO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -55,6 +64,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     private final PmsMaterialRequisitionService pmsMaterialRequisitionService;
     private final OaInfoService oaInfoService;
     private final RemoteMesFeignApi remoteMesFeignApi;
+    private final PmsLaborProtectionStandardDetailService pmsLaborProtectionStandardDetailService;
 
     @Override
     public Page<PmsLaborRecordVO> pageList(PmsLaborRecordPageDTO dto) {
@@ -184,6 +194,42 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
         }
         return true;
     }
+
+    @Override
+    public void download(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        String fileName = URLEncoder.encode("劳保用品", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //获取表头数据
+        List<PmsLaborProtectionStandardDetail> detailData = pmsLaborProtectionStandardDetailService.list(new LambdaQueryWrapper<PmsLaborProtectionStandardDetail>()
+                .orderByDesc(PmsLaborProtectionStandardDetail::getStandardId));
+        List<Long> materialIdList = detailData.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<List<String>> head = new ArrayList<List<String>>();
+        List<String> children = Lists.newArrayList();
+        children.add("姓名");
+        head.add(children);
+        materialIdList.forEach(tmp->{
+            List<String> complexColumnChildren = Lists.newArrayList();
+            EqpSpareVO spareVO = spareMap.get(tmp);
+            StringBuilder materialName = new StringBuilder();
+            materialName.append(spareVO.getName());
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())){
+                materialName.append("/");
+                materialName.append(spareVO.getCode());
+            }
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())){
+                materialName.append("/");
+                materialName.append(spareVO.getSpecifications());
+            }
+            complexColumnChildren.add(materialName.toString());
+            head.add(complexColumnChildren);
+        });
+
+        EasyExcel.write(response.getOutputStream()).sheet(fileName).head(head).doWrite(new ArrayList<>());
+    }
+
 }
 
 

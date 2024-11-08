@@ -38,6 +38,7 @@ import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsProducePlanNewExcelDTO;
 import com.steccn.pms.dto.WmsStorageReceiptExcelDTO;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.*;
@@ -63,8 +64,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -2052,6 +2055,16 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             );
         }
         return map;
+    }
+
+    @Override
+    public void download(HttpServletResponse response) throws IOException{
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("生产月计划模板", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), WmsStorageReceiptExcelDTO.class).sheet("模板").doWrite(new ArrayList<>());
     }
 
     /**

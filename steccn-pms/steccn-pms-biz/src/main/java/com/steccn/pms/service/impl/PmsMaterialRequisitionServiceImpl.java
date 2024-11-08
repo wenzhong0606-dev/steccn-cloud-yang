@@ -22,6 +22,7 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.MapUtil;
@@ -846,6 +847,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             });
         }
         return resList;
+    }
+
+    @Override
+    public R<SteccnTableDataDTO> view(Long id) {
+        return null;
     }
 
     public  List<RequisitionInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity,List<Integer> integers, TupleDTO<LocalDateTime,LocalDateTime> dto){
