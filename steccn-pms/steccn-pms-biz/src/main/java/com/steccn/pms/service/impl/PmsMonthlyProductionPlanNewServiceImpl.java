@@ -146,9 +146,9 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
         dbList.forEach(ele -> {
             BigDecimal bigDecimal = valueMap.get(ele.getPlanDate());
             ele.setPlanQuantity(bigDecimal);
+            valueMap.remove(ele.getPlanDate());
         });
         //新增
-        valueMap.remove(dbList.stream().map(PmsMonthlyProductionPlanNew::getPlanDate).collect(Collectors.toSet()));
         String client = dbList.get(0).getClient();
         valueMap.forEach((k, v) -> {
             PmsMonthlyProductionPlanNew model = new PmsMonthlyProductionPlanNew();
