@@ -6,19 +6,19 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
- * 
  * @TableName pms_monthly_production_plan_new
  */
-@TableName(value ="pms_monthly_production_plan_new")
+@TableName(value = "pms_monthly_production_plan_new")
 @Data
 public class PmsMonthlyProductionPlanNew implements Serializable {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -54,12 +54,7 @@ public class PmsMonthlyProductionPlanNew implements Serializable {
     /**
      * 已转数量
      */
-    private BigDecimal deliveryQuantity;
-
-    /**
-     * 完成数量
-     */
-    private BigDecimal completionQuantity;
+    private Long linkId;
 
     /**
      * 标准单位
