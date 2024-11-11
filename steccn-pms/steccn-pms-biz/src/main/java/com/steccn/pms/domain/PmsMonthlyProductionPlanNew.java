@@ -57,11 +57,6 @@ public class PmsMonthlyProductionPlanNew implements Serializable {
     private Long linkId;
 
     /**
-     * 标准单位
-     */
-    private Long unitId;
-
-    /**
      * 是否删除 0 否 1是
      */
     @TableLogic

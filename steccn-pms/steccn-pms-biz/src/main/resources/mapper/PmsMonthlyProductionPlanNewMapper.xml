@@ -13,7 +13,6 @@
         <result property="state" column="state" jdbcType="INTEGER"/>
         <result property="planQuantity" column="plan_quantity" jdbcType="DECIMAL"/>
         <result property="linkId" column="link_id" jdbcType="BIGINT"/>
-        <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
         <result property="createBy" column="create_by" jdbcType="BIGINT"/>
         <result property="createName" column="create_name" jdbcType="VARCHAR"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
@@ -27,8 +26,7 @@
         id
         ,material_id,client_id,
         client,plan_date,state,
-        plan_quantity,link_id,
-        unit_id,create_by,create_name,
+        plan_quantity,link_id,create_by,create_name,
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
