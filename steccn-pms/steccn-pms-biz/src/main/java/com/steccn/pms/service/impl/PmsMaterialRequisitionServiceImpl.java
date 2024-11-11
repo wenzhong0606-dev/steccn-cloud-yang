@@ -485,10 +485,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                             tmp.setRequireDate(tmp.getUpdateTime().toLocalDate());
                         }
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ, tmp.getRequireDate().toString()));
-                        if (Objects.isNull(tmp.getReceiveQuantity())) {
+                        if (Objects.isNull(tmp.getQuantity())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, BigDecimal.ZERO.toString()));
                         } else {
-                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, tmp.getReceiveQuantity().toString()));
+                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, tmp.getQuantity().toString()));
                         }
                         oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(workFlowNameValueDTOS);
                         workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
