@@ -14,11 +14,14 @@ import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -93,4 +96,14 @@ public class PmsLaborController {
     public R<Boolean> generateReq(@RequestBody PmsLaborGerReqDTO dto) {
         return R.success(pmsLaborProtectionRecordService.generateReq(dto));
     }
+
+    /**
+     * 下载劳保导入模板
+     */
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) throws IOException {
+        pmsLaborProtectionRecordService.download(response);
+    }
+
 }

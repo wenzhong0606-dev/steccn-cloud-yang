@@ -31,6 +31,8 @@ public class WmsDeliverySellFlagVO {
      */
     private Integer contractNotDeliveredFlag = 0;
 
+    private Integer makeAnAppointmentFlag = 0;
+
     private String salesOrder;
 
     private String client;

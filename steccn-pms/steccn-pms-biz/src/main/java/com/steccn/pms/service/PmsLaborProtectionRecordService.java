@@ -7,6 +7,9 @@ import com.steccn.pms.dto.PmsLaborGerReqDTO;
 import com.steccn.pms.dto.PmsLaborRecordPageDTO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 /**
 * @author Admin
 * @description 针对表【pms_labor_protection_record(劳保记录表)】的数据库操作Service
@@ -26,4 +29,6 @@ public interface PmsLaborProtectionRecordService extends IService<PmsLaborProtec
      * @return
      */
     Boolean generateReq(PmsLaborGerReqDTO dto);
+
+    void download(HttpServletResponse response) throws IOException;
 }

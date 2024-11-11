@@ -34,7 +34,7 @@ public class LocalDateUtil {
      * @return String 日期时间字符串，例如 2022-11-01 09:51:53
      */
     public static String format(LocalDateTime localDateTime, String pattern) {
-        if(Objects.isNull(localDateTime)){
+        if (Objects.isNull(localDateTime)) {
             return null;
         }
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
@@ -45,8 +45,8 @@ public class LocalDateUtil {
     /**
      * 获取日期时间字符串
      *
-     * @param date 需要转化的日期时间
-     * @param pattern       时间格式
+     * @param date    需要转化的日期时间
+     * @param pattern 时间格式
      * @return String 日期时间字符串，例如 2022-11-01
      */
     public static String format(LocalDate date, String pattern) {
@@ -56,6 +56,18 @@ public class LocalDateUtil {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
         return dateTimeFormatter.format(date);
     }
+
+    /**
+     * 获取一个月的最后一天
+     *
+     * @param date 当前月日期
+     * @return
+     */
+    public static LocalDate monthLastDay(LocalDate date) {
+        LocalDate lastDayOfMonth = date.with(TemporalAdjusters.lastDayOfMonth()); // 获取本月最后一天
+        return lastDayOfMonth;
+    }
+
 
     /**
      * LocalDateTime转为日期
@@ -332,9 +344,9 @@ public class LocalDateUtil {
     /**
      * 判断time是否在[start,end)之间
      *
-     * @param time    时间
-     * @param start   开始时间
-     * @param end     结束时间
+     * @param time  时间
+     * @param start 开始时间
+     * @param end   结束时间
      * @return
      */
     public static Boolean isRange(LocalDateTime time, LocalDateTime start, LocalDateTime end) {
@@ -373,9 +385,9 @@ public class LocalDateUtil {
     /**
      * 判断time是否在[start,end)之间
      *
-     * @param time    时间
-     * @param start   开始时间
-     * @param end     结束时间
+     * @param time  时间
+     * @param start 开始时间
+     * @param end   结束时间
      * @return
      */
     public static Boolean isRange(LocalDate time, LocalDate start, LocalDate end) {
@@ -567,6 +579,7 @@ public class LocalDateUtil {
 
     /**
      * 算两段时间相差的小时数
+     *
      * @param start1
      * @param end1
      * @param start2
@@ -598,12 +611,13 @@ public class LocalDateUtil {
 
     /**
      * 获取最大时间和最小时间
+     *
      * @param times
      * @return
      */
-    public static TupleDTO<LocalDateTime,LocalDateTime> calculateTimeRange(Set<LocalDateTime> times){
-        TupleDTO result = new TupleDTO<LocalDateTime,LocalDateTime>();
-        if(CollUtil.isEmpty(times)){
+    public static TupleDTO<LocalDateTime, LocalDateTime> calculateTimeRange(Set<LocalDateTime> times) {
+        TupleDTO result = new TupleDTO<LocalDateTime, LocalDateTime>();
+        if (CollUtil.isEmpty(times)) {
             return null;
         }
         // 初始化最小和最大日期
@@ -625,12 +639,13 @@ public class LocalDateUtil {
 
     /**
      * 当前时间区间的上一个区间
+     *
      * @param startTime
      * @param endTime
      * @return
      */
-    public static TupleDTO<LocalDateTime,LocalDateTime> intervalTime(LocalDateTime startTime,LocalDateTime endTime){
-        TupleDTO<LocalDateTime,LocalDateTime> result = new TupleDTO<LocalDateTime,LocalDateTime>();
+    public static TupleDTO<LocalDateTime, LocalDateTime> intervalTime(LocalDateTime startTime, LocalDateTime endTime) {
+        TupleDTO<LocalDateTime, LocalDateTime> result = new TupleDTO<LocalDateTime, LocalDateTime>();
         //计算时间区间的天数
         long between = ChronoUnit.DAYS.between(startTime, endTime);
         // 计算上一个区间的开始和结束日期
@@ -641,6 +656,7 @@ public class LocalDateUtil {
 
     /**
      * 当前时间区间的上一个区间
+     *
      * @param start
      * @param end
      * @return
