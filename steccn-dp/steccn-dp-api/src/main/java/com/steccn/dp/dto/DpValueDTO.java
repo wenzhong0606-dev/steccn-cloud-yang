@@ -12,7 +12,14 @@ import java.math.BigDecimal;
  */
 @Data
 public class DpValueDTO {
-    private BigDecimal value;
     private String tagId;
+    private String nodeId;
+    private String kafkaTopic;
+    private String opcPath;
+    private Long serverTimeMs;
     private String serverTime;
+    private BigDecimal value;
+    private String valueAsString;
+    private String statusCode;
+    private String valueType;
 }

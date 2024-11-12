@@ -87,6 +87,14 @@ public class PullAmountCalculateTask {
     }
 
     /**
+     * 每5分钟推送天气数据
+     */
+    @XxlJob("pushWeather")
+    public void pushWeather() {
+        remoteDpFeignApi.weatherPush();
+    }
+
+    /**
      * @desc 计算损耗 每天 8点01分 20:01:00 执行一次
      * 08:01:00 20:01:00
      */

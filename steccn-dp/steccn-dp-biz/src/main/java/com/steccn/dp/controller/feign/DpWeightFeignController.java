@@ -87,6 +87,12 @@ public class DpWeightFeignController {
         return R.success(adsOpcUaAll3Service.pushWeightSum());
     }
 
+    @GetMapping("/weather/push")
+    @ApiOperation(value = "推送气象站数据")
+    public R<Boolean> weatherPush() {
+        return R.success(adsOpcUaAll3Service.pushTempData());
+    }
+
 
     @PostMapping("/output")
     @ApiOperation(value = "产量")

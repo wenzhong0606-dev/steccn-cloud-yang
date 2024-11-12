@@ -64,6 +64,10 @@ public interface RemoteDpFeignApi {
     @ApiOperation(value = "推送电子秤读数")
     R<Boolean> push();
 
+    @GetMapping("/feign/dp/weather/push")
+    @ApiOperation(value = "推送气象站数据")
+    R<Boolean> weatherPush();
+
     /**
      * 耗料数
      * @param dto

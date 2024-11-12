@@ -86,4 +86,10 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     Boolean pushWeightSum();
+
+    /**
+     * 推送气象站数据
+     * @return
+     */
+    Boolean pushTempData();
 }

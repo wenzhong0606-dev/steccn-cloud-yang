@@ -31,6 +31,7 @@ import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
 import com.steccn.dp.mapper.WeightCountMapper;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.vo.DpSalesContractVO;
+import com.steccn.dp.vo.DpTempVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.oa.constant.OaConstant;
@@ -52,6 +53,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -761,6 +763,43 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         valueDTO.setTagId("Raw_YL.CS.ZHM.fact_weigh1_FLOAT");
         valueDTO.setServerTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         kafkaTemplate.send("opcData_kiln_in_out",JSONObject.toJSONString(valueDTO));
+        return true;
+    }
+
+    @Override
+    public Boolean pushTempData() {
+        String result = HttpUtil.get("http://47.97.164.180:8005/intfa/queryData/24110701");
+        List<DpTempVO> dpTemp = JSONObject.parseObject(result).getJSONArray("entity").toJavaList(DpTempVO.class);
+        for(DpTempVO temp:dpTemp){
+            DpValueDTO valueDTO = new DpValueDTO();
+            if(temp.getEName().equals("风速")){
+                valueDTO.setNodeId("weather_wind_speed");
+                valueDTO.setTagId("weather_wind_speed");
+            }else if(temp.getEName().equals("数字气压")){
+                valueDTO.setNodeId("weather_air_pressure");
+                valueDTO.setTagId("weather_air_pressure");
+            }else if(temp.getEName().equals("大气温度")){
+                valueDTO.setNodeId("weather_air_pressure");
+                valueDTO.setTagId("weather_air_pressure");
+            }else if(temp.getEName().equals("大气湿度")){
+                valueDTO.setNodeId("weather_air_humidity");
+                valueDTO.setTagId("weather_air_humidity");
+            }else if(temp.getEName().equals("风向")){
+                valueDTO.setNodeId("weather_wind_direction");
+                valueDTO.setTagId("weather_wind_direction");
+            }
+            valueDTO.setKafkaTopic("opc_ua_all_topic");
+            valueDTO.setOpcPath("");
+            valueDTO.setServerTimeMs(LocalDateTime.parse(temp.getDatetime(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).toInstant(ZoneOffset.of("+8")).toEpochMilli());
+            valueDTO.setServerTime(temp.getDatetime());
+            valueDTO.setValue(new BigDecimal(temp.getEValue()));
+            valueDTO.setValueAsString(temp.getEValue());
+            valueDTO.setStatusCode("0");
+            valueDTO.setValueType(temp.getEUnit());
+            kafkaTemplate.send("opc_ua_all_topic",valueDTO.getTagId(),JSONObject.toJSONString(valueDTO));
+            valueDTO.setKafkaTopic("weather_station_topic");
+            kafkaTemplate.send("weather_station_topic",valueDTO.getTagId(),JSONObject.toJSONString(valueDTO));
+        }
         return true;
     }
 
