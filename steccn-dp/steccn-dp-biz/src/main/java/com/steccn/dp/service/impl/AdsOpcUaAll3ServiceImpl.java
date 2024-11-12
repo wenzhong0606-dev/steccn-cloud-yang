@@ -779,8 +779,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
                 valueDTO.setNodeId("weather_air_pressure");
                 valueDTO.setTagId("weather_air_pressure");
             }else if(temp.getEName().equals("大气温度")){
-                valueDTO.setNodeId("weather_air_pressure");
-                valueDTO.setTagId("weather_air_pressure");
+                valueDTO.setNodeId("weather_air_temperature");
+                valueDTO.setTagId("weather_air_temperature");
             }else if(temp.getEName().equals("大气湿度")){
                 valueDTO.setNodeId("weather_air_humidity");
                 valueDTO.setTagId("weather_air_humidity");
@@ -797,8 +797,8 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
             valueDTO.setStatusCode("0");
             valueDTO.setValueType(temp.getEUnit());
             kafkaTemplate.send("opc_ua_all_topic",valueDTO.getTagId(),JSONObject.toJSONString(valueDTO));
-            valueDTO.setKafkaTopic("weather_station_topic");
-            kafkaTemplate.send("weather_station_topic",valueDTO.getTagId(),JSONObject.toJSONString(valueDTO));
+            valueDTO.setKafkaTopic("opcData_kiln");
+            kafkaTemplate.send("opcData_kiln",valueDTO.getTagId(),JSONObject.toJSONString(valueDTO));
         }
         return true;
     }
