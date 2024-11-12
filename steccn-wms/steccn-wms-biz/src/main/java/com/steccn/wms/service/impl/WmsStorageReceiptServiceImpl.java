@@ -891,7 +891,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     }
                 }
                 System.out.println("库存:" + wmsInventoryList.size());
-//                保存库存信息
+//               保存库存信息
                 wmsInventoryService.saveBatch(wmsInventoryList);
             }
             log.info(String.valueOf(wmsStorageReceiptList.size()));

@@ -1,8 +1,10 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.util.ListUtils;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -10,13 +12,16 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnTableColumn;
+import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.dto.OaUserInfo;
@@ -26,10 +31,13 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsLaborProtectionRecord;
+import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.domain.PmsLaborProtectionStandardDetail;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.listener.LaborListener;
 import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
+import com.steccn.pms.mapper.PmsLaborProtectionStandardMapper;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
 import com.steccn.pms.service.PmsLaborProtectionStandardDetailService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
@@ -47,6 +55,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,6 +74,8 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     private final OaInfoService oaInfoService;
     private final RemoteMesFeignApi remoteMesFeignApi;
     private final PmsLaborProtectionStandardDetailService pmsLaborProtectionStandardDetailService;
+    private final PmsLaborProtectionRecordMapper pmsLaborProtectionRecordMapper;
+    private final PmsLaborProtectionStandardServiceImpl pmsLaborProtectionStandardService;
 
     @Override
     public Page<PmsLaborRecordVO> pageList(PmsLaborRecordPageDTO dto) {
@@ -227,7 +238,154 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             head.add(complexColumnChildren);
         });
 
-        EasyExcel.write(response.getOutputStream()).sheet(fileName).head(head).doWrite(new ArrayList<>());
+        EasyExcel.write(response.getOutputStream()).sheet("sheet1").head(head).doWrite(new ArrayList<>());
+    }
+
+
+
+    @Override
+    public SteccnTableDataDTO<Map<String, String>> excelImportData(PmExcelDTO dto) throws IOException {
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi);
+        EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().doRead();
+        Map<String, List<Map<String, String>>> stringListMap = laborListener.saveData();
+        //处理数据
+        //需要拿到所有配置的数据
+        List<PmsLaborProtectionStandard> standardList = pmsLaborProtectionStandardService.list();
+        //拿到所有详情
+        List<PmsLaborProtectionStandardDetail> standardDetailList = pmsLaborProtectionStandardDetailService.list();
+
+        //处理部门和岗位
+        //拿到标准中的所有部门了岗位
+        List<PmsLaborProtectionStandard> finalStandardList = standardList;
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(finalStandardList.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<String> availPost = Sets.newHashSet();
+        Set<String> availDep = Sets.newHashSet();
+        //区分岗位和部门
+        for(Map.Entry<String,SysOfficeVO> entry:officeMap.entrySet()){
+            SysOfficeVO tmp = entry.getValue();
+            if(tmp.getOfficeType().equals("6")){
+                availPost.add(tmp.getOfficeCode());
+            }else if(tmp.getOfficeType().equals("15")){
+                //若是部门类型，则拿到其岗位数据
+                availDep.add(tmp.getOfficeCode());
+            }
+        }
+        if(CollUtil.isNotEmpty(availDep)){
+            Map<String, List<String>> depPostMap = FeignOptional.of(() -> remoteOfficeFeign.depPostMap(availDep), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            availPost.addAll(depPostMap.values().stream().flatMap(List::stream).collect(Collectors.toSet()));
+        }
+        //拿到所有岗位下的人员和岗位所属机构
+        Map<String, List<String>> employee = FeignOptional.of(() -> remoteMesFeignApi.getPostUser(availPost), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+        //拿到所有人员的入职时间
+        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .map(str->{
+                    int index = str.indexOf('_');
+                    return index != -1 ? str.substring(0,index) : str;
+                }).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //拿到所有入职超过1个月的人员
+        Set<String> employeeId = employeeTime.entrySet().stream().filter(v -> v.getValue().plusMonths(1).isBefore(LocalDate.now()))
+                .map(Map.Entry::getKey).collect(Collectors.toSet());
+        //过滤名称
+//        if(cn.hutool.core.util.StrUtil.isNotBlank(dto.getUserName())){
+//            employeeId =employeeId.stream().filter(v->v.contains(dto.getUserName())).collect(Collectors.toSet());
+//        }
+//        Set<String> finalEmployeeId = employeeId;
+        List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(employeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+        //开始组装数据
+        //表头
+        SteccnTableDataDTO<Map<String, String>> result = new SteccnTableDataDTO<>();
+        //先组表头
+        List<SteccnTableColumn> columns = Lists.newArrayList();
+        columns.add(new SteccnTableColumn("depName","部门",null));
+        columns.add(new SteccnTableColumn("postName","岗位",null));
+        columns.add(new SteccnTableColumn("userName","人员",null));
+        columns.add(new SteccnTableColumn("enterTime","入职时间",null));
+        //动态部分
+        List<Long> materialIdList = standardDetailList.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        materialIdList.forEach(tmp->{
+            EqpSpareVO spareVO = spareMap.get(tmp);
+            StringBuilder materialName = new StringBuilder();
+            materialName.append(spareVO.getName());
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())){
+                materialName.append("/");
+                materialName.append(spareVO.getCode());
+            }
+            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())){
+                materialName.append("/");
+                materialName.append(spareVO.getSpecifications());
+            }
+            columns.add(new SteccnTableColumn(tmp.toString(),materialName.toString(),
+                    Lists.newArrayList(new SteccnTableColumn(tmp+"_"+"receiptTime","上次领用时间",null),
+                            new SteccnTableColumn(tmp+"_claimNum","待领数量",null),
+                            new SteccnTableColumn(tmp+"_availNum","可领数量",null))));
+        });
+        List<Map<String,String>> tableList = Lists.newArrayList();
+        //处理数据，遍历人员
+        for(MesUserInfoVO tmp:userInfos){
+            Map<String,String> column = Maps.newHashMap();
+                //获取岗位的劳保标准
+                PmsLaborProtectionStandard standardTmp;
+                standardTmp = standardList.stream().filter(v -> v.getOfficeId().contains(tmp.getPostCode())).findFirst().orElse(null);
+                if (Objects.isNull(standardTmp)) {
+                    //获取用户的部门标准
+                    standardTmp = standardList.stream().filter(v -> v.getOfficeId().contains(tmp.getDepCode())).findFirst().orElse(null);
+                }
+                if (Objects.isNull(standardTmp)) {
+                    continue;
+                }
+                column.put("depName", tmp.getDepName());
+                column.put("depCode", tmp.getDepCode());
+                column.put("postName", tmp.getPostName());
+                column.put("postCode", tmp.getPostCode());
+                column.put("loginCode", tmp.getLoginCode());
+                column.put("userName", tmp.getName());
+                column.put("enterTime", employeeTime.get(tmp.getLoginCode()).toString());
+                column.put("materialList", materialIdList.toString());
+                //获取部门详情
+                PmsLaborProtectionStandard finalStandardTmp = standardTmp;
+                List<PmsLaborProtectionStandardDetail> standardDetailTmp = standardDetailList.stream().filter(v -> v.getStandardId().equals(finalStandardTmp.getId())).collect(Collectors.toList());
+                standardDetailTmp.forEach(detailTmp -> {
+                    //查看用户的领用记录
+                    PmsLaborMaterialReceiptDTO pmsLaborMaterialReceiptDTO = pmsLaborProtectionRecordMapper.selectReceiptNum(tmp.getLoginCode(),
+                            LocalDateTime.now().minusMonths(detailTmp.getPeriod().longValue())
+                            , LocalDateTime.now()
+                            , detailTmp.getMaterialId());
+                    if (Objects.nonNull(pmsLaborMaterialReceiptDTO)) {
+                        //可领数量
+                        BigDecimal availNum = BigDecimalUtil.subtract(new BigDecimal(detailTmp.getAmount()), pmsLaborMaterialReceiptDTO.getReceiptNum(), 2);
+                        if (availNum.compareTo(BigDecimal.ZERO) == 1) {
+                            column.put("materialId", detailTmp.getMaterialId().toString());
+                            column.put(detailTmp.getMaterialId() + "_claimNum", availNum.toString());
+                            column.put(detailTmp.getMaterialId() + "_availNum", availNum.toString());
+                            column.put(detailTmp.getMaterialId() + "_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        } else {
+                            column.put("materialId", detailTmp.getMaterialId().toString());
+                            column.put(detailTmp.getMaterialId() + "_claimNum", BigDecimal.ZERO.toString());
+                            column.put(detailTmp.getMaterialId() + "_availNum", BigDecimal.ZERO.toString());
+                            column.put(detailTmp.getMaterialId() + "_receiptTime", pmsLaborMaterialReceiptDTO.getReceiptTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        }
+                    } else {
+                        column.put("materialId", detailTmp.getMaterialId().toString());
+                        column.put(detailTmp.getMaterialId() + "_claimNum", detailTmp.getAmount().toString());
+                        column.put(detailTmp.getMaterialId() + "_availNum", detailTmp.getAmount().toString());
+                    }
+                });
+                tableList.add(column);
+            }
+        result.setColumns(columns);
+
+        tableList.stream().forEach(column -> {
+            String userName = column.get("userName");
+            List<Map<String, String>> list = stringListMap.get(userName);
+            if (Objects.nonNull(list)) {
+                list.forEach(column::putAll);
+            }
+        });
+        result.setTableList(tableList);
+        return result;
     }
 
 }

@@ -3,12 +3,10 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.SteccnTableDataDTO;
+import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.pms.dto.PmsLaborGerReqDTO;
-import com.steccn.pms.dto.PmsLaborRecordPageDTO;
-import com.steccn.pms.dto.PmsLaborStandardDTO;
-import com.steccn.pms.dto.PmsStandardListDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.vo.PmsLaborRecordVO;
@@ -23,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -105,5 +104,15 @@ public class PmsLaborController {
     public void download(HttpServletResponse response) throws IOException {
         pmsLaborProtectionRecordService.download(response);
     }
+
+
+    @ApiModelProperty("Excel导入")
+    @PostMapping("/excelImportData")
+    public R<SteccnTableDataDTO<Map<String, String>>> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
+        return R.success(pmsLaborProtectionRecordService.excelImportData(dto));
+    }
+
+
+
 
 }
