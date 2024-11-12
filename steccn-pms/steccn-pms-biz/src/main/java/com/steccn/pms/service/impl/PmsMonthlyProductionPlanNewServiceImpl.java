@@ -13,6 +13,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -22,9 +23,11 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsMonthlyProductionPlanNew;
 import com.steccn.pms.mapper.PmsMonthlyProductionPlanNewMapper;
 import com.steccn.pms.service.PmsMonthlyProductionPlanNewService;
+import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanNewListVO;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanNewRowVO;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +43,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +60,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final Redisson redisson;
+    private final PmsReportWorkService pmsReportWorkService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -178,6 +184,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
 
     @Override
     public PmsMonthlyProductionPlanNewListVO show(LocalDate monthFirstDay) {
+
         LocalDate monthLastDay = LocalDateUtil.monthLastDay(monthFirstDay);
         PmsMonthlyProductionPlanNewListVO resVo = new PmsMonthlyProductionPlanNewListVO();
         List<PmsMonthlyProductionPlanNewRowVO> dataList = Lists.newArrayList();
@@ -194,7 +201,8 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
                 .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay)
                 .orderByDesc(PmsMonthlyProductionPlanNew::getCreateTime));
-        Map<String, BigDecimal> dateValueMap = Maps.newLinkedHashMap();
+        Map<String, BigDecimal> datePlanValueMap = Maps.newHashMap();
+        Map<String, BigDecimal> dateSumPlanValueMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(dbList)) {
             List<Long> materialIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
             List<Integer> clientIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
@@ -203,60 +211,64 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
             Set<String> materialClientSet = Sets.newHashSet();
             dbList.forEach(ele -> {
                 materialClientSet.add(ele.getMaterialId() + ":" + ele.getClientId());
-                dateValueMap.put(ele.getMaterialId() + ":" + ele.getClientId() + ":" + ele.getPlanDate(), ele.getPlanQuantity());
+                datePlanValueMap.put(ele.getMaterialId() + ":" + ele.getClientId() + ":" + ele.getPlanDate(), ele.getPlanQuantity());
+                MapUtil.add(dateSumPlanValueMap, ele.getMaterialId() + ":" + ele.getPlanDate(), ele.getPlanQuantity(), BigDecimalUtil::add);
             });
-
+            //获取物料的入库总数
+            Map<String, BigDecimal> inStorageMaterialMap = pmsReportWorkService.dateMaterialInStorageUnit(materialIdList, monthFirstDay, monthLastDay, PmManagerConstant.MEASURE_UNIT_PIECE);
             for (Long materialId : materialIdList) {
                 //获取物料数据
                 EqpSpareVO eqpSpareVO = materialIdMap.getOrDefault(materialId, new EqpSpareVO());
-                Map<LocalDate, BigDecimal> materialValueMap = Maps.newHashMap();
                 for (Integer clientId : clientIdList) {
                     SysOfficeVO clientEntry = clientMap.getOrDefault(clientId, new SysOfficeVO());
                     if (materialClientSet.contains(materialId + ":" + clientId)) {
-                        //过滤数据
-                        List<BigDecimal> dateValueList = Lists.newArrayList();
-                        //遍历日期
-                        for (LocalDate date : dateList) {
-                            BigDecimal value = dateValueMap.get(materialId + ":" + clientId + ":" + date);
-                            dateValueList.add(BigDecimalUtil.setScale(value, 0));
-                            MapUtil.add(materialValueMap, date, value, BigDecimalUtil::add);
-                        }
-                        PmsMonthlyProductionPlanNewRowVO rowVO = new PmsMonthlyProductionPlanNewRowVO();
-                        rowVO.setMaterialId(eqpSpareVO.getId());
-                        rowVO.setMaterialCode(eqpSpareVO.getCode());
-                        rowVO.setMaterialName(eqpSpareVO.getName());
-                        rowVO.setClientId(clientId);
-                        rowVO.setClient(clientEntry.getOfficeName());
-                        rowVO.setIndicatorName("生产计划");
-                        rowVO.setValue(dateValueList);
-                        rowVO.setSum(BigDecimalUtil.setScale(BigDecimalUtil.sum(dateValueList), 0));
-                        dataList.add(rowVO);
+                        PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(new TripleDTO<>(clientEntry.getId(), clientEntry.getOfficeName(), "生产计划")
+                                , eqpSpareVO, dateList, x -> datePlanValueMap.get(materialId + ":" + clientId + ":" + x));
+                        dataList.add(planRowVo);
                     }
                 }
-                //获取物料的计划总数
                 //获取物料的发货总数
                 //获取物料的期初库存
+                //获取物料的计划总数
+                dataList.add(getSummary(new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.get(materialId + ":" + x)));
                 //获取物料的入库总数
-                PmsMonthlyProductionPlanNewRowVO rowVO = new PmsMonthlyProductionPlanNewRowVO();
-                rowVO.setMaterialId(eqpSpareVO.getId());
-                rowVO.setMaterialCode(eqpSpareVO.getCode());
-                rowVO.setMaterialName(eqpSpareVO.getName());
-                rowVO.setClientId(-1);
-                rowVO.setClient("计划总数");
-                rowVO.setIndicatorName("计划总数");
-                List<BigDecimal> dateValueSumList = Lists.newArrayList();
-                //遍历日期
-                for (LocalDate date : dateList) {
-                    dateValueSumList.add(BigDecimalUtil.setScale(materialValueMap.get(date), 0));
-                }
-                rowVO.setValue(dateValueSumList);
-                rowVO.setSum(BigDecimalUtil.setScale(BigDecimalUtil.sum(dateValueSumList), 0));
-                dataList.add(rowVO);
+                dataList.add(getSummary(new TripleDTO<>(-1, "入库总数", "入库总数"), eqpSpareVO, dateList, x -> inStorageMaterialMap.get(x + "_" + materialId)));
             }
             resVo.setDataList(dataList);
         }
         return resVo;
     }
+
+    /**
+     * 获取汇总合计
+     *
+     * @param param      指标名称
+     * @param eqpSpareVO 物料信息
+     * @param dateList   日期集合
+     * @param function   取值方法表达式
+     * @return
+     */
+    private PmsMonthlyProductionPlanNewRowVO getSummary(TripleDTO<Integer, String, String> param,
+                                                        EqpSpareVO eqpSpareVO,
+                                                        List<LocalDate> dateList,
+                                                        Function<LocalDate, BigDecimal> function) {
+        PmsMonthlyProductionPlanNewRowVO rowVo = new PmsMonthlyProductionPlanNewRowVO();
+        rowVo.setMaterialId(eqpSpareVO.getId());
+        rowVo.setMaterialCode(eqpSpareVO.getCode());
+        rowVo.setMaterialName(eqpSpareVO.getName());
+        rowVo.setClientId(param.getField1());
+        rowVo.setClient(param.getField2());
+        rowVo.setIndicatorName(param.getField3());
+        List<BigDecimal> valueList = Lists.newArrayList();
+        //遍历日期
+        for (LocalDate date : dateList) {
+            valueList.add(BigDecimalUtil.setScale(function.apply(date), 0));
+        }
+        rowVo.setValue(valueList);
+        rowVo.setSum(BigDecimalUtil.setScale(BigDecimalUtil.sum(valueList), 0));
+        return rowVo;
+    }
+
 
     /**
      * 判断是否已下达

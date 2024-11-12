@@ -16,7 +16,6 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
@@ -25,17 +24,20 @@ import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.Tuple4DTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.*;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaClassVO;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
@@ -49,7 +51,10 @@ import com.steccn.pms.vo.*;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import com.steccn.qms.util.MysqlDateKeyUtil;
-import com.steccn.wms.dto.*;
+import com.steccn.wms.dto.MaterialStorageInfoDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
+import com.steccn.wms.dto.WmsStockInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -71,8 +76,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -2135,6 +2138,33 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
                 }
                 MapUtil.add(resMap, ele.getClassDate() + "", quantity, (x, y) -> BigDecimalUtil.add(x, y));
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> dateMaterialInStorageUnit(List<Long> materialIdList, LocalDate start, LocalDate end, String unit) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        LocalDateTime startLdt = LocalDateUtil.getMorning(start);
+        LocalDateTime endLdt = LocalDateUtil.getMorning(end.plusDays(1));
+        List<PmsUseCountDTO> dbList = baseMapper.getDateInStorageUnit(null, startLdt, endLdt);
+        if (CollUtil.isNotEmpty(dbList)) {
+            Set<Long> materialIdSet = Sets.newHashSet(materialIdList);
+            dbList = dbList.stream().filter(v -> materialIdSet.contains(v.getMaterialId())).collect(Collectors.toList());
+            //考虑物料的单位转换
+            Map<Long, List<SysSpareUnitConversionVO>> materialConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取吨的单位
+            SysDictVO sysDict1 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_PIECE, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDict2 = FeignOptional.of(() -> remoteDictFeignApi.getByCode(unit, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Assert.notNull(sysDict1, "转换单位[片]不存在");
+            Assert.notNull(sysDict2, "目标转换单位不存在");
+            dbList.forEach(ele -> {
+                BigDecimal quantity = ele.getQuantity();
+                if (!sysDict1.equals(sysDict2)) {
+                    quantity = UnitConvertUtil.convertMaterial(materialConvertMap.get(ele.getMaterialId()), sysDict1.getId(), sysDict2.getId(), ele.getQuantity(), BigDecimalUtil.SCALE_2);
+                }
+                MapUtil.add(resMap, ele.getClassDate() + "_" + ele.getMaterialId(), quantity, (x, y) -> BigDecimalUtil.add(x, y));
             });
         }
         return resMap;

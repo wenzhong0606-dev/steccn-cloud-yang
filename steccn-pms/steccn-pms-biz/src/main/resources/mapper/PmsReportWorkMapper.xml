@@ -697,10 +697,12 @@
         pcsi.del_flag = 0
         AND ppo.del_flag = 0
         AND pcs.state != 2
-        AND ppo.production_line_id in
-        <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
-            #{productLineId}
-        </foreach>
+        <if test="lineList != null and lineList.size > 0">
+            AND ppo.production_line_id in
+            <foreach collection="lineList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
         AND pcs.enter_time &gt;= #{start}
         AND pcs.enter_time &lt; #{end}
 
