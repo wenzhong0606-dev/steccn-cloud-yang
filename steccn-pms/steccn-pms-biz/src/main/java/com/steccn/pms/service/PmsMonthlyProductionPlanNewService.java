@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsMonthlyProductionPlanNew;
+import com.steccn.pms.vo.PmsMonthlyProductionPlanNewListVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -57,4 +58,11 @@ public interface PmsMonthlyProductionPlanNewService extends IService<PmsMonthlyP
      * @return
      */
     Boolean updateData(LocalDate date, Integer clientId, Long materialId, List<TupleDTO<LocalDate, BigDecimal>> value);
+
+    /**
+     * 显示月度报表
+     * @param date 日期
+     * @return
+     */
+    PmsMonthlyProductionPlanNewListVO show(LocalDate date);
 }

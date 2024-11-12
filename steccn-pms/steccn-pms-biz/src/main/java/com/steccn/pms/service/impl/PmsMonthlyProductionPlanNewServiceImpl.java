@@ -1,15 +1,23 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.MapUtil;
+import com.steccn.ems.vo.EpDayReportCountHeadVO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -17,7 +25,10 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsMonthlyProductionPlanNew;
 import com.steccn.pms.mapper.PmsMonthlyProductionPlanNewMapper;
 import com.steccn.pms.service.PmsMonthlyProductionPlanNewService;
+import com.steccn.pms.vo.PmsMonthlyProductionPlanNewListVO;
+import com.steccn.pms.vo.PmsMonthlyProductionPlanNewRowVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.jni.Local;
 import org.redisson.Redisson;
 import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
@@ -25,8 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -161,6 +174,88 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
             dbList.add(model);
         });
         return saveOrUpdateBatch(dbList);
+    }
+
+    @Override
+    public PmsMonthlyProductionPlanNewListVO show(LocalDate monthFirstDay) {
+        LocalDate monthLastDay = LocalDateUtil.monthLastDay(monthFirstDay);
+        PmsMonthlyProductionPlanNewListVO resVo = new PmsMonthlyProductionPlanNewListVO();
+        List<PmsMonthlyProductionPlanNewRowVO> dataList = Lists.newArrayList();
+        List<String> dateStrList = Lists.newArrayList();
+        LocalDate classDate = LocalDateUtil.getClassDate(LocalDateTime.now(), false);
+        LocalDate end = LocalDateUtil.ge(classDate, monthLastDay) ? monthLastDay : classDate;
+        //构建动态表头
+        List<LocalDate> dateList = LocalDateUtil.getLocalDateByStartEndDate(monthFirstDay, end);
+        dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM-dd")));
+        resVo.setDateList(dateStrList);
+
+        //获取当前月的最后一天
+        List<PmsMonthlyProductionPlanNew> dbList = list(new LambdaQueryWrapper<PmsMonthlyProductionPlanNew>()
+                .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
+                .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay)
+                .orderByDesc(PmsMonthlyProductionPlanNew::getCreateTime));
+        Map<String, BigDecimal> dateValueMap = Maps.newLinkedHashMap();
+        if (CollUtil.isNotEmpty(dbList)) {
+            List<Long> materialIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
+            List<Integer> clientIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
+            Map<Long, EqpSpareVO> materialIdMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(clientIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Set<String> materialClientSet = Sets.newHashSet();
+            dbList.forEach(ele -> {
+                materialClientSet.add(ele.getMaterialId() + ":" + ele.getClientId());
+                dateValueMap.put(ele.getMaterialId() + ":" + ele.getClientId() + ":" + ele.getPlanDate(), ele.getPlanQuantity());
+            });
+
+            for (Long materialId : materialIdList) {
+                //获取物料数据
+                EqpSpareVO eqpSpareVO = materialIdMap.getOrDefault(materialId, new EqpSpareVO());
+                Map<LocalDate, BigDecimal> materialValueMap = Maps.newHashMap();
+                for (Integer clientId : clientIdList) {
+                    SysOfficeVO clientEntry = clientMap.getOrDefault(clientId, new SysOfficeVO());
+                    if (materialClientSet.contains(materialId + ":" + clientId)) {
+                        //过滤数据
+                        List<BigDecimal> dateValueList = Lists.newArrayList();
+                        //遍历日期
+                        for (LocalDate date : dateList) {
+                            BigDecimal value = dateValueMap.get(materialId + ":" + clientId + ":" + date);
+                            dateValueList.add(BigDecimalUtil.setScale(value, 0));
+                            MapUtil.add(materialValueMap, date, value, BigDecimalUtil::add);
+                        }
+                        PmsMonthlyProductionPlanNewRowVO rowVO = new PmsMonthlyProductionPlanNewRowVO();
+                        rowVO.setMaterialId(eqpSpareVO.getId());
+                        rowVO.setMaterialCode(eqpSpareVO.getCode());
+                        rowVO.setMaterialName(eqpSpareVO.getName());
+                        rowVO.setClientId(clientId);
+                        rowVO.setClient(clientEntry.getOfficeName());
+                        rowVO.setIndicatorName("生产计划");
+                        rowVO.setValue(dateValueList);
+                        rowVO.setSum(BigDecimalUtil.setScale(BigDecimalUtil.sum(dateValueList), 0));
+                        dataList.add(rowVO);
+                    }
+                }
+                //获取物料的计划总数
+                //获取物料的发货总数
+                //获取物料的期初库存
+                //获取物料的入库总数
+                PmsMonthlyProductionPlanNewRowVO rowVO = new PmsMonthlyProductionPlanNewRowVO();
+                rowVO.setMaterialId(eqpSpareVO.getId());
+                rowVO.setMaterialCode(eqpSpareVO.getCode());
+                rowVO.setMaterialName(eqpSpareVO.getName());
+                rowVO.setClientId(-1);
+                rowVO.setClient("计划总数");
+                rowVO.setIndicatorName("计划总数");
+                List<BigDecimal> dateValueSumList = Lists.newArrayList();
+                //遍历日期
+                for (LocalDate date : dateList) {
+                    dateValueSumList.add(BigDecimalUtil.setScale(materialValueMap.get(date), 0));
+                }
+                rowVO.setValue(dateValueSumList);
+                rowVO.setSum(BigDecimalUtil.setScale(BigDecimalUtil.sum(dateValueSumList), 0));
+                dataList.add(rowVO);
+            }
+            resVo.setDataList(dataList);
+        }
+        return resVo;
     }
 
     /**
