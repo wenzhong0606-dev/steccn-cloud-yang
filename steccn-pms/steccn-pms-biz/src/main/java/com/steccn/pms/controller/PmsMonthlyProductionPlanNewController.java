@@ -4,13 +4,12 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsMonthlyProductionPlanNewDTO;
 import com.steccn.pms.service.PmsMonthlyProductionPlanNewService;
+import com.steccn.pms.vo.PmsMonthlyProductionPlanNewListVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
 import java.time.LocalDate;
 
@@ -71,5 +70,18 @@ public class PmsMonthlyProductionPlanNewController {
             throw new BusinessException("日期格式异常");
         }
         return R.success(pmsMonthlyProductionPlanNewService.updateData(parse, dto.getClientId(), dto.getMaterialId(),dto.getValue()));
+    }
+
+    @ApiOperation("显示")
+    @GetMapping("/show")
+    public R<PmsMonthlyProductionPlanNewListVO> show(@RequestParam("date") String date) {
+        LocalDate parse;
+        try {
+            date = date + "-01";
+            parse = LocalDate.parse(date);
+        } catch (Exception e) {
+            throw new BusinessException("日期格式异常");
+        }
+        return R.success(pmsMonthlyProductionPlanNewService.show(parse));
     }
 }
