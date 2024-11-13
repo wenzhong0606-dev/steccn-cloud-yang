@@ -237,7 +237,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                     if (materialClientSet.contains(materialId + ":" + clientId)) {
                         PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(new TripleDTO<>(clientId, clientName, "生产计划")
                                 , eqpSpareVO, dateList, x -> datePlanValueMap.get(materialId + ":" + clientId + ":" + x));
-                        PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(new TripleDTO<>(clientId, clientName, "发货数量计划")
+                        PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(new TripleDTO<>(clientId, clientName, "发货数量")
                                 , eqpSpareVO, dateList, x -> clientValueMap.get(materialId + ":" + clientName + ":" + x));
                         dataList.add(planRowVo);
                         dataList.add(outRowVo);
