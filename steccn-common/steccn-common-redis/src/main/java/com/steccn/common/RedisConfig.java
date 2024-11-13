@@ -1,9 +1,19 @@
 package com.steccn.common;
 
+import cn.hutool.core.date.DatePattern;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.InstantSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.context.ApplicationContext;
@@ -19,7 +29,8 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.time.Duration;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author yequan
@@ -54,6 +65,35 @@ public class RedisConfig extends CachingConfigurerSupport {
                 objectMapper.getPolymorphicTypeValidator(),
                 ObjectMapper.DefaultTyping.NON_FINAL,
                 JsonTypeInfo.As.PROPERTY);
+
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        // ======================= 时间序列化规则 ===============================
+        // yyyy-MM-dd HH:mm:ss
+        javaTimeModule.addSerializer(LocalDateTime.class,
+                new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+        // yyyy-MM-dd
+        javaTimeModule.addSerializer(LocalDate.class,
+                new LocalDateSerializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
+        // HH:mm:ss
+        javaTimeModule.addSerializer(LocalTime.class,
+                new LocalTimeSerializer(DateTimeFormatter.ofPattern(DatePattern.NORM_TIME_PATTERN)));
+
+        // Instant 类型序列化
+        javaTimeModule.addSerializer(Instant.class, InstantSerializer.INSTANCE);
+
+        // ======================= 时间反序列化规则 ==============================
+        // yyyy-MM-dd HH:mm:ss
+        javaTimeModule.addDeserializer(LocalDateTime.class,
+                new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+        // yyyy-MM-dd
+        javaTimeModule.addDeserializer(LocalDate.class,
+                new LocalDateDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
+        // HH:mm:ss
+        javaTimeModule.addDeserializer(LocalTime.class,
+                new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_TIME_PATTERN)));
+        // Instant 反序列化
+        javaTimeModule.addDeserializer(Instant.class, InstantDeserializer.INSTANT);
+        objectMapper.registerModule(javaTimeModule);
 
         jackson2JsonRedisSerializer.setObjectMapper(objectMapper);
         redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);

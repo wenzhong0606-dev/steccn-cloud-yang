@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,7 +19,6 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
-import com.steccn.ems.vo.EpDayReportCountHeadVO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -30,8 +30,9 @@ import com.steccn.pms.service.PmsMonthlyProductionPlanNewService;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanNewListVO;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanNewRowVO;
+import com.steccn.wms.dto.WmsDeliveryReceiptClientNumDTO;
+import com.steccn.wms.feign.RemoteWmsDeliveryReceiptFeignApi;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.jni.Local;
 import org.redisson.Redisson;
 import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
@@ -40,11 +41,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +62,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final Redisson redisson;
     private final PmsReportWorkService pmsReportWorkService;
+    private final RemoteWmsDeliveryReceiptFeignApi remoteWmsDeliveryReceiptFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -206,13 +208,24 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
         if (CollUtil.isNotEmpty(dbList)) {
             List<Long> materialIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
             List<Integer> clientIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
+            Set<Integer> clientIdSet = Sets.newHashSet(clientIdList);
             Map<Long, EqpSpareVO> materialIdMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Integer, SysOfficeVO> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(clientIdList)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(clientIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Set<String> clientNameSet = clientMap.values().stream().collect(Collectors.toSet());
             Set<String> materialClientSet = Sets.newHashSet();
             dbList.forEach(ele -> {
                 materialClientSet.add(ele.getMaterialId() + ":" + ele.getClientId());
                 datePlanValueMap.put(ele.getMaterialId() + ":" + ele.getClientId() + ":" + ele.getPlanDate(), ele.getPlanQuantity());
                 MapUtil.add(dateSumPlanValueMap, ele.getMaterialId() + ":" + ele.getPlanDate(), ele.getPlanQuantity(), BigDecimalUtil::add);
+            });
+            //获取发货数量
+            Map<String, BigDecimal> clientValueMap = Maps.newHashMap();
+            Map<String, BigDecimal> clientValueSumMap = Maps.newHashMap();
+            List<WmsDeliveryReceiptClientNumDTO> clientNumList = FeignOptional.of(() -> remoteWmsDeliveryReceiptFeignApi.clientNum(new TripleDTO<>(Sets.newHashSet(materialIdList), monthFirstDay, monthLastDay)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            clientNumList = clientNumList.stream().filter(v -> LocalDateUtil.isRange(v.getClassDate(), monthFirstDay, monthLastDay, true, true) && clientNameSet.contains(v.getClientName())).collect(Collectors.toList());
+            clientNumList.forEach(ele -> {
+                MapUtil.add(clientValueMap, ele.getMaterialId() + ":" + ele.getClientName() + ":" + ele.getClassDate(), ele.getNum(), BigDecimalUtil::add);
+                MapUtil.add(clientValueSumMap, ele.getMaterialId() + ":" + ele.getClassDate(), ele.getNum(), BigDecimalUtil::add);
             });
             //获取物料的入库总数
             Map<String, BigDecimal> inStorageMaterialMap = pmsReportWorkService.dateMaterialInStorageUnit(materialIdList, monthFirstDay, monthLastDay, PmManagerConstant.MEASURE_UNIT_PIECE);
@@ -220,17 +233,21 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 //获取物料数据
                 EqpSpareVO eqpSpareVO = materialIdMap.getOrDefault(materialId, new EqpSpareVO());
                 for (Integer clientId : clientIdList) {
-                    SysOfficeVO clientEntry = clientMap.getOrDefault(clientId, new SysOfficeVO());
+                    String clientName = clientMap.get(clientId);
                     if (materialClientSet.contains(materialId + ":" + clientId)) {
-                        PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(new TripleDTO<>(clientEntry.getId(), clientEntry.getOfficeName(), "生产计划")
+                        PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(new TripleDTO<>(clientId, clientName, "生产计划")
                                 , eqpSpareVO, dateList, x -> datePlanValueMap.get(materialId + ":" + clientId + ":" + x));
+                        PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(new TripleDTO<>(clientId, clientName, "发货数量计划")
+                                , eqpSpareVO, dateList, x -> clientValueMap.get(materialId + ":" + clientName + ":" + x));
                         dataList.add(planRowVo);
+                        dataList.add(outRowVo);
                     }
                 }
-                //获取物料的发货总数
                 //获取物料的期初库存
                 //获取物料的计划总数
                 dataList.add(getSummary(new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.get(materialId + ":" + x)));
+                //获取物料的发货总数
+                dataList.add(getSummary(new TripleDTO<>(-1, "发货总数", "发货总数"), eqpSpareVO, dateList, x -> clientValueSumMap.get(materialId + ":" + x)));
                 //获取物料的入库总数
                 dataList.add(getSummary(new TripleDTO<>(-1, "入库总数", "入库总数"), eqpSpareVO, dateList, x -> inStorageMaterialMap.get(x + "_" + materialId)));
             }

@@ -15,6 +15,7 @@ import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -196,4 +197,14 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
     Map<Long, BigDecimal>  intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime,Set<Long> materialIds,Long warehouseIds);
 
     Map<Long, Integer> intervalOrderQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    /**
+     * 获取客户指定日期范围内的出库汇总
+     *
+     * @param materialIdSet 物料id集合
+     * @param start         开始日期
+     * @param end           结束日期
+     * @return
+     */
+    List<WmsDeliveryReceiptClientNumDTO> clientNum(Set<Long> materialIdSet, LocalDate start, LocalDate end);
 }

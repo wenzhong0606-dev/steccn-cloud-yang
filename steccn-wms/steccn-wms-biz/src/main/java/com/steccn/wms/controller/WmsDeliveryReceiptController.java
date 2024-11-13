@@ -4,16 +4,14 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.domain.WmsStorageReceipt;
-import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
-import com.steccn.wms.dto.WmsDeliveryReceiptFlagInfoDto;
-import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
-import com.steccn.wms.dto.WmsStorageReceiptFlagInfoDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.vo.*;
@@ -25,7 +23,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 出库凭证控制器
@@ -142,4 +144,9 @@ public class WmsDeliveryReceiptController {
         return R.success(wmsDeliveryReceiptService.deleteInfo(dto));
     }
 
+    @ApiOperation("获取客户指定日期范围内的出库汇总")
+    @PostMapping("/client/num")
+    public R<List<WmsDeliveryReceiptClientNumDTO>> clientNum(@RequestBody TripleDTO<Set<Long>, LocalDate, LocalDate> dto) {
+        return R.success(wmsDeliveryReceiptService.clientNum(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
 }

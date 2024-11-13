@@ -93,6 +93,16 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
     List<WmsDeliveryReceiptInfo> intervalDataQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
 
     List<WmsDeliveryReceiptInfoVO> intervalOrderQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime")  LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    /**
+     * 根据班次日期和物料获取出库单的明细
+     *
+     * @param materialIdSet 物料id
+     * @param start         开始班次日期
+     * @param end           结束班次日期
+     * @return
+     */
+    List<WmsDeliveryReceiptInfo> clientNum(@Param("materialIdSet") Set<Long> materialIdSet, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
 
 

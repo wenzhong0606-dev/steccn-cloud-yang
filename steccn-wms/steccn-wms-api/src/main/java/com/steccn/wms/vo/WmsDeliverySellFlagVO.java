@@ -4,13 +4,14 @@ package com.steccn.wms.vo;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
 @ApiModel("销售出库标识VO")
-public class WmsDeliverySellFlagVO {
+public class WmsDeliverySellFlagVO implements Serializable {
     /**
      * 单号是否存在
      */
@@ -49,7 +50,6 @@ public class WmsDeliverySellFlagVO {
 
     private String logisticsCompany;
 
-
-
+    private static final long serialVersionUID = 1L;
 
 }

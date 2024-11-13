@@ -73,6 +73,8 @@ import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,9 +96,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceiptMapper, WmsDeliveryReceipt>
-        implements WmsDeliveryReceiptService  {
+        implements WmsDeliveryReceiptService {
 
-
+    @Autowired
+    private WmsDeliveryReceiptService wmsDeliveryReceiptService;
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
@@ -121,7 +124,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
     private final RemoteMessFeignApi remoteMessFeignApi;
 
-    private  final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -149,8 +152,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 typeSet.add(receipt.getType());
                 officeSet.add(receipt.getWarehouseId());
             });
-            Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             records.forEach(receipt -> {
                 receipt.setTypeName(dictMap.get(receipt.getType()));
                 receipt.setWarehouseName(officeMap.get(receipt.getWarehouseId()));
@@ -174,7 +177,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //3.给当前出库单生成编码
             model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
             model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
-            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())){
+            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())) {
                 model.setCreateBy(dto.getCreateBy());
                 model.setCreateName(dto.getCreateName());
             }
@@ -199,8 +202,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 //保存明细信息
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
-            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
-                affirm(model.getId(),dto.getCreateName(),null);
+            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())) {
+                affirm(model.getId(), dto.getCreateName(), null);
             }
         } finally {
             lock.unlock();
@@ -223,7 +226,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //3.给当前出库单生成编码
             model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
             model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
-            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())){
+            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())) {
                 model.setCreateBy(dto.getCreateBy());
                 model.setCreateName(dto.getCreateName());
             }
@@ -249,8 +252,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 //保存明细信息
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
-            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
-                affirm(model.getId(),dto.getCreateName(),dto.getAffirmedTime());
+            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())) {
+                affirm(model.getId(), dto.getCreateName(), dto.getAffirmedTime());
             }
         } finally {
             lock.unlock();
@@ -258,7 +261,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return id;
     }
 
-    public Boolean affirm(Long id,String affirmName,LocalDateTime affirmTime) {
+    public Boolean affirm(Long id, String affirmName, LocalDateTime affirmTime) {
         //1.查询出库单
         WmsDeliveryReceipt receipt = getById(id);
         //2.判断单状态
@@ -281,7 +284,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         }
         //4.修改确认单状态
         receipt.setAffirmName(affirmName);
-        if(Objects.isNull(affirmTime)){
+        if (Objects.isNull(affirmTime)) {
             affirmTime = LocalDateTime.now();
         }
         receipt.setAffirmTime(affirmTime);
@@ -378,7 +381,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             Set<Long> materialIds = Sets.newHashSet();
             list.forEach(info -> {
                 WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
-                BeanUtil.copyProperties(info,wmsInventoryDTO);
+                BeanUtil.copyProperties(info, wmsInventoryDTO);
                 wmsInventoryDTO.setId(info.getInventoryId());
                 wmsInventoryDTO.setQuantity(info.getQuantity());
                 materialIds.add(info.getMaterialId());
@@ -390,37 +393,37 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             String type = WmsManagerConstant.variableTypeEnum.getTypeByName(sysDictVO.getName());
             if (Objects.nonNull(type)) {
                 SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(type, WmsManagerConstant.VARIATION_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-           //获取物料名称
-            Map<Long, String> materialNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            WmsInventory wmsInventory = new WmsInventory();
-            List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
-            Map<Long, WmsInventory> inventoryMap = wmsInventoryService.inventoryIdMap(inventoryIds);
-            inventoryDTOList.forEach(info -> {
-                WmsInventory orDefault = inventoryMap.getOrDefault(info.getId(), wmsInventory);
-                WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
-                wmsInventoryRecord.setMaterialId(info.getMaterialId());
-                wmsInventoryRecord.setType(dictVO.getId());
-                wmsInventoryRecord.setCode(receipt.getCode());
-                wmsInventoryRecord.setMaterialName(materialNameMap.get(info.getMaterialId()));
-                wmsInventoryRecord.setShelfId(orDefault.getShelfId());
-                wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
-                //变动数量
-                wmsInventoryRecord.setVariableQuantity(info.getQuantity());
-                //变动前
-                wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
-                wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
-                wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
-                wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
-                //变动后
-                wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().subtract(info.getQuantity()));
-                wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
-                wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().subtract(info.getQuantity()));
-                wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
-                wmsInventoryRecords.add(wmsInventoryRecord);
-            });
-            //生成库存流水记录
-            List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
-            wmsInventoryRecordService.saveBatch(recordList);
+                //获取物料名称
+                Map<Long, String> materialNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                WmsInventory wmsInventory = new WmsInventory();
+                List<WmsInventoryRecordDTO> wmsInventoryRecords = Lists.newArrayList();
+                Map<Long, WmsInventory> inventoryMap = wmsInventoryService.inventoryIdMap(inventoryIds);
+                inventoryDTOList.forEach(info -> {
+                    WmsInventory orDefault = inventoryMap.getOrDefault(info.getId(), wmsInventory);
+                    WmsInventoryRecordDTO wmsInventoryRecord = new WmsInventoryRecordDTO();
+                    wmsInventoryRecord.setMaterialId(info.getMaterialId());
+                    wmsInventoryRecord.setType(dictVO.getId());
+                    wmsInventoryRecord.setCode(receipt.getCode());
+                    wmsInventoryRecord.setMaterialName(materialNameMap.get(info.getMaterialId()));
+                    wmsInventoryRecord.setShelfId(orDefault.getShelfId());
+                    wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
+                    //变动数量
+                    wmsInventoryRecord.setVariableQuantity(info.getQuantity());
+                    //变动前
+                    wmsInventoryRecord.setFrontAvailableQuantity(orDefault.getAvailableQuantity());
+                    wmsInventoryRecord.setFrontStockQuantity(orDefault.getStockQuantity());
+                    wmsInventoryRecord.setFrontLockQuantity(orDefault.getLockQuantity());
+                    wmsInventoryRecord.setFrontTotalQuantity(orDefault.getTotalQuantity());
+                    //变动后
+                    wmsInventoryRecord.setBackAvailableQuantity(orDefault.getAvailableQuantity().subtract(info.getQuantity()));
+                    wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
+                    wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity().subtract(info.getQuantity()));
+                    wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                    wmsInventoryRecords.add(wmsInventoryRecord);
+                });
+                //生成库存流水记录
+                List<WmsInventoryRecord> recordList = BeanUtil.copyToList(wmsInventoryRecords, WmsInventoryRecord.class);
+                wmsInventoryRecordService.saveBatch(recordList);
             }
             wmsInventoryService.affirmLockQuantity(inventoryDTOList);
         }
@@ -472,8 +475,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         typeSet.add(wmsDeliveryReceiptVO.getType());
         officeSet.add(wmsDeliveryReceiptVO.getWarehouseId());
         infoVOList.forEach(info -> typeSet.add(info.getUnit()));
-        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         infoVOList.forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
         wmsDeliveryReceiptVO.setWarehouseName(officeMap.get(wmsDeliveryReceiptVO.getWarehouseId()));
         wmsDeliveryReceiptVO.setTypeName(dictMap.get(wmsDeliveryReceiptVO.getType()));
@@ -513,7 +516,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             materialList.forEach(materialDTO -> {
                 inventoryId.add(materialDTO.getInventoryId());
             });
-            List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId,inventoryId));
+            List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, inventoryId));
 
             for (WmsInventory wmsInventory : list) {
                 for (WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO : materialList) {
@@ -533,11 +536,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         WmsScanInventoryVO wmsScanInventoryVO = new WmsScanInventoryVO();
         //根据箱号获取对应库存信息
         LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,caseNo)
+        inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo, caseNo)
                 .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO).or()
                         .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO));
-        WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
-        if(Objects.isNull(wmsInventory) ) return R.failure("未查询到此箱号信息，请联系管理员");
+        WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper, false);
+        if (Objects.isNull(wmsInventory)) return R.failure("未查询到此箱号信息，请联系管理员");
 //        //检索当前箱号是否已出库
 //        LambdaQueryWrapper<WmsDeliveryReceiptInfo> receiptInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
 //        receiptInfoLambdaQueryWrapper.eq(WmsDeliveryReceiptInfo::getInventoryId,wmsInventory.getId());
@@ -556,25 +559,25 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 //            wmsScanInventoryVO.setDeliveryReceiptTime(wmsDeliveryReceipt.getAffirmTime());
 //            return R.success(wmsScanInventoryVO);
 //        }
-        if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0 ) {
-            if (wmsInventory.getStockQuantity().compareTo(BigDecimal.ZERO)>0){
+        if (wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+            if (wmsInventory.getStockQuantity().compareTo(BigDecimal.ZERO) > 0) {
                 return R.failure("可用库存不足，请联系管理员");
-            }else {
+            } else {
                 return R.failure("已出库");
             }
         }
-        BeanUtils.copyProperties(wmsInventory,wmsScanInventoryVO);
+        BeanUtils.copyProperties(wmsInventory, wmsScanInventoryVO);
         wmsScanInventoryVO.setInventoryId(wmsInventory.getId());
         return R.success(wmsScanInventoryVO);
     }
 
     @Override
     public R<String> scanDeliveryReceipt(Map<String, Object> paramMap) {
-        String result ="";
+        String result = "";
         //类型
         Long type = paramMap.containsKey("type") ? (paramMap.get("type") == null ? null :
                 Long.parseLong(paramMap.get("type").toString())) : null;
-        if(Objects.isNull(type)) return R.failure("请选择类型");
+        if (Objects.isNull(type)) return R.failure("请选择类型");
         List<Map<String, Object>> productList = paramMap.containsKey("inventoryList") ? (List<Map<String,
                 Object>>) paramMap.get("inventoryList") : null;
         Map<Long, List<Map<String, Object>>> warehouseMap =
@@ -606,37 +609,38 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(availableQuantity));
                 wmsInventoryService.updateById(wmsInventory);
             }
-            result = result+wmsDeliveryReceipt.getCode()+",";
+            result = result + wmsDeliveryReceipt.getCode() + ",";
         }
-        if(StringUtils.isNotBlank(result)) result = result.substring(0,result.length() -1);
+        if (StringUtils.isNotBlank(result)) result = result.substring(0, result.length() - 1);
         return R.success(result);
     }
 
     @Override
-    public WmsDeliveryReceiptDTO createAndAffirm(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName) {
+    public WmsDeliveryReceiptDTO createAndAffirm(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO, String userName) {
         //生成出库单并自动确认
         WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
-        BeanUtil.copyProperties(wmsDeliveryReceiptDTO,wmsDeliveryReceipt);
+        BeanUtil.copyProperties(wmsDeliveryReceiptDTO, wmsDeliveryReceipt);
         wmsDeliveryReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
         wmsDeliveryReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
         wmsDeliveryReceipt.setAffirmName(userName);
         wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
         save(wmsDeliveryReceipt);
         List<WmsDeliveryReceiptInfo> list = Lists.newArrayList();
-        wmsDeliveryReceiptDTO.getList().forEach(info ->{
+        wmsDeliveryReceiptDTO.getList().forEach(info -> {
             WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
-            BeanUtil.copyProperties(info,wmsDeliveryReceiptInfo);
+            BeanUtil.copyProperties(info, wmsDeliveryReceiptInfo);
             wmsDeliveryReceiptInfo.setDeliveryReceiptId(wmsDeliveryReceipt.getId());
             list.add(wmsDeliveryReceiptInfo);
         });
         wmsDeliveryReceiptInfoService.saveBatch(list);
-        BeanUtils.copyProperties(wmsDeliveryReceipt,wmsDeliveryReceiptDTO);
+        BeanUtils.copyProperties(wmsDeliveryReceipt, wmsDeliveryReceiptDTO);
         return wmsDeliveryReceiptDTO;
     }
 
     @Override
+    @Cacheable(cacheNames = "sellFlag#3600", key = "#number")
     public WmsDeliverySellFlagVO sellFlag(String number) {
-        Assert.notNull(number,"物流单号不能为空");
+        Assert.notNull(number, "物流单号不能为空");
         WmsDeliverySellFlagVO wmsDeliverySellFlagVO = new WmsDeliverySellFlagVO();
         //调用物流单明细查询接口
         SalesLogisticsDTO dto = new SalesLogisticsDTO();
@@ -648,7 +652,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         JSONObject jsonObject = JSONObject.parseObject(data);
         try {
             List<SalesLogisticsVO> logisticsVOS = jsonObject.getJSONObject("result").getJSONArray("mdMappings").toJavaList(SalesLogisticsVO.class);
-            if (CollUtil.isNotEmpty(logisticsVOS)){
+            if (CollUtil.isNotEmpty(logisticsVOS)) {
                 wmsDeliverySellFlagVO.setNumber(WmsManagerConstant.YesOrNo.YES.getCode());
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String state = salesLogisticsVO.getState();
@@ -664,27 +668,27 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsDeliverySellFlagVO.setPriceQuantity(salesLogisticsVO.getPrice_qty());
                 wmsDeliverySellFlagVO.setProduct(salesLogisticsVO.getProduct_name());
                 wmsDeliverySellFlagVO.setCreateStateFlag(WmsManagerConstant.YesOrNo.YES.getCode());
-                if (state.equals("已离厂")){
+                if (state.equals("已离厂")) {
                     wmsDeliverySellFlagVO.setLeaveTheFactoryStateFlag(1);
                 }
-                if (state.equals("已反馈")){
+                if (state.equals("已反馈")) {
                     wmsDeliverySellFlagVO.setFeedbackFlag(1);
                 }
                 if (state.equals("已预约")) {
                     wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
                 }
                 BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
-                    //如果销售数量为0
-                if (saleQty.compareTo(BigDecimal.ZERO)==0){
-                        wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
-                }else {
-                        //已发货数量
-                        BigDecimal sum = this.baseMapper.getOutSumQuantity(number);
-                            if (Objects.isNull(sum) || saleQty.subtract(sum).compareTo(BigDecimal.ZERO) > 0) {
-                                wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
-                            }
+                //如果销售数量为0
+                if (saleQty.compareTo(BigDecimal.ZERO) == 0) {
+                    wmsDeliverySellFlagVO.setContractNotDeliveredFlag(0);
+                } else {
+                    //已发货数量
+                    BigDecimal sum = this.baseMapper.getOutSumQuantity(number);
+                    if (Objects.isNull(sum) || saleQty.subtract(sum).compareTo(BigDecimal.ZERO) > 0) {
+                        wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
                     }
                 }
+            }
         } catch (Exception e) {
             throw new BusinessException("物流单不存在");
         }
@@ -707,11 +711,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             model.setCode(code);
             model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
             //获取出库销售发货类型
-            SysDictVO dictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_TWO, WmsManagerConstant.OUTBOUND_TYPE),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_TWO, WmsManagerConstant.OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             model.setType(dictVO.getId());
             //保存关联的物流单
             model.setSalesOrder(dto.getLogisticsNumber());
-            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())){
+            if (Objects.nonNull(dto.getCreateBy()) && Objects.nonNull(dto.getCreateName())) {
                 model.setCreateBy(dto.getCreateBy());
                 model.setCreateName(dto.getCreateName());
             }
@@ -748,10 +752,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 //保存明细信息
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
-            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())){
-                affirm(model.getId(),dto.getCreateName(),null);
+            if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())) {
+                affirm(model.getId(), dto.getCreateName(), null);
             }
-            logistics(model,customerCodes);
+            logistics(model, customerCodes);
         } finally {
             lock.unlock();
         }
@@ -760,10 +764,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
 
     /**
-     *同步销售出库数据到销售系统
+     * 同步销售出库数据到销售系统
+     *
      * @param wmsDeliveryReceipt
      */
-    private void logistics(WmsDeliveryReceipt wmsDeliveryReceipt,List<String> customerCode) {
+    private void logistics(WmsDeliveryReceipt wmsDeliveryReceipt, List<String> customerCode) {
         SalesLogisticsSyncDTO dto = new SalesLogisticsSyncDTO();
         List<SalesLogisticsInfoDetailDTO> data = Lists.newArrayList();
         List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS = wmsDeliveryReceiptInfoService.infoList(wmsDeliveryReceipt.getId());
@@ -771,14 +776,14 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         SalesLogisticsInfoDetailDTO salesLogisticsInfoDetailDTO = new SalesLogisticsInfoDetailDTO();
         salesLogisticsInfoDetailDTO.setState(WmsManagerConstant.LogisticsBillState.OUT_OF_STORAGE.getName());
         BigDecimal sum = this.baseMapper.getOutSumQuantity(wmsDeliveryReceipt.getSalesOrder());
-        if (Objects.nonNull(sum)){
+        if (Objects.nonNull(sum)) {
             salesLogisticsInfoDetailDTO.setOut_qty(sum.intValue());
         }
         //查询该物流单相关的出库单，将出库单号逗号拼接传给销售系统
         List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>().eq(WmsDeliveryReceipt::getSalesOrder, wmsDeliveryReceipt.getSalesOrder()));
         String codes = String.join(",", list.stream().map(WmsDeliveryReceipt::getCode).collect(Collectors.toList()));
         //查询该物流单相关的出库单箱号,获取箱号相关的客户条码
-        List<String> customerCodes =this.baseMapper.getCustomerBarcodesBySalesOrder(wmsDeliveryReceipt.getSalesOrder());
+        List<String> customerCodes = this.baseMapper.getCustomerBarcodesBySalesOrder(wmsDeliveryReceipt.getSalesOrder());
         salesLogisticsInfoDetailDTO.setCustomer_barcode(customerCodes);
         //查询该物流单出库数量
         salesLogisticsInfoDetailDTO.setDelivery_code(codes);
@@ -787,31 +792,31 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         dto.setServer_code(WmsManagerConstant.SERVER_CODE);
         dto.setData(data);
         String s = remoteSalesFeignApi.syncLogistics(dto);
-        log.info("同步销售出库单数据——>"+s);
+        log.info("同步销售出库单数据——>" + s);
     }
 
     @Override
     public WmsDeliveryFlagVO deliveryFlagInfo(WmsDeliveryReceiptFlagInfoDto dto) {
         WmsDeliveryFlagVO flagInfoVO = new WmsDeliveryFlagVO();
         //1.通过判断参数中是否存在物料编码判断新老产线
-            //1.1判断箱号在智慧平台实时库存是否存在
-            WmsInventory inventory = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, dto.getCaseNo()).orderByDesc(WmsInventory::getCreateTime).last(MpConstant.STR_LIMIT_1));
-            if (Objects.nonNull(inventory)){
-                flagInfoVO.setCaseNoFlag(1);
-                //箱号对应的物料与物流单中的物料相同
-                if (dto.getMaterialCode().equals(inventory.getMaterialCode())) {
-                    flagInfoVO.setMaterialEqualFlag(1);
-                    //箱号对应的库存明细中的可用库存数量 是否>0
-                    if (inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0) {
+        //1.1判断箱号在智慧平台实时库存是否存在
+        WmsInventory inventory = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, dto.getCaseNo()).orderByDesc(WmsInventory::getCreateTime).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(inventory)) {
+            flagInfoVO.setCaseNoFlag(1);
+            //箱号对应的物料与物流单中的物料相同
+            if (dto.getMaterialCode().equals(inventory.getMaterialCode())) {
+                flagInfoVO.setMaterialEqualFlag(1);
+                //箱号对应的库存明细中的可用库存数量 是否>0
+                if (inventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0) {
                     flagInfoVO.setCaseNumberQuantityFlag(1);
                 }
-                }
-                //获取箱号是否绑定客户条码
-                String customerBarcodeByCaseNO = wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(inventory.getCaseNo());
-                if (Objects.nonNull(customerBarcodeByCaseNO)){
-                    flagInfoVO.setCaseNoBindingCustomerBarcodeFlag(1);
-                }
             }
+            //获取箱号是否绑定客户条码
+            String customerBarcodeByCaseNO = wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(inventory.getCaseNo());
+            if (Objects.nonNull(customerBarcodeByCaseNO)) {
+                flagInfoVO.setCaseNoBindingCustomerBarcodeFlag(1);
+            }
+        }
         return flagInfoVO;
     }
 
@@ -835,7 +840,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 SalesLogisticsVO salesLogisticsVO = logisticsVOS.get(0);
                 String productCode = salesLogisticsVO.getProduct_code();
                 EqpSpareVO material = FeignOptional.of(() -> remoteSpareFeignApi.getByCode(productCode), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                Assert.notNull(material,"该物料在智慧平台不存在");
+                Assert.notNull(material, "该物料在智慧平台不存在");
                 wmsDeliverySellInfoVO.setMaterialId(material.getId());
                 wmsDeliverySellInfoVO.setMaterialName(salesLogisticsVO.getProduct_name());
                 wmsDeliverySellInfoVO.setMaterialCode(salesLogisticsVO.getProduct_code());
@@ -853,10 +858,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     public Boolean linkErp(Long id) {
         WmsDeliveryReceiptVO wmsDeliveryReceiptVO = get(id);
         Assert.notNull(wmsDeliveryReceiptVO, "该出库单不存在");
-        String warehouseCode = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(wmsDeliveryReceiptVO.getWarehouseId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()
+        String warehouseCode = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(wmsDeliveryReceiptVO.getWarehouseId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()
                 .get(wmsDeliveryReceiptVO.getWarehouseId()).getOfficeCode();
         //销售发货
-        if(wmsDeliveryReceiptVO.getType().equals(1582297407643815936L)){
+        if (wmsDeliveryReceiptVO.getType().equals(1582297407643815936L)) {
             ErpReturnStockSaveDTO erpParam = new ErpReturnStockSaveDTO();
             erpParam.setFmesbillid(wmsDeliveryReceiptVO.getId());
             erpParam.setFcustno(wmsDeliveryReceiptVO.getCode());
@@ -864,7 +869,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //客户编码未知
 //            erpParam.setFcustno();
             List<ErpStockSaveDetailDTO> erpDetails = com.google.common.collect.Lists.newArrayList();
-            wmsDeliveryReceiptVO.getList().forEach(tmp->{
+            wmsDeliveryReceiptVO.getList().forEach(tmp -> {
                 ErpStockSaveDetailDTO erpDetail = new ErpStockSaveDetailDTO();
                 erpDetail.setFmatno(tmp.getMaterialCode());
                 erpDetail.setFqty(tmp.getQuantity());
@@ -910,27 +915,27 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         }
         List<WmsReportWarehouseVO> resList = Lists.newArrayList();
         List<WmsDeliveryReceipt> list = list(new LambdaQueryWrapper<WmsDeliveryReceipt>()
-                .eq(Objects.nonNull(dto.getStatus()),WmsDeliveryReceipt::getStatus, dto.getStatus())
-                .eq(Objects.nonNull(dto.getTypeId()),WmsDeliveryReceipt::getType, dto.getTypeId())
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),WmsDeliveryReceipt::getCreateTime,dto.getStartTime(),dto.getEndTime())
-                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()),WmsDeliveryReceipt::getWarehouseId,dto.getWarehouseIds())
-                .notIn(WmsDeliveryReceipt::getStatus,WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
-        if (CollUtil.isNotEmpty(list)){
-            Map<Long,WmsDeliveryReceipt> map = Maps.newHashMap();
+                .eq(Objects.nonNull(dto.getStatus()), WmsDeliveryReceipt::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getTypeId()), WmsDeliveryReceipt::getType, dto.getTypeId())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), WmsDeliveryReceipt::getCreateTime, dto.getStartTime(), dto.getEndTime())
+                .in(CollUtil.isNotEmpty(dto.getWarehouseIds()), WmsDeliveryReceipt::getWarehouseId, dto.getWarehouseIds())
+                .notIn(WmsDeliveryReceipt::getStatus, WmsManagerConstant.OrderStateEnum.FIVE.getCode()));
+        if (CollUtil.isNotEmpty(list)) {
+            Map<Long, WmsDeliveryReceipt> map = Maps.newHashMap();
             List<Long> typeIds = Lists.newArrayList();
             Set<Integer> officeIds = Sets.newHashSet();
-            list.forEach( receipt->{
-                map.put(receipt.getId(),receipt);
+            list.forEach(receipt -> {
+                map.put(receipt.getId(), receipt);
                 typeIds.add(receipt.getType());
                 officeIds.add(Math.toIntExact(receipt.getWarehouseId()));
             });
             Set<Long> ids = map.keySet();
             Map<Long, SysDictVO> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listById(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId,ids));
-            infos.forEach(info->{
+            List<WmsDeliveryReceiptInfo> infos = wmsDeliveryReceiptInfoService.list(new LambdaQueryWrapper<WmsDeliveryReceiptInfo>().in(WmsDeliveryReceiptInfo::getDeliveryReceiptId, ids));
+            infos.forEach(info -> {
                 WmsReportWarehouseVO wmsReportWarehouseVO = new WmsReportWarehouseVO();
-                BeanUtil.copyProperties(info,wmsReportWarehouseVO);
+                BeanUtil.copyProperties(info, wmsReportWarehouseVO);
                 WmsDeliveryReceipt wmsDeliveryReceipt = map.get(info.getDeliveryReceiptId());
                 Long typeId = wmsDeliveryReceipt.getType();
                 wmsReportWarehouseVO.setWarehouse(wmsDeliveryReceipt.getWarehouseId());
@@ -948,9 +953,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         }
         return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
     }
+
     @Override
     public EpChartGraphVO<List<String>, BigDecimal> outboundDeliveryClassification(WmsReportWarehouseDTO dto) {
-        EpChartGraphVO<List<String>, BigDecimal>  chartVO =  new EpChartGraphVO<>();
+        EpChartGraphVO<List<String>, BigDecimal> chartVO = new EpChartGraphVO<>();
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         if (Objects.nonNull(dto.getDate())) {
             dto.setStartTime(LocalDateUtil.getMorning(dto.getDate()));
@@ -967,20 +973,20 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             materialMap.forEach((key, value) -> typeIds.add(value.getType()));
             //获取物料分类
             Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
-            if (CollUtil.isNotEmpty(classificationMap)){
-                classificationMap.forEach((key,value)-> types.add(value.getName()));
-                wmsStorageReceiptInfoVOS.forEach(infoVO-> {
+            if (CollUtil.isNotEmpty(classificationMap)) {
+                classificationMap.forEach((key, value) -> types.add(value.getName()));
+                wmsStorageReceiptInfoVOS.forEach(infoVO -> {
                     if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
-                        infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
+                        infoVO.setClassificationName(classificationMap.get(materialMap.get(infoVO.getMaterialId()).getType()).getName());
                     }
                 });
                 Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
                         .filter(vo -> vo.getClassificationName() != null)
                         .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
-                QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                QtSeriesDataDTO<String, BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
                 List<BigDecimal> quantity = Lists.newArrayList();
-                types.forEach(type->{
-                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+                types.forEach(type -> {
+                    quantity.add(receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
                 });
                 qtSeriesDataDTO.setName(WmsManagerConstant.MATERIAL);
                 qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
@@ -995,7 +1001,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
     @Override
     public BigDecimal totalQuantity(WmsReportWarehouseDTO dto) {
-        BigDecimal quantity  = null;
+        BigDecimal quantity = null;
         //获取当前仓库下的货架
         SysOfficeParentDTO officeParentDTO = new SysOfficeParentDTO();
         Set<Integer> ids = dto.getWarehouseIds().stream().mapToInt(Long::intValue)
@@ -1044,41 +1050,41 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
-    public List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime,Set<Long>materialIds) {
-        return  this.baseMapper.intervalData(startTime,endTime,materialIds);
+    public List<WmsDeliveryReceiptInfo> intervalData(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds) {
+        return this.baseMapper.intervalData(startTime, endTime, materialIds);
     }
 
     @Override
     public List<WmsDeliveryReceiptInfoVO> intervalDataVO(LocalDateTime startTime, LocalDateTime endTime) {
-        return  this.baseMapper.intervalDataVO(startTime,endTime);
+        return this.baseMapper.intervalDataVO(startTime, endTime);
     }
 
     @Override
     public Boolean deleteInfo(WmsDeliveryReceiptDTO dto) {
-       if (CollUtil.isNotEmpty(dto.getList())){
-           List<WmsInventoryDTO> deleteList = Lists.newArrayList();
-           Set<Long> ids = Sets.newHashSet();
-           dto.getList().forEach(info->{
-                       WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
-                       wmsInventoryDTO.setId(info.getInventoryId());
-                       wmsInventoryDTO.setQuantity(info.getQuantity());
-                       deleteList.add(wmsInventoryDTO);
-                       ids.add(info.getId());
-                   });
-                   wmsInventoryService.addInfoByInventoryId(deleteList);
-                   wmsDeliveryReceiptInfoService.removeByIds(ids);
-               }
-       return true;
+        if (CollUtil.isNotEmpty(dto.getList())) {
+            List<WmsInventoryDTO> deleteList = Lists.newArrayList();
+            Set<Long> ids = Sets.newHashSet();
+            dto.getList().forEach(info -> {
+                WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                wmsInventoryDTO.setId(info.getInventoryId());
+                wmsInventoryDTO.setQuantity(info.getQuantity());
+                deleteList.add(wmsInventoryDTO);
+                ids.add(info.getId());
+            });
+            wmsInventoryService.addInfoByInventoryId(deleteList);
+            wmsDeliveryReceiptInfoService.removeByIds(ids);
+        }
+        return true;
     }
 
     @Override
     public Page<SalesLogisticsBillVO> shippingReconciliation(SalesLogisticsBillDTO dto) {
         //自定义sql查询数据
         Page<SalesLogisticsBillVO> page = this.baseMapper.shippingReconciliation(new Page(dto.getCurrent(), dto.getSize()), dto);
-        if (CollUtil.isNotEmpty(page.getRecords())){
+        if (CollUtil.isNotEmpty(page.getRecords())) {
             Set<Long> collect = page.getRecords().stream().map(SalesLogisticsBillVO::getTypeId).collect(Collectors.toSet());
             Map<Long, String> longStringMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(collect), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            page.getRecords().forEach( salesLogisticsBillVO -> salesLogisticsBillVO.setType(longStringMap.get(salesLogisticsBillVO.getTypeId())));
+            page.getRecords().forEach(salesLogisticsBillVO -> salesLogisticsBillVO.setType(longStringMap.get(salesLogisticsBillVO.getTypeId())));
         }
         return page;
     }
@@ -1095,21 +1101,21 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         LocalDate firstDay = today.with(TemporalAdjusters.firstDayOfMonth());
         // 获取当月的最后一天
         LocalDate lastDay = today.with(TemporalAdjusters.lastDayOfMonth());
-        BigDecimal sum = this.baseMapper.monthSum(warehouseIds,firstDay,lastDay);
-        if (Objects.isNull(sum)){
+        BigDecimal sum = this.baseMapper.monthSum(warehouseIds, firstDay, lastDay);
+        if (Objects.isNull(sum)) {
             return BigDecimal.ZERO;
         }
         return sum;
     }
 
     @Override
-    public Map<Long, BigDecimal>  intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseIds) {
+    public Map<Long, BigDecimal> intervalDataQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseIds) {
         Map<Long, BigDecimal> map = new HashMap<>();
         List<WmsDeliveryReceiptInfo> infos = this.baseMapper.intervalDataQuantity(startTime, endTime, materialIds, warehouseIds);
-        infos.forEach(info->{
-            map.put(info.getMaterialId(),info.getQuantity());
+        infos.forEach(info -> {
+            map.put(info.getMaterialId(), info.getQuantity());
         });
-        return  map;
+        return map;
     }
 
     @Override
@@ -1118,12 +1124,41 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS =
                 this.baseMapper.intervalOrderQuantity(startTime, endTime, materialIds, warehouseId);
         Map<Long, Integer> map = new HashMap<>();
-        if (CollUtil.isNotEmpty(wmsDeliveryReceiptInfoVOS)){
+        if (CollUtil.isNotEmpty(wmsDeliveryReceiptInfoVOS)) {
             wmsDeliveryReceiptInfoVOS.forEach(
-                    e-> map.put(e.getMaterialId(),e.getCount())
+                    e -> map.put(e.getMaterialId(), e.getCount())
             );
         }
         return map;
+    }
+
+    @Override
+    public List<WmsDeliveryReceiptClientNumDTO> clientNum(Set<Long> materialIdSet, LocalDate start, LocalDate end) {
+        List<WmsDeliveryReceiptClientNumDTO> resList = Lists.newArrayList();
+        List<WmsDeliveryReceiptInfo> infoList = this.baseMapper.clientNum(materialIdSet, LocalDateUtil.getMorning(start), LocalDateUtil.getMorning(end).plusDays(1));
+        if (CollUtil.isNotEmpty(infoList)) {
+            Set<String> associatedNoSet = infoList.stream().filter(v -> StrUtil.isNotBlank(v.getAssociatedNo())).map(WmsDeliveryReceiptInfo::getAssociatedNo).collect(Collectors.toSet());
+            Map<String, String> resMap = Maps.newHashMap();
+            associatedNoSet.forEach(ele -> {
+                try {
+                    WmsDeliverySellFlagVO sellFlag = wmsDeliveryReceiptService.sellFlag(ele);
+                    resMap.put(ele, sellFlag.getClient());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            //遍历
+            for (WmsDeliveryReceiptInfo ele : infoList) {
+                WmsDeliveryReceiptClientNumDTO num = new WmsDeliveryReceiptClientNumDTO();
+                num.setNum(ele.getQuantity());
+                num.setClientName(resMap.get(ele.getAssociatedNo()));
+                num.setMaterialId(ele.getMaterialId());
+                num.setClassDate(LocalDateUtil.getClassDate(ele.getCreateTime(), Boolean.FALSE));
+                resList.add(num);
+            }
+            resList = resList.stream().filter(v -> StrUtil.isNotBlank(v.getClientName())).collect(Collectors.toList());
+        }
+        return resList;
     }
 
     /**
