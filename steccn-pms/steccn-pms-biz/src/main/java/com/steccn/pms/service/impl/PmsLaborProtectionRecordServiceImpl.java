@@ -1,12 +1,13 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.support.ExcelTypeEnum;
-import com.alibaba.excel.util.ListUtils;
+import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,15 +22,18 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.mes.vo.MesUserInfoVO;
+import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.oa.dto.OaUserInfo;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsLaborProtectionRecord;
 import com.steccn.pms.domain.PmsLaborProtectionStandard;
 import com.steccn.pms.domain.PmsLaborProtectionStandardDetail;
@@ -37,19 +41,24 @@ import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.listener.LaborListener;
 import com.steccn.pms.mapper.PmsLaborProtectionRecordMapper;
-import com.steccn.pms.mapper.PmsLaborProtectionStandardMapper;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
 import com.steccn.pms.service.PmsLaborProtectionStandardDetailService;
-import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
-import com.steccn.pms.vo.PmsLaborExcelDTO;
+import com.steccn.pms.vo.LaborExcelImportDataVO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -67,7 +76,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborProtectionRecordMapper, PmsLaborProtectionRecord>
-    implements PmsLaborProtectionRecordService{
+    implements PmsLaborProtectionRecordService {
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmsMaterialRequisitionService pmsMaterialRequisitionService;
@@ -76,14 +85,15 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     private final PmsLaborProtectionStandardDetailService pmsLaborProtectionStandardDetailService;
     private final PmsLaborProtectionRecordMapper pmsLaborProtectionRecordMapper;
     private final PmsLaborProtectionStandardServiceImpl pmsLaborProtectionStandardService;
+    private final RemoteFileFeignApi remoteFileFeignApi;
 
     @Override
     public Page<PmsLaborRecordVO> pageList(PmsLaborRecordPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmsLaborProtectionRecord> condition = new LambdaQueryWrapper<PmsLaborProtectionRecord>()
-                .in(CollUtil.isNotEmpty(dto.getOfficeId()),PmsLaborProtectionRecord::getDepCode, dto.getOfficeId())
-                .in(CollUtil.isNotEmpty(dto.getPostId()),PmsLaborProtectionRecord::getPostCode, dto.getPostId())
-                .in(CollUtil.isNotEmpty(dto.getMaterialId()),PmsLaborProtectionRecord::getMaterialId, dto.getMaterialId())
+                .in(CollUtil.isNotEmpty(dto.getOfficeId()), PmsLaborProtectionRecord::getDepCode, dto.getOfficeId())
+                .in(CollUtil.isNotEmpty(dto.getPostId()), PmsLaborProtectionRecord::getPostCode, dto.getPostId())
+                .in(CollUtil.isNotEmpty(dto.getMaterialId()), PmsLaborProtectionRecord::getMaterialId, dto.getMaterialId())
                 .like(StrUtil.isNotBlank(dto.getUserName()), PmsLaborProtectionRecord::getLoginName, dto.getUserName());
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -122,28 +132,28 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     public Boolean generateReq(PmsLaborGerReqDTO dto) {
         List<PmsLaborGerReqDetailDTO> data = Lists.newArrayList();
         //处理前端传的数据
-        for(Map<String,String> tmp:dto.getDetails()){
+        for (Map<String, String> tmp : dto.getDetails()) {
             String str = tmp.get("materialList");
             str = tmp.get("materialList").substring(1, str.length() - 1).replaceAll("\\s+", "");
             List<String> materialList = Arrays.asList(str.split(","));
-            materialList.forEach(material->{
+            materialList.forEach(material -> {
                 PmsLaborGerReqDetailDTO dataTmp = new PmsLaborGerReqDetailDTO();
                 dataTmp.setMaterialId(Long.parseLong(material));
                 dataTmp.setDepCode(tmp.get("depCode"));
                 dataTmp.setLoginCode(tmp.get("loginCode"));
-                if(StrUtil.isNotBlank(tmp.get(material+"_claimNum"))){
-                    dataTmp.setNum(new BigDecimal(tmp.get(material+"_claimNum")));
+                if (StrUtil.isNotBlank(tmp.get(material + "_claimNum"))) {
+                    dataTmp.setNum(new BigDecimal(tmp.get(material + "_claimNum")));
                     data.add(dataTmp);
                 }
             });
         }
-        Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByCodeSet(data
-                .stream().map(PmsLaborGerReqDetailDTO::getDepCode).collect(Collectors.toSet())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(data.stream().map(PmsLaborGerReqDetailDTO::getMaterialId).collect(Collectors.toList())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(data
+                .stream().map(PmsLaborGerReqDetailDTO::getDepCode).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(data.stream().map(PmsLaborGerReqDetailDTO::getMaterialId).collect(Collectors.toList())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<MesUserInfoVO> mesUserInfoVOS = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<Set<String>, Integer>(data.stream().map(PmsLaborGerReqDetailDTO::getLoginCode).collect(Collectors.toSet()), null)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(data.stream().map(PmsLaborGerReqDetailDTO::getLoginCode).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         Map<String, List<PmsLaborGerReqDetailDTO>> depMap = data.stream().collect(Collectors.groupingBy(PmsLaborGerReqDetailDTO::getDepCode));
-        for(Map.Entry<String,List<PmsLaborGerReqDetailDTO>> tmp:depMap.entrySet()){
+        for (Map.Entry<String, List<PmsLaborGerReqDetailDTO>> tmp : depMap.entrySet()) {
             MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
             SysOfficeVO office = officeMap.get(tmp.getKey());
             materialRequisitionDTO.setDepartmentId(office.getId());
@@ -156,7 +166,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             List<MaterialRequisitionInfoDTO> detailList = Lists.newArrayList();
             //劳保领用记录
             List<PmsLaborProtectionRecord> modelList = Lists.newArrayList();
-            for(PmsLaborGerReqDetailDTO detailTmp:tmp.getValue()){
+            for (PmsLaborGerReqDetailDTO detailTmp : tmp.getValue()) {
                 //处理领用单
                 MaterialRequisitionInfoDTO detailModel = new MaterialRequisitionInfoDTO();
                 EqpSpareVO spare = spareMap.get(detailTmp.getMaterialId());
@@ -165,14 +175,14 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 detailModel.setMaterialId(spare.getId());
                 detailModel.setUnitId(spare.getUnitId().toString());
                 detailModel.setUnitName(spare.getUnit());
-                if(detailTmp.getNum().compareTo(BigDecimal.ZERO)==0){
+                if (detailTmp.getNum().compareTo(BigDecimal.ZERO) == 0) {
                     continue;
                 }
                 detailModel.setQuantity(detailTmp.getNum());
                 detailModel.setReceiveQuantity(BigDecimal.ZERO);
                 detailModel.setRequireDate(LocalDate.now());
                 OaUserInfo oaUserInfo = FeignOptional.of(() -> oaInfoService.getOaUserInfo(detailTmp.getLoginCode()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                List<MaterialRequisitionDemanderDTO> demanderList = Lists.newArrayList(new MaterialRequisitionDemanderDTO(oaUserInfo.getOaUserId().longValue(),oaUserInfo.getName()));
+                List<MaterialRequisitionDemanderDTO> demanderList = Lists.newArrayList(new MaterialRequisitionDemanderDTO(oaUserInfo.getOaUserId().longValue(), oaUserInfo.getName()));
                 detailList.add(detailModel);
                 detailModel.setDemanderList(demanderList);
                 //保存领用记录
@@ -191,13 +201,13 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 recordModel.setReceiptPersonName(SecurityUtils.getUser().getName());
                 modelList.add(recordModel);
             }
-            if(CollUtil.isEmpty(detailList)){
+            if (CollUtil.isEmpty(detailList)) {
                 throw new BusinessException("物料数都为0");
             }
             materialRequisitionDTO.setList(detailList);
             Long id = pmsMaterialRequisitionService.add(materialRequisitionDTO);
             PmsMaterialRequisition byId = pmsMaterialRequisitionService.getById(id);
-            modelList.forEach(tmp2->{
+            modelList.forEach(tmp2 -> {
                 tmp2.setReceiptId(id);
                 tmp2.setReceiptCode(byId.getCode());
             });
@@ -218,114 +228,168 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
         List<Long> materialIdList = detailData.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
         Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<List<String>> head = new ArrayList<List<String>>();
-        List<String> children = Lists.newArrayList();
-        children.add("姓名");
-        head.add(children);
-        materialIdList.forEach(tmp->{
-            List<String> complexColumnChildren = Lists.newArrayList();
+        head.add(Arrays.asList("填写须知：\n" +
+                "\n" +
+                "1. 导入文件的表头必须和模板一致\n" +
+                "\n" +
+                "2. 导入列表不能为空，至少填写一个人员\n" +
+                "3. 每个人员的姓名必须完全正确\n" +
+                "4. 对于系统内有重名的人员，暂不支持导入，建议页面上单独添加\n" +
+                "5. 无需领用的劳保用品可不填写待领数量\n" +
+                "\n" +
+                "6. 出现以下错误时请相应更正后重新上传：\n" +
+                "\n" +
+                "1）姓名不能为空\n" +
+                "\n" +
+                "2）待领数量必须为数字\n" +
+                "\n" +
+                "3）待领数量必须大于0\n" +
+                "\n" +
+                "4）该人员在系统中不存在\n" +
+                "\n" +
+                "5）系统中存在重名的人员\n" +
+                "6）每个人员只能填写一行","姓名"));
+        materialIdList.forEach(tmp -> {
+
             EqpSpareVO spareVO = spareMap.get(tmp);
             StringBuilder materialName = new StringBuilder();
             materialName.append(spareVO.getName());
-            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())){
+            if (cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())) {
                 materialName.append("/");
                 materialName.append(spareVO.getCode());
             }
-            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())){
+            if (cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())) {
                 materialName.append("/");
                 materialName.append(spareVO.getSpecifications());
             }
-            complexColumnChildren.add(materialName.toString());
-            head.add(complexColumnChildren);
-        });
 
-        EasyExcel.write(response.getOutputStream()).sheet("sheet1").head(head).doWrite(new ArrayList<>());
+            head.add(Arrays.asList("填写须知：\n" +
+                    "\n" +
+                    "1. 导入文件的表头必须和模板一致\n" +
+                    "\n" +
+                    "2. 导入列表不能为空，至少填写一个人员\n" +
+                    "3. 每个人员的姓名必须完全正确\n" +
+                    "4. 对于系统内有重名的人员，暂不支持导入，建议页面上单独添加\n" +
+                    "5. 无需领用的劳保用品可不填写待领数量\n" +
+                    "\n" +
+                    "6. 出现以下错误时请相应更正后重新上传：\n" +
+                    "\n" +
+                    "1）姓名不能为空\n" +
+                    "\n" +
+                    "2）待领数量必须为数字\n" +
+                    "\n" +
+                    "3）待领数量必须大于0\n" +
+                    "\n" +
+                    "4）该人员在系统中不存在\n" +
+                    "\n" +
+                    "5）系统中存在重名的人员\n" +
+                    "6）每个人员只能填写一行",materialName.toString()));
+        });
+        EasyExcel.write(response.getOutputStream()).sheet("sheet1").head( head).doWrite(new ArrayList<>());
+
     }
 
 
-
     @Override
-    public SteccnTableDataDTO<Map<String, String>> excelImportData(PmExcelDTO dto) throws IOException {
-        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi);
-        EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().doRead();
-        Map<String, List<Map<String, String>>> stringListMap = laborListener.saveData();
-        //处理数据
-        //需要拿到所有配置的数据
-        List<PmsLaborProtectionStandard> standardList = pmsLaborProtectionStandardService.list();
-        //拿到所有详情
-        List<PmsLaborProtectionStandardDetail> standardDetailList = pmsLaborProtectionStandardDetailService.list();
+    public LaborExcelImportDataVO excelImportData(PmExcelDTO dto) throws IOException {
 
-        //处理部门和岗位
-        //拿到标准中的所有部门了岗位
-        List<PmsLaborProtectionStandard> finalStandardList = standardList;
-        Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(finalStandardList.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Set<String> availPost = Sets.newHashSet();
-        Set<String> availDep = Sets.newHashSet();
-        //区分岗位和部门
-        for(Map.Entry<String,SysOfficeVO> entry:officeMap.entrySet()){
-            SysOfficeVO tmp = entry.getValue();
-            if(tmp.getOfficeType().equals("6")){
-                availPost.add(tmp.getOfficeCode());
-            }else if(tmp.getOfficeType().equals("15")){
-                //若是部门类型，则拿到其岗位数据
-                availDep.add(tmp.getOfficeCode());
+        LaborExcelImportDataVO laborExcelImportDataVO = new LaborExcelImportDataVO();
+        //文件类型校验
+        if (Objects.nonNull(dto.getFile())) {
+            //获取文件拓展名
+            String fileExtension = Objects.requireNonNull(dto.getFile().getOriginalFilename()).substring(dto.getFile().getOriginalFilename().lastIndexOf("."));
+            if (!fileExtension.equals(PmManagerConstant.FILE_EXTENSION_XLSX)) {
+                throw new BusinessException("文件类型不支持,请使用模板进行导入");
             }
         }
-        if(CollUtil.isNotEmpty(availDep)){
-            Map<String, List<String>> depPostMap = FeignOptional.of(() -> remoteOfficeFeign.depPostMap(availDep), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            availPost.addAll(depPostMap.values().stream().flatMap(List::stream).collect(Collectors.toSet()));
-        }
-        //拿到所有岗位下的人员和岗位所属机构
-        Map<String, List<String>> employee = FeignOptional.of(() -> remoteMesFeignApi.getPostUser(availPost), FeignConstant.STECCN_MES_SERVICE_NAME).get();
-        //拿到所有人员的入职时间
-        Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.values()
-                .stream()
-                .flatMap(Collection::stream)
-                .map(str->{
-                    int index = str.indexOf('_');
-                    return index != -1 ? str.substring(0,index) : str;
-                }).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        //拿到所有入职超过1个月的人员
-        Set<String> employeeId = employeeTime.entrySet().stream().filter(v -> v.getValue().plusMonths(1).isBefore(LocalDate.now()))
-                .map(Map.Entry::getKey).collect(Collectors.toSet());
-        //过滤名称
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName());
+        EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().headRowNumber(1).doRead();
+        Map<String, List<Map<String, String>>> stringListMap = laborListener.saveData();
+        laborExcelImportDataVO.setSize(stringListMap.size());
+
+        if (laborListener.getErrorSize() > 0) {
+            laborExcelImportDataVO.setSuccessFlag(Boolean.FALSE);
+            laborExcelImportDataVO.setSize(laborListener.getErrorSize());
+        }else {
+            laborExcelImportDataVO.setSize(stringListMap.size());
+            //处理数据
+            //需要拿到所有配置的数据
+            List<PmsLaborProtectionStandard> standardList = pmsLaborProtectionStandardService.list();
+            //拿到所有详情
+            List<PmsLaborProtectionStandardDetail> standardDetailList = pmsLaborProtectionStandardDetailService.list();
+
+            //处理部门和岗位
+            //拿到标准中的所有部门了岗位
+            List<PmsLaborProtectionStandard> finalStandardList = standardList;
+            Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(finalStandardList.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Set<String> availPost = Sets.newHashSet();
+            Set<String> availDep = Sets.newHashSet();
+            //区分岗位和部门
+            for (Map.Entry<String, SysOfficeVO> entry : officeMap.entrySet()) {
+                SysOfficeVO tmp = entry.getValue();
+                if (tmp.getOfficeType().equals("6")) {
+                    availPost.add(tmp.getOfficeCode());
+                } else if (tmp.getOfficeType().equals("15")) {
+                    //若是部门类型，则拿到其岗位数据
+                    availDep.add(tmp.getOfficeCode());
+                }
+            }
+            if (CollUtil.isNotEmpty(availDep)) {
+                Map<String, List<String>> depPostMap = FeignOptional.of(() -> remoteOfficeFeign.depPostMap(availDep), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                availPost.addAll(depPostMap.values().stream().flatMap(List::stream).collect(Collectors.toSet()));
+            }
+            //拿到所有岗位下的人员和岗位所属机构
+            Map<String, List<String>> employee = FeignOptional.of(() -> remoteMesFeignApi.getPostUser(availPost), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+            //拿到所有人员的入职时间
+            Map<String, LocalDate> employeeTime = FeignOptional.of(() -> oaInfoService.getCompanyStartTime(employee.values()
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .map(str -> {
+                        int index = str.indexOf('_');
+                        return index != -1 ? str.substring(0, index) : str;
+                    }).collect(Collectors.toSet())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            //拿到所有入职超过1个月的人员
+            Set<String> employeeId = employeeTime.entrySet().stream().filter(v -> v.getValue().plusMonths(1).isBefore(LocalDate.now()))
+                    .map(Map.Entry::getKey).collect(Collectors.toSet());
+            //过滤名称
 //        if(cn.hutool.core.util.StrUtil.isNotBlank(dto.getUserName())){
 //            employeeId =employeeId.stream().filter(v->v.contains(dto.getUserName())).collect(Collectors.toSet());
 //        }
 //        Set<String> finalEmployeeId = employeeId;
-        List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(employeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
-        //开始组装数据
-        //表头
-        SteccnTableDataDTO<Map<String, String>> result = new SteccnTableDataDTO<>();
-        //先组表头
-        List<SteccnTableColumn> columns = Lists.newArrayList();
-        columns.add(new SteccnTableColumn("depName","部门",null));
-        columns.add(new SteccnTableColumn("postName","岗位",null));
-        columns.add(new SteccnTableColumn("userName","人员",null));
-        columns.add(new SteccnTableColumn("enterTime","入职时间",null));
-        //动态部分
-        List<Long> materialIdList = standardDetailList.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
-        Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        materialIdList.forEach(tmp->{
-            EqpSpareVO spareVO = spareMap.get(tmp);
-            StringBuilder materialName = new StringBuilder();
-            materialName.append(spareVO.getName());
-            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())){
-                materialName.append("/");
-                materialName.append(spareVO.getCode());
-            }
-            if(cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())){
-                materialName.append("/");
-                materialName.append(spareVO.getSpecifications());
-            }
-            columns.add(new SteccnTableColumn(tmp.toString(),materialName.toString(),
-                    Lists.newArrayList(new SteccnTableColumn(tmp+"_"+"receiptTime","上次领用时间",null),
-                            new SteccnTableColumn(tmp+"_claimNum","待领数量",null),
-                            new SteccnTableColumn(tmp+"_availNum","可领数量",null))));
-        });
-        List<Map<String,String>> tableList = Lists.newArrayList();
-        //处理数据，遍历人员
-        for(MesUserInfoVO tmp:userInfos){
-            Map<String,String> column = Maps.newHashMap();
+            List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(employeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+            //开始组装数据
+            //表头
+            SteccnTableDataDTO<Map<String, String>> result = new SteccnTableDataDTO<>();
+            //先组表头
+            List<SteccnTableColumn> columns = Lists.newArrayList();
+            columns.add(new SteccnTableColumn("depName", "部门", null));
+            columns.add(new SteccnTableColumn("postName", "岗位", null));
+            columns.add(new SteccnTableColumn("userName", "人员", null));
+            columns.add(new SteccnTableColumn("enterTime", "入职时间", null));
+            //动态部分
+            List<Long> materialIdList = standardDetailList.stream().map(PmsLaborProtectionStandardDetail::getMaterialId).distinct().collect(Collectors.toList());
+            Map<Long, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            materialIdList.forEach(tmp -> {
+                EqpSpareVO spareVO = spareMap.get(tmp);
+                StringBuilder materialName = new StringBuilder();
+                materialName.append(spareVO.getName());
+                if (cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getCode())) {
+                    materialName.append("/");
+                    materialName.append(spareVO.getCode());
+                }
+                if (cn.hutool.core.util.StrUtil.isNotBlank(spareVO.getSpecifications())) {
+                    materialName.append("/");
+                    materialName.append(spareVO.getSpecifications());
+                }
+                columns.add(new SteccnTableColumn(tmp.toString(), materialName.toString(),
+                        Lists.newArrayList(new SteccnTableColumn(tmp + "_" + "receiptTime", "上次领用时间", null),
+                                new SteccnTableColumn(tmp + "_claimNum", "待领数量", null),
+                                new SteccnTableColumn(tmp + "_availNum", "可领数量", null))));
+            });
+            List<Map<String, String>> tableList = Lists.newArrayList();
+            //处理数据，遍历人员
+            for (MesUserInfoVO tmp : userInfos) {
+                Map<String, String> column = Maps.newHashMap();
                 //获取岗位的劳保标准
                 PmsLaborProtectionStandard standardTmp;
                 standardTmp = standardList.stream().filter(v -> v.getOfficeId().contains(tmp.getPostCode())).findFirst().orElse(null);
@@ -375,19 +439,49 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 });
                 tableList.add(column);
             }
-        result.setColumns(columns);
+            result.setColumns(columns);
 
-        tableList.stream().forEach(column -> {
-            String userName = column.get("userName");
-            List<Map<String, String>> list = stringListMap.get(userName);
-            if (Objects.nonNull(list)) {
-                list.forEach(column::putAll);
-            }
-        });
-        result.setTableList(tableList);
-        return result;
+            tableList.stream().forEach(column -> {
+                String userName = column.get("userName");
+                List<Map<String, String>> list = stringListMap.get(userName);
+                if (Objects.nonNull(list)) {
+                    list.forEach(column::putAll);
+                }
+            });
+            result.setTableList(tableList);
+            laborExcelImportDataVO.setTableDataDTO(result);
+        }
+        return laborExcelImportDataVO;
     }
 
+    @Override
+    public ResponseEntity<FileSystemResource> excelImportDataError(PmExcelDTO dto) throws IOException {
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getOriginalFilename());
+        EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().headRowNumber(1).doRead();
+
+        if (laborListener.getErrorSize() > 0) {
+            File errorFile = laborListener.writeErrorFile(laborListener.getErrorRows());
+            if (errorFile != null) {
+                try {
+                    // 返回错误文件给前端
+                    FileSystemResource resource = new FileSystemResource(errorFile);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + errorFile.getName());
+                    return ResponseEntity.ok()
+                            .headers(headers)
+                            .contentLength(errorFile.length())
+                            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                            .body(resource);
+                } catch (Exception e) {
+                    throw new SteccnRuntimeException("文件处理失败");
+                } finally {
+                    errorFile.delete(); // 删除临时文件
+                }
+            }
+        }
+
+        return null;
+    }
 }
 
 

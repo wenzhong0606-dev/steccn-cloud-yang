@@ -9,6 +9,7 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsLaborProtectionRecordService;
 import com.steccn.pms.service.PmsLaborProtectionStandardService;
+import com.steccn.pms.vo.LaborExcelImportDataVO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
 import io.swagger.annotations.Api;
@@ -108,8 +109,14 @@ public class PmsLaborController {
 
     @ApiModelProperty("Excel导入")
     @PostMapping("/excelImportData")
-    public R<SteccnTableDataDTO<Map<String, String>>> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
+    public R<LaborExcelImportDataVO> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
         return R.success(pmsLaborProtectionRecordService.excelImportData(dto));
+    }
+
+    @ApiModelProperty("Excel导入错误文件")
+    @PostMapping("/download/excelImportDataError")
+    public void excelImportDataError(PmExcelDTO dto) throws IOException {
+        pmsLaborProtectionRecordService.excelImportDataError(dto);
     }
 
 
