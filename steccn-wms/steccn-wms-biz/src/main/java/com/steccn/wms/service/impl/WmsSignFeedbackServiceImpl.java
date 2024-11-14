@@ -130,17 +130,22 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         Page page = page(new Page(dto.getCurrent(), dto.getSize()), between);
         Page<WmsSignFeedbackVO> resPage = new Page<>();
         if (CollUtil.isNotEmpty(page.getRecords())){
+            List<Long> fileIds = Lists.newArrayList();
+
             BeanUtil.copyProperties(page,resPage);
             List<WmsSignFeedbackVO> wmsSignFeedbackVOList = BeanUtil.copyToList(page.getRecords(), WmsSignFeedbackVO.class);
             Set<String> orders = Sets.newHashSet();
             for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
                 orders.add(wmsSignFeedbackVO.getSalesOrder());
+                fileIds.add(wmsSignFeedbackVO.getFileId());
             }
             KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
             ksLogisticsOrderDTO.setSalesOrders(orders);
             Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+            Map<Long, FileInfoVO> fileMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
             for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
                 wmsSignFeedbackVO.setCarCode(carCodeMap.get(wmsSignFeedbackVO.getSalesOrder()));
+                wmsSignFeedbackVO.setFileUrl(fileMap.get(wmsSignFeedbackVO.getFileId()).getFileUrl());
             }
 
             if (Objects.isNull(dto.getSortField())) {
