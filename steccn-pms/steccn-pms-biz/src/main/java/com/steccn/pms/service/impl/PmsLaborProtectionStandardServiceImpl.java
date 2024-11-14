@@ -308,6 +308,11 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         if(CollUtil.isNotEmpty(dto.getPostId())){
             userInfos = userInfos.stream().filter(v->dto.getPostId().contains(v.getPostCode())).collect(Collectors.toList());
         }
+        if(CollUtil.isNotEmpty(dto.getDepCode())){
+            Map<String, List<String>> userCodesMap = FeignOptional.of(() -> remoteMesFeignApi.getDepUserAll(dto.getDepCode().stream().collect(Collectors.toSet())), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+            List<String> userList = userCodesMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
+            userInfos = userInfos.stream().filter(v -> userList.contains(v.getLoginCode())).collect(Collectors.toList());
+        }
         Assert.notEmpty(userInfos,"没有符合标准的用户");
         //开始组装数据
         //表头

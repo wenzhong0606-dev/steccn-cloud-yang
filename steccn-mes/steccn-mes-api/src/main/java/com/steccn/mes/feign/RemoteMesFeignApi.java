@@ -60,6 +60,10 @@ public interface RemoteMesFeignApi {
     @PostMapping("/feign/mes/emp/post")
     R<Map<String, List<String>>> getPostUser(@RequestBody Set<String> dto);
 
+    @ApiOperation("获取节点下所有的人员")
+    @PostMapping("/feign/mes/emp/dep/all")
+    R<Map<String, List<String>>> getDepUserAll(@RequestBody Set<String> dto);
+
     /**
      * 获取用户所属部门和岗位
      * @param dto

@@ -4,14 +4,17 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.JsSysEmployee;
+import com.steccn.mes.domain.JsSysOffice;
 import com.steccn.mes.service.JsSysEmployeeService;
 import com.steccn.mes.mapper.JsSysEmployeeMapper;
+import com.steccn.mes.service.JsSysOfficeService;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
@@ -21,10 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +39,7 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     private final JsSysEmployeeMapper jsSysEmployeeMapper;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final OaInfoService oaInfoService;
+    private final JsSysOfficeService jsSysOfficeService;
 
     @Override
     public Map<String, List<String>> getPostUser(Set<String> postCode) {
@@ -78,6 +79,27 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
 
         }
         return mesUserInfo;
+    }
+
+    @Override
+    public Map<String, List<String>> getEmpByDepTree(Set<String> depCode) {
+        Map<String,List<String>> results = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(depCode)){
+            for(String tmp:depCode){
+                List<JsSysOffice> office = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                        .like(JsSysOffice::getParentCodes, tmp + ",")
+                        .eq(JsSysOffice::getStatus, "0"));
+                if(CollUtil.isNotEmpty(office)){
+                    Set<String> officeCodes = office.stream().map(JsSysOffice::getOfficeCode).collect(Collectors.toSet());
+                    officeCodes.add(tmp);
+                    List<JsSysEmployee> employeeList = list(new LambdaQueryWrapper<JsSysEmployee>()
+                            .in(JsSysEmployee::getOfficeCode, officeCodes));
+                    List<String> empCode = employeeList.stream().map(v -> v.getEmpCode().split("_")[0]).collect(Collectors.toList());
+                    results.put(tmp,empCode);
+                }
+            }
+        }
+        return results;
     }
 }
 

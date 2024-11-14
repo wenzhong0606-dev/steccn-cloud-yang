@@ -58,6 +58,12 @@ public class MesEqpFeignController {
         return R.success(jsSysEmployeeService.getPostUser(dto));
     }
 
+    @ApiOperation("获取节点下所有的人员")
+    @PostMapping("/emp/dep/all")
+    public R<Map<String, List<String>>> getDepUserAll(@RequestBody Set<String> dto) {
+        return R.success(jsSysEmployeeService.getEmpByDepTree(dto));
+    }
+
     @PostMapping("/user/getEmpDepPost")
     @ApiOperation(value = "获取人员部门岗位")
     public R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto) {

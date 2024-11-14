@@ -20,6 +20,11 @@ public class PmsStandardListDTO {
      * 岗位Id
      */
     private List<String> postId;
+
+    /**
+     * 部门下级的code
+     */
+    private List<String> depCode;
     /**
      * 用户名称
      */
