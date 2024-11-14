@@ -39,6 +39,7 @@ import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,7 +62,8 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     private final Redisson redisson;
     private final PmsReportWorkService pmsReportWorkService;
     private final RemoteWmsDeliveryReceiptFeignApi remoteWmsDeliveryReceiptFeignApi;
-    private final PmsMonthlyProductionPlanService pmsMonthlyProductionPlanService;
+    @Resource
+    private PmsMonthlyProductionPlanService pmsMonthlyProductionPlanService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
