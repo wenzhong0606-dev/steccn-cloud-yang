@@ -12,6 +12,11 @@ public class PmsMonthlyProductionPlanNewRowVO implements Serializable {
     private final static long serialVersionUID = 1L;
 
     /**
+     * 生产计划1 发货数量2 计划总数3 发货总数4 期初库存5 入库总数6
+     */
+    private Integer type;
+
+    /**
      * 物料主键
      */
     private Long materialId;

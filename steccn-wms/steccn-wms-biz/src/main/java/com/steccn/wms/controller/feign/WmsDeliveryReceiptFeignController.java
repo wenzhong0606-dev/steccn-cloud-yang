@@ -29,6 +29,7 @@ public class WmsDeliveryReceiptFeignController {
     @ApiOperation("获取客户指定日期范围内的出库汇总")
     @PostMapping("/client/num")
     public R<List<WmsDeliveryReceiptClientNumDTO>> clientNum(@RequestBody TripleDTO<Set<Long>, LocalDate, LocalDate> dto) {
-        return R.success(wmsDeliveryReceiptService.clientNum(dto.getField1(), dto.getField2(), dto.getField3()));
+        List<WmsDeliveryReceiptClientNumDTO> resList = wmsDeliveryReceiptService.clientNum(dto.getField1(), dto.getField2(), dto.getField3());
+        return R.success(resList);
     }
 }
