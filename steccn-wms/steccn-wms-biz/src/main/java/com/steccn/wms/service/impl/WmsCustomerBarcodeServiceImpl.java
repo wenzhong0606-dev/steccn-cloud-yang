@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.dto.SalesLogisticsDTO;
@@ -16,6 +17,9 @@ import com.steccn.platform.feign.RemoteSalesFeignApi;
 import com.steccn.platform.vo.SalesLogisticsVO;
 import com.steccn.pms.dto.PmsProducerOrderInfoDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.sales.dto.KsLogisticsOrderDTO;
+import com.steccn.sales.feign.RemoteSaleFeignApi;
+import com.steccn.sales.vo.ResUserVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsCustomerBarcode;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
@@ -58,6 +62,7 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
     private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
     private final WmsInventoryMapper wmsInventoryMapper;
     private final RemoteSalesFeignApi remoteSalesFeignApi;
+    private final RemoteSaleFeignApi remoteSaleFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -253,6 +258,13 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
                      }
                      if (state.equals("已反馈")) {
                          wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                     }
+                     KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+                     ksLogisticsOrderDTO.setName(salesOrder);
+                     Integer integer = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompanyId(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+                     ResUserVO resUserVO = FeignOptional.of(() -> remoteSaleFeignApi.salesUserInfo(SecurityUtils.getUser().getName()), FeignConstant.STECCN_SALES_NAME).get();
+                     if (resUserVO.getLogisticsCompanyId().equals(integer)){
+                        wmsDeliverySellFlagVO.setCompanyFlag(1);
                      }
                  }
              } catch (Exception e) {

@@ -51,4 +51,9 @@ public interface RemoteSaleFeignApi {
     @PostMapping("/feign/sales/order/company")
     @ApiOperation("获取物流单公司")
     R<String> salesOrderCompany(@RequestBody  KsLogisticsOrderDTO dto);
+
+    @PostMapping("/order/company/id")
+    @ApiOperation("获取物流单公司")
+    R<Integer> salesOrderCompanyId(@RequestBody  KsLogisticsOrderDTO dto);
+
 }

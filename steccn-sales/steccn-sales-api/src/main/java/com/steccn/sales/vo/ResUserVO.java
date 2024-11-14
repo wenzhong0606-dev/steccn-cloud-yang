@@ -30,4 +30,5 @@ public class ResUserVO {
      * 物流公司Id
      */
     private Integer logisticsCompanyId;
+
 }

@@ -1,5 +1,6 @@
 package com.steccn.wms.service.impl;
 
+import ch.qos.logback.core.util.ExecutorServiceUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
@@ -20,6 +21,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
@@ -35,6 +37,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.feign.RemoteSaleFeignApi;
+import com.steccn.sales.vo.ResUserVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
@@ -84,6 +87,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -688,6 +693,12 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
                     }
                 }
+                Integer integer = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompanyId(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+                ResUserVO resUserVO = FeignOptional.of(() -> remoteSaleFeignApi.salesUserInfo(SecurityUtils.getUser().getName()), FeignConstant.STECCN_SALES_NAME).get();
+                if (resUserVO.getLogisticsCompanyId().equals(integer)){
+                    wmsDeliverySellFlagVO.setCompanyFlag(1);
+                }
+
             }
         } catch (Exception e) {
             throw new BusinessException("物流单不存在");
@@ -1138,15 +1149,27 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         List<WmsDeliveryReceiptInfo> infoList = this.baseMapper.clientNum(materialIdSet, LocalDateUtil.getMorning(start), LocalDateUtil.getMorning(end).plusDays(1));
         if (CollUtil.isNotEmpty(infoList)) {
             Set<String> associatedNoSet = infoList.stream().filter(v -> StrUtil.isNotBlank(v.getAssociatedNo())).map(WmsDeliveryReceiptInfo::getAssociatedNo).collect(Collectors.toSet());
-            Map<String, String> resMap = Maps.newHashMap();
+            Map<String, String> resMap = Maps.newConcurrentMap();
+            List<CompletableFuture> futureList = Lists.newArrayList();
             associatedNoSet.forEach(ele -> {
-                try {
+                CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                     WmsDeliverySellFlagVO sellFlag = wmsDeliveryReceiptService.sellFlag(ele);
-                    resMap.put(ele, sellFlag.getClient());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    return sellFlag;
+                }).handle((res, exe) -> {
+                    if (exe == null && res != null) {
+                        resMap.put(ele, res.getClient());
+                    }
+                    return null;
+                });
+                futureList.add(future);
             });
+            CompletableFuture[] futureArr = futureList.stream().toArray(CompletableFuture[]::new);
+            CompletableFuture<Void> lastFuture = CompletableFuture.allOf(futureArr);
+            try {
+                lastFuture.get();
+            } catch (Exception e) {
+                log.error("{}", e.getMessage());
+            }
             //遍历
             for (WmsDeliveryReceiptInfo ele : infoList) {
                 WmsDeliveryReceiptClientNumDTO num = new WmsDeliveryReceiptClientNumDTO();
