@@ -160,7 +160,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 .eq(PmsMonthlyProductionPlanNew::getClientId, clientId)
                 .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
                 .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay));
-        Assert.notNull(dbList, "本月度暂无此物料与客户数据");
+        Assert.notEmpty(dbList, "本月度暂无此物料与客户数据");
         //将日期从list转换成map
         Map<LocalDate, BigDecimal> valueMap = value.stream().filter(ele -> LocalDateUtil.isRange(ele.getField1(), monthFirstDay, monthLastDay, true, true)).collect(Collectors.toMap(TupleDTO::getField1, TupleDTO::getField2));
         //编辑
