@@ -65,4 +65,10 @@ public class SalesLogisticsFeignController {
         return R.success(ksLogisticsOrderService.salesOrderCompany(dto.getName()));
     }
 
+    @PostMapping("/order/company/id")
+    @ApiOperation("获取物流单公司")
+    R<Integer> salesOrderCompanyId(@RequestBody  KsLogisticsOrderDTO dto){
+        return R.success(ksLogisticsOrderService.salesOrderCompanyId(dto.getName()));
+    }
+
 }

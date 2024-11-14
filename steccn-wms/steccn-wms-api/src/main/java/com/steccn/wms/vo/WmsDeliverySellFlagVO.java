@@ -26,6 +26,8 @@ public class WmsDeliverySellFlagVO implements Serializable {
 
     private Integer feedbackFlag = 0;
 
+    private Integer companyFlag=0;
+
 
     /**
      * 合同未发货>0

@@ -250,6 +250,15 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         }
         return company;
     }
+
+    @Override
+    public Integer salesOrderCompanyId(String name) {
+        if (Objects.nonNull(name)){
+            KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, name));
+           return one.getLogisticsCompanyId();
+        }
+        return null;
+    }
 }
 
 
