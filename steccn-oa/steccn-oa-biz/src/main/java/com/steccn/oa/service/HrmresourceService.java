@@ -133,4 +133,6 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     Map<String,LocalDate> getCompanyStartTime(Set<String> loginCode);
+
+    List<String> getAllUserName();
 }

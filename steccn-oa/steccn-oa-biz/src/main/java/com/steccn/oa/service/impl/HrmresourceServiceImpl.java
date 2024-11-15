@@ -346,6 +346,12 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         }
         return results;
     }
+
+    @Override
+    public List<String> getAllUserName() {
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>());
+        return list.stream().map(Hrmresource::getLoginid).collect(Collectors.toList());
+    }
 }
 
 

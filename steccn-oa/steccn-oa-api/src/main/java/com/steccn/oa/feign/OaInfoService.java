@@ -65,6 +65,10 @@ public interface OaInfoService {
     @GetMapping("/oa/username")
     R<OaUserDTO> loadByUsername(@RequestParam("username") String username);
 
+    @ApiOperation("获取所有用户名称")
+    @GetMapping("/feign/oa/all/user")
+    R<List<String>> getAllUserName();
+
     /**
      * 根据用户名查询用户信息
      *

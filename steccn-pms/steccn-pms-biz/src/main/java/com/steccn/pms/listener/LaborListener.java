@@ -15,6 +15,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.domain.PmsLaborProtectionStandardDetail;
@@ -49,14 +50,15 @@ public class LaborListener extends AnalysisEventListener<Map<Integer, String>> {
     private   Map<String,List<Map<String, String>>> excelDataMap = Maps.newHashMap();
     private String fileName;
     private Set<String> processedNames = new HashSet<>();
+    private List<String> userNames;
 
     public LaborListener(PmsLaborProtectionStandardDetailService protectionStandardDetailService,
-                         RemoteSpareFeignApi remoteSpareFeignApi,RemoteFileFeignApi remoteFileFeignApi, String fileName) {
+                         RemoteSpareFeignApi remoteSpareFeignApi,RemoteFileFeignApi remoteFileFeignApi, String fileName,List<String> userNames) {
         this.protectionStandardDetailService = protectionStandardDetailService;
         this.remoteSpareFeignApi = remoteSpareFeignApi;
         this.remoteFileFeignApi = remoteFileFeignApi;
         this.fileName = fileName; // 设置文件名
-
+        this.userNames = userNames;
     }
 
     /**
@@ -193,6 +195,13 @@ public class LaborListener extends AnalysisEventListener<Map<Integer, String>> {
         }else if (name.length() < 2 || name.length() > 4){
             return "姓名通常由2到4个汉字组成,长度不符合要求";
         }
+        if (!userNames.contains(name)){
+            return "该人员在系统中不存在";
+        }
+        long count = userNames.stream().filter(userName -> userName.equals(name)).count();
+        if (count > 1){
+            return "系统中存在重名的人员";
+        }
         // 检查每个字符是否为中文字符
         for (char c : name.toCharArray()) {
             if (!Character.UnicodeBlock.of(c).equals(Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS)) {
@@ -201,7 +210,7 @@ public class LaborListener extends AnalysisEventListener<Map<Integer, String>> {
         }
         // 检查名字是否重复
         if (!processedNames.add(name)) {
-            return "姓名重复";
+            return "每个人员只能填写一行";
         }
 
         for (String key : rowData.keySet()) {

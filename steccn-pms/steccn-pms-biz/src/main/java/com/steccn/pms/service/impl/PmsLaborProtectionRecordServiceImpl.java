@@ -302,7 +302,8 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 throw new BusinessException("文件类型不支持,请使用模板进行导入");
             }
         }
-        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName());
+        List<String> names = FeignOptional.of(oaInfoService::getAllUserName, FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName(),names);
         EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().headRowNumber(1).doRead();
         Map<String, List<Map<String, String>>> stringListMap = laborListener.saveData();
         laborExcelImportDataVO.setSize(stringListMap.size());
@@ -441,9 +442,9 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             }
             result.setColumns(columns);
             //过滤掉excel 中不存在的数据
-            Set<String> names = stringListMap.keySet();
+            Set<String> nameSet = stringListMap.keySet();
             List<Map<String, String>> filteredTableList = tableList.stream()
-                    .filter(column -> names.contains(column.get("userName")))
+                    .filter(column -> nameSet.contains(column.get("userName")))
                     .collect(Collectors.toList());
             filteredTableList.stream().forEach(column -> {
                 String userName = column.get("userName");
@@ -460,7 +461,8 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
 
     @Override
     public ResponseEntity<FileSystemResource> excelImportDataError(PmExcelDTO dto) throws IOException {
-        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getOriginalFilename());
+        List<String> names = FeignOptional.of(oaInfoService::getAllUserName, FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName(),names);
         EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().headRowNumber(1).doRead();
 
         if (laborListener.getErrorSize() > 0) {

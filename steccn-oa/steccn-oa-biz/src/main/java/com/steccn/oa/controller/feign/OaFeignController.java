@@ -86,6 +86,12 @@ public class OaFeignController {
         return R.success(hrmresourceService.getLoginIdById(id));
     }
 
+    @ApiOperation("获取所有用户名称")
+    @GetMapping("/all/user")
+    public R<List<String>> getAllUserName(){
+        return R.success(hrmresourceService.getAllUserName());
+    }
+
     @ApiOperation("根据Id查询用户信息")
     @GetMapping("/user/info/id")
     public R<OaEmpVO> getUserInfoById(@RequestParam("id") Integer id){
