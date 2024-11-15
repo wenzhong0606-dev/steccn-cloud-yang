@@ -52,6 +52,16 @@ public class PmsMonthlyProductionPlanNewRowVO implements Serializable {
     private BigDecimal sum;
 
     /**
+     * 是否下达
+     */
+    private Integer state;
+
+    /**
+     * 关联主键
+     */
+    private Long linkId;
+
+    /**
      * 动态列值
      */
     private List<BigDecimal> value;

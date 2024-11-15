@@ -193,13 +193,11 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
 
     @Override
     public PmsMonthlyProductionPlanNewListVO show(LocalDate monthFirstDay) {
-
         LocalDate monthLastDay = LocalDateUtil.monthLastDay(monthFirstDay);
         PmsMonthlyProductionPlanNewListVO resVo = new PmsMonthlyProductionPlanNewListVO();
         List<PmsMonthlyProductionPlanNewRowVO> dataList = Lists.newArrayList();
         List<String> dateStrList = Lists.newArrayList();
-        LocalDate classDate = LocalDateUtil.getClassDate(LocalDateTime.now(), false);
-        LocalDate end = LocalDateUtil.ge(classDate, monthLastDay) ? monthLastDay : classDate;
+        LocalDate end = monthLastDay;
         //构建动态表头
         List<LocalDate> dateList = LocalDateUtil.getLocalDateByStartEndDate(monthFirstDay, end);
         dateList.forEach(ele -> dateStrList.add(LocalDateTimeUtil.format(ele, "MM-dd")));
@@ -219,9 +217,9 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
             Map<Long, EqpSpareVO> materialIdMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(clientIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<String> clientNameSet = clientMap.values().stream().collect(Collectors.toSet());
-            Set<String> materialClientSet = Sets.newHashSet();
+            Map<String, Long> materialClientMap = Maps.newHashMap();
             dbList.forEach(ele -> {
-                materialClientSet.add(ele.getMaterialId() + ":" + ele.getClientId());
+                materialClientMap.put(ele.getMaterialId() + ":" + ele.getClientId(), ele.getLinkId());
                 datePlanValueMap.put(ele.getMaterialId() + ":" + ele.getClientId() + ":" + ele.getPlanDate(), ele.getPlanQuantity());
                 MapUtil.add(dateSumPlanValueMap, ele.getMaterialId() + ":" + ele.getPlanDate(), ele.getPlanQuantity(), BigDecimalUtil::add);
             });
@@ -241,11 +239,16 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 EqpSpareVO eqpSpareVO = materialIdMap.getOrDefault(materialId, new EqpSpareVO());
                 for (Integer clientId : clientIdList) {
                     String clientName = clientMap.get(clientId);
-                    if (materialClientSet.contains(materialId + ":" + clientId)) {
+                    Long linkId = materialClientMap.get(materialId + ":" + clientId);
+                    if (Objects.nonNull(linkId) || materialClientMap.containsKey(materialId + ":" + clientId)) {
                         PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(1, new TripleDTO<>(clientId, clientName, "生产计划")
                                 , eqpSpareVO, dateList, x -> datePlanValueMap.get(materialId + ":" + clientId + ":" + x));
+                        planRowVo.setState(Objects.nonNull(linkId) ? 1 : 0);
+                        planRowVo.setLinkId(linkId);
                         PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(2, new TripleDTO<>(clientId, clientName, "发货数量")
                                 , eqpSpareVO, dateList, x -> clientValueMap.get(materialId + ":" + clientName + ":" + x));
+                        outRowVo.setState(planRowVo.getState());
+                        outRowVo.setLinkId(linkId);
                         dataList.add(planRowVo);
                         dataList.add(outRowVo);
                     }
