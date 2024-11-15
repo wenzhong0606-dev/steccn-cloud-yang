@@ -467,33 +467,67 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                         }
                     }
                     Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                    for (PmsMaterialRequisitionInfo tmp : detailList) {
+                    Map<Long, BigDecimal> materialNumMap = detailList.stream().collect(Collectors.groupingBy(
+                            PmsMaterialRequisitionInfo::getMaterialId,
+                            Collectors.mapping(
+                                    v -> Objects.isNull(v.getQuantity()) ? BigDecimal.ZERO : v.getQuantity(),
+                                    Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                            )
+                    ));
+                    for(Map.Entry<Long,BigDecimal> entry:materialNumMap.entrySet()){
                         OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
                         oaWorkFlowDetailDataListDTO.setRecordOrder(OaConstant.NO.toString());
                         //组装详情数据
                         List<OaWorkFlowNameValueDTO> workFlowNameValueDTOS = Lists.newArrayList();
-                        EqpSpareVO eqpSpareVO = materialMap.get(tmp.getMaterialId());
+                        EqpSpareVO eqpSpareVO = materialMap.get(entry.getKey());
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLBM, eqpSpareVO.getCode()));
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC, eqpSpareVO.getName()));
                         //领用人
-                        if(StrUtil.isNotBlank(demanderMap.get(tmp.getId()))){
-                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId())));
-                        }
+//                        if(StrUtil.isNotBlank(demanderMap.get(tmp.getId()))){
+//                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId())));
+//                        }
                         if (Objects.nonNull(eqpSpareVO.getSpecifications())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH, eqpSpareVO.getSpecifications()));
                         }
-                        if(Objects.isNull(tmp.getRequireDate())){
-                            tmp.setRequireDate(tmp.getUpdateTime().toLocalDate());
-                        }
-                        workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ, tmp.getRequireDate().toString()));
-                        if (Objects.isNull(tmp.getQuantity())) {
+//                        if(Objects.isNull(tmp.getRequireDate())){
+//                            tmp.setRequireDate(tmp.getUpdateTime().toLocalDate());
+//                        }
+//                        workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ, tmp.getRequireDate().toString()));
+                        if (Objects.isNull(entry.getValue())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, BigDecimal.ZERO.toString()));
                         } else {
-                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, tmp.getQuantity().toString()));
+                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, entry.getValue().toString()));
                         }
                         oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(workFlowNameValueDTOS);
                         workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
                     }
+//                    for (PmsMaterialRequisitionInfo tmp : detailList) {
+//                        OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+//                        oaWorkFlowDetailDataListDTO.setRecordOrder(OaConstant.NO.toString());
+//                        //组装详情数据
+//                        List<OaWorkFlowNameValueDTO> workFlowNameValueDTOS = Lists.newArrayList();
+//                        EqpSpareVO eqpSpareVO = materialMap.get(tmp.getMaterialId());
+//                        workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLBM, eqpSpareVO.getCode()));
+//                        workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC, eqpSpareVO.getName()));
+//                        //领用人
+//                        if(StrUtil.isNotBlank(demanderMap.get(tmp.getId()))){
+//                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId())));
+//                        }
+//                        if (Objects.nonNull(eqpSpareVO.getSpecifications())) {
+//                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH, eqpSpareVO.getSpecifications()));
+//                        }
+//                        if(Objects.isNull(tmp.getRequireDate())){
+//                            tmp.setRequireDate(tmp.getUpdateTime().toLocalDate());
+//                        }
+//                        workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ, tmp.getRequireDate().toString()));
+//                        if (Objects.isNull(tmp.getQuantity())) {
+//                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, BigDecimal.ZERO.toString()));
+//                        } else {
+//                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL, tmp.getQuantity().toString()));
+//                        }
+//                        oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(workFlowNameValueDTOS);
+//                        workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
+//                    }
                     oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
                     detailDataList.add(oaWorkFlowDetailObjDTO);
                     workflowDTO.setDetailData(detailDataList);
