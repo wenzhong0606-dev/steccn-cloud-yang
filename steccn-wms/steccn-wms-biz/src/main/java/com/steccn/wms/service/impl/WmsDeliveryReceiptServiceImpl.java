@@ -693,13 +693,13 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         wmsDeliverySellFlagVO.setContractNotDeliveredFlag(1);
                     }
                 }
-//                Integer integer = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompanyId(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
-//                String name = SecurityUtils.getUser().getName();
-//                ResUserVO resUserVO = FeignOptional.of(() -> remoteSaleFeignApi.salesUserInfo(name), FeignConstant.STECCN_SALES_NAME).get();
-//                if (resUserVO.getLogisticsCompanyId().equals(integer)){
-//                    wmsDeliverySellFlagVO.setCompanyFlag(1);
-//                }
-
+                Integer integer = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompanyId(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+                if (Objects.nonNull(SecurityUtils.getUser())) {
+                    ResUserVO resUserVO = FeignOptional.of(() -> remoteSaleFeignApi.salesUserInfo(SecurityUtils.getUser().getName()), FeignConstant.STECCN_SALES_NAME).get();
+                    if (Objects.nonNull(resUserVO) && Objects.equals(resUserVO.getLogisticsCompanyId(), integer)) {
+                        wmsDeliverySellFlagVO.setCompanyFlag(1);
+                    }
+                }
             }
         } catch (Exception e) {
             throw new BusinessException("物流单不存在");
