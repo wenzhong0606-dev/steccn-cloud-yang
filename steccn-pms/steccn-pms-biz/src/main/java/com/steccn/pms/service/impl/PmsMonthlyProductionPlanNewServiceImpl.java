@@ -27,6 +27,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsMonthlyProductionPlanNew;
 import com.steccn.pms.mapper.PmsMonthlyProductionPlanNewMapper;
 import com.steccn.pms.service.PmsMonthlyProductionPlanNewService;
+import com.steccn.pms.service.PmsMonthlyProductionPlanService;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanNewListVO;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanNewRowVO;
@@ -38,13 +39,11 @@ import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,6 +62,8 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     private final Redisson redisson;
     private final PmsReportWorkService pmsReportWorkService;
     private final RemoteWmsDeliveryReceiptFeignApi remoteWmsDeliveryReceiptFeignApi;
+    @Resource
+    private PmsMonthlyProductionPlanService pmsMonthlyProductionPlanService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -124,7 +125,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean release(Long linkId, String date, Integer clientId, Long materialId) {
-        Assert.notNull(linkId, "关联月度计划主键为空");
+        if (Objects.isNull(linkId)) return Boolean.FALSE;
         LocalDate monthFirstDay;
         try {
             date = date + "-01";
@@ -153,14 +154,13 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
         Assert.notNull(value, "更新数据集为空");
         //获取当前月的最后一天
         LocalDate monthLastDay = LocalDateUtil.monthLastDay(monthFirstDay);
-        judgeRelease(clientId, materialId, monthFirstDay, monthLastDay, "已下达状态下不可以编辑");
         //可能是新增数据、可能是更新数据
         List<PmsMonthlyProductionPlanNew> dbList = list(new LambdaQueryWrapper<PmsMonthlyProductionPlanNew>()
                 .eq(PmsMonthlyProductionPlanNew::getMaterialId, materialId)
                 .eq(PmsMonthlyProductionPlanNew::getClientId, clientId)
                 .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
                 .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay));
-        Assert.notNull(dbList, "本月度暂无此物料与客户数据");
+        Assert.notEmpty(dbList, "本月度暂无此物料与客户数据");
         //将日期从list转换成map
         Map<LocalDate, BigDecimal> valueMap = value.stream().filter(ele -> LocalDateUtil.isRange(ele.getField1(), monthFirstDay, monthLastDay, true, true)).collect(Collectors.toMap(TupleDTO::getField1, TupleDTO::getField2));
         //编辑
@@ -171,6 +171,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
         });
         //新增
         String client = dbList.get(0).getClient();
+        Long linkId = dbList.get(0).getLinkId();
         valueMap.forEach((k, v) -> {
             PmsMonthlyProductionPlanNew model = new PmsMonthlyProductionPlanNew();
             model.setMaterialId(materialId);
@@ -179,9 +180,15 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
             model.setClient(client);
             model.setPlanQuantity(v);
             model.setState(0);
+            model.setLinkId(linkId);
             dbList.add(model);
         });
-        return saveOrUpdateBatch(dbList);
+        boolean flag = saveOrUpdateBatch(dbList);
+        //需要更新计划数量
+        if (Objects.nonNull(linkId)) {
+            pmsMonthlyProductionPlanService.editPlanQuantity(linkId, BigDecimalUtil.sum(dbList.stream().map(PmsMonthlyProductionPlanNew::getPlanQuantity).collect(Collectors.toList())));
+        }
+        return flag;
     }
 
     @Override
@@ -235,9 +242,9 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 for (Integer clientId : clientIdList) {
                     String clientName = clientMap.get(clientId);
                     if (materialClientSet.contains(materialId + ":" + clientId)) {
-                        PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(new TripleDTO<>(clientId, clientName, "生产计划")
+                        PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(1, new TripleDTO<>(clientId, clientName, "生产计划")
                                 , eqpSpareVO, dateList, x -> datePlanValueMap.get(materialId + ":" + clientId + ":" + x));
-                        PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(new TripleDTO<>(clientId, clientName, "发货数量")
+                        PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(2, new TripleDTO<>(clientId, clientName, "发货数量")
                                 , eqpSpareVO, dateList, x -> clientValueMap.get(materialId + ":" + clientName + ":" + x));
                         dataList.add(planRowVo);
                         dataList.add(outRowVo);
@@ -245,11 +252,11 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 }
                 //获取物料的期初库存
                 //获取物料的计划总数
-                dataList.add(getSummary(new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.get(materialId + ":" + x)));
+                dataList.add(getSummary(3, new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.get(materialId + ":" + x)));
                 //获取物料的发货总数
-                dataList.add(getSummary(new TripleDTO<>(-1, "发货总数", "发货总数"), eqpSpareVO, dateList, x -> clientValueSumMap.get(materialId + ":" + x)));
+                dataList.add(getSummary(4, new TripleDTO<>(-1, "发货总数", "发货总数"), eqpSpareVO, dateList, x -> clientValueSumMap.get(materialId + ":" + x)));
                 //获取物料的入库总数
-                dataList.add(getSummary(new TripleDTO<>(-1, "入库总数", "入库总数"), eqpSpareVO, dateList, x -> inStorageMaterialMap.get(x + "_" + materialId)));
+                dataList.add(getSummary(6, new TripleDTO<>(-1, "入库总数", "入库总数"), eqpSpareVO, dateList, x -> inStorageMaterialMap.get(x + "_" + materialId)));
             }
             resVo.setDataList(dataList);
         }
@@ -259,17 +266,19 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     /**
      * 获取汇总合计
      *
+     * @param type       类型 生产计划1 发货数量2 计划总数3 发货总数4 期初库存5 入库总数6
      * @param param      指标名称
      * @param eqpSpareVO 物料信息
      * @param dateList   日期集合
      * @param function   取值方法表达式
      * @return
      */
-    private PmsMonthlyProductionPlanNewRowVO getSummary(TripleDTO<Integer, String, String> param,
+    private PmsMonthlyProductionPlanNewRowVO getSummary(Integer type, TripleDTO<Integer, String, String> param,
                                                         EqpSpareVO eqpSpareVO,
                                                         List<LocalDate> dateList,
                                                         Function<LocalDate, BigDecimal> function) {
         PmsMonthlyProductionPlanNewRowVO rowVo = new PmsMonthlyProductionPlanNewRowVO();
+        rowVo.setType(type);
         rowVo.setMaterialId(eqpSpareVO.getId());
         rowVo.setMaterialCode(eqpSpareVO.getCode());
         rowVo.setMaterialName(eqpSpareVO.getName());

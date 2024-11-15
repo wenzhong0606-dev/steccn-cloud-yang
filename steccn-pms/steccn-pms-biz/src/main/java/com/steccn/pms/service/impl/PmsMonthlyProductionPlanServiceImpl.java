@@ -23,8 +23,11 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsMonthlyProductionPlanMapper;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,9 +41,9 @@ import java.util.stream.Collectors;
 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyProductionPlanMapper, PmsMonthlyProductionPlan>
     implements PmsMonthlyProductionPlanService{
-
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final PmsMonthlyProductionPlanCraftService pmsMonthlyProductionPlanCraftService;
@@ -53,6 +56,9 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
 
     private final PmsProduceOrderService pmsProduceOrderService;
 
+    @Resource
+    private PmsMonthlyProductionPlanNewService pmsMonthlyProductionPlanNewService;
+
     @Override
     public Boolean add(PmsMonthlyProductionPlanDTO dto) {
         PmsMonthlyProductionPlan pmsMonthlyProductionPlan = BeanUtil.copyProperties(dto, PmsMonthlyProductionPlan.class);
@@ -63,6 +69,12 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
         }
         if (CollUtil.isNotEmpty(dto.getMaterialList())) {
             pmsMonthlyProductionPlanBomService.saveBom(dto.getMaterialList(), pmsMonthlyProductionPlan.getId());
+        }
+        //关联转月度计划New
+        try {
+            pmsMonthlyProductionPlanNewService.release(pmsMonthlyProductionPlan.getId(), dto.getMonthly(), dto.getClientId(), dto.getMaterialId());
+        } catch (RuntimeException e) {
+            log.error("关联转月度计划New Error -> {}", e.getMessage());
         }
         return Boolean.TRUE;
     }
@@ -113,6 +125,16 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
             pmsMonthlyProductionPlanBomService.remove(new LambdaQueryWrapper<PmsMonthlyProductionPlanBom>().eq(PmsMonthlyProductionPlanBom::getMonthlyProductionPlanId, dto.getId()));
         }
         return updateById(pmsMonthlyProductionPlan);
+    }
+
+    @Override
+    public Boolean editPlanQuantity(Long id, BigDecimal newQuantity) {
+        Assert.notNull(id, "主键不能为空");
+        Assert.notNull(newQuantity, "更新后的计划数量不能为空");
+        PmsMonthlyProductionPlan plan = new PmsMonthlyProductionPlan();
+        plan.setId(id);
+        plan.setPlannedQuantity(newQuantity);
+        return updateById(plan);
     }
 
     @Override

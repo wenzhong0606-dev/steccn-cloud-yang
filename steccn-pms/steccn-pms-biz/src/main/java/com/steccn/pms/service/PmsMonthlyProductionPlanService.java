@@ -8,6 +8,8 @@ import com.steccn.pms.dto.PmsMonthlyProductionPlanDTO;
 import com.steccn.pms.vo.PmsMonthlyProductionPlanVO;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 /**
 * @author 34872
 * @description 针对表【pms_monthly_production_plan】的数据库操作Service
@@ -19,6 +21,15 @@ public interface PmsMonthlyProductionPlanService extends IService<PmsMonthlyProd
     Boolean add(PmsMonthlyProductionPlanDTO dto);
 
     Boolean edit(PmsMonthlyProductionPlanDTO dto);
+
+    /**
+     * 更新计划数量
+     *
+     * @param id          主键
+     * @param newQuantity 计划数量
+     * @return
+     */
+    Boolean editPlanQuantity(Long id, BigDecimal newQuantity);
 
     Boolean order(PmsMonthlyProductionPlanDTO dto);
 

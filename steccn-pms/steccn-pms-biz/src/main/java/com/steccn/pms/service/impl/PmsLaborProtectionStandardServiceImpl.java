@@ -300,7 +300,8 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
         List<MesUserInfoVO> userInfos = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(employeeId, null)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         //开始过滤
         if(StrUtil.isNotBlank(dto.getUserName())){
-            userInfos = userInfos.stream().filter(v->v.getName().contains(dto.getUserName())).collect(Collectors.toList());
+            List<String> nameList = Arrays.asList(dto.getUserName().split("\\s+"));
+            userInfos = userInfos.stream().filter(v->nameList.contains(v.getName())).collect(Collectors.toList());
         }
         if(CollUtil.isNotEmpty(dto.getOfficeId())){
             userInfos = userInfos.stream().filter(v->dto.getOfficeId().contains(v.getDepCode())).collect(Collectors.toList());
