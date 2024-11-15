@@ -310,7 +310,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
         if (laborListener.getErrorSize() > 0) {
             laborExcelImportDataVO.setSuccessFlag(Boolean.FALSE);
             laborExcelImportDataVO.setSize(laborListener.getErrorSize());
-        }else {
+        }else if (stringListMap.size() >0){
             laborExcelImportDataVO.setSize(stringListMap.size());
             //处理数据
             //需要拿到所有配置的数据
@@ -319,7 +319,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             List<PmsLaborProtectionStandardDetail> standardDetailList = pmsLaborProtectionStandardDetailService.list();
 
             //处理部门和岗位
-            //拿到标准中的所有部门了岗位
+            //拿到标准中的所有部门岗位
             List<PmsLaborProtectionStandard> finalStandardList = standardList;
             Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(finalStandardList.stream().flatMap(eq -> eq.getOfficeId().stream()).collect(Collectors.toSet())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<String> availPost = Sets.newHashSet();
@@ -440,15 +440,19 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 tableList.add(column);
             }
             result.setColumns(columns);
-
-            tableList.stream().forEach(column -> {
+            //过滤掉excel 中不存在的数据
+            Set<String> names = stringListMap.keySet();
+            List<Map<String, String>> filteredTableList = tableList.stream()
+                    .filter(column -> names.contains(column.get("userName")))
+                    .collect(Collectors.toList());
+            filteredTableList.stream().forEach(column -> {
                 String userName = column.get("userName");
                 List<Map<String, String>> list = stringListMap.get(userName);
                 if (Objects.nonNull(list)) {
                     list.forEach(column::putAll);
                 }
             });
-            result.setTableList(tableList);
+            result.setTableList(filteredTableList);
             laborExcelImportDataVO.setTableDataDTO(result);
         }
         return laborExcelImportDataVO;
