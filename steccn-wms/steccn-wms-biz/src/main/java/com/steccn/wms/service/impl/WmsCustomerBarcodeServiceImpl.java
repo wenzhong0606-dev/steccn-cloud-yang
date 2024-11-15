@@ -259,13 +259,13 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
                      if (state.equals("已反馈")) {
                          wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
                      }
-                     KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
-                     ksLogisticsOrderDTO.setName(salesOrder);
-                     Integer integer = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompanyId(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
-                     ResUserVO resUserVO = FeignOptional.of(() -> remoteSaleFeignApi.salesUserInfo(SecurityUtils.getUser().getName()), FeignConstant.STECCN_SALES_NAME).get();
-                     if (resUserVO.getLogisticsCompanyId().equals(integer)){
-                        wmsDeliverySellFlagVO.setCompanyFlag(1);
-                     }
+//                     KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+//                     ksLogisticsOrderDTO.setName(salesOrder);
+//                     Integer integer = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCompanyId(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+//                     ResUserVO resUserVO = FeignOptional.of(() -> remoteSaleFeignApi.salesUserInfo(SecurityUtils.getUser().getName()), FeignConstant.STECCN_SALES_NAME).get();
+//                     if (resUserVO.getLogisticsCompanyId().equals(integer)){
+//                        wmsDeliverySellFlagVO.setCompanyFlag(1);
+//                     }
                  }
              } catch (Exception e) {
                  throw new BusinessException("物流单不存在");
