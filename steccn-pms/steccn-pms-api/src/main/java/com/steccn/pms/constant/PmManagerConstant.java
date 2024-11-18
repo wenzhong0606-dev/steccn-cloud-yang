@@ -477,6 +477,11 @@ public interface PmManagerConstant {
     String WORKFLOW_REQ_TABLE_NAME = "formtable_main_103_dt1";
 
     /**
+     * 详情表名
+     */
+    String WORKFLOW_REQ_TABLE_NAME2 = "formtable_main_103_dt2";
+
+    /**
      * 物料编码
      */
     String WORKFLOW_WLBM = "wlbm";
