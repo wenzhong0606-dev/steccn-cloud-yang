@@ -25,6 +25,7 @@ import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -76,6 +77,8 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
         } catch (RuntimeException e) {
             log.error("关联转月度计划New Error -> {}", e.getMessage());
         }
+        dto.setId(pmsMonthlyProductionPlan.getId());
+        this.order(dto);
         return Boolean.TRUE;
     }
 
@@ -138,6 +141,7 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean order(PmsMonthlyProductionPlanDTO dto) {
         PmsMonthlyProductionPlan plan = getById(dto.getId());
         Assert.isTrue(0 == plan.getState() || 2 == plan.getState(),"当前计划状态不可下达");
