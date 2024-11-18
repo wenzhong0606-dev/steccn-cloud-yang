@@ -38,5 +38,5 @@ public interface PmsLaborProtectionRecordService extends IService<PmsLaborProtec
     LaborExcelImportDataVO excelImportData(PmExcelDTO dto) throws IOException;
 
 
-    ResponseEntity<FileSystemResource> excelImportDataError(PmExcelDTO dto) throws IOException;
+    void excelImportDataError(PmExcelDTO dto,HttpServletResponse response) throws IOException;
 }

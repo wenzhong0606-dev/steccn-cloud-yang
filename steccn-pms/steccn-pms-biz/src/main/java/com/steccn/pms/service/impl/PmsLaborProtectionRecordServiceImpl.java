@@ -60,8 +60,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -248,7 +250,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 "4）该人员在系统中不存在\n" +
                 "\n" +
                 "5）系统中存在重名的人员\n" +
-                "6）每个人员只能填写一行","姓名"));
+                "6）每个人员只能填写一行", "姓名"));
         materialIdList.forEach(tmp -> {
 
             EqpSpareVO spareVO = spareMap.get(tmp);
@@ -283,9 +285,9 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                     "4）该人员在系统中不存在\n" +
                     "\n" +
                     "5）系统中存在重名的人员\n" +
-                    "6）每个人员只能填写一行",materialName.toString()));
+                    "6）每个人员只能填写一行", materialName.toString()));
         });
-        EasyExcel.write(response.getOutputStream()).sheet("sheet1").head( head).doWrite(new ArrayList<>());
+        EasyExcel.write(response.getOutputStream()).sheet("sheet1").head(head).doWrite(new ArrayList<>());
 
     }
 
@@ -303,7 +305,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             }
         }
         List<String> names = FeignOptional.of(oaInfoService::getAllUserName, FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName(),names);
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName(), names);
         EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().headRowNumber(1).doRead();
         Map<String, List<Map<String, String>>> stringListMap = laborListener.saveData();
         laborExcelImportDataVO.setSize(stringListMap.size());
@@ -311,7 +313,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
         if (laborListener.getErrorSize() > 0) {
             laborExcelImportDataVO.setSuccessFlag(Boolean.FALSE);
             laborExcelImportDataVO.setSize(laborListener.getErrorSize());
-        }else if (stringListMap.size() >0){
+        } else if (stringListMap.size() > 0) {
             laborExcelImportDataVO.setSize(stringListMap.size());
             //处理数据
             //需要拿到所有配置的数据
@@ -460,36 +462,43 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     }
 
     @Override
-    public ResponseEntity<FileSystemResource> excelImportDataError(PmExcelDTO dto) throws IOException {
+    public void excelImportDataError(PmExcelDTO dto,HttpServletResponse response) throws IOException {
         List<String> names = FeignOptional.of(oaInfoService::getAllUserName, FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName(),names);
+        LaborListener laborListener = new LaborListener(pmsLaborProtectionStandardDetailService, remoteSpareFeignApi, remoteFileFeignApi, dto.getFile().getName(), names);
         EasyExcel.read(dto.getFile().getInputStream(), laborListener).excelType(ExcelTypeEnum.XLSX).sheet().headRowNumber(1).doRead();
 
         if (laborListener.getErrorSize() > 0) {
             File errorFile = laborListener.writeErrorFile(laborListener.getErrorRows());
             if (errorFile != null) {
                 try {
-                    // 返回错误文件给前端
-                    FileSystemResource resource = new FileSystemResource(errorFile);
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + errorFile.getName());
-                    return ResponseEntity.ok()
-                            .headers(headers)
-                            .contentLength(errorFile.length())
-                            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                            .body(resource);
+                    response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                    response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + URLEncoder.encode(errorFile.getName(), String.valueOf(StandardCharsets.UTF_8)) + "\"");
+                    response.setContentLengthLong(errorFile.length());
+
+                    FileInputStream fileInputStream = new FileInputStream(errorFile);
+                    OutputStream outputStream = response.getOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    fileInputStream.close();
+                    outputStream.flush();
                 } catch (Exception e) {
                     throw new SteccnRuntimeException("文件处理失败");
                 } finally {
-                    errorFile.delete(); // 删除临时文件
+                    if (!errorFile.delete()) {
+                        errorFile.deleteOnExit();
+                    }
                 }
+            } else {
+                throw new SteccnRuntimeException("生成错误文件失败");
             }
+        } else {
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
         }
-
-        return null;
     }
 }
-
 
 
 

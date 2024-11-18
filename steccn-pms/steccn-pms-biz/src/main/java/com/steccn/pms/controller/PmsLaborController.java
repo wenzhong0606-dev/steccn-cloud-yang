@@ -115,8 +115,8 @@ public class PmsLaborController {
 
     @ApiModelProperty("Excel导入错误文件")
     @PostMapping("/download/excelImportDataError")
-    public void excelImportDataError(PmExcelDTO dto) throws IOException {
-        pmsLaborProtectionRecordService.excelImportDataError(dto);
+    public void excelImportDataError(PmExcelDTO dto,HttpServletResponse response) throws IOException {
+        pmsLaborProtectionRecordService.excelImportDataError(dto,response);
     }
 
 
