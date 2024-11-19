@@ -11,6 +11,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -73,12 +74,15 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
         }
         //关联转月度计划New
         try {
-            pmsMonthlyProductionPlanNewService.release(pmsMonthlyProductionPlan.getId(), dto.getMonthly(), dto.getClientId(), dto.getMaterialId());
+            if (MpConstant.YES.equals(dto.getState())) {
+                pmsMonthlyProductionPlanNewService.release(pmsMonthlyProductionPlan.getId(), dto.getMonthly(), dto.getClientId(), dto.getMaterialId());
+                //从月度计划过来的直接下达
+                dto.setId(pmsMonthlyProductionPlan.getId());
+                this.order(dto);
+            }
         } catch (RuntimeException e) {
             log.error("关联转月度计划New Error -> {}", e.getMessage());
         }
-        dto.setId(pmsMonthlyProductionPlan.getId());
-        this.order(dto);
         return Boolean.TRUE;
     }
 
