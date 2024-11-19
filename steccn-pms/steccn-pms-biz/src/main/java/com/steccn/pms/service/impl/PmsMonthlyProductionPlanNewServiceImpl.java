@@ -206,13 +206,12 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
         //获取当前月的最后一天
         List<PmsMonthlyProductionPlanNew> dbList = list(new LambdaQueryWrapper<PmsMonthlyProductionPlanNew>()
                 .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
-                .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay)
-                .orderByDesc(PmsMonthlyProductionPlanNew::getCreateTime));
+                .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay));
         Map<String, BigDecimal> datePlanValueMap = Maps.newHashMap();
         Map<String, BigDecimal> dateSumPlanValueMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(dbList)) {
-            List<Long> materialIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
-            List<Integer> clientIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
+            List<Long> materialIdList = dbList.stream().filter(v -> monthFirstDay.equals(v.getPlanDate())).sorted((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime())).map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
+            List<Integer> clientIdList = dbList.stream().filter(v -> monthFirstDay.equals(v.getPlanDate())).sorted((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime())).map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
             Set<Integer> clientIdSet = Sets.newHashSet(clientIdList);
             Map<Long, EqpSpareVO> materialIdMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(clientIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -242,11 +241,11 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                     Long linkId = materialClientMap.get(materialId + ":" + clientId);
                     if (Objects.nonNull(linkId) || materialClientMap.containsKey(materialId + ":" + clientId)) {
                         PmsMonthlyProductionPlanNewRowVO planRowVo = getSummary(1, new TripleDTO<>(clientId, clientName, "生产计划")
-                                , eqpSpareVO, dateList, x -> datePlanValueMap.get(materialId + ":" + clientId + ":" + x));
+                                , eqpSpareVO, dateList, x -> datePlanValueMap.getOrDefault(materialId + ":" + clientId + ":" + x, BigDecimal.ZERO));
                         planRowVo.setState(Objects.nonNull(linkId) ? 1 : 0);
                         planRowVo.setLinkId(linkId);
                         PmsMonthlyProductionPlanNewRowVO outRowVo = getSummary(2, new TripleDTO<>(clientId, clientName, "发货数量")
-                                , eqpSpareVO, dateList, x -> clientValueMap.get(materialId + ":" + clientName + ":" + x));
+                                , eqpSpareVO, dateList, x -> clientValueMap.getOrDefault(materialId + ":" + clientName + ":" + x, BigDecimal.ZERO));
                         outRowVo.setState(planRowVo.getState());
                         outRowVo.setLinkId(linkId);
                         dataList.add(planRowVo);
@@ -255,7 +254,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 }
                 //获取物料的期初库存
                 //获取物料的计划总数
-                dataList.add(getSummary(3, new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.get(materialId + ":" + x)));
+                dataList.add(getSummary(3, new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.getOrDefault(materialId + ":" + x, BigDecimal.ZERO)));
                 //获取物料的发货总数
                 dataList.add(getSummary(4, new TripleDTO<>(-1, "发货总数", "发货总数"), eqpSpareVO, dateList, x -> clientValueSumMap.get(materialId + ":" + x)));
                 //获取物料的入库总数
