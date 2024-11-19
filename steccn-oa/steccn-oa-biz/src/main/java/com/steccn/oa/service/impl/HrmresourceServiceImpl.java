@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.oa.constant.OaConstant;
@@ -305,6 +306,27 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
             });
 
         }
+        return oaUserVOS;
+    }
+
+    @Override
+    public List<OaUserVO> getAllNormalOaUser() {
+        List<OaUserVO> oaUserVOS = hrmresourceMapper.selectJoinList(OaUserVO.class,
+                new MPJLambdaWrapper<OaUserVO>()
+                        .selectAs(Hrmresource::getId, OaUserVO::getId)
+                        .selectAs(Hrmresource::getLastname, OaUserVO::getName)
+                        .selectAs(Hrmresource::getJobtitle, OaUserVO::getJobTitleId)
+                        .selectAs(Hrmresource::getLoginid,OaUserVO::getUserName)
+                        .selectAs(Hrmjobtitles::getJobtitlename, OaUserVO::getJobTitleName)
+                        .selectAs(Hrmresource::getDepartmentid, OaUserVO::getDepartmentId)
+                        .selectAs(Hrmresource::getWorkcode,OaUserVO::getWorkCode)
+                        .selectAs(Hrmresource::getStatus,OaUserVO::getStatus)
+                        .selectAs(Hrmdepartment::getDepartmentname, OaUserVO::getDepartmentName)
+                        .leftJoin(Hrmjobtitles.class, Hrmjobtitles::getId, Hrmresource::getJobtitle)
+                        .leftJoin(Hrmdepartment.class, Hrmdepartment::getId, Hrmresource::getDepartmentid)
+                        .notIn(Hrmresource::getStatus, Sets.newHashSet(4,5,6))
+//                        .ne(Hrmresource::getStatus, OaConstant.NUM_5)
+                        .isNull(Hrmjobtitles::getCanceled));
         return oaUserVOS;
     }
 

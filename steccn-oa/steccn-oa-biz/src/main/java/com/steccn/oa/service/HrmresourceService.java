@@ -114,6 +114,12 @@ public interface HrmresourceService extends IService<Hrmresource> {
     List<OaUserVO> getAllOaUser(TripleDTO<LocalDateTime,LocalDateTime, Set<String>> dto);
 
     /**
+     * 获取所有oa在职用户
+     * @return
+     */
+    List<OaUserVO> getAllNormalOaUser();
+
+    /**
      * 根据登录名获取oa信息
      * @param loginCode
      * @return
