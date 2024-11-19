@@ -73,7 +73,11 @@ public class PmsMonthlyProductionPlanDTO extends BasePageDTO {
 
     private Long minimumPackingQuantityUnit;
 
-
+    /**
+     * source 0 原来的创建状态
+     * source 1 从新的月度计划来的
+     */
+    private Integer source;
 
     @Valid
     @ApiModelProperty("物料信息")

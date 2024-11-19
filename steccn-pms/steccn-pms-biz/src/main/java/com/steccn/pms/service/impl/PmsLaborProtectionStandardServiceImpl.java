@@ -212,7 +212,9 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
             for(int i = 0; i < tmp.getOfficeId().size();i++){
                 SysOfficeVO officeTmp = officeMap.get(tmp.getOfficeId().get(i));
                 //如果是岗位则显示部门
-                System.out.println(tmp.getOfficeId());
+                if(Objects.isNull(officeTmp)){
+                    continue;
+                }
                 if(officeTmp.getOfficeType().equals("6")&&Objects.nonNull(postDepMap.get(officeTmp.getOfficeCode()))){
                     officeName.append(postDepMap.get(officeTmp.getOfficeCode()).getOfficeName());
                     officeName.append("/");
