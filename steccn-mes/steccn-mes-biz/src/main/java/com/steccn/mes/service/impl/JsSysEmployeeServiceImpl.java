@@ -2,6 +2,8 @@ package com.steccn.mes.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -21,7 +23,10 @@ import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaUserVO;
+import com.steccn.platform.dto.MesOfficeDTO;
+import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.dto.SysConfigurationDTO;
+import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -48,6 +53,7 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     private final OaInfoService oaInfoService;
     private final JsSysOfficeService jsSysOfficeService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final RemoteMesFeignApi remoteMesFeignApi;
 
     @Override
     public Map<String, List<String>> getPostUser(Set<String> postCode) {
@@ -113,15 +119,22 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String synOaUser() {
+        StringBuilder result = new StringBuilder();
         List<OaUserVO> oaUserList = oaInfoService.getNormalUser().getData();
+        List<OaUserVO> noNameList = oaUserList.stream().filter(v->Objects.isNull(v.getUserName())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(noNameList)){
+            for(OaUserVO tmp:noNameList){
+                result.append(tmp.getName()+"用户名为空;");
+            }
+        }
+
+        oaUserList = oaUserList.stream().filter(v->Objects.nonNull(v.getUserName())).collect(Collectors.toList());
         List<JsSysUser> mesUser = jsSysUserService.list(new LambdaQueryWrapper<JsSysUser>()
                         .select(JsSysUser::getLoginCode,JsSysUser::getUserCode,JsSysUser::getUserName)
                         .eq(JsSysUser::getStatus, OaConstant.NO.toString()));
         Map<String, String> mesUserMap = mesUser.stream().collect(Collectors.toMap(JsSysUser::getLoginCode, JsSysUser::getUserCode));
         //mes中已经有的人
         List<String> usedMesUser = Lists.newArrayList();
-        //mes中没有的人
-        List<String> unUsedMesUser = Lists.newArrayList();
         List<JsSysEmployee> mesEmployeeList = jsSysEmployeeMapper.selectList(new LambdaQueryWrapper<JsSysEmployee>()
                 .select(JsSysEmployee::getEmpCode,JsSysEmployee::getOfficeCode,JsSysEmployee::getOfficeName)
                 .in(JsSysEmployee::getEmpCode, mesUser.stream().map(JsSysUser::getUserCode).collect(Collectors.toSet())));
@@ -129,7 +142,6 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
         //获取部门数据
         List<JsSysOffice> officeList = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
                 .eq(JsSysOffice::getStatus, OaConstant.NO));
-        Map<String, String> officeMap = officeList.stream().collect(Collectors.toMap(JsSysOffice::getOfficeCode, JsSysOffice::getOfficeName));
         //获取oa部门对应数据
         List<SysConfigurationDTO> oaMesDept = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByType("OA_MES_DEPT"), FeignConstant.STECCN_MES_SERVICE_NAME).get();
         Map<String, String> oaMesDeptMap = oaMesDept.stream().collect(Collectors.toMap(SysConfigurationDTO::getContent, SysConfigurationDTO::getRefContent));
@@ -139,12 +151,69 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
             //先看mes中是否有人
             String userCode = mesUserMap.get(oaUser.getUserName());
             if(StrUtil.isBlank(userCode)){
-                unUsedMesUser.add(oaUser.getUserName());
+                //mes中没有，新增
+                MesUserDTO mesUserDTO = new MesUserDTO();
+                mesUserDTO.setLoginCode(oaUser.getUserName());
+                mesUserDTO.setUserName(oaUser.getName());
+                mesUserDTO.setIsNewRecord(true);
+                String oaOfficeId = oaMesDeptMap.get(oaUser.getDepartmentId().toString());
+                JsSysOffice officeTmp = officeList.stream().filter(v -> v.getParentCode().equals(oaOfficeId)&&v.getOfficeName().equals("岗位")).findFirst().orElse(null);
+                if(Objects.isNull(officeTmp)){
+                    result.append(oaOfficeId+"不存在;");
+                    continue;
+                }
+                JsSysOffice officeTmp2 = officeList.stream().filter(v -> v.getParentCode().equals(officeTmp.getOfficeCode())
+                        && v.getOfficeName().equals(oaUser.getJobTitleName())).findFirst().orElse(null);
+                if(Objects.isNull(officeTmp2)){
+                    result.append(oaOfficeId+"部门下"+oaUser.getJobTitleName()+"不存在;");
+                    continue;
+                }
+                mesUserDTO.setOfficeCode(officeTmp2.getOfficeCode());
+                mesUserDTO.setOfficeName(officeTmp2.getOfficeName());
+                log.debug(oaUser.getUserName());
+//                String post = HttpUtil.post("http://192.168.16.252:8080/web/user/save", JSONObject.toJSONString(mesUserDTO));
+//                String s = remoteMesFeignApi.saveUser(mesUserDTO);
+                result.append(oaUser.getUserName()+"mes中不存在该用户");
             }else {
                 usedMesUser.add(userCode);
+                //对比officeCode
+                String officeCode = mesEmployeeMap.get(userCode);
+                String oaOfficeId = oaMesDeptMap.get(oaUser.getDepartmentId().toString());
+                JsSysOffice officeTmp = officeList.stream().filter(v -> v.getParentCode().equals(oaOfficeId)&&v.getOfficeName().equals("岗位")).findFirst().orElse(null);
+                if(Objects.isNull(officeTmp)){
+                    result.append("部门"+oaUser.getDepartmentId().toString()+"不存在");
+                    result.append("部门"+ oaOfficeId+"不存在;");
+                    continue;
+                }
+                JsSysOffice officeTmp2 = officeList.stream().filter(v -> v.getParentCode().equals(officeTmp.getOfficeCode())
+                        && v.getOfficeName().equals(oaUser.getJobTitleName())).findFirst().orElse(null);
+                if(Objects.isNull(officeTmp2)){
+                    result.append(oaOfficeId+"部门下"+oaUser.getJobTitleName()+"不存在;");
+                    continue;
+                }
+                log.debug(userCode);
+                if(!officeCode.equals(officeTmp2.getOfficeCode())){
+                    JsSysEmployee employeeTmp = new JsSysEmployee();
+                    employeeTmp.setOfficeCode(officeTmp2.getOfficeCode());
+                    employeeTmp.setOfficeName(officeTmp2.getOfficeName());
+                    jsSysEmployeeMapper.update(employeeTmp,new LambdaQueryWrapper<JsSysEmployee>().eq(JsSysEmployee::getEmpCode,userCode));
+                }
+
             }
+
         }
-        return "";
+        mesUser = mesUser.stream().filter(v->!usedMesUser.contains(v.getUserCode())).collect(Collectors.toList());
+        for(JsSysUser user:mesUser){
+            if(user.getUserCode().equals("system")||user.getUserCode().equals("admin")){
+                continue;
+            }
+            jsSysEmployeeMapper.delete(new LambdaQueryWrapper<JsSysEmployee>().eq(JsSysEmployee::getEmpCode,user.getUserCode()));
+            JsSysUser userTmp = new JsSysUser();
+            userTmp.setStatus(OaConstant.NUM_1.toString());
+            jsSysUserService.update(userTmp,new LambdaQueryWrapper<JsSysUser>()
+                    .eq(JsSysUser::getUserCode,user.getUserCode()));
+        }
+        return result.toString();
     }
 }
 
