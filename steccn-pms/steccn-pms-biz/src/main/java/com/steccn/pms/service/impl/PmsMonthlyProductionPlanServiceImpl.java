@@ -74,7 +74,7 @@ public class PmsMonthlyProductionPlanServiceImpl extends ServiceImpl<PmsMonthlyP
         }
         //关联转月度计划New
         try {
-            if (MpConstant.YES.equals(dto.getState())) {
+            if (MpConstant.YES.equals(dto.getSource())) {
                 pmsMonthlyProductionPlanNewService.release(pmsMonthlyProductionPlan.getId(), dto.getMonthly(), dto.getClientId(), dto.getMaterialId());
                 //从月度计划过来的直接下达
                 dto.setId(pmsMonthlyProductionPlan.getId());
