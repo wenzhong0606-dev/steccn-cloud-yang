@@ -12,16 +12,22 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.mes.domain.JsSysEmployee;
 import com.steccn.mes.domain.JsSysOffice;
+import com.steccn.mes.domain.JsSysUser;
 import com.steccn.mes.service.JsSysEmployeeService;
 import com.steccn.mes.mapper.JsSysEmployeeMapper;
 import com.steccn.mes.service.JsSysOfficeService;
+import com.steccn.mes.service.JsSysUserService;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaUserVO;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -37,9 +43,11 @@ import java.util.stream.Collectors;
 public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, JsSysEmployee>
     implements JsSysEmployeeService{
     private final JsSysEmployeeMapper jsSysEmployeeMapper;
+    private final JsSysUserService jsSysUserService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final OaInfoService oaInfoService;
     private final JsSysOfficeService jsSysOfficeService;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
     public Map<String, List<String>> getPostUser(Set<String> postCode) {
@@ -100,6 +108,43 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
             }
         }
         return results;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String synOaUser() {
+        List<OaUserVO> oaUserList = oaInfoService.getNormalUser().getData();
+        List<JsSysUser> mesUser = jsSysUserService.list(new LambdaQueryWrapper<JsSysUser>()
+                        .select(JsSysUser::getLoginCode,JsSysUser::getUserCode,JsSysUser::getUserName)
+                        .eq(JsSysUser::getStatus, OaConstant.NO.toString()));
+        Map<String, String> mesUserMap = mesUser.stream().collect(Collectors.toMap(JsSysUser::getLoginCode, JsSysUser::getUserCode));
+        //mes中已经有的人
+        List<String> usedMesUser = Lists.newArrayList();
+        //mes中没有的人
+        List<String> unUsedMesUser = Lists.newArrayList();
+        List<JsSysEmployee> mesEmployeeList = jsSysEmployeeMapper.selectList(new LambdaQueryWrapper<JsSysEmployee>()
+                .select(JsSysEmployee::getEmpCode,JsSysEmployee::getOfficeCode,JsSysEmployee::getOfficeName)
+                .in(JsSysEmployee::getEmpCode, mesUser.stream().map(JsSysUser::getUserCode).collect(Collectors.toSet())));
+        Map<String, String> mesEmployeeMap = mesEmployeeList.stream().collect(Collectors.toMap(JsSysEmployee::getEmpCode, JsSysEmployee::getOfficeCode));
+        //获取部门数据
+        List<JsSysOffice> officeList = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                .eq(JsSysOffice::getStatus, OaConstant.NO));
+        Map<String, String> officeMap = officeList.stream().collect(Collectors.toMap(JsSysOffice::getOfficeCode, JsSysOffice::getOfficeName));
+        //获取oa部门对应数据
+        List<SysConfigurationDTO> oaMesDept = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByType("OA_MES_DEPT"), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+        Map<String, String> oaMesDeptMap = oaMesDept.stream().collect(Collectors.toMap(SysConfigurationDTO::getContent, SysConfigurationDTO::getRefContent));
+
+        //开始操作
+        for(OaUserVO oaUser:oaUserList){
+            //先看mes中是否有人
+            String userCode = mesUserMap.get(oaUser.getUserName());
+            if(StrUtil.isBlank(userCode)){
+                unUsedMesUser.add(oaUser.getUserName());
+            }else {
+                usedMesUser.add(userCode);
+            }
+        }
+        return "";
     }
 }
 

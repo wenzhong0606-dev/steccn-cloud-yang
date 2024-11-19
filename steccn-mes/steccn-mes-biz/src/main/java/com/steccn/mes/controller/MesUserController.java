@@ -7,10 +7,7 @@ import com.steccn.mes.vo.MesUserInfoVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Set;
@@ -32,5 +29,10 @@ public class MesUserController {
     @ApiOperation(value = "获取用户所属部门")
     public R<List<MesUserInfoVO>> getEmpDepPost(@RequestBody TupleDTO<Set<String>,Integer> dto) {
         return R.success(jsSysEmployeeService.getEmpDepPost(dto.getField1()));
+    }
+
+    @GetMapping("/synOaUser")
+    public R<String> synOaUser(){
+        return R.success(jsSysEmployeeService.synOaUser());
     }
 }

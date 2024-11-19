@@ -38,4 +38,10 @@ public interface JsSysEmployeeService extends IService<JsSysEmployee> {
      */
     Map<String, List<String>> getEmpByDepTree(Set<String> depCode);
 
+    /**
+     * 同步oa用户
+     * @return
+     */
+    String synOaUser();
+
 }

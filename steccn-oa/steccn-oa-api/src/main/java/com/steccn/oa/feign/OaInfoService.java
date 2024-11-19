@@ -354,4 +354,8 @@ public interface OaInfoService {
     @ApiOperation("获取用户入职时间")
     @PostMapping("/feign/oa/user/workStartTime")
     R<Map<String, LocalDate>> getCompanyStartTime(@RequestBody Set<String> loginCode);
+
+    @GetMapping("/feign/oa/user/getNormalUser")
+    @ApiOperation(value = "获取oa普通用户")
+    R<List<OaUserVO>> getNormalUser();
 }

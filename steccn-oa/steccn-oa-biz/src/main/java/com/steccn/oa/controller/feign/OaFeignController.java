@@ -187,4 +187,10 @@ public class OaFeignController {
     public R<Map<String, LocalDate>> getCompanyStartTime(@RequestBody Set<String> loginCode){
         return R.success(hrmresourceService.getCompanyStartTime(loginCode));
     }
+
+    @GetMapping("/user/getNormalUser")
+    @ApiOperation(value = "获取oa普通用户")
+    public R<List<OaUserVO>> getNormalUser() {
+        return R.success(hrmresourceService.getAllNormalOaUser());
+    }
 }
