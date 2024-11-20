@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -205,13 +206,12 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
         //获取当前月的最后一天
         List<PmsMonthlyProductionPlanNew> dbList = list(new LambdaQueryWrapper<PmsMonthlyProductionPlanNew>()
                 .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
-                .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay)
-                .orderByDesc(PmsMonthlyProductionPlanNew::getCreateTime));
+                .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay));
         Map<String, BigDecimal> datePlanValueMap = Maps.newHashMap();
         Map<String, BigDecimal> dateSumPlanValueMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(dbList)) {
-            List<Long> materialIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
-            List<Integer> clientIdList = dbList.stream().map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
+            List<Long> materialIdList = dbList.stream().filter(v -> monthFirstDay.equals(v.getPlanDate())).sorted((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime())).map(PmsMonthlyProductionPlanNew::getMaterialId).distinct().collect(Collectors.toList());
+            List<Integer> clientIdList = dbList.stream().filter(v -> monthFirstDay.equals(v.getPlanDate())).sorted((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime())).map(PmsMonthlyProductionPlanNew::getClientId).distinct().collect(Collectors.toList());
             Set<Integer> clientIdSet = Sets.newHashSet(clientIdList);
             Map<Long, EqpSpareVO> materialIdMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(clientIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -256,9 +256,9 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
                 //获取物料的计划总数
                 dataList.add(getSummary(3, new TripleDTO<>(-1, "计划总数", "计划总数"), eqpSpareVO, dateList, x -> dateSumPlanValueMap.getOrDefault(materialId + ":" + x, BigDecimal.ZERO)));
                 //获取物料的发货总数
-                dataList.add(getSummary(4, new TripleDTO<>(-1, "发货总数", "发货总数"), eqpSpareVO, dateList, x -> clientValueSumMap.getOrDefault(materialId + ":" + x, BigDecimal.ZERO)));
+                dataList.add(getSummary(4, new TripleDTO<>(-1, "发货总数", "发货总数"), eqpSpareVO, dateList, x -> clientValueSumMap.get(materialId + ":" + x)));
                 //获取物料的入库总数
-                dataList.add(getSummary(6, new TripleDTO<>(-1, "入库总数", "入库总数"), eqpSpareVO, dateList, x -> inStorageMaterialMap.getOrDefault(x + "_" + materialId, BigDecimal.ZERO)));
+                dataList.add(getSummary(6, new TripleDTO<>(-1, "入库总数", "入库总数"), eqpSpareVO, dateList, x -> inStorageMaterialMap.get(x + "_" + materialId)));
             }
             resVo.setDataList(dataList);
         }
