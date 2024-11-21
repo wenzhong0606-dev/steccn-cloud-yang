@@ -97,29 +97,26 @@ public class JsSysEmployeeServiceImpl extends ServiceImpl<JsSysEmployeeMapper, J
     }
 
     @Override
-    public List<String> getEmpTree(Set<String> userName) {
+    public List<List<String>> getEmpTree(Set<String> userName) {
         List<MesUserInfoVO> mesUserInfo = jsSysEmployeeMapper.selectEmpInfo(userName);
-        List<String> results = Lists.newArrayList();
+        List<List<String>> results = Lists.newArrayList();
         if(CollUtil.isNotEmpty(mesUserInfo)){
             String depCode = mesUserInfo.get(0).getPostCode();
-            JsSysOffice dep = jsSysOfficeService.getOne(new LambdaQueryWrapper<JsSysOffice>()
+            JsSysOffice node = jsSysOfficeService.getOne(new LambdaQueryWrapper<JsSysOffice>()
                     .eq(JsSysOffice::getOfficeCode, depCode)
-                    .eq(JsSysOffice::getStatus,OaConstant.NO.toString())
+                    .eq(JsSysOffice::getStatus, OaConstant.NO.toString())
                     .last("LIMIT 1"));
-            String officeType = dep.getOfficeType();
-            String parentCode = dep.getParentCode();
-            results.add(dep.getOfficeCode());
-            while(!officeType.equals("15")){
-                JsSysOffice tmp = jsSysOfficeService.getOne(new LambdaQueryWrapper<JsSysOffice>()
-                        .eq(JsSysOffice::getOfficeCode, parentCode)
-                        .eq(JsSysOffice::getStatus, OaConstant.NO.toString())
-                        .last("LIMIT 1"));
-                officeType = tmp.getOfficeType();
-                parentCode = tmp.getParentCode();
-                results.add(tmp.getOfficeCode());
+            List<JsSysOffice> tree = jsSysOfficeService.list(new LambdaQueryWrapper<JsSysOffice>()
+                    .eq(JsSysOffice::getParentCode, node.getParentCode())
+                    .eq(JsSysOffice::getStatus,OaConstant.NO.toString())
+                    .orderByDesc(JsSysOffice::getTreeSort));
+            for(JsSysOffice tmp:tree){
+                List<String> list = Lists.newArrayList(Arrays.asList(tmp.getParentCodes().split(",")));
+                list = list.subList(2,list.size());
+                list.add(tmp.getOfficeCode());
+                results.add(list);
             }
         }
-        Collections.reverse(results);
         return results;
     }
 
