@@ -1,5 +1,6 @@
 package com.steccn.wms.vo;
 
+import com.steccn.pms.vo.WmsInventoryVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -19,5 +20,7 @@ public class WmsDeliveryFlagVO {
 
     @ApiModelProperty("箱号是否绑定客户条码")
     private Integer caseNoBindingCustomerBarcodeFlag = 0;
+
+    private WmsInventoryVO wmsInventoryVO;
 
 }

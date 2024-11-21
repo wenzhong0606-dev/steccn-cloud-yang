@@ -103,9 +103,13 @@ public class SysLogAspect {
         sysLog.setRemoteAddr(ServletUtil.getClientIP(request));
         sysLog.setMethod(request.getMethod());
         sysLog.setUserAgent(request.getHeader("user-agent"));
+        //如果是登录方法，需要去掉密码
+        String requestUri = request.getRequestURI();
+        if ("/portal/login".equals(requestUri) && args.length > 1) {
+            args[1] = "";
+        }
         sysLog.setParams(JSONUtil.toJsonStr(args));
         //确定服务
-        String requestUri = request.getRequestURI();
         try {
             sysLog.setRequestUri(URLUtil.getPath(request.getRequestURI()));
             String[] split = requestUri.split("/");

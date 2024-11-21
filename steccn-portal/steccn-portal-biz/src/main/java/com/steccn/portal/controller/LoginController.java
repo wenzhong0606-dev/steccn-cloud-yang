@@ -6,6 +6,8 @@ import com.steccn.common.vo.R;
 import com.steccn.portal.service.LoginService;
 import com.steccn.portal.vo.SteccnTokenVO;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,13 +32,14 @@ public class LoginController {
     /**
      * 统一登录，获取OA ， MESS-JAVA的菜单和token
      *
-     * @param username 用户名
-     * @param password 密码
-     * @param clientNo 客户端编码
+     * @param username    用户名
+     * @param password    密码
+     * @param clientNo    客户端编码
      * @param loginStatus 不传或0-正常token ,1-临时登录
      * @return r
      */
     @GetMapping("/login")
+    @ApiOperation(value = "登录方法")
     public R<SteccnTokenVO> login(@RequestParam("username") String username,
                                   @RequestParam("password") String password,
                                   @RequestParam(value = "clientNo", required = false) String clientNo,

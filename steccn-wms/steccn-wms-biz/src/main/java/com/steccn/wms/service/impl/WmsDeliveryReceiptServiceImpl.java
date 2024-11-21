@@ -35,6 +35,7 @@ import com.steccn.platform.vo.*;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.util.UnitConvertUtil;
+import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.feign.RemoteSaleFeignApi;
 import com.steccn.sales.vo.ResUserVO;
@@ -823,11 +824,14 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     flagInfoVO.setCaseNumberQuantityFlag(1);
                 }
             }
+            WmsInventoryVO wmsInventoryVO = BeanUtil.copyProperties(inventory, WmsInventoryVO.class);
             //获取箱号是否绑定客户条码
             String customerBarcodeByCaseNO = wmsCustomerBarcodeService.getCustomerBarcodeByCaseNO(inventory.getCaseNo());
             if (Objects.nonNull(customerBarcodeByCaseNO)) {
                 flagInfoVO.setCaseNoBindingCustomerBarcodeFlag(1);
+                wmsInventoryVO.setCustomerBarcode(customerBarcodeByCaseNO);
             }
+            flagInfoVO.setWmsInventoryVO(wmsInventoryVO);
         }
         return flagInfoVO;
     }

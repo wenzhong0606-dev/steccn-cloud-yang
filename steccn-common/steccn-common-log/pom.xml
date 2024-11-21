@@ -19,6 +19,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-data</artifactId>
+        </dependency>
         <!--mvc 相关配置-->
         <dependency>
             <groupId>org.springframework</groupId>
