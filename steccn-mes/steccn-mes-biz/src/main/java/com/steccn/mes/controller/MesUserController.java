@@ -31,6 +31,12 @@ public class MesUserController {
         return R.success(jsSysEmployeeService.getEmpDepPost(dto.getField1()));
     }
 
+    @PostMapping("/getEmpDepPost/tree")
+    @ApiOperation(value = "获取用户所属部门")
+    public R<List<String>> getEmpDepPostTree(@RequestBody TupleDTO<Set<String>,Integer> dto) {
+        return R.success(jsSysEmployeeService.getEmpTree(dto.getField1()));
+    }
+
     @GetMapping("/synOaUser")
     public R<String> synOaUser(){
         return R.success(jsSysEmployeeService.synOaUser());

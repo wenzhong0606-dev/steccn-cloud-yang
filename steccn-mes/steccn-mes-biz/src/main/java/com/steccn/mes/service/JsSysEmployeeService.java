@@ -32,6 +32,12 @@ public interface JsSysEmployeeService extends IService<JsSysEmployee> {
     List<MesUserInfoVO>  getEmpDepPost(Set<String> userName);
 
     /**
+     * 获取用户的部门树
+     * @return
+     */
+    List<String> getEmpTree(Set<String> userName);
+
+    /**
      * 获取传入depCode下所有的人
      * @param depCode
      * @return
