@@ -10,6 +10,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.vo.MaterialRequisitionLaborVO;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import com.steccn.pms.vo.MaterialRequisitionViewDTO;
@@ -60,6 +61,14 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
     MaterialRequisitionVO get(Long id);
 
     /**
+     * 获取领料单详情 - 劳保
+     *
+     * @param id 领料单主键
+     * @return
+     */
+    MaterialRequisitionLaborVO viewLabor(Long id);
+
+    /**
      * 领料单审批
      * @param dto
      * @return
@@ -97,4 +106,5 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
     List<CommonReportDTO> substrate(DpPmsOperateDTO dto);
 
     R<SteccnTableDataDTO> view(Long id);
+
 }

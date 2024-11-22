@@ -11,6 +11,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.service.PmsMaterialRequisitionWorkflowService;
+import com.steccn.pms.vo.MaterialRequisitionLaborVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +75,12 @@ public class MaterialRequisitionController {
     @GetMapping("/{id}")
     public R<MaterialRequisitionVO> get(@PathVariable("id") Long id) {
         return R.success(pmsMaterialRequisitionService.get(id));
+    }
+
+    @ApiOperation("领料单详情-劳保用品领用")
+    @GetMapping("/view/{id}")
+    public R<MaterialRequisitionLaborVO> viewLabor(@PathVariable("id") Long id) {
+        return R.success(pmsMaterialRequisitionService.viewLabor(id));
     }
 
     @ApiOperation("领料单token跳转")
