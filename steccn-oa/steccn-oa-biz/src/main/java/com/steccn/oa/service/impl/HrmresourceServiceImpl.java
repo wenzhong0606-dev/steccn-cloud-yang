@@ -358,12 +358,12 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     @Override
     public Map<String, LocalDate> getCompanyStartTime(Set<String> loginCode) {
         Map<String,LocalDate> results = Maps.newHashMap();
-        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().select(Hrmresource::getCreatedate, Hrmresource::getLoginid)
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().select(Hrmresource::getCreatedate, Hrmresource::getLoginid,Hrmresource::getCompanystartdate)
                 .in(Hrmresource::getLoginid, loginCode).isNotNull(Hrmresource::getCreatedate));
         if(CollUtil.isNotEmpty(list)){
             results = list.stream().collect(Collectors.toMap(
                     Hrmresource::getLoginid,
-                    v->LocalDate.parse(v.getCreatedate())
+                    v-> StrUtil.isNotBlank(v.getCompanystartdate()) ? LocalDate.parse(v.getCompanystartdate()):LocalDate.parse(v.getCreatedate())
             ));
         }
         return results;
