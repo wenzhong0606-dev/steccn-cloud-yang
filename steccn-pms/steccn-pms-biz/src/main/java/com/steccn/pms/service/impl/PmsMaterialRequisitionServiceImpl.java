@@ -7,19 +7,16 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
-import cn.hutool.json.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.constant.Constant;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.*;
@@ -28,7 +25,6 @@ import com.steccn.common.util.FrontTableConvertUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.oa.constant.OaConstant;
@@ -36,7 +32,6 @@ import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaEmpVO;
-import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -59,22 +54,15 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.security.SecurityUtil;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.logging.log4j.util.Base64Util;
-import org.springframework.boot.json.GsonJsonParser;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Base64Utils;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -426,7 +414,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             resDataList.add(rowList);
         });
         //转换成前端格式
-        return FrontTableConvertUtil.twoHeadConvert(multiHeadList, resDataList, (x, count) -> PinyinUtil.getFirstLetter(x, "").replaceAll(":", "") + (Objects.isNull(count) ? "" : ":" + count));
+        return FrontTableConvertUtil.twoHeadConvert(multiHeadList, resDataList, (x, count) -> {
+                    String countStr = Objects.isNull(count) ? Strings.EMPTY : Constant.COLON + count;
+                    String firstLetter = PinyinUtil.getFirstLetter(x, Strings.EMPTY);
+                    String cleanString = firstLetter.replaceAll(Constant.regExp, Strings.EMPTY);
+                    return cleanString + countStr;
+                }
+        );
     }
 
 
