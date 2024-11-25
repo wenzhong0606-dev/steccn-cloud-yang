@@ -2,6 +2,7 @@ package com.steccn.qms.scheduled;
 
 import com.google.common.collect.Lists;
 import com.steccn.common.constant.LockConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
@@ -122,7 +123,7 @@ public class PullAmountCalculateTask {
 
     @XxlJob("每月计算人数")
     public void countPeopleByMonth() {
-        oaInfoService.countOnJobNum(LocalDate.now());
+        oaInfoService.countOnJobNum(new TupleDTO<LocalDate,LocalDate>(LocalDate.now(),LocalDate.now()));
     }
 
 
