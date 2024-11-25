@@ -29,6 +29,15 @@ public class Constant {
      */
     public static final Integer OA_SUCCESS_CODE = 0;
 
+    /**
+     * 正则表达式
+     */
+    public static final String regExp = "[^a-zA-Z0-9\\s]";
+
+    /**
+     * 冒号
+     */
+    public static final String COLON = ":";
 
 
 }

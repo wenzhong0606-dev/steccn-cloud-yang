@@ -1,12 +1,11 @@
 package com.steccn.common.util;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 
 /**
  * @author yequan
@@ -94,6 +93,31 @@ public class MapUtil {
         V apply = function.apply(v, value);
         map.put(key, apply);
     }
+
+
+    /**
+     * 使用Map<K,Map<V,U>> 的结构
+     *
+     * @param map      map
+     * @param outKey   外部key
+     * @param inKey    内部key
+     * @param value    存的值
+     * @param function 函数，重复了怎么执行
+     * @param <K>      泛型1
+     * @param <V>      泛型2
+     * @param <U>      泛型3
+     */
+    public static <K, V, U> void putEleDMap(Map<K, Map<V, U>> map, K outKey, V inKey, U value, BiFunction<U, U, U> function) {
+        Map<V, U> inMap = map.get(outKey);
+        if (Objects.isNull(inMap)) {
+            inMap = Maps.newLinkedHashMap();
+            map.put(outKey, inMap);
+        }
+        U u = inMap.get(inKey);
+        U apply = function.apply(u, value);
+        inMap.put(inKey, apply);
+    }
+
 
     /**
      * 单层map 相同key存放到list中

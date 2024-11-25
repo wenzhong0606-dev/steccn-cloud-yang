@@ -6,29 +6,25 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
+import cn.hutool.extra.pinyin.PinyinUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.constant.Constant;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.CommonReportDTO;
-import com.steccn.common.dto.SteccnTableDataDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.FrontTableConvertUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
-import com.steccn.dp.vo.DpWeightVO;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.oa.constant.OaConstant;
@@ -36,7 +32,6 @@ import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaEmpVO;
-import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -59,22 +54,15 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.security.SecurityUtil;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.logging.log4j.util.Base64Util;
-import org.springframework.boot.json.GsonJsonParser;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Base64Utils;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,10 +161,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //如果前端获取的部门是用户所属部门,那么就是oa中的值
         if (model.getDepartmentId().equals(oaEmpVO.getDepartmentid())) {
             model.setDepartmentId(oaEmpVO.getDepartmentid());
-        }else {
+        } else {
             //找到mes对应的oa部门Id
             SysConfigurationDTO conf = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndType(new TupleDTO<>("MES_OA_DEPT", materialRequisitionDTO.getDepartmentId().toString())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if(Objects.isNull(conf.getRefContent())){
+            if (Objects.isNull(conf.getRefContent())) {
                 throw new BusinessException("OA中没有对应的部门");
             }
             model.setDepartmentId(Integer.parseInt(conf.getRefContent()));
@@ -186,7 +174,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             List<PmsMaterialRequisitionInfo> list = Lists.newArrayList();
             List<PmsMaterialRequisitionDemander> demanderList = Lists.newArrayList();
             materialRequisitionDTO.getList().forEach(materialRequisitionInfoDTO -> {
-                if(Objects.isNull(materialRequisitionInfoDTO.getReceiveQuantity())){
+                if (Objects.isNull(materialRequisitionInfoDTO.getReceiveQuantity())) {
                     materialRequisitionInfoDTO.setReceiveQuantity(BigDecimal.ZERO);
                 }
                 PmsMaterialRequisitionInfo materialRequisitionInfo = new PmsMaterialRequisitionInfo();
@@ -226,10 +214,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             PmsMaterialRequisition model = new PmsMaterialRequisition();
             BeanUtil.copyProperties(materialRequisitionDTO, model);
             //处理编辑的部门
-            if(Objects.nonNull(model.getDepartmentId())&&!model.getDepartmentId().equals(materialRequisition.getDepartmentId())){
+            if (Objects.nonNull(model.getDepartmentId()) && !model.getDepartmentId().equals(materialRequisition.getDepartmentId())) {
                 //找到mes对应的oa部门Id
                 SysConfigurationDTO conf = FeignOptional.of(() -> remoteSysConfigurationFeignApi.infoByContentAndType(new TupleDTO<>("MES_OA_DEPT", model.getDepartmentId().toString())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                if(Objects.isNull(conf.getRefContent())){
+                if (Objects.isNull(conf.getRefContent())) {
                     throw new BusinessException("OA中没有对应的部门");
                 }
                 model.setDepartmentId(Integer.parseInt(conf.getRefContent()));
@@ -263,7 +251,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             if (b) {
                 //删除对应的领用记录
                 pmsLaborProtectionRecordMapper.delete(new LambdaQueryWrapper<PmsLaborProtectionRecord>()
-                        .eq(PmsLaborProtectionRecord::getReceiptId,id));
+                        .eq(PmsLaborProtectionRecord::getReceiptId, id));
                 pmsMaterialRequisitionInfoService.remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>().eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, id));
             }
             return b;
@@ -332,7 +320,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 infoVO.setUnitName(materialMap.get(infoVO.getMaterialId()).getUnit());
                 //3.3.1处理机构数据
                 List<String> organizationList = Lists.newArrayList();
-                if(CollUtil.isNotEmpty(infoVO.getOrganization())){
+                if (CollUtil.isNotEmpty(infoVO.getOrganization())) {
                     infoVO.getOrganization().forEach(integer -> {
                         organizationList.add(officeMap.get(integer).getOfficeName());
                     });
@@ -351,6 +339,90 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         materialRequisitionVO.setList(infoList);
         return materialRequisitionVO;
     }
+
+    @Override
+    public MaterialRequisitionLaborVO viewLabor(Long id) {
+        MaterialRequisitionVO requisition = get(id);
+        MaterialRequisitionLaborVO vo = new MaterialRequisitionLaborVO();
+        Assert.isTrue(requisition.getTypeName().contains("劳保"), "领料单类型为空");
+        Map<String, String> materialCodeMap = Maps.newTreeMap();
+        Map<Long, String> userIdMap = Maps.newHashMap();
+        Map<Long, Map<String, BigDecimal>> valueMap = Maps.newLinkedHashMap();
+        for (MaterialRequisitionInfoVO info : requisition.getList()) {
+            materialCodeMap.putIfAbsent(info.getMaterialCode(), info.getMaterialName());
+            List<MaterialRequisitionInfoDemanderVO> manList = info.getDemanderList();
+            if (CollUtil.isNotEmpty(manList)) {
+                manList.forEach(ele -> {
+                    Long demanderId = ele.getDemanderId();
+                    String demanderName = ele.getDemanderName();
+                    userIdMap.put(demanderId, demanderName);
+                    MapUtil.putEleDMap(valueMap, demanderId, info.getMaterialCode(), info.getQuantity(), BigDecimalUtil::add);
+                });
+            }
+        }
+        List<String> laborCategory = materialCodeMap.values().stream().collect(Collectors.toList());
+        List<TupleDTO<String, List<BigDecimal>>> dataList = Lists.newArrayList();
+        vo.setLaborCategory(laborCategory);
+        vo.setDataList(dataList);
+        Map<String, BigDecimal> countMap = Maps.newHashMap();
+        //遍历map
+        valueMap.entrySet().forEach(ele -> {
+            Map<String, BigDecimal> numMap = ele.getValue();
+            TupleDTO<String, List<BigDecimal>> manRow = new TupleDTO<>();
+            List<BigDecimal> valueList = Lists.newArrayList();
+            manRow.setField2(valueList);
+            manRow.setField1(userIdMap.get(ele.getKey()));
+            materialCodeMap.entrySet().forEach(inEle -> {
+                BigDecimal value = numMap.get(inEle.getKey());
+                valueList.add(BigDecimalUtil.setScale(value, 0));
+                MapUtil.add(countMap, inEle.getKey(), value, BigDecimalUtil::add);
+            });
+            dataList.add(manRow);
+        });
+        //写总计
+        TupleDTO<String, List<BigDecimal>> countRow = new TupleDTO<>();
+        countRow.setField1("总计");
+        List<BigDecimal> countRowList = Lists.newArrayList();
+        countRow.setField2(countRowList);
+        materialCodeMap.forEach((k, v) -> {
+            countRowList.add(BigDecimalUtil.setScale(countMap.get(k), 0));
+        });
+        dataList.add(countRow);
+        return vo;
+    }
+
+    @Override
+    public FrontTableDTO viewLaborFront(Long id) {
+        MaterialRequisitionLaborVO materialLabor = viewLabor(id);
+        //封装成多级表头格式
+        List<String> laborCategory = materialLabor.getLaborCategory();
+        List<FrontTableElement> multiHeadList = Lists.newArrayList();
+        List<FrontTableElement> childrenHead = Lists.newArrayList();
+        laborCategory.forEach(ele -> {
+            childrenHead.add(new FrontTableElement(ele));
+        });
+        multiHeadList.add(new FrontTableElement("类别", null, com.google.common.collect.Lists.newArrayList(new FrontTableElement("需求人"))));
+        multiHeadList.add(new FrontTableElement("劳保用品发放标准(件、套、双、条/月)", null, childrenHead));
+        List<TupleDTO<String, List<BigDecimal>>> dataList = materialLabor.getDataList();
+        List<List<String>> resDataList = Lists.newArrayList();
+        dataList.forEach(ele -> {
+            List<String> rowList = Lists.newArrayList();
+            rowList.add(ele.getField1());
+            for (BigDecimal value : ele.getField2()) {
+                rowList.add(BigDecimalUtil.format(value, 0));
+            }
+            resDataList.add(rowList);
+        });
+        //转换成前端格式
+        return FrontTableConvertUtil.twoHeadConvert(multiHeadList, resDataList, (x, count) -> {
+                    String countStr = Objects.isNull(count) ? Strings.EMPTY : Constant.COLON + count;
+                    String firstLetter = PinyinUtil.getFirstLetter(x, Strings.EMPTY);
+                    String cleanString = firstLetter.replaceAll(Constant.regExp, Strings.EMPTY);
+                    return cleanString + countStr;
+                }
+        );
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -395,7 +467,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 id.add(dto.getId());
                 Map<Long, BigDecimal> quantityMap = pmsMaterialRequisitionInfoService.getTotalQuantity(id);
                 BigDecimal quantity = quantityMap.getOrDefault(dto.getId(), BigDecimal.ZERO);
-                if(Objects.isNull(quantity)){
+                if (Objects.isNull(quantity)) {
                     quantity = BigDecimal.ZERO;
                 }
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_ZSL, quantity.toString()));
@@ -408,8 +480,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 //                List<JSONObject> list = new ArrayList<>();
 //                list.add(jsonObject);
                 //附件
-                if (Objects.nonNull(pmsMaterialRequisition.getFileId())){
-                    OaWorkFlowNameFileDTO oaWorkFlowNameFileDTO = new OaWorkFlowNameFileDTO(fileMap.get(pmsMaterialRequisition.getFileId()).getFileUrl(),fileMap.get(pmsMaterialRequisition.getFileId()).getFileName());
+                if (Objects.nonNull(pmsMaterialRequisition.getFileId())) {
+                    OaWorkFlowNameFileDTO oaWorkFlowNameFileDTO = new OaWorkFlowNameFileDTO(fileMap.get(pmsMaterialRequisition.getFileId()).getFileUrl(), fileMap.get(pmsMaterialRequisition.getFileId()).getFileName());
                     List<OaWorkFlowNameFileDTO> fileList = Lists.newArrayList();
                     fileList.add(oaWorkFlowNameFileDTO);
                     OaWorkFlowNameValueDTO oaWorkFlowNameValueDTO = new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_FJ, JSONObject.toJSONString(fileList));
@@ -460,10 +532,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     //获取领用人
                     List<PmsMaterialRequisitionDemander> demanderList = pmsMaterialRequisitionDemanderService.list(new LambdaQueryWrapper<PmsMaterialRequisitionDemander>()
                             .in(PmsMaterialRequisitionDemander::getRequisitionInfoId, detailId));
-                    Map<Long,String> demanderMap = Maps.newHashMap();
-                    if(CollUtil.isNotEmpty(demanderList)){
-                        for(PmsMaterialRequisitionDemander tmp:demanderList){
-                            demanderMap.put(tmp.getRequisitionInfoId(),tmp.getDemanderName());
+                    Map<Long, String> demanderMap = Maps.newHashMap();
+                    if (CollUtil.isNotEmpty(demanderList)) {
+                        for (PmsMaterialRequisitionDemander tmp : demanderList) {
+                            demanderMap.put(tmp.getRequisitionInfoId(), tmp.getDemanderName());
                         }
                     }
                     Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -474,7 +546,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                                     Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
                             )
                     ));
-                    for(Map.Entry<Long,BigDecimal> entry:materialNumMap.entrySet()){
+                    for (Map.Entry<Long, BigDecimal> entry : materialNumMap.entrySet()) {
                         OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
                         oaWorkFlowDetailDataListDTO.setRecordOrder(OaConstant.NO.toString());
                         //组装详情数据
@@ -517,13 +589,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLBM, eqpSpareVO.getCode()));
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC, eqpSpareVO.getName()));
                         //领用人
-                        if(StrUtil.isNotBlank(demanderMap.get(tmp.getId()))){
+                        if (StrUtil.isNotBlank(demanderMap.get(tmp.getId()))) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId())));
                         }
                         if (Objects.nonNull(eqpSpareVO.getSpecifications())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH, eqpSpareVO.getSpecifications()));
                         }
-                        if(Objects.isNull(tmp.getRequireDate())){
+                        if (Objects.isNull(tmp.getRequireDate())) {
                             tmp.setRequireDate(tmp.getUpdateTime().toLocalDate());
                         }
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ, tmp.getRequireDate().toString()));
@@ -855,33 +927,33 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         integers.add(dto.getOfficeId());
         integers.add(dto.getOfficeId());
         QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        List<RequisitionInfoDTO> requisitionInfoList = substrateData(granularity,integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
-        List<String> materialNames = Arrays.asList("石英砂（低铁硅砂）","纯碱","方解石","白云石（普通白云石）","氧化铝","复合澄清剂","碎玻璃（外购）");
+        List<RequisitionInfoDTO> requisitionInfoList = substrateData(granularity, integers, new TupleDTO<>(dto.getStart().atTime(8, 0, 0), dto.getEnd().plusDays(1).atTime(7, 59, 59)));
+        List<String> materialNames = Arrays.asList("石英砂（低铁硅砂）", "纯碱", "方解石", "白云石（普通白云石）", "氧化铝", "复合澄清剂", "碎玻璃（外购）");
         Map<String, EqpSpareVO> spareMap = FeignOptional.of(() -> remoteSpareFeignApi.listByName(materialNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<Long> materialIds =  Lists.newArrayList();
-        spareMap.forEach( (key,value)->{
+        List<Long> materialIds = Lists.newArrayList();
+        spareMap.forEach((key, value) -> {
             materialIds.add(value.getId());
         });
-        if (CollUtil.isNotEmpty(requisitionInfoList)){
+        if (CollUtil.isNotEmpty(requisitionInfoList)) {
             List<RequisitionInfoDTO> collect = requisitionInfoList.stream().filter(vo -> materialIds.contains(vo.getMaterialId())).collect(Collectors.toList());
             Map<Long, List<RequisitionInfoDTO>> map = collect.stream().collect(Collectors.groupingBy(RequisitionInfoDTO::getMaterialId));
-            spareMap.forEach( (k,v)->{
+            spareMap.forEach((k, v) -> {
                 CommonReportDTO commonReportDTO = new CommonReportDTO();
-                Map<String,BigDecimal> valueMap = Maps.newHashMap();
+                Map<String, BigDecimal> valueMap = Maps.newHashMap();
                 commonReportDTO.setName(v.getName());
                 List<RequisitionInfoDTO> requisitionInfoDTOS = map.get(v.getId());
-                if (CollUtil.isNotEmpty(requisitionInfoDTOS)){
-                    collect.forEach( ele ->{
-                        String convert = MysqlDateKeyUtil.convert(granularity,ele.getRequireDate());
-                        MapUtil.add(valueMap,convert,ele.getReceiveQuantity(),(x,y)->BigDecimalUtil.add(x,y));
+                if (CollUtil.isNotEmpty(requisitionInfoDTOS)) {
+                    collect.forEach(ele -> {
+                        String convert = MysqlDateKeyUtil.convert(granularity, ele.getRequireDate());
+                        MapUtil.add(valueMap, convert, ele.getReceiveQuantity(), (x, y) -> BigDecimalUtil.add(x, y));
                     });
                 }
                 commonReportDTO.setUnit(v.getUnit());
                 commonReportDTO.setValueMap(valueMap);
                 resList.add(commonReportDTO);
             });
-        }else {
-            spareMap.forEach( (k,v)->{
+        } else {
+            spareMap.forEach((k, v) -> {
                 CommonReportDTO commonReportDTO = new CommonReportDTO();
                 commonReportDTO.setName(v.getName());
                 commonReportDTO.setUnit(v.getUnit());
@@ -896,16 +968,16 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         return null;
     }
 
-    public  List<RequisitionInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity,List<Integer> integers, TupleDTO<LocalDateTime,LocalDateTime> dto){
+    public List<RequisitionInfoDTO> substrateData(QtManagerConstant.QtGranularityEnum granularity, List<Integer> integers, TupleDTO<LocalDateTime, LocalDateTime> dto) {
         List<RequisitionInfoDTO> requisitionInfoList;
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
-            requisitionInfoList = this.baseMapper.substrateDayData(integers,dto.getField1(),dto.getField2());
+            requisitionInfoList = this.baseMapper.substrateDayData(integers, dto.getField1(), dto.getField2());
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.equals(granularity)) {
-            requisitionInfoList = this.baseMapper.substrateWeekData(integers,dto.getField1(),dto.getField2());
+            requisitionInfoList = this.baseMapper.substrateWeekData(integers, dto.getField1(), dto.getField2());
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.equals(granularity)) {
-            requisitionInfoList = this.baseMapper.substrateMonthData(integers,dto.getField1(),dto.getField2());
+            requisitionInfoList = this.baseMapper.substrateMonthData(integers, dto.getField1(), dto.getField2());
         } else {
-            requisitionInfoList = this.baseMapper.substrateYearData(integers,dto.getField1(),dto.getField2());
+            requisitionInfoList = this.baseMapper.substrateYearData(integers, dto.getField1(), dto.getField2());
         }
         return requisitionInfoList;
     }
