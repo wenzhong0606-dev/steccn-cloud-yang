@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.pinyin.PinyinUtil;
 import cn.hutool.json.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -21,10 +22,9 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.CommonReportDTO;
-import com.steccn.common.dto.SteccnTableDataDTO;
-import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.FrontTableConvertUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
@@ -402,6 +402,33 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         dataList.add(countRow);
         return vo;
     }
+
+    @Override
+    public FrontTableDTO viewLaborFront(Long id) {
+        MaterialRequisitionLaborVO materialLabor = viewLabor(id);
+        //封装成多级表头格式
+        List<String> laborCategory = materialLabor.getLaborCategory();
+        List<FrontTableElement> multiHeadList = Lists.newArrayList();
+        List<FrontTableElement> childrenHead = Lists.newArrayList();
+        laborCategory.forEach(ele -> {
+            childrenHead.add(new FrontTableElement(ele));
+        });
+        multiHeadList.add(new FrontTableElement("类别", null, com.google.common.collect.Lists.newArrayList(new FrontTableElement("需求人"))));
+        multiHeadList.add(new FrontTableElement("劳保用品发放标准(件、套、双、条/月)", null, childrenHead));
+        List<TupleDTO<String, List<BigDecimal>>> dataList = materialLabor.getDataList();
+        List<List<String>> resDataList = Lists.newArrayList();
+        dataList.forEach(ele -> {
+            List<String> rowList = Lists.newArrayList();
+            rowList.add(ele.getField1());
+            for (BigDecimal value : ele.getField2()) {
+                rowList.add(BigDecimalUtil.format(value, 0));
+            }
+            resDataList.add(rowList);
+        });
+        //转换成前端格式
+        return FrontTableConvertUtil.twoHeadConvert(multiHeadList, resDataList, x -> PinyinUtil.getFirstLetter(x, "").replaceAll(":", ""));
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

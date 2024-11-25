@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.FrontTableDTO;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
@@ -68,6 +69,9 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      */
     MaterialRequisitionLaborVO viewLabor(Long id);
 
+    FrontTableDTO viewLaborFront(Long id);
+
+
     /**
      * 领料单审批
      * @param dto
@@ -106,5 +110,4 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
     List<CommonReportDTO> substrate(DpPmsOperateDTO dto);
 
     R<SteccnTableDataDTO> view(Long id);
-
 }

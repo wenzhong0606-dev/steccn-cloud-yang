@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.FrontTableDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
@@ -79,8 +80,8 @@ public class MaterialRequisitionController {
 
     @ApiOperation("领料单详情-劳保用品领用")
     @GetMapping("/view/{id}")
-    public R<MaterialRequisitionLaborVO> viewLabor(@PathVariable("id") Long id) {
-        return R.success(pmsMaterialRequisitionService.viewLabor(id));
+    public R<FrontTableDTO<String>> viewLabor(@PathVariable("id") Long id) {
+        return R.success(pmsMaterialRequisitionService.viewLaborFront(id));
     }
 
     @ApiOperation("领料单token跳转")
