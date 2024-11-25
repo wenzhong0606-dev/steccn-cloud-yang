@@ -20,16 +20,15 @@ public class FrontTableConvertUtil implements Serializable {
      * @param headList
      * @param dataList
      * @param headGenerate
-     * @param <T>
      * @return
      */
-    public static <T> FrontTableDTO twoHeadConvert(List<FrontTableElement> headList, List<List<T>> dataList, BiFunction<String, Integer, String> headGenerate) {
+    public static FrontTableDTO twoHeadConvert(List<FrontTableElement> headList, List<List<String>> dataList, BiFunction<String, Integer, String> headGenerate) {
         //标记映射位置
         Map<Integer, String> siteMap = Maps.newHashMap();
         Integer count = 0;
-        FrontTableDTO<T> dto = new FrontTableDTO();
+        FrontTableDTO<String> dto = new FrontTableDTO();
         List<FrontTableElement> columns = Lists.newArrayList();
-        List<Map<String, T>> tableList = Lists.newArrayList();
+        List<Map<String, String>> tableList = Lists.newArrayList();
         dto.setColumns(columns);
         dto.setTableList(tableList);
         for (FrontTableElement parentHead : headList) {
@@ -53,8 +52,8 @@ public class FrontTableConvertUtil implements Serializable {
                 columns.add(new FrontTableElement(parentHead.getLabel(), apply));
             }
         }
-        for (List<T> row : dataList) {
-            Map<String, T> dataMap = Maps.newLinkedHashMap();
+        for (List<String> row : dataList) {
+            Map<String, String> dataMap = Maps.newLinkedHashMap();
             for (int i = 0; i < row.size(); i++) {
                 dataMap.put(siteMap.get(i), row.get(i));
             }
