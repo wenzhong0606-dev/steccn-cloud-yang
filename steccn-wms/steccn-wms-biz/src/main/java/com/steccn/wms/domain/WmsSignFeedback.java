@@ -82,6 +82,7 @@ public class WmsSignFeedback implements Serializable {
      */
     private LocalDate signedDate;
 
+
     /**
      * 异常原因
      */

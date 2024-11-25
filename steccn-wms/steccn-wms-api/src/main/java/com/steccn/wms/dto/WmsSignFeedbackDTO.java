@@ -90,6 +90,10 @@ public class WmsSignFeedbackDTO extends BasePageDTO implements Serializable {
 
     private LocalDate endDate;
 
+    private LocalDate sendStartDate;
+
+    private LocalDate sendEndDate;
+
     /**
      * 退回原因
      */

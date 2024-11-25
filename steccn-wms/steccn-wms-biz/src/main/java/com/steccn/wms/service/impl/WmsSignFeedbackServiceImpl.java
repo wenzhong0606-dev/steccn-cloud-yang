@@ -95,6 +95,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 .eq(Objects.nonNull(dto.getSendQuantity()), WmsSignFeedback::getSendQuantity, dto.getSendQuantity())
                 .eq(Objects.nonNull(dto.getPriceQuantity()), WmsSignFeedback::getPriceQuantity, dto.getPriceQuantity())
                 .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()), WmsSignFeedback::getSignedDate, dto.getStartDate(), dto.getEndDate())
+                .between(Objects.nonNull(dto.getSendStartDate()) && Objects.nonNull(dto.getSendEndDate()),WmsSignFeedback::getSendDate,dto.getSendStartDate(),dto.getSendEndDate())
                 .eq(Objects.nonNull(dto.getState()), WmsSignFeedback::getState, dto.getState());
 
         if (Objects.nonNull(dto.getSortField())) {
