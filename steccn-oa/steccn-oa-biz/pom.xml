@@ -136,6 +136,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-ems-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

@@ -3,6 +3,7 @@ package com.steccn.oa.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.ems.vo.PmsOperateEnergyVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
@@ -44,6 +45,8 @@ public class OaController {
     private final KqGroupmemberService kqGroupmemberService;
 
     private final HrmdepartmentService hrmdepartmentService;
+
+    private final HrmEmpCountService hrmEmpCountService;
 
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
@@ -319,6 +322,18 @@ public class OaController {
     @PostMapping("/todayClass/info/warehouse")
     public R<List<OaTodayClassVO>> getTodayClassInfoWarehouse(@RequestBody TupleDTO<Set<Integer>, LocalDate> dto){
         return R.success(kqGroupmemberService.getTodayClassInfoWarehouse(dto));
+    }
+
+    @ApiOperation("计算人数")
+    @GetMapping("/countPeople")
+    public R<Boolean> countOnJobNum(@RequestParam("date")LocalDate date){
+        return R.success(hrmresourceService.countPeople(date));
+    }
+
+    @ApiOperation("计算人数图表")
+    @GetMapping("/countEmp/dashboard")
+    public R<PmsOperateEnergyVO> countEmpDashboard(@RequestParam("date")LocalDate date){
+        return R.success(hrmEmpCountService.countDash(date));
     }
 
 }

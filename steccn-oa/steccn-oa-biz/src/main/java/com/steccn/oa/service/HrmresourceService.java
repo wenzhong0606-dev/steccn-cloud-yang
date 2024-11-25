@@ -141,4 +141,6 @@ public interface HrmresourceService extends IService<Hrmresource> {
     Map<String,LocalDate> getCompanyStartTime(Set<String> loginCode);
 
     List<String> getAllUserName();
+
+    Boolean countPeople(LocalDate date);
 }

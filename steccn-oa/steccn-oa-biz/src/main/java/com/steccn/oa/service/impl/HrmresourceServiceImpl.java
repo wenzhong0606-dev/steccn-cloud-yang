@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
@@ -20,6 +21,7 @@ import com.steccn.oa.mapper.HrmdepartmentMapper;
 import com.steccn.oa.mapper.HrmjobtitlesMapper;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
+import com.steccn.oa.service.HrmEmpCountService;
 import com.steccn.oa.service.HrmjobtitlesService;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.vo.OaEmpVO;
@@ -55,6 +57,7 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     private final HrmjobtitlesMapper hrmjobtitlesMapper;
     private final HrmresourceMapper hrmresourceMapper;
     private final HrmjobtitlesService hrmjobtitlesService;
+    private final HrmEmpCountService hrmEmpCountService;
 
     @Override
     public Long getIdByWorkCode(String workCode) {
@@ -373,6 +376,23 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     public List<String> getAllUserName() {
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>());
         return list.stream().map(Hrmresource::getLastname).collect(Collectors.toList());
+    }
+
+    @Override
+    public Boolean countPeople(LocalDate date) {
+        Hrmresource all = getOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
+                .lambda()
+                .lt(Hrmresource::getCreated, date.plusMonths(1).withDayOfMonth(1).atTime(0,0,0)));
+        Hrmresource leaveJob = getOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
+                .lambda()
+                .lt(Hrmresource::getModified, date.plusMonths(1).withDayOfMonth(1).atTime(0,0,0))
+                .in(Hrmresource::getStatus,Sets.newHashSet(5,4)));
+        HrmEmpCount hrmEmpCount = new HrmEmpCount();
+        hrmEmpCount.setMonth(date.withDayOfMonth(1));
+        hrmEmpCount.setOnJob(all.getLocationid()-leaveJob.getLocationid());
+        hrmEmpCount.setLeaveJob(leaveJob.getLocationid());
+        hrmEmpCountService.save(hrmEmpCount);
+        return true;
     }
 }
 

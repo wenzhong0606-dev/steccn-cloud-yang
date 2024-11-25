@@ -193,4 +193,10 @@ public class OaFeignController {
     public R<List<OaUserVO>> getNormalUser() {
         return R.success(hrmresourceService.getAllNormalOaUser());
     }
+
+    @ApiOperation("计算人数")
+    @PostMapping("/countPeople")
+    public R<Boolean> countOnJobNum(@RequestBody TupleDTO<LocalDate,LocalDate> date){
+        return R.success(hrmresourceService.countPeople(date.getField1()));
+    }
 }

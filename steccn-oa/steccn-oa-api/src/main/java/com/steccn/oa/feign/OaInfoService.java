@@ -358,4 +358,8 @@ public interface OaInfoService {
     @GetMapping("/feign/oa/user/getNormalUser")
     @ApiOperation(value = "获取oa普通用户")
     R<List<OaUserVO>> getNormalUser();
+
+    @ApiOperation("计算人数")
+    @PostMapping("/feign/oa/countPeople")
+    R<Boolean> countOnJobNum(@RequestBody TupleDTO<LocalDate,LocalDate> date);
 }

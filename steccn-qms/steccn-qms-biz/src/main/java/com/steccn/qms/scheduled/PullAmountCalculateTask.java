@@ -6,6 +6,7 @@ import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.feign.RemoteDpPullForceFeignApi;
 import com.steccn.dp.vo.DpValueDateVO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.service.QtChartGenerateService;
@@ -37,6 +38,7 @@ public class PullAmountCalculateTask {
     private final QtChartGenerateService qtChartGenerateService;
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final RemoteDpPullForceFeignApi remoteDpPullForceFeignApi;
+    private final OaInfoService oaInfoService;
 
     /**
      * @desc 每天 8点10分 20点10分执行一次
@@ -117,4 +119,11 @@ public class PullAmountCalculateTask {
         }
         XxlJobHelper.log("计算损耗-任务结束");
     }
+
+    @XxlJob("每月计算人数")
+    public void countPeopleByMonth() {
+        oaInfoService.countOnJobNum(LocalDate.now());
+    }
+
+
 }
