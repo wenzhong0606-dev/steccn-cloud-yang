@@ -9,6 +9,7 @@ import com.steccn.common.dto.FrontTableElement;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class FrontTableConvertUtil implements Serializable {
@@ -22,7 +23,7 @@ public class FrontTableConvertUtil implements Serializable {
      * @param <T>
      * @return
      */
-    public static <T> FrontTableDTO twoHeadConvert(List<FrontTableElement> headList, List<List<T>> dataList, Function<String, String> headGenerate) {
+    public static <T> FrontTableDTO twoHeadConvert(List<FrontTableElement> headList, List<List<T>> dataList, BiFunction<String, Integer, String> headGenerate) {
         //标记映射位置
         Map<Integer, String> siteMap = Maps.newHashMap();
         Integer count = 0;
@@ -32,22 +33,24 @@ public class FrontTableConvertUtil implements Serializable {
         dto.setColumns(columns);
         dto.setTableList(tableList);
         for (FrontTableElement parentHead : headList) {
-            String apply = headGenerate.apply(parentHead.getLabel());
             //孩子不为空
             if (CollUtil.isNotEmpty(parentHead.getChildren())) {
+                String apply = headGenerate.apply(parentHead.getLabel(), null);
+
                 List<FrontTableElement> children = Lists.newArrayList();
                 //多层表头
                 for (FrontTableElement childHead : parentHead.getChildren()) {
-                    String prop = headGenerate.apply(childHead.getLabel()) + ":" + count;
+                    String prop = headGenerate.apply(childHead.getLabel(), count);
                     children.add(new FrontTableElement(childHead.getLabel(), prop, null));
                     siteMap.put(count++, prop);
                 }
                 //孩子为空的情况下，自己就是自己，不占用位置
                 columns.add(new FrontTableElement(parentHead.getLabel(), apply, children));
             } else {
+                String apply = headGenerate.apply(parentHead.getLabel(), count);
                 //孩子为空，则自己是元素
                 siteMap.put(count++, apply);
-                columns.add(new FrontTableElement(parentHead.getLabel(), apply, null));
+                columns.add(new FrontTableElement(parentHead.getLabel(), apply));
             }
         }
         for (List<T> row : dataList) {

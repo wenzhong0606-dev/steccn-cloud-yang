@@ -426,7 +426,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             resDataList.add(rowList);
         });
         //转换成前端格式
-        return FrontTableConvertUtil.twoHeadConvert(multiHeadList, resDataList, x -> PinyinUtil.getFirstLetter(x, "").replaceAll(":", ""));
+        return FrontTableConvertUtil.twoHeadConvert(multiHeadList, resDataList, (x, count) -> PinyinUtil.getFirstLetter(x, "").replaceAll(":", "") + (Objects.isNull(count) ? "" : ":" + count));
     }
 
 
