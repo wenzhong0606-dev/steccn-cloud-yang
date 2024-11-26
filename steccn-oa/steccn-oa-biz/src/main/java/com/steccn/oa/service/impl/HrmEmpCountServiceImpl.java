@@ -46,7 +46,6 @@ public class HrmEmpCountServiceImpl extends ServiceImpl<HrmEmpCountMapper, HrmEm
         PmsOperateEnergyVO result = new PmsOperateEnergyVO();
         List<HrmEmpCount> data = list(new LambdaQueryWrapper<HrmEmpCount>()
                 .between(HrmEmpCount::getMonth, dto.getStart(), dto.getEnd()));
-        Assert.notEmpty(data, "数据为空");
         //当前人数
         Hrmresource all = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
                 .lambda()
@@ -60,11 +59,16 @@ public class HrmEmpCountServiceImpl extends ServiceImpl<HrmEmpCountMapper, HrmEm
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> valueList = Lists.newArrayList();
         LocalDate now = LocalDate.now();
+        if(dateList.size()!=1){
+            dateList.remove(dateList.size()-1);
+        }
         for(LocalDate tmp:dateList){
+            xAisList.add(tmp.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             if(now.getYear()==tmp.getYear()&&tmp.getMonthValue() > now.getMonthValue()){
+                valueList.add(BigDecimal.ZERO);
                 continue;
             }
-            xAisList.add(tmp.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+
             if(now.getYear()==tmp.getYear()&&tmp.getMonthValue()==now.getMonthValue()){
                 valueList.add(new BigDecimal(all.getLocationid()-leaveJob.getLocationid()));
                 continue;
