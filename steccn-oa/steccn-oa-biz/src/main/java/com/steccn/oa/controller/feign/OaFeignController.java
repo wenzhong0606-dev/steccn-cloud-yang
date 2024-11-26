@@ -74,6 +74,12 @@ public class OaFeignController {
         return R.success(workflowCurrentoperatorService.getUserIdByRequestId(dto));
     }
 
+    @ApiOperation("流程是否完成")
+    @GetMapping("/workflow/isFinished")
+    public R<Boolean> workflowFinished(@RequestParam("requestId")Integer requestId){
+        return R.success(workflowRequestlogService.workflowFinished(requestId));
+    }
+
     @ApiOperation("根据userId查询考勤组")
     @PostMapping("/user/group")
     public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){

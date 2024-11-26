@@ -362,4 +362,7 @@ public interface OaInfoService {
     @ApiOperation("计算人数")
     @PostMapping("/feign/oa/countPeople")
     R<Boolean> countOnJobNum(@RequestBody TupleDTO<LocalDate,LocalDate> date);
+
+    @GetMapping("/feign/oa/workflow/isFinished")
+    R<Boolean> workflowFinished(@RequestParam("requestId")Integer requestId);
 }
