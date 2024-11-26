@@ -59,12 +59,13 @@ public class HrmEmpCountServiceImpl extends ServiceImpl<HrmEmpCountMapper, HrmEm
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> valueList = Lists.newArrayList();
+        LocalDate now = LocalDate.now();
         for(LocalDate tmp:dateList){
-            if(tmp.getMonthValue() > LocalDate.now().getMonthValue()){
+            if(now.getYear()==tmp.getYear()&&tmp.getMonthValue() > now.getMonthValue()){
                 continue;
             }
             xAisList.add(tmp.format(DateTimeFormatter.ofPattern("yyyy-MM")));
-            if(tmp.getMonthValue()==LocalDate.now().getMonthValue()){
+            if(now.getYear()==tmp.getYear()&&tmp.getMonthValue()==now.getMonthValue()){
                 valueList.add(new BigDecimal(all.getLocationid()-leaveJob.getLocationid()));
                 continue;
             }
