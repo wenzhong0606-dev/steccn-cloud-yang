@@ -14,6 +14,7 @@ import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.ems.vo.PmsOperateEnergyVO;
 import com.steccn.oa.domain.HrmEmpCount;
 import com.steccn.oa.domain.Hrmresource;
+import com.steccn.oa.dto.OaDateDTO;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import com.steccn.oa.service.HrmEmpCountService;
 import com.steccn.oa.mapper.HrmEmpCountMapper;
@@ -41,22 +42,32 @@ public class HrmEmpCountServiceImpl extends ServiceImpl<HrmEmpCountMapper, HrmEm
     private final HrmresourceMapper hrmresourceMapper;
 
     @Override
-    public PmsOperateEnergyVO countDash(LocalDate day) {
+    public PmsOperateEnergyVO countDash(OaDateDTO dto) {
         PmsOperateEnergyVO result = new PmsOperateEnergyVO();
-        //切割
-        int year = day.getYear();
         List<HrmEmpCount> data = list(new LambdaQueryWrapper<HrmEmpCount>()
-                .between(HrmEmpCount::getMonth, LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31)));
+                .between(HrmEmpCount::getMonth, dto.getStart(), dto.getEnd()));
         Assert.notEmpty(data, "数据为空");
-        List<LocalDate> dateList = ShardTimeUtil.cutDate("M", LocalDate.of(year, 1, 1), LocalDate.of(year, 11, 30));
+        //当前人数
+        Hrmresource all = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
+                .lambda()
+                .lt(Hrmresource::getCreated, LocalDate.now().atTime(0,0,0)));
+        Hrmresource leaveJob = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
+                .lambda()
+                .lt(Hrmresource::getModified, LocalDate.now().atTime(0,0,0))
+                .in(Hrmresource::getStatus, Sets.newHashSet(5,4)));
+        List<LocalDate> dateList = ShardTimeUtil.cutDate("M", dto.getStart(), dto.getEnd());
         CommonBarLineVO commonBarLineVO = new CommonBarLineVO();
         List<String> xAisList = Lists.newArrayList();
         List<BigDecimal> valueList = Lists.newArrayList();
         for(LocalDate tmp:dateList){
-            if(tmp.getMonthValue() > LocalDate.now().getMonthValue()-1){
+            if(tmp.getMonthValue() > LocalDate.now().getMonthValue()){
                 continue;
             }
             xAisList.add(tmp.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            if(tmp.getMonthValue()==LocalDate.now().getMonthValue()){
+                valueList.add(new BigDecimal(all.getLocationid()-leaveJob.getLocationid()));
+                continue;
+            }
             HrmEmpCount hrmEmpCount = data.stream().filter(v -> v.getMonth().equals(tmp)).findFirst().orElse(null);
             if(Objects.isNull(hrmEmpCount)){
                 valueList.add(BigDecimal.ZERO);
@@ -68,14 +79,6 @@ public class HrmEmpCountServiceImpl extends ServiceImpl<HrmEmpCountMapper, HrmEm
         commonBarLineVO.setLegend(new BaseValueVO(Arrays.asList("在职人数")));
         commonBarLineVO.setSeries(Arrays.asList(new BaseValueNameVO<>(valueList, "在职人数")));
         result.setCommonBarLineVO(commonBarLineVO);
-        //当前人数
-        Hrmresource all = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
-                .lambda()
-                .lt(Hrmresource::getCreated, LocalDate.now().atTime(0,0,0)));
-        Hrmresource leaveJob = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
-                .lambda()
-                .lt(Hrmresource::getModified, LocalDate.now().atTime(0,0,0))
-                .in(Hrmresource::getStatus, Sets.newHashSet(5,4)));
         result.setTotalQuantity(new BigDecimal(all.getLocationid()-leaveJob.getLocationid()));
         return result;
     }

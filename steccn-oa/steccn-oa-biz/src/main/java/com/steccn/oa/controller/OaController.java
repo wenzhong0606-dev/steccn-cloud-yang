@@ -331,9 +331,9 @@ public class OaController {
     }
 
     @ApiOperation("计算人数图表")
-    @GetMapping("/countEmp/dashboard")
-    public R<PmsOperateEnergyVO> countEmpDashboard(@RequestParam("date")LocalDate date){
-        return R.success(hrmEmpCountService.countDash(date));
+    @PostMapping("/countEmp/dashboard")
+    public R<PmsOperateEnergyVO> countEmpDashboard(@RequestBody OaDateDTO dto){
+        return R.success(hrmEmpCountService.countDash(dto));
     }
 
 }

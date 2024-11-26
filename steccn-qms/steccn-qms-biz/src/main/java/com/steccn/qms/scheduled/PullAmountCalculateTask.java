@@ -121,7 +121,7 @@ public class PullAmountCalculateTask {
         XxlJobHelper.log("计算损耗-任务结束");
     }
 
-    @XxlJob("countPeopleByMonth")
+    @XxlJob("countPeopleByMonthHandler")
     public void countPeopleByMonth() {
         oaInfoService.countOnJobNum(new TupleDTO<LocalDate,LocalDate>(LocalDate.now(),LocalDate.now()));
     }
