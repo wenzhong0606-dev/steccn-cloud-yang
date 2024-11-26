@@ -3,11 +3,14 @@ package com.steccn.oa.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.domain.WorkflowNodeFlowtime;
+import com.steccn.oa.domain.WorkflowNodebase;
 import com.steccn.oa.domain.WorkflowRequestlog;
 import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.WorkflowNodebaseService;
 import com.steccn.oa.service.WorkflowRequestlogService;
 import com.steccn.oa.mapper.WorkflowRequestlogMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ import java.util.Objects;
 public class WorkflowRequestlogServiceImpl extends ServiceImpl<WorkflowRequestlogMapper, WorkflowRequestlog>
     implements WorkflowRequestlogService{
     private final HrmresourceService hrmresourceService;
+    private final WorkflowNodebaseService workflowNodebaseService;
 
     @Override
     public OaUserIdAndName getOperator(TupleDTO<Integer, Integer> dto) {
@@ -46,6 +50,27 @@ public class WorkflowRequestlogServiceImpl extends ServiceImpl<WorkflowRequestlo
             }
         }
         return result;
+    }
+
+    @Override
+    public Boolean workflowFinished(Integer requestId) {
+        WorkflowRequestlog workflowRequestlog = getOne(new LambdaQueryWrapper<WorkflowRequestlog>()
+                .select(WorkflowRequestlog::getNodeid)
+                .eq(WorkflowRequestlog::getRequestid, requestId)
+                .orderByDesc(WorkflowRequestlog::getOperatedate)
+                .orderByDesc(WorkflowRequestlog::getOperatetime)
+                .last("LIMIT 1"));
+        if(Objects.isNull(workflowRequestlog)){
+            return false;
+        }
+        WorkflowNodebase workflowNodebase = workflowNodebaseService.getOne(new LambdaQueryWrapper<WorkflowNodebase>()
+                .select(WorkflowNodebase::getIsend)
+                .eq(WorkflowNodebase::getId, workflowRequestlog.getNodeid()));
+        if(workflowNodebase.getIsend().equals(OaConstant.NUM_1.toString())){
+            return true;
+        }else {
+            return false;
+        }
     }
 }
 

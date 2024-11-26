@@ -17,4 +17,10 @@ public interface WorkflowRequestlogService extends IService<WorkflowRequestlog> 
      * @return
      */
     OaUserIdAndName getOperator(TupleDTO<Integer,Integer> dto);
+
+    /**
+     * 根据requestId查询节点是否完成
+     * @return
+     */
+    Boolean workflowFinished(Integer requestId);
 }

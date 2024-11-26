@@ -48,6 +48,8 @@ public class OaController {
 
     private final HrmEmpCountService hrmEmpCountService;
 
+    private final WorkflowRequestlogService workflowRequestlogService;
+
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
     public R getOaMenuList(@RequestParam("userId") String userId) {
@@ -334,6 +336,12 @@ public class OaController {
     @PostMapping("/countEmp/dashboard")
     public R<PmsOperateEnergyVO> countEmpDashboard(@RequestBody OaDateDTO dto){
         return R.success(hrmEmpCountService.countDash(dto));
+    }
+
+    @ApiOperation("流程是否完成")
+    @GetMapping("/workflow/isFinished")
+    public R<Boolean> workflowFinished(@RequestParam("requestId")Integer requestId){
+        return R.success(workflowRequestlogService.workflowFinished(requestId));
     }
 
 }
