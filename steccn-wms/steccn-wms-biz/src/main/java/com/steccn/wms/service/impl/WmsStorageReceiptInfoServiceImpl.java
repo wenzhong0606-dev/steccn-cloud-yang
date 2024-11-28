@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -29,12 +30,16 @@ import com.steccn.wms.mapper.WmsDeliveryReceiptInfoMapper;
 import com.steccn.wms.service.WmsDeliveryReceiptInfoService;
 import com.steccn.wms.service.WmsStorageReceiptInfoService;
 import com.steccn.wms.mapper.WmsStorageReceiptInfoMapper;
+import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -152,6 +157,43 @@ public class WmsStorageReceiptInfoServiceImpl extends ServiceImpl<WmsStorageRece
             resPage.setRecords(wmsStorageReceiptInfoVOS);
         }
         return resPage;
+    }
+
+    @Override
+    public void excelExportData(HttpServletResponse response, Long id) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("出库明细", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), WmsStorageReceiptInfoVO.class).sheet("模板").doWrite(getExcelData(id));
+    }
+
+
+    /**
+     * 获取excel数据
+     *
+     * @return
+     */
+    private List<WmsStorageReceiptInfoVO> getExcelData(Long id) {
+        //获取数
+        List<WmsStorageReceiptInfo> list = list(new LambdaQueryWrapper<WmsStorageReceiptInfo>().eq(WmsStorageReceiptInfo::getStorageReceiptId, id));
+//        List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS = wmsStorageReceiptInfoMapper.infoList(id);
+        //处理数据
+        List<WmsStorageReceiptInfoVO> wmsDeliveryReceiptInfoVOS = BeanUtil.copyToList(list, WmsStorageReceiptInfoVO.class);
+        Set<Long> dictIds = Sets.newHashSet();
+        List<Long> materialIds = Lists.newArrayList();
+        wmsDeliveryReceiptInfoVOS.forEach( info->{
+            dictIds.add(info.getUnit());
+            materialIds.add(info.getMaterialId());
+        });
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        wmsDeliveryReceiptInfoVOS.forEach(info->{
+            info.setUnitName(dictMap.get(info.getUnit()));
+            info.setSpecification(materialMap.get(info.getMaterialId()).getSpecifications());
+        });
+        return  wmsDeliveryReceiptInfoVOS;
     }
 }
 

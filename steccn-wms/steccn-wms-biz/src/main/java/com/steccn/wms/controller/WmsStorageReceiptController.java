@@ -74,6 +74,14 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptInfoService.infoPageList(dto));
     }
 
+
+    @ApiOperation("入库明细导出")
+    @GetMapping("/excelExportData")
+    public void excelExportData(HttpServletResponse response,@RequestParam Long id) throws IOException {
+        wmsStorageReceiptInfoService.excelExportData(response,id);
+    }
+
+
     @ApiOperation("新增")
     @PostMapping()
     @SysLog("入库凭证新增")

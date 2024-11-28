@@ -11,6 +11,8 @@ import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -66,4 +68,6 @@ public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceipt
     BigDecimal purchaseInventoryRawGlass(TupleDTO<LocalDateTime, LocalDateTime> tupleDTO);
 
     Page<WmsStorageReceiptInfoVO> infoPageList(WmsStorageReceiptPageDTO dto);
+
+    void excelExportData(HttpServletResponse response, Long id) throws IOException;
 }

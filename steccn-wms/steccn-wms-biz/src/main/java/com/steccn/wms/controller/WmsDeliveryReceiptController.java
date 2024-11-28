@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -68,6 +70,12 @@ public class WmsDeliveryReceiptController {
     @PostMapping("/info/list")
     public R<Page<WmsDeliveryReceiptInfoVO>> infoPageList(@RequestBody WmsDeliveryReceiptPageDTO dto){
         return R.success(wmsDeliveryReceiptInfoService.infoPageList(dto));
+    }
+
+    @ApiOperation("出库明细导出")
+    @GetMapping("/excelExportData")
+    public void excelExportData(HttpServletResponse response,@RequestParam Long id) throws IOException {
+        wmsDeliveryReceiptInfoService.excelExportData(response,id);
     }
 
     @ApiOperation("出库凭证确认")

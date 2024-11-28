@@ -9,6 +9,9 @@ import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -36,4 +39,6 @@ public interface WmsDeliveryReceiptInfoService extends IService<WmsDeliveryRecei
     List<WmsDeliveryReceiptInfoVO> infoList(Long id);
 
     Page<WmsDeliveryReceiptInfoVO> infoPageList(WmsDeliveryReceiptPageDTO dto);
+
+    void excelExportData(HttpServletResponse response, Long id) throws IOException;
 }

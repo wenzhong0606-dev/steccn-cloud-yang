@@ -3,6 +3,7 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,10 +13,13 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
@@ -32,10 +36,15 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -105,6 +114,41 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
             );
         }
         return page;
+    }
+
+    @Override
+    public void excelExportData(HttpServletResponse response, Long id) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("入库明细", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), WmsDeliveryReceiptInfoVO.class).sheet("模板").doWrite(getExcelData(id));
+    }
+
+
+    /**
+     * 获取excel数据
+     *
+     * @return
+     */
+    private List<WmsDeliveryReceiptInfoVO> getExcelData(Long id) {
+        //获取数据
+        List<WmsDeliveryReceiptInfoVO> wmsDeliveryReceiptInfoVOS = this.baseMapper.infoList(id);
+        //处理数据
+        Set<Long> dictIds = Sets.newHashSet();
+        List<Long> materialIds = Lists.newArrayList();
+        wmsDeliveryReceiptInfoVOS.forEach( info->{
+            dictIds.add(info.getUnit());
+            materialIds.add(info.getMaterialId());
+        });
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        wmsDeliveryReceiptInfoVOS.forEach(info->{
+            info.setUnitName(dictMap.get(info.getUnit()));
+            info.setSpecification(materialMap.get(info.getMaterialId()).getSpecifications());
+        });
+        return  wmsDeliveryReceiptInfoVOS;
     }
 }
 

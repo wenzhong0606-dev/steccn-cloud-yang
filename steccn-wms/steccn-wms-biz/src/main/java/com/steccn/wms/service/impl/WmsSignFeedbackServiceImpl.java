@@ -179,7 +179,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
             ksLogisticsOrderDTO.setSignType("abnormal");
         }
         ksLogisticsOrderDTO.setSignQty(order.getSignedQuantity());
-        ksLogisticsOrderDTO.setPieceQty(order.getPriceQuantity());
+        ksLogisticsOrderDTO.setPriceQty(order.getPriceQuantity());
         ksLogisticsOrderDTO.setSignDate(order.getSignedDate());
         ksLogisticsOrderDTO.setAbnormalCause(order.getAbnormalCause());
         ksLogisticsOrderDTO.setState("feedback");
