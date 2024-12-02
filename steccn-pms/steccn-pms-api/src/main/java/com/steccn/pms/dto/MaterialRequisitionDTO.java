@@ -10,6 +10,7 @@ import org.hibernate.validator.constraints.Length;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.File;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -46,6 +47,8 @@ public class MaterialRequisitionDTO {
     private String type;
 
     private Long fileId;
+
+    private LocalDate receiveTime;
 
     /**
      * 关联单据

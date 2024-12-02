@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotEmpty;
 import java.io.File;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -19,5 +20,6 @@ public class PmsLaborGerReqDTO implements Serializable {
     private List<Map<String,String>>  details;
     private Long typeId;
     private Long fileId;
+    private LocalDate receiveTime;
 //    private List<PmsLaborGerReqDetailDTO> details;
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -82,4 +83,6 @@ public class MaterialRequisitionVO implements Serializable {
 
     @ApiModelProperty("oa流程id")
     private Long requestId;
+
+    private LocalDate receiveTime;
 }

@@ -133,6 +133,12 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateReq(PmsLaborGerReqDTO dto) {
         List<PmsLaborGerReqDetailDTO> data = Lists.newArrayList();
+        if(Objects.isNull(dto.getReceiveTime())){
+            throw new BusinessException("领用时间不能为空");
+        }
+        if(dto.getReceiveTime().getDayOfMonth()>10){
+            throw new BusinessException("领用时间必须为每月1-10日");
+        }
         //处理前端传的数据
         for (Map<String, String> tmp : dto.getDetails()) {
             String str = tmp.get("materialList");
@@ -157,6 +163,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
         Map<String, List<PmsLaborGerReqDetailDTO>> depMap = data.stream().collect(Collectors.groupingBy(PmsLaborGerReqDetailDTO::getDepCode));
         for (Map.Entry<String, List<PmsLaborGerReqDetailDTO>> tmp : depMap.entrySet()) {
             MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
+            materialRequisitionDTO.setReceiveTime(dto.getReceiveTime());
             SysOfficeVO office = officeMap.get(tmp.getKey());
             materialRequisitionDTO.setDepartmentId(office.getId());
             //部门领料

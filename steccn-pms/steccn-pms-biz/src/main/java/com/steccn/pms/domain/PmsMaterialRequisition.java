@@ -3,6 +3,7 @@ package com.steccn.pms.domain;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.Data;
@@ -73,6 +74,11 @@ public class PmsMaterialRequisition implements Serializable {
      * 确认时间
      */
     private LocalDateTime affirmTime;
+
+    /**
+     * 领用时间
+     */
+    private LocalDate receiveTime;
 
     /**
      * 创建人id
