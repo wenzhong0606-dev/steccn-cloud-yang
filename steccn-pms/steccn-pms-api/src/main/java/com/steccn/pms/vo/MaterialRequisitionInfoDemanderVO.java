@@ -20,4 +20,10 @@ public class MaterialRequisitionInfoDemanderVO {
      */
     @ApiModelProperty("需求人名称")
     private String demanderName;
+
+    /**
+     * 需求人岗位
+     */
+    @ApiModelProperty("需求人岗位")
+    private String demanderPost;
 }

@@ -20,4 +20,5 @@ public class PmsLaborGerReqDetailDTO implements Serializable {
     private BigDecimal num;
     private File file;
     private String type;
+    private String postName;
 }

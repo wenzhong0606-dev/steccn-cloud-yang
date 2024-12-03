@@ -149,6 +149,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 dataTmp.setMaterialId(Long.parseLong(material));
                 dataTmp.setDepCode(tmp.get("depCode"));
                 dataTmp.setLoginCode(tmp.get("loginCode"));
+                dataTmp.setPostName(tmp.get("postName"));
                 if (StrUtil.isNotBlank(tmp.get(material + "_claimNum"))) {
                     dataTmp.setNum(new BigDecimal(tmp.get(material + "_claimNum")));
                     data.add(dataTmp);
@@ -191,7 +192,7 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
                 detailModel.setReceiveQuantity(BigDecimal.ZERO);
                 detailModel.setRequireDate(LocalDate.now());
                 OaUserInfo oaUserInfo = FeignOptional.of(() -> oaInfoService.getOaUserInfo(detailTmp.getLoginCode()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                List<MaterialRequisitionDemanderDTO> demanderList = Lists.newArrayList(new MaterialRequisitionDemanderDTO(oaUserInfo.getOaUserId().longValue(), oaUserInfo.getName()));
+                List<MaterialRequisitionDemanderDTO> demanderList = Lists.newArrayList(new MaterialRequisitionDemanderDTO(oaUserInfo.getOaUserId().longValue(), oaUserInfo.getName(),detailTmp.getPostName()));
                 detailList.add(detailModel);
                 detailModel.setDemanderList(demanderList);
                 //保存领用记录

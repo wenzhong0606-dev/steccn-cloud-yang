@@ -517,6 +517,11 @@ public interface PmManagerConstant {
     String WORKFLOW_LYR = "lyr";
 
     /**
+     * 领用岗位
+     */
+    String WORKFLOW_LYGW = "lygw";
+
+    /**
      * 成功
      */
     String WORKFLOW_SUCCESS = "SUCCESS";

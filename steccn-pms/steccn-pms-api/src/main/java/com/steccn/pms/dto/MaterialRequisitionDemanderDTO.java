@@ -24,4 +24,9 @@ public class MaterialRequisitionDemanderDTO {
      */
     @ApiModelProperty("需求人名称")
     private String demanderName;
+
+    /**
+     * 需求人岗位
+     */
+    private String demanderPost;
 }

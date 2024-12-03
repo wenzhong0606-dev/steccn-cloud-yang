@@ -535,10 +535,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     //获取领用人
                     List<PmsMaterialRequisitionDemander> demanderList = pmsMaterialRequisitionDemanderService.list(new LambdaQueryWrapper<PmsMaterialRequisitionDemander>()
                             .in(PmsMaterialRequisitionDemander::getRequisitionInfoId, detailId));
-                    Map<Long, String> demanderMap = Maps.newHashMap();
+                    Map<Long, TupleDTO<String,String>> demanderMap = Maps.newHashMap();
                     if (CollUtil.isNotEmpty(demanderList)) {
                         for (PmsMaterialRequisitionDemander tmp : demanderList) {
-                            demanderMap.put(tmp.getRequisitionInfoId(), tmp.getDemanderName());
+                            demanderMap.put(tmp.getRequisitionInfoId(),new TupleDTO<>(tmp.getDemanderName(),tmp.getDemanderPost()) );
                         }
                     }
                     Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -592,8 +592,12 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLBM, eqpSpareVO.getCode()));
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC, eqpSpareVO.getName()));
                         //领用人
-                        if (StrUtil.isNotBlank(demanderMap.get(tmp.getId()))) {
-                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId())));
+                        if (StrUtil.isNotBlank(demanderMap.get(tmp.getId()).getField1())) {
+                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYR, demanderMap.get(tmp.getId()).getField1()));
+                        }
+                        //领用人岗位
+                        if (StrUtil.isNotBlank(demanderMap.get(tmp.getId()).getField2())) {
+                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYGW, demanderMap.get(tmp.getId()).getField2()));
                         }
                         if (Objects.nonNull(eqpSpareVO.getSpecifications())) {
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH, eqpSpareVO.getSpecifications()));
