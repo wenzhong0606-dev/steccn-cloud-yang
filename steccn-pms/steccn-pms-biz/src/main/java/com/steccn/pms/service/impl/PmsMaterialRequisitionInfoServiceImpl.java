@@ -11,6 +11,10 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.vo.R;
+import com.steccn.mes.feign.RemoteMesFeignApi;
+import com.steccn.mes.vo.MesUserInfoVO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteStationWarehouseFeignApi;
 import com.steccn.platform.vo.SysStationWarehouseVO;
 import com.steccn.pms.domain.PmsMaterialRequisitionDemander;
@@ -47,6 +51,8 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
 
     private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
     private final PmsMaterialRequisitionDemanderService pmsMaterialRequisitionDemanderService;
+    private final RemoteMesFeignApi remoteMesFeignApi;
+    private final OaInfoService oaInfoService;
 
     @Override
     public Boolean editList(MaterialRequisitionDTO materialRequisitionDTO) {
@@ -70,8 +76,11 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
                 materialRequisitionInfoDTO.getDemanderList().forEach( demander->{
                     PmsMaterialRequisitionDemander pmsMaterialRequisitionDemander = new PmsMaterialRequisitionDemander();
                     BeanUtil.copyProperties(demander,pmsMaterialRequisitionDemander);
+                    String loginIdById = FeignOptional.of(()->oaInfoService.getLoginIdById(Integer.parseInt(demander.getDemanderId().toString())),FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                    List<MesUserInfoVO> mesUserInfoVOS = FeignOptional.of(() -> remoteMesFeignApi.getEmpDepPost(new TupleDTO<>(Sets.newHashSet(loginIdById), 0)), FeignConstant.STECCN_MES_SERVICE_NAME).get();
                     pmsMaterialRequisitionDemander.setMaterialRequisitionId(materialRequisitionDTO.getId());
                     pmsMaterialRequisitionDemander.setRequisitionInfoId(materialRequisitionInfo.getId());
+                    pmsMaterialRequisitionDemander.setDemanderPost(mesUserInfoVOS.get(0).getPostName());
                     demanderList.add(pmsMaterialRequisitionDemander);
                 });
             }
