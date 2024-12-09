@@ -644,7 +644,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
-    @Cacheable(cacheNames = "sellFlag#3600", key = "#number")
+//    @Cacheable(cacheNames = "sellFlag#3600", key = "#number")
     public WmsDeliverySellFlagVO sellFlag(String number) {
         Assert.notNull(number, "物流单号不能为空");
         WmsDeliverySellFlagVO wmsDeliverySellFlagVO = new WmsDeliverySellFlagVO();
@@ -681,7 +681,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     wmsDeliverySellFlagVO.setFeedbackFlag(1);
                 }
                 if (state.equals("已预约")) {
-                    wmsDeliverySellFlagVO.setFeedbackFlag(WmsManagerConstant.YesOrNo.YES.getCode());
+                    wmsDeliverySellFlagVO.setMakeAnAppointmentFlag(WmsManagerConstant.YesOrNo.YES.getCode());
                 }
                 BigDecimal saleQty = new BigDecimal(salesLogisticsVO.getSale_qty());
                 //如果销售数量为0
