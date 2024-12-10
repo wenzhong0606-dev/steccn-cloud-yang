@@ -64,6 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -493,7 +494,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //申请部门
                 Set<Integer> officeIdSet = Sets.newHashSet();
                 officeIdSet.add(pmsMaterialRequisition.getDepartmentId());
-                Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//                Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //查到oa中部门
                 OaOrgDetailDTO oaOrg = new OaOrgDetailDTO();
                 oaOrg.setId(pmsMaterialRequisition.getDepartmentId().toString());
@@ -510,11 +511,16 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 dictIdSet.add(pmsMaterialRequisition.getTypeId());
                 Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Integer typeCode = PmManagerConstant.PmRequisitionWorkFlow.getCodeByName(dictMap.get(pmsMaterialRequisition.getTypeId()));
+
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LX, typeCode.toString()));
 //                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LX, "3"));
                 //备注
                 if (Objects.nonNull(pmsMaterialRequisition.getNote())) {
                     mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_BZ, pmsMaterialRequisition.getNote()));
+                }
+                //领用月份
+                if(Objects.nonNull(pmsMaterialRequisition.getReceiveTime())){
+                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_LYYF, pmsMaterialRequisition.getReceiveTime().format(DateTimeFormatter.ofPattern("yyyy-MM"))));
                 }
                 workflowDTO.setMainData(mainDataList);
 
