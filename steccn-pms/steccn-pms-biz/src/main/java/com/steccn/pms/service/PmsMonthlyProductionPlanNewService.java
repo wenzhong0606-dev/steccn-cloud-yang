@@ -60,6 +60,17 @@ public interface PmsMonthlyProductionPlanNewService extends IService<PmsMonthlyP
     Boolean updateData(LocalDate date, Integer clientId, Long materialId, List<TupleDTO<LocalDate, BigDecimal>> value);
 
     /**
+     * 同步
+     *
+     * @param date       日期
+     * @param clientId   客户
+     * @param materialId 物料主键
+     * @param value      日期数据
+     * @return
+     */
+    Boolean syncData(LocalDate date, Integer clientId, Long materialId, List<TupleDTO<LocalDate, BigDecimal>> value);
+
+    /**
      * 显示月度报表
      * @param date 日期
      * @return

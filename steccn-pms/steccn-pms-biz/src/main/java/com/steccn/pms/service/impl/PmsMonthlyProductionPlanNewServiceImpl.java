@@ -192,6 +192,52 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean syncData(LocalDate monthFirstDay, Integer clientId, Long materialId, List<TupleDTO<LocalDate, BigDecimal>> value) {
+        Assert.notEmpty(value, "业务数据为空");
+        SysOfficeVO clientVo = FeignOptional.of(() -> remoteOfficeFeign.info(clientId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(clientVo, "客户不存在");
+        EqpSpareVO materialVo = FeignOptional.of(() -> remoteSpareFeignApi.getById(materialId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(materialVo, "物料不存在");
+        Assert.notNull(monthFirstDay, "日期数据为空");
+        //加分布式锁
+        //加分布式锁-反正出现有效期重叠的情况
+        RLock lock = redisson.getLock(materialId + ":" + clientId + ":" + monthFirstDay);
+        lock.lock();
+        boolean flag = false;
+        try {
+            //获取当前月的最后一天
+            LocalDate monthLastDay = LocalDateUtil.monthLastDay(monthFirstDay);
+            long count = count(new LambdaQueryWrapper<PmsMonthlyProductionPlanNew>()
+                    .eq(PmsMonthlyProductionPlanNew::getMaterialId, materialId)
+                    .eq(PmsMonthlyProductionPlanNew::getClientId, clientId)
+                    .ge(PmsMonthlyProductionPlanNew::getPlanDate, monthFirstDay)
+                    .le(PmsMonthlyProductionPlanNew::getPlanDate, monthLastDay));
+            if (count == 0) {
+                //第一次同步
+                List<PmsMonthlyProductionPlanNew> modelList = Lists.newArrayList();
+                value.forEach(ele -> {
+                    PmsMonthlyProductionPlanNew model = new PmsMonthlyProductionPlanNew();
+                    model.setMaterialId(materialId);
+                    model.setClientId(clientId);
+                    model.setPlanDate(ele.getField1());
+                    model.setClient(clientVo.getOfficeName());
+                    model.setPlanQuantity(ele.getField2());
+                    model.setState(0);
+                    modelList.add(model);
+                });
+                saveBatch(modelList);
+            } else {
+                //反复同步
+                flag = updateData(monthFirstDay, clientId, materialId, value);
+            }
+        } finally {
+            lock.unlock();
+        }
+        return flag;
+    }
+
+    @Override
     public PmsMonthlyProductionPlanNewListVO show(LocalDate monthFirstDay) {
         LocalDate monthLastDay = LocalDateUtil.monthLastDay(monthFirstDay);
         PmsMonthlyProductionPlanNewListVO resVo = new PmsMonthlyProductionPlanNewListVO();
