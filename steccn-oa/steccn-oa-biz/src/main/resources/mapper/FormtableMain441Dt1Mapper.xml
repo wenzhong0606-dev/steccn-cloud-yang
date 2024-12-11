@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.FormtableMain441Dt1Mapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.FormtableMain441Dt1">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="mainid" column="mainid" jdbcType="INTEGER"/>
+            <result property="wlbm" column="wlbm" jdbcType="VARCHAR"/>
+            <result property="wlmc" column="wlmc" jdbcType="VARCHAR"/>
+            <result property="khbm" column="khbm" jdbcType="VARCHAR"/>
+            <result property="zs" column="zs" jdbcType="INTEGER"/>
+            <result property="bzfs" column="bzfs" jdbcType="INTEGER"/>
+            <result property="dd" column="dd" jdbcType="VARCHAR"/>
+            <result property="day1" column="day1" jdbcType="DECIMAL"/>
+            <result property="day2" column="day2" jdbcType="DECIMAL"/>
+            <result property="day3" column="day3" jdbcType="DECIMAL"/>
+            <result property="day4" column="day4" jdbcType="DECIMAL"/>
+            <result property="day5" column="day5" jdbcType="DECIMAL"/>
+            <result property="day6" column="day6" jdbcType="DECIMAL"/>
+            <result property="day7" column="day7" jdbcType="DECIMAL"/>
+            <result property="day8" column="day8" jdbcType="DECIMAL"/>
+            <result property="day9" column="day9" jdbcType="DECIMAL"/>
+            <result property="day10" column="day10" jdbcType="DECIMAL"/>
+            <result property="day11" column="day11" jdbcType="DECIMAL"/>
+            <result property="day12" column="day12" jdbcType="DECIMAL"/>
+            <result property="day13" column="day13" jdbcType="DECIMAL"/>
+            <result property="day14" column="day14" jdbcType="DECIMAL"/>
+            <result property="day15" column="day15" jdbcType="DECIMAL"/>
+            <result property="day16" column="day16" jdbcType="DECIMAL"/>
+            <result property="day17" column="day17" jdbcType="DECIMAL"/>
+            <result property="day18" column="day18" jdbcType="DECIMAL"/>
+            <result property="day19" column="day19" jdbcType="DECIMAL"/>
+            <result property="day20" column="day20" jdbcType="DECIMAL"/>
+            <result property="day21" column="day21" jdbcType="DECIMAL"/>
+            <result property="day22" column="day22" jdbcType="DECIMAL"/>
+            <result property="day23" column="day23" jdbcType="DECIMAL"/>
+            <result property="day24" column="day24" jdbcType="DECIMAL"/>
+            <result property="day25" column="day25" jdbcType="DECIMAL"/>
+            <result property="day26" column="day26" jdbcType="DECIMAL"/>
+            <result property="day27" column="day27" jdbcType="DECIMAL"/>
+            <result property="day28" column="day28" jdbcType="DECIMAL"/>
+            <result property="day29" column="day29" jdbcType="DECIMAL"/>
+            <result property="day30" column="day30" jdbcType="DECIMAL"/>
+            <result property="day31" column="day31" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,mainid,wlbm,
+        wlmc,khbm,zs,
+        bzfs,dd,day1,
+        day2,day3,day4,
+        day5,day6,day7,
+        day8,day9,day10,
+        day11,day12,day13,
+        day14,day15,day16,
+        day17,day18,day19,
+        day20,day21,day22,
+        day23,day24,day25,
+        day26,day27,day28,
+        day29,day30,day31
+    </sql>
+</mapper>

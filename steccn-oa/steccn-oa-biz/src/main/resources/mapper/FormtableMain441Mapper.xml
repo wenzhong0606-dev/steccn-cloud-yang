@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.FormtableMain441Mapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.FormtableMain441">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="requestid" column="requestId" jdbcType="INTEGER"/>
+            <result property="khmc" column="khmc" jdbcType="VARCHAR"/>
+            <result property="glhth" column="glhth" jdbcType="VARCHAR"/>
+            <result property="sqr" column="sqr" jdbcType="INTEGER"/>
+            <result property="sqbm" column="sqbm" jdbcType="INTEGER"/>
+            <result property="sqrq" column="sqrq" jdbcType="CHAR"/>
+            <result property="fhyf" column="fhyf" jdbcType="VARCHAR"/>
+            <result property="jhdz" column="jhdz" jdbcType="VARCHAR"/>
+            <result property="jhlx" column="jhlx" jdbcType="INTEGER"/>
+            <result property="jsbz" column="jsbz" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,requestId,khmc,
+        glhth,sqr,sqbm,
+        sqrq,fhyf,jhdz,
+        jhlx,jsbz
+    </sql>
+</mapper>

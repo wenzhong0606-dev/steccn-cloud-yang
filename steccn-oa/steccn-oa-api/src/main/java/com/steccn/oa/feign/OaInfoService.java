@@ -365,4 +365,7 @@ public interface OaInfoService {
 
     @GetMapping("/feign/oa/workflow/isFinished")
     R<Boolean> workflowFinished(@RequestParam("requestId")Integer requestId);
+
+    @GetMapping("/feign/oa/pmsPlan/syn")
+    R<List<OaFormTableMain441VO>> synPmsPlan(@RequestParam("yearMonth") String yearMonth);
 }
