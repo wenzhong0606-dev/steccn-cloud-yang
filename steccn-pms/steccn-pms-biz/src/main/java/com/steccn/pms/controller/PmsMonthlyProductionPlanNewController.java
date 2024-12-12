@@ -73,6 +73,12 @@ public class PmsMonthlyProductionPlanNewController {
         return R.success(pmsMonthlyProductionPlanNewService.updateData(parse, dto.getClientId(), dto.getMaterialId(),dto.getValue()));
     }
 
+    @ApiOperation("同步oa数据")
+    @GetMapping("/syn")
+    public R<Boolean> syn(@RequestParam("date") String date) {
+        return R.success(pmsMonthlyProductionPlanNewService.getDataFromOa(date));
+    }
+
     @ApiOperation("显示")
     @GetMapping("/show")
     public R<PmsMonthlyProductionPlanNewListVO> show(@RequestParam("date") String date) {

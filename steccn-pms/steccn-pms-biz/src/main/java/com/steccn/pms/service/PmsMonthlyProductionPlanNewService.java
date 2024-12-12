@@ -76,4 +76,11 @@ public interface PmsMonthlyProductionPlanNewService extends IService<PmsMonthlyP
      * @return
      */
     PmsMonthlyProductionPlanNewListVO show(LocalDate date);
+
+    /**
+     * 从oa同步数据到生产系统
+     * @param yearMonth
+     * @return
+     */
+    Boolean getDataFromOa(String yearMonth);
 }

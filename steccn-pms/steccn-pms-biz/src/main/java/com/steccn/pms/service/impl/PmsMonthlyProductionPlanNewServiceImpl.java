@@ -1,5 +1,6 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
@@ -19,12 +20,17 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaFormTableMain441VO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsMonthlyProductionPlanNew;
+import com.steccn.pms.dto.PmsMonthlySynDataDTO;
 import com.steccn.pms.mapper.PmsMonthlyProductionPlanNewMapper;
 import com.steccn.pms.service.PmsMonthlyProductionPlanNewService;
 import com.steccn.pms.service.PmsMonthlyProductionPlanService;
@@ -40,9 +46,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,6 +74,7 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
     private final RemoteWmsDeliveryReceiptFeignApi remoteWmsDeliveryReceiptFeignApi;
     @Resource
     private PmsMonthlyProductionPlanService pmsMonthlyProductionPlanService;
+    private final OaInfoService oaInfoService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -309,6 +320,121 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
             resVo.setDataList(dataList);
         }
         return resVo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean getDataFromOa(String yearMonth) {
+        List<OaFormTableMain441VO> oaFormTableMain441VOS = FeignOptional.of(() -> oaInfoService.synPmsPlan(yearMonth), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(CollUtil.isEmpty(oaFormTableMain441VOS)){
+            throw new BusinessException("当月没有审批通过的计划");
+        }
+//        步骤1：“计划类型”值为“交货计划”的审批，每个客户仅保留审批时间最晚的一条审批，组成审批集合A
+        OaFormTableMain441VO oaFormTableMain441VO1 = oaFormTableMain441VOS.stream().filter(v -> v.getJhlx().equals(OaConstant.NO))
+                .max(Comparator.comparingInt(OaFormTableMain441VO::getId)).orElse(null);
+//        步骤2：“计划类型”值为“备货计划”的审批，组成审批集合B
+        List<OaFormTableMain441VO> collect = oaFormTableMain441VOS.stream().filter(v -> v.getJhlx().equals(OaConstant.NUM_1)).collect(Collectors.toList());
+//        步骤3：将集合A、B中的审批明细整理为月计划数据（每行数据展示：物料 + 客户 + 各天发货数），加入表C
+        List<PmsMonthlySynDataDTO> tmpList = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(collect)){
+            for(OaFormTableMain441VO tmpVo:collect){
+                SysOfficeTypeKeyDTO dto = new SysOfficeTypeKeyDTO();
+                dto.setType(Lists.newArrayList("7"));
+                dto.setKeyList(Lists.newArrayList(tmpVo.getKhmc()));
+                List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(CollUtil.isEmpty(sysOfficeVOS)){
+                    throw new BusinessException(tmpVo.getKhmc()+"在系统中不存在，请联系管理员");
+                }
+                tmpList.addAll(BeanUtil.copyToList(tmpVo.getDetailList(),PmsMonthlySynDataDTO.class));
+                tmpList.forEach(tmp->tmp.setClientId(sysOfficeVOS.get(0).getId()));
+            }
+        }
+        if(Objects.nonNull(oaFormTableMain441VO1)){
+            SysOfficeTypeKeyDTO dto = new SysOfficeTypeKeyDTO();
+            dto.setType(Lists.newArrayList("7"));
+            dto.setKeyList(Lists.newArrayList(oaFormTableMain441VO1.getKhmc()));
+            List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isEmpty(sysOfficeVOS)){
+                throw new BusinessException(oaFormTableMain441VO1.getKhmc()+"在系统中不存在，请联系管理员");
+            }
+            List<PmsMonthlySynDataDTO> pmsMonthlySynDataDTOS = BeanUtil.copyToList(oaFormTableMain441VO1.getDetailList(), PmsMonthlySynDataDTO.class);
+            pmsMonthlySynDataDTOS.forEach(tmp->tmp.setClientId(sysOfficeVOS.get(0).getId()));
+            tmpList.addAll(pmsMonthlySynDataDTOS);
+        }
+//        步骤4：表C中的数据按物料、客户分组，发货数求和
+        // 1. 按 物料 和 客户 分组
+        Map<String, Map<Integer, List<PmsMonthlySynDataDTO>>> grouped = tmpList.stream()
+                .collect(Collectors.groupingBy(
+                        PmsMonthlySynDataDTO::getWlbm,
+                        Collectors.groupingBy(PmsMonthlySynDataDTO::getClientId)
+                ));
+        // 2. 对分组数据计算智力水平求和
+        List<PmsMonthlySynDataDTO> result = Lists.newArrayList();
+        for (Map.Entry<String, Map<Integer, List<PmsMonthlySynDataDTO>>> materialGroup : grouped.entrySet()) {
+            String name = materialGroup.getKey();
+            for (Map.Entry<Integer, List<PmsMonthlySynDataDTO>> clientIdGroup : materialGroup.getValue().entrySet()) {
+                int height = clientIdGroup.getKey();
+                List<PmsMonthlySynDataDTO> tmpGroup = clientIdGroup.getValue();
+
+                // 创建新的DTO 并累加值
+                PmsMonthlySynDataDTO summedDTO = new PmsMonthlySynDataDTO();
+                summedDTO.setWlbm(name);
+                summedDTO.setClientId(height);
+                Field[] fields = PmsMonthlySynDataDTO.class.getDeclaredFields();
+                for (Field field : fields) {
+                    if (field.getName().startsWith("day")) {
+                        field.setAccessible(true);
+                        BigDecimal sum = tmpGroup.stream()
+                                .map(tmp -> {
+                                    try {
+                                        BigDecimal value = (BigDecimal) field.get(tmp);
+                                        return value == null ? BigDecimal.ZERO : value;
+                                    } catch (IllegalAccessException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                })
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        try {
+                            field.set(summedDTO, sum);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+                result.add(summedDTO);
+            }
+        }
+//        步骤5：将表C中的数据覆盖MES侧的生产月计划（已下达的生产月计划被覆盖后，自动更新对应的月度主生产计划）
+        String date = yearMonth + "-01";
+        LocalDate parse = LocalDate.parse(date);
+        Map<String, EqpSpareVO> spareCodeMap = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(Lists.newArrayList(tmpList.stream().map(PmsMonthlySynDataDTO::getWlbm).collect(Collectors.toSet()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        for(PmsMonthlySynDataDTO tmp:result){
+            EqpSpareVO eqpSpareVO = spareCodeMap.get(tmp.getWlbm());
+            if(Objects.isNull(eqpSpareVO)){
+                throw new BusinessException("物料编码"+tmp.getWlbm()+"不存在，请联系管理员");
+            }
+            List<TupleDTO<LocalDate, BigDecimal>> value = Lists.newArrayList();
+            for (int day = 1; day <= YearMonth.from(parse).lengthOfMonth(); day++) {
+                LocalDate currentDay = parse.withDayOfMonth(day);
+                String methodName = "getDay" + day;
+                Method method = null;
+                BigDecimal num;
+                try {
+                    method = PmsMonthlySynDataDTO.class.getMethod(methodName);
+                    num = (BigDecimal) method.invoke(tmp);
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                } catch (InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                value.add(new TupleDTO<LocalDate, BigDecimal>(currentDay,num == null ? BigDecimal.ZERO : num));
+            }
+            updateData(parse,tmp.getClientId(),eqpSpareVO.getId(),value);
+        }
+
+        return true;
     }
 
     /**
