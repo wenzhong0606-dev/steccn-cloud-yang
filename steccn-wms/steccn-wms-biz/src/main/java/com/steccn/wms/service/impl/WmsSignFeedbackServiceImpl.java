@@ -30,6 +30,7 @@ import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
@@ -168,6 +169,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean affirm(WmsSignFeedbackDTO dto) {
         Assert.notNull(dto.getId(),"反馈id不能为空");
         WmsSignFeedback order = getById(dto.getId());

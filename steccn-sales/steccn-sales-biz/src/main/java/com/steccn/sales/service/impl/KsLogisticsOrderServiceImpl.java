@@ -36,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -210,6 +211,7 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateOrderByOrderCode(KsLogisticsOrderDTO dto) {
         KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, dto.getName()));
         one.setState("feedback");
