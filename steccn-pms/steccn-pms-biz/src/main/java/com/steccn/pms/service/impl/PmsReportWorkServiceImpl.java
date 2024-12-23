@@ -332,6 +332,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 info.setWarehouseId(materialDTO.getWarehouseId());
                 info.setShelfId(materialDTO.getShelfId());
                 info.setCompleteDeliveryId(completeDelivery.getId());
+                //保存不良数
+                info.setBadnessQuantity(materialDTO.getBadnessQuantity());
                 //新增可用数量
                 info.setAvaQuantity(materialDTO.getAvailableQuantity());
                 modelList.add(info);
