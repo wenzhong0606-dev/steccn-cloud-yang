@@ -34,6 +34,8 @@ public class OaFormTableDT441VO {
      */
     private String khbm;
 
+    private String khbm2;
+
     /**
      *
      */

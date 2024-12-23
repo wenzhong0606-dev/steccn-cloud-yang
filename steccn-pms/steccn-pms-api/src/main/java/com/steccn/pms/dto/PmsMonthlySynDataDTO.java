@@ -15,6 +15,7 @@ public class PmsMonthlySynDataDTO {
     private Integer clientId;
     private Long materialId;
     private String wlbm;
+    private String khbm;
     private BigDecimal day1;
 
     /**

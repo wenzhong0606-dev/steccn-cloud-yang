@@ -41,6 +41,8 @@ public class FormtableMain441Dt1 implements Serializable {
      */
     private String khbm;
 
+    private String khbm2;
+
     /**
      * 
      */

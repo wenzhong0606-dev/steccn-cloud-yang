@@ -22,6 +22,7 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaFormTableDT441VO;
 import com.steccn.oa.vo.OaFormTableMain441VO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -337,38 +338,62 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
 //        步骤3：将集合A、B中的审批明细整理为月计划数据（每行数据展示：物料 + 客户 + 各天发货数），加入表C
         List<PmsMonthlySynDataDTO> tmpList = Lists.newArrayList();
         if(CollUtil.isNotEmpty(collect)){
+            Set<String> codeSet = collect.stream().flatMap(v -> v.getDetailList().stream().map(OaFormTableDT441VO::getKhbm2)).collect(Collectors.toSet());
+            Map<String, SysOfficeVO> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(codeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             for(OaFormTableMain441VO tmpVo:collect){
-                SysOfficeTypeKeyDTO dto = new SysOfficeTypeKeyDTO();
-                dto.setType(Lists.newArrayList("7"));
-                dto.setKeyList(Lists.newArrayList(tmpVo.getKhmc()));
-                List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                if(CollUtil.isEmpty(sysOfficeVOS)){
-                    throw new BusinessException(tmpVo.getKhmc()+"在系统中不存在，请联系管理员");
-                }
-                tmpList.addAll(BeanUtil.copyToList(tmpVo.getDetailList(),PmsMonthlySynDataDTO.class));
-                tmpList.forEach(tmp->tmp.setClientId(sysOfficeVOS.get(0).getId()));
+//                SysOfficeTypeKeyDTO dto = new SysOfficeTypeKeyDTO();
+//                dto.setType(Lists.newArrayList("7"));
+//                dto.setKeyList(Lists.newArrayList(tmpVo.getKhmc()));
+//                List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//                if(CollUtil.isEmpty(sysOfficeVOS)){
+//                    throw new BusinessException(tmpVo.getKhmc()+"在系统中不存在，请联系管理员");
+//                }
+                tmpVo.getDetailList().forEach(tmp->{
+                    PmsMonthlySynDataDTO synTmp = new PmsMonthlySynDataDTO();
+                    BeanUtil.copyProperties(tmp,synTmp);
+                    SysOfficeVO sysOfficeVO = clientMap.get(tmp.getKhbm2());
+                    if(Objects.isNull(sysOfficeVO)){
+                        throw new BusinessException(tmp.getKhbm2()+"在系统中不存在，请联系管理员");
+                    }
+                    synTmp.setClientId(sysOfficeVO.getId());
+                    tmpList.add(synTmp);
+                });
             }
         }
         if(Objects.nonNull(oaFormTableMain441VO1)){
-            SysOfficeTypeKeyDTO dto = new SysOfficeTypeKeyDTO();
-            dto.setType(Lists.newArrayList("7"));
-            dto.setKeyList(Lists.newArrayList(oaFormTableMain441VO1.getKhmc()));
-            List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if(CollUtil.isEmpty(sysOfficeVOS)){
-                throw new BusinessException(oaFormTableMain441VO1.getKhmc()+"在系统中不存在，请联系管理员");
-            }
-            List<PmsMonthlySynDataDTO> pmsMonthlySynDataDTOS = BeanUtil.copyToList(oaFormTableMain441VO1.getDetailList(), PmsMonthlySynDataDTO.class);
-            pmsMonthlySynDataDTOS.forEach(tmp->tmp.setClientId(sysOfficeVOS.get(0).getId()));
-            tmpList.addAll(pmsMonthlySynDataDTOS);
+//            SysOfficeTypeKeyDTO dto = new SysOfficeTypeKeyDTO();
+//            dto.setType(Lists.newArrayList("7"));
+//            dto.setKeyList(Lists.newArrayList(oaFormTableMain441VO1.getKhmc()));
+//            List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//            if(CollUtil.isEmpty(sysOfficeVOS)){
+//                throw new BusinessException(oaFormTableMain441VO1.getKhmc()+"在系统中不存在，请联系管理员");
+//            }
+//            List<PmsMonthlySynDataDTO> pmsMonthlySynDataDTOS = BeanUtil.copyToList(oaFormTableMain441VO1.getDetailList(), PmsMonthlySynDataDTO.class);
+//            pmsMonthlySynDataDTOS.forEach(tmp->tmp.setClientId(sysOfficeVOS.get(0).getId()));
+//            tmpList.addAll(pmsMonthlySynDataDTOS);
+            Set<String> codeSet = oaFormTableMain441VO1.getDetailList().stream().map(OaFormTableDT441VO::getKhbm2).collect(Collectors.toSet());
+            Map<String, SysOfficeVO> clientMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(codeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            oaFormTableMain441VO1.getDetailList().forEach(tmp->{
+                PmsMonthlySynDataDTO synTmp = new PmsMonthlySynDataDTO();
+                BeanUtil.copyProperties(tmp,synTmp);
+                SysOfficeVO sysOfficeVO = clientMap.get(tmp.getKhbm2());
+                if(Objects.isNull(sysOfficeVO)){
+                    throw new BusinessException(tmp.getKhbm2()+"在系统中不存在，请联系管理员");
+                }
+                synTmp.setClientId(sysOfficeVO.getId());
+                tmpList.add(synTmp);
+            });
+
+
         }
 //        步骤4：表C中的数据按物料、客户分组，发货数求和
         // 1. 按 物料 和 客户 分组
         Map<String, Map<Integer, List<PmsMonthlySynDataDTO>>> grouped = tmpList.stream()
                 .collect(Collectors.groupingBy(
-                        PmsMonthlySynDataDTO::getWlbm,
+                        PmsMonthlySynDataDTO::getKhbm,
                         Collectors.groupingBy(PmsMonthlySynDataDTO::getClientId)
                 ));
-        // 2. 对分组数据计算智力水平求和
+        // 2. 对分组数据计算发货数求和
         List<PmsMonthlySynDataDTO> result = Lists.newArrayList();
         for (Map.Entry<String, Map<Integer, List<PmsMonthlySynDataDTO>>> materialGroup : grouped.entrySet()) {
             String name = materialGroup.getKey();
@@ -407,11 +432,11 @@ public class PmsMonthlyProductionPlanNewServiceImpl extends ServiceImpl<PmsMonth
 //        步骤5：将表C中的数据覆盖MES侧的生产月计划（已下达的生产月计划被覆盖后，自动更新对应的月度主生产计划）
         String date = yearMonth + "-01";
         LocalDate parse = LocalDate.parse(date);
-        Map<String, EqpSpareVO> spareCodeMap = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(Lists.newArrayList(tmpList.stream().map(PmsMonthlySynDataDTO::getWlbm).collect(Collectors.toSet()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, EqpSpareVO> spareCodeMap = FeignOptional.of(() -> remoteSpareFeignApi.listByCode(Lists.newArrayList(tmpList.stream().map(PmsMonthlySynDataDTO::getKhbm).collect(Collectors.toSet()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         for(PmsMonthlySynDataDTO tmp:result){
-            EqpSpareVO eqpSpareVO = spareCodeMap.get(tmp.getWlbm());
+            EqpSpareVO eqpSpareVO = spareCodeMap.get(tmp.getKhbm());
             if(Objects.isNull(eqpSpareVO)){
-                throw new BusinessException("物料编码"+tmp.getWlbm()+"不存在，请联系管理员");
+                throw new BusinessException("物料编码"+tmp.getKhbm()+"不存在，请联系管理员");
             }
             List<TupleDTO<LocalDate, BigDecimal>> value = Lists.newArrayList();
             for (int day = 1; day <= YearMonth.from(parse).lengthOfMonth(); day++) {
