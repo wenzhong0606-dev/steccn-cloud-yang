@@ -797,7 +797,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         String codes = String.join(",", list.stream().map(WmsDeliveryReceipt::getCode).collect(Collectors.toList()));
         //查询该物流单相关的出库单箱号,获取箱号相关的客户条码
         List<String> customerCodes = this.baseMapper.getCustomerBarcodesBySalesOrder(wmsDeliveryReceipt.getSalesOrder());
-        salesLogisticsInfoDetailDTO.setCustomer_barcode(customerCodes);
+        if (CollUtil.isNotEmpty(customerCodes)) {
+            salesLogisticsInfoDetailDTO.setCustomer_barcode(customerCodes);
+        }
         //查询该物流单出库数量
         salesLogisticsInfoDetailDTO.setDelivery_code(codes);
         salesLogisticsInfoDetailDTO.setLogistics_code(wmsDeliveryReceipt.getSalesOrder());
