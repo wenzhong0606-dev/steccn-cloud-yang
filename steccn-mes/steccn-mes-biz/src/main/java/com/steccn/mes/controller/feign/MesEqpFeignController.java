@@ -3,10 +3,7 @@ package com.steccn.mes.controller.feign;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.mes.dto.EqpReportDTO;
-import com.steccn.mes.service.JsSysEmployeeService;
-import com.steccn.mes.service.JsSysRoleMenuService;
-import com.steccn.mes.service.MesEqpReportService;
-import com.steccn.mes.service.MesEquipmentService;
+import com.steccn.mes.service.*;
 import com.steccn.mes.vo.MesEqpVO;
 import com.steccn.mes.vo.MesUserInfoVO;
 import io.swagger.annotations.Api;
@@ -14,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +32,7 @@ public class MesEqpFeignController {
     private final JsSysEmployeeService jsSysEmployeeService;
     private final MesEqpReportService mesEqpReportService;
     private final JsSysRoleMenuService jsSysRoleMenuService;
+    private final MesEqpInsTaskEqpItemService mesEqpInsTaskEqpItemService;
 
     @ApiOperation("根据编码获取备件")
     @GetMapping("/eqp/getByCode")
@@ -74,5 +74,11 @@ public class MesEqpFeignController {
     @ApiOperation(value = "获取用户所属菜单")
     public R<List<Long>> getUserMenuAuth(@RequestParam("userName") String userName) {
         return R.success(jsSysRoleMenuService.menuIds(userName));
+    }
+
+    @PostMapping("/eqp/ins/pao")
+    @ApiOperation(value = "获取泡界线位置")
+    public R<List<TupleDTO<LocalDateTime,String>>> getPaoPosition(@RequestBody TupleDTO<LocalDate,String> dto) {
+        return R.success(mesEqpInsTaskEqpItemService.paoPosition(dto.getField1()));
     }
 }

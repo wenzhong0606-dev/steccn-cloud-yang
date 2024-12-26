@@ -26,6 +26,7 @@ import com.steccn.common.util.ShardTimeUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpNatureGasVO;
+import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.pms.dto.DataCollectDTO;
 import com.steccn.pms.service.PmsDataCollectReportService;
@@ -63,6 +64,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportService {
     private final RemoteDpFeignApi remoteDpFeignApi;
+    private final RemoteMesFeignApi remoteMesFeignApi;
     @Override
     public SteccnTableDataDTO<Map<String, String>> turbineReport(LocalDate date) {
         List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("YR_DPU2_AI02_2_METER3"
@@ -686,7 +688,27 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         columns.add(new SteccnTableColumn("RY_PIC308_PV_OUT","雾化气压(mpa)",null));
         columns.add(new SteccnTableColumn("RY_TE61_PV","烟道温度(℃)",null));
         columns.add(new SteccnTableColumn("RY_TE63_PV","烟根温度(℃)",null));
+        columns.add(new SteccnTableColumn("PAO_POSITION","泡界线位置",null));
         tableData.setColumns(columns);
+        //加入泡界线位置 泡界线十位为1-9代表小炉，个位为1-3代表上中下
+        List<TupleDTO<LocalDateTime, String>> paoData = FeignOptional.of(() -> remoteMesFeignApi.getPaoPosition(new TupleDTO<LocalDate,String>(date,"")), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(paoData)){
+            data.forEach(tmp->{
+                TupleDTO<LocalDateTime, String> paoTmp = paoData.stream().filter(v -> v.getField1().getHour() == LocalTime.parse(tmp.get("time")).getHour()).findFirst().orElse(null);
+                if(Objects.nonNull(paoTmp)){
+                    String str = paoTmp.getField2().charAt(0) + "号小炉";
+                    if(paoTmp.getField2().charAt(1)=='1'){
+                        str = str + "上";
+                    }else if(paoTmp.getField2().charAt(1)=='2'){
+                        str = str + "中";
+                    }else if(paoTmp.getField2().charAt(1)=='3'){
+                        str = str + "下";
+                    }
+                    tmp.put("PAO_POSITION",str);
+                }
+
+            });
+        }
         tableData.setTableList(data);
         return tableData;
     }
@@ -955,7 +977,7 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
 
     @Override
     public SteccnTableDataDTO<Map<String, String>> annealing(LocalDate date,Integer type) {
-        List<String> params = Lists.newArrayList("RY_TIC1101_PV"
+        List<String> params = Lists.newArrayList("RY_TIC"+type+"101_PV"
                 ,"RY_TIC"+type+"103_PV"
                 ,"RY_TIC"+type+"105_PV"
                 ,"RY_TIC"+type+"111_PV"

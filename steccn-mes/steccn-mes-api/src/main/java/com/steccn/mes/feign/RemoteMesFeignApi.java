@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,4 +82,8 @@ public interface RemoteMesFeignApi {
     @GetMapping("/feign/mes/user/menuAuth")
     @ApiOperation(value = "获取用户所属菜单")
     R<List<Long>> getUserMenuAuth(@RequestParam("userName") String userName);
+
+    @PostMapping("/feign/mes/eqp/ins/pao")
+    @ApiOperation(value = "获取泡界线位置")
+    R<List<TupleDTO<LocalDateTime,String>>> getPaoPosition(@RequestBody TupleDTO<LocalDate,String> dto);
 }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.mes.mapper.MesEqpInsTaskEqpItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.mes.domain.MesEqpInsTaskEqpItem">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="insItemId" column="ins_Item_Id" jdbcType="BIGINT"/>
+            <result property="sort" column="sort" jdbcType="BIGINT"/>
+            <result property="eqpId" column="eqp_id" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="insTaskId" column="ins_task_id" jdbcType="BIGINT"/>
+            <result property="isSelected" column="is_selected" jdbcType="CHAR"/>
+            <result property="isFinished" column="is_finished" jdbcType="CHAR"/>
+            <result property="imgUrl" column="img_url" jdbcType="VARCHAR"/>
+            <result property="imgBizKey" column="img_biz_key" jdbcType="BIGINT"/>
+            <result property="itemValue" column="item_value" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,ins_Item_Id,sort,
+        eqp_id,create_by,create_date,
+        update_by,update_date,remarks,
+        ins_task_id,is_selected,is_finished,
+        img_url,img_biz_key,item_value
+    </sql>
+</mapper>
