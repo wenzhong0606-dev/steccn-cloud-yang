@@ -63,18 +63,17 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
             WmsSignFeedback one = getOne(new LambdaQueryWrapper<WmsSignFeedback>()
                     .eq(WmsSignFeedback::getSalesOrder, dto.getSalesOrder())
                     .last("LIMIT 1"));
-            if(Objects.nonNull(one)){
-                throw new BusinessException("该物流单已反馈过");
+            if(Objects.isNull(one)){
+                WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
+                wmsSignFeedback.setState(0);
+                Set<String> orders  = Sets.newHashSet();
+                orders.add(wmsSignFeedback.getSalesOrder());
+                KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+                ksLogisticsOrderDTO.setSalesOrders(orders);
+                Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+                wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
+                save(wmsSignFeedback);
             }
-            WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
-            wmsSignFeedback.setState(0);
-            Set<String> orders  = Sets.newHashSet();
-            orders.add(wmsSignFeedback.getSalesOrder());
-            KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
-            ksLogisticsOrderDTO.setSalesOrders(orders);
-            Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
-            wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
-            save(wmsSignFeedback);
         }finally {
             lock.unlock();
         }
