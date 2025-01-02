@@ -11,6 +11,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.LockConstant;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.oa.constant.OaConstant;
@@ -29,6 +30,8 @@ import com.steccn.wms.vo.WmsSignFeedbackVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,18 +52,33 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
 
     private final RemoteFileFeignApi remoteFileFeignApi;
     private final RemoteSaleFeignApi remoteSaleFeignApi;
+    private final RedissonClient redissonClient;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(WmsSignFeedbackDTO dto) {
-        WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
-        wmsSignFeedback.setState(0);
-        Set<String> orders  = Sets.newHashSet();
-        orders.add(wmsSignFeedback.getSalesOrder());
-        KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
-        ksLogisticsOrderDTO.setSalesOrders(orders);
-        Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
-        wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
-        return save(wmsSignFeedback);
+        RLock lock = redissonClient.getLock(LockConstant.SIGN_FEED_BACK);
+        lock.lock();
+        try{
+            WmsSignFeedback one = getOne(new LambdaQueryWrapper<WmsSignFeedback>()
+                    .eq(WmsSignFeedback::getSalesOrder, dto.getSalesOrder())
+                    .last("LIMIT 1"));
+            if(Objects.nonNull(one)){
+                throw new BusinessException("该物流单已反馈过");
+            }
+            WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
+            wmsSignFeedback.setState(0);
+            Set<String> orders  = Sets.newHashSet();
+            orders.add(wmsSignFeedback.getSalesOrder());
+            KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+            ksLogisticsOrderDTO.setSalesOrders(orders);
+            Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+            wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
+            save(wmsSignFeedback);
+        }finally {
+            lock.unlock();
+        }
+        return true;
     }
 
     @Override

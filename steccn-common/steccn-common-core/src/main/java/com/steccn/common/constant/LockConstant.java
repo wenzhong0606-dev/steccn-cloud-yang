@@ -132,5 +132,10 @@ public interface LockConstant {
      * CDC新增或修改用户
      */
     String CDC_USER_ADD = "CDC_USER_ADD";
+
+    /**
+     * 签收反馈
+     */
+    String SIGN_FEED_BACK = "SIGN_FEED_BACK";
 }
 
