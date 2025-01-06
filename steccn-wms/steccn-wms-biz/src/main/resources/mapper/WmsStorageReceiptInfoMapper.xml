@@ -45,7 +45,7 @@
         FROM
             wms_storage_receipt_info wsri
                 LEFT JOIN wms_storage_receipt wsr ON wsr.id = wsri.storage_receipt_id
-        WHERE wsr.del_flag = 0 and wsr.`status`!= 5 and wsri.case_no = #{caseNo}
+        WHERE wsr.del_flag = 0 and wsr.`status`!= 5 and wsri.case_no = #{caseNo} and wsri.del_flag = 0
         order by wsri.valid_time desc limit 1
     </select>
     <select id="purchaseQuantity" resultType="com.steccn.wms.domain.WmsStorageReceiptInfo">
