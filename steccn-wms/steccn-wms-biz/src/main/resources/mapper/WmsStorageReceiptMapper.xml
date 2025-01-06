@@ -48,7 +48,7 @@
         wms_storage_receipt a
         LEFT JOIN wms_storage_receipt_info b ON a.id = b.storage_receipt_id
         <where>
-            a.del_flag = 0
+            a.del_flag = 0 and b.del_flag = 0
             <if test="dto.status != null">
                 AND a.status = #{dto.status}
             </if>
