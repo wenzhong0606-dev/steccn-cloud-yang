@@ -3,6 +3,9 @@ package com.steccn.ems.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.ems.vo.EpDayReportCountVO;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,6 +24,15 @@ public interface EpDayReportService {
      * @return 结果
      */
     EpDayReportCountVO count(LocalDate month, boolean flag);
+
+    /**
+     * 能耗日统计报表下载
+     *
+     * @param month 年月
+     * @param flag  是否计入缓存
+     * @return 结果
+     */
+    void countDownload(LocalDate month, boolean flag, HttpServletResponse response) throws IOException;
 
     Boolean countTask(LocalDate date);
 

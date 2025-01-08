@@ -3,12 +3,19 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.common.dto.TripleDTO;
@@ -27,7 +34,11 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
+import com.steccn.pms.vo.JpAnalysisReportVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +49,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -154,6 +168,73 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         hintList1.addAll(hintList2);
         resVo.setHintLineList(hintList1);
         return resVo;
+    }
+
+    @Override
+    public void countDownload(LocalDate month, boolean flag, HttpServletResponse response) throws IOException {
+        try {
+            EpDayReportCountVO data = count(month, flag);
+            SteccnTableAssertUtil.notEmpty(data.getDataList(), "数据为空");
+            //写表头
+            List<List<String>> list = Lists.newArrayList();
+            list.add(Lists.newArrayList(data.getHead().getEnergyType()));
+            list.add(Lists.newArrayList(data.getHead().getUnit()));
+            list.add(Lists.newArrayList(data.getHead().getDepartmentName()));
+            data.getHead().getConsumeList().forEach(tmp->{
+                list.add(Lists.newArrayList(tmp));
+            });
+            list.add(Lists.newArrayList(data.getHead().getSumStr()));
+            list.add(Lists.newArrayList(data.getHead().getEquivalentValue()));
+            list.add(Lists.newArrayList(data.getHead().getEqualValue()));
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+            String fileName = URLEncoder.encode("能耗日统计报表", "UTF-8");
+            fileName += LocalDateUtil.localDateFormat(month, "yyyy-MM");
+            response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+            //数据
+            List<List<Object>> dataList = Lists.newArrayList();
+            data.getDataList().forEach(ele -> {
+                List<Object> dataEle = Lists.newArrayList();
+                dataEle.add(ele.getEnergyType());
+                dataEle.add(ele.getUnit());
+                dataEle.add(ele.getDepartmentName());
+                if(CollUtil.isEmpty(ele.getConsumeList())){
+                    for(int i = 0;i < data.getHead().getConsumeList().size();i++){
+                        dataEle.add(null);
+                    }
+                }else {
+                    for(int i = 0;i < data.getHead().getConsumeList().size();i++){
+                        dataEle.add(ele.getConsumeList().get(i));
+                    }
+                }
+                dataEle.add(ele.getSumStr());
+                dataEle.add(ele.getEquivalentValue());
+                dataEle.add(ele.getEqualValue());
+                dataList.add(dataEle);
+            });
+            int[] mergeColumnIndex = {0};
+            ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+            WriteSheet writeSheet = EasyExcel.writerSheet(0, "能耗日统计报表")
+                    .head(list)
+                    .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                    .registerWriteHandler(new HeadContentStyleStrategy())
+                    .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                    .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                    .build();
+            excelWriter.write(dataList, writeSheet);
+            excelWriter.finish();
+            response.flushBuffer();
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @Override
