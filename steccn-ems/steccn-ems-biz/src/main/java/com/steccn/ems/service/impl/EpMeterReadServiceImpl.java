@@ -126,7 +126,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取需要查询的日期
         List<LocalDate> localDateList;
         //如果查询的月份是当月
-        if (selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+        if (selectMonth.getYear()==currentLocalDate.getYear()&&selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
             if (currentTime.isBefore(localTime)) {
                 endDay = currentLocalDate.minusDays(1);
             }
@@ -270,7 +270,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取需要查询的日期
         List<LocalDate> localDateList;
         //如果查询的月份是当月
-        if (selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+        if (selectMonth.getYear()==currentLocalDate.getYear()&&selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
             if (currentTime.isBefore(localTime)) {
                 endDay = currentLocalDate.minusDays(1);
             }
