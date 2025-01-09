@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.dto.SteccnTableColumn;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
@@ -21,5 +22,6 @@ public class PmsLaborGerReqDTO implements Serializable {
     private Long typeId;
     private Long fileId;
     private LocalDate receiveTime;
+    private List<SteccnTableColumn> columns;
 //    private List<PmsLaborGerReqDetailDTO> details;
 }

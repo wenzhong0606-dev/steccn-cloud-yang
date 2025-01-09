@@ -34,6 +34,13 @@ public interface PmsLaborProtectionRecordService extends IService<PmsLaborProtec
      */
     Boolean generateReq(PmsLaborGerReqDTO dto);
 
+    /**
+     * 下载详情数据
+     * @param dto
+     * @param response
+     */
+    void downloadDetail(PmsLaborGerReqDTO dto,HttpServletResponse response) throws IOException;
+
     void download(HttpServletResponse response) throws IOException;
     LaborExcelImportDataVO excelImportData(PmExcelDTO dto) throws IOException;
 

@@ -1,5 +1,7 @@
 package com.steccn.pms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.SteccnTableDataDTO;
@@ -12,6 +14,7 @@ import com.steccn.pms.service.PmsLaborProtectionStandardService;
 import com.steccn.pms.vo.LaborExcelImportDataVO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
 import com.steccn.pms.vo.PmsLaborStandardVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -82,6 +85,22 @@ public class PmsLaborController {
     @ApiOperation(value = "劳保清单列表")
     public R<SteccnTableDataDTO> standardList(@RequestBody PmsStandardListDTO dto) {
         return R.success(pmsLaborProtectionStandardService.standardList(dto));
+    }
+
+    @PostMapping("/standard/download")
+    @ApiOperation(value = "下载劳保清单列表")
+    public void downloadList(@RequestBody PmsLaborGerReqDTO dto,HttpServletResponse response) throws IOException{
+        try {
+            pmsLaborProtectionRecordService.downloadDetail(dto,response);
+        } catch (Exception e) {
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @PostMapping("/standard/record")

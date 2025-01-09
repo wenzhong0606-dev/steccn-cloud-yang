@@ -8,6 +8,7 @@ import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,12 +19,14 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnTableColumn;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.exception.SteccnRuntimeException;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.mes.vo.MesUserInfoVO;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
@@ -46,6 +49,9 @@ import com.steccn.pms.service.PmsLaborProtectionStandardDetailService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.vo.LaborExcelImportDataVO;
 import com.steccn.pms.vo.PmsLaborRecordVO;
+import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
+import com.steccn.qms.excel.strategy.HeadContentStyleStrategy;
+import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.springframework.beans.BeanUtils;
@@ -224,6 +230,68 @@ public class PmsLaborProtectionRecordServiceImpl extends ServiceImpl<PmsLaborPro
             saveBatch(modelList);
         }
         return true;
+    }
+
+    @Override
+    public void downloadDetail(PmsLaborGerReqDTO dto, HttpServletResponse response) throws IOException{
+        List<SteccnTableColumn> columns = dto.getColumns();
+        List<Map<String,String>> data = dto.getDetails();
+        SteccnTableAssertUtil.notEmpty(columns, "表头为空");
+        //写表头
+        List<List<String>> list = new ArrayList<>();
+        //加序号
+        list.add(Lists.newArrayList("序号", "序号"));
+        int flag = 0 ;
+        for (SteccnTableColumn c : columns) {
+            if (CollUtil.isNotEmpty(c.getChildren())) {
+                for (SteccnTableColumn ch : c.getChildren()) {
+                    if (flag == 0) {
+                        list.add(Lists.newArrayList(c.getLabel(), ch.getLabel()));
+                    } else {
+                        list.add(Lists.newArrayList(c.getLabel(), ch.getLabel() + " "));
+                    }
+                    flag = (flag + 1) % 2;
+                }
+            } else {
+                list.add(Lists.newArrayList(c.getLabel(), c.getLabel()));
+            }
+        }
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("劳保领用清单", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(LocalDate.now(), "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        //数据
+        List<List<Object>> dataList = Lists.newArrayList();
+        int num = 1;
+        for (Map<String, String> ele : data) {
+            List<Object> dataEle = Lists.newArrayList();
+            dataEle.add(String.valueOf(num));
+            num = num + 1;
+            columns.forEach(c -> {
+                if (CollUtil.isEmpty(c.getChildren())) {
+                    dataEle.add(ele.get(c.getProp()));
+                } else {
+                    c.getChildren().forEach(d -> {
+                        dataEle.add(ele.get(d.getProp()));
+                    });
+                }
+            });
+            dataList.add(dataEle);
+        }
+        int[] mergeColumnIndex = {0};
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        WriteSheet writeSheet = EasyExcel.writerSheet(0, "劳保领用清单")
+                .head(list)
+                .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                .registerWriteHandler(new HeadContentStyleStrategy())
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                .build();
+        excelWriter.write(dataList, writeSheet);
+        excelWriter.finish();
+        response.flushBuffer();
     }
 
     @Override
