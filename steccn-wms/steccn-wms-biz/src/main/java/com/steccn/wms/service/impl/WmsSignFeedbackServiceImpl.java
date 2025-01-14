@@ -243,11 +243,15 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         if(CollUtil.isEmpty(result)){
             throw new BusinessException("没有符合标准的图片");
         }
+        if(result.size()>500){
+            throw new BusinessException("下载图片数量不能超过500张");
+        }
         List<Long> fileIds = result.stream().filter(v->Objects.nonNull(v.getFileId())).map(WmsSignFeedback::getFileId).collect(Collectors.toList());
         Map<Long, FileInfoVO> fileInfoVOMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
         // 设置响应头
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment; filename=images.zip");
+        response.setHeader("Accept-Ranges", "bytes");
 
         try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream())) {
             for (WmsSignFeedback tmp:result) {
@@ -261,7 +265,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                     String fileName = tmp.getSalesOrder() + getFileExtension(urlStr);
                     zos.putNextEntry(new ZipEntry(fileName));
 
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[8192];
                     int bytesRead;
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
                         zos.write(buffer, 0, bytesRead);
