@@ -3,6 +3,8 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -251,8 +253,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         // 设置响应头
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment; filename=images.zip");
-        response.setHeader("Accept-Ranges", "bytes");
-
+        Set<String> fileNameRepeat = Sets.newHashSet();
         try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream())) {
             for (WmsSignFeedback tmp:result) {
                 FileInfoVO fileInfoTmp = fileInfoVOMap.get(tmp.getFileId());
@@ -262,7 +263,15 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 String urlStr = fileInfoTmp.getFileUrl();
                 try (InputStream inputStream = new URL(urlStr).openStream()) {
                     // 给每个文件命名并添加到 ZIP
-                    String fileName = tmp.getSalesOrder() + getFileExtension(urlStr);
+
+                    //避免文件名重复
+                    String fileName;
+                    if(fileNameRepeat.add(tmp.getSalesOrder())){
+                        fileName = tmp.getSalesOrder() + getFileExtension(urlStr);
+                    }else {
+                        fileName = tmp.getSalesOrder()+ "_"+RandomUtil.randomString(2) + getFileExtension(urlStr);
+                    }
+
                     zos.putNextEntry(new ZipEntry(fileName));
 
                     byte[] buffer = new byte[8192];
