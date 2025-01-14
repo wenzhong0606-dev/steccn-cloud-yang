@@ -1,10 +1,13 @@
 package com.steccn.wms.controller;
 
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.wms.domain.WmsSignFeedback;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsSignFeedbackDTO;
@@ -17,6 +20,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/wms/sign/feedback")
@@ -56,6 +63,23 @@ public class WmsSignFeedbackController {
     @PostMapping("/list")
     public R<Page<WmsSignFeedbackVO>> pageList(@RequestBody WmsSignFeedbackDTO dto) {
         return R.success(wmsSignFeedbackService.pageList(dto));
+    }
+
+    @ApiOperation("下载图片")
+    @PostMapping("/downloadImages")
+    public void downloadImages(@RequestBody WmsSignFeedbackDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            wmsSignFeedbackService.downloadImages(response,dto);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
     }
 
     @ApiOperation("确认签收")

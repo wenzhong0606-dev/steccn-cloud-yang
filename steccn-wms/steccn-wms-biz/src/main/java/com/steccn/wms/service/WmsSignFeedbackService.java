@@ -8,6 +8,9 @@ import com.steccn.wms.dto.WmsSignFeedbackDTO;
 import com.steccn.wms.vo.WmsSignFeedbackVO;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 /**
 * @author 34872
 * @description 针对表【wms_sign_feedback】的数据库操作Service
@@ -22,6 +25,8 @@ public interface WmsSignFeedbackService extends IService<WmsSignFeedback> {
     WmsSignFeedbackVO get(Long id);
 
     Page<WmsSignFeedbackVO> pageList(WmsSignFeedbackDTO dto);
+
+    void downloadImages(HttpServletResponse response,WmsSignFeedbackDTO dto) throws IOException;
 
     Boolean affirm(WmsSignFeedbackDTO dto);
 

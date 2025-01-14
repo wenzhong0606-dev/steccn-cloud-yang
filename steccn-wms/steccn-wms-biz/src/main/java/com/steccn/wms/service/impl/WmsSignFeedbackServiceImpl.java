@@ -36,9 +36,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
 * @author 34872
@@ -110,7 +116,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 .like(Objects.nonNull(dto.getClient()), WmsSignFeedback::getClient, dto.getClient())
                 .eq(Objects.nonNull(dto.getSignedQuantity()), WmsSignFeedback::getSignedQuantity, dto.getSignedQuantity())
                 .eq(Objects.nonNull(dto.getSignedPriceQuantity()), WmsSignFeedback::getSignedPriceQuantity, dto.getSignedPriceQuantity())
-                .eq(Objects.nonNull(dto.getSignatureType()), WmsSignFeedback::getSignatureType, dto.getSignatureType().equals("0") ? "正常签收" : "异常签收")
+                .eq(Objects.nonNull(dto.getSignatureType()), WmsSignFeedback::getSignatureType, Objects.nonNull(dto.getSignedQuantity())&&dto.getSignatureType().equals("0") ? "正常签收" : "异常签收")
                 .eq(Objects.nonNull(dto.getSendQuantity()), WmsSignFeedback::getSendQuantity, dto.getSendQuantity())
                 .eq(Objects.nonNull(dto.getPriceQuantity()), WmsSignFeedback::getPriceQuantity, dto.getPriceQuantity())
                 .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()), WmsSignFeedback::getSignedDate, dto.getStartDate(), dto.getEndDate())
@@ -187,6 +193,93 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
     }
 
     @Override
+    public void downloadImages(HttpServletResponse response, WmsSignFeedbackDTO dto) throws IOException {
+        LambdaQueryWrapper<WmsSignFeedback> between = new LambdaQueryWrapper<WmsSignFeedback>()
+                .select(WmsSignFeedback::getFileId,WmsSignFeedback::getSalesOrder)
+                .like(Objects.nonNull(dto.getSalesOrder()), WmsSignFeedback::getSalesOrder, dto.getSalesOrder())
+                .like(Objects.nonNull(dto.getProduct()), WmsSignFeedback::getProduct, dto.getProduct())
+                .like(Objects.nonNull(dto.getLogisticsCompany()), WmsSignFeedback::getLogisticsCompany, dto.getLogisticsCompany())
+                .like(Objects.nonNull(dto.getCarCode()), WmsSignFeedback::getCarCode, dto.getCarCode())
+                .like(Objects.nonNull(dto.getClient()), WmsSignFeedback::getClient, dto.getClient())
+                .eq(Objects.nonNull(dto.getSignedQuantity()), WmsSignFeedback::getSignedQuantity, dto.getSignedQuantity())
+                .eq(Objects.nonNull(dto.getSignedPriceQuantity()), WmsSignFeedback::getSignedPriceQuantity, dto.getSignedPriceQuantity())
+                .eq(Objects.nonNull(dto.getSignatureType()), WmsSignFeedback::getSignatureType, Objects.nonNull(dto.getSignatureType())&&dto.getSignatureType().equals("0") ? "正常签收" : "异常签收")
+                .eq(Objects.nonNull(dto.getSendQuantity()), WmsSignFeedback::getSendQuantity, dto.getSendQuantity())
+                .eq(Objects.nonNull(dto.getPriceQuantity()), WmsSignFeedback::getPriceQuantity, dto.getPriceQuantity())
+                .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()), WmsSignFeedback::getSignedDate, dto.getStartDate(), dto.getEndDate())
+                .between(Objects.nonNull(dto.getSendStartDate()) && Objects.nonNull(dto.getSendEndDate()),WmsSignFeedback::getSendDate,dto.getSendStartDate(),dto.getSendEndDate())
+                .eq(Objects.nonNull(dto.getState()), WmsSignFeedback::getState, dto.getState());
+        if (Objects.nonNull(dto.getSortField())) {
+            //定义排序条件
+            if (WmsManagerConstant.SALES_ORDER.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSalesOrder);
+            } else if (WmsManagerConstant.CLIENT.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getClient);
+            } else if (WmsManagerConstant.PRODUCT.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getProduct);
+            } else if (WmsManagerConstant.SEND_DATE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSendDate);
+            } else if (WmsManagerConstant.LOGISTICS_COMPANY.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getLogisticsCompany);
+            } else if (WmsManagerConstant.CAR_CODE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getCarCode);
+            } else if (WmsManagerConstant.SEND_QUANTITY.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSendQuantity);
+            } else if (WmsManagerConstant.PRICE_QUANTITY.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getPriceQuantity);
+            } else if (WmsManagerConstant.SIGNATURE_TYPE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignatureType);
+            }else if (WmsManagerConstant.SIGNED_QUANTITY.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedQuantity);
+            }else if (WmsManagerConstant.SIGNED_PRICE_QUANTITY.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedPriceQuantity);
+            }else if (WmsManagerConstant.SIGNED_DATE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedDate);
+            }
+        } else {
+            between.orderByDesc(WmsSignFeedback::getCreateTime);
+        }
+        List<WmsSignFeedback> result = list(between);
+        if(CollUtil.isEmpty(result)){
+            throw new BusinessException("没有符合标准的图片");
+        }
+        List<Long> fileIds = result.stream().filter(v->Objects.nonNull(v.getFileId())).map(WmsSignFeedback::getFileId).collect(Collectors.toList());
+        Map<Long, FileInfoVO> fileInfoVOMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
+        // 设置响应头
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment; filename=images.zip");
+
+        try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream())) {
+            for (WmsSignFeedback tmp:result) {
+                FileInfoVO fileInfoTmp = fileInfoVOMap.get(tmp.getFileId());
+                if(Objects.isNull(fileInfoTmp)){
+                    continue;
+                }
+                String urlStr = fileInfoTmp.getFileUrl();
+                try (InputStream inputStream = new URL(urlStr).openStream()) {
+                    // 给每个文件命名并添加到 ZIP
+                    String fileName = tmp.getSalesOrder() + getFileExtension(urlStr);
+                    zos.putNextEntry(new ZipEntry(fileName));
+
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        zos.write(buffer, 0, bytesRead);
+                    }
+
+                    zos.closeEntry();
+                }
+//                catch (IOException e) {
+//                    log.error("Failed to download or add: " + urlStr);
+//                }
+            }
+        }
+//        catch (IOException e) {
+//            log.error("Error creating ZIP: " + e.getMessage());
+//        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean affirm(WmsSignFeedbackDTO dto) {
         Assert.notNull(dto.getId(),"反馈id不能为空");
@@ -253,6 +346,15 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
         }
         return resPage;
     }
+
+    private String getFileExtension(String urlStr) {
+        int lastIndex = urlStr.lastIndexOf('.');
+        if (lastIndex > 0) {
+            return urlStr.substring(lastIndex);
+        }
+        return ""; // 默认无扩展名
+    }
+
 }
 
 
