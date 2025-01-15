@@ -8,6 +8,8 @@ import com.steccn.sales.dto.KsLogisticsDTO;
 import com.steccn.sales.dto.KsLogisticsDashBoardDTO;
 import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.vo.KsShippingReconciliationVO;
+import com.steccn.wms.dto.WmsSignFeedbackDTO;
+import com.steccn.wms.vo.WmsSignFeedbackVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -45,6 +47,14 @@ public interface KsLogisticsOrderMapper extends BaseMapper<KsLogisticsOrder> {
      * @return
      */
     BigDecimal selectDeliverySum(@Param("dto") TupleDTO<LocalDate,LocalDate> dto);
+
+    /**
+     * 物流单分页
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<WmsSignFeedbackVO> logisticsPage(Page page,@Param("dto") WmsSignFeedbackDTO dto);
 }
 
 

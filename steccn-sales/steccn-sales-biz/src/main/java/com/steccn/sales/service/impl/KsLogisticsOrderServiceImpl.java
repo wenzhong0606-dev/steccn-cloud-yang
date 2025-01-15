@@ -6,16 +6,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -32,6 +32,8 @@ import com.steccn.sales.service.KsLogisticsCompanyService;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.vo.KsLogisticsVO;
 import com.steccn.sales.vo.KsShippingReconciliationVO;
+import com.steccn.wms.dto.WmsSignFeedbackDTO;
+import com.steccn.wms.vo.WmsSignFeedbackVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -259,6 +261,15 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
             KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, name));
            return one.getLogisticsCompanyId();
         }
+        return null;
+    }
+
+    @Override
+    public Page<WmsSignFeedbackVO> getSignFeedback(WmsSignFeedbackDTO dto) {
+        if(dto.getIsMobile()){
+            dto.setUserId(SecurityUtils.getUser().getUserId());
+        }
+        ksLogisticsOrderMapper.logisticsPage(new Page(dto.getCurrent(), dto.getSize()),dto);
         return null;
     }
 }

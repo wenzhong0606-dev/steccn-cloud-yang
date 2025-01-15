@@ -121,10 +121,10 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 .eq(Objects.nonNull(dto.getSignatureType()), WmsSignFeedback::getSignatureType, Objects.nonNull(dto.getSignedQuantity())&&dto.getSignatureType().equals("0") ? "正常签收" : "异常签收")
                 .eq(Objects.nonNull(dto.getSendQuantity()), WmsSignFeedback::getSendQuantity, dto.getSendQuantity())
                 .eq(Objects.nonNull(dto.getPriceQuantity()), WmsSignFeedback::getPriceQuantity, dto.getPriceQuantity())
+                .eq(Objects.nonNull(dto.getIsMobile())&&dto.getIsMobile().equals(true),WmsSignFeedback::getCreateBy,SecurityUtils.getUser().getUserId())
                 .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()), WmsSignFeedback::getSignedDate, dto.getStartDate(), dto.getEndDate())
                 .between(Objects.nonNull(dto.getSendStartDate()) && Objects.nonNull(dto.getSendEndDate()),WmsSignFeedback::getSendDate,dto.getSendStartDate(),dto.getSendEndDate())
                 .eq(Objects.nonNull(dto.getState()), WmsSignFeedback::getState, dto.getState());
-
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
             if (WmsManagerConstant.SALES_ORDER.equals(dto.getSortField())) {

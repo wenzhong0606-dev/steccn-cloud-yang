@@ -12,6 +12,8 @@ import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.vo.KsLogisticsVO;
 import com.steccn.sales.vo.KsShippingReconciliationVO;
+import com.steccn.wms.dto.WmsSignFeedbackDTO;
+import com.steccn.wms.vo.WmsSignFeedbackVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -68,4 +70,11 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
     String salesOrderCompany(String salesOrders);
 
     Integer salesOrderCompanyId(String name);
+
+    /**
+     * 签收确认页面的待反馈
+     * @param dto
+     * @return
+     */
+    Page<WmsSignFeedbackVO>  getSignFeedback(WmsSignFeedbackDTO dto);
 }

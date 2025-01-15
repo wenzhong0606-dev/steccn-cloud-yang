@@ -98,4 +98,8 @@ public class WmsSignFeedbackDTO extends BasePageDTO implements Serializable {
      * 退回原因
      */
     private String sendBackReason;
+
+    private Boolean isMobile;
+
+    private Long userId;
 }
