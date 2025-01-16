@@ -101,5 +101,5 @@ public class WmsSignFeedbackDTO extends BasePageDTO implements Serializable {
 
     private Boolean isMobile;
 
-    private Long userId;
+    private String userName;
 }

@@ -1,11 +1,14 @@
 package com.steccn.sales.controller.feign;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.service.KsLogisticsOrderService;
 import com.steccn.sales.service.ResUsersService;
 import com.steccn.sales.vo.ResUserVO;
+import com.steccn.wms.dto.WmsSignFeedbackDTO;
+import com.steccn.wms.vo.WmsSignFeedbackVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +72,12 @@ public class SalesLogisticsFeignController {
     @ApiOperation("获取物流单公司")
     R<Integer> salesOrderCompanyId(@RequestBody  KsLogisticsOrderDTO dto){
         return R.success(ksLogisticsOrderService.salesOrderCompanyId(dto.getName()));
+    }
+
+    @PostMapping("/order/logistics/info")
+    @ApiOperation("获取物流单详情")
+    R<Page<WmsSignFeedbackVO>> signFeedback(@RequestBody WmsSignFeedbackDTO dto){
+        return R.success(ksLogisticsOrderService.getSignFeedback(dto));
     }
 
 }

@@ -115,68 +115,66 @@
 
     <select id="logisticsPage" resultType="com.steccn.wms.vo.WmsSignFeedbackVO">
         SELECT
+            klo.id AS id,
             klo.name AS salesOrder,
             rp.name AS client,
             pt.name->> 'en_US' AS product,
             klo.send_date AS sendDate,
             klc.name AS logisticsCompany,
             klo.sale_qty AS sendQuantity,
-            klo.price_qty AS signedPriceQuantity,
+            klo.price_qty AS priceQuantity,
+            klo.sign_area AS signedPriceQuantity,
             klo.sign_qty AS signedQuantity,
-            klo.sign_date AS signedDate
-            klo.car_code AS carCode
-            klo.create_by As authId
+            klo.sign_date AS signedDate,
+            klo.car_code AS carCode,
             CASE
                 WHEN klo.sign_type = 'normal' THEN '正常签收'
-                ELSE '异常签收'
+                WHEN klo.sign_type = 'abnormal' THEN '异常签收'
             END AS signatureType
             FROM ks_logistics_order klo
             LEFT JOIN res_partner rp ON klo.customer_id = rp.id
             LEFT JOIN product_template pt on klo.product_id = pt.id
             LEFT JOIN ks_logistics_company klc on klo.logistics_company_id = klc.id
         <where>
-            klc.state IN ('reservation','stock','sync','leave','enter')
+            klo.state IN ('reservation','stock','sync','leave','enter')
             <if test="dto.sendStartDate != null and dto.sendEndDate != null">
-                AND (sendDate BETWEEN  #{dto.sendStartDate} AND #{dto.sendEndDate})
+                AND (klo.send_date BETWEEN  #{dto.sendStartDate} AND #{dto.sendEndDate})
             </if>
             <if test="dto.startDate != null and dto.endDate != null">
-                AND (sendDate BETWEEN  #{dto.startDate} AND #{dto.endDate})
+                AND (klo.sign_date BETWEEN  #{dto.startDate} AND #{dto.endDate})
+            </if>
+            <if test="dto.userName != null and dto.userName != null">
+                AND klc.name =  #{dto.userName}
             </if>
             <if test="dto.salesOrder != null and dto.salesOrder != ''">
-                AND salesOrder LIKE CONCAT('%', #{dto.salesOrder}, '%')
+                AND klo.name LIKE CONCAT('%', #{dto.salesOrder}, '%')
             </if>
             <if test="dto.product != null and dto.product != ''">
-                AND product LIKE CONCAT('%', #{dto.product}, '%')
+                AND pt.name->> 'en_US' LIKE CONCAT('%', #{dto.product}, '%')
             </if>
             <if test="dto.logisticsCompany != null and dto.logisticsCompany != ''">
-                AND logisticsCompany LIKE CONCAT('%', #{dto.logisticsCompany}, '%')
+                AND klc.name LIKE CONCAT('%', #{dto.logisticsCompany}, '%')
             </if>
             <if test="dto.carCode != null and dto.carCode != ''">
-                AND carCode LIKE CONCAT('%', #{dto.carCode}, '%')
+                AND klo.car_code LIKE CONCAT('%', #{dto.carCode}, '%')
             </if>
             <if test="dto.client != null and dto.client != ''">
-                AND client LIKE CONCAT('%', #{dto.client}, '%')
-            </if>
-            <if test="dto.userId != null">
-                AND authId = #{dto.userId}
+                AND rp.name LIKE CONCAT('%', #{dto.client}, '%')
             </if>
             <if test="dto.signedQuantity != null">
-                AND signedQuantity = #{dto.signedQuantity}
+                AND klo.sign_qty = #{dto.signedQuantity}
             </if>
             <if test="dto.signedPriceQuantity != null">
-                AND signedPriceQuantity = #{dto.signedPriceQuantity}
+                AND klo.sign_area = #{dto.signedPriceQuantity}
             </if>
             <if test="dto.sendQuantity != null">
-                AND sendQuantity = #{dto.sendQuantity}
+                AND klo.sale_qty = #{dto.sendQuantity}
             </if>
             <if test="dto.priceQuantity != null">
-                AND priceQuantity = #{dto.priceQuantity}
+                AND klo.price_qty = #{dto.priceQuantity}
             </if>
-            <if test="dto.signatureType != null and dto.signatureType = '0'">
-                AND signatureType = 'normal'
-            </if>
-            <if test="dto.signatureType != null and dto.signatureType = '1'">
-                AND signatureType = 'abnormal'
+            <if test="dto.signatureType != null and dto.signatureType != ''">
+                AND klo.sign_type = #{dto.signatureType}
             </if>
         </where>
         <choose>
@@ -187,7 +185,7 @@
                 </if>
             </when>
             <otherwise>
-                ORDER BY create_time
+                ORDER BY klo.create_date DESC
             </otherwise>
         </choose>
     </select>

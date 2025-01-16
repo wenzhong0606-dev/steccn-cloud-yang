@@ -110,73 +110,84 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
 
     @Override
     public Page<WmsSignFeedbackVO> pageList(WmsSignFeedbackDTO dto) {
-        LambdaQueryWrapper<WmsSignFeedback> between = new LambdaQueryWrapper<WmsSignFeedback>()
-                .like(Objects.nonNull(dto.getSalesOrder()), WmsSignFeedback::getSalesOrder, dto.getSalesOrder())
-                .like(Objects.nonNull(dto.getProduct()), WmsSignFeedback::getProduct, dto.getProduct())
-                .like(Objects.nonNull(dto.getLogisticsCompany()), WmsSignFeedback::getLogisticsCompany, dto.getLogisticsCompany())
-                .like(Objects.nonNull(dto.getCarCode()), WmsSignFeedback::getCarCode, dto.getCarCode())
-                .like(Objects.nonNull(dto.getClient()), WmsSignFeedback::getClient, dto.getClient())
-                .eq(Objects.nonNull(dto.getSignedQuantity()), WmsSignFeedback::getSignedQuantity, dto.getSignedQuantity())
-                .eq(Objects.nonNull(dto.getSignedPriceQuantity()), WmsSignFeedback::getSignedPriceQuantity, dto.getSignedPriceQuantity())
-                .eq(Objects.nonNull(dto.getSignatureType()), WmsSignFeedback::getSignatureType, Objects.nonNull(dto.getSignedQuantity())&&dto.getSignatureType().equals("0") ? "正常签收" : "异常签收")
-                .eq(Objects.nonNull(dto.getSendQuantity()), WmsSignFeedback::getSendQuantity, dto.getSendQuantity())
-                .eq(Objects.nonNull(dto.getPriceQuantity()), WmsSignFeedback::getPriceQuantity, dto.getPriceQuantity())
-                .eq(Objects.nonNull(dto.getIsMobile())&&dto.getIsMobile().equals(true),WmsSignFeedback::getCreateBy,SecurityUtils.getUser().getUserId())
-                .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()), WmsSignFeedback::getSignedDate, dto.getStartDate(), dto.getEndDate())
-                .between(Objects.nonNull(dto.getSendStartDate()) && Objects.nonNull(dto.getSendEndDate()),WmsSignFeedback::getSendDate,dto.getSendStartDate(),dto.getSendEndDate())
-                .eq(Objects.nonNull(dto.getState()), WmsSignFeedback::getState, dto.getState());
-        if (Objects.nonNull(dto.getSortField())) {
-            //定义排序条件
-            if (WmsManagerConstant.SALES_ORDER.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSalesOrder);
-            } else if (WmsManagerConstant.CLIENT.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getClient);
-            } else if (WmsManagerConstant.PRODUCT.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getProduct);
-            } else if (WmsManagerConstant.SEND_DATE.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSendDate);
-            } else if (WmsManagerConstant.LOGISTICS_COMPANY.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getLogisticsCompany);
-            } else if (WmsManagerConstant.CAR_CODE.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getCarCode);
-            } else if (WmsManagerConstant.SEND_QUANTITY.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSendQuantity);
-            } else if (WmsManagerConstant.PRICE_QUANTITY.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getPriceQuantity);
-            } else if (WmsManagerConstant.SIGNATURE_TYPE.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignatureType);
-            }else if (WmsManagerConstant.SIGNED_QUANTITY.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedQuantity);
-            }else if (WmsManagerConstant.SIGNED_PRICE_QUANTITY.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedPriceQuantity);
-            }else if (WmsManagerConstant.SIGNED_DATE.equals(dto.getSortField())) {
-                between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedDate);
+        Page page;
+        //如果是待反馈状态则num为3
+        if(dto.getState().equals(OaConstant.NUM_3)){
+            if(Objects.nonNull(dto.getIsMobile())&&dto.getIsMobile()){
+                dto.setUserName(SecurityUtils.getUser().getName());
             }
-        } else {
-            between.orderByDesc(WmsSignFeedback::getCreateTime);
+            page = FeignOptional.of(() -> remoteSaleFeignApi.signFeedback(dto), FeignConstant.STECCN_SALES_NAME).get();
+        }else {
+            LambdaQueryWrapper<WmsSignFeedback> between = new LambdaQueryWrapper<WmsSignFeedback>()
+                    .like(Objects.nonNull(dto.getSalesOrder()), WmsSignFeedback::getSalesOrder, dto.getSalesOrder())
+                    .like(Objects.nonNull(dto.getProduct()), WmsSignFeedback::getProduct, dto.getProduct())
+                    .like(Objects.nonNull(dto.getLogisticsCompany()), WmsSignFeedback::getLogisticsCompany, dto.getLogisticsCompany())
+                    .like(Objects.nonNull(dto.getCarCode()), WmsSignFeedback::getCarCode, dto.getCarCode())
+                    .like(Objects.nonNull(dto.getClient()), WmsSignFeedback::getClient, dto.getClient())
+                    .eq(Objects.nonNull(dto.getSignedQuantity()), WmsSignFeedback::getSignedQuantity, dto.getSignedQuantity())
+                    .eq(Objects.nonNull(dto.getSignedPriceQuantity()), WmsSignFeedback::getSignedPriceQuantity, dto.getSignedPriceQuantity())
+                    .eq(Objects.nonNull(dto.getSignatureType()), WmsSignFeedback::getSignatureType, Objects.nonNull(dto.getSignatureType())&&dto.getSignatureType().equals("0") ? "正常签收" : "异常签收")
+                    .eq(Objects.nonNull(dto.getSendQuantity()), WmsSignFeedback::getSendQuantity, dto.getSendQuantity())
+                    .eq(Objects.nonNull(dto.getPriceQuantity()), WmsSignFeedback::getPriceQuantity, dto.getPriceQuantity())
+                    .eq(Objects.nonNull(dto.getIsMobile())&&dto.getIsMobile().equals(true),WmsSignFeedback::getCreateBy,SecurityUtils.getUser().getUserId())
+                    .between(Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate()), WmsSignFeedback::getSignedDate, dto.getStartDate(), dto.getEndDate())
+                    .between(Objects.nonNull(dto.getSendStartDate()) && Objects.nonNull(dto.getSendEndDate()),WmsSignFeedback::getSendDate,dto.getSendStartDate(),dto.getSendEndDate())
+                    .eq(Objects.nonNull(dto.getState()), WmsSignFeedback::getState, dto.getState());
+            if (Objects.nonNull(dto.getSortField())) {
+                //定义排序条件
+                if (WmsManagerConstant.SALES_ORDER.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSalesOrder);
+                } else if (WmsManagerConstant.CLIENT.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getClient);
+                } else if (WmsManagerConstant.PRODUCT.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getProduct);
+                } else if (WmsManagerConstant.SEND_DATE.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSendDate);
+                } else if (WmsManagerConstant.LOGISTICS_COMPANY.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getLogisticsCompany);
+                } else if (WmsManagerConstant.CAR_CODE.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getCarCode);
+                } else if (WmsManagerConstant.SEND_QUANTITY.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSendQuantity);
+                } else if (WmsManagerConstant.PRICE_QUANTITY.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getPriceQuantity);
+                } else if (WmsManagerConstant.SIGNATURE_TYPE.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignatureType);
+                }else if (WmsManagerConstant.SIGNED_QUANTITY.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedQuantity);
+                }else if (WmsManagerConstant.SIGNED_PRICE_QUANTITY.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedPriceQuantity);
+                }else if (WmsManagerConstant.SIGNED_DATE.equals(dto.getSortField())) {
+                    between.orderBy(Boolean.TRUE, dto.getAscFlag(), WmsSignFeedback::getSignedDate);
+                }
+            } else {
+                between.orderByDesc(WmsSignFeedback::getCreateTime);
+            }
+            page = page(new Page(dto.getCurrent(), dto.getSize()), between);
         }
-        Page page = page(new Page(dto.getCurrent(), dto.getSize()), between);
         Page<WmsSignFeedbackVO> resPage = new Page<>();
         if (CollUtil.isNotEmpty(page.getRecords())){
             List<Long> fileIds = Lists.newArrayList();
 
             BeanUtil.copyProperties(page,resPage);
             List<WmsSignFeedbackVO> wmsSignFeedbackVOList = BeanUtil.copyToList(page.getRecords(), WmsSignFeedbackVO.class);
-            Set<String> orders = Sets.newHashSet();
-            for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
-                orders.add(wmsSignFeedbackVO.getSalesOrder());
-                fileIds.add(wmsSignFeedbackVO.getFileId());
-            }
-            KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
-            ksLogisticsOrderDTO.setSalesOrders(orders);
-            Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
-            Map<Long, FileInfoVO> fileMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
-            for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
-                wmsSignFeedbackVO.setCarCode(carCodeMap.get(wmsSignFeedbackVO.getSalesOrder()));
-                wmsSignFeedbackVO.setFileUrl(fileMap.get(wmsSignFeedbackVO.getFileId()).getFileUrl());
+            if(Objects.nonNull(dto.getState())&&!dto.getState().equals(OaConstant.NUM_3)){
+                Set<String> orders = Sets.newHashSet();
+                for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
+                    orders.add(wmsSignFeedbackVO.getSalesOrder());
+                    fileIds.add(wmsSignFeedbackVO.getFileId());
+                }
+                KsLogisticsOrderDTO ksLogisticsOrderDTO = new KsLogisticsOrderDTO();
+                ksLogisticsOrderDTO.setSalesOrders(orders);
+                Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+                Map<Long, FileInfoVO> fileMap = FeignOptional.of(() -> remoteFileFeignApi.listById(fileIds), FeignConstant.STECCN_MINIO_SERVICE_NAME).get();
+                for (WmsSignFeedbackVO wmsSignFeedbackVO : wmsSignFeedbackVOList) {
+                    wmsSignFeedbackVO.setCarCode(carCodeMap.get(wmsSignFeedbackVO.getSalesOrder()));
+                    wmsSignFeedbackVO.setFileUrl(fileMap.get(wmsSignFeedbackVO.getFileId()).getFileUrl());
+                }
             }
 
-            if (Objects.isNull(dto.getSortField())) {
+            if (Objects.isNull(dto.getSortField())&&Objects.nonNull(dto.getState())&&!dto.getState().equals(OaConstant.NUM_3)) {
                             wmsSignFeedbackVOList.sort(Comparator.comparing(WmsSignFeedbackVO::getSignedDate)
             );
                 List<WmsSignFeedbackVO> collect = wmsSignFeedbackVOList.stream()

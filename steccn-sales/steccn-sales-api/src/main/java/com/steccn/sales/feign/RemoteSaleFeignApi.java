@@ -1,10 +1,13 @@
 package com.steccn.sales.feign;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.vo.ResUserVO;
+import com.steccn.wms.dto.WmsSignFeedbackDTO;
+import com.steccn.wms.vo.WmsSignFeedbackVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,5 +58,10 @@ public interface RemoteSaleFeignApi {
     @PostMapping("/feign/sales/order/company/id")
     @ApiOperation("获取物流单公司")
     R<Integer> salesOrderCompanyId(@RequestBody  KsLogisticsOrderDTO dto);
+
+    @PostMapping("/feign/sales/order/logistics/info")
+    @ApiOperation("获取物流单详情")
+    R<Page<WmsSignFeedbackVO>> signFeedback(@RequestBody WmsSignFeedbackDTO dto);
+
 
 }

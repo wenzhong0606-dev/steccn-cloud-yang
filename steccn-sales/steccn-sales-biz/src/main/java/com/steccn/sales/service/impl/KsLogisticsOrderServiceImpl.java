@@ -1,17 +1,18 @@
 package com.steccn.sales.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
@@ -266,11 +267,15 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
 
     @Override
     public Page<WmsSignFeedbackVO> getSignFeedback(WmsSignFeedbackDTO dto) {
-        if(dto.getIsMobile()){
-            dto.setUserId(SecurityUtils.getUser().getUserId());
+        if(StrUtil.isNotBlank(dto.getSignatureType())){
+            if(dto.getSignatureType().equals("0")){
+                dto.setSignatureType("normal");
+            }else if(dto.getSignatureType().equals("1")){
+                dto.setSignatureType("abnormal");
+            }
         }
-        ksLogisticsOrderMapper.logisticsPage(new Page(dto.getCurrent(), dto.getSize()),dto);
-        return null;
+        Page<WmsSignFeedbackVO> result = ksLogisticsOrderMapper.logisticsPage(new Page(dto.getCurrent(), dto.getSize()),dto);
+        return result;
     }
 }
 
