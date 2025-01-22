@@ -1,6 +1,7 @@
 package com.steccn.wms.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
@@ -45,6 +46,14 @@ public interface WmsDeliveryReceiptInfoMapper extends BaseMapper<WmsDeliveryRece
                                                        @Param("endTime") LocalDateTime end);
 
     Page<WmsDeliveryReceiptInfoVO> pageList(@Param("page") Page page,@Param("dto") WmsDeliveryReceiptPageDTO dto);
+
+    /**
+     * 根据详情id获取仓库id和货架id
+     * f1 仓库id f2货架id
+     * @param infoId
+     * @return
+     */
+    TupleDTO<Integer,Integer> oneInfo(@Param("infoId") Long infoId);
 }
 
 

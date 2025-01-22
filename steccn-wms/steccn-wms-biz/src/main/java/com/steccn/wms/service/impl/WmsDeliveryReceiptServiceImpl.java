@@ -18,6 +18,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.util.BigDecimalUtil;
@@ -59,6 +60,7 @@ import com.steccn.pms.vo.ClassificationVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.mapper.WmsDeliveryReceiptInfoMapper;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
 import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
@@ -131,6 +133,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     private final RemoteMessFeignApi remoteMessFeignApi;
 
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    @Autowired
+    private WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
+    @Autowired
+    private WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
 
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
@@ -370,6 +376,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean affirm(Long id) {
         //1.查询出库单
         WmsDeliveryReceipt receipt = getById(id);
@@ -413,6 +420,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     wmsInventoryRecord.setMaterialName(materialNameMap.get(info.getMaterialId()));
                     wmsInventoryRecord.setShelfId(orDefault.getShelfId());
                     wmsInventoryRecord.setWarehouseId(orDefault.getWarehouseId());
+                    if(Objects.isNull(wmsInventoryRecord.getWarehouseId())){
+                        TupleDTO<Integer, Integer> integerIntegerTupleDTO = wmsDeliveryReceiptInfoMapper.oneInfo(info.getId());
+                        wmsInventoryRecord.setWarehouseId(integerIntegerTupleDTO.getField1());
+                        wmsInventoryRecord.setShelfId(integerIntegerTupleDTO.getField2());
+                    }
                     //变动数量
                     wmsInventoryRecord.setVariableQuantity(info.getQuantity());
                     //变动前
