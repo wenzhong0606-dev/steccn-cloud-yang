@@ -256,6 +256,8 @@ public class KsLogisticsOrder implements Serializable {
 
     private LocalDateTime allocationDate;
 
+    private Integer isInWms;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

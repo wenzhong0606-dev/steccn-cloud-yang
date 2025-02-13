@@ -19,6 +19,7 @@ import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.ems.vo.EpDeepConsumeContrastVO;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -244,6 +245,14 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
             });
         }
         return res;
+    }
+
+    @Override
+    public Boolean setInWmsColumn(Set<String> salesOrders) {
+        KsLogisticsOrder model = new KsLogisticsOrder();
+        model.setIsInWms(OaConstant.YES);
+        update(model,new LambdaQueryWrapper<KsLogisticsOrder>().in(KsLogisticsOrder::getName,salesOrders));
+        return true;
     }
 
     @Override

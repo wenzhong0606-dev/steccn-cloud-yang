@@ -67,6 +67,8 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
 
     Map<String,String> salesOrderCarCode(Set<String> salesOrders);
 
+    Boolean setInWmsColumn(Set<String> salesOrders);
+
     String salesOrderCompany(String salesOrders);
 
     Integer salesOrderCompanyId(String name);

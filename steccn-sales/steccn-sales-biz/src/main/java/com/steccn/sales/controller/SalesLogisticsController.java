@@ -6,6 +6,7 @@ import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.sales.dto.KsLogisticsDTO;
+import com.steccn.sales.dto.KsLogisticsOrderDTO;
 import com.steccn.sales.dto.KsShippingReconciliationDTO;
 import com.steccn.sales.service.KsContractService;
 import com.steccn.sales.service.KsLogisticsOrderService;

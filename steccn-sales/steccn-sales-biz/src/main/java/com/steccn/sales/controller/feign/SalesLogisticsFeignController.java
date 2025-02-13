@@ -61,6 +61,12 @@ public class SalesLogisticsFeignController {
         return R.success(ksLogisticsOrderService.salesOrderCarCode(dto.getSalesOrders()));
     }
 
+    @PostMapping("/sales/order/inWms")
+    @ApiOperation("设置wms系统中已经存在物流单")
+    R<Boolean> setInWmsColumn (@RequestBody  KsLogisticsOrderDTO dto){
+        return R.success(ksLogisticsOrderService.setInWmsColumn(dto.getSalesOrders()));
+    }
+
 
     @PostMapping("/order/company")
     @ApiOperation("获取物流单公司")

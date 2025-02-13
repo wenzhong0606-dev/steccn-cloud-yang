@@ -176,6 +176,7 @@
             <if test="dto.signatureType != null and dto.signatureType != ''">
                 AND klo.sign_type = #{dto.signatureType}
             </if>
+                AND klo.is_in_wms IS NULL
         </where>
         <choose>
             <when test="dto.sortField != null and dto.sortField != ''">

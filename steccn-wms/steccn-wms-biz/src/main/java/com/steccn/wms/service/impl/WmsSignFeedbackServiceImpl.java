@@ -81,6 +81,7 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 Map<String, String> carCodeMap = FeignOptional.of(() -> remoteSaleFeignApi.salesOrderCarCode(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
                 wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
                 save(wmsSignFeedback);
+                FeignOptional.of(() -> remoteSaleFeignApi.setInWmsColumn(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
             }
         }finally {
             lock.unlock();
