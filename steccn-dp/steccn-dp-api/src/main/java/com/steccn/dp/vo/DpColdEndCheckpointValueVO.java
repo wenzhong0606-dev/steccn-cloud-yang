@@ -29,4 +29,8 @@ public class DpColdEndCheckpointValueVO {
      * 值
      */
     private BigDecimal value;
+    /**
+     * 单位
+     */
+    private String unit;
 }

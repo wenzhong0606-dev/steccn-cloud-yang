@@ -4,6 +4,7 @@ import com.steccn.dp.domain.DpColdEndCheckpointValue;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,12 @@ public interface DpColdEndCheckpointValueMapper extends BaseMapper<DpColdEndChec
      * @return
      */
     Boolean deleteData(@Param("date")LocalDateTime date);
+
+    /**
+     * 查询最新环保数据
+     * @return
+     */
+    List<DpColdEndCheckpointValue> selectEPLatestTime();
 }
 
 

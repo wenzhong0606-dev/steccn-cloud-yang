@@ -803,6 +803,13 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         return true;
     }
 
+    @Override
+    public List<DpTempVO> queryDpTemp() {
+        String result = HttpUtil.get("http://47.97.164.180:8005/intfa/queryData/24110701");
+        List<DpTempVO> dpTemp = JSONObject.parseObject(result).getJSONArray("entity").toJavaList(DpTempVO.class);
+        return dpTemp;
+    }
+
     public List<DpWeightVO> weightCount(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto) {
         List<DpWeightVO> weightCountList = Lists.newArrayList();
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {

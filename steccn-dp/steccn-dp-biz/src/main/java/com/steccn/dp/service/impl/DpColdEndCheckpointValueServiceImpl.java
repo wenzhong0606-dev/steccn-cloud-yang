@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.DpColdEndCheckpointValue;
 import com.steccn.dp.service.DpColdEndCheckpointValueService;
 import com.steccn.dp.mapper.DpColdEndCheckpointValueMapper;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,11 +65,11 @@ public class DpColdEndCheckpointValueServiceImpl extends ServiceImpl<DpColdEndCh
         BigDecimal result = BigDecimal.ZERO;
         String code = null;
         if(num.equals(OaConstant.NUM_1)){
-            code = "OA.YR_TX.yibiao.KLW_INPUT";
+            code = DpConstant.DP_ENVIRONMENT_PROTECTION_KLW;
         }else if(num.equals(OaConstant.NUM_2)){
-            code = "OA.YR_TX.yibiao.NOX_INPUT";
+            code = DpConstant.DP_ENVIRONMENT_PROTECTION_NOX;
         }else if (num.equals(OaConstant.NUM_3)){
-            code = "OA.YR_TX.yibiao.SO2_INPUT";
+            code = DpConstant.DP_ENVIRONMENT_PROTECTION_S02;
         }
         DpColdEndCheckpointValue one = getOne(new LambdaQueryWrapper<DpColdEndCheckpointValue>()
                 .select(DpColdEndCheckpointValue::getValue)
@@ -82,6 +84,17 @@ public class DpColdEndCheckpointValueServiceImpl extends ServiceImpl<DpColdEndCh
     public Boolean deleteData(LocalDateTime date) {
         dpColdEndCheckpointValueMapper.deleteData(date);
         return true;
+    }
+
+    @Override
+    public List<DpColdEndCheckpointValueVO> getEpColdEndValue() {
+        List<DpColdEndCheckpointValue> dpColdEndCheckpointValues = dpColdEndCheckpointValueMapper.selectEPLatestTime();
+        List<DpColdEndCheckpointValueVO> dpColdEndCheckpointValueVOS = BeanUtil.copyToList(dpColdEndCheckpointValues, DpColdEndCheckpointValueVO.class);
+        //添加单位
+        for(DpColdEndCheckpointValueVO vo:dpColdEndCheckpointValueVOS){
+            vo.setUnit("mg/Nm³");
+        }
+        return dpColdEndCheckpointValueVOS;
     }
 }
 

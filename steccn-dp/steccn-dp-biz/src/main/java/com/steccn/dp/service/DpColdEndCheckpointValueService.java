@@ -35,4 +35,10 @@ public interface DpColdEndCheckpointValueService extends IService<DpColdEndCheck
      */
     Boolean deleteData(LocalDateTime date);
 
+    /**
+     * 获取环保数据的值
+     * @return
+     */
+    List<DpColdEndCheckpointValueVO> getEpColdEndValue();
+
 }

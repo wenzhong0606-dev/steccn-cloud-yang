@@ -32,4 +32,16 @@
         delete from dp_cold_end_checkpoint_value
         where time_stamp &lt; #{date}
     </delete>
+
+    <select id="selectEPLatestTime" resultType="com.steccn.dp.domain.DpColdEndCheckpointValue">
+        WITH ranked_data AS (
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY check_point_code ORDER BY update_date DESC) AS rn
+            FROM dp_cold_end_checkpoint_value
+            WHERE check_point_code IN ('OA.YR_TX.yibiao.KLW_INPUT', 'OA.YR_TX.yibiao.NOX_INPUT', 'OA.YR_TX.yibiao.SO2_INPUT')
+        )
+        SELECT *
+        FROM ranked_data
+        WHERE rn = 1;
+    </select>
 </mapper>

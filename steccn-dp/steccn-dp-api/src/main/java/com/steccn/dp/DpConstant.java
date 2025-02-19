@@ -25,6 +25,9 @@ public interface DpConstant {
     String DP_WEIGHT_XIAOLIAO_TAGID = "Raw_YL.CS.ZHM.fact_weigh8_FLOAT";
     String DP_WEIGHT_GLASS_1_TAGID = "Raw_YL.CS.ZHM.fact_weigh9_FLOAT";
     String DP_WEIGHT_GLASS_2_TAGID = "Raw_YL.CS.ZHM.fact_weigh10_FLOAT";
+    String DP_ENVIRONMENT_PROTECTION_KLW = "OA.YR_TX.yibiao.KLW_INPUT";
+    String DP_ENVIRONMENT_PROTECTION_NOX = "OA.YR_TX.yibiao.NOX_INPUT";
+    String DP_ENVIRONMENT_PROTECTION_S02 = "OA.YR_TX.yibiao.SO2_INPUT";
 
     @Getter
     @AllArgsConstructor

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.dp.dto.DpPmsOperateDTO;
 import com.steccn.common.dto.CommonReportDTO;
 import com.steccn.dp.vo.DpSalesContractVO;
+import com.steccn.dp.vo.DpTempVO;
 import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.dp.vo.DpWeightVO;
 
@@ -92,4 +93,10 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     Boolean pushTempData();
+
+    /**
+     * 查询实时天气数据
+     * @return
+     */
+    List<DpTempVO> queryDpTemp();
 }
