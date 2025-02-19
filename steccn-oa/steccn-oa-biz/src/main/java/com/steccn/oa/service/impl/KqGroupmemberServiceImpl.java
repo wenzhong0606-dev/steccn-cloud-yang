@@ -495,12 +495,16 @@ public List<OaTodayClassVO> getTodayClassInfo(String workshopName, LocalDate dat
             }else {
                 time = LocalTime.of(20,0);
             }
+//            time = LocalTime.of(20,0);
             //仓库班组的id为33,34,35
             KqFormatDetail kqFormatDetail = kqFormatDetailMapper.selectOne(new LambdaQueryWrapper<KqFormatDetail>()
                     .eq(KqFormatDetail::getWorkbegindate, dto.getField2().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                     .eq(KqFormatDetail::getWorkbegintime, time.toString())
                     .in(KqFormatDetail::getGroupid, Sets.newHashSet(33, 34, 35))
                     .last("LIMIT 1"));
+            if(Objects.isNull(kqFormatDetail)){
+                continue;
+            }
             KqGroup kqGroup = kqGroupService.getOne(new LambdaQueryWrapper<KqGroup>()
                     .eq(KqGroup::getId, kqFormatDetail.getGroupid()), false);
             String[] split = kqGroup.getGroupname().split("-");
