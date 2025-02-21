@@ -32,9 +32,11 @@ import com.steccn.platform.feign.RemoteMesFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -393,6 +395,29 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         hrmEmpCount.setLeaveJob(leaveJob.getLocationid());
         hrmEmpCountService.save(hrmEmpCount);
         return true;
+    }
+
+    @Override
+    public Integer peopleNum() {
+        Hrmresource all = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
+                .lambda()
+                .lt(Hrmresource::getCreated, LocalDate.now().atTime(0,0,0)));
+        Hrmresource leaveJob = hrmresourceMapper.selectOne(new QueryWrapper<Hrmresource>().select("Count(*) As locationid")
+                .lambda()
+                .lt(Hrmresource::getModified, LocalDate.now().atTime(0,0,0))
+                .in(Hrmresource::getStatus, Sets.newHashSet(5,4)));
+        return all.getLocationid()-leaveJob.getLocationid();
+    }
+
+    @Override
+    public Long safetyNum() {
+        LocalDate startDate = LocalDate.of(2022, 3, 18);
+        // 获取今天的日期
+        LocalDate today = LocalDate.now();
+
+        // 计算天数差
+        long daysBetween = ChronoUnit.DAYS.between(startDate, today);
+        return daysBetween;
     }
 }
 

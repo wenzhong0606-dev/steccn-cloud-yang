@@ -12,6 +12,7 @@ import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaMesUserVO;
 import com.steccn.oa.vo.OaUserVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
@@ -143,4 +144,16 @@ public interface HrmresourceService extends IService<Hrmresource> {
     List<String> getAllUserName();
 
     Boolean countPeople(LocalDate date);
+
+    /**
+     * 获取当前在职人数
+     * @return
+     */
+    Integer peopleNum();
+
+    /**
+     * 获取安全日期
+     * @return
+     */
+    Long safetyNum();
 }

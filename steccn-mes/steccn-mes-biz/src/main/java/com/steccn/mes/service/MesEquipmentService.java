@@ -42,4 +42,6 @@ public interface MesEquipmentService extends IService<MesEquipment> {
     YlEqpDashboardVO dashBoard(TupleDTO<LocalDate,LocalDate> dto);
 
     Boolean test(TupleDTO<String, String> dto);
+
+    Integer eqpNum();
 }

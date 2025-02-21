@@ -15,10 +15,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.oa.service.HrmdepartmentService;
-import com.steccn.oa.service.HrmjobtitlesService;
-import com.steccn.oa.service.HrmresourceService;
-import com.steccn.oa.service.KqGroupService;
+import com.steccn.oa.service.*;
 import com.steccn.oa.vo.*;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.Api;
@@ -53,6 +50,8 @@ public class OaThirdPartyController {
     private final HrmresourceService hrmresourceService;
 
     private final HrmjobtitlesService hrmjobtitlesService;
+
+    private final KqFormatDetailService kqFormatDetailService;
     @GetMapping("/thirdParty/department/{id}")
     @ApiOperation(value = "第三方获取部门信息")
     public R<List<OaDepartmentTreeVO>> screenData(HttpServletRequest request, @PathVariable("id") Integer subId) {
@@ -105,6 +104,27 @@ public class OaThirdPartyController {
     @ApiOperation(value = "获取Oa用户")
     public R<OaUserVO> getOaUser(@RequestParam("loginCode") String loginCode) {
         return R.success(hrmresourceService.getOaUserByLoginCode(loginCode));
+    }
+
+    @GetMapping("/thirdParty/emp/num")
+    @ApiOperation(value = "获取在职人数")
+    public R<Integer> getOaNum(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(hrmresourceService.peopleNum());
+    }
+
+    @GetMapping("/thirdParty/emp/work")
+    @ApiOperation(value = "获取厂内人数")
+    public R<Integer> getOnWorkNum(HttpServletRequest request) {
+//        validRequestHeader(request);
+        return R.success(kqFormatDetailService.kqNum());
+    }
+
+    @GetMapping("/thirdParty/safety/num")
+    @ApiOperation(value = "获取安全天数")
+    public R<Long> getSafetyNum(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(hrmresourceService.safetyNum());
     }
 
     /**

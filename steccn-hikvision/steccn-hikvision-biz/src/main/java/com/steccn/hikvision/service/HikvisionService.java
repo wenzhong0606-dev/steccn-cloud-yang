@@ -54,4 +54,10 @@ public interface HikvisionService {
     Boolean bookEvent(SysHikEventDTO dto);
 
     String weighRegUrl(String weighNo);
+
+    /**
+     * 获取在库车辆数量
+     * @return
+     */
+    Integer carNum();
 }

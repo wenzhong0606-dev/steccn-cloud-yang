@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.hikvision.artemis.sdk.ArtemisHttpUtil;
 import com.hikvision.artemis.sdk.config.ArtemisConfig;
 import com.steccn.hikvision.dto.SysHikEventDTO;
+import com.steccn.hikvision.dto.SysHikPageDTO;
 import com.steccn.hikvision.entity.Cameras;
 import com.steccn.hikvision.entity.PlaybackURLs;
 import com.steccn.hikvision.entity.PreviewURLs;
@@ -164,6 +165,23 @@ public class VideoApi {
             }
         };
         String result = ArtemisHttpUtil.doGetArtemis(path,querys,null,"application/json");
+        return result;
+    }
+
+    /**
+     * 获取停车场内车辆
+     * @param SysHikPageDTO
+     * @return
+     */
+    public String searchCars(SysHikPageDTO dto) {
+        String getDataApi = ARTEMIS_PATH + "/api/pms/v1/tempCarInRecords/page";
+        Map<String, String> path = new HashMap<String, String>(2) {
+            {
+                put("https://", getDataApi);
+            }
+        };
+        String body = JSON.toJSONString(dto);
+        String result = ArtemisHttpUtil.doPostStringArtemis(path, body, null, null, "application/json");
         return result;
     }
 }

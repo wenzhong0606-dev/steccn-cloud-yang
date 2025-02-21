@@ -9,6 +9,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.hikvision.api.VideoApi;
 import com.steccn.hikvision.dto.SysHikEventDTO;
+import com.steccn.hikvision.dto.SysHikPageDTO;
 import com.steccn.hikvision.entity.Cameras;
 import com.steccn.hikvision.entity.HikCommonR;
 import com.steccn.hikvision.entity.HikvisionR;
@@ -133,6 +134,17 @@ public class HikvisionServiceImpl implements HikvisionService {
         String s = videoApi.queryWeighUrl(weighNo);
         String result = JSONObject.parseObject(s).getJSONObject("data").getString("url");
         return result;
+    }
+
+    @Override
+    public Integer carNum() {
+        SysHikPageDTO pageDTO = new SysHikPageDTO();
+        pageDTO.setPageSize(1);
+        pageDTO.setPageNo(1);
+        VideoApi videoApi = new VideoApi();
+        String search = videoApi.searchCars(pageDTO);
+        HikvisionR r = JSONObject.parseObject(search, HikvisionR.class);
+        return r.getData().getTotal();
     }
 
     /**

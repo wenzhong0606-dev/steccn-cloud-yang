@@ -3,6 +3,7 @@ package com.steccn.mes.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -265,6 +266,15 @@ public class MesEquipmentServiceImpl extends ServiceImpl<MesEquipmentMapper, Mes
             }
         }
         return true;
+    }
+
+    @Override
+    public Integer eqpNum() {
+        MesEquipment mesEquipment = mesEquipmentMapper.selectOne(new QueryWrapper<MesEquipment>().select("Count(*) AS id")
+                .lambda()
+                .eq(MesEquipment::getIsEqp, OaConstant.NO)
+                .eq(MesEquipment::getStatus, OaConstant.NO));
+        return Integer.parseInt(mesEquipment.getId().toString());
     }
 
 

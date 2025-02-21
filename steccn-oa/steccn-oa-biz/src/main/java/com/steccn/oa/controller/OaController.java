@@ -50,6 +50,8 @@ public class OaController {
 
     private final WorkflowRequestlogService workflowRequestlogService;
 
+    private final HpelementNoticeService hpelementNoticeService;
+
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
     public R getOaMenuList(@RequestParam("userId") String userId) {
@@ -342,6 +344,12 @@ public class OaController {
     @GetMapping("/workflow/isFinished")
     public R<Boolean> workflowFinished(@RequestParam("requestId")Integer requestId){
         return R.success(workflowRequestlogService.workflowFinished(requestId));
+    }
+
+    @ApiOperation("流程是否完成")
+    @GetMapping("/news/elementNotice")
+    public R<List<OaHpElementNoticeVO>> elementNotice(){
+        return R.success(hpelementNoticeService.queryNoticeNews());
     }
 
 }

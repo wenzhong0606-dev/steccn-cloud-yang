@@ -9,5 +9,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2023-11-09 17:25:16
 */
 public interface KqFormatDetailService extends IService<KqFormatDetail> {
-
+    /**
+     * 获取考勤人数
+     * @return
+     */
+    Integer kqNum();
 }

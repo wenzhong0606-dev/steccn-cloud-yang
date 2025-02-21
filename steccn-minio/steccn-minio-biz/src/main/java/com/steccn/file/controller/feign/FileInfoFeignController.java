@@ -1,10 +1,12 @@
 package com.steccn.file.controller.feign;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.file.domain.FileInfo;
 import com.steccn.file.service.FileInfoService;
+import com.steccn.minio.dto.FileInfoDto;
 import com.steccn.minio.vo.FileInfoVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +36,13 @@ public class FileInfoFeignController {
             return R.success(Maps.newHashMap());
         }
         return R.success(fileInfoService.listByIdList(idList));
+    }
+
+    @PostMapping("/upload")
+    @ResponseBody
+    public R<FileInfoVO> uploadFile(FileInfoDto fileInfoDto){
+        FileInfoVO vo = new FileInfoVO();
+        BeanUtil.copyProperties(fileInfoService.uploadFile(fileInfoDto),vo);
+        return  R.success(vo);
     }
 }

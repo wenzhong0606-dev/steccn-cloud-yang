@@ -118,6 +118,12 @@ public class MesEqpController {
         return R.success(mesEqpReportService.queryReport(dto));
     }
 
+    @GetMapping("/num")
+    @ApiOperation(value = "获取设备数量")
+    public R<Integer> eqpNum() {
+        return R.success(mesEquipmentService.eqpNum());
+    }
+
     /**
      * 校验请求头信息
      *
