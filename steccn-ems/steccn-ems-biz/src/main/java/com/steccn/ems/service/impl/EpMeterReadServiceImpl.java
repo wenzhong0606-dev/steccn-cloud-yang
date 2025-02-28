@@ -253,6 +253,45 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     @Override
+    public EpMeterReadVO listRecord(String readMonth, Integer meterType) {
+        EpMeterReadVO list = list(readMonth, meterType);
+        modifyAllReadValueList(list.getMeterReadListVOList().get(0));
+        return list;
+    }
+    private void modifyAllReadValueList(MeterReadListVO tmp) {
+        // 修改当前对象的 readValueList 中的值
+        if (CollUtil.isNotEmpty(tmp.getReadValueList())) {
+            List<ReadValueListVO> newReadValueList = getReadValueListVOS(tmp.getReadValueList());
+            tmp.setReadValueList(newReadValueList);
+        }
+
+        // 递归遍历 meterReadListVOList
+        if (CollUtil.isNotEmpty(tmp.getMeterReadListVOList())) {
+            for (MeterReadListVO subMeter : tmp.getMeterReadListVOList()) {
+                modifyAllReadValueList(subMeter); // 递归调用
+            }
+        }
+    }
+
+    private static List<ReadValueListVO> getReadValueListVOS(List<ReadValueListVO> readValueList) {
+        List<ReadValueListVO> newReadValueList = Lists.newArrayList();
+        for(int i=0; i<readValueList.size();i++){
+            if(i==0||i==readValueList.size()-1){
+                continue;
+            }
+            ReadValueListVO tmp = new ReadValueListVO();
+            BeanUtil.copyProperties(readValueList.get(i),tmp);
+            if(Objects.nonNull(readValueList.get(i).getReadValue())&&Objects.nonNull(readValueList.get(i-1).getReadValue())){
+                tmp.setReadValue(BigDecimalUtil.subtract(readValueList.get(i).getReadValue(),readValueList.get(i-1).getReadValue()));
+            }else {
+                tmp.setReadValue(null);
+            }
+            newReadValueList.add(tmp);
+        }
+        return newReadValueList;
+    }
+
+    @Override
     public EpMeterReadVO kvDay(String readMonth, Integer meterType) {
         //当前时间
         LocalDateTime now = LocalDateTime.now();

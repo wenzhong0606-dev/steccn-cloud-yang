@@ -34,6 +34,15 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
     EpMeterReadVO list(String readMonth, Integer meterType);
 
     /**
+     * 抄表管理用电量
+     *
+     * @param readMonth 抄表月份
+     * @param meterType 仪表类型
+     * @return
+     */
+    EpMeterReadVO listRecord(String readMonth, Integer meterType);
+
+    /**
      * 录入抄表数据
      *
      * @param dto 入参

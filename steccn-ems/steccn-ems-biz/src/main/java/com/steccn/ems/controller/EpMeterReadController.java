@@ -37,6 +37,12 @@ public class EpMeterReadController {
         return R.success(epMeterReadService.list(readMonth, energyType));
     }
 
+    @GetMapping("/listRecord")
+    @ApiOperation(value = "抄表管理列表")
+    public R<EpMeterReadVO> listRecord(@RequestParam("readMonth") String readMonth, @RequestParam("energyType") Integer energyType) {
+        return R.success(epMeterReadService.listRecord(readMonth, energyType));
+    }
+
     @GetMapping("/kvDay")
     @ApiOperation(value = "35kV开关站日报表")
     public R<EpMeterReadVO> kvDay(@RequestParam("readMonth") String readMonth, @RequestParam("energyType") Integer energyType) {

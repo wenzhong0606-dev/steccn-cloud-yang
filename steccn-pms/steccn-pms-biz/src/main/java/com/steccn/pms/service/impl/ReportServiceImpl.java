@@ -1767,6 +1767,7 @@ public class ReportServiceImpl implements ReportService {
                         .forEach(v->{
                             v.setProcessQuantitySquare(tmp.getProcessQuantitySquare());
                             v.setProcessQuantitySlice(tmp.getProcessQuantitySlice());
+                            v.setFinishedProduct(tmp.getFinishedProduct());
                         });
             }
         }
