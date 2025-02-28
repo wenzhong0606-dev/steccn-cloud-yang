@@ -1760,6 +1760,15 @@ public class ReportServiceImpl implements ReportService {
 //                });
 //
 //            }
+            //修复加工产量问题
+            List<OutputQualitySjgDataVO> collect = dataList.stream().filter(v -> Objects.nonNull(v.getProcessQuantitySquare())).collect(Collectors.toList());
+            for(OutputQualitySjgDataVO tmp:collect){
+                dataList.stream().filter(v->v.getProductLine().equals(tmp.getProductLine()))
+                        .forEach(v->{
+                            v.setProcessQuantitySquare(tmp.getProcessQuantitySquare());
+                            v.setProcessQuantitySlice(tmp.getProcessQuantitySlice());
+                        });
+            }
         }
         //合计 月累计
         if (CollUtil.isNotEmpty(dataList)) {
