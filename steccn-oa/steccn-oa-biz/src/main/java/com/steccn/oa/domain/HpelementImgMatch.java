@@ -20,6 +20,10 @@ public class HpelementImgMatch implements Serializable {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
+    private Integer noticeId;
+
+    private Integer isMain;
+
     /**
      * 
      */

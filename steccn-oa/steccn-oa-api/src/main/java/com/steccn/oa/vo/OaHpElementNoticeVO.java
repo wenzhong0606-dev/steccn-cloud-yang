@@ -10,6 +10,8 @@ import lombok.Data;
  */
 @Data
 public class OaHpElementNoticeVO {
+    private Integer id;
+
     private String title;
 
     /**
