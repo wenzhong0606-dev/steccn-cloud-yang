@@ -352,4 +352,10 @@ public class OaController {
         return R.success(hpelementNoticeService.queryNoticeNews());
     }
 
+    @ApiOperation("流程是否完成")
+    @GetMapping("/news/elementNotice/{id}")
+    public R<OaHpElementNoticeVO> elementNoticeDetail(@PathVariable("id")Integer id){
+        return R.success(hpelementNoticeService.queryNoticeNewsDetails(id));
+    }
+
 }

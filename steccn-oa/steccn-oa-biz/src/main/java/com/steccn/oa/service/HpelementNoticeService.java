@@ -13,4 +13,6 @@ import java.util.List;
 */
 public interface HpelementNoticeService extends IService<HpelementNotice> {
     List<OaHpElementNoticeVO> queryNoticeNews();
+
+    OaHpElementNoticeVO queryNoticeNewsDetails(Integer id);
 }
