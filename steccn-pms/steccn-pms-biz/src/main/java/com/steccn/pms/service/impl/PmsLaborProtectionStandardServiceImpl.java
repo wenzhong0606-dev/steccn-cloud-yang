@@ -306,9 +306,9 @@ public class PmsLaborProtectionStandardServiceImpl extends ServiceImpl<PmsLaborP
             List<String> nameList = Arrays.asList(dto.getUserName().split("\\s+"));
             userInfos = userInfos.stream().filter(v->nameList.contains(v.getName())).collect(Collectors.toList());
         }
-        if(CollUtil.isNotEmpty(dto.getOfficeId())){
-            userInfos = userInfos.stream().filter(v->dto.getOfficeId().contains(v.getDepCode())).collect(Collectors.toList());
-        }
+//        if(CollUtil.isNotEmpty(dto.getOfficeId())){
+//            userInfos = userInfos.stream().filter(v->dto.getOfficeId().contains(v.getDepCode())).collect(Collectors.toList());
+//        }
         if(CollUtil.isNotEmpty(dto.getPostId())){
             userInfos = userInfos.stream().filter(v->dto.getPostId().contains(v.getPostCode())).collect(Collectors.toList());
         }
