@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
 import com.steccn.dp.service.DpColdEndCheckpointValueService;
@@ -46,6 +47,13 @@ public class DpDataTwinController {
     public R<List<DpColdEndCheckpointValueVO>> ep(HttpServletRequest request) {
         validRequestHeader(request);
         return R.success(dpColdEndCheckpointValueService.getEpColdEndValue());
+    }
+
+    @GetMapping("/origin")
+    @ApiOperation(value = "原料数据")
+    public R<TupleDTO<String,String>> origin(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(adsOpcUaAll3Service.weightScreenData());
     }
 
     /**

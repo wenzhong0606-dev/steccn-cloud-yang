@@ -76,6 +76,13 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
     SteccnTableDataDTO<Map<String,String>> weightDetail(TupleDTO<LocalDateTime,LocalDateTime> date);
 
     /**
+     * 数字孪生数据
+     * f1 最新序号 f2 总配料重量
+     * @return
+     */
+    TupleDTO<String,String> weightScreenData();
+
+    /**
      * 电子称读数单日汇总
      * @param date
      * @return

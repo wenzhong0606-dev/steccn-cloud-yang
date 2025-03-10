@@ -631,6 +631,21 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     }
 
     @Override
+    public TupleDTO<String, String> weightScreenData() {
+        TupleDTO<String, String> result = new TupleDTO<String, String>();
+        TupleDTO<LocalDateTime,LocalDateTime> date = new TupleDTO<>();
+        date.setField1(LocalDateTime.now().minusHours(4));
+        date.setField2(LocalDateTime.now());
+        SteccnTableDataDTO<Map<String, String>> data = weightDetail(date);
+        int tableSize = data.getTableList().size();
+        String total = data.getTableList().get(tableSize - 1).get("total");
+        result.setField1(total);
+        String no = data.getTableList().get(tableSize - 2).get("num");
+        result.setField2(no);
+        return result;
+    }
+
+    @Override
     public SteccnTableDataDTO<Map<String, String>> weightSum(LocalDate date) {
         Map<String, BigDecimal> day = postWeightCount(new TupleDTO<LocalDateTime, LocalDateTime>(date.atTime(8, 0, 0)
                 , date.atTime(19, 59, 59)));
