@@ -38,6 +38,11 @@ public interface OaDataConstant {
     String WORKFLOW_FINISHED_2 = "部门领导";
 
     /**
+     * 流程完成，部门副职
+     */
+    String WORKFLOW_FINISHED_3 = "总经理审批";
+
+    /**
      * 归档
      */
     String WORKFLOW_END = "归档";
