@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.util.MapUtils;
@@ -42,7 +43,9 @@ import com.steccn.qms.excel.strategy.RowHeightStyleStrategy;
 import com.steccn.qms.util.MysqlDateKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +58,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -69,6 +73,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class EpDayReportServiceImpl implements EpDayReportService {
+    /**
+     * 自定义bean，调用缓存
+     */
+    @Autowired
+    private EpDayReportService self;
 
     private final EpEnergyTypeService epEnergyTypeService;
     private final EpPartitionService epPartitionService;
@@ -168,6 +177,92 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         hintList1.addAll(hintList2);
         resVo.setHintLineList(hintList1);
         return resVo;
+    }
+
+    @Override
+    public List<TupleDTO<String, String>> dataTwinCount() {
+        LocalDate parse = LocalDate.now().withDayOfMonth(1);
+        boolean flag = Boolean.FALSE;
+        if (LocalDate.now().getMonthValue() > parse.getMonthValue()) {
+            flag = Boolean.TRUE;
+        }
+        EpDayReportCountVO count = self.count(parse, flag);
+//        List<EpDayReportCountRowVO> sum = count.getDataList().stream().filter(v -> StrUtil.isNotBlank(v.getDepartmentName())
+//                &&v.getDepartmentName().equals("合计")).collect(Collectors.toList());
+        List<TupleDTO<String,String>> results = Lists.newArrayList();
+        for(EpDayReportCountRowVO vo:count.getDataList()){
+            if(vo.getEnergyType().equals("电")&&vo.getDepartmentName().equals("合计")){
+                //每月汇总
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("耗电量(每月汇总)");
+                result.setField2(Objects.isNull(vo.getSumStr())?"0":vo.getSumStr().toString());
+                results.add(result);
+                //电耗，当前值
+                TupleDTO<String,String> result2 = new TupleDTO<>();
+                result2.setField1("耗电量(当前值)");
+                BigDecimal v1 = vo.getConsumeList().get(vo.getConsumeList().size() - 2);
+                LocalTime now = LocalTime.now();
+                BigDecimal v2 = BigDecimalUtil.divide(new BigDecimal(now.toSecondOfDay()),new BigDecimal(86400));
+                BigDecimal v3 = BigDecimalUtil.multiply(v1,v2,0);
+                result2.setField2(Objects.isNull(v3)?"0":v3.toString());
+                results.add(result2);
+            }else if(vo.getEnergyType().equals("水")&&vo.getDepartmentName().equals("合计")){
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("耗水量");
+                result.setField2(Objects.isNull(vo.getSumStr())?"0":vo.getSumStr().toString());
+                results.add(result);
+            }else if(vo.getEnergyType().equals("天然气")){
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("天然气");
+                result.setField2(Objects.isNull(vo.getSumStr())?"0":vo.getSumStr().toString());
+                results.add(result);
+            }else if(vo.getEnergyType().equals("LNG")){
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("LNG");
+                result.setField2(Objects.isNull(vo.getSumStr())?"0":vo.getSumStr().toString());
+                results.add(result);
+            }else if(vo.getEnergyType().equals("燃料油")){
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("燃料油");
+                result.setField2(Objects.isNull(vo.getSumStr())?"0":vo.getSumStr().toString());
+                results.add(result);
+            }else if(vo.getEnergyType().equals("电（其他）")&&vo.getDepartmentName().equals("余热发电")){
+                //每月汇总
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("余热发电(每月汇总)");
+                result.setField2(Objects.isNull(vo.getSumStr())?"0":vo.getSumStr().toString());
+                results.add(result);
+                //电耗，当前值
+                TupleDTO<String,String> result2 = new TupleDTO<>();
+                result2.setField1("余热发电(当前值)");
+                BigDecimal v1 = vo.getConsumeList().get(vo.getConsumeList().size() - 2);
+                LocalTime now = LocalTime.now();
+                BigDecimal v2 = BigDecimalUtil.divide(new BigDecimal(now.toSecondOfDay()),new BigDecimal(86400));
+                BigDecimal v3 = BigDecimalUtil.multiply(v1,v2,0);
+                result2.setField2(Objects.isNull(v3)?"0":v3.toString());
+                results.add(result2);
+            }else if(vo.getEnergyType().equals("电（其他）")&&vo.getDepartmentName().equals("光伏发电一")){
+                EpDayReportCountRowVO station2 = count.getDataList().stream().filter(v -> StrUtil.isNotBlank(v.getDepartmentName())
+                &&v.getDepartmentName().equals("光伏发电二")).findFirst().orElse(null);
+                //每月汇总
+                TupleDTO<String,String> result = new TupleDTO<>();
+                result.setField1("光伏发电(每月汇总)");
+                BigDecimal v = BigDecimalUtil.add(station2.getSumStr(), vo.getSumStr());
+                result.setField2(Objects.isNull(v)?"0":v.toString());
+                results.add(result);
+                //电耗，当前值
+                TupleDTO<String,String> result2 = new TupleDTO<>();
+                result2.setField1("光伏发电(当前值)");
+                BigDecimal v1 = BigDecimalUtil.add(vo.getConsumeList().get(vo.getConsumeList().size() - 2),
+                        station2.getConsumeList().get(station2.getConsumeList().size() - 2));
+                LocalTime now = LocalTime.now();
+                BigDecimal v2 = BigDecimalUtil.divide(new BigDecimal(now.toSecondOfDay()),new BigDecimal(86400));
+                BigDecimal v3 = BigDecimalUtil.multiply(v1,v2,0);
+                result2.setField2(Objects.isNull(v3)?"0":v3.toString());
+                results.add(result2);
+            }
+        }
+        return results;
     }
 
     @Override

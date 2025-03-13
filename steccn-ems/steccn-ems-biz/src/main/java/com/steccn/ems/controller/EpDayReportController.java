@@ -1,14 +1,19 @@
 package com.steccn.ems.controller;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.ems.vo.EpDayReportCountVO;
 import com.steccn.ems.service.EpDayReportService;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -16,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -35,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 public class EpDayReportController {
 
     private final EpDayReportService epDayReportService;
+    private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
     @GetMapping("/count")
     @ApiOperation(value = "能耗日统计报表")
@@ -52,6 +59,13 @@ public class EpDayReportController {
             flag = Boolean.TRUE;
         }
         return R.success(epDayReportService.count(parse, flag));
+    }
+
+    @GetMapping("/dataTwin")
+    @ApiOperation(value = "能耗日统计报表")
+    public R<List<TupleDTO<String, String>>> dataTwin(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(epDayReportService.dataTwinCount());
     }
 
     @GetMapping("/count/download")
@@ -114,5 +128,17 @@ public class EpDayReportController {
             flag = Boolean.TRUE;
         }
         return R.success(epDayReportService.unitConsumeCount(parse, flag));
+    }
+
+    /**
+     * 校验请求头信息
+     *
+     * @param request 请求
+     */
+    private void validRequestHeader(HttpServletRequest request) {
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String clientId = request.getHeader(OaConstant.CLIENT_ID);
+        Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
+        Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
     }
 }

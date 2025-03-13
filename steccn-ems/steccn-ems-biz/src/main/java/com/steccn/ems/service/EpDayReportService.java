@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.CommonReportDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.vo.EpDayReportCountVO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -24,6 +25,12 @@ public interface EpDayReportService {
      * @return 结果
      */
     EpDayReportCountVO count(LocalDate month, boolean flag);
+
+    /**
+     * 能耗日报表数字孪生接口
+     * @return
+     */
+    List<TupleDTO<String,String>> dataTwinCount();
 
     /**
      * 能耗日统计报表下载
