@@ -297,7 +297,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      */
     BigDecimal inventoryM(WmsReportWarehouseDTO wmsReportWarehouseDTO);
 
-
+    TupleDTO<BigDecimal,BigDecimal> dataTwinInventoryM();
     /**
      * 库存列表 可用库存为0不显示
      * @param dto

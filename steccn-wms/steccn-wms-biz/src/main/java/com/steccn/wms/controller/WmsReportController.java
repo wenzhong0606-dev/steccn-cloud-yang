@@ -2,7 +2,11 @@ package com.steccn.wms.controller;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.SteccnTableDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
@@ -10,6 +14,8 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.pms.vo.PanoramicTracingVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
@@ -23,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,6 +60,8 @@ public class WmsReportController {
     private final WmsInventoryService wmsInventoryService;
 
     private final WmsReportService wmsReportService;
+
+    private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
 
     @PostMapping("/day/sheet")
@@ -107,6 +116,13 @@ public class WmsReportController {
     @ApiOperation("获取实时库存-平方米")
     public R<BigDecimal> inventoryM(@RequestBody WmsReportWarehouseDTO wmsReportWarehouseDTO){
         return R.success(wmsInventoryService.inventoryM(wmsReportWarehouseDTO));
+    }
+
+    @GetMapping("/dataTwin/inventory/m")
+    @ApiOperation("数字孪生-平方米")
+    public R<TupleDTO> inventoryMDataTwin(HttpServletRequest request){
+//        validRequestHeader(request);
+        return R.success(wmsInventoryService.dataTwinInventoryM());
     }
 
 
@@ -272,6 +288,13 @@ public class WmsReportController {
     @PostMapping("/historical")
     public R<Page<WmsHistoricalInventoryVO>> historical(@RequestBody WmsInventoryPageDTO dto){
         return R.success(wmsReportService.historical(dto));
+    }
+
+    private void validRequestHeader(HttpServletRequest request) {
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String clientId = request.getHeader(OaConstant.CLIENT_ID);
+        Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
+        Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
     }
 
 

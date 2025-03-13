@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -760,6 +761,17 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             });
         }
         return totalM.get();
+    }
+
+    @Override
+    public TupleDTO<BigDecimal,BigDecimal> dataTwinInventoryM() {
+        WmsReportWarehouseDTO wmsReportWarehouseDTO = new WmsReportWarehouseDTO();
+        wmsReportWarehouseDTO.setDate(LocalDate.now());
+        wmsReportWarehouseDTO.setWarehouseIds(Sets.newHashSet(446L,5933L,451L));
+        BigDecimal bigDecimal1 = inventoryM(wmsReportWarehouseDTO);
+        wmsReportWarehouseDTO.setWarehouseIds(Sets.newHashSet(454L,455L,453L,445L));
+        BigDecimal bigDecimal2 = inventoryM(wmsReportWarehouseDTO);
+        return new TupleDTO<>(bigDecimal1,bigDecimal2);
     }
 
     @Override
