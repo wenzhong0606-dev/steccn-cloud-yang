@@ -89,6 +89,8 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      */
     SteccnTableDataDTO<Map<String,String>> weightSum(LocalDate date);
 
+    BigDecimal weightSumDataTwin();
+
     /**
      * 推送电子秤读数数据
      * @return

@@ -71,6 +71,12 @@ public class DpWeightController {
         return R.success(adsOpcUaAll3Service.weightSum(date));
     }
 
+    @GetMapping("/weightSum/dataTwin")
+    @ApiOperation(value = "获取原料配料聚合数据")
+    public R<BigDecimal> weightSumDataTwin(){
+        return R.success(adsOpcUaAll3Service.weightSumDataTwin());
+    }
+
     @PostMapping("/test")
     @ApiOperation(value = "电子秤读数图表")
     public R<List<CommonReportDTO>> test(@RequestBody DpPmsOperateDTO dto) {

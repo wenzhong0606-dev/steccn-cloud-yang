@@ -1,14 +1,19 @@
 package com.steccn.pms.controller;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import com.steccn.pms.dto.JpAnalysisReportDTO;
 import com.steccn.pms.vo.JpAnalysisReportVO;
 import com.steccn.pms.dto.DashboardProducePageDTO;
@@ -23,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
@@ -44,10 +50,19 @@ public class PmsReportDashboardController {
 
     private final PmsReportDashboardService pmsReportDashboardService;
 
+    private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+
     @GetMapping("/pull/force/today")
     @ApiOperation("今日拉引量（单位/T）")
     public R<BigDecimal> pullForceToday(@RequestParam("workShopId") Integer workShopId, @RequestParam("date") LocalDate date) {
         return R.success(pmsReportDashboardService.pullForceToday(workShopId, date));
+    }
+
+    @GetMapping("/pull/force/today/dataTwin")
+    @ApiOperation("今日拉引量（单位/T）")
+    public R<BigDecimal> pullForceTodayDataTwin(HttpServletRequest request) {
+        validRequestHeader(request);
+        return R.success(pmsReportDashboardService.pullForceTodayDataTwin());
     }
 
     @GetMapping("/pull/force/date/range")
@@ -202,5 +217,17 @@ public class PmsReportDashboardController {
             map.put("message", "下载文件失败" + e.getMessage());
             response.getWriter().println(JSON.toJSONString(map));
         }
+    }
+
+    /**
+     * 校验请求头信息
+     *
+     * @param request 请求
+     */
+    private void validRequestHeader(HttpServletRequest request) {
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String clientId = request.getHeader(OaConstant.CLIENT_ID);
+        Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
+        Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");
     }
 }

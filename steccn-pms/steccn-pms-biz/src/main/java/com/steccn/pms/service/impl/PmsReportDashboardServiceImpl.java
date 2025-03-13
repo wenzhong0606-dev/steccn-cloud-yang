@@ -67,6 +67,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -116,6 +117,15 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
             resVal = BigDecimalUtil.setScale(resVal, UnitLengthUtil.UNIT_TON_LENGTH);
         }
         return resVal;
+    }
+
+    @Override
+    public BigDecimal pullForceTodayDataTwin() {
+        BigDecimal v1 = pullForceToday(76, LocalDate.now().minusDays(1));
+        LocalTime now = LocalTime.now();
+        BigDecimal v2 = BigDecimalUtil.divide(new BigDecimal(now.toSecondOfDay()),new BigDecimal(86400));
+        BigDecimal v3 = BigDecimalUtil.multiply(v1,v2,0);
+        return v3;
     }
 
     @Override

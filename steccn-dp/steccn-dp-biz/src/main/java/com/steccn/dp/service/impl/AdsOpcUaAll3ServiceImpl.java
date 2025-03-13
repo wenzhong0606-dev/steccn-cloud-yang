@@ -53,6 +53,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -765,6 +766,17 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         result.setTableList(tableList);
         result.setColumns(columns);
         return result;
+    }
+
+    @Override
+    public BigDecimal weightSumDataTwin() {
+        SteccnTableDataDTO<Map<String, String>> mapSteccnTableDataDTO = weightSum(LocalDate.now());
+        String total = mapSteccnTableDataDTO.getTableList().get(2).get("total");
+        BigDecimal v1 = new BigDecimal(total);
+        LocalTime now = LocalTime.now();
+        BigDecimal v2 = BigDecimalUtil.divide(new BigDecimal(now.toSecondOfDay()),new BigDecimal(86400));
+        BigDecimal v3 = BigDecimalUtil.multiply(v1,v2,0);
+        return v3;
     }
 
     @Override
