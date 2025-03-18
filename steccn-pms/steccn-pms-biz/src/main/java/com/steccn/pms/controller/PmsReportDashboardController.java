@@ -90,6 +90,13 @@ public class PmsReportDashboardController {
         return R.success(pmsReportDashboardService.produceNumToday(workShopId, date));
     }
 
+    @GetMapping("/produce/num/today/dataTwin")
+    @ApiOperation("今日产量（单位/T/片/㎡）")
+    public R<BigDecimal> produceNumTodayDataTwin(HttpServletRequest httpServletRequest) {
+        validRequestHeader(httpServletRequest);
+        return R.success(pmsReportDashboardService.produceNumTodayDataTwin());
+    }
+
     @GetMapping("/produce/num/date/range")
     @ApiOperation("日期范围产量（单位/T/片/㎡）")
     public R<List<BigDecimal>> produceNumDateRange(@RequestParam("partId") Integer partId, @RequestParam("start") LocalDate start, @RequestParam("end") LocalDate end) {

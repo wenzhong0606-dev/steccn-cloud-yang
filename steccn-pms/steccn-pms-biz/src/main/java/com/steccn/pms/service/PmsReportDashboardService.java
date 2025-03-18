@@ -88,6 +88,8 @@ public interface PmsReportDashboardService {
      */
     List<BigDecimal> produceNumToday(Integer workShopId, LocalDate date);
 
+    BigDecimal produceNumTodayDataTwin();
+
     /**
      * 日期范围产量（单位/T/片/㎡）
      *

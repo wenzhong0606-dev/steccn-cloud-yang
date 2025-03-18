@@ -34,6 +34,8 @@ public interface QtChartGenerateService {
      */
     QtDefectChartVO generateSubstrateOverview(QtTimeDTO dto);
 
+    String OverviewPercent();
+
     /**
      * 生产基片成品率柱状趋势图
      * @param dto

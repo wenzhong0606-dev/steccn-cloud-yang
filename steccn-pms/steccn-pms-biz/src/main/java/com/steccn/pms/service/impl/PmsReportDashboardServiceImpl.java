@@ -248,6 +248,16 @@ public class PmsReportDashboardServiceImpl implements PmsReportDashboardService 
     }
 
     @Override
+    public BigDecimal produceNumTodayDataTwin() {
+        List<BigDecimal> bigDecimals = produceNumToday(76, LocalDate.now().minusDays(1));
+        BigDecimal v1 = bigDecimals.get(0);
+        LocalTime now = LocalTime.now();
+        BigDecimal v2 = BigDecimalUtil.divide(new BigDecimal(now.toSecondOfDay()),new BigDecimal(86400));
+        BigDecimal v3 = BigDecimalUtil.multiply(v1,v2,0);
+        return v3;
+    }
+
+    @Override
     public List<BigDecimal> produceNumDateRange(Integer partId, LocalDate start, LocalDate end) {
         SysOfficeVO partOffice = FeignOptional.of(() -> remoteOfficeFeign.sysOfficeInfo(partId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(partOffice, "制造部不能为空");

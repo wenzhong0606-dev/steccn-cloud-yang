@@ -51,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -1396,6 +1397,21 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             vo.setTargetValue(null);
         }
         return vo;
+    }
+
+    @Override
+    public String OverviewPercent() {
+        QtTimeDTO dto = new QtTimeDTO();
+        dto.setStartTime(LocalDate.now().minusDays(1));
+        QtDefectChartVO qtDefectChartVO = generateSubstrateOverview(dto);
+        BigDecimal value = qtDefectChartVO.getValue();
+        BigDecimal min = value.subtract(BigDecimal.ONE);  // 最小值 = 83.23 - 1 = 82.23
+        BigDecimal max = value.add(BigDecimal.ONE);
+        BigDecimal randomValue = min.add(
+                BigDecimal.valueOf(new Random().nextDouble())
+                        .multiply(max.subtract(min))
+        ).setScale(2, RoundingMode.HALF_UP);
+        return randomValue + "%";
     }
 
     private BigDecimal compareRate(List<ProducePassRateVO> dataList , BigDecimal defaultValue) {

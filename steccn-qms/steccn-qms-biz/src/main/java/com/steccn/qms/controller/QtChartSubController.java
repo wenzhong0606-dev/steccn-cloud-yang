@@ -41,6 +41,11 @@ public class QtChartSubController {
         return R.success(qtChartGenerateService.generateSubstrateOverview(dto));
     }
 
+    @GetMapping("/sub/overview/dataTwin")
+    public R<String> generateSubstrateOverviewDataTwin(){
+        return R.success(qtChartGenerateService.OverviewPercent());
+    }
+
     /**
      * 基片成品率概览
      * @return

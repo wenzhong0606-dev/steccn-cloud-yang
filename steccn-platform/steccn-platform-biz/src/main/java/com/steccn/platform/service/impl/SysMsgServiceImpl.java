@@ -74,6 +74,10 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean sendMsg(SysMsgSendDTO sysMsgDTO) {
+        //过滤安环消息
+        if(sysMsgDTO.getType().equals(25)){
+            return true;
+        }
         //1.保存消息主体
         SysMsg msg = new SysMsg();
         BeanUtils.copyProperties(sysMsgDTO, msg);
