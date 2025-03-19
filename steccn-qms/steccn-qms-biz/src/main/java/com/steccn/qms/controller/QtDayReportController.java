@@ -68,6 +68,22 @@ public class QtDayReportController {
         }
     }
 
+    @PostMapping("/online/man/download/multi")
+    @ApiOperation("质量日报表-在线检")
+    public void onlineManMultiDownload(@RequestBody QtDayReportOnlineDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDayReportService.multiOnlineDownload(dto.getStart(),dto.getEnd(), dto.getProductLineIdList(), QtManagerConstant.CONF_QMS_COLLECT_DISABLE_CONTENT, response);
+        } catch (Exception e) {
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
     @PostMapping("/first")
     @ApiOperation("质量日报表-首检2/巡检4")
     public R<QtDayReportFirstVO> first(@RequestBody @Validated QtReportFirstPatrolDTO dto) {
@@ -79,6 +95,23 @@ public class QtDayReportController {
     public void firstDownload(@RequestBody @Validated QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException {
         try {
             qtDayReportService.firstDownload(dto,response);
+        } catch (Exception e) {
+            log.error("{}",e.getLocalizedMessage());
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
+    @PostMapping("/first/download/multi")
+    @ApiOperation("质量日报表-首检2/巡检4-下载")
+    public void firstDownloadMulti(@RequestBody QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            qtDayReportService.multiFirstDownload(dto,response);
         } catch (Exception e) {
             log.error("{}",e.getLocalizedMessage());
             response.reset();

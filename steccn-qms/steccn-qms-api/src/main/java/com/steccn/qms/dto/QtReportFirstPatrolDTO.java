@@ -21,6 +21,10 @@ public class QtReportFirstPatrolDTO implements Serializable {
     @NotNull(message = "日期不能为空")
     private LocalDate date;
 
+    private LocalDate start;
+
+    private LocalDate end;
+
     /**
      * 2巡检，4首检
      */

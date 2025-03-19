@@ -36,6 +36,7 @@ public interface QtDayReportService {
      */
     void onlineDownload(LocalDate date, List<Integer> lineIdList, String confContent, HttpServletResponse response) throws IOException;
 
+    void multiOnlineDownload(LocalDate start,LocalDate end, List<Integer> lineIdList, String confContent, HttpServletResponse response) throws IOException;
 
     /**
      * 质量日报表-首检2/巡检4
@@ -50,6 +51,13 @@ public interface QtDayReportService {
      * @param response 响应
      */
     void firstDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException;
+
+    /**
+     * 质量日报表-首检2/巡检4-下载
+     * @param dto dto
+     * @param response 响应
+     */
+    void multiFirstDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException;
 
 
     /**

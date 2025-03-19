@@ -14,6 +14,7 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
@@ -396,6 +397,124 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .build();
         excelWriter.write(dataList1, writeSheet1);
         excelWriter.write(dataList2, writeSheet2);
+        excelWriter.finish();
+        response.flushBuffer();
+    }
+
+    @Override
+    public void multiOnlineDownload(LocalDate dateStart, LocalDate dateEnd, List<Integer> lineIdList, String confContent, HttpServletResponse response) throws IOException {
+        List<LocalDate> days = ShardTimeUtil.cutDate("D", dateStart, dateEnd);
+        days.remove(days.size()-1);
+        if(days.size()>32){
+            throw new BusinessException("日期范围不能超过30天");
+        }
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("质量日报表(人工)", "UTF-8");
+        fileName += LocalDateUtil.localDateFormat(dateStart, "yyyy-MM-dd") +"~"+LocalDateUtil.localDateFormat(dateEnd, "yyyy-MM-dd");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        int i = 0;
+        for(LocalDate date:days){
+            QtDayReportOnlineVO online = online(date, lineIdList, confContent);
+            List<QtDayReportOnlineDataVO> tableData = online.getTableData();
+            SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
+            //写表头
+            QtDayReportTableHeadersVO headers = online.getHeaders();
+            //在线检
+            List<List<String>> list1 = new ArrayList<>();
+            //落板记录
+            List<List<String>> list2 = new ArrayList<>();
+            Arrays.asList("产线", "班次", "班组", "落板记录时段", "落板工位", "落板原因", "备注").forEach(ele -> list2.add(Lists.newArrayList(ele)));
+
+            List<QtSpcHeadTitleVO> common = headers.getCommon();
+            common.forEach(ele -> {
+                list1.add(Lists.newArrayList(ele.getLabel()));
+            });
+            List<BaseReportHeaderVO> module = headers.getModule();
+            module.forEach(ele -> {
+                List<String> value = ele.getValue();
+                value.forEach(aa -> {
+                    list1.add(Lists.newArrayList(ele.getLabel(), aa));
+                });
+            });
+            //数据
+            List<List<Object>> dataList1 = Lists.newArrayList();
+            List<List<Object>> dataList2 = Lists.newArrayList();
+            //落板记录
+            online.getFallList().forEach(ele -> {
+                List<Object> dataEle = Lists.newArrayList();
+                dataEle.add(ele.getProductLineName());
+                dataEle.add(ele.getClassName());
+                dataEle.add(ele.getClassGroupName());
+                String start = LocalDateTimeUtil.format(ele.getDestoryStartTime(), "MM-dd HH:mm");
+                String end = LocalDateTimeUtil.format(ele.getDestoryEndTime(), "MM-dd HH:mm");
+                dataEle.add(start + " ~ " + end);
+                dataEle.add(ele.getDestoryWorkStationStr());
+                dataEle.add(ele.getDestoryReason());
+                dataEle.add(ele.getDestoryInfoRemark());
+                dataList2.add(dataEle);
+            });
+
+            //在线检
+            tableData.forEach(ele -> {
+                List<Object> dataEle = Lists.newArrayList();
+                if (ele.getType() == 1) {
+                    dataEle.add(ele.getProductLineName());
+                    dataEle.add("小计(单班次)");
+                    dataEle.add("小计(单班次)");
+                } else if (ele.getType() == 2) {
+                    dataEle.add("合计(单产线)");
+                    dataEle.add("合计(单产线)");
+                    dataEle.add("合计(单产线)");
+                } else if (ele.getType() == 3) {
+                    dataEle.add("总计");
+                    dataEle.add("总计");
+                    dataEle.add("总计");
+                } else {
+                    dataEle.add(ele.getProductLineName());
+                    dataEle.add(ele.getClassName());
+                    dataEle.add(ele.getClassGroupName());
+                }
+                dataEle.add(ele.getCustomerName());
+                dataEle.add(ele.getMaterialName());
+                dataEle.add(ele.getDefectTimeStr());
+                dataEle.add(ele.getNote());
+                dataEle.add(ele.getRowTotal());
+                List<FurtherValueStrVO> rowData = ele.getModule();
+                rowData.forEach(rf -> {
+                    List<String> value = rf.getValue();
+                    value.forEach(bb -> {
+                        dataEle.add(Objects.nonNull(bb) ? Integer.parseInt(bb) : null);
+                    });
+                });
+                dataList1.add(dataEle);
+            });
+            int[] mergeColumnIndex1 = {0, 1, 2};
+            int[] mergeColumnIndex2 = {0};
+
+
+            WriteSheet writeSheet1 = EasyExcel.writerSheet(i, LocalDateUtil.localDateFormat(date, "yyyy-MM-dd")+"_在线检日报表")
+                    .head(list1)
+                    .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                    .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                    .registerWriteHandler(new HeadContentStyleStrategy())
+                    .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex1))
+                    .build();
+            i = i+1;
+            WriteSheet writeSheet2 = EasyExcel.writerSheet(i, LocalDateUtil.localDateFormat(date, "yyyy-MM-dd")+"_落板记录")
+                    .head(list2)
+                    .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                    .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                    .registerWriteHandler(new HeadContentStyleStrategy())
+                    .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
+                    .build();
+            i = i+1;
+            excelWriter.write(dataList1, writeSheet1);
+            excelWriter.write(dataList2, writeSheet2);
+
+        }
         excelWriter.finish();
         response.flushBuffer();
     }
@@ -1022,6 +1141,180 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //首检
             firstCheckDownload(dto, response);
         }
+    }
+
+    @Override
+    public void multiFirstDownload(QtReportFirstPatrolDTO dto, HttpServletResponse response) throws IOException {
+        List<LocalDate> days = ShardTimeUtil.cutDate("D", dto.getStart(), dto.getEnd());
+        days.remove(days.size()-1);
+        if(days.size()>32){
+            throw new BusinessException("日期范围不能超过30天");
+        }
+        if(dto.getCheckTaskType() == 4){
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+            String fileName = URLEncoder.encode("巡检", "UTF-8");
+            fileName += LocalDateUtil.localDateFormat(dto.getStart(), "yyyy-MM-dd") +"~"+LocalDateUtil.localDateFormat(dto.getEnd(), "yyyy-MM-dd");
+            response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+            ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+            int i = 0;
+            for(LocalDate date:days){
+                dto.setDate(date);
+                QtDayReportFirstVO first = first(dto);
+                List<QtDayReportFirstDataVO> tableData = first.getTableData();
+                SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
+                //写表头
+                QtDayReportTableHeadersVO headers = first.getHeaders();
+                //在线检
+                List<List<String>> list1 = new ArrayList<>();
+                //落板记录
+                List<List<String>> list2 = new ArrayList<>();
+                Arrays.asList("产线", "班次", "班组", "落板记录时段", "落板工位", "落板原因", "备注").forEach(ele -> list2.add(Lists.newArrayList(ele)));
+
+                List<QtSpcHeadTitleVO> common = headers.getCommon();
+                common.forEach(ele -> {
+                    list1.add(Lists.newArrayList(ele.getLabel()));
+                });
+                List<BaseReportHeaderVO> module = headers.getModule();
+                module.forEach(ele -> {
+                    List<String> value = ele.getValue();
+                    value.forEach(aa -> {
+                        list1.add(Lists.newArrayList(ele.getLabel(), aa));
+                    });
+                });
+                //数据
+                List<List<Object>> dataList1 = Lists.newArrayList();
+                List<List<Object>> dataList2 = Lists.newArrayList();
+                //落板记录
+                if (CollUtil.isNotEmpty(first.getFallList())) {
+                    first.getFallList().forEach(ele -> {
+                        List<Object> dataEle = Lists.newArrayList();
+                        dataEle.add(ele.getProductLineName());
+                        dataEle.add(ele.getClassName());
+                        dataEle.add(ele.getClassGroupName());
+                        String start = LocalDateTimeUtil.format(ele.getDestoryStartTime(), "MM-dd HH:mm");
+                        String end = LocalDateTimeUtil.format(ele.getDestoryEndTime(), "MM-dd HH:mm");
+                        dataEle.add(start + " ~ " + end);
+                        dataEle.add(ele.getDestoryWorkStationStr());
+                        dataEle.add(ele.getDestoryReason());
+                        dataEle.add(ele.getDestoryInfoRemark());
+                        dataList2.add(dataEle);
+                    });
+                }
+                tableData.forEach(ele -> {
+                    List<Object> dataEle = Lists.newArrayList();
+                    dataEle.add(ele.getProductLine());
+                    dataEle.add(ele.getClassName());
+                    dataEle.add(ele.getClassGroupName());
+                    dataEle.add(LocalDateUtil.format(ele.getSpotTime(), "MM-dd HH:mm"));
+                    dataEle.add(ele.getStation());
+                    dataEle.add(ele.getMaterialName());
+                    dataEle.add(ele.getCustomerName());
+                    dataEle.add(ele.getResult());
+                    dataEle.add(ele.getNote());
+                    dataEle.add(ele.getCopy());
+
+                    List<FurtherValueObjVO> rowData = ele.getModule();
+                    rowData.forEach(rf -> {
+                        List<ColorValueVO> value = rf.getValue();
+                        value.forEach(bb -> {
+                            dataEle.add(bb.getValue());
+                        });
+                    });
+                    dataList1.add(dataEle);
+                });
+                int[] mergeColumnIndex1 = {0, 1, 2};
+                int[] mergeColumnIndex2 = {0};
+
+                WriteSheet writeSheet1 = EasyExcel.writerSheet(i, LocalDateUtil.localDateFormat(date, "yyyy-MM-dd")+"巡检")
+                        .head(list1)
+                        .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                        .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                        .registerWriteHandler(new HeadContentStyleStrategy())
+                        .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex1))
+                        .build();
+                i = i + 1;
+                excelWriter.write(dataList1, writeSheet1);
+                if (CollUtil.isNotEmpty(first.getFallList())) {
+                    WriteSheet writeSheet2 = EasyExcel.writerSheet(i, LocalDateUtil.localDateFormat(date, "yyyy-MM-dd")+"落板记录")
+                            .head(list2)
+                            .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                            .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                            .registerWriteHandler(new HeadContentStyleStrategy())
+                            .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex2))
+                            .build();
+                    excelWriter.write(dataList2, writeSheet2);
+                    i = i + 1;
+                }
+            }
+            excelWriter.finish();
+            response.flushBuffer();
+        }else {
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+            String fileName = URLEncoder.encode("首检", "UTF-8");
+            fileName += LocalDateUtil.localDateFormat(dto.getStart(), "yyyy-MM-dd") +"~"+LocalDateUtil.localDateFormat(dto.getEnd(), "yyyy-MM-dd");
+            response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+            int i = 0;
+            ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
+            for(LocalDate date:days){
+                QtDayReportFirstVO first = first(dto);
+                dto.setDate(date);
+                List<QtDayReportFirstDataVO> tableData = first.getTableData();
+                SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
+                //写表头
+                QtDayReportTableHeadersVO headers = first.getHeaders();
+                List<List<String>> list = new ArrayList<>();
+                List<QtSpcHeadTitleVO> common = headers.getCommon();
+                common.forEach(ele -> {
+                    list.add(Lists.newArrayList(ele.getLabel()));
+                });
+                List<BaseReportHeaderVO> module = headers.getModule();
+                module.forEach(ele -> {
+                    List<String> value = ele.getValue();
+                    value.forEach(aa -> {
+                        list.add(Lists.newArrayList(ele.getLabel(), aa));
+                    });
+                });
+                //数据
+                List<List<Object>> dataList = Lists.newArrayList();
+                tableData.forEach(ele -> {
+                    List<Object> dataEle = Lists.newArrayList();
+                    dataEle.add(ele.getProductLine());
+                    dataEle.add(ele.getClassName());
+                    dataEle.add(ele.getClassGroupName());
+                    dataEle.add(LocalDateUtil.format(ele.getFinishedTime(), "MM-dd HH:mm"));
+                    dataEle.add(ele.getMaterialName());
+                    dataEle.add(ele.getCustomerName());
+                    dataEle.add(ele.getResult());
+                    dataEle.add(ele.getNote());
+                    dataEle.add(ele.getCopy());
+                    List<FurtherValueObjVO> rowData = ele.getModule();
+                    rowData.forEach(rf -> {
+                        List<ColorValueVO> value = rf.getValue();
+                        value.forEach(bb -> {
+                            dataEle.add(bb.getValue());
+                        });
+                    });
+                    dataList.add(dataEle);
+                });
+                int[] mergeColumnIndex = {0, 1, 2};
+                WriteSheet writeSheet1 = EasyExcel.writerSheet(i, LocalDateUtil.localDateFormat(date, "yyyy-MM-dd")+"首检")
+                        .head(list)
+                        .registerWriteHandler(new RowHeightStyleStrategy(30, 20))
+                        .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                        .registerWriteHandler(new HeadContentStyleStrategy())
+                        .registerWriteHandler(new ExcelFillCellMergeStrategy(1, mergeColumnIndex))
+                        .build();
+                i = i + 1;
+                excelWriter.write(dataList, writeSheet1);
+            }
+            excelWriter.finish();
+            response.flushBuffer();
+        }
+
     }
 
     /**

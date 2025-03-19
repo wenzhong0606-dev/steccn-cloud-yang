@@ -26,4 +26,8 @@ public class QtDayReportOnlineDTO implements Serializable {
     @ApiModelProperty("产线id集合")
     @NotEmpty(message = "产线集合不能为空")
     private List<Integer> productLineIdList;
+
+    private LocalDate start;
+
+    private LocalDate end;
 }
