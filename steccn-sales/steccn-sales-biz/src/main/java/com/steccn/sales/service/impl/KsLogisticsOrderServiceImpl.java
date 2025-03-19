@@ -228,6 +228,11 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         ksAbnormalCause.setName(dto.getAbnormalCause());
         ksAbnormalCauseService.save(ksAbnormalCause);
         Integer ksAbnormalCauseId = ksAbnormalCause.getId();
+        KsAbnormalCauseKsLogisticsOrderRel one1 = ksAbnormalCauseKsLogisticsOrderRelService.getOne(new LambdaQueryWrapper<KsAbnormalCauseKsLogisticsOrderRel>()
+                .eq(KsAbnormalCauseKsLogisticsOrderRel::getKsAbnormalCauseId, ksAbnormalCauseId), false);
+        if(Objects.nonNull(one1)){
+            return Boolean.TRUE;
+        }
         KsAbnormalCauseKsLogisticsOrderRel ksAbnormalCauseKsLogisticsOrderRel = new KsAbnormalCauseKsLogisticsOrderRel();
         ksAbnormalCauseKsLogisticsOrderRel.setKsLogisticsOrderId(Math.toIntExact(one.getId()));
         ksAbnormalCauseKsLogisticsOrderRel.setKsAbnormalCauseId(ksAbnormalCauseId);
