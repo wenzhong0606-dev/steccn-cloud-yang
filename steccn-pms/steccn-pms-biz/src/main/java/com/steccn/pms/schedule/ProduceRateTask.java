@@ -1,6 +1,10 @@
 package com.steccn.pms.schedule;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.pms.domain.PmsMeltingConfig;
+import com.steccn.pms.dto.PmsMeltingConfigDTO;
+import com.steccn.pms.service.PmsMeltingConfigService;
 import com.steccn.pms.service.PmsReportDashboardService;
 import com.steccn.pms.service.PmsSjgReportDashboardCtService;
 import com.steccn.pms.service.PmsSjgReportDashboardService;
@@ -22,6 +26,7 @@ public class ProduceRateTask {
     private final PmsReportDashboardService pmsReportDashboardService;
     private final PmsSjgReportDashboardService pmsSjgReportDashboardService;
     private final PmsSjgReportDashboardCtService pmsSjgReportDashboardCtService;
+    private final PmsMeltingConfigService pmsMeltingConfigService;
 
     @XxlJob("JP_RH_RATE")
     public void JP_RH_RATE() {
@@ -133,4 +138,26 @@ public class ProduceRateTask {
         }
         XxlJobHelper.log("DEEP_REPORT_WORK_FINISH_NUM_DAY-任务完成");
     }
+
+    /**
+     * 设置每天熔化率
+     */
+    @XxlJob("MELTING_CONFIG")
+    public void meltingConfig() {
+        XxlJobHelper.log("MELTING_CONFIG-任务开始");
+        try {
+            LocalDate date = LocalDate.now();
+            PmsMeltingConfig one = pmsMeltingConfigService.getOne(new LambdaQueryWrapper<PmsMeltingConfig>()
+                    .eq(PmsMeltingConfig::getMeltingDate, date.minusDays(1)), false);
+            PmsMeltingConfigDTO dto = new PmsMeltingConfigDTO();
+            dto.setMeltingNum(one.getMeltingNum());
+            dto.setMeltingDate(LocalDate.now());
+            pmsMeltingConfigService.add(dto);
+        } catch (RuntimeException e) {
+            log.error("业务运行异常 -> {}", e.getCause());
+            XxlJobHelper.log("业务运行异常 -> {}", e.getCause());
+        }
+        XxlJobHelper.log("MELTING_CONFIG-任务完成");
+    }
+
 }
