@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class KafkaConsumer {
     private final StringRedisTemplate stringRedisTemplate;
     private final DpColdEndCheckpointValueService dpColdEndCheckpointValueService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final KafkaTemplate<String,String> kafkaTemplate;
     /**
      * 消费监听
      *
@@ -72,6 +74,18 @@ public class KafkaConsumer {
         model.setCreateBy("kafkaConsumer");
         model.setUpdateBy("kafkaConsumer");
         dpColdEndCheckpointValueService.save(model);
+        ack.acknowledge();
+    }
+
+    /**
+     * 传输配料数据至数字孪生
+     * @param record
+     * @param ack
+     */
+    @KafkaListener(topics = "opc_ua_all_topic", concurrency = "4", containerFactory = "kafkaListenerScreenContainerFactory")
+    public void originToScreen(ConsumerRecord<Object, String> record, Acknowledgment ack) {
+        JSONObject value = JSONObject.parseObject(record.value());
+        kafkaTemplate.send("data_twin_screen",record.key().toString(),value.getString("value"));
         ack.acknowledge();
     }
 }
