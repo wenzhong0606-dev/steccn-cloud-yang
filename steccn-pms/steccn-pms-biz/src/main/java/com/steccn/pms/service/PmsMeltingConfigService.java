@@ -26,7 +26,6 @@ public interface PmsMeltingConfigService extends IService<PmsMeltingConfig> {
 
     /**
      * 获取每日熔化率列表
-     * @param workshopId
      * @param monthDate
      * @return
      */

@@ -593,6 +593,15 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                 ,"RY_FIC7_PV"
                 ,"RY_FIC8_PV"
                 ,"RY_FIC9_PV"
+                ,"RY_FIC11_PV"
+                ,"RY_FIC12_PV"
+                ,"RY_FIC13_PV"
+                ,"RY_FIC14_PV"
+                ,"RY_FIC15_PV"
+                ,"RY_FIC16_PV"
+                ,"RY_FIC17_PV"
+                ,"RY_FIC18_PV"
+                ,"RY_FIC19_PV"
                 ,"RY_FIC101_PV"
                 ,"RY_FIC102_PV"
                 ,"RY_FIC103_PV"
@@ -653,6 +662,16 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
                         ,new SteccnTableColumn("RY_FIC7_PV","7#小炉",null)
                         ,new SteccnTableColumn("RY_FIC8_PV","8#小炉",null)
                         ,new SteccnTableColumn("RY_FIC9_PV","9#小炉",null))));
+        columns.add(new SteccnTableColumn("head5","分支小炉重油流量(Nm³/h)",
+                Lists.newArrayList(new SteccnTableColumn("RY_FIC11_PV","1#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC12_PV","2#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC13_PV","3#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC14_PV","4#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC15_PV","5#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC16_PV","6#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC17_PV","7#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC18_PV","8#小炉",null)
+                        ,new SteccnTableColumn("RY_FIC19_PV","9#小炉",null))));
         columns.add(new SteccnTableColumn("head2","分支小炉助燃风流量(m³/h)",
                 Lists.newArrayList(new SteccnTableColumn("RY_FIC101_PV","1#小炉",null)
                         ,new SteccnTableColumn("RY_FIC102_PV","2#小炉",null)
