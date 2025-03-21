@@ -51,6 +51,12 @@ public class DpWeightFeignController {
         return R.success(adsOpcUaAll3Service.getWeightCountMap(dto));
     }
 
+    @PostMapping("/weightDetail")
+    @ApiOperation(value = "获取原料配料详情")
+    public R<SteccnTableDataDTO> weightDetail(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> date){
+        return R.success(adsOpcUaAll3Service.weightDetail(date));
+    }
+
     @PostMapping("/weight/countAsDay")
     @ApiOperation(value = "电子秤读数按天")
     public R<List<DpValueDateVO>> countAsDay(@RequestBody DpPmsOperateDTO dto) {

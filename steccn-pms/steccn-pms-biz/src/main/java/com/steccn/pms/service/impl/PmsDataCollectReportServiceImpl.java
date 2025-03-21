@@ -10,6 +10,7 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
@@ -28,8 +29,10 @@ import com.steccn.dp.feign.RemoteDpFeignApi;
 import com.steccn.dp.vo.DpNatureGasVO;
 import com.steccn.mes.feign.RemoteMesFeignApi;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.pms.domain.PmsMeltingConfig;
 import com.steccn.pms.dto.DataCollectDTO;
 import com.steccn.pms.service.PmsDataCollectReportService;
+import com.steccn.pms.service.PmsMeltingConfigService;
 import com.steccn.pms.vo.SjgMonthCountReportTransverseVO;
 import com.steccn.pms.vo.SjgMonthCountReportVO;
 import com.steccn.qms.excel.strategy.ExcelFillCellMergeStrategy;
@@ -65,6 +68,7 @@ import java.util.*;
 public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportService {
     private final RemoteDpFeignApi remoteDpFeignApi;
     private final RemoteMesFeignApi remoteMesFeignApi;
+    private final PmsMeltingConfigService pmsMeltingConfigService;
     @Override
     public SteccnTableDataDTO<Map<String, String>> turbineReport(LocalDate date) {
         List<Map<String, String>> data = postDataCollect(date, Lists.newArrayList("YR_DPU2_AI02_2_METER3"
@@ -708,6 +712,7 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
         columns.add(new SteccnTableColumn("RY_TE61_PV","烟道温度(℃)",null));
         columns.add(new SteccnTableColumn("RY_TE63_PV","烟根温度(℃)",null));
         columns.add(new SteccnTableColumn("PAO_POSITION","泡界线位置",null));
+        columns.add(new SteccnTableColumn("PULL_AMOUNT","拉引量",null));
         tableData.setColumns(columns);
         //加入泡界线位置 泡界线十位为1-9代表小炉，个位为1-3代表上中下
         List<TupleDTO<LocalDateTime, String>> paoData = FeignOptional.of(() -> remoteMesFeignApi.getPaoPosition(new TupleDTO<LocalDate,String>(date,"")), FeignConstant.STECCN_MES_SERVICE_NAME).get();
@@ -728,6 +733,26 @@ public class PmsDataCollectReportServiceImpl implements PmsDataCollectReportServ
 
             });
         }
+        SteccnTableDataDTO<Map<String,String>> steccnTableDataDTO = FeignOptional.of(() -> remoteDpFeignApi.weightDetail(new TupleDTO<>(date.atTime(8, 0, 0), date.plusDays(1).atTime(8, 0, 0))), FeignConstant.STECCN_DP_SERVICE_NAME).get();
+        Map<String,BigDecimal> timeValueMap = Maps.newHashMap();
+        //只取map中的数据
+        steccnTableDataDTO.getTableList().forEach(tmp->{
+            if(!tmp.get("ENo").equals("统计报表")){
+                LocalDateTime time = LocalDateTime.parse(tmp.get("time"),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                String timeStr = time.withMinute(0).withSecond(0).format(DateTimeFormatter.ofPattern("HH:mm"));
+                timeValueMap.merge(timeStr,new BigDecimal(tmp.get("total")),BigDecimal::add);
+            }
+
+        });
+        PmsMeltingConfig one = pmsMeltingConfigService.getOne(new LambdaQueryWrapper<PmsMeltingConfig>().eq(PmsMeltingConfig::getMeltingDate, date), false);
+        data.forEach(tmp->{
+            BigDecimal value = timeValueMap.get(tmp.get("time"));
+            if(Objects.nonNull(value)){
+                BigDecimal step1 = BigDecimalUtil.multiply(value, one.getMeltingNum());
+                BigDecimal step2 = BigDecimalUtil.divide(step1, new BigDecimal(1000));
+                tmp.put("PULL_AMOUNT",step2.toString());
+            }
+        });
         tableData.setTableList(data);
         return tableData;
     }

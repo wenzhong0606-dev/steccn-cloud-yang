@@ -51,6 +51,10 @@ public interface RemoteDpFeignApi {
     @ApiOperation(value = "电子秤读数Map")
     R<Map<String, BigDecimal>> countMap(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> dto);
 
+    @PostMapping("/feign/dp/weightDetail")
+    @ApiOperation(value = "获取原料配料详情")
+    R<SteccnTableDataDTO> weightDetail(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> date);
+
     /**
      * 电子秤读数按天
      * @param dto
