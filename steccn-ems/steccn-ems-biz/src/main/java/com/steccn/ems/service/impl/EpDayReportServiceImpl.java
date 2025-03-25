@@ -92,7 +92,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpDayCountReportService epDayCountReportService;
 
     @Override
-    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
@@ -174,7 +174,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         Map<String, List<String>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListString(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, Sets.newHashSet(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString()), 3)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<String> hintList1 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
         List<String> hintList2 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
+        List<String> hintList3 = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG1_LINE14_LIST.toString(), Lists.newArrayList());
         hintList1.addAll(hintList2);
+        hintList1.addAll(hintList3);
         resVo.setHintLineList(hintList1);
         return resVo;
     }
@@ -1461,7 +1463,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<EpMeterReadAllDataVO> gydDataList = classDateAllData.stream().filter(v -> nodeList.get(finalI).equals(v.getSysOfficeId())).collect(Collectors.toList());
             //所有的电量按照百分之50分给基片，其余百分之50按照产量分给深加工
             Boolean flag = true;
-            if(gydDataList.get(0).getSysOfficeId().equals(76)){
+            if(CollUtil.isNotEmpty(gydDataList)&&gydDataList.get(0).getSysOfficeId().equals(76)){
                 flag = false;
             }
             //a1.2 a2.2 a3.2 a4.2
