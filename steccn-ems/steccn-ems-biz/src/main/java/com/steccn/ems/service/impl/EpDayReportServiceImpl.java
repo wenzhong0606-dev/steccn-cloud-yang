@@ -1692,7 +1692,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 if (Objects.nonNull(jpEle) && tripleDTO != jpEle) {
                     otherMap.put(classDate, BigDecimalUtil.add(otherMap.get(classDate), dataInt));
                 } else if (Objects.nonNull(jpEle) && tripleDTO == jpEle) {
-                    dataInt = BigDecimalUtil.subtract(dataInt, otherMap.get(classDate));
+//                    dataInt = BigDecimalUtil.subtract(dataInt, otherMap.get(classDate));
+                    dataInt = dataValue;
                 }
                 consumeList.add(BigDecimalUtil.setScale(dataInt, 0));
             }
