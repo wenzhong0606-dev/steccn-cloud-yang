@@ -331,6 +331,8 @@ public interface EpManagerConstant {
     Integer ENERGY_AIR = 6;
     Integer ENERGY_ELECTRIC_OTHER = 7;
     Integer ENERGY_LNG = 8;
+    Integer ENERGY_AN = 9;
+    Integer ENERGY_CO3 = 10;
 
 
     /**
@@ -343,6 +345,8 @@ public interface EpManagerConstant {
     String CONF_EMS_DAY_COUNT_LNG = "EMS_DAY_COUNT_LNG";
     String CONF_EMS_DAY_COUNT_AIR = "EMS_DAY_COUNT_AIR";
     String CONF_EMS_DAY_COUNT_ELEC_OTHER = "EMS_DAY_COUNT_ELEC_OTHER";
+    String CONF_EMS_DAY_COUNT_AN = "EMS_DAY_COUNT_AN";
+    String CONF_EMS_DAY_COUNT_CO3 = "EMS_DAY_COUNT_CO3";
 
 
     /**
@@ -353,6 +357,8 @@ public interface EpManagerConstant {
     String CONF_EMS_OIL_CONTENT = "EMS_OIL_CONTENT";
     String CONF_EMS_LNG_CONTENT = "EMS_LNG_CONTENT";
     String CONF_EMS_AIR_CONTENT = "EMS_AIR_CONTENT";
+    String CONF_EMS_AN_CONTENT = "EMS_AN_CONTENT";
+    String CONF_EMS_CO3_CONTENT = "EMS_CO3_CONTENT";
 
     /**
      * 基片统计报表-能耗配置
@@ -374,7 +380,7 @@ public interface EpManagerConstant {
     @Getter
     @AllArgsConstructor
     enum ELECConfContentEnum {
-        SJG_LINE14_LIST, SJG_LINE58_LIST, DINING_AND_ROOM_LIST, GYD_LIST, FL610_LIST, FL15_LIST, DSJ_LIST, JPZZB_LIST;
+        SJG_LINE14_LIST, SJG_LINE58_LIST, DINING_AND_ROOM_LIST, GYD_LIST, FL610_LIST, FL15_LIST, DSJ_LIST, JPZZB_LIST,JP_1,JP_2,SJG1_LINE14_LIST,KYJ_LIST;
 
         //根据code查找值
         public static Set<String> allContentConf() {

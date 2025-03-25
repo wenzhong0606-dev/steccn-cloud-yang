@@ -623,6 +623,12 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //压缩空气
         Map<String, List<SysConfigurationDTO>> airConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_AIR, Sets.newHashSet(EpManagerConstant.CONF_EMS_AIR_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysConfigurationDTO> airConfList = airConfMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //氨气
+        Map<String, List<SysConfigurationDTO>> anMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_AN, Sets.newHashSet(EpManagerConstant.CONF_EMS_AN_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> anConfList = anMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        //消石灰
+        Map<String, List<SysConfigurationDTO>> co3Map = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_CO3, Sets.newHashSet(EpManagerConstant.CONF_EMS_CO3_CONTENT))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysConfigurationDTO> co3ConfList = co3Map.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 
         //站外电
         Map<String, List<SysConfigurationDTO>> eleOtherConfMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC_OTHER, EpManagerConstant.ELECOtherConfContentEnum.allContentConf())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -640,6 +646,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, oilConfList));
         resMap.put(EpManagerConstant.ENERGY_LNG, queryNodeByNameList(EpManagerConstant.ENERGY_LNG, lngConfList));
         resMap.put(EpManagerConstant.ENERGY_AIR, queryNodeByNameList(EpManagerConstant.ENERGY_AIR, airConfList));
+        resMap.put(EpManagerConstant.ENERGY_AN, queryNodeByNameList(EpManagerConstant.ENERGY_AN, anConfList));
+        resMap.put(EpManagerConstant.ENERGY_CO3, queryNodeByNameList(EpManagerConstant.ENERGY_CO3, co3ConfList));
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC_OTHER, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC_OTHER, eleOtherConfList));
         return resMap;
     }

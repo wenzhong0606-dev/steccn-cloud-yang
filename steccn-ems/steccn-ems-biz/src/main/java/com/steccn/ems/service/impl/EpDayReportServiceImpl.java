@@ -112,7 +112,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             BigDecimal equivalentValueSum = null;
             BigDecimal equalValueSum = null;
             for (EpDayReportCountRowVO ele : dataList) {
-                if ("电".equals(ele.getEnergyType()) && ele.getDepartmentName().contains("基片")) {
+                if ("电".equals(ele.getEnergyType()) && ele.getDepartmentName().contains("基片二车间")) {
                     ed = ele.getEquivalentValue();
                 } else if ("天然气".equals(ele.getEnergyType())) {
                     ec11 = ele.getEquivalentValue();
@@ -148,7 +148,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             BigDecimal c1 = GetValueUtil.get(discountFactor3, x -> x.getValue());
             SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
             sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.DEPARTMENT));
-            sysOfficeTypeKeyDTO.setKeyList(Lists.newArrayList("基片制造部"));
+            sysOfficeTypeKeyDTO.setKeyList(Lists.newArrayList("基片组"));
             List<SysOfficeVO> officeList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndNameList(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if(CollUtil.isNotEmpty(officeList)){
                 pb = FeignOptional.of(() -> remotePmsFeignApi.partInStorageTon(new TripleDTO<>(officeList.get(0).getId(),start, end)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -438,7 +438,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         shRow.setDepartmentName("生活用电");
 
         //深加工一~八产线
-        List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2()) || sjgLine58List.contains(v.getField2())).collect(Collectors.toList());
+        List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2())
+                || sjgLine58List.contains(v.getField2())).collect(Collectors.toList());
         Set<Integer> lineOfficeIdSet = Sets.newHashSet();
         Map<String, List<BigDecimal>> lineResMap = Maps.newHashMap();
 
@@ -466,7 +467,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         //获取几条产线的产量及对应比例，用于分摊公用电
         Map<String, BigDecimal> productNumMap = FeignOptional.of(() -> reportWorkFeignApi.classDateProductNum(new TripleDTO<>(lineOfficeIdSet, start, end)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-        TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> tupleDTO = getProductNumRateMap(sjgLine14List, sjgLine58List, timeList, productNumMap);
+        TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> tupleDTO = getProductNumRateMap(sjgLine14List, sjgLine58List, Lists.newArrayList(),timeList, productNumMap);
         Map<String, BigDecimal> productNumLineRateMap = tupleDTO.getField1();
         Map<String, BigDecimal> productNumRateMap = tupleDTO.getField2();
 
@@ -916,6 +917,38 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             }
         }).exceptionally(ex -> Lists.newArrayList());
 
+        CompletableFuture<List<EpDayReportCountRowVO>> anFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                RequestContextHolder.setRequestAttributes(attributes);
+                //获取用气量
+                Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_AN.equals(v.getId())).findFirst();
+                //判断天然气能源
+                Optional<EpDiscountFactorVO> discount1 = validDiscountList1.stream().filter(ele -> EpManagerConstant.ENERGY_AN.equals(ele.getEnergyType())).findFirst();
+                Optional<EpDiscountFactorVO> discount2 = validDiscountList2.stream().filter(ele -> EpManagerConstant.ENERGY_AN.equals(ele.getEnergyType())).findFirst();
+                List<EpDayReportCountRowVO> gasRes = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_AN),discount1.orElse(new EpDiscountFactorVO()),discount2.orElse(new EpDiscountFactorVO()));
+                return gasRes;
+            } catch (Exception e) {
+                log.error("AN -> {}", e.getLocalizedMessage());
+                throw new BusinessException("业务执行异常");
+            }
+        }).exceptionally(ex -> Lists.newArrayList());
+
+        CompletableFuture<List<EpDayReportCountRowVO>> co3Future = CompletableFuture.supplyAsync(() -> {
+            try {
+                RequestContextHolder.setRequestAttributes(attributes);
+                //获取用气量
+                Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_CO3.equals(v.getId())).findFirst();
+                //判断天然气能源
+                Optional<EpDiscountFactorVO> discount1 = validDiscountList1.stream().filter(ele -> EpManagerConstant.ENERGY_CO3.equals(ele.getEnergyType())).findFirst();
+                Optional<EpDiscountFactorVO> discount2 = validDiscountList2.stream().filter(ele -> EpManagerConstant.ENERGY_CO3.equals(ele.getEnergyType())).findFirst();
+                List<EpDayReportCountRowVO> gasRes = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_CO3),discount1.orElse(new EpDiscountFactorVO()),discount2.orElse(new EpDiscountFactorVO()));
+                return gasRes;
+            } catch (Exception e) {
+                log.error("CO3 -> {}", e.getLocalizedMessage());
+                throw new BusinessException("业务执行异常");
+            }
+        }).exceptionally(ex -> Lists.newArrayList());
+
 
         CompletableFuture<List<EpDayReportCountRowVO>> elecOtherFuture = CompletableFuture.supplyAsync(() -> {
             try {
@@ -957,6 +990,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //添加压缩空气
         dataList.addAll(airFuture.get());
         dataList.addAll(elecOtherFuture.get());
+        dataList.addAll(anFuture.get());
+        dataList.addAll(co3Future.get());
         return dataList;
     }
 
@@ -1063,12 +1098,16 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<EpDayReportCountRowVO> resList = Lists.newArrayList();
         //获取配置map
         Map<String, List<Integer>> confMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confListInteger(new TripleDTO<>(EpManagerConstant.CONF_EMS_DAY_COUNT_ELEC, EpManagerConstant.ELECConfContentEnum.allContentConf(), 2)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        //基片制造部
-        List<Integer> jpzzbList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JPZZB_LIST.toString(), Lists.newArrayList());
+        //基片二车间
+        List<Integer> jp2List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JP_2.toString(), Lists.newArrayList());
+        //基片一车间
+        List<Integer> jp1List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.JP_1.toString(), Lists.newArrayList());
         //深加工四条产线【一二三四】
         List<Integer> sjgLine14List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE14_LIST.toString(), Lists.newArrayList());
         //深加工四条产线【五六七八】
         List<Integer> sjgLine58List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG_LINE58_LIST.toString(), Lists.newArrayList());
+        //深加工一车间四条产线【一二三四】
+        List<Integer> sjg1LIST = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.SJG1_LINE14_LIST.toString(), Lists.newArrayList());
         //员工餐厅和宿舍】
         List<Integer> diningList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DINING_AND_ROOM_LIST.toString(), Lists.newArrayList());
         //公用电【深加工二车间（东线）->公用电,深加工二车间（西线）->公用电】
@@ -1083,6 +1122,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<Integer> sjgLineList = Lists.newArrayList();
         sjgLine14List.forEach(ele -> sjgLineList.add(ele));
         sjgLine58List.forEach(ele -> sjgLineList.add(ele));
+        sjg1LIST.forEach(ele -> sjgLineList.add(ele));
 
         LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
         LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
@@ -1093,13 +1133,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //获取全量数据表
         List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
         //每个节点，每天的数据
-        //基片制造部=b1+b2+b3
-        List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> jpzzbList.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        //基片制造部=b1+b2+b3(基片二车间)
+        List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> jp2List.contains(v.getSysOfficeId())).collect(Collectors.toList());
         List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
-        //构建基片制造部
+        //构建基片组
         EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();
         List<BigDecimal> jpValueList = Lists.newArrayList();
-
         Map<LocalDate, List<BigDecimal>> jpResMap = Maps.newHashMap();
         for (LocalDate ele : timeList) {
             List<BigDecimal> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
@@ -1109,8 +1148,24 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         jpRow.setConsumeList(jpValueList);
         jpRow.setUnit(epEnergy.getMeasureUnitName());
         jpRow.setEnergyType(epEnergy.getName());
-        jpRow.setDepartmentName("基片");
+        jpRow.setDepartmentName("基片二车间");
 
+        //基片制造部=b1+b2+b3(基片一车间)
+        List<EpMeterReadAllDataVO> jp1ListValue = classDateAllData.stream().filter(v -> jp1List.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        List<LocalDate> jp1TimeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
+        //构建基片组
+        EpDayReportCountRowVO jp1Row = new EpDayReportCountRowVO();
+        List<BigDecimal> jp1ValueList = Lists.newArrayList();
+        Map<LocalDate, List<BigDecimal>> jp1ResMap = Maps.newHashMap();
+        for (LocalDate ele : jp1TimeList) {
+            List<BigDecimal> timeDataList = jp1ListValue.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
+            jp1ResMap.put(ele, Lists.newArrayList(reduce));
+        }
+        jp1Row.setConsumeList(jp1ValueList);
+        jp1Row.setUnit(epEnergy.getMeasureUnitName());
+        jp1Row.setEnergyType(epEnergy.getName());
+        jp1Row.setDepartmentName("基片一车间");
         //构建生活用电 = 员工餐厅 + 员工宿舍
         EpDayReportCountRowVO shRow = new EpDayReportCountRowVO();
         List<EpMeterReadAllDataVO> shList = classDateAllData.stream().filter(v -> diningList.contains(v.getSysOfficeId())).collect(Collectors.toList());
@@ -1134,8 +1189,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         BigDecimal shEqualValue = BigDecimalUtil.multiply(shSum, GetValueUtil.get(discount2, x -> x.getValue()));
         shEqualValue = BigDecimalUtil.divide(shEqualValue, BigDecimalUtil.THOUSAND);
         shRow.setEqualValue(BigDecimalUtil.setScale(shEqualValue, 2));
-        //深加工一~八产线
-        List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2()) || sjgLine58List.contains(v.getField2())).collect(Collectors.toList());
+        //深加工一~八产线  深加工一车间
+        List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2())
+                || sjgLine58List.contains(v.getField2())
+                || sjg1LIST.contains(v.getField2())).collect(Collectors.toList());
         Set<Integer> lineOfficeIdSet = Sets.newHashSet();
         Map<String, List<BigDecimal>> lineResMap = Maps.newHashMap();
 
@@ -1161,31 +1218,34 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             lineRowList.add(lineRow);
         }
         //基片，产线行，生活用电
+        resList.add(jp1Row);
         resList.add(jpRow);
         resList.addAll(lineRowList);
         resList.add(shRow);
 
         //获取几条产线的产量及对应比例，用于分摊公用电
         Map<String, BigDecimal> productNumMap = FeignOptional.of(() -> reportWorkFeignApi.classDateProductNum(new TripleDTO<>(lineOfficeIdSet, start, end)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-        TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> tupleDTO = getProductNumRateMap(sjgLine14List, sjgLine58List, timeList, productNumMap);
+        TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> tupleDTO = getProductNumRateMap(sjgLine14List, sjgLine58List, sjg1LIST,timeList, productNumMap);
         Map<String, BigDecimal> productNumLineRateMap = tupleDTO.getField1();
         Map<String, BigDecimal> productNumRateMap = tupleDTO.getField2();
 
         //获取公用电
-        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumLineRateMap, lineResMap);
+//        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumLineRateMap, lineResMap);
 
+        //分摊源数据=空压机房+路灯+维修车间；基片分50%；加工分50%，分别按产量比例分到每一条产线
+        meterRate(classDateAllData,Lists.newArrayList(660,674,3810), Lists.newArrayList(sjgLine14List, sjgLine58List,sjg1LIST), timeList, productNumLineRateMap, lineResMap);
         //获取风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
         //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
-        fl610(classDateAllData, fl610List, sjgLineList, timeList, productNumRateMap, lineResMap);
+//        fl610(classDateAllData, fl610List, sjgLineList, timeList, productNumRateMap, lineResMap);
 
         //获取风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
         //获取b2
-        fl15(classDateAllData, fl15List, timeList, jpResMap);
+//        fl15(classDateAllData, fl15List, timeList, jpResMap);
 
         //获取总能耗N 按b1、a1.1 + a1.2 + a1.3、a2.1 + a2.2 + a2.3、... 、a8.1 + a8.2 + a8.3按照比例分摊
         //N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
-        Map<String, BigDecimal> nRateMap = getNRateMap(sjgLineList, timeList, jpResMap, lineResMap);
-        dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
+//        Map<String, BigDecimal> nRateMap = getNRateMap(sjgLineList, timeList, jpResMap, lineResMap);
+//        dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
 
         //重新计算基片行和产线行
         ftJpRow(jpRow, timeList, jpResMap,discount1,discount2);
@@ -1385,6 +1445,44 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         }
     }
 
+    /**
+     * 电表分摊
+     *
+     * @param classDateAllData  全量数据表
+     * @param nodeList           公用电集合
+     * @param lineList          产线集合【1-4 ，5-8】
+     * @param timeList          时间集合
+     * @param productNumRateMap 产量集合
+     * @param lineResMap        产线返回集合
+     */
+    private void meterRate(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> nodeList, List<List<Integer>> lineList, List<LocalDate> timeList, Map<String, BigDecimal> productNumRateMap, Map<String, List<BigDecimal>> lineResMap) {
+        for (int i = 0; i < nodeList.size(); i++) {
+            int finalI = i;
+            List<EpMeterReadAllDataVO> gydDataList = classDateAllData.stream().filter(v -> nodeList.get(finalI).equals(v.getSysOfficeId())).collect(Collectors.toList());
+            //所有的电量按照百分之50分给基片，其余百分之50按照产量分给深加工
+            Boolean flag = true;
+            if(gydDataList.get(0).getSysOfficeId().equals(76)){
+                flag = false;
+            }
+            //a1.2 a2.2 a3.2 a4.2
+            //a5.2 a6.2 a7.2 a8.2
+            for (LocalDate ele : timeList) {
+                List<BigDecimal> timeDataList = gydDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
+                for (Integer sjgLine : lineList.get(i)) {
+                    String mapKey = mapKey(sjgLine, ele);
+                    if(flag){
+                        BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
+                        lineResMap.get(mapKey).add(rateValue);
+                    }else {
+                        BigDecimal rateValue = BigDecimalUtil.multiply(reduce, new BigDecimal(0.5));
+                        lineResMap.get(mapKey).add(rateValue);
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * 获取产量比例的map
@@ -1395,7 +1493,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param productNumMap 产量集合
      * @return
      */
-    private TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> getProductNumRateMap(List<Integer> sjgLine14List, List<Integer> sjgLine58List, List<LocalDate> timeList, Map<String, BigDecimal> productNumMap) {
+    private TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> getProductNumRateMap(List<Integer> sjgLine14List, List<Integer> sjgLine58List,List<Integer> sjg1LineList, List<LocalDate> timeList, Map<String, BigDecimal> productNumMap) {
         Map<String, BigDecimal> productNumLineRateMap = Maps.newHashMap();
         Map<String, BigDecimal> productNumRateMap = Maps.newHashMap();
 
@@ -1403,6 +1501,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<Integer> sjgLineList = Lists.newArrayList();
         sjgLine14List.forEach(ele -> sjgLineList.add(ele));
         sjgLine58List.forEach(ele -> sjgLineList.add(ele));
+        if(CollUtil.isNotEmpty(sjg1LineList)){
+            sjg1LineList.forEach(ele -> sjgLineList.add(ele));
+        }
 
         //获取几条产线的每日产量对比
         for (LocalDate classDate : timeList) {
@@ -1425,6 +1526,18 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 String mapKey = mapKey(line, classDate);
                 BigDecimal num = productNumMap.getOrDefault(mapKey, BigDecimal.ZERO);
                 productNumLineRateMap.put(mapKey, BigDecimalUtil.divide(num, sum58));
+            }
+            if(CollUtil.isNotEmpty(sjg1LineList)){
+                //深加工一车间
+                BigDecimal sum1 = BigDecimal.ZERO;
+                for (Integer line : sjg1LineList) {
+                    sum1 = BigDecimalUtil.add(sum1, productNumMap.getOrDefault(mapKey(line, classDate), BigDecimal.ZERO));
+                }
+                for (Integer line : sjg1LineList) {
+                    String mapKey = mapKey(line, classDate);
+                    BigDecimal num = productNumMap.getOrDefault(mapKey, BigDecimal.ZERO);
+                    productNumLineRateMap.put(mapKey, BigDecimalUtil.divide(num, sum1));
+                }
             }
             //深加工八条产线【一二三四五六七八】
             BigDecimal sum = BigDecimal.ZERO;
@@ -1561,7 +1674,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         for (TripleDTO<Long, Integer, String> tripleDTO : partitionList) {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
             List<BigDecimal> consumeList = Lists.newArrayList();
-            //需求改动余热发电 + 锅炉 => 余热发电
+            //需求改动余热发电 + 锅炉 => 余热发电 再次改动 脱硫脱硝+锅炉 => 余热发电
             List<EpMeterReadAllDataVO> dataList;
             if(tripleDTO.getField3().equals("余热发电") && glOp.isPresent()){
                 dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1()) || v.getOfficeId().equals(glOp.get().getField1())).collect(Collectors.toList());
