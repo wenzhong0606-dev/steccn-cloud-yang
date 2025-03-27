@@ -391,6 +391,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<Integer> fl15List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.FL15_LIST.toString(), Lists.newArrayList());
         //大数据控制中心
         List<Integer> dsjList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DSJ_LIST.toString(), Lists.newArrayList());
+
         //深加工8条产线
         List<Integer> sjgLineList = Lists.newArrayList();
         sjgLine14List.forEach(ele -> sjgLineList.add(ele));
@@ -1120,6 +1121,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<Integer> fl15List = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.FL15_LIST.toString(), Lists.newArrayList());
         //大数据控制中心
         List<Integer> dsjList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.DSJ_LIST.toString(), Lists.newArrayList());
+        //原料车间
+        List<Integer> ylList = confMap.getOrDefault(EpManagerConstant.ELECConfContentEnum.YL_LIST.toString(), Lists.newArrayList());
         //深加工8条产线
         List<Integer> sjgLineList = Lists.newArrayList();
         sjgLine14List.forEach(ele -> sjgLineList.add(ele));
@@ -1232,10 +1235,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         Map<String, BigDecimal> productNumRateMap = tupleDTO.getField2();
 
         //获取公用电
-//        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumLineRateMap, lineResMap);
+        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumLineRateMap, lineResMap);
 
-        //分摊源数据=空压机房+路灯+维修车间；基片分50%；加工分50%，分别按产量比例分到每一条产线
-        meterRate(classDateAllData,Lists.newArrayList(660,674,3810), Lists.newArrayList(sjgLine14List, sjgLine58List,sjg1LIST), timeList, productNumLineRateMap, lineResMap);
+        //分摊源数据=空压机房+路灯+维修车间；基片二车间分50%；加工分50%，分别按产量比例分到每一条产线  并把原料车间数据加入
+        meterRate(classDateAllData,Lists.newArrayList(660,674,3810,77), Lists.newArrayList(sjgLine14List, sjgLine58List,jp2List), timeList, productNumLineRateMap, lineResMap,jpResMap);
         //获取风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
         //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
 //        fl610(classDateAllData, fl610List, sjgLineList, timeList, productNumRateMap, lineResMap);
@@ -1440,7 +1443,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
                 for (Integer sjgLine : lineList.get(i)) {
                     String mapKey = mapKey(sjgLine, ele);
-                    BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
+                    //新分摊逻辑，公用电平均分到四条产线
+//                    BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
+                    BigDecimal rateValue = BigDecimalUtil.multiply(reduce, new BigDecimal(0.25));
                     lineResMap.get(mapKey).add(rateValue);
                 }
             }
@@ -1457,28 +1462,36 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param productNumRateMap 产量集合
      * @param lineResMap        产线返回集合
      */
-    private void meterRate(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> nodeList, List<List<Integer>> lineList, List<LocalDate> timeList, Map<String, BigDecimal> productNumRateMap, Map<String, List<BigDecimal>> lineResMap) {
+    private void meterRate(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> nodeList, List<List<Integer>> lineList, List<LocalDate> timeList, Map<String, BigDecimal> productNumRateMap, Map<String, List<BigDecimal>> lineResMap,Map<LocalDate, List<BigDecimal>> jpResMap) {
         for (int i = 0; i < nodeList.size(); i++) {
             int finalI = i;
             List<EpMeterReadAllDataVO> gydDataList = classDateAllData.stream().filter(v -> nodeList.get(finalI).equals(v.getSysOfficeId())).collect(Collectors.toList());
-            //所有的电量按照百分之50分给基片，其余百分之50按照产量分给深加工
-            Boolean flag = true;
-            if(CollUtil.isNotEmpty(gydDataList)&&gydDataList.get(0).getSysOfficeId().equals(76)){
-                flag = false;
-            }
             //a1.2 a2.2 a3.2 a4.2
             //a5.2 a6.2 a7.2 a8.2
             for (LocalDate ele : timeList) {
                 List<BigDecimal> timeDataList = gydDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
                 BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
-                for (Integer sjgLine : lineList.get(i)) {
-                    String mapKey = mapKey(sjgLine, ele);
-                    if(flag){
-                        BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
-                        lineResMap.get(mapKey).add(rateValue);
-                    }else {
-                        BigDecimal rateValue = BigDecimalUtil.multiply(reduce, new BigDecimal(0.5));
-                        lineResMap.get(mapKey).add(rateValue);
+//                for (Integer sjgLine : lineList.get(i)) {
+//                    String mapKey = mapKey(sjgLine, ele);
+//                    BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
+//                    lineResMap.get(mapKey).add(rateValue);
+//
+//                }
+                for(List<Integer> lines:lineList){
+                    for (Integer line : lines) {
+                        if(!line.equals(76)&&!nodeList.get(finalI).equals(77)){
+                            //深加工产线分摊
+                            String mapKey = mapKey(line, ele);
+                            BigDecimal rateValue = BigDecimalUtil.multiply(reduce, new BigDecimal(0.0625));
+                            lineResMap.get(mapKey).add(rateValue);
+                        }else if(line.equals(76)&&nodeList.get(finalI).equals(77)){
+                            //原料车间加至基片
+                            jpResMap.get(ele).add(reduce);
+                        }else if(line.equals(76)&&!nodeList.get(finalI).equals(77)){
+                            //百分之50分摊至基片
+                            BigDecimal rateValue = BigDecimalUtil.multiply(reduce, new BigDecimal(0.5));
+                            jpResMap.get(ele).add(rateValue);
+                        }
                     }
                 }
             }
