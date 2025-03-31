@@ -108,4 +108,10 @@ public interface AdsOpcUaAll3Service extends IService<AdsOpcUaAll3> {
      * @return
      */
     List<DpTempVO> queryDpTemp();
+
+    /**
+     * 获取白云石、纯碱、石灰石的入料量(map顺序)
+     * @return
+     */
+    List<Map<LocalDate,BigDecimal>> queryListDay(DpPmsOperateDTO dto);
 }

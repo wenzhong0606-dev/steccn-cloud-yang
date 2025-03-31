@@ -55,6 +55,10 @@ public interface RemoteDpFeignApi {
     @ApiOperation(value = "获取原料配料详情")
     R<SteccnTableDataDTO> weightDetail(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> date);
 
+    @PostMapping("/feign/dp/weightMaterial")
+    @ApiOperation(value = "获取白云石、纯碱、石灰石每天的入料量数据")
+    R<List<Map<LocalDate,BigDecimal>>> weightMaterial(@RequestBody DpPmsOperateDTO dto);
+
     /**
      * 电子秤读数按天
      * @param dto

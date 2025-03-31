@@ -111,4 +111,10 @@ public class DpWeightFeignController {
     public R<SteccnTableDataDTO> weightSum(@RequestBody TupleDTO<LocalDate,LocalDate> dto){
         return R.success(adsOpcUaAll3Service.weightSum(dto.getField1()));
     }
+
+    @PostMapping("/weightMaterial")
+    @ApiOperation(value = "获取白云石、纯碱、石灰石每天的入料量数据")
+    public R<List<Map<LocalDate,BigDecimal>>> weightMaterial(@RequestBody DpPmsOperateDTO dto){
+        return R.success(adsOpcUaAll3Service.queryListDay(dto));
+    }
 }

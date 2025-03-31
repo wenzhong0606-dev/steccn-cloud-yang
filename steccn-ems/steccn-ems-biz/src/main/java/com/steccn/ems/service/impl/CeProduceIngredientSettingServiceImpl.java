@@ -18,6 +18,9 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.GetValueUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.dp.dto.DpPmsOperateDTO;
+import com.steccn.dp.feign.RemoteDpFeignApi;
+import com.steccn.dp.vo.DpValueDateVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.CeElectricSetting;
 import com.steccn.ems.domain.CeFossilFuelSetting;
@@ -54,6 +57,7 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
 
     private final Redisson redisson;
     private final RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
+    private final RemoteDpFeignApi remoteDpFeignApi;
 
     @Override
     public Page<CeProduceIngredientSettingVO> getPage(CeProduceIngredientSettingPageDTO dto) {
@@ -170,9 +174,27 @@ public class CeProduceIngredientSettingServiceImpl extends ServiceImpl<CeProduce
             });
             Map<Long,Map<LocalDate, BigDecimal>> consumeMap = Maps.newHashMap();
             //这里考虑性能-优先考虑异步
+            //修改需求，直接电子秤读数
+            DpPmsOperateDTO dto = new DpPmsOperateDTO();
+            dto.setStart(start);
+            dto.setEnd(end);
+            dto.setType(1);
+            dto.setGranularity(1);
+            //白云石 纯碱 石灰石
+            List<Map<LocalDate,BigDecimal>> weightCount = FeignOptional.of(() -> remoteDpFeignApi.weightMaterial(dto), FeignConstant.STECCN_DP_SERVICE_NAME).get();
             for (Long materialId : linkedHashMap.keySet()) {
-                Map<LocalDate, BigDecimal> valueMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(materialId, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-                consumeMap.put(materialId, valueMap);
+//                Map<LocalDate, BigDecimal> valueMap = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.produceConsumeQuantity(new TripleDTO<>(materialId, start, end)), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+//                consumeMap.put(materialId, valueMap);
+                if(materialId.equals(1554387196106801152L)){
+                    //纯碱
+                    consumeMap.put(materialId,weightCount.get(1));
+                }else if(materialId.equals(1554387196400402432L)){
+                    //白云石
+                    consumeMap.put(materialId,weightCount.get(0));
+                }else if(materialId.equals(1554387196874358784L)){
+                    //石灰石
+                    consumeMap.put(materialId,weightCount.get(2));
+                }
             }
             //开始遍历-形成返回集合
             LocalDate startTmp = start;

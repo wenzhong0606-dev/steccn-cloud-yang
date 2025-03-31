@@ -837,6 +837,26 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         return dpTemp;
     }
 
+    @Override
+    public List<Map<LocalDate, BigDecimal>> queryListDay(DpPmsOperateDTO dto) {
+        List<LocalDateTime> days = ShardTimeUtil.cutDateRange("D", dto.getStart().atTime(8,0,0), dto.getEnd().atTime(8,0,0));
+        //白云石、纯碱、石灰石的入料量
+        Map<LocalDate, BigDecimal> map1 = Maps.newHashMap();
+        Map<LocalDate, BigDecimal> map2 = Maps.newHashMap();
+        Map<LocalDate, BigDecimal> map3 = Maps.newHashMap();
+        List<Map<LocalDate, BigDecimal>> results = Lists.newArrayList();
+        results.add(map1);
+        results.add(map2);
+        results.add(map3);
+        for(int i = 0; i < days.size(); i++){
+            Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+            map1.put(days.get(i).toLocalDate(),BigDecimalUtil.divide(mapResult.get("data3"),BigDecimalUtil.THOUSAND));
+            map2.put(days.get(i).toLocalDate(),BigDecimalUtil.divide(mapResult.get("data4"),BigDecimalUtil.THOUSAND));
+            map3.put(days.get(i).toLocalDate(),BigDecimalUtil.divide(mapResult.get("data5"),BigDecimalUtil.THOUSAND));
+        }
+        return results;
+    }
+
     public List<DpWeightVO> weightCount(QtManagerConstant.QtGranularityEnum granularity, TupleDTO<LocalDateTime,LocalDateTime> dto) {
         List<DpWeightVO> weightCountList = Lists.newArrayList();
         if (QtManagerConstant.QtGranularityEnum.DAY.equals(granularity)) {
