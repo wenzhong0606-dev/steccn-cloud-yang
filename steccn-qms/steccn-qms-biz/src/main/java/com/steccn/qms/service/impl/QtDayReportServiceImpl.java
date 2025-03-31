@@ -1260,8 +1260,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             int i = 0;
             ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
             for(LocalDate date:days){
-                QtDayReportFirstVO first = first(dto);
                 dto.setDate(date);
+                QtDayReportFirstVO first = first(dto);
                 List<QtDayReportFirstDataVO> tableData = first.getTableData();
                 SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
                 //写表头
