@@ -380,7 +380,7 @@ public interface EpManagerConstant {
     @Getter
     @AllArgsConstructor
     enum ELECConfContentEnum {
-        SJG_LINE14_LIST, SJG_LINE58_LIST, DINING_AND_ROOM_LIST, GYD_LIST, FL610_LIST, FL15_LIST, DSJ_LIST, JPZZB_LIST,JP_1,JP_2,SJG1_LINE14_LIST,KYJ_LIST,YL_LIST;
+        SJG_LINE14_LIST, SJG_LINE58_LIST, DINING_AND_ROOM_LIST, GYD_LIST, FL610_LIST, FL15_LIST, DSJ_LIST, JPZZB_LIST,JP_1,JP_2,KYJ_LIST,YL_LIST;
 
         //根据code查找值
         public static Set<String> allContentConf() {
@@ -398,7 +398,7 @@ public interface EpManagerConstant {
     @Getter
     @AllArgsConstructor
     enum ELECOtherConfContentEnum {
-        LIGHT_ELEC, HEAT_POWER, ELEC_110KV_STATION,HEAT_POWER_OUT_STATION;
+        LIGHT_ELEC, HEAT_POWER, ELEC_110KV_STATION,HEAT_POWER_OUT_STATION,SJG1_LINE14_LIST;
 
         //根据code查找值
         public static Set<String> allContentConf() {
