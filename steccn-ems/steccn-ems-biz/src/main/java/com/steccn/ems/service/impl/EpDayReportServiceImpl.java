@@ -964,7 +964,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                     Map<Integer, EpInstrumentAccount> accountMap = epPartitionService.listByOfficeId(EpManagerConstant.ENERGY_CO3, Sets.newHashSet(hpIdSet));
                     if (CollUtil.isNotEmpty(accountMap)) {
                         hpIdSet.forEach(ele -> {
-                            EpDayReportCountRowVO res = heatPowerRow(start, end, elecEnergy, accountMap.get(ele));
+                            EpDayReportCountRowVO res = heatPowerRow2(start, end, elecEnergy, accountMap.get(ele));
                             resList.add(res);
                         });
                     }
@@ -1070,6 +1070,40 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         heatPowerRow.setConsumeList(valueList);
         BigDecimal heatPowerSum = BigDecimalUtil.sum(valueList);
         heatPowerRow.setSumStr(BigDecimalUtil.setScale(heatPowerSum, 0));
+        return heatPowerRow;
+    }
+
+    /**
+     * 计算消石灰
+     *
+     * @param start  开始日期
+     * @param end    结束日期
+     * @param energy 能源类型
+     * @return
+     */
+    private EpDayReportCountRowVO heatPowerRow2(LocalDate start, LocalDate end, EpEnergyTypeVO energy, EpInstrumentAccount account ) {
+        //计算余热发电-能源抄表
+        List<EpMeterRead> dbList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                .between(EpMeterRead::getReadDate, start, end)
+                .eq(EpMeterRead::getMeterId, account.getId()));
+        EpDayReportCountRowVO heatPowerRow = new EpDayReportCountRowVO();
+        Map<LocalDate, BigDecimal> dpMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                dpMap.put(ele.getReadDate(), BigDecimalUtil.setScale(ele.getAdminValue(), 1));
+            });
+        }
+        List<BigDecimal> valueList = Lists.newArrayList();
+        List<LocalDate> dateList = ShardTimeUtil.cutDate("D", start, end);
+        dateList.forEach(ele -> {
+            valueList.add(dpMap.get(ele));
+        });
+        heatPowerRow.setEnergyType(energy.getName());
+        heatPowerRow.setDepartmentName(account.getMeterName());
+        heatPowerRow.setUnit(energy.getMeasureUnitName());
+        heatPowerRow.setConsumeList(valueList);
+        BigDecimal heatPowerSum = BigDecimalUtil.sum(valueList);
+        heatPowerRow.setSumStr(BigDecimalUtil.setScale(heatPowerSum, 1));
         return heatPowerRow;
     }
 
