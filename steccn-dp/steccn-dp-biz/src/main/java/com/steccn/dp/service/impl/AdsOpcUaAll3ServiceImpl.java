@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -25,11 +26,13 @@ import com.steccn.common.vo.CommonBarLineVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.dp.DpConstant;
 import com.steccn.dp.domain.AdsOpcUaAll3;
+import com.steccn.dp.domain.RawNum;
 import com.steccn.dp.domain.WeightCount;
 import com.steccn.dp.dto.*;
 import com.steccn.dp.mapper.AdsOpcUaAll3Mapper;
 import com.steccn.dp.mapper.WeightCountMapper;
 import com.steccn.dp.service.AdsOpcUaAll3Service;
+import com.steccn.dp.service.RawNumService;
 import com.steccn.dp.vo.DpSalesContractVO;
 import com.steccn.dp.vo.DpTempVO;
 import com.steccn.dp.vo.DpValueDateVO;
@@ -76,6 +79,7 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
     private final RemotePmsFeignApi remotePmsFeignApi;
     private final WeightCountMapper weightCountMapper;
     private final KafkaTemplate<String,String> kafkaTemplate;
+    private final RawNumService rawNumService;
 
     @Override
     public List<DpWeightVO> getWeighCount(TupleDTO<LocalDateTime, LocalDateTime> dto) {
@@ -848,11 +852,20 @@ public class AdsOpcUaAll3ServiceImpl extends ServiceImpl<AdsOpcUaAll3Mapper, Ads
         results.add(map1);
         results.add(map2);
         results.add(map3);
+        List<RawNum> list = rawNumService.list(new LambdaQueryWrapper<RawNum>()
+                .ge(RawNum::getDay, dto.getStart())
+                .le(RawNum::getDay, dto.getEnd()));
+        Map<String, BigDecimal> collect = list.stream().collect(Collectors.toMap(
+                obj -> obj.getDay() + "_" + obj.getCode(), RawNum::getValue
+        ));
         for(int i = 0; i < days.size(); i++){
-            Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
-            map1.put(days.get(i).toLocalDate(),BigDecimalUtil.divide(mapResult.get("data3"),BigDecimalUtil.THOUSAND));
-            map2.put(days.get(i).toLocalDate(),BigDecimalUtil.divide(mapResult.get("data4"),BigDecimalUtil.THOUSAND));
-            map3.put(days.get(i).toLocalDate(),BigDecimalUtil.divide(mapResult.get("data5"),BigDecimalUtil.THOUSAND));
+            if(days.get(i).equals(LocalDate.now())){
+                break;
+            }
+            LocalDate dayNow = days.get(i).toLocalDate();
+            map1.put(dayNow,BigDecimalUtil.divide(collect.get(dayNow+"_data3"),BigDecimalUtil.THOUSAND));
+            map2.put(dayNow,BigDecimalUtil.divide(collect.get(dayNow+"_data4"),BigDecimalUtil.THOUSAND));
+            map3.put(dayNow,BigDecimalUtil.divide(collect.get(dayNow+"_data5"),BigDecimalUtil.THOUSAND));
         }
         return results;
     }
