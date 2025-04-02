@@ -178,6 +178,34 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         hintList1.addAll(hintList2);
 //        hintList1.addAll(hintList3);
         resVo.setHintLineList(hintList1);
+        //调整顺序,把深加工一车间调整至基片二车间后面
+        int baseIndex = -1;   // 记录基片二车间的索引
+        int deepStart = -1;   // 记录深加工一车间的起始索引
+        // 找到基片二车间和深加工一车间的索引
+        for (int i = 0; i < resVo.getDataList().size(); i++) {
+            if(Objects.isNull(resVo.getDataList().get(i).getDepartmentName())){
+                continue;
+            }
+            if ("基片二车间".equals(resVo.getDataList().get(i).getDepartmentName()) && resVo.getDataList().get(i).getEnergyType().equals("电")&& baseIndex == -1) {
+                baseIndex = i;
+            }
+            if (resVo.getDataList().get(i).getDepartmentName().contains("深加工一车间") &&resVo.getDataList().get(i).getEnergyType().equals("电（其他）")&& deepStart == -1) {
+                deepStart = i;
+            }
+        }
+        resVo.getDataList().get(deepStart).setEnergyType("电");
+        resVo.getDataList().get(deepStart+1).setEnergyType("电");
+        resVo.getDataList().get(deepStart+2).setEnergyType("电");
+        resVo.getDataList().get(deepStart+3).setEnergyType("电");
+        int deepEnd = deepStart + 3; // 深加工一车间有 4 条数据，索引范围是 deepStart 到 deepEnd
+
+        // 重新排序
+        List<EpDayReportCountRowVO> result = new ArrayList<>();
+        result.addAll(resVo.getDataList().subList(0, baseIndex + 1)); // 先保留基片二车间及其之前的部分
+        result.addAll(resVo.getDataList().subList(deepStart, deepEnd + 1)); // 插入深加工一车间
+        result.addAll(resVo.getDataList().subList(baseIndex + 1, deepStart)); // 插入基片二车间后、深加工一车间前的部分
+        result.addAll(resVo.getDataList().subList(deepEnd + 1, resVo.getDataList().size()));
+        resVo.setDataList(result);
         return resVo;
     }
 
