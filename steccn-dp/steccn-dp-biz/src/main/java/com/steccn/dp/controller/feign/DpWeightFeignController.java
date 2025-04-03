@@ -38,6 +38,7 @@ public class DpWeightFeignController {
     private final DpColdEndCheckpointValueService dpColdEndCheckpointValueService;
     private final NaturalGasFlowCountService naturalGasFlowCountService;
     private final ExitStationCountService exitStationCountService;
+    private final RawNumService rawNumService;
 
     @PostMapping("/weight/count")
     @ApiOperation(value = "电子秤读数")
@@ -116,5 +117,11 @@ public class DpWeightFeignController {
     @ApiOperation(value = "获取白云石、纯碱、石灰石每天的入料量数据")
     public R<List<Map<LocalDate,BigDecimal>>> weightMaterial(@RequestBody DpPmsOperateDTO dto){
         return R.success(adsOpcUaAll3Service.queryListDay(dto));
+    }
+
+    @GetMapping("/weight/material/push")
+    @ApiOperation(value = "推送电子秤读数")
+    R<Boolean> materialPush(){
+        return R.success(rawNumService.insertToday());
     }
 }

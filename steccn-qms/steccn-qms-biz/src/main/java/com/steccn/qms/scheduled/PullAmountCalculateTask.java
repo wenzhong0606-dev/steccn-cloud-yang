@@ -98,6 +98,14 @@ public class PullAmountCalculateTask {
     }
 
     /**
+     * 每天8点左右保存
+     */
+    @XxlJob("pushRawMaterial")
+    public void pushRawMaterial() {
+        remoteDpFeignApi.materialPush();
+    }
+
+    /**
      * @desc 计算损耗 每天 8点01分 20:01:00 执行一次
      * 08:01:00 20:01:00
      */

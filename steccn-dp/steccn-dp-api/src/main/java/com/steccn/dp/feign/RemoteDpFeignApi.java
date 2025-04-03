@@ -68,6 +68,10 @@ public interface RemoteDpFeignApi {
     @ApiOperation(value = "电子秤读数按天")
     R<List<DpValueDateVO>> countAsDay(@RequestBody DpPmsOperateDTO dto);
 
+    @GetMapping("/feign/dp/weight/material/push")
+    @ApiOperation(value = "推送电子秤读数")
+    R<Boolean> materialPush();
+
     @GetMapping("/feign/dp/weight/push")
     @ApiOperation(value = "推送电子秤读数")
     R<Boolean> push();
