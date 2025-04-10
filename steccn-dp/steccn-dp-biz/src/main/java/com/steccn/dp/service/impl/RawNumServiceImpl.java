@@ -77,24 +77,22 @@ public class RawNumServiceImpl extends ServiceImpl<RawNumMapper, RawNum>
         results.add(map1);
         results.add(map2);
         results.add(map3);
-        for(int i = 0; i < days.size(); i++){
-            Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(i), days.get(i).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
-            RawNum model = new RawNum();
-            model.setDay(days.get(i).toLocalDate());
-            model.setCode("data3");
-            model.setValue(BigDecimalUtil.divide(mapResult.get("data3"),BigDecimalUtil.THOUSAND));
-            save(model);
-            RawNum model2 = new RawNum();
-            model2.setDay(days.get(i).toLocalDate());
-            model2.setCode("data4");
-            model2.setValue(BigDecimalUtil.divide(mapResult.get("data4"),BigDecimalUtil.THOUSAND));
-            save(model2);
-            RawNum model3 = new RawNum();
-            model3.setDay(days.get(i).toLocalDate());
-            model3.setCode("data5");
-            model3.setValue(BigDecimalUtil.divide(mapResult.get("data5"),BigDecimalUtil.THOUSAND));
-            save(model3);
-        }
+        Map<String, BigDecimal> mapResult = postWeightCount(new TupleDTO<>(days.get(0), days.get(0).plusDays(1).withHour(7).withMinute(59).withSecond(59)));
+        RawNum model = new RawNum();
+        model.setDay(days.get(0).toLocalDate());
+        model.setCode("data3");
+        model.setValue(BigDecimalUtil.divide(mapResult.get("data3"),BigDecimalUtil.THOUSAND));
+        save(model);
+        RawNum model2 = new RawNum();
+        model2.setDay(days.get(0).toLocalDate());
+        model2.setCode("data4");
+        model2.setValue(BigDecimalUtil.divide(mapResult.get("data4"),BigDecimalUtil.THOUSAND));
+        save(model2);
+        RawNum model3 = new RawNum();
+        model3.setDay(days.get(0).toLocalDate());
+        model3.setCode("data5");
+        model3.setValue(BigDecimalUtil.divide(mapResult.get("data5"),BigDecimalUtil.THOUSAND));
+        save(model3);
         return true;
     }
 
