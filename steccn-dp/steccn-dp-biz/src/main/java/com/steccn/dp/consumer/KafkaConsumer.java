@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,6 +44,40 @@ public class KafkaConsumer {
     private final DpColdEndCheckpointValueService dpColdEndCheckpointValueService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final KafkaTemplate<String,String> kafkaTemplate;
+    //静态代码块，用于原料过滤数据
+    private static final Set<String> valueSet = Sets.newHashSet();
+    static {
+        //配料状态
+        valueSet.add("Raw_YL.ZHM.plyx_BOOL");
+        //1#硅砂排料快排速度
+        valueSet.add("Raw_YL.CS.kw1_UINT");
+        //2#硅砂排料快排速度
+        valueSet.add("Raw_YL.CS.kw2_UINT");
+        //复合澄清剂喂料快排速度
+        valueSet.add("Raw_YL.CS.kw3_UINT");
+        //铝粉喂料快排速度
+        valueSet.add("Raw_YL.CS.kw4_UINT");
+        //小料喂料快排速度
+        valueSet.add("Raw_YL.CS.kw6_UINT");
+        //1#硅砂排料慢排速度
+        valueSet.add("Raw_YL.CS.mw1_UINT");
+        //Raw_YL.CS.mw2_UINT	2#硅砂排料慢排速度
+        valueSet.add("Raw_YL.CS.mw2_UINT");
+        //Raw_YL.CS.mw3_UINT	复合澄清剂喂料慢排速度
+        valueSet.add("Raw_YL.CS.mw3_UINT");
+        //Raw_YL.CS.mw4_UINT	铝粉喂料慢排速度
+        valueSet.add("Raw_YL.CS.mw4_UINT");
+        //Raw_YL.CS.mw6_UINT	小料喂料慢排速度
+        valueSet.add("Raw_YL.CS.mw6_UINT");
+        //RY.KS.MODE_L		左火
+        valueSet.add("RY.KS.MODE_L");
+        //RY.KS.MODE_R		右火
+        valueSet.add("RY.KS.MODE_R");
+        //RY.KS.PIC81_PV_OUT	窑压测量实际值
+        valueSet.add("RY.KS.PIC81_PV_OUT");
+        //RY.KS.LIC92_PV_OUT	液位测量实际值
+        valueSet.add("RY.KS.LIC92_PV_OUT");
+    }
     /**
      * 消费监听
      *
@@ -82,10 +117,12 @@ public class KafkaConsumer {
      * @param record
      * @param ack
      */
-    @KafkaListener(topics = "opc_ua_all_topic", concurrency = "4", containerFactory = "kafkaListenerScreenContainerFactory")
+//    @KafkaListener(topics = "opc_ua_all_topic", concurrency = "4")
     public void originToScreen(ConsumerRecord<Object, String> record, Acknowledgment ack) {
-        JSONObject value = JSONObject.parseObject(record.value());
-        kafkaTemplate.send("data_twin_screen",record.key().toString(),value.getString("value"));
+        if(valueSet.contains(record.key())){
+            JSONObject value = JSONObject.parseObject(record.value());
+            kafkaTemplate.send("data_twin_screen",record.key().toString(),value.getString("value"));
+        }
         ack.acknowledge();
     }
 }
