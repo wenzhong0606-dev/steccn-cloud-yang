@@ -218,6 +218,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submitReportWork(ProcessReportWorkSubmitDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_REPORT_WORK);
         lock.lock();
@@ -226,9 +227,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 //检验生产订单是否存在
                 PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
                 Assert.notNull(pmsProduceOrder, "生产订单不存在");
-                //校验产线和工位是否存在
-                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
+                if(!dto.getIsDeepWork()){
+                    //校验产线和工位是否存在
+                    Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
+                }
                 //校验工序是否存在
                 PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
                 Assert.notNull(pmsProduceOrderCraft, "工序不存在");

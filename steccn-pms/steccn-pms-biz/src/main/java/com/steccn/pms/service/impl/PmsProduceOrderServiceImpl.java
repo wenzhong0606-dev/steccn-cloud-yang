@@ -637,6 +637,34 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
+    public ReportWorkOrderVO reportWorkOrder(Integer productLineId) {
+        //1.根据产线查询订单
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getProductionLineId, productLineId).eq(PmsProduceOrder::getState, 2).orderByDesc(PmsProduceOrder::getCreateTime).last(MpConstant.STR_LIMIT_1));
+        Assert.notNull(order, "该产线暂无执行中的订单，请选择其他订单");
+        //1.根据订单查询当前批次
+        PmsWorkOrderBatch currentBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, order.getId()).orderByDesc(PmsWorkOrderBatch::getCode).last(MpConstant.STR_LIMIT_1));
+        Assert.notNull(currentBatch, "订单" + order.getCode() + "无当前批次");
+
+        //4.定义返回数据
+        ReportWorkOrderVO vo = new ReportWorkOrderVO();
+        BeanUtils.copyProperties(order, vo);
+
+        vo.setUnitId(order.getUnitId());
+        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        vo.setUnitName(unitMap.get(order.getUnitId()));
+
+        vo.setProduceOrderId(order.getId());
+        vo.setProduceOrderCode(order.getCode());
+        vo.setBatch(currentBatch.getId());
+        vo.setBatchNo(currentBatch.getCode());
+        Map<Long, List<PmsProduceOrderCraftVO>> crafts = pmsProduceOrderCraftService.crafts(Sets.newHashSet(order.getId()));
+        vo.setProcessList(crafts.get(order.getId()));
+        Map<Long, List<PmsWorkOrderBomVO>> materials = pmsWorkOrderBomService.materials(Sets.newHashSet(order.getId()));
+        vo.setMaterialList(materials.get(order.getId()));
+        return vo;
+    }
+
+    @Override
     public ReportWorkOrderVO reportWorkOrderId(Long orderId, Integer stationId) {
         PmsProduceOrder order = getById(orderId);
         Assert.notNull(order, "该产线暂无订单");

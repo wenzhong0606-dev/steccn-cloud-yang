@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author yequan
@@ -62,5 +63,11 @@ public class ReportWorkOrderVO implements Serializable {
 
     @ApiModelProperty("单位名称")
     private String unitName;
+
+    @ApiModelProperty("工序信息")
+    private List<PmsProduceOrderCraftVO> processList;
+
+    @ApiModelProperty("物料信息")
+    private List<PmsWorkOrderBomVO> materialList;
 }
 

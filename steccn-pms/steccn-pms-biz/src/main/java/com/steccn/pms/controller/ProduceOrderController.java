@@ -111,6 +111,12 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.reportWorkOrder(productLineId, stationId));
     }
 
+    @ApiOperation("工序报工-订单批次的信息(根据产线)")
+    @GetMapping("/report/work/order/line")
+    public R<ReportWorkOrderVO> reportWorkOrder(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId) {
+        return R.success(pmsProduceOrderService.reportWorkOrder(productLineId));
+    }
+
     @ApiOperation("工序报工-订单批次的信息")
     @GetMapping("/report/work/order/id")
     public R<ReportWorkOrderVO> reportWorkOrderId(@ApiParam("订单id") @RequestParam("orderId") Long orderId,

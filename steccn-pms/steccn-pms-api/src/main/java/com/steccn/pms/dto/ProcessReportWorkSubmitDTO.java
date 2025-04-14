@@ -132,8 +132,14 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @Valid
     private List<ProcessReportWorkMaterialListDTO> materialConsumeList;
 
+    @ApiModelProperty("多工序报工列表")
+    private List<ProcessReportWorkSubmitProcessDTO> processNumList;
+
     @ApiModelProperty("能耗")
     private List<ProcessReportWorkConsumeDTO> consumeDTOList;
+
+    @ApiModelProperty("是否深加工")
+    private Boolean isDeepWork = false;
 
     private static final long serialVersionUID = 1L;
 }

@@ -1,5 +1,6 @@
 package com.steccn.pms.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,6 +19,7 @@ import com.steccn.pms.vo.ReportWorkPreinstallValueVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Adolph.Ye
@@ -62,6 +65,31 @@ public class ProcessReportWorkController {
             }
         }
         return R.success(pmsReportWorkService.submitReportWork(dto));
+    }
+
+    @ApiOperation("深加工提交报工")
+    @PostMapping("/add/deepWork")
+    @SysLog("提交报工")
+    public R<Boolean> deepWorkSubmitReportWork(@RequestBody ProcessReportWorkSubmitDTO dto) {
+        //时间不可以跨班次
+        Assert.isTrue(CalculateDateUtil.isSameClassType(dto.getStartTime(), dto.getEndTime()), "报工时间不可以跨班次");
+        dto.getProcessNumList().forEach(tmp->{
+            ProcessReportWorkSubmitDTO model = new ProcessReportWorkSubmitDTO();
+            BeanUtil.copyProperties(dto,model);
+            model.setProcessId(tmp.getProcessId());
+            model.setProcessName(tmp.getProcessName());
+            model.setBadnessQuantity(tmp.getBadnessQuantity());
+            model.setProcessQuantity(tmp.getProcessQuantity());
+            model.setConsumeDTOList(Lists.newArrayList());
+            model.setStationName(null);
+            model.setStationId(null);
+            model.setIsDeepWork(true);
+            if(CollUtil.isNotEmpty(model.getMaterialConsumeList())){
+                model.setMaterialConsumeList(model.getMaterialConsumeList().stream().filter(v->v.getProcessId().equals(tmp.getProcessId())).collect(Collectors.toList()));
+            }
+            pmsReportWorkService.submitReportWork(model);
+        });
+        return R.success(Boolean.TRUE);
     }
 
     @ApiOperation("报工加工数预填")

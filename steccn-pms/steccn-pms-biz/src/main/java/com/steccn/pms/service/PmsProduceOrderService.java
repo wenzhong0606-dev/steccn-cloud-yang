@@ -103,6 +103,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     ReportWorkOrderVO reportWorkOrder(Integer productLineId, Integer stationId);
 
     /**
+     * 根据产线修改报工批次
+     * @param productLineId
+     * @return
+     */
+    ReportWorkOrderVO reportWorkOrder(Integer productLineId);
+
+    /**
      * 报工订单批次详细信息
      *
      * @param orderId   订单id
