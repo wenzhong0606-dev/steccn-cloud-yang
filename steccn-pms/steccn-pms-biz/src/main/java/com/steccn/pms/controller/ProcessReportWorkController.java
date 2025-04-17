@@ -76,7 +76,7 @@ public class ProcessReportWorkController {
         dto.getProcessNumList().forEach(tmp->{
             ProcessReportWorkSubmitDTO model = new ProcessReportWorkSubmitDTO();
             BeanUtil.copyProperties(dto,model);
-            model.setProcessId(tmp.getProcessId());
+            model.setProcessId(tmp.getId());
             model.setProcessName(tmp.getProcessName());
             model.setBadnessQuantity(tmp.getBadnessQuantity());
             model.setProcessQuantity(tmp.getProcessQuantity());
@@ -85,7 +85,7 @@ public class ProcessReportWorkController {
             model.setStationId(null);
             model.setIsDeepWork(true);
             if(CollUtil.isNotEmpty(model.getMaterialConsumeList())){
-                model.setMaterialConsumeList(model.getMaterialConsumeList().stream().filter(v->v.getProcessId().equals(tmp.getProcessId())).collect(Collectors.toList()));
+                model.setMaterialConsumeList(model.getMaterialConsumeList().stream().filter(v->v.getProcessId().equals(tmp.getId())).collect(Collectors.toList()));
             }
             pmsReportWorkService.submitReportWork(model);
         });

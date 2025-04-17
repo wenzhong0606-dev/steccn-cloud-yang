@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 @Data
 public class ProcessReportWorkSubmitProcessDTO {
     @NotNull(message = "工序不能为空")
-    private Long processId;
+    private Long id;
 
     @ApiModelProperty("工序名称")
     private String processName;

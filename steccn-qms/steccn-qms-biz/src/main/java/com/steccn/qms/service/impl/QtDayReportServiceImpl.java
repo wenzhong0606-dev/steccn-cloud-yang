@@ -417,7 +417,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         int i = 0;
         for(LocalDate date:days){
-            QtDayReportOnlineVO online = online(date, lineIdList, confContent);
+            QtDayReportOnlineVO online = null;
+            try {
+                online = online(date, lineIdList, confContent);
+            } catch (Exception e) {
+                continue;
+            }
             List<QtDayReportOnlineDataVO> tableData = online.getTableData();
             SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
             //写表头
@@ -1161,7 +1166,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             int i = 0;
             for(LocalDate date:days){
                 dto.setDate(date);
-                QtDayReportFirstVO first = first(dto);
+                QtDayReportFirstVO first = null;
+                try {
+                    first = first(dto);
+                } catch (Exception e) {
+                    continue;
+                }
                 List<QtDayReportFirstDataVO> tableData = first.getTableData();
                 SteccnTableAssertUtil.notEmpty(tableData, "数据为空");
                 //写表头
