@@ -86,4 +86,10 @@ public class SalesLogisticsFeignController {
         return R.success(ksLogisticsOrderService.getSignFeedback(dto));
     }
 
+    @PostMapping("/order/logistics/state")
+    @ApiOperation("获取物流单状态")
+    R<String> signFeedbackState(@RequestBody WmsSignFeedbackDTO dto){
+        return R.success(ksLogisticsOrderService.orderState(dto.getSalesOrder()));
+    }
+
 }

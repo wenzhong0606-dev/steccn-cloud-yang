@@ -82,6 +82,18 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 wmsSignFeedback.setCarCode(carCodeMap.get(wmsSignFeedback.getSalesOrder()));
                 save(wmsSignFeedback);
                 FeignOptional.of(() -> remoteSaleFeignApi.setInWmsColumn(ksLogisticsOrderDTO), FeignConstant.STECCN_SALES_NAME).get();
+            }else {
+                WmsSignFeedbackDTO feedBackDTO = new WmsSignFeedbackDTO();
+                feedBackDTO.setSalesOrder(dto.getSalesOrder());
+                String s = FeignOptional.of(() -> remoteSaleFeignApi.signFeedbackState(feedBackDTO), FeignConstant.STECCN_SALES_NAME).get();
+                if(s.equals("feedback")){
+                    throw new BusinessException("物流单已反馈");
+                }else {
+                    WmsSignFeedback wmsSignFeedback = BeanUtil.copyProperties(dto, WmsSignFeedback.class);
+                    wmsSignFeedback.setState(0);
+                    update(wmsSignFeedback,new LambdaQueryWrapper<WmsSignFeedback>()
+                            .eq(WmsSignFeedback::getId,one.getId()));
+                }
             }
         }finally {
             lock.unlock();

@@ -79,4 +79,10 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
      * @return
      */
     Page<WmsSignFeedbackVO>  getSignFeedback(WmsSignFeedbackDTO dto);
+
+    /**
+     *
+     * @return
+     */
+    String orderState(String salesOrder);
 }

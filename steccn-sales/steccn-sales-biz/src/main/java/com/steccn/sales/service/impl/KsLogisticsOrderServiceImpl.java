@@ -224,19 +224,21 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         one.setPieceQty(dto.getPieceQty());
         one.setSignDate(dto.getSignDate());
         updateById(one);
-        KsAbnormalCause ksAbnormalCause = new KsAbnormalCause();
-        ksAbnormalCause.setName(dto.getAbnormalCause());
-        ksAbnormalCauseService.save(ksAbnormalCause);
-        Integer ksAbnormalCauseId = ksAbnormalCause.getId();
-        KsAbnormalCauseKsLogisticsOrderRel one1 = ksAbnormalCauseKsLogisticsOrderRelService.getOne(new LambdaQueryWrapper<KsAbnormalCauseKsLogisticsOrderRel>()
-                .eq(KsAbnormalCauseKsLogisticsOrderRel::getKsAbnormalCauseId, ksAbnormalCauseId), false);
-        if(Objects.nonNull(one1)){
-            return Boolean.TRUE;
+        if(StrUtil.isNotBlank(dto.getAbnormalCause())){
+            KsAbnormalCause ksAbnormalCause = new KsAbnormalCause();
+            ksAbnormalCause.setName(dto.getAbnormalCause());
+            ksAbnormalCauseService.save(ksAbnormalCause);
+            Integer ksAbnormalCauseId = ksAbnormalCause.getId();
+            KsAbnormalCauseKsLogisticsOrderRel one1 = ksAbnormalCauseKsLogisticsOrderRelService.getOne(new LambdaQueryWrapper<KsAbnormalCauseKsLogisticsOrderRel>()
+                    .eq(KsAbnormalCauseKsLogisticsOrderRel::getKsAbnormalCauseId, ksAbnormalCauseId), false);
+            if(Objects.nonNull(one1)){
+                return Boolean.TRUE;
+            }
+            KsAbnormalCauseKsLogisticsOrderRel ksAbnormalCauseKsLogisticsOrderRel = new KsAbnormalCauseKsLogisticsOrderRel();
+            ksAbnormalCauseKsLogisticsOrderRel.setKsLogisticsOrderId(Math.toIntExact(one.getId()));
+            ksAbnormalCauseKsLogisticsOrderRel.setKsAbnormalCauseId(ksAbnormalCauseId);
+            ksAbnormalCauseKsLogisticsOrderRelService.save(ksAbnormalCauseKsLogisticsOrderRel);
         }
-        KsAbnormalCauseKsLogisticsOrderRel ksAbnormalCauseKsLogisticsOrderRel = new KsAbnormalCauseKsLogisticsOrderRel();
-        ksAbnormalCauseKsLogisticsOrderRel.setKsLogisticsOrderId(Math.toIntExact(one.getId()));
-        ksAbnormalCauseKsLogisticsOrderRel.setKsAbnormalCauseId(ksAbnormalCauseId);
-        ksAbnormalCauseKsLogisticsOrderRelService.save(ksAbnormalCauseKsLogisticsOrderRel);
         return Boolean.TRUE;
     }
 
@@ -290,6 +292,15 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
         }
         Page<WmsSignFeedbackVO> result = ksLogisticsOrderMapper.logisticsPage(new Page(dto.getCurrent(), dto.getSize()),dto);
         return result;
+    }
+
+    @Override
+    public String orderState(String salesOrder) {
+        KsLogisticsOrder one = getOne(new LambdaQueryWrapper<KsLogisticsOrder>().eq(KsLogisticsOrder::getName, salesOrder), false);
+        if(Objects.nonNull(one)){
+            return one.getState();
+        }
+        return "";
     }
 }
 

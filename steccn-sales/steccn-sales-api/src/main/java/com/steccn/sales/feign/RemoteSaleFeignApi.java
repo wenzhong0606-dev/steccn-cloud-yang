@@ -67,5 +67,8 @@ public interface RemoteSaleFeignApi {
     @ApiOperation("获取物流单详情")
     R<Page<WmsSignFeedbackVO>> signFeedback(@RequestBody WmsSignFeedbackDTO dto);
 
+    @PostMapping("/feign/sales/order/logistics/state")
+    @ApiOperation("获取物流单状态")
+    R<String> signFeedbackState(@RequestBody WmsSignFeedbackDTO dto);
 
 }
