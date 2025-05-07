@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -70,5 +71,9 @@ public interface RemoteSaleFeignApi {
     @PostMapping("/feign/sales/order/logistics/state")
     @ApiOperation("获取物流单状态")
     R<String> signFeedbackState(@RequestBody WmsSignFeedbackDTO dto);
+
+    @PostMapping("/feign/sales/order/logistics/packType")
+    @ApiOperation("获取物流单状态")
+    R<Map<String,String>> packType(@RequestBody Set<String> salesOrders);
 
 }

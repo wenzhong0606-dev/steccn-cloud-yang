@@ -92,4 +92,10 @@ public class SalesLogisticsFeignController {
         return R.success(ksLogisticsOrderService.orderState(dto.getSalesOrder()));
     }
 
+    @PostMapping("/order/logistics/packType")
+    @ApiOperation("获取物流单状态")
+    R<Map<String,String>> packType(@RequestBody Set<String> salesOrders){
+        return R.success(ksLogisticsOrderService.orderPackType(salesOrders));
+    }
+
 }

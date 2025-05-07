@@ -22,6 +22,10 @@ public interface SalesConstant {
         IRON("iron", "铁托"),
         U("u", "U型架"),
         L("l", "L架"),
+        NOTHING_WOOD("nothing_wood", "无纸木托"),
+        NOTHING_IRON("nothing_iron", "无纸铁托"),
+        PAPER_WOOD("paper_wood", "有纸木托"),
+        PAPER_IRON("paper_iron", "有纸铁托"),
         BOX("box", "木箱");
 
         private String code;

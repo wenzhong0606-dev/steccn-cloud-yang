@@ -44,10 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -301,6 +298,20 @@ public class KsLogisticsOrderServiceImpl extends ServiceImpl<KsLogisticsOrderMap
             return one.getState();
         }
         return "";
+    }
+
+    @Override
+    public Map<String, String> orderPackType(Set<String> salesOrders) {
+        List<KsLogisticsOrder> list = list(new LambdaQueryWrapper<KsLogisticsOrder>()
+                .select(KsLogisticsOrder::getName, KsLogisticsOrder::getPackType)
+                .in(KsLogisticsOrder::getName, salesOrders));
+        Map<String,String> results = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(list)){
+            list.forEach(tmp->{
+                results.put(tmp.getName(),SalesConstant.salesPackTypeMapping.getNameByCode(tmp.getPackType()));
+            });
+        }
+        return results;
     }
 }
 

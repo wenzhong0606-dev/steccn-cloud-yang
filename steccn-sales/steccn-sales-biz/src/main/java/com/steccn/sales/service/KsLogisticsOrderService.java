@@ -81,8 +81,15 @@ public interface KsLogisticsOrderService extends IService<KsLogisticsOrder> {
     Page<WmsSignFeedbackVO>  getSignFeedback(WmsSignFeedbackDTO dto);
 
     /**
-     *
+     * 获取物流单状态
      * @return
      */
     String orderState(String salesOrder);
+
+    /**
+     * 获取物流单包装类型
+     * @param salesOrders
+     * @return
+     */
+    Map<String,String> orderPackType(Set<String> salesOrders);
 }

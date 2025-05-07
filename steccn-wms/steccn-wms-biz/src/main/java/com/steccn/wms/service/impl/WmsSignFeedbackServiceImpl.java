@@ -215,6 +215,11 @@ public class WmsSignFeedbackServiceImpl extends ServiceImpl<WmsSignFeedbackMappe
                 resPage.setRecords(wmsSignFeedbackVOList);
             }
         }
+        //设置包装类型
+        if(CollUtil.isNotEmpty(resPage.getRecords())){
+            Map<String, String> stringStringMap = FeignOptional.of(() -> remoteSaleFeignApi.packType(resPage.getRecords().stream().map(WmsSignFeedbackVO::getSalesOrder).collect(Collectors.toSet())), FeignConstant.STECCN_SALES_NAME).get();
+            resPage.getRecords().forEach(tmp->tmp.setPackType(stringStringMap.get(tmp.getSalesOrder())));
+        }
         return resPage;
     }
 
