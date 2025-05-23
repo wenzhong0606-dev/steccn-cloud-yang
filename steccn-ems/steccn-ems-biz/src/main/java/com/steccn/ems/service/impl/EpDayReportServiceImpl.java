@@ -206,6 +206,71 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         result.addAll(resVo.getDataList().subList(baseIndex + 1, deepStart)); // 插入基片二车间后、深加工一车间前的部分
         result.addAll(resVo.getDataList().subList(deepEnd + 1, resVo.getDataList().size()));
         resVo.setDataList(result);
+        //找到水耗信息
+        List<EpDayReportCountRowVO> water = resVo.getDataList().stream().filter(v -> v.getEnergyType().equals("水")).collect(Collectors.toList());
+        //找到抄表信息
+        List<EpMeterRead> meterReadList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                .eq(EpMeterRead::getMeterId, 70)
+                .between(EpMeterRead::getReadDate, start, end));
+        //对除了基片和合计以外的consumeList进行合计
+        List<BigDecimal> countData = water.stream()
+                .filter(data -> {
+                    String name = data.getDepartmentName();
+                    return name != null && !name.equals("基片组") && !name.equals("合计");
+                })
+                .map(EpDayReportCountRowVO::getConsumeList)
+                .filter(Objects::nonNull)
+                .reduce(new ArrayList<>(), (acc, list) -> {
+                    for (int i = 0; i < list.size(); i++) {
+                        BigDecimal val = list.get(i) != null ? list.get(i) : BigDecimal.ZERO;
+                        if (i < acc.size()) {
+                            acc.set(i, acc.get(i).add(val));
+                        } else {
+                            acc.add(val);
+                        }
+                    }
+                    return acc;
+                }, (l1, l2) -> {
+                    for (int i = 0; i < l2.size(); i++) {
+                        BigDecimal val = l2.get(i) != null ? l2.get(i) : BigDecimal.ZERO;
+                        if (i < l1.size()) {
+                            l1.set(i, l1.get(i).add(val));
+                        } else {
+                            l1.add(val);
+                        }
+                    }
+                    return l1;
+                });
+        //计算consumeList
+        List<BigDecimal> countDataList = Lists.newArrayList();
+        List<BigDecimal> jpList = Lists.newArrayList();
+        BigDecimal sumData = BigDecimal.ZERO;
+        BigDecimal jpSumData = BigDecimal.ZERO;
+        for(int i = 0; i < countData.size(); i++){
+            int finalI = i;
+            EpMeterRead epMeterRead = meterReadList.stream().filter(v -> v.getReadDate().equals(start.plusDays((finalI)))).findFirst().orElse(null);
+            if(Objects.isNull(epMeterRead)){
+                countDataList.add(null);
+                if(countData.get(i).equals(BigDecimal.ZERO)){
+                    jpList.add(null);
+                }else {
+                    jpList.add(countData.get(i));
+                    jpSumData = BigDecimalUtil.add(jpSumData,countData.get(i));
+                }
+            }else {
+                countDataList.add(epMeterRead.getReadValue());
+                sumData = BigDecimalUtil.add(sumData,epMeterRead.getReadValue());
+                BigDecimal jpResult = BigDecimalUtil.subtract(epMeterRead.getReadValue(), countData.get(i), 0);
+                jpList.add(jpResult);
+                jpSumData = BigDecimalUtil.add(jpSumData,jpResult);
+            }
+        }
+        EpDayReportCountRowVO epDayReportCountRowVO1 = resVo.getDataList().stream().filter(v -> v.getEnergyType().equals("水") && v.getDepartmentName().equals("基片组")).findFirst().orElse(null);
+        epDayReportCountRowVO1.setConsumeList(jpList);
+        epDayReportCountRowVO1.setSumStr(jpSumData.setScale(0));
+        EpDayReportCountRowVO epDayReportCountRowVO = resVo.getDataList().stream().filter(v -> v.getEnergyType().equals("水") && v.getDepartmentName().equals("合计")).findFirst().orElse(null);
+        epDayReportCountRowVO.setConsumeList(countDataList);
+        epDayReportCountRowVO.setSumStr(sumData.setScale(0));
         return resVo;
     }
 
