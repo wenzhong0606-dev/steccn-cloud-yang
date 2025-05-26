@@ -23,6 +23,9 @@ public class BarcodePrintRecordVO implements Serializable {
     @ApiModelProperty("箱号")
     private String caseNo;
 
+    @ApiModelProperty("解密后箱号")
+    private String decCaseNo;
+
     @ApiModelProperty("批次号")
     private String batchNo;
 

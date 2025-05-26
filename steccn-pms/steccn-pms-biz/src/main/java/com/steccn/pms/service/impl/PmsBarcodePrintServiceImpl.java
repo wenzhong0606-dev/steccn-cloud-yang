@@ -20,6 +20,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.AESUtils;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -156,7 +157,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
                 String date = LocalDate.now().format(formatter);
-                printModel.setCaseNo(PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++));
+                String caseNo = PmsCodeUtil.getNextCode(date + PmsCodeUtil.SHORT_LINE + classesGroupCode + classesCode + PmsCodeUtil.SHORT_LINE + viewCode + PmsCodeUtil.SHORT_LINE + num + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_2, currentMaxNo++);
+//                printModel.setCaseNo(AESUtils.encrypt(caseNo));
+                printModel.setCaseNo(caseNo);
                 printModel.setNumber(currentMaxNo);
                 if (Objects.isNull(dto.getShelfId())) {
                     printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
@@ -294,10 +297,25 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 TupleDTO<Integer, Integer> tupleDTO = caseCntMap.getOrDefault(barcodePrintRecordVO.getCaseNo(),new TupleDTO<>());
                 barcodePrintRecordVO.setPrintFlag(tupleDTO.getField1());
                 barcodePrintRecordVO.setPrintCount(tupleDTO.getField2());
+                String[] split = barcodePrintRecordVO.getCaseNo().split("-");
+                if(split.length < 4){
+                    barcodePrintRecordVO.setDecCaseNo(AESUtils.decrypt(barcodePrintRecordVO.getCaseNo()));
+                }
             });
             resPage.setRecords(voList);
         }
         return resPage;
+    }
+
+    @Override
+    public String decode(String code) {
+        String result = "";
+        try {
+            result = AESUtils.decrypt(code);
+        }catch (Exception e){
+            result = "请输入正确的加密字符";
+        }
+        return result;
     }
 
     @Override

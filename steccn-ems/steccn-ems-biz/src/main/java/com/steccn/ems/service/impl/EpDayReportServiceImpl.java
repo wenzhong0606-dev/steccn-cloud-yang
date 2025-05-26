@@ -211,7 +211,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //找到抄表信息
         List<EpMeterRead> meterReadList = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
                 .eq(EpMeterRead::getMeterId, 70)
-                .between(EpMeterRead::getReadDate, start, end));
+                .between(EpMeterRead::getReadDate, start.minusDays(1), end));
         //对除了基片和合计以外的consumeList进行合计
         List<BigDecimal> countData = water.stream()
                 .filter(data -> {
@@ -246,6 +246,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<BigDecimal> jpList = Lists.newArrayList();
         BigDecimal sumData = BigDecimal.ZERO;
         BigDecimal jpSumData = BigDecimal.ZERO;
+        BigDecimal preNum = BigDecimal.ZERO;
         for(int i = 0; i < countData.size(); i++){
             int finalI = i;
             EpMeterRead epMeterRead = meterReadList.stream().filter(v -> v.getReadDate().equals(start.plusDays((finalI)))).findFirst().orElse(null);
@@ -258,9 +259,17 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                     jpSumData = BigDecimalUtil.add(jpSumData,countData.get(i));
                 }
             }else {
-                countDataList.add(epMeterRead.getReadValue());
-                sumData = BigDecimalUtil.add(sumData,epMeterRead.getReadValue());
-                BigDecimal jpResult = BigDecimalUtil.subtract(epMeterRead.getReadValue(), countData.get(i), 0);
+                EpMeterRead preMeter = meterReadList.stream().filter(v -> v.getReadDate().equals(start.plusDays((finalI)).minusDays(1))).findFirst().orElse(null);
+                BigDecimal consumeValue = BigDecimal.ZERO;
+                if(Objects.isNull(preMeter)){
+                    consumeValue = BigDecimalUtil.subtract(epMeterRead.getReadValue(),preNum);
+                }else {
+                    preNum = epMeterRead.getReadValue();
+                    consumeValue = BigDecimalUtil.subtract(epMeterRead.getReadValue(),preMeter.getReadValue());
+                }
+                countDataList.add(consumeValue.setScale(0));
+                sumData = BigDecimalUtil.add(sumData,consumeValue);
+                BigDecimal jpResult = BigDecimalUtil.subtract(consumeValue, countData.get(i), 0);
                 jpList.add(jpResult);
                 jpSumData = BigDecimalUtil.add(jpSumData,jpResult);
             }

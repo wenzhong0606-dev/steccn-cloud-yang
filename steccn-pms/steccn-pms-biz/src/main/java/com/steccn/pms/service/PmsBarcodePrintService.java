@@ -51,6 +51,13 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
     Page<BarcodePrintRecordVO> printRecord(BarcodePrintRecordDTO dto);
 
     /**
+     * 解密码
+     * @param code
+     * @return
+     */
+    String decode(String code);
+
+    /**
      * 删除箱号
      *
      * @param idList 主键id集合

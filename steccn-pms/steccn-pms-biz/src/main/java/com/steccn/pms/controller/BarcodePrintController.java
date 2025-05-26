@@ -43,6 +43,12 @@ public class BarcodePrintController {
         return R.success(pmsBarcodePrintService.printRecord(dto));
     }
 
+    @GetMapping("/print/decode/{code}")
+    @ApiOperation("解密编码")
+    public R<String> decode(@PathVariable("code") String code) {
+        return R.success(pmsBarcodePrintService.decode(code));
+    }
+
     @PostMapping("/print/record/remove")
     @ApiOperation("打印记录删除")
     @SysLog("打印记录删除")
