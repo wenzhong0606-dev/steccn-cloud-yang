@@ -254,5 +254,7 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
 
     Map<Long, Integer> intervalOrderQuantity(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
 
+    Boolean deleteDetail(Long id);
+
     void download(HttpServletResponse response) throws IOException;
 }

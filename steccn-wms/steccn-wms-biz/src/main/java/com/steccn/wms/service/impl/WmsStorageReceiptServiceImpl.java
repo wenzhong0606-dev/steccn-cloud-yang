@@ -2058,6 +2058,37 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
     @Override
+    public Boolean deleteDetail(Long id) {
+        WmsStorageReceiptInfo byId = wmsStorageReceiptInfoService.getById(id);
+        WmsStorageReceipt receipt = getById(byId.getStorageReceiptId());
+        if(Objects.isNull(receipt)||!receipt.getStatus().equals(OaConstant.NO)){
+            throw new BusinessException("必须是已创建状态的入库单");
+        }
+        //修改库存
+        WmsInventory one = wmsInventoryService.getOne(new LambdaQueryWrapper<WmsInventory>()
+                .eq(WmsInventory::getCaseNo, byId.getCaseNo())
+                .eq(WmsInventory::getMaterialId, byId.getMaterialId())
+                .last("LIMIT 1"));
+        if(Objects.nonNull(one)){
+            WmsInventory model = new WmsInventory();
+            BeanUtil.copyProperties(one,model);
+            model.setStockQuantity(BigDecimalUtil.subtract(model.getStockQuantity(),byId.getQuantity()));
+            if(model.getAvailableQuantity().compareTo(BigDecimal.ZERO)==0
+                    &&model.getDetectionQuantity().compareTo(BigDecimal.ZERO)==0
+                    &&model.getTotalQuantity().compareTo(BigDecimal.ZERO)==0
+                    &&model.getStockQuantity().compareTo(BigDecimal.ZERO)==0
+                    &&model.getFreezeQuantity().compareTo(BigDecimal.ZERO)==0
+                    &&model.getLockQuantity().compareTo(BigDecimal.ZERO)==0){
+                wmsInventoryService.removeById(one.getId());
+            }else {
+                wmsInventoryService.updateById(model);
+            }
+        }
+        wmsStorageReceiptInfoService.removeById(id);
+        return true;
+    }
+
+    @Override
     public void download(HttpServletResponse response) throws IOException{
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");

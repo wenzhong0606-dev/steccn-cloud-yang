@@ -292,6 +292,12 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.deleteInfo(dto));
     }
 
+    @ApiOperation("删除已创建状态入库单明细并还原库存")
+    @DeleteMapping("/delete/detail/{id}")
+    public R<Boolean> deleteInfo(@PathVariable("id") Long id){
+        return R.success(wmsStorageReceiptService.deleteDetail(id));
+    }
+
 
     @ApiOperation("原片采购入库数")
     @PostMapping("/purchase/inventory/raw/glass")
