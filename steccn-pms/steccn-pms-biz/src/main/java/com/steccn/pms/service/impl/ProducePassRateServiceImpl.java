@@ -241,6 +241,9 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         }
 
         List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime, dto.getProductLineIdList());
+        if(CollUtil.isNotEmpty(reportWorkGroupVOList)){
+            reportWorkGroupVOList = reportWorkGroupVOList.stream().filter(v->Objects.nonNull(v.getProductLineId())).collect(Collectors.toList());
+        }
         Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
         Set<Long> materialIdSet = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getMaterialId).collect(Collectors.toSet());
