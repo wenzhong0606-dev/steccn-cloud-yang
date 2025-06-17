@@ -962,6 +962,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(officeName);
             }
             if (CollUtil.isNotEmpty(wmsStorageReceiptVO.getList())) {
+                Set<String> productLineCodes = wmsStorageReceiptVO.getList().stream().filter(v -> Objects.nonNull(v.getProductionLineName())).map(WmsStorageReceiptInfoVO::getProductionLineName).collect(Collectors.toSet());
+                Map<String, SysOfficeVO> stringSysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(productLineCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 for (WmsStorageReceiptInfoVO tmp : wmsStorageReceiptVO.getList()) {
                     ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
                     erpCommonSaveDetail.setFmesentryid(tmp.getId().toString());
@@ -969,7 +971,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     erpCommonSaveDetail.setFmustqty(tmp.getQuantity());
                     erpCommonSaveDetail.setFrealqty(tmp.getQuantity());
                     //YWZ需求 批号为箱号
-                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
+//                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
+                    erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(tmp.getMaterialName(),stringSysOfficeVOMap.get(tmp.getProductionLineName()).getParentCode(),String.valueOf(tmp.getQuantity().intValue())));
                     erpCommonSaveDetail.setFstockno(erpStockCode);
                     if (StrUtil.isBlank(tmp.getErpLineCode())) {
                         if(StrUtil.isBlank(erpDepCode)){

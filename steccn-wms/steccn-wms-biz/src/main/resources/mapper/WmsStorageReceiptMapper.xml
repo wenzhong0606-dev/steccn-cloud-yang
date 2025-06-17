@@ -43,6 +43,7 @@
         a.shelf_id,
         a.affirm_time,
         a.affirm_name,
+        a.come_time,
         a.note
         FROM
         wms_storage_receipt a

@@ -336,4 +336,5 @@ public interface RemoteOfficeFeign {
     @GetMapping("/feign/platform/sys/office/code")
     @ApiOperation("根据机构code获取机构信息")
     R<SysOfficeVO> getByCode(@RequestParam("code") String warehouseCode);
+
 }

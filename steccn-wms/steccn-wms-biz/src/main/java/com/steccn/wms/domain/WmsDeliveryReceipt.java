@@ -65,6 +65,21 @@ public class WmsDeliveryReceipt implements Serializable {
     private Long linkedId;
 
     /**
+     * 关联的主键-报工id
+     */
+    private LocalDateTime outTime;
+
+    /**
+     * 产线id
+     */
+    private Integer productLineId;
+
+    /**
+     * 产线名称
+     */
+    private String productLineName;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

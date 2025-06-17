@@ -208,4 +208,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     List<WmsDeliveryReceiptClientNumDTO> clientNum(Set<Long> materialIdSet, LocalDate start, LocalDate end);
+
+    /**
+     * 同步至erp
+     * @param id
+     * @return
+     */
+    Boolean LinkErp(Long id);
 }

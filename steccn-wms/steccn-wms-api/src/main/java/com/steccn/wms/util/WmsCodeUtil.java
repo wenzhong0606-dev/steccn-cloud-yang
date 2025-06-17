@@ -1,6 +1,16 @@
 package com.steccn.wms.util;
 
+import cn.hutool.core.util.StrUtil;
+import com.google.common.collect.Lists;
+import com.steccn.common.dto.ParentTupleDTO;
+import com.steccn.common.vo.EpTreeGraphDataVO;
+import com.steccn.common.vo.EpTreeGraphLinkVO;
+import com.steccn.common.vo.EpTreeGraphVO;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -136,6 +146,32 @@ public class WmsCodeUtil {
         }
         String s = LocalDate.now().toString().replaceAll(SHORT_LINE, "");
         return prefix + s + SHORT_LINE + classes + SHORT_LINE + finalValStr;
+    }
+
+    /**
+     * 获取erp批号
+     * @param root
+     * @return
+     */
+    public static String getErpFlotCode(String materialName,String workShopCode,String packNum) {
+        if(StrUtil.isBlank(materialName) || StrUtil.isBlank(workShopCode) || StrUtil.isBlank(packNum)){
+            return "0";
+        }
+        StringBuilder sb = new StringBuilder();
+        if(materialName.contains("原片")){
+            sb.append("2Y");
+        }else {
+            if(workShopCode.equals("STEC002")){
+                sb.append("1");
+            }else if(workShopCode.equals("STEC003")){
+                sb.append("2");
+            } else if (workShopCode.equals("STEC015")) {
+                sb.append("3");
+            }
+            sb.append("-CT.");
+            sb.append(packNum);
+        }
+        return sb.toString();
     }
 
 }

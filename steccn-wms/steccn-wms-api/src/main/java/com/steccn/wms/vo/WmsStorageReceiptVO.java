@@ -64,6 +64,9 @@ public class WmsStorageReceiptVO {
     @ApiModelProperty("备注")
     private String note;
 
+    @ApiModelProperty("入库时间")
+    private LocalDateTime comeTime;
+
     @ApiModelProperty("明细集合")
     private List<WmsStorageReceiptInfoVO> list;
 }

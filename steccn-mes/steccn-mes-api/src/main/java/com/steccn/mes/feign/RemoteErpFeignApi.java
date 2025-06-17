@@ -108,6 +108,24 @@ public interface RemoteErpFeignApi {
      */
     @PostMapping("/api/tcmes/savemisdelivery")
     @ApiOperation("保存其他出库单")
+    String saveMisDelivery(@RequestBody ErpReturnStockSaveDTO dto);
+
+    /**
+     * 保存生产领料单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savesppickmtrl")
+    @ApiOperation("保存生产领料单")
+    String saveSpPickMtrl(@RequestBody ErpReturnStockSaveDTO dto);
+
+    /**
+     * 保存其他出库单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/savemisdelivery")
+    @ApiOperation("保存其他出库单")
     String saveMisdelivery(@RequestBody ErpReturnStockSaveDTO dto);
 
     /**

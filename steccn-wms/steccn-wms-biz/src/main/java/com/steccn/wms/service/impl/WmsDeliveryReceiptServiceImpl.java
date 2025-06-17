@@ -88,6 +88,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -590,11 +591,18 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R<String> scanDeliveryReceipt(Map<String, Object> paramMap) {
         String result = "";
         //类型
         Long type = paramMap.containsKey("type") ? (paramMap.get("type") == null ? null :
                 Long.parseLong(paramMap.get("type").toString())) : null;
+        LocalDateTime outTime = paramMap.containsKey("outTime") ? (paramMap.get("outTime") == null ? null :
+                LocalDateTime.parse(paramMap.get("outTime").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))) : null;
+        Integer productLineId = paramMap.containsKey("productLineId") ? (paramMap.get("productLineId") == null ? null :
+                Integer.parseInt(paramMap.get("productLineId").toString())) : null;
+        String productLineName = paramMap.containsKey("productLineName") ? (paramMap.get("productLineName") == null ? null :
+                paramMap.get("productLineName").toString()) : null;
         if (Objects.isNull(type)) return R.failure("请选择类型");
         List<Map<String, Object>> productList = paramMap.containsKey("inventoryList") ? (List<Map<String,
                 Object>>) paramMap.get("inventoryList") : null;
@@ -610,6 +618,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             wmsDeliveryReceipt.setWarehouseId(moduleEntry.getKey());
             wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
             wmsDeliveryReceipt.setAffirmName(SecurityUtils.getUser().getName());
+            wmsDeliveryReceipt.setOutTime(outTime);
+            wmsDeliveryReceipt.setProductLineId(productLineId);
+            wmsDeliveryReceipt.setProductLineName(productLineName);
             this.baseMapper.insert(wmsDeliveryReceipt);
             for (Map<String, Object> item : inventoryList) {
                 //保存出库明细
@@ -891,14 +902,15 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         String warehouseCode = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(wmsDeliveryReceiptVO.getWarehouseId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get()
                 .get(wmsDeliveryReceiptVO.getWarehouseId()).getOfficeCode();
         //销售发货
-        if (wmsDeliveryReceiptVO.getType().equals(1582297407643815936L)) {
-            ErpReturnStockSaveDTO erpParam = new ErpReturnStockSaveDTO();
-            erpParam.setFmesbillid(wmsDeliveryReceiptVO.getId());
-            erpParam.setFcustno(wmsDeliveryReceiptVO.getCode());
-            erpParam.setFdate(wmsDeliveryReceiptVO.getAffirmTime().toLocalDate());
-            //客户编码未知
+        ErpReturnStockSaveDTO erpParam = new ErpReturnStockSaveDTO();
+        erpParam.setFmesbillid(wmsDeliveryReceiptVO.getId());
+        erpParam.setFcustno(wmsDeliveryReceiptVO.getCode());
+        erpParam.setFdate(wmsDeliveryReceiptVO.getAffirmTime().toLocalDate());
+        //客户编码未知
 //            erpParam.setFcustno();
-            List<ErpStockSaveDetailDTO> erpDetails = com.google.common.collect.Lists.newArrayList();
+        List<ErpStockSaveDetailDTO> erpDetails = com.google.common.collect.Lists.newArrayList();
+        String listR = "";
+        if (wmsDeliveryReceiptVO.getType().equals(1582297407643815936L)) {
             wmsDeliveryReceiptVO.getList().forEach(tmp -> {
                 ErpStockSaveDetailDTO erpDetail = new ErpStockSaveDetailDTO();
                 erpDetail.setFmatno(tmp.getMaterialCode());
@@ -918,7 +930,37 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 //                erpDetail.setFsrcmesentryid();
                 erpDetails.add(erpDetail);
             });
-            String listR = remoteErpFeignApi.saveOutStock(erpParam);
+            erpParam.setFentry(erpDetails);
+            listR = remoteErpFeignApi.saveOutStock(erpParam);
+        }else if(wmsDeliveryReceiptVO.getType().equals(1582297428762136576L)){
+            //其他出库
+            wmsDeliveryReceiptVO.getList().forEach(tmp -> {
+                ErpStockSaveDetailDTO erpDetail = new ErpStockSaveDetailDTO();
+                erpDetail.setFmatno(tmp.getMaterialCode());
+                erpDetail.setFqty(tmp.getQuantity());
+                erpDetail.setFstockno(warehouseCode);
+                //批号
+//                erpDetail.setFlot();
+                erpDetails.add(erpDetail);
+            });
+            erpParam.setFentry(erpDetails);
+            listR = remoteErpFeignApi.saveMisDelivery(erpParam);
+        }else if(wmsDeliveryReceiptVO.getType().equals(1582296769061031936L)){
+            //生产领料
+            wmsDeliveryReceiptVO.getList().forEach(tmp -> {
+                ErpStockSaveDetailDTO erpDetail = new ErpStockSaveDetailDTO();
+                erpDetail.setFmatno(tmp.getMaterialCode());
+                erpDetail.setFqppqty(tmp.getQuantity());
+                erpDetail.setFactualqty(tmp.getQuantity());
+                erpDetail.setFstockno(warehouseCode);
+                //批号
+//                erpDetail.setFlot();
+                erpDetails.add(erpDetail);
+            });
+            erpParam.setFentry(erpDetails);
+            listR = remoteErpFeignApi.saveSpPickMtrl(erpParam);
+        }
+        if(StrUtil.isNotBlank(listR)){
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
             if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
@@ -1201,6 +1243,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             resList = resList.stream().filter(v -> StrUtil.isNotBlank(v.getClientName())).collect(Collectors.toList());
         }
         return resList;
+    }
+
+    @Override
+    public Boolean LinkErp(Long id) {
+        return null;
     }
 
     /**

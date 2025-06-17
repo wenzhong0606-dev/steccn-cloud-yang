@@ -41,4 +41,12 @@ public class ErpStockSaveDetailDTO extends ErpSpinStockSaveDetailDTO{
      * 销售退货单使用的实退数量
      */
     private BigDecimal fqty;
+    /**
+     * 生产领料单申请数量
+     */
+    private BigDecimal fqppqty;
+    /**
+     * 生产领料单实发数量
+     */
+    private BigDecimal factualqty;
 }
