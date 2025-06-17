@@ -293,7 +293,7 @@ public class WmsStorageReceiptController {
     }
 
     @ApiOperation("删除已创建状态入库单明细并还原库存")
-    @DeleteMapping("/delete/detail/{id}")
+    @GetMapping("/delete/detail/{id}")
     public R<Boolean> deleteInfo(@PathVariable("id") Long id){
         return R.success(wmsStorageReceiptService.deleteDetail(id));
     }
