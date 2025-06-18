@@ -43,6 +43,9 @@
         a.warehouse_id,
         a.affirm_time,
         a.affirm_name,
+        a.out_time,
+        a.product_line_id,
+        a.product_line_name,
         a.note
         FROM
         wms_delivery_receipt a

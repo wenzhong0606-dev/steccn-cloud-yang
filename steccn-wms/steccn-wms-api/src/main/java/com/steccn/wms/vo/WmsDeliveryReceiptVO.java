@@ -53,6 +53,12 @@ public class WmsDeliveryReceiptVO {
     @ApiModelProperty("备注")
     private String note;
 
+    private LocalDateTime outTime;
+
+    private Integer productLineId;
+
+    private String productLineName;
+
     @ApiModelProperty("明细集合")
     private List<WmsDeliveryReceiptInfoVO> list;
 

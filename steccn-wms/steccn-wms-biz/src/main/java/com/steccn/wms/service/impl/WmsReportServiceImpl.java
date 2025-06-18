@@ -393,13 +393,16 @@ public class WmsReportServiceImpl implements WmsReportService {
                                     SysOfficeVO sysOfficeVO = officeMapByLineName.get(daySheetVO.getProductionLineName());
                                     if (Objects.nonNull(sysOfficeVO)) {
                                         wmsInventoryDaySheetVO.setSort(sysOfficeVO.getTreeSort());
+                                        wmsInventoryDaySheetVO.setProductionLineId(sysOfficeVO.getId());
                                     }
+                                    wmsInventoryDaySheetVO.setWarehouseId(daySheetVO.getWarehouseId());
                                     wmsInventoryDaySheetVO.setWarehouseName(officeMap.get(daySheetVO.getWarehouseId()).getOfficeName());
                                     wmsInventoryDaySheetVO.setTypeName(typeNameMap.get(daySheetVO.getType()));
                                     wmsInventoryDaySheetVO.setClasses(daySheetVO.getClasses());
                                     wmsInventoryDaySheetVO.setMaterialName(daySheetVO.getMaterialName());
                                     wmsInventoryDaySheetVO.setStatus(daySheetVO.getStatus());
                                     BigDecimal totalQuantity = BigDecimal.ZERO;
+                                    List<String> receiptCodes = Lists.newArrayList();
                                     List<String> caseNoList = Lists.newArrayList();
                                     Integer caseNum = null;
                                     for (WmsInventoryDaySheetVO inventoryDaySheetVO : classesValue) {
@@ -409,7 +412,9 @@ public class WmsReportServiceImpl implements WmsReportService {
                                                 .map(String::trim)
                                                 .collect(Collectors.toList());
                                         caseNoList.addAll(boxNumbers);
+                                        receiptCodes.add(inventoryDaySheetVO.getCode());
                                     }
+                                    wmsInventoryDaySheetVO.setReceiptCode(receiptCodes);
                                     wmsInventoryDaySheetVO.setCaseNum(caseNum);
                                     wmsInventoryDaySheetVO.setTotalQuantity(totalQuantity);
                                     wmsInventoryDaySheetVO.setCaseNoList(caseNoList);
