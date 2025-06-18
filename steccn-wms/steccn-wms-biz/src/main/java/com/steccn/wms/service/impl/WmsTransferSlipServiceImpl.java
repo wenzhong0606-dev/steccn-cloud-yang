@@ -666,36 +666,38 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         if (CollUtil.isNotEmpty(list)) {
             Set<Long> ids = list.stream().map(WmsTransferSlip::getId).collect(Collectors.toSet());
             List<WmsTransferSlipInfo> infos = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().in(WmsTransferSlipInfo::getTransferSlipId,ids));
-            List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
-            List<Long> materialIds = infos.stream().map(WmsTransferSlipInfo::getMaterialId).collect(Collectors.toList());
-            Set<Long> typeIds = Sets.newHashSet();
-            List<String> types = Lists.newArrayList();
-            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            materialMap.forEach((key, value) -> typeIds.add(value.getType()));
-            //获取物料分类
-            Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
-            if (CollUtil.isNotEmpty(classificationMap)){
-                classificationMap.forEach((key,value)-> types.add(value.getName()));
-                wmsStorageReceiptInfoVOS.forEach(infoVO-> {
-                    if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
-                        infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
-                    }
-                });
-                Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
-                        .filter(vo -> vo.getClassificationName() != null)
-                        .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
-                QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
-                List<BigDecimal> quantity = Lists.newArrayList();
-                types.forEach(type->{
-                    quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
-                });
-                qtSeriesDataDTO.setData(quantity);
-                qtSeriesDataDTO.setName(WmsManagerConstant.MATERIAL);
-                qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
-                seriesDataVO.add(qtSeriesDataDTO);
+            if(CollUtil.isNotEmpty(infos)){
+                List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(infos, WmsStorageReceiptInfoVO.class);
+                List<Long> materialIds = infos.stream().map(WmsTransferSlipInfo::getMaterialId).collect(Collectors.toList());
+                Set<Long> typeIds = Sets.newHashSet();
+                List<String> types = Lists.newArrayList();
+                Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                materialMap.forEach((key, value) -> typeIds.add(value.getType()));
+                //获取物料分类
+                Map<Long, ClassificationVO> classificationMap = remoteMessFeignApi.spareClassification(typeIds);
+                if (CollUtil.isNotEmpty(classificationMap)){
+                    classificationMap.forEach((key,value)-> types.add(value.getName()));
+                    wmsStorageReceiptInfoVOS.forEach(infoVO-> {
+                        if (Objects.nonNull(materialMap.get(infoVO.getMaterialId()).getType())) {
+                            infoVO.setClassificationName(classificationMap.get( materialMap.get(infoVO.getMaterialId()).getType()).getName());
+                        }
+                    });
+                    Map<String, List<WmsStorageReceiptInfoVO>> receiptMap = wmsStorageReceiptInfoVOS.stream()
+                            .filter(vo -> vo.getClassificationName() != null)
+                            .collect(Collectors.groupingBy(WmsStorageReceiptInfoVO::getClassificationName));
+                    QtSeriesDataDTO<String,BigDecimal> qtSeriesDataDTO = new QtSeriesDataDTO<>();
+                    List<BigDecimal> quantity = Lists.newArrayList();
+                    types.forEach(type->{
+                        quantity.add( receiptMap.get(type).stream().map(WmsStorageReceiptInfoVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimalUtil::add));
+                    });
+                    qtSeriesDataDTO.setData(quantity);
+                    qtSeriesDataDTO.setName(WmsManagerConstant.MATERIAL);
+                    qtSeriesDataDTO.setType(WmsManagerConstant.BAR);
+                    seriesDataVO.add(qtSeriesDataDTO);
+                }
+                chartVO.setXData(types);
+                chartVO.setSeriesDataVO(seriesDataVO);
             }
-            chartVO.setXData(types);
-            chartVO.setSeriesDataVO(seriesDataVO);
         }
         return chartVO;
     }
