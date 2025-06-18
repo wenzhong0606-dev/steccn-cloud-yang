@@ -13,6 +13,10 @@ public class WmsInventoryDaySheetVO {
 
     private String materialName;
 
+    private Long materialId;
+
+    private String materialCode;
+
     private Long type;
 
     private String typeName;

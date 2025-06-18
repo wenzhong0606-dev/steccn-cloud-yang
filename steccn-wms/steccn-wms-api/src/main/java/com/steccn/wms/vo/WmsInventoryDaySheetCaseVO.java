@@ -32,7 +32,7 @@ public class WmsInventoryDaySheetCaseVO {
 
     private LocalDateTime comeTime;
 
-
+    private String productionLineName;
 
 
 }

@@ -39,6 +39,13 @@ public interface WmsReportService {
      */
     List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto);
 
+    /**
+     * 同步日报表数据
+     * @param dto
+     * @return
+     */
+    Boolean synDaySheet(WmsInventoryDaySheetDTO dto);
+
     List<WmsInventoryDaySheetCaseVO> daySheetCaseList(WmsInventoryDaySheetDTO dto);
 
     /**

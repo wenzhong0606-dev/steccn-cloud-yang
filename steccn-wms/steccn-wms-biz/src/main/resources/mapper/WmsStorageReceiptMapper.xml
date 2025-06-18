@@ -202,6 +202,8 @@
     <select id="daySheetData" resultType="com.steccn.wms.vo.WmsInventoryDaySheetVO">
         SELECT
         a.material_name,
+        a.material_id,
+        a.material_code,
         b.type,
         b.warehouse_id,
         b.CODE,
@@ -280,6 +282,7 @@
         a.material_name as materialName,
         a.quantity as quantity,
         a.case_no as caseNo,
+        a.production_line_name,
         b.`code` as code,
         b.STATUS as status,
         b.create_time as createTime,
