@@ -623,7 +623,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             wmsDeliveryReceipt.setWarehouseId(moduleEntry.getKey());
             wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
             wmsDeliveryReceipt.setAffirmName(SecurityUtils.getUser().getName());
-            wmsDeliveryReceipt.setOutTime(outTime);
+            if(Objects.isNull(outTime)){
+                wmsDeliveryReceipt.setOutTime(LocalDateTime.now());
+            }else {
+                wmsDeliveryReceipt.setOutTime(outTime);
+            }
             wmsDeliveryReceipt.setProductLineId(productLineId);
             wmsDeliveryReceipt.setProductLineName(productLineName);
             this.baseMapper.insert(wmsDeliveryReceipt);
@@ -666,9 +670,49 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         wmsDeliveryReceipt.setWarehouseId(one.getWarehouseId());
         wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
         wmsDeliveryReceipt.setAffirmName(one.getAffirmName());
+        wmsDeliveryReceipt.setCreateBy(one.getCreateBy());
+        wmsDeliveryReceipt.setCreateName(one.getCreateName());
+        wmsDeliveryReceipt.setUpdateBy(one.getUpdateBy());
+        wmsDeliveryReceipt.setUpdateName(one.getUpdateName());
+        wmsDeliveryReceipt.setOutTime(LocalDateTime.now());
+        if(CollUtil.isNotEmpty(wmsStorageReceiptInfos)){
+            String productionLineName = wmsStorageReceiptInfos.get(0).getProductionLineName();
+            if(StrUtil.isNotBlank(productionLineName)){
+                Map<String, SysOfficeVO> stringSysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(productionLineName)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                String replace = stringSysOfficeVOMap.get(productionLineName).getOfficeName().replace("基片", "深加工");
+                Map<String, SysOfficeVO> nameMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(Sets.newHashSet(replace)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(Objects.nonNull(nameMap.get(replace))){
+                    wmsDeliveryReceipt.setProductLineId(nameMap.get(replace).getId());
+                    wmsDeliveryReceipt.setProductLineName(nameMap.get(replace).getOfficeName());
+                }
+            }
+        }
         this.baseMapper.insert(wmsDeliveryReceipt);
-        wmsInventoryService.remove(new LambdaQueryWrapper<WmsInventory>()
-                .in(WmsInventory::getCaseNo,wmsStorageReceiptInfos.stream().map(WmsStorageReceiptInfo::getCaseNo).collect(Collectors.toSet())));
+        //保存出库明细
+        Set<String> caseNoSet = wmsStorageReceiptInfos.stream().map(WmsStorageReceiptInfo::getCaseNo).collect(Collectors.toSet());
+        if(CollUtil.isNotEmpty(caseNoSet)){
+            List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>()
+                    .in(WmsInventory::getCaseNo, caseNoSet));
+            if(CollUtil.isNotEmpty(list)){
+                List<WmsDeliveryReceiptInfo> models = Lists.newArrayList();
+                List<Long> inventoryIds = Lists.newArrayList();
+                list.forEach(tmp->{
+                    WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
+                    wmsDeliveryReceiptInfo.setDeliveryReceiptId(wmsDeliveryReceipt.getId());
+                    inventoryIds.add(tmp.getId());
+                    wmsDeliveryReceiptInfo.setMaterialId(tmp.getMaterialId());
+                    wmsDeliveryReceiptInfo.setInventoryId(tmp.getId());
+                    wmsDeliveryReceiptInfo.setQuantity(tmp.getAvailableQuantity());
+                    wmsDeliveryReceiptInfo.setCreateBy(one.getCreateBy());
+                    wmsDeliveryReceiptInfo.setCreateName(one.getCreateName());
+                    wmsDeliveryReceiptInfo.setUpdateBy(one.getUpdateBy());
+                    wmsDeliveryReceiptInfo.setUpdateName(one.getUpdateName());
+                    models.add(wmsDeliveryReceiptInfo);
+                });
+                wmsDeliveryReceiptInfoService.saveBatch(models);
+                wmsInventoryService.removeByIds(inventoryIds);
+            }
+        }
         return true;
     }
 
@@ -681,6 +725,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         wmsDeliveryReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
         wmsDeliveryReceipt.setAffirmName(userName);
         wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
+        wmsDeliveryReceipt.setOutTime(LocalDateTime.now());
         save(wmsDeliveryReceipt);
         List<WmsDeliveryReceiptInfo> list = Lists.newArrayList();
         wmsDeliveryReceiptDTO.getList().forEach(info -> {
@@ -783,6 +828,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 model.setCreateBy(dto.getCreateBy());
                 model.setCreateName(dto.getCreateName());
             }
+            model.setOutTime(LocalDateTime.now());
             //4.保存出库单信息
             save(model);
             //5.保存出库单明细信息
