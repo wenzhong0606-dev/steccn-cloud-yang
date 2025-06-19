@@ -660,7 +660,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 .eq(WmsStorageReceipt::getCode, code)
                 .last("LIMIT 1"));
         List<WmsStorageReceiptInfo> wmsStorageReceiptInfos = wmsStorageReceiptInfoMapper.selectList(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
-                .select(WmsStorageReceiptInfo::getCaseNo)
+                .select(WmsStorageReceiptInfo::getCaseNo,WmsStorageReceiptInfo::getProductionLineName)
                 .eq(WmsStorageReceiptInfo::getStorageReceiptId, one.getId()));
         //保存出库信息
         WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
