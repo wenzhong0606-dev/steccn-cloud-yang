@@ -70,6 +70,12 @@ public class WmsReportController {
         return R.success(wmsReportService.daySheetData(dto));
     }
 
+    @PostMapping("/day/sheet/linkErp")
+    @ApiOperation("日报表连接Erp")
+    public  R<Boolean> daySheetDataLinkErp(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.synDaySheet(dto));
+    }
+
     @PostMapping("/day/sheet/case/list")
     @ApiOperation("仓储入库统计日报箱列表")
     public R<List<WmsInventoryDaySheetCaseVO>> daySheetCaseList(@RequestBody WmsInventoryDaySheetDTO dto){

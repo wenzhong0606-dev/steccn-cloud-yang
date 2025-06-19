@@ -140,6 +140,10 @@ public interface RemoteWmsInventoryFeignApi {
     @PutMapping("/wms/storage/receipt/affirm/code")
     R<Boolean> affirm(@RequestBody WmsStorageReceiptDTO dto);
 
+    @ApiOperation("连线入库生成出库单")
+    @PostMapping("/feign/wms/inventory/connect/delivery/create")
+    R<Boolean> connectDelivery(@RequestBody WmsTransferSlipDTO dto);
+
     /**
      * 获取箱子位置
      *

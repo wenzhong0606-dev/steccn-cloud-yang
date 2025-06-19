@@ -128,4 +128,10 @@ public class WmsInventoryFeignController {
     public R<Boolean> chargeAgainstDelivery(@RequestBody TupleDTO<Long,String> dto){
         return R.success(wmsStorageReceiptService.chargeAgainstDelivery(dto.getField1(),dto.getField2()));
     }
+
+    @ApiOperation("连线入库生成出库单")
+    @PostMapping("/connect/delivery/create")
+    public R<Boolean> connectDelivery(@RequestBody WmsTransferSlipDTO dto) {
+        return R.success(wmsDeliveryReceiptService.storageToReceipt(dto.getCode()));
+    }
 }

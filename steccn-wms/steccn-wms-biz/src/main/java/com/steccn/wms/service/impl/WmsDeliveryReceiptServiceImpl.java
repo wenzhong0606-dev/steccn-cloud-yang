@@ -62,6 +62,8 @@ import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.mapper.WmsDeliveryReceiptInfoMapper;
 import com.steccn.wms.mapper.WmsDeliveryReceiptMapper;
+import com.steccn.wms.mapper.WmsStorageReceiptInfoMapper;
+import com.steccn.wms.mapper.WmsStorageReceiptMapper;
 import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.*;
@@ -109,6 +111,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
 
     @Autowired
     private WmsDeliveryReceiptService wmsDeliveryReceiptService;
+
+    private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
+    private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
@@ -642,6 +647,29 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         }
         if (StringUtils.isNotBlank(result)) result = result.substring(0, result.length() - 1);
         return R.success(result);
+    }
+
+    @Override
+    public Boolean storageToReceipt(String code) {
+        //生成出库单
+        WmsStorageReceipt one = wmsStorageReceiptMapper.selectOne(new LambdaQueryWrapper<WmsStorageReceipt>()
+                .eq(WmsStorageReceipt::getCode, code)
+                .last("LIMIT 1"));
+        List<WmsStorageReceiptInfo> wmsStorageReceiptInfos = wmsStorageReceiptInfoMapper.selectList(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                .select(WmsStorageReceiptInfo::getCaseNo)
+                .eq(WmsStorageReceiptInfo::getStorageReceiptId, one.getId()));
+        //保存出库信息
+        WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
+        wmsDeliveryReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+        wmsDeliveryReceipt.setType(1582296769061031936L);
+        wmsDeliveryReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
+        wmsDeliveryReceipt.setWarehouseId(one.getWarehouseId());
+        wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
+        wmsDeliveryReceipt.setAffirmName(one.getAffirmName());
+        this.baseMapper.insert(wmsDeliveryReceipt);
+        wmsInventoryService.remove(new LambdaQueryWrapper<WmsInventory>()
+                .in(WmsInventory::getCaseNo,wmsStorageReceiptInfos.stream().map(WmsStorageReceiptInfo::getCaseNo).collect(Collectors.toSet())));
+        return true;
     }
 
     @Override

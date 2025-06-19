@@ -105,6 +105,12 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      */
     R<String> scanDeliveryReceipt( Map<String, Object> paramMap);
 
+    /**
+     * 入库单转成出库单
+     * @param code
+     * @return
+     */
+    Boolean storageToReceipt(String code);
 
     /**
      *  创建出库单确认

@@ -45,10 +45,7 @@ import com.steccn.pms.vo.CompleteStorageMaterialVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.wms.dto.WmsCustomerBarcodeDTO;
-import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
-import com.steccn.wms.dto.WmsStorageReceiptDTO;
-import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsCustomerBarcodeFeignApi;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.feign.RemoteWmsShelfStrategyFeignApi;
@@ -577,6 +574,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
         receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
         FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        //连线入库时，需要生成对应的生产领料出库单
+        WmsTransferSlipDTO connectDTO = new WmsTransferSlipDTO();
+        connectDTO.setCode(generate);
+        FeignOptional.of(() -> remoteWmsInventoryFeignApi.connectDelivery(connectDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         return generate;
     }
 
