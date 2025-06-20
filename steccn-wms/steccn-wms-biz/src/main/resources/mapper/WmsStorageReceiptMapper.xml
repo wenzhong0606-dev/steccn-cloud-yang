@@ -202,8 +202,8 @@
     <select id="daySheetData" resultType="com.steccn.wms.vo.WmsInventoryDaySheetVO">
         SELECT
         a.material_name,
-        any_value(material_id),
-        any_value(material_code),
+        any_value(a.material_id) as material_id,
+        any_value(a.material_code) as material_code,
         b.type,
         b.warehouse_id,
         b.CODE,
@@ -213,6 +213,8 @@
         '已创建'
         WHEN b.STATUS = 1 THEN
         '已确认'
+        WHEN b.STATUS = 2 THEN
+        '已同步'
         WHEN b.STATUS = 5 THEN
         '已冲销'
         END AS STATUS,
@@ -269,6 +271,8 @@
         '已创建'
         WHEN b.STATUS = 1 THEN
         '已确认'
+        WHEN b.STATUS = 2 THEN
+        '已同步'
         WHEN b.STATUS = 5 THEN
         '已冲销'
         END,

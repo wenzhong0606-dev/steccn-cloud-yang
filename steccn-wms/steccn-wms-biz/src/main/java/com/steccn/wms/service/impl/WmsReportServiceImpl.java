@@ -414,6 +414,8 @@ public class WmsReportServiceImpl implements WmsReportService {
                                     wmsInventoryDaySheetVO.setTypeName(typeNameMap.get(daySheetVO.getType()));
                                     wmsInventoryDaySheetVO.setClasses(daySheetVO.getClasses());
                                     wmsInventoryDaySheetVO.setMaterialName(daySheetVO.getMaterialName());
+                                    wmsInventoryDaySheetVO.setMaterialCode(daySheetVO.getMaterialCode());
+                                    wmsInventoryDaySheetVO.setMaterialId(daySheetVO.getMaterialId());
                                     wmsInventoryDaySheetVO.setStatus(daySheetVO.getStatus());
                                     BigDecimal totalQuantity = BigDecimal.ZERO;
                                     List<String> receiptCodes = Lists.newArrayList();
@@ -461,7 +463,7 @@ public class WmsReportServiceImpl implements WmsReportService {
             return true;
         }
         ErpCommonSaveDTO<ErpSpinStockSaveDetailDTO> erpCommonSaveDTO = new ErpCommonSaveDTO<>();
-        erpCommonSaveDTO.setFdate(LocalDate.now());
+        erpCommonSaveDTO.setFdate(dto.getStartTime().toLocalDate());
         erpCommonSaveDTO.setFmesbillid(IdUtil.simpleUUID());
         erpCommonSaveDTO.setFmesbillno("syn_time_"+LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         //引入详细信息(生产完工入库list)
@@ -579,7 +581,8 @@ public class WmsReportServiceImpl implements WmsReportService {
         //生产完工入库
         if(CollUtil.isNotEmpty(erpCommonSaveDetails)){
             erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
-            String listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
+            String listR = "";
+            listR = remoteErpFeignApi.saveSpinStock(erpCommonSaveDTO);
             //判断是否保存成功
             JSONObject jsonObject = JSONObject.parseObject(listR);
             //成功则修改入库单状态
