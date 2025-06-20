@@ -200,6 +200,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 model.setCreateName(dto.getCreateName());
             }
             //4.保存出库单信息
+            if(Objects.isNull(model.getOutTime())){
+                model.setOutTime(LocalDateTime.now());
+            }
             save(model);
             //5.保存出库单明细信息
             if (CollUtil.isNotEmpty(dto.getList())) {
