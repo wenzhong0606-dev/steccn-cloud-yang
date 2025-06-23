@@ -27,6 +27,7 @@ import com.steccn.wms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -72,6 +73,7 @@ public class WmsReportController {
 
     @PostMapping("/day/sheet/linkErp")
     @ApiOperation("日报表连接Erp")
+    @PreAuthorize("hasAuthority('wms:recipe:linkErp')")
     public  R<Boolean> daySheetDataLinkErp(@RequestBody WmsInventoryDaySheetDTO dto){
         return R.success(wmsReportService.synDaySheet(dto));
     }

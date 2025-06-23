@@ -345,6 +345,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean affirm(Long id) {
         //1.查询订单
         WmsTransferSlip order = getOne(new LambdaQueryWrapper<WmsTransferSlip>().eq(WmsTransferSlip::getId, id));
