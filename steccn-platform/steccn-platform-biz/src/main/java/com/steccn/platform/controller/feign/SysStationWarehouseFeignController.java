@@ -38,4 +38,10 @@ public class SysStationWarehouseFeignController {
     public R<Map<Integer, List<SysStationWarehouseVO>>> listByStationIds(@RequestBody Set<Integer> stations) {
         return R.success(sysStationWarehouseService.listByStationIds(stations));
     }
+
+    @PostMapping("/page")
+    @ApiOperation("工位配置列表")
+    public R<Page<SysStationWarehouseVO>> pageList(@RequestBody SysStationWarehouseDTO dto) {
+        return R.success(sysStationWarehouseService.pageList(dto));
+    }
 }

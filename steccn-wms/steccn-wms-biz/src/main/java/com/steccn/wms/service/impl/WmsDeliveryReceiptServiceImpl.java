@@ -144,6 +144,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
     @Autowired
     private WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
 
+    private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+
     @Override
     public Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto) {
         //1.处理筛选条件时间格式
@@ -616,6 +618,27 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 Object>>) paramMap.get("inventoryList") : null;
         Map<Long, List<Map<String, Object>>> warehouseMap =
                 productList.stream().collect(Collectors.groupingBy(e -> Long.valueOf(e.get("warehouseId").toString())));
+        //收集所有的库存
+        if(Objects.nonNull(productLineId)){
+            //获取产线对应的线边仓
+            SysStationWarehouseDTO dto = new SysStationWarehouseDTO();
+            dto.setOrganId(productLineId.longValue());
+            dto.setOrganType(9);
+//            Page<SysStationWarehouseVO> sysStationWarehouseVOPage = remoteStationWarehouseFeignApi.pageList(dto).getData();
+            Page<SysStationWarehouseVO> sysStationWarehouseVOPage = FeignOptional.of(() -> remoteStationWarehouseFeignApi.pageList(dto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(sysStationWarehouseVOPage.getRecords())){
+                Integer shelfId = sysStationWarehouseVOPage.getRecords().get(0).getShelfId();
+                Set<Long> inventoryIds = productList.stream()
+                        .map(m -> Long.parseLong(m.get("inventoryId").toString()))
+                        .collect(Collectors.toSet());
+                List<WmsInventory> wmsInventories = wmsInventoryService.listByIds(inventoryIds);
+                wmsInventories.forEach(tmp->{
+                    if(!tmp.getShelfId().equals(shelfId)){
+                        throw new BusinessException("目标货架（"+tmp.getShelfName()+"-"+tmp.getWarehouseName()+"）库存不够，请先调拨");
+                    }
+                });
+            }
+        }
         for (Map.Entry<Long, List<Map<String, Object>>> moduleEntry : warehouseMap.entrySet()) {
             List<Map<String, Object>> inventoryList = moduleEntry.getValue();
             //保存出库信息

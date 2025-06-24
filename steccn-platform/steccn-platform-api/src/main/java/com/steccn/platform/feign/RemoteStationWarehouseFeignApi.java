@@ -1,7 +1,9 @@
 package com.steccn.platform.feign;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysStationWarehouseDTO;
 import com.steccn.platform.vo.SysStationWarehouseVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -30,4 +32,8 @@ public interface RemoteStationWarehouseFeignApi {
     @ApiOperation("批量获取工位绑定的线边仓数据")
     R<Map<Integer, List<SysStationWarehouseVO>>> listByStationIds(@RequestBody Set<Integer> stations);
 
+
+    @PostMapping("/feign/platform/station/warehouse/page")
+    @ApiOperation("工位配置列表")
+    R<Page<SysStationWarehouseVO>> pageList(@RequestBody SysStationWarehouseDTO dto);
 }
