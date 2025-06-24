@@ -79,6 +79,11 @@ public class PmsBarcodePrint implements Serializable {
     private Long number;
 
     /**
+     * 托盘类型(0:铁托 1：木托)
+     */
+    private Integer palletType;
+
+    /**
      * 箱状态（0:已完工 1:待入库 2：已入库）
      */
     private Integer caseState;

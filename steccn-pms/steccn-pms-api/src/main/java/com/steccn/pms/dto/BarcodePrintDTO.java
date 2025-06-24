@@ -59,6 +59,8 @@ public class BarcodePrintDTO implements Serializable {
     @Min(value = 1,message = "打印张数最小为1")
     private Integer printNumber;
 
+    private Integer palletType;
+
     @ApiModelProperty("班次id")
     private Long classesId;
 

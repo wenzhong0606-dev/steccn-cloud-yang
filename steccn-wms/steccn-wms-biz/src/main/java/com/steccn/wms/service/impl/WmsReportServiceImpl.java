@@ -470,7 +470,7 @@ public class WmsReportServiceImpl implements WmsReportService {
             return true;
         }
         //去除null值
-        results = results.stream().filter(v->Objects.isNull(v.getProductionLineId())).collect(Collectors.toList());
+        results = results.stream().filter(v->Objects.nonNull(v.getProductionLineId())).collect(Collectors.toList());
         //金蝶同步单据分组，分组逻辑（二级库、成品-原片、成品加工）；二级库包含所有二级库，成品加工按车间分组
         Set<String> deepProcessingLines = Sets.newHashSet("深加工一产线", "深加工二产线", "深加工三产线", "深加工四产线");
         Map<String, List<WmsInventoryDaySheetVO>> finalGrouped = results.stream()
