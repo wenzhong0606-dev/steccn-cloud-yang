@@ -56,7 +56,7 @@ public class BarcodePrintRecordVO implements Serializable {
     @ApiModelProperty("条数")
     private Integer printCount;
 
-    @ApiModelProperty("托盘类型")
+    @ApiModelProperty("托盘类型(0:铁托 1:木托)")
     private Integer palletType;
 
 }
