@@ -6,6 +6,7 @@ import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -50,8 +51,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -1397,6 +1401,29 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             vo.setTargetValue(null);
         }
         return vo;
+    }
+
+    @Override
+    public void generateSubstrateOverviewDownload(HttpServletResponse response) throws IOException {
+        LocalDate day = LocalDate.of(2024,6,23);
+        List<QtOverviewVO> results = Lists.newArrayList();
+        while (!day.equals(LocalDate.now())){
+            QtTimeDTO dto = new QtTimeDTO();
+            dto.setStartTime(day);
+            QtDefectChartVO qtDefectChartVO = generateSubstrateOverview(dto);
+            QtOverviewVO vo = new QtOverviewVO();
+            vo.setDate(day.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            vo.setValue(qtDefectChartVO.getValue().toString()+"%");
+            results.add(vo);
+            day = day.plusDays(1);
+        }
+        // 这里注意 有同学反应使用swagger 会导致各种问题，请直接用浏览器或者用postman
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("测试", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), QtOverviewVO.class).sheet("模板").doWrite(results);
     }
 
     @Override

@@ -9,6 +9,8 @@ import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +35,13 @@ public interface QtChartGenerateService {
      * @return
      */
     QtDefectChartVO generateSubstrateOverview(QtTimeDTO dto);
+
+    /**
+     * 基片成品率下载
+     * @param dto
+     * @return
+     */
+    void generateSubstrateOverviewDownload(HttpServletResponse response)throws IOException;
 
     String OverviewPercent();
 

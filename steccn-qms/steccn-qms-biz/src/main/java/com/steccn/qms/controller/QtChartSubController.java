@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +41,11 @@ public class QtChartSubController {
     @PostMapping("/sub/overview")
     public R<QtDefectChartVO> generateSubstrateOverview(@RequestBody QtTimeDTO dto){
         return R.success(qtChartGenerateService.generateSubstrateOverview(dto));
+    }
+
+    @PostMapping("/sub/overview/download")
+    public void generateSubstrateOverviewDownload(HttpServletResponse response) throws IOException {
+        qtChartGenerateService.generateSubstrateOverviewDownload(response);
     }
 
     @GetMapping("/sub/overview/dataTwin")
