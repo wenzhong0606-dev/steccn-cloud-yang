@@ -90,6 +90,12 @@ public class WmsReportController {
         return R.success(wmsReportService.statisticalData(dto));
     }
 
+    @PostMapping("/out/day/sheet/production")
+    @ApiOperation("生产领料日报表")
+    public R<List<WmsInventoryDaySheetVO>> productionDaySheet(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.productionDaySheet(dto));
+    }
+
     @PostMapping("out/in/warehouse/info")
     @ApiOperation("出入库明细")
     public R<SteccnTableDataDTO> outInWarehouseInfo(@RequestBody WmsOutInWarehouseInfoDTO dto){

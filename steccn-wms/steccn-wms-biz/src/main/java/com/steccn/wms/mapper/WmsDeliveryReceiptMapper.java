@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.dto.SalesLogisticsBillDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.vo.SalesLogisticsBillVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsInventoryDaySheetVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
@@ -103,6 +105,13 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     List<WmsDeliveryReceiptInfo> clientNum(@Param("materialIdSet") Set<Long> materialIdSet, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    /**
+     * 生产领料出库日报表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetVO> productionDaySheet(@Param("dto") WmsInventoryDaySheetDTO dto);
 }
 
 

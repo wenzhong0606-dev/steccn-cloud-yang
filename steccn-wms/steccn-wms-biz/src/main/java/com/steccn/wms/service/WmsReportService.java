@@ -40,6 +40,13 @@ public interface WmsReportService {
     List<WmsInventoryDaySheetVO> daySheetData(WmsInventoryDaySheetDTO dto);
 
     /**
+     * 生产领料出库日报表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetVO> productionDaySheet(WmsInventoryDaySheetDTO dto);
+
+    /**
      * 同步日报表数据
      * @param dto
      * @return
@@ -81,4 +88,5 @@ public interface WmsReportService {
      * @return
      */
     Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto);
+
 }

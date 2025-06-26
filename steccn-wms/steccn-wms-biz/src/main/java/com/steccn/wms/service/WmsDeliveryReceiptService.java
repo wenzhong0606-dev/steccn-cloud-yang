@@ -13,6 +13,7 @@ import com.steccn.wms.vo.*;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
+import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -221,4 +222,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     Boolean LinkErp(Long id);
+
+    /**
+     * 生产领料出库日报表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetVO> productionDaySheet(WmsInventoryDaySheetDTO dto);
 }
