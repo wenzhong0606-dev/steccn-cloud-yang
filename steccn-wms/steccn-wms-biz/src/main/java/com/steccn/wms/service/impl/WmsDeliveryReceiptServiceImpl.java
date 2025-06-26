@@ -1356,6 +1356,12 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return results;
     }
 
+    @Override
+    public List<WmsInventoryDaySheetCaseVO> productionDaySheetCaseList(WmsInventoryDaySheetDTO dto) {
+        List<WmsInventoryDaySheetCaseVO> productionDaySheetCaseList = wmsDeliveryReceiptMapper.productionDaySheetCaseList(dto);
+        return productionDaySheetCaseList;
+    }
+
     /**
      * 当前最大的code值
      *

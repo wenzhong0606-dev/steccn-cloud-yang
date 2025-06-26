@@ -1027,6 +1027,10 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                         wmsInventoryRecord.setBackStockQuantity(info.getQuantity());
                         wmsInventoryRecord.setBackTotalQuantity(BigDecimal.ZERO);
                         wmsInventoryRecord.setBackLockQuantity(BigDecimal.ZERO);
+                        wmsInventoryRecord.setCreateName(info.getCreateName());
+                        wmsInventoryRecord.setCreateBy(info.getCreateBy());
+                        wmsInventoryRecord.setUpdateName(info.getUpdateName());
+                        wmsInventoryRecord.setUpdateBy(info.getUpdateBy());
                         WmsInventory inventory = new WmsInventory();
                         BeanUtil.copyProperties(info, inventory);
                         inventory.setStockQuantity(info.getQuantity());
@@ -1042,7 +1046,15 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                         wmsInventoryRecord.setBackStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
                         wmsInventoryRecord.setBackTotalQuantity(orDefault.getTotalQuantity());
                         wmsInventoryRecord.setBackLockQuantity(orDefault.getLockQuantity());
+                        wmsInventoryRecord.setCreateName(info.getCreateName());
+                        wmsInventoryRecord.setCreateBy(info.getCreateBy());
+                        wmsInventoryRecord.setUpdateName(info.getUpdateName());
+                        wmsInventoryRecord.setUpdateBy(info.getUpdateBy());
                         orDefault.setStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
+                        orDefault.setCreateName(info.getCreateName());
+                        orDefault.setCreateBy(info.getCreateBy());
+                        orDefault.setUpdateName(info.getUpdateName());
+                        orDefault.setUpdateBy(info.getUpdateBy());
                         addWmsInventory.add(orDefault);
                     }
                     wmsInventoryRecordList.add(wmsInventoryRecord);

@@ -101,10 +101,14 @@ public class WmsCustomerBarcodeServiceImpl extends ServiceImpl<WmsCustomerBarcod
                 if (CollUtil.isNotEmpty(barcodes)){
                     WmsCustomerBarcode wmsCustomerBarcode = barcodes.get(WmsManagerConstant.InventoryEnum.ZERO.getCode());
                     wmsCustomerBarcode.setCustomerBarcode(wmsCustomerBarcodeDTO.getCustomerBarcode());
+                    wmsCustomerBarcode.setUpdateBy(wmsCustomerBarcodeDTO.getUpdateBy());
+                    wmsCustomerBarcode.setUpdateName(wmsCustomerBarcodeDTO.getUpdateName());
                     wmsCustomerBarcodes.add(wmsCustomerBarcode);
                 }else {
                     WmsCustomerBarcode wmsCustomerBarcode = new WmsCustomerBarcode();
                     BeanUtil.copyProperties(wmsCustomerBarcodeDTO,wmsCustomerBarcode);
+                    wmsCustomerBarcode.setCreateBy(wmsCustomerBarcodeDTO.getUpdateBy());
+                    wmsCustomerBarcode.setCreateName(wmsCustomerBarcodeDTO.getUpdateName());
                     wmsCustomerBarcodes.add(wmsCustomerBarcode);
 
                 }

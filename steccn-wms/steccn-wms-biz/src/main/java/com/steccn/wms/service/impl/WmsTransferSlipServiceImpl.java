@@ -218,8 +218,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     @Override
     @Transactional(readOnly = false)
     public Boolean edit(WmsTransferSlipDTO dto) {
-        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_TRANSFER_SLIP);
-        lock.lock();
+//        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_TRANSFER_SLIP);
+//        lock.lock();
         try {
             //1.校验数据是否存在
             Assert.isTrue(Objects.nonNull(dto), "调拨单信息为空");
@@ -339,7 +339,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 wmsTransferSlipInfoService.saveOrUpdateBatch(list);
             }
         } finally {
-            lock.unlock();
+//            lock.unlock();
         }
         return true;
     }

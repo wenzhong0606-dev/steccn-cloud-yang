@@ -34,5 +34,7 @@ public class WmsInventoryDaySheetCaseVO {
 
     private String productionLineName;
 
+    private LocalDateTime outTime;
+
 
 }

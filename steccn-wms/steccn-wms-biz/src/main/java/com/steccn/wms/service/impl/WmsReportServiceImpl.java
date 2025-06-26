@@ -490,6 +490,12 @@ public class WmsReportServiceImpl implements WmsReportService {
     }
 
     @Override
+    public List<WmsInventoryDaySheetCaseVO> productionDaySheetCase(WmsInventoryDaySheetDTO dto) {
+        List<WmsInventoryDaySheetCaseVO> results = wmsDeliveryReceiptService.productionDaySheetCaseList(dto);
+        return results;
+    }
+
+    @Override
     @Transactional
     public Boolean synDaySheet(WmsInventoryDaySheetDTO dto) {
         List<WmsInventoryDaySheetVO> results = daySheetData(dto);

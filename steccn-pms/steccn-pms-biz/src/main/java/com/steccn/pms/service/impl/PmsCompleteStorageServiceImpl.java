@@ -292,6 +292,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
             wmsStorageReceiptDTO.setCreateName(SecurityUtils.getUser().getName());
             wmsStorageReceiptDTO.setCreateBy(SecurityUtils.getUser().getUserId());
+            wmsStorageReceiptDTO.setUpdateBy(SecurityUtils.getUser().getUserId());
+            wmsStorageReceiptDTO.setUpdateName(SecurityUtils.getUser().getName());
             //pms_complete_storage enter_time  -> wms_storage_receipt come_time
             wmsStorageReceiptDTO.setComeTime(enterTime);
             try {

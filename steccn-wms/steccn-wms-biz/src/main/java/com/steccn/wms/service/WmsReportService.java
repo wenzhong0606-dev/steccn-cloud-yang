@@ -47,6 +47,13 @@ public interface WmsReportService {
     List<WmsInventoryDaySheetVO> productionDaySheet(WmsInventoryDaySheetDTO dto);
 
     /**
+     * 生产领料出库日报表箱列表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetCaseVO> productionDaySheetCase(WmsInventoryDaySheetDTO dto);
+
+    /**
      * 同步日报表数据
      * @param dto
      * @return

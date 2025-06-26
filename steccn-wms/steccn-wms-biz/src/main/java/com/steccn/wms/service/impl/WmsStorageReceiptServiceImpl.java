@@ -423,6 +423,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     wmsInventoryDTO.setWarehouseId(dto.getWarehouseId());
                     wmsInventoryDTO.setWarehouseName(dto.getWarehouseName());
                     BeanUtil.copyProperties(info, wmsInventoryDTO);
+                    wmsInventoryDTO.setCreateBy(dto.getCreateBy());
+                    wmsInventoryDTO.setCreateName(dto.getCreateName());
+                    wmsInventoryDTO.setUpdateBy(dto.getUpdateBy());
+                    wmsInventoryDTO.setUpdateName(dto.getUpdateName());
                     WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
                     wmsStorageReceiptInfo.setStorageReceiptId(model.getId());
                     BeanUtil.copyProperties(info, wmsStorageReceiptInfo);

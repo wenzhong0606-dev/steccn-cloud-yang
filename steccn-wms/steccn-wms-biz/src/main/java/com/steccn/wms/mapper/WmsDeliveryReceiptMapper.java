@@ -7,10 +7,7 @@ import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.steccn.wms.dto.SalesLogisticsBillDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
-import com.steccn.wms.vo.SalesLogisticsBillVO;
-import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
-import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsInventoryDaySheetVO;
+import com.steccn.wms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
@@ -112,6 +109,13 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     List<WmsInventoryDaySheetVO> productionDaySheet(@Param("dto") WmsInventoryDaySheetDTO dto);
+
+    /**
+     * 生产领料出库日报表箱列表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetCaseVO> productionDaySheetCaseList(@Param("dto")WmsInventoryDaySheetDTO dto);
 }
 
 

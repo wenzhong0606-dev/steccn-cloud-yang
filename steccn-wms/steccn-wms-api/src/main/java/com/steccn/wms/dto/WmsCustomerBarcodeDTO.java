@@ -28,4 +28,8 @@ public class WmsCustomerBarcodeDTO {
      */
     @ApiModelProperty("客户条码")
     private String customerBarcode;
+
+    private Long updateBy;
+
+    private String updateName;
 }

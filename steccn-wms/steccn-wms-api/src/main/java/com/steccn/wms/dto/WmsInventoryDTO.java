@@ -114,6 +114,12 @@ public class WmsInventoryDTO {
      */
     private LocalDateTime packTime;
 
+    private Long updateBy;
 
+    private String updateName;
+
+    private Long createBy;
+
+    private String createName;
 
 }

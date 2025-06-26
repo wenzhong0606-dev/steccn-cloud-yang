@@ -229,4 +229,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     List<WmsInventoryDaySheetVO> productionDaySheet(WmsInventoryDaySheetDTO dto);
+
+    /**
+     * 生产领料出库日报表箱号
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetCaseVO> productionDaySheetCaseList(WmsInventoryDaySheetDTO dto);
 }

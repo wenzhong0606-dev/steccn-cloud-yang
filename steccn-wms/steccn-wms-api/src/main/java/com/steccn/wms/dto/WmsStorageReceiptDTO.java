@@ -72,6 +72,12 @@ public class WmsStorageReceiptDTO {
     @ApiModelProperty("创建人名称")
     private String createName;
 
+    @ApiModelProperty("修改人")
+    private Long updateBy;
+
+    @ApiModelProperty("修改人名称")
+    private String updateName;
+
     @ApiModelProperty("是否SRM系统传参 0否 1是")
     private Integer isSRMSys;
 
