@@ -97,6 +97,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final WmsTransferSlipMapper wmsTransferSlipMapper;
 
 
     /**
@@ -218,8 +219,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     @Override
     @Transactional(readOnly = false)
     public Boolean edit(WmsTransferSlipDTO dto) {
-//        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_TRANSFER_SLIP);
-//        lock.lock();
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_TRANSFER_SLIP);
+        lock.lock();
         try {
             //1.校验数据是否存在
             Assert.isTrue(Objects.nonNull(dto), "调拨单信息为空");
@@ -304,7 +305,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                     //增加库存中原始占用库存数量,减少可用库存
                     wmsInventoryService.addLockQuantity(sourceList);
                     //增加目标货架在途库存数量
-                    wmsInventoryService.addInfo(sourceList);
+//                    wmsInventoryService.addInfo(sourceList);
+                    wmsInventoryService.add(targetList);
                 }
                 if (CollUtil.isNotEmpty(updateList)) {
                     //获取原始数量
@@ -339,7 +341,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 wmsTransferSlipInfoService.saveOrUpdateBatch(list);
             }
         } finally {
-//            lock.unlock();
+            lock.unlock();
         }
         return true;
     }
@@ -908,6 +910,12 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             );
         }
         return map;
+    }
+
+    @Override
+    public List<WmsInventoryDaySheetVO> transferDaySheet(WmsInventoryDaySheetDTO dto) {
+        List<WmsInventoryDaySheetVO> results = wmsTransferSlipMapper.transferDaySheet(dto);
+        return results;
     }
 
 

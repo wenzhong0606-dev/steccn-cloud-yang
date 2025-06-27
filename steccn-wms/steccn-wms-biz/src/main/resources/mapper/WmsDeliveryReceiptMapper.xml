@@ -324,7 +324,7 @@
             materialId,
             status,
             COUNT(*) AS caseNum,
-            sum(quantity) AS quantity,
+            sum(quantity) AS totalQuantity,
             classes,
             group_concat(case_no ORDER BY case_no SEPARATOR ',  ') as caseNo
         from (

@@ -36,5 +36,13 @@ public class WmsInventoryDaySheetCaseVO {
 
     private LocalDateTime outTime;
 
+    private String targetShelfName;
+
+    private Integer targetShelfId;
+
+    private Integer warehouseId;
+
+    private String warehouseName;
+
 
 }

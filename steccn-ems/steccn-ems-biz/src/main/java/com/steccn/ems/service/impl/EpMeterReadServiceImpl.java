@@ -613,8 +613,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         epMeterRead.setAdminValue(dto.getReadValue());
 
         save(epMeterRead);
-        Boolean aBoolean = createDeliveryReceipt(dto);
-        log.info("创建出库单->"+ aBoolean);
+//        Boolean aBoolean = createDeliveryReceipt(dto);
+//        log.info("创建出库单->"+ aBoolean);
         SteccnUser user = SecurityUtils.getUser();
         epMeterOperationRecord.setReadId(epMeterRead.getId());
         epMeterOperationRecord.setOpBy(user.getUserId());
@@ -833,14 +833,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     batchChargeAgainstDTO.setEndTime(LocalDateUtil.getEndTimeOfDayStr(map.get(epInstrumentAccount.getId()).getReadDate()));
                     againstDTOList.add(batchChargeAgainstDTO);
                 });
-                //仓储批量冲销
-                Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.chargeAgainstAssociated(againstDTOList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-                log.info("仓储冲销:"+aBoolean);
-                //重新生成入库单
-                for (EpMeterReadUpdateDTO epMeterReadUpdateDTO : dtoList) {
-                    EpMeterReadAddDTO epMeterReadAddDTO = BeanUtil.copyProperties(epMeterReadUpdateDTO, EpMeterReadAddDTO.class);
-                    createDeliveryReceipt(epMeterReadAddDTO);
-                }
+//                //仓储批量冲销
+//                Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.chargeAgainstAssociated(againstDTOList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+//                log.info("仓储冲销:"+aBoolean);
+//                //重新生成入库单
+//                for (EpMeterReadUpdateDTO epMeterReadUpdateDTO : dtoList) {
+//                    EpMeterReadAddDTO epMeterReadAddDTO = BeanUtil.copyProperties(epMeterReadUpdateDTO, EpMeterReadAddDTO.class);
+//                    createDeliveryReceipt(epMeterReadAddDTO);
+//                }
             }
         }
         return true;

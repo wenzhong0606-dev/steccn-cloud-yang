@@ -48,6 +48,7 @@ import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.mapper.WmsStorageReceiptInfoMapper;
 import com.steccn.wms.mapper.WmsStorageReceiptMapper;
+import com.steccn.wms.mapper.WmsTransferSlipMapper;
 import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.*;
@@ -91,6 +92,7 @@ public class WmsReportServiceImpl implements WmsReportService {
     private final RemoteErpFeignApi remoteErpFeignApi;
     private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
     private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
+    private final WmsTransferSlipMapper wmsTransferSlipMapper;
 
     @Override
     public SteccnTableDataDTO statisticalData(WmsReportStatisticalDTO dto) {
@@ -492,6 +494,39 @@ public class WmsReportServiceImpl implements WmsReportService {
     @Override
     public List<WmsInventoryDaySheetCaseVO> productionDaySheetCase(WmsInventoryDaySheetDTO dto) {
         List<WmsInventoryDaySheetCaseVO> results = wmsDeliveryReceiptService.productionDaySheetCaseList(dto);
+        return results;
+    }
+
+    @Override
+    public List<WmsInventoryDaySheetVO> transferDaySheet(WmsInventoryDaySheetDTO dto) {
+        List<WmsInventoryDaySheetVO> results = wmsTransferSlipMapper.transferDaySheet(dto);
+        if(CollUtil.isNotEmpty(results)){
+            //获取类型名称
+            Set<Long> typeIds = results.stream().map(WmsInventoryDaySheetVO::getType).collect(Collectors.toSet());
+            Map<Long, String> typeNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取仓库名称
+            Set<Integer> officeIdSet = results.stream().map(WmsInventoryDaySheetVO::getWarehouseId).collect(Collectors.toSet());
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for(WmsInventoryDaySheetVO tmp:results){
+                if(StrUtil.isNotBlank(tmp.getCaseNo())){
+                    List<String> caseNoList = Lists.newArrayList();
+                    List<String> boxNumbers = Arrays.stream(tmp.getCaseNo().split(",\\s*"))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    caseNoList.addAll(boxNumbers);
+                    tmp.setCaseNoList(caseNoList);
+                    tmp.setCaseNo(null);
+                    tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
+                    tmp.setTypeName(typeNameMap.get(tmp.getType()));
+                }
+            }
+        }
+        return results;
+    }
+
+    @Override
+    public List<WmsInventoryDaySheetCaseVO> transferDaySheetCase(WmsInventoryDaySheetDTO dto) {
+        List<WmsInventoryDaySheetCaseVO> results = wmsTransferSlipMapper.transferDaySheetCaseList(dto);
         return results;
     }
 

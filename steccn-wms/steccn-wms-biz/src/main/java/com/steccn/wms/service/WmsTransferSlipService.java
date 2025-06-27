@@ -7,13 +7,12 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.RawMaterialReportDTO;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.wms.dto.WmsReportWarehouseDTO;
-import com.steccn.wms.dto.WmsTransferSlipBatchDto;
-import com.steccn.wms.dto.WmsTransferSlipDTO;
-import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.dto.*;
+import com.steccn.wms.vo.WmsInventoryDaySheetVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
+import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -146,4 +145,11 @@ public interface WmsTransferSlipService extends IService<WmsTransferSlip> {
     Map<Long, Integer> intervalOutOrder(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
 
     Map<Long, Integer> intervalEnterOrder(LocalDateTime startTime, LocalDateTime endTime, Set<Long> materialIds, Long warehouseId);
+
+    /**
+     * 调拨日报表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetVO> transferDaySheet(WmsInventoryDaySheetDTO dto);
 }

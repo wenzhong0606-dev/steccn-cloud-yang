@@ -54,6 +54,20 @@ public interface WmsReportService {
     List<WmsInventoryDaySheetCaseVO> productionDaySheetCase(WmsInventoryDaySheetDTO dto);
 
     /**
+     * 调拨单日报表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetVO> transferDaySheet(WmsInventoryDaySheetDTO dto);
+
+    /**
+     * 调拨单日报表箱列表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetCaseVO> transferDaySheetCase(WmsInventoryDaySheetDTO dto);
+
+    /**
      * 同步日报表数据
      * @param dto
      * @return

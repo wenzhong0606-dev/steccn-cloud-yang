@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
@@ -45,6 +46,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -393,6 +395,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
+    @Transactional
     public Boolean editLockQuantity(List<WmsInventoryDTO> updateList) {
         if (CollUtil.isNotEmpty(updateList)) {
             List<Long> ids = Lists.newArrayList();
@@ -403,6 +406,9 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 WmsInventory wmsInventory = inventoryMap.get(info.getId());
                 wmsInventory.setLockQuantity(wmsInventory.getLockQuantity().subtract(info.getOriginalQuantity()).add(info.getQuantity()));
                 wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(info.getOriginalQuantity()).subtract(info.getQuantity()));
+                if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO)==-1){
+                    throw new BusinessException("可用数量不够");
+                }
                 addWmsInventory.add(wmsInventory);
             });
             updateBatchById(addWmsInventory);

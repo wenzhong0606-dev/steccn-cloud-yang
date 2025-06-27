@@ -33,6 +33,10 @@ public class WmsInventoryDaySheetVO {
 
     private Integer productionLineId;
 
+    private Integer targetShelfId;
+
+    private String targetShelfName;
+
     private String status;
 
     private Integer caseNum;
@@ -46,5 +50,6 @@ public class WmsInventoryDaySheetVO {
     private List<String> caseNoList;
 
     private List<String> receiptCode;
+
 
 }

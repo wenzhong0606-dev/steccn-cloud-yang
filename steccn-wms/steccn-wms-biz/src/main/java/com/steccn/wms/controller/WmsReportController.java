@@ -102,6 +102,18 @@ public class WmsReportController {
         return R.success(wmsReportService.productionDaySheetCase(dto));
     }
 
+    @PostMapping("/transfer/day/sheet")
+    @ApiOperation("调拨日报表")
+    public R<List<WmsInventoryDaySheetVO>> transferDaySheet(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.transferDaySheet(dto));
+    }
+
+    @PostMapping("/transfer/day/sheet/list")
+    @ApiOperation("调拨日报表箱号")
+    public R<List<WmsInventoryDaySheetCaseVO>> transferDaySheetCase(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.transferDaySheetCase(dto));
+    }
+
     @PostMapping("out/in/warehouse/info")
     @ApiOperation("出入库明细")
     public R<SteccnTableDataDTO> outInWarehouseInfo(@RequestBody WmsOutInWarehouseInfoDTO dto){

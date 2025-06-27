@@ -9,7 +9,10 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
+import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.vo.WmsInventoryDaySheetCaseVO;
+import com.steccn.wms.vo.WmsInventoryDaySheetVO;
 import com.steccn.wms.vo.WmsTransferSlipInfoVO;
 import com.steccn.wms.vo.WmsTransferSlipVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -86,6 +89,21 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
     List<WmsTransferSlipInfoVO> intervalOutOrder(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
 
     List<WmsTransferSlipInfoVO> intervalEnterOrder(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    /**
+     * 调拨日报表
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetVO> transferDaySheet(@Param("dto") WmsInventoryDaySheetDTO dto);
+
+    /**
+     * 调拨日报表箱号
+     * @param dto
+     * @return
+     */
+    List<WmsInventoryDaySheetCaseVO> transferDaySheetCaseList(@Param("dto")WmsInventoryDaySheetDTO dto);
+
 }
 
 
