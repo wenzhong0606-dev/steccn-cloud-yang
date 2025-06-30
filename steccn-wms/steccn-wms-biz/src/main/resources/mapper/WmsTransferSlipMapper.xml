@@ -430,6 +430,7 @@
         a.material_id as materialId,
         b.type as type,
         b.status,
+        b.code as code,
         b.affirm_name AS affirm_name,
         b.affirm_time AS affirm_time,
         b.create_name AS create_name,
