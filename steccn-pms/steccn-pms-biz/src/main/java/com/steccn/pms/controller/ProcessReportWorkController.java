@@ -81,8 +81,8 @@ public class ProcessReportWorkController {
             model.setBadnessQuantity(tmp.getBadnessQuantity());
             model.setProcessQuantity(tmp.getProcessQuantity());
             model.setConsumeDTOList(Lists.newArrayList());
-            model.setStationName(null);
-            model.setStationId(null);
+//            model.setStationName(null);
+//            model.setStationId(null);
             model.setIsDeepWork(true);
             if(CollUtil.isNotEmpty(model.getMaterialConsumeList())){
                 model.setMaterialConsumeList(model.getMaterialConsumeList().stream().filter(v->v.getProcessId().equals(tmp.getId())).collect(Collectors.toList()));
