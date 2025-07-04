@@ -506,6 +506,7 @@ public class WmsReportServiceImpl implements WmsReportService {
             Map<Long, String> typeNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取仓库名称
             Set<Integer> officeIdSet = results.stream().map(WmsInventoryDaySheetVO::getWarehouseId).collect(Collectors.toSet());
+            officeIdSet.addAll(results.stream().map(WmsInventoryDaySheetVO::getTargetWarehouseId).collect(Collectors.toSet()));
             Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             for(WmsInventoryDaySheetVO tmp:results){
                 if(StrUtil.isNotBlank(tmp.getCaseNo())){
@@ -517,6 +518,7 @@ public class WmsReportServiceImpl implements WmsReportService {
                     tmp.setCaseNoList(caseNoList);
                     tmp.setCaseNo(null);
                     tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
+                    tmp.setTargetWarehouseName(officeMap.get(tmp.getTargetWarehouseId()).getOfficeName());
                     tmp.setTypeName(typeNameMap.get(tmp.getType()));
                 }
             }
@@ -527,6 +529,12 @@ public class WmsReportServiceImpl implements WmsReportService {
     @Override
     public List<WmsInventoryDaySheetCaseVO> transferDaySheetCase(WmsInventoryDaySheetDTO dto) {
         List<WmsInventoryDaySheetCaseVO> results = wmsTransferSlipMapper.transferDaySheetCaseList(dto);
+        //获取仓库名称
+        Set<Integer> officeIdSet = results.stream().map(WmsInventoryDaySheetCaseVO::getTargetWarehouseId).collect(Collectors.toSet());
+        Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        for(WmsInventoryDaySheetCaseVO tmp:results){
+            tmp.setTargetWarehouseName(officeMap.get(tmp.getTargetWarehouseId()).getOfficeName());
+        }
         return results;
     }
 

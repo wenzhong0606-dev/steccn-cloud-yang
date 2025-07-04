@@ -27,6 +27,10 @@ public class WmsInventoryDaySheetVO {
 
     private String warehouseName;
 
+    private Integer targetWarehouseId;
+
+    private String targetWarehouseName;
+
     private String code;
 
     private String productionLineName;
@@ -36,6 +40,10 @@ public class WmsInventoryDaySheetVO {
     private Integer targetShelfId;
 
     private String targetShelfName;
+
+    private Integer sourceShelfId;
+
+    private String sourceShelfName;
 
     private String status;
 

@@ -12,6 +12,8 @@ public class WmsInventoryDaySheetCaseVO {
 
     private String shelfName;
 
+    private String shelfId;
+
     private String materialName;
 
     private BigDecimal quantity;
@@ -43,6 +45,10 @@ public class WmsInventoryDaySheetCaseVO {
     private Integer warehouseId;
 
     private String warehouseName;
+
+    private Integer targetWarehouseId;
+
+    private String targetWarehouseName;
 
 
 }

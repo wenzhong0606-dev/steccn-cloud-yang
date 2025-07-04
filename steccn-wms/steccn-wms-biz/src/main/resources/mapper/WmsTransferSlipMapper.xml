@@ -363,8 +363,11 @@
     <select id="transferDaySheet" resultType="com.steccn.wms.vo.WmsInventoryDaySheetVO">
         select
             warehouse_id as warehouseId,
+            target_warehouse_id as targetWarehouseId,
             target_shelf_name as targetShelfName,
+            source_shelf_name as sourceShelfName,
             any_value(target_shelf_id) as targetShelfId,
+            any_value(source_shelf_id) as sourceShelfId,
             any_value(material_id) as materialId,
             material_name as materialName,
             type,
@@ -376,8 +379,11 @@
         from (
                  select
                      c.warehouse_id as warehouse_id,
+                     b.target_warehouse as target_warehouse_id,
                      a.target_shelf_name as target_shelf_name,
                      a.target_shelf as target_shelf_id,
+                     a.source_shelf_name as source_shelf_name,
+                     a.source_shelf as source_shelf_id,
                      a.material_name as material_name,
                      a.material_id as material_id,
                      b.type as type,
@@ -409,11 +415,26 @@
                         AND b.create_time &gt;= #{dto.startTime}
                         AND b.create_time &lt; #{dto.endTime}
                     </if>
+                    <if test="dto.type !=null">
+                        AND b.type = #{dto.type}
+                    </if>
+                    <if test="dto.caseNo !=null and dto.caseNo != ''">
+                        AND c.case_no = #{dto.caseNo}
+                    </if>
+                    <if test="dto.materialName !=null and dto.materialName != ''">
+                        AND a.material_name like CONCAT('%',#{dto.materialName},'%')
+                    </if>
+                    <if test="dto.warehouseId !=null">
+                        AND c.warehouse_id = #{dto.warehouseId}
+                    </if>
+
              ) as newList
         GROUP BY
             warehouseId,
             targetShelfName,
             materialName,
+            sourceShelfName,
+            targetWarehouseId,
             type,
             status,
             classes
@@ -423,9 +444,12 @@
     <select id="transferDaySheetCaseList" resultType="com.steccn.wms.vo.WmsInventoryDaySheetCaseVO">
         select
         c.warehouse_id as warehouseId,
+        b.target_warehouse as target_warehouse_id,
         c.warehouse_name as warehouseName,
         a.target_shelf_name as targetShelfName,
         a.target_shelf as targetShelfId,
+        a.source_shelf_name as shelf_name,
+        a.source_shelf as shelf_id,
         a.material_name as materialName,
         a.material_id as materialId,
         b.type as type,
@@ -454,6 +478,22 @@
             <foreach collection="dto.caseNoList" item="caseNo" open="(" close=")" separator=",">
                 #{caseNo}
             </foreach>
+        </if>
+        <if test="dto.startTime !=null and dto.endTime != null">
+            AND b.create_time &gt;= #{dto.startTime}
+            AND b.create_time &lt; #{dto.endTime}
+        </if>
+        <if test="dto.type !=null">
+            AND b.type = #{dto.type}
+        </if>
+        <if test="dto.caseNo !=null and dto.caseNo != ''">
+            AND c.case_no = #{dto.caseNo}
+        </if>
+        <if test="dto.warehouseId !=null">
+            AND c.warehouse_id = #{dto.warehouseId}
+        </if>
+        <if test="dto.materialName !=null and dto.materialName != ''">
+            AND a.material_name like CONCAT('%',#{dto.materialName},'%')
         </if>
     </select>
 </mapper>

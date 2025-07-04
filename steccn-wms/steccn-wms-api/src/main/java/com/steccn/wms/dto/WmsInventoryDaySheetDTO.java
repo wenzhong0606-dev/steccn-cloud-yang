@@ -29,4 +29,6 @@ public class WmsInventoryDaySheetDTO {
 
     private List<String> caseNoList;
 
+    private String caseNo;
+
 }

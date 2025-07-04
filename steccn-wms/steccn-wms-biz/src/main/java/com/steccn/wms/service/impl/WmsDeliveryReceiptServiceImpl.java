@@ -306,6 +306,9 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             wmsInventoryService.affirmLockQuantity(inventoryDTOList);
         }
         //4.修改确认单状态
+        if(StrUtil.isBlank(affirmName)){
+            affirmName = receipt.getCreateName();
+        }
         receipt.setAffirmName(affirmName);
         if (Objects.isNull(affirmTime)) {
             affirmTime = LocalDateTime.now();
@@ -638,6 +641,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     }
                 });
             }
+        }else {
+            throw new BusinessException("产线不能为空");
         }
         for (Map.Entry<Long, List<Map<String, Object>>> moduleEntry : warehouseMap.entrySet()) {
             List<Map<String, Object>> inventoryList = moduleEntry.getValue();
