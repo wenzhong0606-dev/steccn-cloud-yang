@@ -11,9 +11,11 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.*;
+import com.steccn.pms.vo.PmsCaseNoHistoryVO;
 import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
+import com.steccn.wms.vo.WmsCaseNoHistoryVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -146,6 +148,12 @@ public class PmsProduceOrderFeignController {
     @ApiOperation(("箱号是否存在"))
     public R<PmsCaseNoInfoVO> getCaseNoInfo(@RequestParam("caseNo") String caseNo){
         return R.success(pmsBarcodePrintService.getCaseNoInfo(caseNo));
+    }
+
+    @GetMapping("/get/caseNo/history")
+    @ApiOperation(("箱号历史记录"))
+    public R<List<PmsCaseNoHistoryVO>> caseNoHistory(@RequestParam("caseNo") String caseNo){
+        return R.success(pmsBarcodePrintService.caseNoHistory(caseNo));
     }
 
 

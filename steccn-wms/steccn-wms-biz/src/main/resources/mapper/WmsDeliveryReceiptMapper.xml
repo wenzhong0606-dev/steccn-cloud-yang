@@ -430,4 +430,85 @@
             </foreach>
         </if>
     </select>
+
+    <select id="caseNoHistory" resultType="com.steccn.wms.vo.WmsCaseNoHistoryVO">
+        /*查询出库创建信息*/
+        select
+            c.case_no as caseNo,
+                c.warehouse_id as warehouseId,
+                c.shelf_name as shelfName,
+                b.product_line_name as productLineName,
+                b.code as associatedNo,
+                b.create_time as operateTime,
+                b.create_name as operator,
+                c.material_id as materialId,
+                a.quantity as quantity,
+                '出库单创建' AS operateType,
+                b.type AS typeId
+        from wms_delivery_receipt_info a
+                 join wms_delivery_receipt b on a.delivery_receipt_id = b.id
+                 join wms_inventory c on a.inventory_id = c.id
+        WHERE
+            c.case_no = #{caseNo}
+        UNION
+        /*查询出库确认信息*/
+        select
+            c.case_no as caseNo,
+                c.warehouse_id as warehouseId,
+                c.shelf_name as shelfName,
+                b.product_line_name as productLineName,
+                b.code as associatedNo,
+                b.affirm_time as operateTime,
+                b.affirm_name as operator,
+                c.material_id as materialId,
+                a.quantity as quantity,
+                '出库单确认' AS operateType,
+                b.type AS typeId
+        from wms_delivery_receipt_info a
+                 join wms_delivery_receipt b on a.delivery_receipt_id = b.id
+                 join wms_inventory c on a.inventory_id = c.id
+        WHERE
+            c.case_no = #{caseNo}
+          AND (b.affirm_name is NOT NULL OR b.affirm_time IS NOT NULL)
+        UNION
+        /*查询出库明细删除信息*/
+        select
+            c.case_no as caseNo,
+                c.warehouse_id as warehouseId,
+                c.shelf_name as shelfName,
+                b.product_line_name as productLineName,
+                b.code as associatedNo,
+                a.update_time as operateTime,
+                a.update_name as operator,
+                c.material_id as materialId,
+                a.quantity as quantity,
+                '出库单明细删除' AS operateType,
+                b.type AS typeId
+        from wms_delivery_receipt_info a
+                 join wms_delivery_receipt b on a.delivery_receipt_id = b.id
+                 join wms_inventory c on a.inventory_id = c.id
+        WHERE
+            a.del_flag = 1
+          AND c.case_no = #{caseNo}
+        UNION
+        /*查询出库单删除信息*/
+        select
+            c.case_no as caseNo,
+                c.warehouse_id as warehouseId,
+                c.shelf_name as shelfName,
+                b.product_line_name as productLineName,
+                b.`code` as associatedNo,
+                b.update_time as operateTime,
+                b.update_name as operator,
+                c.material_id as materialId,
+                a.quantity as quantity,
+                '出库单删除' AS operateType,
+                b.type AS typeId
+        from wms_delivery_receipt_info a
+                 join wms_delivery_receipt b on a.delivery_receipt_id = b.id
+                 join wms_inventory c on a.inventory_id = c.id
+        WHERE
+            b.del_flag = 1
+          AND c.case_no = #{caseNo}
+    </select>
 </mapper>

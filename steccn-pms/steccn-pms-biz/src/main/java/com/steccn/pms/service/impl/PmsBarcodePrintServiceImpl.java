@@ -42,9 +42,11 @@ import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.pms.vo.PmsCaseNoHistoryVO;
 import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.WorkOrderMaterialVO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import com.steccn.wms.vo.WmsCaseNoHistoryVO;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
@@ -90,6 +92,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private RemoteSpareFeignApi remoteSpareFeignApi;
     @Autowired
     private PmsBarcodePrintRecordService pmsBarcodePrintRecordService;
+    @Autowired
+    private PmsBarcodePrintMapper pmsBarcodePrintMapper;
 
 
     @Override
@@ -547,6 +551,15 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             BeanUtil.copyProperties(one,vo);
         }
         return vo;
+    }
+
+    @Override
+    public List<PmsCaseNoHistoryVO> caseNoHistory(String caseNo) {
+        List<PmsCaseNoHistoryVO> results = pmsBarcodePrintMapper.caseNoHistory(caseNo);
+        if(CollUtil.isEmpty(results)){
+            results = Lists.newArrayList();
+        }
+        return results;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.dto.WmsInventoryPageDTO;
 import com.steccn.wms.dto.WmsOutInWarehouseInfoDTO;
 import com.steccn.wms.dto.WmsReportStatisticalDTO;
+import com.steccn.wms.vo.WmsCaseNoHistoryVO;
 import com.steccn.wms.vo.WmsHistoricalInventoryVO;
 import com.steccn.wms.vo.WmsInventoryDaySheetCaseVO;
 import com.steccn.wms.vo.WmsInventoryDaySheetVO;
@@ -109,5 +110,12 @@ public interface WmsReportService {
      * @return
      */
     Page<WmsHistoricalInventoryVO> historical(WmsInventoryPageDTO dto);
+
+    /**
+     * 箱号历史记录
+     * @param caseNo
+     * @return
+     */
+    List<WmsCaseNoHistoryVO> caseNoHistory(String caseNo);
 
 }

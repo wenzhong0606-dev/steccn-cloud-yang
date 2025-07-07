@@ -9,8 +9,10 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.SteccnTableColumn;
@@ -37,6 +39,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.util.UnitConvertUtil;
+import com.steccn.pms.vo.PmsCaseNoHistoryVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
@@ -45,10 +48,7 @@ import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import com.steccn.wms.mapper.WmsInventoryMapper;
-import com.steccn.wms.mapper.WmsStorageReceiptInfoMapper;
-import com.steccn.wms.mapper.WmsStorageReceiptMapper;
-import com.steccn.wms.mapper.WmsTransferSlipMapper;
+import com.steccn.wms.mapper.*;
 import com.steccn.wms.service.*;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.*;
@@ -93,6 +93,8 @@ public class WmsReportServiceImpl implements WmsReportService {
     private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
     private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
     private final WmsTransferSlipMapper wmsTransferSlipMapper;
+    private final WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public SteccnTableDataDTO statisticalData(WmsReportStatisticalDTO dto) {
@@ -708,6 +710,9 @@ public class WmsReportServiceImpl implements WmsReportService {
                 if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
                     WmsStorageReceipt wmsStorageReceipt = new WmsStorageReceipt();
                     wmsStorageReceipt.setStatus(OaConstant.NUM_2);
+                    if(Objects.nonNull(SecurityUtils.getUser())){
+                        wmsStorageReceipt.setSynName(SecurityUtils.getUser().getName());
+                    }
                     wmsStorageReceiptService.update(wmsStorageReceipt,new LambdaQueryWrapper<WmsStorageReceipt>()
                             .in(WmsStorageReceipt::getCode,receiptNos));
                 } else {
@@ -1006,6 +1011,138 @@ public class WmsReportServiceImpl implements WmsReportService {
         return page;
     }
 
+    @Override
+    public List<WmsCaseNoHistoryVO> caseNoHistory(String caseNo) {
+        List<WmsCaseNoHistoryVO> results = Lists.newArrayList();
+        Set<Long> materialId = Sets.newHashSet();
+        Set<String> productLineCode = Sets.newHashSet();
+        Set<Long> typeId = Sets.newHashSet();
+        Set<Integer> officeId = Sets.newHashSet();
+        //入库关联
+        List<WmsCaseNoHistoryVO> inStorageCaseHistory = wmsStorageReceiptMapper.caseNoHistory(caseNo);
+        if(CollUtil.isNotEmpty(inStorageCaseHistory)){
+            materialId.addAll(inStorageCaseHistory.stream().map(WmsCaseNoHistoryVO::getMaterialId).collect(Collectors.toSet()));
+            productLineCode.addAll(inStorageCaseHistory.stream().map(WmsCaseNoHistoryVO::getProductLineName).collect(Collectors.toSet()));
+            typeId.addAll(inStorageCaseHistory.stream().map(WmsCaseNoHistoryVO::getTypeId).collect(Collectors.toSet()));
+            officeId.addAll(inStorageCaseHistory.stream().map(WmsCaseNoHistoryVO::getWarehouseId).collect(Collectors.toSet()));
+        }
+        //出库关联
+        List<WmsCaseNoHistoryVO> deliveryCaseHistory = wmsDeliveryReceiptMapper.caseNoHistory(caseNo);
+        if(CollUtil.isNotEmpty(deliveryCaseHistory)){
+            materialId.addAll(deliveryCaseHistory.stream().map(WmsCaseNoHistoryVO::getMaterialId).collect(Collectors.toSet()));
+            typeId.addAll(deliveryCaseHistory.stream().map(WmsCaseNoHistoryVO::getTypeId).collect(Collectors.toSet()));
+            officeId.addAll(deliveryCaseHistory.stream().map(WmsCaseNoHistoryVO::getWarehouseId).collect(Collectors.toSet()));
+        }
+        //调拨单关联
+        List<WmsCaseNoHistoryVO> transferCaseHistory = wmsTransferSlipMapper.caseNoHistory(caseNo);
+        if(CollUtil.isNotEmpty(transferCaseHistory)){
+            materialId.addAll(transferCaseHistory.stream().map(WmsCaseNoHistoryVO::getMaterialId).collect(Collectors.toSet()));
+            typeId.addAll(transferCaseHistory.stream().map(WmsCaseNoHistoryVO::getTypeId).collect(Collectors.toSet()));
+            transferCaseHistory.forEach(tmp->{
+                if(StrUtil.isNotBlank(tmp.getWarehouseName())&&tmp.getWarehouseName().contains("->")){
+                    String[] parts = tmp.getWarehouseName().split("->");
+                    for (String part : parts) {
+                        if (StrUtil.isNotBlank(part)) {
+                            officeId.add(Integer.parseInt(part));
+                        }
+                    }
+                }
+                if(StrUtil.isNotBlank(tmp.getShelfName())&&tmp.getShelfName().contains("->")){
+                    String[] parts = tmp.getShelfName().split("->");
+                    for (String part : parts) {
+                        if (StrUtil.isNotBlank(part)) {
+                            officeId.add(Integer.parseInt(part));
+                        }
+                    }
+                }
+            });
+        }
+        //条码创建
+        List<PmsCaseNoHistoryVO> pmsCaseNoHistoryVOS = FeignOptional.of(() -> remotePmsFeignApi.caseNoHistory(caseNo), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        List<WmsCaseNoHistoryVO> barCodeCreateVOS = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(barCodeCreateVOS)){
+            barCodeCreateVOS = BeanUtil.copyToList(pmsCaseNoHistoryVOS, WmsCaseNoHistoryVO.class);
+            typeId.addAll(barCodeCreateVOS.stream().map(WmsCaseNoHistoryVO::getTypeId).collect(Collectors.toSet()));
+            materialId.addAll(barCodeCreateVOS.stream().map(WmsCaseNoHistoryVO::getMaterialId).collect(Collectors.toSet()));
+            officeId.addAll(barCodeCreateVOS.stream().map(WmsCaseNoHistoryVO::getProductLineId).collect(Collectors.toSet()));
+        }
+        //通过id找到值
+        Map<Long, EqpSpareVO> eqpSpareVOMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(materialId)){
+            eqpSpareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(new ArrayList<>(materialId)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+        Map<Long, String> typeNameMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(typeId)){
+            typeNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(typeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+        Map<Integer, SysOfficeVO> officeMap = Maps.newHashMap();;
+        if(CollUtil.isNotEmpty(officeId)){
+            officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+        Map<String, SysOfficeVO> officeCodeMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(productLineCode)){
+            officeCodeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(productLineCode), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+        //入库关联
+        if(CollUtil.isNotEmpty(inStorageCaseHistory)){
+            for(WmsCaseNoHistoryVO tmp:inStorageCaseHistory){
+                tmp.setMaterialName(eqpSpareVOMap.get(tmp.getMaterialId()).getName());
+                tmp.setMaterialCode(eqpSpareVOMap.get(tmp.getMaterialId()).getCode());
+                tmp.setProductLineName(officeCodeMap.get(tmp.getProductLineName()).getOfficeName());
+                tmp.setTypeName(typeNameMap.get(tmp.getTypeId()));
+                tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
+                results.add(tmp);
+            }
+        }
+        //出库关联
+        if(CollUtil.isNotEmpty(deliveryCaseHistory)){
+            for(WmsCaseNoHistoryVO tmp:deliveryCaseHistory){
+                tmp.setMaterialName(eqpSpareVOMap.get(tmp.getMaterialId()).getName());
+                tmp.setMaterialCode(eqpSpareVOMap.get(tmp.getMaterialId()).getCode());
+                tmp.setTypeName(typeNameMap.get(tmp.getTypeId()));
+                tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
+                results.add(tmp);
+            }
+        }
+        //调拨单关联
+        if(CollUtil.isNotEmpty(transferCaseHistory)){
+            for(WmsCaseNoHistoryVO tmp:transferCaseHistory){
+                tmp.setMaterialName(eqpSpareVOMap.get(tmp.getMaterialId()).getName());
+                tmp.setMaterialCode(eqpSpareVOMap.get(tmp.getMaterialId()).getCode());
+                tmp.setTypeName(typeNameMap.get(tmp.getTypeId()));
+                if(StrUtil.isNotBlank(tmp.getWarehouseName())&&tmp.getWarehouseName().contains("->")){
+                    String[] parts = tmp.getWarehouseName().split("->",2);
+                    String left = officeMap.get(Integer.parseInt(parts[0].trim())).getOfficeName();
+                    String right = officeMap.get(Integer.parseInt(parts[1].trim())).getOfficeName();
+                    tmp.setWarehouseName(left+"->"+right);
+                }
+                if(StrUtil.isNotBlank(tmp.getShelfName())&&tmp.getShelfName().contains("->")){
+                    String[] parts = tmp.getShelfName().split("->",2);
+                    String left = officeMap.get(Integer.parseInt(parts[0].trim())).getOfficeName();
+                    String right = officeMap.get(Integer.parseInt(parts[1].trim())).getOfficeName();
+                    tmp.setShelfName(left+"->"+right);
+                }
+                results.add(tmp);
+            }
+        }
+        //条码创建
+        if(CollUtil.isNotEmpty(barCodeCreateVOS)){
+            for(WmsCaseNoHistoryVO tmp:barCodeCreateVOS){
+                tmp.setMaterialName(eqpSpareVOMap.get(tmp.getMaterialId()).getName());
+                tmp.setMaterialCode(eqpSpareVOMap.get(tmp.getMaterialId()).getCode());
+                tmp.setProductLineName(officeMap.get(tmp.getProductLineId()).getOfficeName());
+                tmp.setTypeName(typeNameMap.get(tmp.getTypeId()));
+                results.add(tmp);
+            }
+        }
+        if(CollUtil.isNotEmpty(results)){
+            results = results.stream()
+                    .sorted(Comparator.comparing(WmsCaseNoHistoryVO::getOperateTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .collect(Collectors.toList());
+        }
+        return results;
+    }
+
     public List<AdsWmsInventoryVO> process(List<AdsWmsInventoryVO> list) {
         return list.stream()
                 .collect(Collectors.groupingBy(AdsWmsInventoryVO::getMaterialId))
@@ -1089,7 +1226,7 @@ public class WmsReportServiceImpl implements WmsReportService {
      * @param dateTime
      * @return
      */
-    private String formattedDate(LocalDateTime dateTime){
+    private String formattedDate(LocalDateTime dateTime) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
         return dateTime.format(formatter);
     }

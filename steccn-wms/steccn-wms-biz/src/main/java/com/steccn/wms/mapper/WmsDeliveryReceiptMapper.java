@@ -116,6 +116,13 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @return
      */
     List<WmsInventoryDaySheetCaseVO> productionDaySheetCaseList(@Param("dto")WmsInventoryDaySheetDTO dto);
+
+    /**
+     * 箱号操作日志
+     * @param caseNo 箱号
+     * @return
+     */
+    List<WmsCaseNoHistoryVO> caseNoHistory(@Param("caseNo") String caseNo);
 }
 
 

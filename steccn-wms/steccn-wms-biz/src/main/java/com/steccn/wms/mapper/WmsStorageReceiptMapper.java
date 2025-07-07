@@ -107,6 +107,14 @@ public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
     List<WmsStorageReceiptInfo> intervalDataQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
 
     List<WmsDeliveryReceiptInfoVO> intervalOrderQuantity(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime,@Param("materialIds") Set<Long> materialIds,@Param("warehouseId") Long warehouseId);
+
+    /**
+     * 箱号操作日志
+     * @param caseNo 箱号
+     * @return
+     */
+    List<WmsCaseNoHistoryVO> caseNoHistory(@Param("caseNo") String caseNo);
+
 }
 
 

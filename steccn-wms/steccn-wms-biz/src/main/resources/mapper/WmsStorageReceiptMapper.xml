@@ -408,4 +408,100 @@
         and wdr.`status` in (1,2,3,5)
         group by info.material_id;
     </select>
+
+    <select id="caseNoHistory" resultType="com.steccn.wms.vo.WmsCaseNoHistoryVO">
+        /*查询入库创建信息*/
+        SELECT
+            a.case_no as caseNo,
+            b.warehouse_id as warehouseId,
+            a.shelf_name as shelfName,
+            a.production_line_name as productLineName,
+            b.code as associatedNo,
+            b.create_time as operateTime,
+            b.create_name as operator,
+            a.quantity as quantity,
+            a.material_id as materialId,
+			'入库单创建' AS operateType,
+            b.type AS typeId
+        FROM wms_storage_receipt_info a
+                 join wms_storage_receipt b on a.storage_receipt_id = b.id
+        where
+            a.case_no = #{caseNo}
+        UNION
+        /*查询入库确认信息*/
+        SELECT
+            a.case_no as caseNo,
+            b.warehouse_id as warehouseId,
+            a.shelf_name as shelfName,
+            a.production_line_name as productLineName,
+            b.code as associatedNo,
+            b.affirm_time as operateTime,
+            b.affirm_name as operator,
+            a.quantity as quantity,
+            a.material_id as materialId,
+            '入库单确认' AS operateType,
+            b.type AS typeId
+        FROM wms_storage_receipt_info a
+                 join wms_storage_receipt b on a.storage_receipt_id = b.id
+        where
+            a.case_no = #{caseNo}
+          AND (b.affirm_name is NOT NULL OR b.affirm_time IS NOT NULL)
+        UNION
+        /*查询入库冲销信息*/
+        SELECT
+            a.case_no as caseNo,
+                b.warehouse_id as warehouseId,
+                a.shelf_name as shelfName,
+                a.production_line_name as productLineName,
+                b.code as associatedNo,
+                b.charge_time as operateTime,
+                b.charge_name as operator,
+                a.quantity as quantity,
+                a.material_id as materialId,
+                '入库单冲销' AS operateType,
+                b.type AS typeId
+        FROM wms_storage_receipt_info a
+                 join wms_storage_receipt b on a.storage_receipt_id = b.id
+        where
+            a.case_no = #{caseNo}
+          AND (b.charge_name is NOT NULL OR b.charge_name IS NOT NULL)
+        UNION
+        /*查询入库删除明细信息*/
+        SELECT
+            a.case_no as caseNo,
+            b.warehouse_id as warehouseId,
+            a.shelf_name as shelfName,
+            a.production_line_name as productLineName,
+            b.code as associatedNo,
+            a.update_time as operateTime,
+            a.update_name as operator,
+            a.quantity as quantity,
+            '入库单明细删除' AS operateType,
+            a.material_id as materialId,
+            b.type AS typeId
+        FROM wms_storage_receipt_info a
+                 join wms_storage_receipt b on a.storage_receipt_id = b.id
+        where
+            a.case_no = #{caseNo}
+          AND a.del_flag = 1
+        UNION
+        /*查询入库单删除信息*/
+        SELECT
+            a.case_no as caseNo,
+                b.warehouse_id as warehouseId,
+                a.shelf_name as shelfName,
+                a.production_line_name as productLineName,
+                b.code as associatedNo,
+                b.update_time as operateTime,
+                b.update_name as operator,
+                a.quantity as quantity,
+                a.material_id as materialId,
+                '入库单删除' AS operateType,
+                b.type AS typeId
+        FROM wms_storage_receipt_info a
+                 join wms_storage_receipt b on a.storage_receipt_id = b.id
+        where
+            a.case_no = #{caseNo}
+          AND b.del_flag = 1
+    </select>
 </mapper>

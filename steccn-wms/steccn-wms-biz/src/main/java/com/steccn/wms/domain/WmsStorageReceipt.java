@@ -55,6 +55,11 @@ public class WmsStorageReceipt implements Serializable {
     private String affirmName;
 
     /**
+     * 同步人
+     */
+    private String synName;
+
+    /**
      * 冲销人
      */
     private String chargeName;

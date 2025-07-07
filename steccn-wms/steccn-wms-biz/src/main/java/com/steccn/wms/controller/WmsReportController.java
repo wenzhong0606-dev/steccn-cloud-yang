@@ -150,6 +150,12 @@ public class WmsReportController {
         return R.success(wmsInventoryService.inventoryM(wmsReportWarehouseDTO));
     }
 
+    @GetMapping("/caseHistory")
+    @ApiOperation("箱号历史")
+    public R<List<WmsCaseNoHistoryVO>> caseHistory(@RequestParam("caseNo") String caseNo){
+        return R.success(wmsReportService.caseNoHistory(caseNo));
+    }
+
     @GetMapping("/dataTwin/inventory/m")
     @ApiOperation("数字孪生-平方米")
     public R<TupleDTO> inventoryMDataTwin(HttpServletRequest request){

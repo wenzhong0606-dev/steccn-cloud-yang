@@ -11,10 +11,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
 import com.steccn.wms.dto.WmsInventoryDaySheetDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
-import com.steccn.wms.vo.WmsInventoryDaySheetCaseVO;
-import com.steccn.wms.vo.WmsInventoryDaySheetVO;
-import com.steccn.wms.vo.WmsTransferSlipInfoVO;
-import com.steccn.wms.vo.WmsTransferSlipVO;
+import com.steccn.wms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -104,6 +101,12 @@ public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
      */
     List<WmsInventoryDaySheetCaseVO> transferDaySheetCaseList(@Param("dto")WmsInventoryDaySheetDTO dto);
 
+    /**
+     * 箱号操作日志
+     * @param caseNo 箱号
+     * @return
+     */
+    List<WmsCaseNoHistoryVO> caseNoHistory(@Param("caseNo") String caseNo);
 }
 
 

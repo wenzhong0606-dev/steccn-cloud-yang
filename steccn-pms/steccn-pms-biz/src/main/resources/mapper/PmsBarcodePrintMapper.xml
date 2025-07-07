@@ -32,4 +32,25 @@
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+
+    <select id="caseNoHistory" resultType="com.steccn.pms.vo.PmsCaseNoHistoryVO">
+        /*查询箱号创建信息*/
+        select
+            a.case_no as caseNo,
+                '-' as warehouseName,
+                '-' as shelfName,
+                a.production_line as productLineId,
+                b.code as associatedNo,
+                a.create_time as operateTime,
+                a.create_name as operator,
+                a.material_id as materialId,
+                a.quantity as quantity,
+                '条码创建' AS operateType,
+                b.type_id AS typeId
+        from pms_barcode_print a
+                 JOIN pms_produce_order b on a.produce_order_id = b.id
+        where
+            a.case_no = #{caseNo}
+          and a.del_flag = 0
+    </select>
 </mapper>

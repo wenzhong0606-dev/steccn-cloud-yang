@@ -11,8 +11,11 @@ import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.pms.vo.PmsCaseNoHistoryVO;
 import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.WorkOrderMaterialVO;
+import com.steccn.wms.vo.WmsCaseNoHistoryVO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -153,4 +156,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
     Boolean getCaseNoFlag(String caseNo);
 
     PmsCaseNoInfoVO getCaseNoInfo(String caseNo);
+
+    /**
+     * 箱号操作日志
+     * @param caseNo 箱号
+     * @return
+     */
+    List<PmsCaseNoHistoryVO> caseNoHistory(@Param("caseNo") String caseNo);
 }

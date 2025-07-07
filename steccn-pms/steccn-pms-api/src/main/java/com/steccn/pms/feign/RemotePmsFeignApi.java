@@ -170,6 +170,10 @@ public interface RemotePmsFeignApi {
     @ApiOperation(("获取箱号信息"))
     R<PmsCaseNoInfoVO> getCaseNoInfo(@RequestParam("caseNo") String caseNo);
 
+    @GetMapping("/feign/pms/produce/order/get/caseNo/history")
+    @ApiOperation(("获取箱号信息"))
+    R<List<PmsCaseNoHistoryVO>> caseNoHistory(@RequestParam("caseNo") String caseNo);
+
 
 
     @ApiOperation("根据产线id查询订单")
