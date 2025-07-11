@@ -3,6 +3,7 @@ package com.steccn.pms.vo;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 类说明
@@ -44,6 +45,10 @@ public class PmsCaseNoHistoryVO {
      * 操作类型
      */
     private String operateType;
+    /**
+     * 操作时间
+     */
+    private LocalDateTime operateTime;
     /**
      * 单据类型
      */

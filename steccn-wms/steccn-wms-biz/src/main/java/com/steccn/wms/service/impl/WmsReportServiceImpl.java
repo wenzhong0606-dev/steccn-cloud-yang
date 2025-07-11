@@ -591,97 +591,72 @@ public class WmsReportServiceImpl implements WmsReportService {
             Map<String, SysOfficeVO> stringSysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(productListNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 //        Set<String> productLineCodes = results.stream().filter(v -> StrUtil.isNotBlank(v.getProductionLineName())).map(WmsInventoryDaySheetVO::getProductionLineName).collect(Collectors.toSet());
 //        Map<String, SysOfficeVO> stringSysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(productLineCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            for(WmsInventoryDaySheetVO wmsInventoryDaySheetVO:groupByValue){
-                if(!wmsInventoryDaySheetVO.getStatus().equals("已确认")){
-                    continue;
-                }
-                //仓库编码
-                String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                //获取erp中的code
-                Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(sourceCode))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                if(CollUtil.isEmpty(erpWarehouse)){
-                    throw new BusinessException("erp中没有对应的仓库");
-                }
-                String erpStockCode = erpWarehouse.get(sourceCode).get(0).getRefContent();
-                //类型为生产完工入库
-                if (wmsInventoryDaySheetVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
-                    if(!Objects.isNull(wmsInventoryDaySheetVO.getProductionLineId())){
-                        //拿到epr关联的code
-                        String erpDepCode = "";
-                        erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(wmsInventoryDaySheetVO.getProductionLineName());
+            groupByValue = groupByValue.stream().filter(v -> v.getStatus().equals("已确认")).collect(Collectors.toList());
+            //相同车间，相同id的物料进行累加
+            if(CollUtil.isNotEmpty(groupByValue)){
+                groupByValue = groupByValue.stream()
+                        // 过滤掉 null 或关键字段缺失的项
+                        .filter(vo -> vo != null
+                                && vo.getMaterialId() != null
+                                && vo.getProductionLineName() != null
+                                && stringSysOfficeVOMap.get(vo.getProductionLineName()) != null
+                                && stringSysOfficeVOMap.get(vo.getProductionLineName()).getParentCode() != null)
+                        // 按 materialId + parentCode 分组
+                        .collect(Collectors.groupingBy(vo -> vo.getMaterialId() + "_" + stringSysOfficeVOMap.get(vo.getProductionLineName()).getParentCode()))
+                        // 对每组进行合并
+                        .values().stream()
+                        .map(groupList -> {
+                            WmsInventoryDaySheetVO first = groupList.get(0);
 
-                        ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
-                        erpCommonSaveDetail.setFmesentryid(IdUtil.simpleUUID());
-                        erpCommonSaveDetail.setFmatno(wmsInventoryDaySheetVO.getMaterialCode());
-                        erpCommonSaveDetail.setFmustqty(wmsInventoryDaySheetVO.getTotalQuantity());
-                        erpCommonSaveDetail.setFrealqty(wmsInventoryDaySheetVO.getTotalQuantity());
-                        //YWZ需求 批号为箱号
-//                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
-                        String s = wmsInventoryDaySheetVO.getCaseNoList().get(0);
-                        WmsStorageReceiptInfo wmsStorageReceiptInfo = wmsStorageReceiptInfoMapper.selectOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
-                                .select(WmsStorageReceiptInfo::getQuantity)
-                                .eq(WmsStorageReceiptInfo::getCaseNo, s)
-                                .last("LIMIT 1"));
-                        erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(wmsInventoryDaySheetVO.getMaterialName(),stringSysOfficeVOMap.get(wmsInventoryDaySheetVO.getProductionLineName()).getParentCode(),String.valueOf(wmsStorageReceiptInfo.getQuantity().intValue())));
-                        erpCommonSaveDetail.setFstockno(erpStockCode);
-                        erpCommonSaveDetail.setFdeptno(erpDepCode);
-//                if (StrUtil.isBlank(tmp.getErpLineCode())) {
-//                    if(StrUtil.isBlank(erpDepCode)){
-//                        throw new BusinessException("没有erp对应的部门");
-//                    }else {
-//
-//                    }
-//                }else {
-//                    erpCommonSaveDetail.setFdeptno(tmp.getErpLineCode());
-//                }
-                        erpCommonSaveDetails.add(erpCommonSaveDetail);
-                        //加入入库单号
-                        receiptNos.addAll(wmsInventoryDaySheetVO.getReceiptCode());
-                    }else {
-                        //产线为空的情况
-                        WmsInventoryDaySheetDTO detailDTO = new WmsInventoryDaySheetDTO();
-                        detailDTO.setCaseNoList(wmsInventoryDaySheetVO.getCaseNoList());
-                        List<WmsInventoryDaySheetCaseVO> wmsInventoryDaySheetCaseVOS = daySheetCaseList(detailDTO);
-                        boolean allMatch = wmsInventoryDaySheetCaseVOS.stream()
-                                .map(WmsInventoryDaySheetCaseVO::getProductionLineName)
-                                .allMatch(name -> name.contains("JP") || name.contains("JG"));
-                        if(!allMatch){
-                            continue;
-                        }
-                        //加入入库单号
-                        receiptNos.addAll(wmsInventoryDaySheetCaseVOS.stream()
-                                .map(WmsInventoryDaySheetCaseVO::getCode).collect(Collectors.toSet()));
-                        // 使用 Map 聚合相同的产线
-                        Map<String, BigDecimal> quantityMap = wmsInventoryDaySheetCaseVOS.stream()
-                                .collect(Collectors.groupingBy(
-                                        WmsInventoryDaySheetCaseVO::getProductionLineName,
-                                        Collectors.mapping(
-                                                WmsInventoryDaySheetCaseVO::getQuantity,
-                                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
-                                        )
-                                ));
-                        quantityMap.forEach((k, v) -> {
-                            String productionLineName = "";
-                            String s = NumberChineseFormatter.numberCharToChinese(k.substring(2).charAt(0), false);
-                            if(k.contains("JP")){
-                                productionLineName = "基片"+s+"产线";
-                            }else {
-                                productionLineName = "深加工"+s+"产线";
-                            }
+                            // 计算 totalQuantity 累加和
+                            BigDecimal totalQtySum = groupList.stream()
+                                    .map(vo -> vo.getTotalQuantity() == null ? BigDecimal.ZERO : vo.getTotalQuantity())
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                            // 复制一个新的对象（防止修改原数据），这里简单用第一条作为基础
+                            WmsInventoryDaySheetVO merged = new WmsInventoryDaySheetVO();
+
+                            // 复制基本字段（按需扩展）
+                            BeanUtil.copyProperties(first,merged);
+                            merged.setTotalQuantity(totalQtySum);
+
+                            return merged;
+                        })
+                        .collect(Collectors.toList());
+            }
+            if(CollUtil.isNotEmpty(groupByValue)){
+                for(WmsInventoryDaySheetVO wmsInventoryDaySheetVO:groupByValue){
+                    if(!wmsInventoryDaySheetVO.getStatus().equals("已确认")){
+                        continue;
+                    }
+                    //仓库编码
+                    String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    //获取erp中的code
+                    Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(sourceCode))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(erpWarehouse)){
+                        throw new BusinessException("erp中没有对应的仓库");
+                    }
+                    String erpStockCode = erpWarehouse.get(sourceCode).get(0).getRefContent();
+                    //类型为生产完工入库
+                    if (wmsInventoryDaySheetVO.getTypeName().equals(WmsManagerConstant.RECEIPT_TYPE_1)) {
+                        if(!Objects.isNull(wmsInventoryDaySheetVO.getProductionLineId())){
                             //拿到epr关联的code
                             String erpDepCode = "";
-                            erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(productionLineName);
+                            erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(wmsInventoryDaySheetVO.getProductionLineName());
 
                             ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
                             erpCommonSaveDetail.setFmesentryid(IdUtil.simpleUUID());
                             erpCommonSaveDetail.setFmatno(wmsInventoryDaySheetVO.getMaterialCode());
-                            erpCommonSaveDetail.setFmustqty(v);
-                            erpCommonSaveDetail.setFrealqty(v);
+                            erpCommonSaveDetail.setFmustqty(wmsInventoryDaySheetVO.getTotalQuantity());
+                            erpCommonSaveDetail.setFrealqty(wmsInventoryDaySheetVO.getTotalQuantity());
                             //YWZ需求 批号为箱号
 //                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
-                            //需要根据箱号查询
-
-                            erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(wmsInventoryDaySheetVO.getMaterialName(),stringSysOfficeVOMap.get(productionLineName).getParentCode(),String.valueOf(v.intValue())));
+                            String s = wmsInventoryDaySheetVO.getCaseNoList().get(0);
+                            WmsStorageReceiptInfo wmsStorageReceiptInfo = wmsStorageReceiptInfoMapper.selectOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                                    .select(WmsStorageReceiptInfo::getQuantity)
+                                    .eq(WmsStorageReceiptInfo::getCaseNo, s)
+                                    .last("LIMIT 1"));
+                            erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(wmsInventoryDaySheetVO.getMaterialName(),stringSysOfficeVOMap.get(wmsInventoryDaySheetVO.getProductionLineName()).getParentCode(),String.valueOf(wmsStorageReceiptInfo.getQuantity().intValue())));
                             erpCommonSaveDetail.setFstockno(erpStockCode);
                             erpCommonSaveDetail.setFdeptno(erpDepCode);
 //                if (StrUtil.isBlank(tmp.getErpLineCode())) {
@@ -694,8 +669,68 @@ public class WmsReportServiceImpl implements WmsReportService {
 //                    erpCommonSaveDetail.setFdeptno(tmp.getErpLineCode());
 //                }
                             erpCommonSaveDetails.add(erpCommonSaveDetail);
+                            //加入入库单号
+                            receiptNos.addAll(wmsInventoryDaySheetVO.getReceiptCode());
+                        }else {
+                            //产线为空的情况
+                            WmsInventoryDaySheetDTO detailDTO = new WmsInventoryDaySheetDTO();
+                            detailDTO.setCaseNoList(wmsInventoryDaySheetVO.getCaseNoList());
+                            List<WmsInventoryDaySheetCaseVO> wmsInventoryDaySheetCaseVOS = daySheetCaseList(detailDTO);
+                            boolean allMatch = wmsInventoryDaySheetCaseVOS.stream()
+                                    .map(WmsInventoryDaySheetCaseVO::getProductionLineName)
+                                    .allMatch(name -> name.contains("JP") || name.contains("JG"));
+                            if(!allMatch){
+                                continue;
+                            }
+                            //加入入库单号
+                            receiptNos.addAll(wmsInventoryDaySheetCaseVOS.stream()
+                                    .map(WmsInventoryDaySheetCaseVO::getCode).collect(Collectors.toSet()));
+                            // 使用 Map 聚合相同的产线
+                            Map<String, BigDecimal> quantityMap = wmsInventoryDaySheetCaseVOS.stream()
+                                    .collect(Collectors.groupingBy(
+                                            WmsInventoryDaySheetCaseVO::getProductionLineName,
+                                            Collectors.mapping(
+                                                    WmsInventoryDaySheetCaseVO::getQuantity,
+                                                    Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                                            )
+                                    ));
+                            quantityMap.forEach((k, v) -> {
+                                String productionLineName = "";
+                                String s = NumberChineseFormatter.numberCharToChinese(k.substring(2).charAt(0), false);
+                                if(k.contains("JP")){
+                                    productionLineName = "基片"+s+"产线";
+                                }else {
+                                    productionLineName = "深加工"+s+"产线";
+                                }
+                                //拿到epr关联的code
+                                String erpDepCode = "";
+                                erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(productionLineName);
 
-                        });
+                                ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
+                                erpCommonSaveDetail.setFmesentryid(IdUtil.simpleUUID());
+                                erpCommonSaveDetail.setFmatno(wmsInventoryDaySheetVO.getMaterialCode());
+                                erpCommonSaveDetail.setFmustqty(v);
+                                erpCommonSaveDetail.setFrealqty(v);
+                                //YWZ需求 批号为箱号
+//                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
+                                //需要根据箱号查询
+
+                                erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(wmsInventoryDaySheetVO.getMaterialName(),stringSysOfficeVOMap.get(productionLineName).getParentCode(),String.valueOf(v.intValue())));
+                                erpCommonSaveDetail.setFstockno(erpStockCode);
+                                erpCommonSaveDetail.setFdeptno(erpDepCode);
+//                if (StrUtil.isBlank(tmp.getErpLineCode())) {
+//                    if(StrUtil.isBlank(erpDepCode)){
+//                        throw new BusinessException("没有erp对应的部门");
+//                    }else {
+//
+//                    }
+//                }else {
+//                    erpCommonSaveDetail.setFdeptno(tmp.getErpLineCode());
+//                }
+                                erpCommonSaveDetails.add(erpCommonSaveDetail);
+
+                            });
+                        }
                     }
                 }
             }
@@ -1060,7 +1095,7 @@ public class WmsReportServiceImpl implements WmsReportService {
         //条码创建
         List<PmsCaseNoHistoryVO> pmsCaseNoHistoryVOS = FeignOptional.of(() -> remotePmsFeignApi.caseNoHistory(caseNo), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         List<WmsCaseNoHistoryVO> barCodeCreateVOS = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(barCodeCreateVOS)){
+        if(CollUtil.isNotEmpty(pmsCaseNoHistoryVOS)){
             barCodeCreateVOS = BeanUtil.copyToList(pmsCaseNoHistoryVOS, WmsCaseNoHistoryVO.class);
             typeId.addAll(barCodeCreateVOS.stream().map(WmsCaseNoHistoryVO::getTypeId).collect(Collectors.toSet()));
             materialId.addAll(barCodeCreateVOS.stream().map(WmsCaseNoHistoryVO::getMaterialId).collect(Collectors.toSet()));
