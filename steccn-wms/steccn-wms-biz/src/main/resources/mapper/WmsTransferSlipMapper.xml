@@ -538,5 +538,25 @@
         where
             c.case_no = #{caseNo}
           AND (b.affirm_name is NOT NULL OR b.affirm_time IS NOT NULL)
+        UNION
+        /*查询调拨单删除信息*/
+        SELECT
+            c.case_no as caseNo,
+            CONCAT(b.source_warehouse, "->", b.target_warehouse) as warehouseName,
+            CONCAT(c.shelf_id , "->", a.target_shelf) as shelfName,
+            '-' as productLineName,
+            b.code as associatedNo,
+            b.affirm_time as operateTime,
+            b.affirm_name as operator,
+            c.material_id as materialId,
+            a.quantity as quantity,
+            '调拨单删除' AS operateType,
+            b.type AS typeId
+        from wms_transfer_slip_info a
+                 join wms_transfer_slip b on a.transfer_slip_id = b.id
+                 join wms_inventory c on a.source_inventory_id = c.id
+        where
+            c.case_no = #{caseNo}
+          AND b.status = 4
     </select>
 </mapper>
