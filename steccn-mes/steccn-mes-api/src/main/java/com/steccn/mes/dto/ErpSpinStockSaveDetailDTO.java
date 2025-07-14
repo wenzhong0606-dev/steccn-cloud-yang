@@ -30,9 +30,22 @@ public class ErpSpinStockSaveDetailDTO implements Serializable {
      */
     private BigDecimal frealqty;
     /**
+     * 调拨数量
+     */
+    private BigDecimal fqty;
+    /**
      * 仓库编码
      */
     private String fstockno;
+    /**
+     * 调出仓库
+     */
+    private String fsrcstockno;
+    /**
+     * 调入仓库
+     */
+    private String fdeststockno;
+
     /**
      * 生产车间编码
      */

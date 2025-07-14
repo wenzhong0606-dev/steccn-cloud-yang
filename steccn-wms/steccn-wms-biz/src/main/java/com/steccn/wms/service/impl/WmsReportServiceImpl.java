@@ -40,12 +40,10 @@ import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.PmsCaseNoHistoryVO;
+import com.steccn.pms.vo.PmsCaseNoInfoVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
-import com.steccn.wms.domain.WmsStorageReceipt;
-import com.steccn.wms.domain.WmsStorageReceiptInfo;
-import com.steccn.wms.domain.WmsTransferSlip;
+import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.mapper.*;
@@ -519,6 +517,13 @@ public class WmsReportServiceImpl implements WmsReportService {
                     caseNoList.addAll(boxNumbers);
                     tmp.setCaseNoList(caseNoList);
                     tmp.setCaseNo(null);
+                    Set<String> codeList = Sets.newHashSet();
+                    List<String> boxNumbers2 = Arrays.stream(tmp.getCode().split(",\\s*"))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    codeList.addAll(boxNumbers2);
+                    tmp.setCodeList(com.google.common.collect.Lists.newArrayList(codeList));
+                    tmp.setCode(null);
                     tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
                     tmp.setTargetWarehouseName(officeMap.get(tmp.getTargetWarehouseId()).getOfficeName());
                     tmp.setTypeName(typeNameMap.get(tmp.getType()));
@@ -538,6 +543,136 @@ public class WmsReportServiceImpl implements WmsReportService {
             tmp.setTargetWarehouseName(officeMap.get(tmp.getTargetWarehouseId()).getOfficeName());
         }
         return results;
+    }
+
+    @Override
+    public Boolean transferDaySheetLinkErp(WmsInventoryDaySheetDTO dto) {
+        //先获取调拨日报表
+        List<WmsInventoryDaySheetVO> results = transferDaySheet(dto);
+        if(CollUtil.isEmpty(results)){
+            return true;
+        }
+        results = results.stream()
+                // 过滤掉 null 或关键字段缺失的项
+                .filter(Objects::nonNull)
+                // 按 materialId + parentCode 分组
+                .collect(Collectors.groupingBy(vo -> vo.getMaterialId() + "_" + vo.getWarehouseId() + vo.getTargetWarehouseId()))
+                // 对每组进行合并
+                .values().stream()
+                .map(groupList -> {
+                    WmsInventoryDaySheetVO first = groupList.get(0);
+
+                    // 计算 totalQuantity 累加和
+                    BigDecimal totalQtySum = groupList.stream()
+                            .map(vo -> vo.getTotalQuantity() == null ? BigDecimal.ZERO : vo.getTotalQuantity())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    // 复制一个新的对象（防止修改原数据），这里简单用第一条作为基础
+                    WmsInventoryDaySheetVO merged = new WmsInventoryDaySheetVO();
+
+                    // 复制基本字段（按需扩展）
+                    BeanUtil.copyProperties(first,merged);
+                    merged.setTotalQuantity(totalQtySum);
+
+                    return merged;
+                })
+                .collect(Collectors.toList());
+        if(CollUtil.isEmpty(results)){
+            return true;
+        }
+        //根据源仓库分组
+        Map<Integer, List<WmsInventoryDaySheetVO>> finalGrouped = results.stream()
+                .collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getWarehouseId));
+        for (Map.Entry<Integer, List<WmsInventoryDaySheetVO>> entry : finalGrouped.entrySet()) {
+            List<WmsInventoryDaySheetVO> groupByValue = entry.getValue();
+            if(CollUtil.isEmpty(entry.getValue())){
+                continue;
+            }
+            ErpCommonSaveDTO<ErpSpinStockSaveDetailDTO> erpCommonSaveDTO = new ErpCommonSaveDTO<>();
+            erpCommonSaveDTO.setFdate(dto.getStartTime().toLocalDate());
+            erpCommonSaveDTO.setFmesbillid(IdUtil.simpleUUID());
+            erpCommonSaveDTO.setFmesbillno("syn_time_"+LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            //引入详细信息(生产完工入库list)
+            List<ErpSpinStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
+            Set<String> transferNo = Sets.newHashSet();
+            groupByValue = groupByValue.stream().filter(v -> v.getStatus().equals("已确认")).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(groupByValue)){
+                for(WmsInventoryDaySheetVO wmsInventoryDaySheetVO:groupByValue){
+                    if(!wmsInventoryDaySheetVO.getStatus().equals("已确认")){
+                        continue;
+                    }
+                    //仓库编码
+                    String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    String targetSourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    //获取erp中的code
+                    Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(sourceCode,targetSourceCode))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(erpWarehouse)&&erpWarehouse.size()!=2){
+                        throw new BusinessException("erp中没有对应的仓库:"+sourceCode+","+targetSourceCode);
+                    }
+                    String erpStockCode = erpWarehouse.get(sourceCode).get(0).getRefContent();
+                    String erpTargetStockCode = erpWarehouse.get(targetSourceCode).get(0).getRefContent();
+
+                    ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
+                    erpCommonSaveDetail.setFmesentryid(IdUtil.simpleUUID());
+                    erpCommonSaveDetail.setFmatno(wmsInventoryDaySheetVO.getMaterialCode());
+                    erpCommonSaveDetail.setFqty(wmsInventoryDaySheetVO.getTotalQuantity());
+                    //调出仓库
+                    erpCommonSaveDetail.setFsrcstockno(erpStockCode);
+                    //调入仓库
+                    erpCommonSaveDetail.setFdeptno(erpTargetStockCode);
+                    //YWZ需求 批号为箱号
+//                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
+                    String s = wmsInventoryDaySheetVO.getCaseNoList().get(0);
+                    PmsCaseNoInfoVO pmsCaseNoInfoVO = FeignOptional.of(() -> remotePmsFeignApi.getCaseNoInfo(s), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                    //找到车间
+                    String workShopCode = "yp";
+                    if(wmsInventoryDaySheetVO.getWarehouseName().contains("车间")){
+                        // 用"车间"作为分隔符分割字符串
+                        String[] parts = wmsInventoryDaySheetVO.getWarehouseName().split("车间");
+
+                        if (parts.length > 0) {
+                            // 返回前半部分的第一个字符（去掉空格）
+                            String num = parts[0].trim().substring(0, 1);
+                            if(num.equals("一")){
+                                workShopCode = "STEC002";
+                            }else if(num.equals("二")){
+                                workShopCode = "STEC003";
+                            }else if(num.equals("三")){
+                                workShopCode = "STEC015";
+                            }
+                        }
+                    }
+                    erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(wmsInventoryDaySheetVO.getMaterialName(),workShopCode,String.valueOf(pmsCaseNoInfoVO.getQuantity().intValue())));
+                    erpCommonSaveDetails.add(erpCommonSaveDetail);
+                    //加入入库单号
+                    transferNo.addAll(wmsInventoryDaySheetVO.getCodeList());
+                }
+            }
+            //调拨单
+            if(CollUtil.isNotEmpty(erpCommonSaveDetails)){
+                erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
+                String listR = "";
+                listR = remoteErpFeignApi.saveTransfer(erpCommonSaveDTO);
+                //判断是否保存成功
+                JSONObject jsonObject = JSONObject.parseObject(listR);
+                //成功则修改入库单状态
+                if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
+                    WmsTransferSlip wmsTransferSlip = new WmsTransferSlip();
+                    wmsTransferSlip.setStatus(OaConstant.NUM_2);
+                    if(Objects.nonNull(SecurityUtils.getUser())){
+                        wmsTransferSlip.setSynName(SecurityUtils.getUser().getName());
+                    }
+                    wmsTransferSlipService.update(wmsTransferSlip,new LambdaQueryWrapper<WmsTransferSlip>()
+                            .in(WmsTransferSlip::getCode,transferNo));
+                } else {
+                    String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+                    log.error(error);
+                    throw new BusinessException(error);
+                }
+            }
+
+        }
+        return true;
     }
 
     @Override

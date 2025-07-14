@@ -59,5 +59,6 @@ public class WmsInventoryDaySheetVO {
 
     private List<String> receiptCode;
 
+    private List<String> codeList;
 
 }

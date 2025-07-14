@@ -69,6 +69,13 @@ public interface WmsReportService {
     List<WmsInventoryDaySheetCaseVO> transferDaySheetCase(WmsInventoryDaySheetDTO dto);
 
     /**
+     * 调拨单同步erp
+     * @param dto
+     * @return
+     */
+    Boolean transferDaySheetLinkErp(WmsInventoryDaySheetDTO dto);
+
+    /**
      * 同步日报表数据
      * @param dto
      * @return

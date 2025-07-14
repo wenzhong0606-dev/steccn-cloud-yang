@@ -369,13 +369,15 @@
             any_value(target_shelf_id) as targetShelfId,
             any_value(source_shelf_id) as sourceShelfId,
             any_value(material_id) as materialId,
+            any_value(material_code) as materialCode,
             material_name as materialName,
             type,
             status,
             classes,
             COUNT(*) as caseNum,
             sum(quantity) as totalQuantity,
-            group_concat(case_no ORDER BY case_no SEPARATOR ',  ') as caseNo
+            group_concat(case_no ORDER BY case_no SEPARATOR ',  ') as caseNo,
+            group_concat(code ORDER BY code SEPARATOR ',  ') as code
         from (
                  select
                      c.warehouse_id as warehouse_id,
@@ -386,6 +388,7 @@
                      a.source_shelf as source_shelf_id,
                      a.material_name as material_name,
                      a.material_id as material_id,
+                     a.material_code as material_code,
                      b.type as type,
                      CASE
                         WHEN b.status = 0
@@ -394,8 +397,8 @@
                         THEN '已确认'
                         WHEN b.status = 2
                         THEN '已同步'
-                        WHEN b.status = 5
-                        THEN '已冲销'
+                        WHEN b.status = 4
+                        THEN '已删除'
                      END AS status,
                      CASE
                          WHEN TIME(b.create_time) BETWEEN '20:00:00' AND '23:59:59'
@@ -405,12 +408,13 @@
                          THEN '白班'
                          END AS classes,
                      a.case_no as case_no,
-                     a.quantity as quantity
+                     a.quantity as quantity,
+                     b.code as code
                  from wms_transfer_slip_info a
                      join wms_transfer_slip b on a.transfer_slip_id = b.id
                      join wms_inventory c on c.id = a.source_inventory_id
                  where
-                    a.del_flag = 0 AND b.del_flag = 0
+                    a.del_flag = 0 AND b.del_flag = 0 and b.status != 4
                     <if test="dto.startTime !=null and dto.endTime != null">
                         AND b.create_time &gt;= #{dto.startTime}
                         AND b.create_time &lt; #{dto.endTime}

@@ -114,6 +114,13 @@ public class WmsReportController {
         return R.success(wmsReportService.transferDaySheetCase(dto));
     }
 
+    @PostMapping("/transfer/day/sheet/linkErp")
+    @ApiOperation("日报表连接Erp")
+    @PreAuthorize("hasAuthority('wms:transfer:linkErp')")
+    public  R<Boolean> transferDaySheetLinkErp(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.transferDaySheetLinkErp(dto));
+    }
+
     @PostMapping("out/in/warehouse/info")
     @ApiOperation("出入库明细")
     public R<SteccnTableDataDTO> outInWarehouseInfo(@RequestBody WmsOutInWarehouseInfoDTO dto){

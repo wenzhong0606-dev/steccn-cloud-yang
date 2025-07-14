@@ -65,6 +65,11 @@ public class WmsTransferSlip implements Serializable {
     private String affirmName;
 
     /**
+     * 同步人名称
+     */
+    private String synName;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
