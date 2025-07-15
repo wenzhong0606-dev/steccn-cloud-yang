@@ -200,7 +200,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         throw new BusinessException("需求数量不能为0");
                     }
                     //校验需求数量和可用数量
-                    if(info.getQuantity().compareTo(inventoryMap.get(info.getSourceInventoryId()).getAvailableQuantity())!=-1){
+                    if(info.getQuantity().compareTo(inventoryMap.get(info.getSourceInventoryId()).getAvailableQuantity())==1){
                         throw new BusinessException("需求数量不能大于可用数量");
                     }
                     targetList.add(target);
