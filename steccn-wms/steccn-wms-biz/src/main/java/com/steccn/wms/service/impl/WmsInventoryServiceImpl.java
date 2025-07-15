@@ -3,6 +3,7 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -94,12 +95,13 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             like  = new LambdaQueryWrapper<WmsInventory>()
                     .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
                     .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                    .gt(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
                     .in(WmsInventory::getMaterialId,materialIds)
-                    .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
-                    .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
-                    .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
-                    .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
-                    .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                    .like(StrUtil.isNotBlank(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                    .like(StrUtil.isNotBlank(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                    .like(StrUtil.isNotBlank(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                    .like(StrUtil.isNotBlank(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                    .like(StrUtil.isNotBlank(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
                     .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
                             .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
                     .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
@@ -114,11 +116,12 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                     like = new LambdaQueryWrapper<WmsInventory>()
                     .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
                     .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
-                    .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
-                    .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
-                    .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
-                    .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
-                    .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                            .gt(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                    .like(StrUtil.isNotBlank(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                    .like(StrUtil.isNotBlank(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                    .like(StrUtil.isNotBlank(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                    .like(StrUtil.isNotBlank(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                    .like(StrUtil.isNotBlank(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
                     .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
                             .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
                     .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
@@ -131,6 +134,9 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                     .orderByDesc(WmsInventory::getId);
         }
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
+        if(CollUtil.isEmpty(resPage.getRecords())){
+            throw new BusinessException("库存可用数量为0或没有符合条件的库存");
+        }
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
         Set<Long> dict = Sets.newHashSet();

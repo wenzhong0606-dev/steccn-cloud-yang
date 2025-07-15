@@ -174,7 +174,9 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 List<WmsInventoryDTO> targetList = Lists.newArrayList();
                 //获取箱号规则
 //                Long caseNo = getCaseNo(model.getCode(), model.getId());
-
+                //校验库存数量
+                List<WmsInventory> wmsInventories = wmsInventoryService.listByIds(dto.getList().stream().map(WmsTransferSlipInfoDTO::getSourceInventoryId).collect(Collectors.toSet()));
+                Map<Long, WmsInventory> inventoryMap = wmsInventories.stream().collect(Collectors.toMap(WmsInventory::getId, v -> v));
                 List<WmsTransferSlipInfoDTO> list = dto.getList();
                 for (WmsTransferSlipInfoDTO info : list) {
                     WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
@@ -194,6 +196,13 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
 //                    target.setCaseNo(model.getCode() + WmsCodeUtil.SHORT_LINE + caseNo);
                     target.setShelfId(info.getTargetShelf());
                     target.setWarehouseId(model.getTargetWarehouse());
+                    if(info.getQuantity().compareTo(BigDecimal.ZERO)==0){
+                        throw new BusinessException("需求数量不能为0");
+                    }
+                    //校验需求数量和可用数量
+                    if(info.getQuantity().compareTo(inventoryMap.get(info.getSourceInventoryId()).getAvailableQuantity())!=-1){
+                        throw new BusinessException("需求数量不能大于可用数量");
+                    }
                     targetList.add(target);
                     wmsTransferSlipInfo.setTargetCaseNo(target.getCaseNo());
                     infoList.add(wmsTransferSlipInfo);
