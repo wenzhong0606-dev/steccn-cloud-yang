@@ -174,4 +174,20 @@ public class WmsCodeUtil {
         return sb.toString();
     }
 
+    /**
+     * 切割PG后的箱号
+     * @param
+     * @return
+     */
+    public static String extractBetweenPGAndComma(String input) {
+        int pgIndex = input.indexOf("PG:");
+        if (pgIndex == -1) return ""; // 没有PG:
+
+        int start = pgIndex + 3; // "PG:" 长度是3
+        int end = input.indexOf(",", start);
+        if (end == -1) return input.substring(start); // 没有逗号，则取到结尾
+
+        return input.substring(start, end);
+    }
+
 }

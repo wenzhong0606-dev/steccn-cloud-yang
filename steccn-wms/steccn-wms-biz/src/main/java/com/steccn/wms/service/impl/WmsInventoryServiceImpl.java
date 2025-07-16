@@ -42,6 +42,7 @@ import com.steccn.wms.service.WmsInventoryRecordService;
 import com.steccn.wms.service.WmsCustomerBarcodeService;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
+import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.WmsHistoricalInventoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,6 +90,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
         LambdaQueryWrapper<WmsInventory> like;
+        //处理箱号
+        if(StrUtil.isNotBlank(dto.getCaseNo())&&dto.getCaseNo().contains("PG:")){
+            String s = WmsCodeUtil.extractBetweenPGAndComma(dto.getCaseNo());
+            dto.setCaseNo(s);
+        }
         //规格筛选
         if (Objects.nonNull(dto.getSpecification())){
             List<Long> materialIds = FeignOptional.of(() -> remoteSpareFeignApi.listBySpecification(dto.getSpecification()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

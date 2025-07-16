@@ -1187,6 +1187,9 @@ public class WmsReportServiceImpl implements WmsReportService {
 
     @Override
     public List<WmsCaseNoHistoryVO> caseNoHistory(String caseNo) {
+        if(caseNo.contains("PG:")){
+            caseNo = WmsCodeUtil.extractBetweenPGAndComma(caseNo);
+        }
         List<WmsCaseNoHistoryVO> results = Lists.newArrayList();
         Set<Long> materialId = Sets.newHashSet();
         Set<String> productLineCode = Sets.newHashSet();
@@ -1232,7 +1235,8 @@ public class WmsReportServiceImpl implements WmsReportService {
             });
         }
         //条码创建
-        List<PmsCaseNoHistoryVO> pmsCaseNoHistoryVOS = FeignOptional.of(() -> remotePmsFeignApi.caseNoHistory(caseNo), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        String finalCaseNo = caseNo;
+        List<PmsCaseNoHistoryVO> pmsCaseNoHistoryVOS = FeignOptional.of(() -> remotePmsFeignApi.caseNoHistory(finalCaseNo), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         List<WmsCaseNoHistoryVO> barCodeCreateVOS = Lists.newArrayList();
         if(CollUtil.isNotEmpty(pmsCaseNoHistoryVOS)){
             barCodeCreateVOS = BeanUtil.copyToList(pmsCaseNoHistoryVOS, WmsCaseNoHistoryVO.class);
@@ -1262,7 +1266,9 @@ public class WmsReportServiceImpl implements WmsReportService {
             for(WmsCaseNoHistoryVO tmp:inStorageCaseHistory){
                 tmp.setMaterialName(eqpSpareVOMap.get(tmp.getMaterialId()).getName());
                 tmp.setMaterialCode(eqpSpareVOMap.get(tmp.getMaterialId()).getCode());
-                tmp.setProductLineName(officeCodeMap.get(tmp.getProductLineName()).getOfficeName());
+                if(Objects.nonNull(officeCodeMap.get(tmp.getProductLineName()))){
+                    tmp.setProductLineName(officeCodeMap.get(tmp.getProductLineName()).getOfficeName());
+                }
                 tmp.setTypeName(typeNameMap.get(tmp.getTypeId()));
                 tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
                 results.add(tmp);
