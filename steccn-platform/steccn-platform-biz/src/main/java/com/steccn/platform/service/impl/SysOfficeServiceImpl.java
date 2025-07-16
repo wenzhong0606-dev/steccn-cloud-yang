@@ -886,20 +886,13 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 //        List<SysOfficeVO> list = this.baseMapper.listByParentId(dto.getId(), dto.getOfficeType());
         SysOffice office = getById(dto.getId());
         List<SysOfficeVO> res = Lists.newArrayList();
-        List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().notIn(SysOffice::getOfficeType, 11).eq(SysOffice::getStatus, SysOfficeConstant.normal));
+        List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>()
+                .like(SysOffice::getParentCodes,","+office.getOfficeCode())
+                .eq(SysOffice::getOfficeType, dto.getOfficeType())
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal));
 
         if (CollUtil.isNotEmpty(list)) {
-            List<SysOffice> officeNodes = getOfficeNodes(list, office.getOfficeCode());
-            if (CollUtil.isNotEmpty(officeNodes)){
-                //过滤出符合type的数据
-                if (Objects.nonNull(dto.getOfficeType())) {
-                    List<SysOffice> collect = officeNodes.stream().filter(e -> e.getOfficeType().equals(dto.getOfficeType())).filter(e -> !e.getStatus().equals("1")).collect(Collectors.toList());
-                    res.addAll(BeanUtil.copyToList(collect,SysOfficeVO.class));
-                }else {
-                    res.addAll(BeanUtil.copyToList(officeNodes,SysOfficeVO.class));
-                }
-
-            }
+            res.addAll(BeanUtil.copyToList(list,SysOfficeVO.class));
         }
         return res;
     }

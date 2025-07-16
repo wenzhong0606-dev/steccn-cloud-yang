@@ -466,6 +466,10 @@ public class WmsReportServiceImpl implements WmsReportService {
 
     @Override
     public List<WmsInventoryDaySheetVO> productionDaySheet(WmsInventoryDaySheetDTO dto) {
+        Set<Long> typeSet = Sets.newHashSet(1582296769061031936L,1582297407643815936L);
+        if(Objects.nonNull(dto.getType())&&!typeSet.contains(dto.getType())){
+            throw new BusinessException("目前只支持销售发货和生产领料类型");
+        }
         List<WmsInventoryDaySheetVO> results = wmsDeliveryReceiptService.productionDaySheet(dto);
         if(CollUtil.isNotEmpty(results)){
             //获取类型名称
