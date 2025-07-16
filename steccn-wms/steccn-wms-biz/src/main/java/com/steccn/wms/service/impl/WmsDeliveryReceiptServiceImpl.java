@@ -893,6 +893,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 //保存明细信息
                 wmsDeliveryReceiptInfoService.saveBatch(receiptInfoList);
             }
+            dto.setAffirmFlag("1");
             if (Objects.nonNull(dto.getAffirmFlag()) && WmsManagerConstant.CODE_ONE.equals(dto.getAffirmFlag())) {
                 affirm(model.getId(), dto.getCreateName(), null);
             }
