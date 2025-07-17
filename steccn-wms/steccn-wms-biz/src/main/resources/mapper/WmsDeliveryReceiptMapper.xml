@@ -439,7 +439,7 @@
         from wms_delivery_receipt a
         join wms_delivery_receipt_info c on c.delivery_receipt_id = a.id
         join wms_inventory d on c.inventory_id = d.id
-        where a.type = 1582296769061031936 and a.del_flag = 0 and c.del_flag = 0
+        where a.del_flag = 0 and c.del_flag = 0
         <if test="dto.caseNoList != null and dto.caseNoList.size > 0">
             and d.case_no in
             <foreach collection="dto.caseNoList" item="caseNo" open="(" close=")" separator=",">
