@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -35,6 +36,7 @@ import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.util.UnitConvertUtil;
 import com.steccn.pms.vo.WmsInventoryVO;
+import com.steccn.qms.vo.QtCheckTaskReportVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsInventoryRecord;
@@ -861,6 +863,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public Page<WmsInventoryCompareVO> comparePageList(WmsInventoryCompareDTO dto) {
+        Page<WmsInventoryCompareVO> page = new Page<>();
         Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(dto.getWarehouseCode()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if(CollUtil.isEmpty(erpWarehouse)){
             throw new BusinessException("erp中没有对应的仓库");
@@ -870,8 +873,89 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             erpDTO.setFmatno(dto.getMaterialCode());
         }
         erpDTO.setFstockno(erpWarehouse.get(dto.getWarehouseCode()).get(0).getRefContent());
-        List<ErpInventoryVO> erpInventoryVOS = FeignOptional.of(() -> remoteErpFeignApi.getInventory(erpDTO), FeignConstant.STECCN_MES_SERVICE_NAME).get();
-        return null;
+        List<ErpInventoryVO> erpInventoryVOS = remoteErpFeignApi.getInventory(erpDTO).getData();
+        LambdaQueryWrapper<WmsInventory> wrapper = new QueryWrapper<WmsInventory>()
+                .select("any_value(material_code) AS materialCode,any_value(material_name) AS materialNode,any_value(warehouse_name) AS warehouseName,Sum(total_quantity) AS totalQuantity,Sum(available_quantity) as availableQuantity")
+                .lambda()
+                .eq(WmsInventory::getWarehouseCode, dto.getWarehouseCode())
+                .like(StrUtil.isNotBlank(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                .groupBy(WmsInventory::getMaterialId);
+        List<WmsInventory> inventoryList = list(wrapper);
+        //把所有请求到的值接入
+        Set<String> materialCode = Sets.newHashSet();
+        Map<String,ErpInventoryVO> codeMap1 = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(erpInventoryVOS)){
+            //相同的物料合并
+            erpInventoryVOS = erpInventoryVOS.stream()
+                    // 按 materialId + parentCode 分组
+                    .collect(Collectors.groupingBy(ErpInventoryVO::getFmatno))
+                    // 对每组进行合并
+                    .values().stream()
+                    .map(groupList -> {
+                        ErpInventoryVO first = groupList.get(0);
+
+                        // 计算 totalQuantity 累加和
+                        BigDecimal totalQtySum = groupList.stream()
+                                .map(vo -> vo.getFqty() == null ? BigDecimal.ZERO : vo.getFqty())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
+                        // 构造合并对象
+                        ErpInventoryVO merged = new ErpInventoryVO();
+                        BeanUtil.copyProperties(first, merged);
+
+                        // 设置合并后的值
+                        merged.setFqty(totalQtySum);
+                        return merged;
+                    })
+                    .collect(Collectors.toList());
+            materialCode.addAll(erpInventoryVOS.stream().map(ErpInventoryVO::getFmatno).collect(Collectors.toSet()));
+            codeMap1 = erpInventoryVOS.stream().collect(
+                    Collectors.toMap(
+                            ErpInventoryVO::getFmatno,
+                            vo -> vo
+                    ));
+        }
+        Map<String,WmsInventory> codeMap2 = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(inventoryList)){
+            materialCode.addAll(inventoryList.stream().map(WmsInventory::getMaterialCode).collect(Collectors.toSet()));
+            codeMap2 = inventoryList.stream().collect(
+                    Collectors.toMap(
+                            WmsInventory::getMaterialCode,
+                            vo -> vo
+                    ));
+        }
+        if(CollUtil.isNotEmpty(materialCode)){
+            List<String> sortedList = materialCode.stream()
+                    .sorted() // 按降序排序
+                    .collect(Collectors.toList());
+            Page<String> materialPage = LogicalPageUtil.page(sortedList, dto.getCurrent(), dto.getSize());
+            List<WmsInventoryCompareVO> data = Lists.newArrayList();
+            for(String tmp:materialPage.getRecords()){
+                WmsInventoryCompareVO vo = new WmsInventoryCompareVO();
+                ErpInventoryVO erpInventoryVO = codeMap1.get(tmp);
+                WmsInventory wmsInventory = codeMap2.get(tmp);
+                if(Objects.nonNull(erpInventoryVO)){
+                    vo.setErpQuantity(erpInventoryVO.getFqty());
+                    vo.setMaterialName(erpInventoryVO.getFmatname());
+                    vo.setMaterialCode(erpInventoryVO.getFmatno());
+                    vo.setStockName(erpInventoryVO.getFstockname());
+                }
+                if(Objects.nonNull(wmsInventory)){
+                    vo.setTotalQuantity(wmsInventory.getTotalQuantity());
+                    vo.setAvailQuantity(wmsInventory.getAvailableQuantity());
+                    vo.setMaterialName(wmsInventory.getMaterialName());
+                    vo.setMaterialCode(wmsInventory.getMaterialCode());
+                    vo.setStockName(wmsInventory.getWarehouseName());
+                }
+                data.add(vo);
+            }
+            page.setRecords(data);
+            page.setCurrent(materialPage.getCurrent());
+            page.setSize(materialPage.getSize());
+            page.setTotal(materialPage.getTotal());
+        }
+        return page;
     }
 
     List<WmsInventoryExcelDTO> getExcelData(WmsInventoryPageDTO dto) {

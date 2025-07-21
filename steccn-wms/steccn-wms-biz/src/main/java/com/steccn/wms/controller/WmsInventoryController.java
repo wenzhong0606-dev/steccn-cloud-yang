@@ -12,6 +12,7 @@ import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.vo.WmsHistoricalInventoryVO;
+import com.steccn.wms.vo.WmsInventoryCompareVO;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -145,6 +146,10 @@ public class WmsInventoryController {
     }
 
 
-
+    @ApiOperation("和Erp库存对比")
+    @PostMapping("/compare")
+    public R<Page<WmsInventoryCompareVO>> comparePageList(@RequestBody WmsInventoryCompareDTO dto) {
+        return R.success(wmsInventoryService.comparePageList(dto));
+    }
 
 }
