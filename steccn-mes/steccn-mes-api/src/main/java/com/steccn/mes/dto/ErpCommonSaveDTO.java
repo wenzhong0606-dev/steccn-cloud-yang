@@ -28,6 +28,11 @@ public class ErpCommonSaveDTO<T> implements Serializable {
     private LocalDate fdate;
 
     /**
+     * 生产车间编码
+     */
+    private String fdeptno;
+
+    /**
      * 分录明细实体
      */
     List<T> fentry;

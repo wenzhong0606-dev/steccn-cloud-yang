@@ -72,7 +72,7 @@ public interface RemoteErpFeignApi {
      */
     @PostMapping("/api/tcmes/savesppickmtrl")
     @ApiOperation("保存简单生产领料单")
-    String saveSppickmtrl(@RequestBody ErpSppickMtrlSaveDTO dto);
+    String saveSppickmtrl(@RequestBody ErpCommonSaveDTO dto);
 
     /**
      * 保存其他入库单

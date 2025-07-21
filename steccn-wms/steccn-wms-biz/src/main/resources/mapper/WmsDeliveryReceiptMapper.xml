@@ -326,7 +326,8 @@
             COUNT(*) AS caseNum,
             sum(quantity) AS totalQuantity,
             classes,
-            group_concat(case_no ORDER BY case_no SEPARATOR ',  ') as caseNo
+            group_concat(case_no ORDER BY case_no SEPARATOR ',  ') as caseNo,
+            group_concat(code ORDER BY code SEPARATOR ',  ') as code
         from (
                     select
                         a.out_time AS out_time,

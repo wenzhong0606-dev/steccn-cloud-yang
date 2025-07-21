@@ -487,6 +487,13 @@ public class WmsReportServiceImpl implements WmsReportService {
                     caseNoList.addAll(boxNumbers);
                     tmp.setCaseNoList(caseNoList);
                     tmp.setCaseNo(null);
+                    Set<String> codeList = Sets.newHashSet();
+                    List<String> boxNumbers2 = Arrays.stream(tmp.getCode().split(",\\s*"))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    codeList.addAll(boxNumbers2);
+                    tmp.setCodeList(caseNoList);
+                    tmp.setCode(null);
                     tmp.setWarehouseName(officeMap.get(tmp.getWarehouseId()).getOfficeName());
                     tmp.setTypeName(typeNameMap.get(tmp.getType()));
                 }
@@ -499,6 +506,121 @@ public class WmsReportServiceImpl implements WmsReportService {
     public List<WmsInventoryDaySheetCaseVO> productionDaySheetCase(WmsInventoryDaySheetDTO dto) {
         List<WmsInventoryDaySheetCaseVO> results = wmsDeliveryReceiptService.productionDaySheetCaseList(dto);
         return results;
+    }
+
+    @Override
+    public Boolean productionDayDaySheetLinkErp(WmsInventoryDaySheetDTO dto) {
+        //先同步生产领料
+        dto.setType(1582296769061031936L);
+        dto.setStatus(OaConstant.NUM_1);
+        List<WmsInventoryDaySheetVO> results = productionDaySheet(dto);
+        if(CollUtil.isEmpty(results)){
+            return true;
+        }
+        results = results.stream()
+                // 过滤掉 null 或关键字段缺失的项
+                .filter(v->Objects.nonNull(v.getProductionLineId()))
+                // 按 materialId + parentCode 分组
+                .collect(Collectors.groupingBy(vo -> vo.getProductionLineId() + "_" + vo.getWarehouseId() + "_" + vo.getMaterialId()))
+                // 对每组进行合并
+                .values().stream()
+                .map(groupList -> {
+                    WmsInventoryDaySheetVO first = groupList.get(0);
+
+                    // 计算 totalQuantity 累加和
+                    BigDecimal totalQtySum = groupList.stream()
+                            .map(vo -> vo.getTotalQuantity() == null ? BigDecimal.ZERO : vo.getTotalQuantity())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    // 复制一个新的对象（防止修改原数据），这里简单用第一条作为基础
+                    WmsInventoryDaySheetVO merged = new WmsInventoryDaySheetVO();
+
+                    // 复制基本字段（按需扩展）
+                    BeanUtil.copyProperties(first,merged);
+                    merged.setTotalQuantity(totalQtySum);
+
+                    return merged;
+                })
+                .collect(Collectors.toList());
+        //根据产线分组
+        Map<Integer, List<WmsInventoryDaySheetVO>> finalGrouped = results.stream()
+                .collect(Collectors.groupingBy(WmsInventoryDaySheetVO::getProductionLineId));
+
+        for (Map.Entry<Integer, List<WmsInventoryDaySheetVO>> entry : finalGrouped.entrySet()) {
+            List<WmsInventoryDaySheetVO> groupByValue = entry.getValue();
+            if(CollUtil.isEmpty(entry.getValue())){
+                continue;
+            }
+            ErpCommonSaveDTO<ErpSpinStockSaveDetailDTO> erpCommonSaveDTO = new ErpCommonSaveDTO<>();
+            erpCommonSaveDTO.setFdate(dto.getStartTime().toLocalDate());
+            erpCommonSaveDTO.setFmesbillid(IdUtil.simpleUUID());
+            erpCommonSaveDTO.setFmesbillno("syn_time_"+LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            String erpDepCode = WmsManagerConstant.ErpProductionLineCodeEnum.getCodeByName(groupByValue.get(0).getProductionLineName());
+            erpCommonSaveDTO.setFdeptno(erpDepCode);
+            //引入详细信息(生产完工入库list)
+            List<ErpSpinStockSaveDetailDTO> erpCommonSaveDetails = Lists.newArrayList();
+            Set<String> deliveryNo = Sets.newHashSet();
+            groupByValue = groupByValue.stream().filter(v -> v.getStatus().equals("已确认")).collect(Collectors.toList());
+            for(WmsInventoryDaySheetVO wmsInventoryDaySheetVO:groupByValue){
+                //仓库编码
+                String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //获取erp中的code
+                Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(sourceCode))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(CollUtil.isEmpty(erpWarehouse)&&erpWarehouse.size()!=2){
+                    throw new BusinessException("erp中没有对应的仓库:"+sourceCode);
+                }
+                String erpStockCode = erpWarehouse.get(sourceCode).get(0).getRefContent();
+
+                ErpSpinStockSaveDetailDTO erpCommonSaveDetail = new ErpSpinStockSaveDetailDTO();
+                erpCommonSaveDetail.setFmesentryid(IdUtil.simpleUUID());
+                erpCommonSaveDetail.setFmatno(wmsInventoryDaySheetVO.getMaterialCode());
+                erpCommonSaveDetail.setFappqty(wmsInventoryDaySheetVO.getTotalQuantity());
+                erpCommonSaveDetail.setFactualqty(wmsInventoryDaySheetVO.getTotalQuantity());
+                String s = wmsInventoryDaySheetVO.getCaseNoList().get(0);
+                PmsCaseNoInfoVO pmsCaseNoInfoVO = FeignOptional.of(() -> remotePmsFeignApi.getCaseNoInfo(s), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                //找到车间
+                String workShopCode = "yp";
+                if(wmsInventoryDaySheetVO.getWarehouseName().contains("车间")){
+                    // 用"车间"作为分隔符分割字符串
+                    if(wmsInventoryDaySheetVO.getWarehouseName().contains("一车间")){
+                        workShopCode = "STEC002";
+                    }else if(wmsInventoryDaySheetVO.getWarehouseName().contains("二车间")){
+                        workShopCode = "STEC003";
+                    }else if(wmsInventoryDaySheetVO.getWarehouseName().contains("三车间")){
+                        workShopCode = "STEC015";
+                    }
+                }
+                erpCommonSaveDetail.setFlot(WmsCodeUtil.getErpFlotCode(wmsInventoryDaySheetVO.getMaterialName(),workShopCode,String.valueOf(pmsCaseNoInfoVO.getQuantity().intValue())));
+                erpCommonSaveDetails.add(erpCommonSaveDetail);
+                //加入入库单号
+                deliveryNo.addAll(wmsInventoryDaySheetVO.getCodeList());
+            }
+
+            //生产领料单
+            if(CollUtil.isNotEmpty(erpCommonSaveDetails)){
+                erpCommonSaveDTO.setFentry(erpCommonSaveDetails);
+                String listR = "";
+                listR = remoteErpFeignApi.saveSppickmtrl(erpCommonSaveDTO);
+                //判断是否保存成功
+                JSONObject jsonObject = JSONObject.parseObject(listR);
+                //成功则修改入库单状态
+                if (jsonObject.getBoolean(WmsManagerConstant.JSON_SUCCESS)) {
+                    WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
+                    wmsDeliveryReceipt.setStatus(OaConstant.NUM_2);
+                    if(Objects.nonNull(SecurityUtils.getUser())){
+                        wmsDeliveryReceipt.setSynName(SecurityUtils.getUser().getName());
+                    }
+                    wmsDeliveryReceiptService.update(wmsDeliveryReceipt,new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                            .in(WmsDeliveryReceipt::getCode,deliveryNo));
+                } else {
+                    String error = "同步失败-" + jsonObject.getString(WmsManagerConstant.JSON_MESSAGE);
+                    log.error(error);
+                    throw new BusinessException(error);
+                }
+            }
+
+        }
+        return true;
     }
 
     @Override
@@ -560,7 +682,7 @@ public class WmsReportServiceImpl implements WmsReportService {
                 // 过滤掉 null 或关键字段缺失的项
                 .filter(Objects::nonNull)
                 // 按 materialId + parentCode 分组
-                .collect(Collectors.groupingBy(vo -> vo.getMaterialId() + "_" + vo.getWarehouseId() + vo.getTargetWarehouseId()))
+                .collect(Collectors.groupingBy(vo -> vo.getMaterialId() + "_" + vo.getWarehouseId() +"_"+ vo.getTargetWarehouseId()))
                 // 对每组进行合并
                 .values().stream()
                 .map(groupList -> {

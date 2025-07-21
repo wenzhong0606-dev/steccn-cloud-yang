@@ -102,6 +102,13 @@ public class WmsReportController {
         return R.success(wmsReportService.productionDaySheetCase(dto));
     }
 
+    @PostMapping("/out/day/sheet/production/linkErp")
+    @ApiOperation("日报表连接Erp")
+    @PreAuthorize("hasAuthority('wms:production:linkErp')")
+    public  R<Boolean> productionDaySheetLinkErp(@RequestBody WmsInventoryDaySheetDTO dto){
+        return R.success(wmsReportService.productionDayDaySheetLinkErp(dto));
+    }
+
     @PostMapping("/transfer/day/sheet")
     @ApiOperation("调拨日报表")
     public R<List<WmsInventoryDaySheetVO>> transferDaySheet(@RequestBody WmsInventoryDaySheetDTO dto){

@@ -50,6 +50,11 @@ public class WmsDeliveryReceipt implements Serializable {
     private String affirmName;
 
     /**
+     * 同步人
+     */
+    private String synName;
+
+    /**
      * 备注
      */
     private String note;

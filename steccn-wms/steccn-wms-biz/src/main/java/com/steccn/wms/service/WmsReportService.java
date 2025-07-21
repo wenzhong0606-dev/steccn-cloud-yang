@@ -55,6 +55,12 @@ public interface WmsReportService {
     List<WmsInventoryDaySheetCaseVO> productionDaySheetCase(WmsInventoryDaySheetDTO dto);
 
     /**
+     * 生产日报表链接Erp
+     * @param dto
+     * @return
+     */
+    Boolean productionDayDaySheetLinkErp(WmsInventoryDaySheetDTO dto);
+    /**
      * 调拨单日报表
      * @param dto
      * @return
