@@ -696,10 +696,17 @@ public class WmsReportServiceImpl implements WmsReportService {
                     // 复制一个新的对象（防止修改原数据），这里简单用第一条作为基础
                     WmsInventoryDaySheetVO merged = new WmsInventoryDaySheetVO();
 
+                    //累加codeList
+                    // 累加 codeList
+                    List<String> allCodes = groupList.stream()
+                            .map(WmsInventoryDaySheetVO::getCodeList)
+                            .filter(Objects::nonNull)
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toList());
                     // 复制基本字段（按需扩展）
                     BeanUtil.copyProperties(first,merged);
                     merged.setTotalQuantity(totalQtySum);
-
+                    merged.setCodeList(allCodes);
                     return merged;
                 })
                 .collect(Collectors.toList());
@@ -728,8 +735,11 @@ public class WmsReportServiceImpl implements WmsReportService {
                         continue;
                     }
                     //仓库编码
+                    if(wmsInventoryDaySheetVO.getTargetWarehouseId().equals(wmsInventoryDaySheetVO.getWarehouseId())){
+                        continue;
+                    }
                     String sourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                    String targetSourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    String targetSourceCode = FeignOptional.of(() -> remoteOfficeFeign.getByIdSysOfficeInfo(wmsInventoryDaySheetVO.getTargetWarehouseId().longValue()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     //获取erp中的code
                     Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(sourceCode,targetSourceCode))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     if(CollUtil.isEmpty(erpWarehouse)&&erpWarehouse.size()!=2){
@@ -745,7 +755,7 @@ public class WmsReportServiceImpl implements WmsReportService {
                     //调出仓库
                     erpCommonSaveDetail.setFsrcstockno(erpStockCode);
                     //调入仓库
-                    erpCommonSaveDetail.setFdeptno(erpTargetStockCode);
+                    erpCommonSaveDetail.setFdeststockno(erpTargetStockCode);
                     //YWZ需求 批号为箱号
 //                    erpCommonSaveDetail.setFlot(tmp.getCaseNo());
                     String s = wmsInventoryDaySheetVO.getCaseNoList().get(0);

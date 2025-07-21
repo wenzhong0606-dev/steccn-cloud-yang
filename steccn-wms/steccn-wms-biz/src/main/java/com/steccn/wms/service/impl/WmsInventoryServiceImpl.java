@@ -18,12 +18,13 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.dp.dto.DpWmsDataDTO;
 import com.steccn.dp.feign.RemoteDpWmsDataFeignApi;
+import com.steccn.mes.dto.ErpInventoryDTO;
+import com.steccn.mes.feign.RemoteErpFeignApi;
+import com.steccn.mes.vo.ErpInventoryVO;
 import com.steccn.platform.dto.SparePageDTO;
+import com.steccn.platform.dto.SysConfigurationDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
@@ -44,6 +45,7 @@ import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.WmsHistoricalInventoryVO;
+import com.steccn.wms.vo.WmsInventoryCompareVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -85,6 +87,10 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     private final RemoteDpWmsDataFeignApi remoteDpWmsDataFeignApi;
+
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+
+    private final RemoteErpFeignApi remoteErpFeignApi;
 
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
@@ -851,6 +857,21 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         String fileName = URLEncoder.encode("仓库清单", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         EasyExcel.write(response.getOutputStream(), WmsInventoryExcelDTO.class).sheet("模板").doWrite(getExcelData(dto));
+    }
+
+    @Override
+    public Page<WmsInventoryCompareVO> comparePageList(WmsInventoryCompareDTO dto) {
+        Map<String, List<SysConfigurationDTO>> erpWarehouse = FeignOptional.of(() -> remoteSysConfigurationFeignApi.confList(new TupleDTO<>("ERP_WAREHOUSE", com.google.common.collect.Sets.newHashSet(dto.getWarehouseCode()))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if(CollUtil.isEmpty(erpWarehouse)){
+            throw new BusinessException("erp中没有对应的仓库");
+        }
+        ErpInventoryDTO erpDTO = new ErpInventoryDTO();
+        if(StrUtil.isNotBlank(dto.getMaterialCode())){
+            erpDTO.setFmatno(dto.getMaterialCode());
+        }
+        erpDTO.setFstockno(erpWarehouse.get(dto.getWarehouseCode()).get(0).getRefContent());
+        List<ErpInventoryVO> erpInventoryVOS = FeignOptional.of(() -> remoteErpFeignApi.getInventory(erpDTO), FeignConstant.STECCN_MES_SERVICE_NAME).get();
+        return null;
     }
 
     List<WmsInventoryExcelDTO> getExcelData(WmsInventoryPageDTO dto) {

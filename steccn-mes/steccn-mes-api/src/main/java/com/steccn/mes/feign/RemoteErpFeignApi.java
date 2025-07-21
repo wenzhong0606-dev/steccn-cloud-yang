@@ -172,4 +172,13 @@ public interface RemoteErpFeignApi {
     @PostMapping("/api/tcmes/getstock")
     @ApiOperation("获取erp仓库信息")
     R<List<ErpStockVO>> getStock(@RequestBody ErpCustomerDTO dto);
+
+    /**
+     * 获取erp库存信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/tcmes/getinventory")
+    @ApiOperation("获取erp库存信息")
+    R<List<ErpInventoryVO>> getInventory(@RequestBody ErpInventoryDTO dto);
 }
