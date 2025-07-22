@@ -4,16 +4,20 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.wms.domain.WmsCheckOrder;
 import com.steccn.wms.domain.WmsCheckOrderInfo;
 import com.steccn.wms.domain.WmsCheckOrderScanInfo;
 import com.steccn.wms.dto.WmsCheckOrderScanInfoDTO;
@@ -24,6 +28,7 @@ import com.steccn.wms.service.WmsCheckOrderService;
 import com.steccn.wms.vo.WmsCheckOrderAreaVO;
 import com.steccn.wms.vo.WmsCheckOrderScanInfoVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import reactor.util.function.Tuple3;
 
@@ -46,10 +51,15 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
 
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final WmsCheckOrderService wmsCheckOrderService;
 
     @Override
     public Boolean addScanCheckInfo(WmsCheckOrderScanInfoDTO dto) {
         Assert.isTrue(Objects.nonNull(dto), "扫描明细不可为空");
+        WmsCheckOrder byId = wmsCheckOrderService.getById(dto.getCheckOrderId());
+        if(byId.getStatus().equals(4) || byId.getStatus().equals(2)){
+            throw new BusinessException("已归档状态和已完成状态的单据不能添加");
+        }
         remove(new LambdaQueryWrapper<WmsCheckOrderScanInfo>().eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
                 .eq(WmsCheckOrderScanInfo::getCaseNo, dto.getCaseNo()));
         WmsCheckOrderScanInfo wmsCheckOrderScanInfo = new WmsCheckOrderScanInfo();
@@ -72,26 +82,31 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
     }
 
     @Override
-    public List<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto) {
-        List<WmsCheckOrderScanInfo> list = list(new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
+    public Page<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto) {
+        Page<WmsCheckOrderScanInfoVO> resPage = new Page<>();
+        Page<WmsCheckOrderScanInfo> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
                 .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
                 .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
-        List<WmsCheckOrderScanInfoVO> res = BeanUtil.copyToList(list, WmsCheckOrderScanInfoVO.class);
+        BeanUtils.copyProperties(page, resPage);
+//        List<WmsCheckOrderScanInfo> list = list();
+//        List<WmsCheckOrderScanInfoVO> res = BeanUtil.copyToList(list, WmsCheckOrderScanInfoVO.class);
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> dictIds = Sets.newHashSet();
-        res.stream().forEach(e -> {
-            officeIds.add(e.getWarehouse());
-            officeIds.add(e.getShelf());
-            dictIds.add(e.getUnitId());
-        });
-        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        res.stream().forEach(e -> {
-            e.setShelfName(officeMap.get(e.getShelf()));
-            e.setWarehouseName(officeMap.get(e.getWarehouse()));
-            e.setUnitName(dictMap.get(e.getUnitId()));
-        });
-        return res;
+        if(CollUtil.isNotEmpty(resPage.getRecords())){
+            resPage.getRecords().stream().forEach(e -> {
+                officeIds.add(e.getWarehouse());
+                officeIds.add(e.getShelf());
+                dictIds.add(e.getUnitId());
+            });
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            resPage.getRecords().stream().forEach(e -> {
+                e.setShelfName(officeMap.get(e.getShelf()));
+                e.setWarehouseName(officeMap.get(e.getWarehouse()));
+                e.setUnitName(dictMap.get(e.getUnitId()));
+            });
+        }
+        return resPage;
     }
 
     @Override

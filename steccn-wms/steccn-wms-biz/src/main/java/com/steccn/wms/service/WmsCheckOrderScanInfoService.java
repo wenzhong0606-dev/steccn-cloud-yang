@@ -1,5 +1,6 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.wms.domain.WmsCheckOrderScanInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -23,7 +24,7 @@ public interface WmsCheckOrderScanInfoService extends IService<WmsCheckOrderScan
 
     Boolean editScanCheckInfo(WmsCheckOrderScanInfoDTO dto);
 
-    List<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto);
+    Page<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto);
 
     List<WmsCheckOrderAreaVO> areaCountList(Long checkOrderId, Set<Long> shelfIds);
 }
