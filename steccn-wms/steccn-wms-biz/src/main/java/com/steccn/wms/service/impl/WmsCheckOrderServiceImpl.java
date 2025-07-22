@@ -680,7 +680,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                     if (CollUtil.isNotEmpty(checkOrderInfos)){
                         //去重逻辑
                         Set<String> seen = new HashSet<>();
-                        checkOrderInfos = checkOrderInfos.stream()
+                        List<WmsCheckOrderInfo> finalCheckOrderInfos = checkOrderInfos.stream()
                                 .filter(Objects::nonNull)
                                 .filter(item -> seen.add(
                                         item.getWarehouse() + "_" +
@@ -694,12 +694,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                                                 item.getCheckOrderId()
                                 ))
                                 .collect(Collectors.toList());
-                        Set<Long> unitIds = checkOrderInfos.stream().map(WmsCheckOrderInfo::getUnitId).collect(Collectors.toSet());
+                        Set<Long> unitIds = finalCheckOrderInfos.stream().map(WmsCheckOrderInfo::getUnitId).collect(Collectors.toSet());
                         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                        checkOrderInfos.stream().forEach(info-> info.setUnit(dictMap.get(info.getUnitId())));
+                        finalCheckOrderInfos.stream().forEach(info-> info.setUnit(dictMap.get(info.getUnitId())));
 
+                        wmsCheckOrderInfoService.saveBatch(finalCheckOrderInfos);
                     }
-                    wmsCheckOrderInfoService.saveBatch(checkOrderInfos);
             }
         return Boolean.TRUE;
     }
