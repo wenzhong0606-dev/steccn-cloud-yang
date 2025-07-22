@@ -22,9 +22,9 @@ import com.steccn.wms.domain.WmsCheckOrderInfo;
 import com.steccn.wms.domain.WmsCheckOrderScanInfo;
 import com.steccn.wms.dto.WmsCheckOrderScanInfoDTO;
 import com.steccn.wms.dto.WmsCheckOrderScanInfoListDTO;
+import com.steccn.wms.mapper.WmsCheckOrderMapper;
 import com.steccn.wms.service.WmsCheckOrderScanInfoService;
 import com.steccn.wms.mapper.WmsCheckOrderScanInfoMapper;
-import com.steccn.wms.service.WmsCheckOrderService;
 import com.steccn.wms.vo.WmsCheckOrderAreaVO;
 import com.steccn.wms.vo.WmsCheckOrderScanInfoVO;
 import lombok.RequiredArgsConstructor;
@@ -51,12 +51,12 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
 
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteDictFeignApi remoteDictFeignApi;
-    private final WmsCheckOrderService wmsCheckOrderService;
+    private final WmsCheckOrderMapper wmsCheckOrderMapper;
 
     @Override
     public Boolean addScanCheckInfo(WmsCheckOrderScanInfoDTO dto) {
         Assert.isTrue(Objects.nonNull(dto), "扫描明细不可为空");
-        WmsCheckOrder byId = wmsCheckOrderService.getById(dto.getCheckOrderId());
+        WmsCheckOrder byId = wmsCheckOrderMapper.selectById(dto.getCheckOrderId());
         if(byId.getStatus().equals(4) || byId.getStatus().equals(2)){
             throw new BusinessException("已归档状态和已完成状态的单据不能添加");
         }
@@ -87,24 +87,32 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
         Page<WmsCheckOrderScanInfo> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
                 .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
                 .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
-        BeanUtils.copyProperties(page, resPage);
 //        List<WmsCheckOrderScanInfo> list = list();
 //        List<WmsCheckOrderScanInfoVO> res = BeanUtil.copyToList(list, WmsCheckOrderScanInfoVO.class);
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> dictIds = Sets.newHashSet();
-        if(CollUtil.isNotEmpty(resPage.getRecords())){
-            resPage.getRecords().stream().forEach(e -> {
-                officeIds.add(e.getWarehouse());
-                officeIds.add(e.getShelf());
-                dictIds.add(e.getUnitId());
-            });
+        BeanUtils.copyProperties(page, resPage);
+        if(CollUtil.isNotEmpty(page.getRecords())){
+            officeIds.addAll(page.getRecords().stream().map(WmsCheckOrderScanInfo::getWarehouse).collect(Collectors.toSet()));
+            officeIds.addAll(page.getRecords().stream().map(WmsCheckOrderScanInfo::getShelf).collect(Collectors.toSet()));
+            dictIds.addAll(page.getRecords().stream().map(WmsCheckOrderScanInfo::getUnitId).collect(Collectors.toSet()));
+//            page.getRecords().stream().forEach(e -> {
+//                officeIds.add(e.getWarehouse());
+//                officeIds.add(e.getShelf());
+//                dictIds.add(e.getUnitId());
+//            });
+            List<WmsCheckOrderScanInfoVO> res = Lists.newArrayList();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            resPage.getRecords().stream().forEach(e -> {
-                e.setShelfName(officeMap.get(e.getShelf()));
-                e.setWarehouseName(officeMap.get(e.getWarehouse()));
-                e.setUnitName(dictMap.get(e.getUnitId()));
+            page.getRecords().stream().forEach(e -> {
+                WmsCheckOrderScanInfoVO vo = new WmsCheckOrderScanInfoVO();
+                BeanUtil.copyProperties(e,vo);
+                vo.setShelfName(officeMap.get(e.getShelf()));
+                vo.setWarehouseName(officeMap.get(e.getWarehouse()));
+                vo.setUnitName(dictMap.get(e.getUnitId()));
+                res.add(vo);
             });
+            resPage.setRecords(res);
         }
         return resPage;
     }
