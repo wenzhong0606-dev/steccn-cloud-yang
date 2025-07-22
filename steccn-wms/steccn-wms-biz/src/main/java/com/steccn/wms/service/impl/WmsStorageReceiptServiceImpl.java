@@ -774,7 +774,18 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 receiptInfoList.add(wmsStorageReceiptInfo);
             }
             long count = infoList.stream().distinct().count();
-            Assert.isFalse(count < infoList.size(), "箱号重复，请修改");
+            if(count < infoList.size()){
+                Set<String> duplicateCaseNos = infoList.stream()
+                        .filter(Objects::nonNull)
+                        .map(WmsInventoryDTO::getCaseNo) // 只要在实例上用就没问题
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.groupingBy(v -> v, Collectors.counting()))
+                        .entrySet().stream()
+                        .filter(entry -> entry.getValue() > 1)
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toSet());
+                Assert.isFalse(count < infoList.size(), "箱号"+duplicateCaseNos.toString()+"重复，请修改");
+            }
             //增加库存信息
             wmsInventoryService.addInfo(infoList);
             //保存明细信息

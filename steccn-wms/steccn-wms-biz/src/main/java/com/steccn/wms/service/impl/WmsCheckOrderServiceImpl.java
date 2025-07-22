@@ -687,6 +687,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean newVarianceAdjustmentCheckOrder(Long id) {
         //获取盘点单
         WmsCheckOrder order = getById(id);
