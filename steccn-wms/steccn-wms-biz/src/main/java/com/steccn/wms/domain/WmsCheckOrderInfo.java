@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 盘点单明细
@@ -147,4 +148,5 @@ public class WmsCheckOrderInfo implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
 }

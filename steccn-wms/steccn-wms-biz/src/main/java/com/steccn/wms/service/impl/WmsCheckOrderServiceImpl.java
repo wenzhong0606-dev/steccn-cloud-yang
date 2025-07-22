@@ -492,6 +492,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     }
 
     @Override
+    @Transactional
     public Boolean affirmCheck(WmsCheckOrderDTO dto) {
         //确认盘点  对盘点扫描明细与库存数据进行比对，生成盘点结果
         //获取盘点单信息
@@ -677,9 +678,26 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                         });
                     }
                     if (CollUtil.isNotEmpty(checkOrderInfos)){
+                        //去重逻辑
+                        Set<String> seen = new HashSet<>();
+                        checkOrderInfos = checkOrderInfos.stream()
+                                .filter(Objects::nonNull)
+                                .filter(item -> seen.add(
+                                        item.getWarehouse() + "_" +
+                                                item.getShelf() + "_" +
+                                                item.getMaterialId() + "_" +
+                                                item.getQuantity() + "_" +
+                                                item.getBatch() + "_" +
+                                                item.getCaseNo() + "_" +
+                                                item.getResult() + "_" +
+                                                item.getDifference() + "_" +
+                                                item.getCheckOrderId()
+                                ))
+                                .collect(Collectors.toList());
                         Set<Long> unitIds = checkOrderInfos.stream().map(WmsCheckOrderInfo::getUnitId).collect(Collectors.toSet());
                         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                         checkOrderInfos.stream().forEach(info-> info.setUnit(dictMap.get(info.getUnitId())));
+
                     }
                     wmsCheckOrderInfoService.saveBatch(checkOrderInfos);
             }
