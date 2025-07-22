@@ -10,12 +10,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -156,6 +158,17 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         orderInfoQueryWrapper.eq("check_order_id", dto.getId());
         wmsCheckOrderInfoService.remove(orderInfoQueryWrapper);
         return result;
+    }
+
+    @Override
+    public Boolean delCheckOrderDetail(Long id) {
+        WmsCheckOrderInfo byId = wmsCheckOrderInfoService.getById(id);
+        WmsCheckOrder byId1 = getById(byId.getCheckOrderId());
+        if(byId1.getStatus().equals(4)){
+            throw new BusinessException("无法删除已归档状态数据");
+        }
+        removeById(id);
+        return true;
     }
 
     /***

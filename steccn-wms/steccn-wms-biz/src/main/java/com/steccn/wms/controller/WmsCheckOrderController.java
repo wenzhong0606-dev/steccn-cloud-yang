@@ -73,6 +73,17 @@ public class WmsCheckOrderController {
     }
 
     /****
+     * 盘点详情删除
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/delCheckOrder/detail/{id}")
+    @ApiOperation(value = "删除盘点管理")
+    public R<Boolean> delCheckOrder(@PathVariable("id") Long id) {
+        return R.success(wmsCheckOrderService.delCheckOrderDetail(id));
+    }
+
+    /****
      * 盘点管理详情
      * @param id
      * @return

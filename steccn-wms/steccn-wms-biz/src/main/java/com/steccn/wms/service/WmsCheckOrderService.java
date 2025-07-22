@@ -42,6 +42,13 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      */
     Boolean delCheckOrder( WmsCheckOrder dto);
 
+    /**
+     * 删除盘点管理详情
+     * @param dto
+     * @return
+     */
+    Boolean delCheckOrderDetail(Long id);
+
     /***
      * 盘点管理详情
      * @param id
