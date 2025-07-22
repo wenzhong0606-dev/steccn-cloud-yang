@@ -476,8 +476,8 @@
             a.update_time as operateTime,
             a.update_name as operator,
             a.quantity as quantity,
-            '入库单明细删除' AS operateType,
             a.material_id as materialId,
+            '入库单明细删除' AS operateType,
             b.type AS typeId
         FROM wms_storage_receipt_info a
                  join wms_storage_receipt b on a.storage_receipt_id = b.id
