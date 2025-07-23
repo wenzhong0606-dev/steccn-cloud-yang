@@ -21,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -148,7 +149,7 @@ public class WmsInventoryController {
 
     @ApiOperation("和Erp库存对比")
     @PostMapping("/compare")
-    public R<Page<WmsInventoryCompareVO>> comparePageList(@RequestBody WmsInventoryCompareDTO dto) {
+    public R<Page<WmsInventoryCompareVO>> comparePageList(@Valid @RequestBody WmsInventoryCompareDTO dto) {
         return R.success(wmsInventoryService.comparePageList(dto));
     }
 

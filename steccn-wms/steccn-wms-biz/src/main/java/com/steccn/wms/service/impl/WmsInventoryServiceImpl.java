@@ -235,6 +235,10 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 } else {
                     orDefault.setStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
                     addWmsInventory.add(orDefault);
+//                    if(orDefault.getShelfId().equals(info.getShelfId())){
+//                    }else {
+//
+//                    }
                 }
             });
             saveOrUpdateBatch(addWmsInventory);

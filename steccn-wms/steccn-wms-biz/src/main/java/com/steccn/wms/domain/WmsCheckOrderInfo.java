@@ -149,4 +149,7 @@ public class WmsCheckOrderInfo implements Serializable {
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
+    @TableField(exist = false)
+    private Boolean flag = true;
+
 }

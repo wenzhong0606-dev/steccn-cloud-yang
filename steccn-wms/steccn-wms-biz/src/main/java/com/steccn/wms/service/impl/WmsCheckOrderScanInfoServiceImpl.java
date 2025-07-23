@@ -73,6 +73,10 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
     @Override
     public Boolean editScanCheckInfo(WmsCheckOrderScanInfoDTO dto) {
         Assert.isTrue(Objects.nonNull(dto), "扫描明细不可为空");
+        WmsCheckOrder byId = wmsCheckOrderMapper.selectById(dto.getCheckOrderId());
+        if(byId.getStatus().equals(4) || byId.getStatus().equals(2)){
+            throw new BusinessException("已归档状态和已完成状态的单据不能添加");
+        }
         WmsCheckOrderScanInfo wmsCheckOrderScanInfo = new WmsCheckOrderScanInfo();
         BeanUtil.copyProperties(dto, wmsCheckOrderScanInfo);
         wmsCheckOrderScanInfo.setCheckOrderId(SecurityUtils.getUser().getUserId());
@@ -82,13 +86,49 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
     }
 
     @Override
-    public Page<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto) {
+    public List<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto) {
+//        Page<WmsCheckOrderScanInfoVO> resPage = new Page<>();
+//        Page<WmsCheckOrderScanInfo> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
+//                .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
+//                .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
+        List<WmsCheckOrderScanInfo> list = list(new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
+                .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
+                .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
+        List<WmsCheckOrderScanInfoVO> res = BeanUtil.copyToList(list, WmsCheckOrderScanInfoVO.class);
+        Set<Integer> officeIds = Sets.newHashSet();
+        Set<Long> dictIds = Sets.newHashSet();
+//        BeanUtils.copyProperties(page, resPage);
+        if(CollUtil.isNotEmpty(list)){
+            officeIds.addAll(list.stream().map(WmsCheckOrderScanInfo::getWarehouse).collect(Collectors.toSet()));
+            officeIds.addAll(list.stream().map(WmsCheckOrderScanInfo::getShelf).collect(Collectors.toSet()));
+            dictIds.addAll(list.stream().map(WmsCheckOrderScanInfo::getUnitId).collect(Collectors.toSet()));
+//            page.getRecords().stream().forEach(e -> {
+//                officeIds.add(e.getWarehouse());
+//                officeIds.add(e.getShelf());
+//                dictIds.add(e.getUnitId());
+//            });
+//            List<WmsCheckOrderScanInfoVO> res = Lists.newArrayList();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            list.stream().forEach(e -> {
+                WmsCheckOrderScanInfoVO vo = new WmsCheckOrderScanInfoVO();
+                BeanUtil.copyProperties(e,vo);
+                vo.setShelfName(officeMap.get(e.getShelf()));
+                vo.setWarehouseName(officeMap.get(e.getWarehouse()));
+                vo.setUnitName(dictMap.get(e.getUnitId()));
+                res.add(vo);
+            });
+//            resPage.setRecords(res);
+        }
+        return res;
+    }
+
+    @Override
+    public Page<WmsCheckOrderScanInfoVO> listScanCheckInfoPage(WmsCheckOrderScanInfoListDTO dto) {
         Page<WmsCheckOrderScanInfoVO> resPage = new Page<>();
         Page<WmsCheckOrderScanInfo> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
                 .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
                 .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
-//        List<WmsCheckOrderScanInfo> list = list();
-//        List<WmsCheckOrderScanInfoVO> res = BeanUtil.copyToList(list, WmsCheckOrderScanInfoVO.class);
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> dictIds = Sets.newHashSet();
         BeanUtils.copyProperties(page, resPage);
@@ -96,11 +136,6 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
             officeIds.addAll(page.getRecords().stream().map(WmsCheckOrderScanInfo::getWarehouse).collect(Collectors.toSet()));
             officeIds.addAll(page.getRecords().stream().map(WmsCheckOrderScanInfo::getShelf).collect(Collectors.toSet()));
             dictIds.addAll(page.getRecords().stream().map(WmsCheckOrderScanInfo::getUnitId).collect(Collectors.toSet()));
-//            page.getRecords().stream().forEach(e -> {
-//                officeIds.add(e.getWarehouse());
-//                officeIds.add(e.getShelf());
-//                dictIds.add(e.getUnitId());
-//            });
             List<WmsCheckOrderScanInfoVO> res = Lists.newArrayList();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

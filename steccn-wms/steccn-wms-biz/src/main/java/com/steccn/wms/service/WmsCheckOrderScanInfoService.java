@@ -24,7 +24,9 @@ public interface WmsCheckOrderScanInfoService extends IService<WmsCheckOrderScan
 
     Boolean editScanCheckInfo(WmsCheckOrderScanInfoDTO dto);
 
-    Page<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto);
+    List<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto);
+
+    Page<WmsCheckOrderScanInfoVO> listScanCheckInfoPage(WmsCheckOrderScanInfoListDTO dto);
 
     List<WmsCheckOrderAreaVO> areaCountList(Long checkOrderId, Set<Long> shelfIds);
 }

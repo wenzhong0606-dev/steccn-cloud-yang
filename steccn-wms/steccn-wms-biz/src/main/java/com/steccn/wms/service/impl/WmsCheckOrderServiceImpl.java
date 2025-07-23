@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -48,6 +49,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -505,7 +507,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean affirmCheck(WmsCheckOrderDTO dto) {
         //确认盘点  对盘点扫描明细与库存数据进行比对，生成盘点结果
         //获取盘点单信息
@@ -536,8 +538,20 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 //获取库存信息
                 List<WmsInventory> inventoryList = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>()
                         .in(WmsInventory::getShelfId, shelfIds));
+                Map<String,WmsInventory> caseMap = Maps.newHashMap();
+                if(CollUtil.isNotEmpty(scanInfoList)){
+                    List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>()
+                            .in(WmsInventory::getCaseNo, scanInfoList.stream().map(WmsCheckOrderScanInfo::getCaseNo).collect(Collectors.toSet())));
+                    if(CollUtil.isNotEmpty(list)){
+                        caseMap = list.stream().collect(Collectors
+                                .toMap(WmsInventory::getCaseNo,
+                                        Function.identity(),
+                                        (existing, replacement) -> existing));
+                    }
+                }
                     List<WmsCheckOrderInfo> checkOrderInfos = Lists.newArrayList();
-                    scanInfoList.forEach(scanInfo -> {
+                Map<String, WmsInventory> finalCaseMap = caseMap;
+                scanInfoList.forEach(scanInfo -> {
                         inventoryList.forEach(inventory -> {
                             if (inventory.getCaseNo().equals(scanInfo.getCaseNo())) {
                                 //如果库存中的箱号与扫描明细中的箱号相对应，比较仓库货架批次是否一致
@@ -692,21 +706,22 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                     }
                     if (CollUtil.isNotEmpty(checkOrderInfos)){
                         //去重逻辑
-                        Set<String> seen = new HashSet<>();
-                        List<WmsCheckOrderInfo> finalCheckOrderInfos = checkOrderInfos.stream()
-                                .filter(Objects::nonNull)
-                                .filter(item -> seen.add(
-                                        item.getWarehouse() + "_" +
-                                                item.getShelf() + "_" +
-                                                item.getMaterialId() + "_" +
-                                                item.getQuantity() + "_" +
-                                                item.getBatch() + "_" +
-                                                item.getCaseNo() + "_" +
-                                                item.getResult() + "_" +
-                                                item.getDifference() + "_" +
-                                                item.getCheckOrderId()
-                                ))
-                                .collect(Collectors.toList());
+//                        Set<String> seen = new HashSet<>();
+//                        List<WmsCheckOrderInfo> finalCheckOrderInfos = checkOrderInfos.stream()
+//                                .filter(Objects::nonNull)
+//                                .filter(item -> seen.add(
+//                                        item.getWarehouse() + "_" +
+//                                                item.getShelf() + "_" +
+//                                                item.getMaterialId() + "_" +
+//                                                item.getQuantity() + "_" +
+//                                                item.getBatch() + "_" +
+//                                                item.getCaseNo() + "_" +
+//                                                item.getResult() + "_" +
+//                                                item.getDifference() + "_" +
+//                                                item.getCheckOrderId()
+//                                ))
+//                                .collect(Collectors.toList());
+                        List<WmsCheckOrderInfo> finalCheckOrderInfos = checkOrderInfos;
                         Set<Long> unitIds = finalCheckOrderInfos.stream().map(WmsCheckOrderInfo::getUnitId).collect(Collectors.toSet());
                         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                         finalCheckOrderInfos.stream().forEach(info-> info.setUnit(dictMap.get(info.getUnitId())));

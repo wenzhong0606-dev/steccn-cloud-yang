@@ -183,8 +183,14 @@ public class WmsCheckOrderController {
 
     @PostMapping("/list/scan/check/info")
     @ApiOperation("扫描盘点明细列表")
-    public R<Page<WmsCheckOrderScanInfoVO>> listScanCheckInfo(@RequestBody WmsCheckOrderScanInfoListDTO dto){
+    public R<List<WmsCheckOrderScanInfoVO>> listScanCheckInfo(@RequestBody WmsCheckOrderScanInfoListDTO dto){
         return R.success(wmsCheckOrderScanInfoService.listScanCheckInfo(dto));
+    }
+
+    @PostMapping("/list/scan/check/info/page")
+    @ApiOperation("扫描盘点明细列表")
+    public R<Page<WmsCheckOrderScanInfoVO>> listScanCheckInfoPage(@RequestBody WmsCheckOrderScanInfoListDTO dto){
+        return R.success(wmsCheckOrderScanInfoService.listScanCheckInfoPage(dto));
     }
 
     @GetMapping("/area/count/list")
