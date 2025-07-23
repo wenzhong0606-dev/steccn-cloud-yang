@@ -642,7 +642,10 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 });
             }
         }else {
-            throw new BusinessException("产线不能为空");
+            //其他类型不用校验
+            if(!type.equals(1582297428762136576L)){
+                throw new BusinessException("产线不能为空");
+            }
         }
         for (Map.Entry<Long, List<Map<String, Object>>> moduleEntry : warehouseMap.entrySet()) {
             List<Map<String, Object>> inventoryList = moduleEntry.getValue();
