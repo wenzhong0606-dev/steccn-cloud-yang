@@ -87,27 +87,16 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
 
     @Override
     public List<WmsCheckOrderScanInfoVO> listScanCheckInfo(WmsCheckOrderScanInfoListDTO dto) {
-//        Page<WmsCheckOrderScanInfoVO> resPage = new Page<>();
-//        Page<WmsCheckOrderScanInfo> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
-//                .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
-//                .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
         List<WmsCheckOrderScanInfo> list = list(new LambdaQueryWrapper<WmsCheckOrderScanInfo>()
                 .eq(WmsCheckOrderScanInfo::getCheckOrderId, dto.getCheckOrderId())
                 .eq(WmsCheckOrderScanInfo::getShelf, dto.getShelf()));
-        List<WmsCheckOrderScanInfoVO> res = BeanUtil.copyToList(list, WmsCheckOrderScanInfoVO.class);
+        List<WmsCheckOrderScanInfoVO> res = Lists.newArrayList();
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> dictIds = Sets.newHashSet();
-//        BeanUtils.copyProperties(page, resPage);
         if(CollUtil.isNotEmpty(list)){
             officeIds.addAll(list.stream().map(WmsCheckOrderScanInfo::getWarehouse).collect(Collectors.toSet()));
             officeIds.addAll(list.stream().map(WmsCheckOrderScanInfo::getShelf).collect(Collectors.toSet()));
             dictIds.addAll(list.stream().map(WmsCheckOrderScanInfo::getUnitId).collect(Collectors.toSet()));
-//            page.getRecords().stream().forEach(e -> {
-//                officeIds.add(e.getWarehouse());
-//                officeIds.add(e.getShelf());
-//                dictIds.add(e.getUnitId());
-//            });
-//            List<WmsCheckOrderScanInfoVO> res = Lists.newArrayList();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.stream().forEach(e -> {
@@ -118,7 +107,6 @@ public class WmsCheckOrderScanInfoServiceImpl extends ServiceImpl<WmsCheckOrderS
                 vo.setUnitName(dictMap.get(e.getUnitId()));
                 res.add(vo);
             });
-//            resPage.setRecords(res);
         }
         return res;
     }

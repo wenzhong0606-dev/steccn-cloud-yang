@@ -36,7 +36,17 @@ public class WmsInventoryCompareVO {
     private BigDecimal availQuantity;
 
     /**
+     * 在途库存
+     */
+    private BigDecimal stockQuantity;
+
+    /**
      * 总库存
      */
     private BigDecimal totalQuantity;
+
+    /**
+     * 差额
+     */
+    private BigDecimal difference;
 }

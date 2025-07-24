@@ -738,6 +738,9 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         //获取盘点单
         WmsCheckOrder order = getById(id);
         Assert.notNull(order,"盘点单不存在");
+        if(!order.getStatus().equals(2)){
+            throw new BusinessException("只有已完成的盘点单才能调整");
+        }
         List<WmsCheckOrderInfo> list = wmsCheckOrderInfoService.list(new LambdaQueryWrapper<WmsCheckOrderInfo>().eq(WmsCheckOrderInfo::getCheckOrderId, id));
         if(CollUtil.isNotEmpty(list)){
             //差额为负数，则盘亏；盘亏生成对应的出库单，类型为盘点出库，关联单据为盘点单号，出库单自动确认

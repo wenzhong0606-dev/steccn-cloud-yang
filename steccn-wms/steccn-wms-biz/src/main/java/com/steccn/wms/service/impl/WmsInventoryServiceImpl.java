@@ -234,6 +234,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                     addWmsInventory.add(inventory);
                 } else {
                     orDefault.setStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
+                    orDefault.setWarehouseId(info.getWarehouseId());
+                    orDefault.setWarehouseName(info.getWarehouseName());
+                    orDefault.setShelfId(info.getShelfId());
+                    orDefault.setShelfName(info.getShelfName());
+                    orDefault.setShelfCode(info.getShelfCode());
                     addWmsInventory.add(orDefault);
 //                    if(orDefault.getShelfId().equals(info.getShelfId())){
 //                    }else {
@@ -878,8 +883,9 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         }
         erpDTO.setFstockno(erpWarehouse.get(dto.getWarehouseCode()).get(0).getRefContent());
         List<ErpInventoryVO> erpInventoryVOS = remoteErpFeignApi.getInventory(erpDTO).getData();
+        erpInventoryVOS = erpInventoryVOS.stream().filter(v->v.getFqty().compareTo(BigDecimal.ZERO)!=0).collect(Collectors.toList());
         LambdaQueryWrapper<WmsInventory> wrapper = new QueryWrapper<WmsInventory>()
-                .select("any_value(material_code) AS materialCode,any_value(material_name) AS materialNode,any_value(warehouse_name) AS warehouseName,Sum(total_quantity) AS totalQuantity,Sum(available_quantity) as availableQuantity")
+                .select("any_value(material_code) AS materialCode,any_value(material_name) AS materialNode,any_value(warehouse_name) AS warehouseName,Sum(total_quantity) AS totalQuantity,Sum(available_quantity) as availableQuantity,Sum(stock_quantity) as stockQuantity")
                 .lambda()
                 .eq(WmsInventory::getWarehouseCode, dto.getWarehouseCode())
                 .like(StrUtil.isNotBlank(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
@@ -948,10 +954,18 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 if(Objects.nonNull(wmsInventory)){
                     vo.setTotalQuantity(wmsInventory.getTotalQuantity());
                     vo.setAvailQuantity(wmsInventory.getAvailableQuantity());
+                    vo.setStockQuantity(wmsInventory.getStockQuantity());
                     vo.setMaterialName(wmsInventory.getMaterialName());
                     vo.setMaterialCode(wmsInventory.getMaterialCode());
                     vo.setStockName(wmsInventory.getWarehouseName());
                 }
+                //差额（金蝶-总数+在途）
+                BigDecimal difference = BigDecimal.ZERO;
+                difference = BigDecimalUtil.subtract(Objects.isNull(vo.getErpQuantity()) ? BigDecimal.ZERO : vo.getErpQuantity(),
+                        Objects.isNull(vo.getTotalQuantity()) ? BigDecimal.ZERO : vo.getTotalQuantity());
+                difference = BigDecimalUtil.add(difference,
+                        Objects.isNull(vo.getStockQuantity()) ? BigDecimal.ZERO : vo.getStockQuantity());
+                vo.setDifference(difference);
                 data.add(vo);
             }
             page.setRecords(data);
