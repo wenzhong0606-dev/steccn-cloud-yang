@@ -207,6 +207,7 @@
         b.type,
         b.warehouse_id,
         b.CODE,
+        any_value(a.production_line_name) as productionLineCode,
         CASE
 
         WHEN b.STATUS = 0 THEN
@@ -236,7 +237,7 @@
         <if test="dto.startTime !=null and dto.endTime != null">
             AND b.come_time between #{dto.startTime} and #{dto.endTime}
         </if>
-        <if test="dto.status != null and dto.status != ''">
+        <if test="dto.status != null">
             AND b.status = #{dto.status}
         </if>
         <if test="dto.materialName != null and dto.materialName != ''">

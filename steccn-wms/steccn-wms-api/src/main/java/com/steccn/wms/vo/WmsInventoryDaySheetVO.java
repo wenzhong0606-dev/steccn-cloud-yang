@@ -35,6 +35,8 @@ public class WmsInventoryDaySheetVO {
 
     private String productionLineName;
 
+    private String productionLineCode;
+
     private Integer productionLineId;
 
     private Integer targetShelfId;
