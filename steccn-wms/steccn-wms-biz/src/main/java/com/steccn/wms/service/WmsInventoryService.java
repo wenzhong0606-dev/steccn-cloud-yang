@@ -35,6 +35,12 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto);
 
     /**
+     * 库存分页总库存数
+     * @return
+     */
+    BigDecimal inventoryTotalCount(WmsInventoryPageDTO dto);
+
+    /**
      * 调整占用库存信息
      *
      * @param infoList

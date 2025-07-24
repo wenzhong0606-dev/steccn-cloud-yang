@@ -175,6 +175,66 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
+    public BigDecimal inventoryTotalCount(WmsInventoryPageDTO dto) {
+        LambdaQueryWrapper<WmsInventory> like;
+        //处理箱号
+        if(StrUtil.isNotBlank(dto.getCaseNo())&&dto.getCaseNo().contains("PG:")){
+            String s = WmsCodeUtil.extractBetweenPGAndComma(dto.getCaseNo());
+            dto.setCaseNo(s);
+        }
+        //规格筛选
+        if (Objects.nonNull(dto.getSpecification())){
+            List<Long> materialIds = FeignOptional.of(() -> remoteSpareFeignApi.listBySpecification(dto.getSpecification()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            like  = new QueryWrapper<WmsInventory>()
+                    .select("Sum(total_quantity) AS totalQuantity")
+                    .lambda()
+                    .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+                    .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                    .gt(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                    .in(WmsInventory::getMaterialId,materialIds)
+                    .like(StrUtil.isNotBlank(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                    .like(StrUtil.isNotBlank(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                    .like(StrUtil.isNotBlank(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                    .like(StrUtil.isNotBlank(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                    .like(StrUtil.isNotBlank(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                    .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                            .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
+                    .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                            .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO));
+        }else {
+            like = new QueryWrapper<WmsInventory>()
+                    .select("Sum(total_quantity) AS totalQuantity")
+                    .lambda()
+                    .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
+                    .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                    .gt(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                    .like(StrUtil.isNotBlank(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                    .like(StrUtil.isNotBlank(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                    .like(StrUtil.isNotBlank(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                    .like(StrUtil.isNotBlank(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                    .like(StrUtil.isNotBlank(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                    .and((dto.getCodeOrName() != null && !dto.getCodeOrName().equals("")), wrapper -> wrapper.like(WmsInventory::getMaterialName, dto.getCodeOrName())
+                            .or().like(WmsInventory::getMaterialCode, dto.getCodeOrName()))
+                    .and(wrapper -> wrapper.notIn(WmsInventory::getAvailableQuantity, BigDecimal.ZERO)
+                            .or().notIn(WmsInventory::getStockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getFreezeQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getLockQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getDetectionQuantity, BigDecimal.ZERO).or()
+                            .notIn(WmsInventory::getTotalQuantity, BigDecimal.ZERO));
+
+        }
+        WmsInventory one = getOne(like,false);
+        if(Objects.isNull(one)){
+            return BigDecimal.ZERO;
+        }
+        return one.getTotalQuantity().setScale(0);
+    }
+
+    @Override
     public Boolean updateLockQuantity(List<WmsInventoryDTO> infoList, Integer state) {
         Assert.isTrue(CollUtil.isNotEmpty(infoList), "数据异常");
         //自定义sql 修改锁定库存信息

@@ -49,7 +49,11 @@ public class WmsInventoryController {
         return R.success(wmsInventoryService.pageList(dto));
     }
 
-
+    @ApiOperation("库存分页列表")
+    @PostMapping("/list/sum")
+    public R<BigDecimal> pageListSum(@RequestBody WmsInventoryPageDTO dto) {
+        return R.success(wmsInventoryService.inventoryTotalCount(dto));
+    }
 
     @ApiOperation("库存导出")
     @PostMapping("/export/data")
