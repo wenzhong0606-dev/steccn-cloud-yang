@@ -2,6 +2,7 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.PlatformUserRole;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author Admin
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-07-29 16:23:29
 * @Entity com.steccn.platform.domain.PlatformUserRole
 */
+@Mapper
 public interface PlatformUserRoleMapper extends BaseMapper<PlatformUserRole> {
 
 }
