@@ -1,11 +1,13 @@
 package com.steccn.platform.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.platform.domain.PlatformUserRoleDTO;
 import com.steccn.platform.dto.OaProcessPushDTO;
 import com.steccn.platform.dto.PlatformUserDTO;
 import com.steccn.platform.service.PlatformUserRoleService;
 import com.steccn.platform.service.PlatformUserService;
+import com.steccn.platform.vo.PlatformUserVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -54,4 +56,12 @@ public class PlatformUserController {
     public R<Boolean> bind(@Valid @RequestBody PlatformUserRoleDTO dto) {
         return R.success(platformUserRoleService.bind(dto));
     }
+
+    @PostMapping("/pageList")
+    @ApiOperation(value = "用户分页")
+    public R<Page<PlatformUserVO>> pageList(@RequestBody PlatformUserDTO dto) {
+        return R.success(platformUserService.pageList(dto));
+    }
+
+
 }

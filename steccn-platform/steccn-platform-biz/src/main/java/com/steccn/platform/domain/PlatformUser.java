@@ -71,6 +71,16 @@ public class PlatformUser implements Serializable {
     private Integer status;
 
     /**
+     * 机构id
+     */
+    private Integer officeId;
+
+    /**
+     * 岗位id
+     */
+    private Integer postId;
+
+    /**
      * 创建者
      */
     @TableField(fill = FieldFill.INSERT)
@@ -86,7 +96,7 @@ public class PlatformUser implements Serializable {
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createDate;
+    private LocalDateTime createTime;
 
     /**
      * 更新者
@@ -104,7 +114,7 @@ public class PlatformUser implements Serializable {
      * 更新时间
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateDate;
+    private LocalDateTime updateTime;
 
     /**
      * 备注信息

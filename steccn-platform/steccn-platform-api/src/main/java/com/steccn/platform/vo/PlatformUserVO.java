@@ -75,4 +75,14 @@ public class PlatformUserVO {
      * 状态（0正常 1删除 2停用 3冻结）
      */
     private Integer status;
+
+    /**
+     * 机构id
+     */
+    private Integer officeId;
+
+    /**
+     * 岗位id
+     */
+    private Integer postId;
 }

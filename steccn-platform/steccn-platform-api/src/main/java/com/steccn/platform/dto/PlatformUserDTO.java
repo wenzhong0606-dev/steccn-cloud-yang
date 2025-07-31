@@ -2,6 +2,7 @@ package com.steccn.platform.dto;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -13,11 +14,10 @@ import javax.validation.constraints.NotBlank;
  * @date 2025/07/29
  */
 @Data
-public class PlatformUserDTO {
+public class PlatformUserDTO extends BasePageDTO {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
@@ -72,4 +72,14 @@ public class PlatformUserDTO {
      * 状态（0正常 1删除 2停用 3冻结）
      */
     private Integer status;
+
+    /**
+     * 机构id
+     */
+    private Integer officeId;
+
+    /**
+     * 岗位id
+     */
+    private Integer postId;
 }

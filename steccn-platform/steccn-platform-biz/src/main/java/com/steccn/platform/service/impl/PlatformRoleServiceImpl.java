@@ -61,6 +61,7 @@ public class PlatformRoleServiceImpl extends ServiceImpl<PlatformRoleMapper, Pla
         if(Objects.isNull(dto.getId())){
             throw new BusinessException("数据Id不能为空");
         }
+        dto.setRoleCode(null);
         PlatformRole role = new PlatformRole();
         BeanUtil.copyProperties(dto,role);
         updateById(role);

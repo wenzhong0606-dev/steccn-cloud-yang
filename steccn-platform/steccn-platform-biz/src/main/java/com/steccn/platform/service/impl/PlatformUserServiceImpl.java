@@ -2,17 +2,21 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.platform.domain.PlatformRole;
 import com.steccn.platform.domain.PlatformUser;
 import com.steccn.platform.dto.PlatformUserDTO;
 import com.steccn.platform.service.PlatformUserService;
 import com.steccn.platform.mapper.PlatformUserMapper;
 import com.steccn.platform.vo.PlatformUserVO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -73,6 +77,20 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
         PlatformUserVO vo = new PlatformUserVO();
         BeanUtil.copyProperties(one,vo);
         return vo;
+    }
+
+    @Override
+    public Page<PlatformUserVO> pageList(PlatformUserDTO dto) {
+        Page<PlatformUser> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PlatformUser>()
+                .like(StrUtil.isNotBlank(dto.getUserCode()), PlatformUser::getUserCode, dto.getUserCode())
+                .like(StrUtil.isNotBlank(dto.getUserName()), PlatformUser::getUserName, dto.getUserName())
+                .like(StrUtil.isNotBlank(dto.getName()), PlatformUser::getName, dto.getName())
+                .eq(Objects.nonNull(dto.getStatus()), PlatformUser::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getOfficeId()), PlatformUser::getOfficeId, dto.getOfficeId())
+                .eq(Objects.nonNull(dto.getPostId()), PlatformUser::getPostId, dto.getPostId()));
+        Page resPage = new Page<PlatformUserVO>(dto.getCurrent(), dto.getSize());
+        BeanUtils.copyProperties(page, resPage);
+        return resPage;
     }
 }
 

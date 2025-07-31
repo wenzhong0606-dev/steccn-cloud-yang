@@ -1,8 +1,10 @@
 package com.steccn.platform.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.platform.domain.PlatformUser;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.PlatformUserDTO;
+import com.steccn.platform.vo.PlatformRoleVO;
 import com.steccn.platform.vo.PlatformUserVO;
 
 /**
@@ -38,4 +40,11 @@ public interface PlatformUserService extends IService<PlatformUser> {
      * @return
      */
     PlatformUserVO getByUserName(String userName);
+
+    /**
+     * 分页信息
+     * @param dto
+     * @return
+     */
+    Page<PlatformUserVO> pageList(PlatformUserDTO dto);
 }
