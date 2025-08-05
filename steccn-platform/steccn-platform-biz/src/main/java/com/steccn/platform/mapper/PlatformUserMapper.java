@@ -3,6 +3,9 @@ package com.steccn.platform.mapper;
 import com.steccn.platform.domain.PlatformUser;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.Set;
 
 /**
 * @author Admin
@@ -12,7 +15,12 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface PlatformUserMapper extends BaseMapper<PlatformUser> {
-
+    /**
+     * 获取权限数据
+     * @param userName
+     * @return
+     */
+    Set<String> selectPermission(@Param("userName")String userName);
 }
 
 

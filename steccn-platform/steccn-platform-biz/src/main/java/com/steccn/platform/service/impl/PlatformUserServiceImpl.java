@@ -1,6 +1,7 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -10,16 +11,24 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.util.AESUtils;
 import com.steccn.platform.domain.PlatformRole;
 import com.steccn.platform.domain.PlatformUser;
+import com.steccn.platform.domain.PlatformUserRole;
 import com.steccn.platform.dto.PlatformUserDTO;
+import com.steccn.platform.service.PlatformRoleMenuService;
+import com.steccn.platform.service.PlatformUserRoleService;
 import com.steccn.platform.service.PlatformUserService;
 import com.steccn.platform.mapper.PlatformUserMapper;
 import com.steccn.platform.vo.PlatformUserVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
 * @author Admin
@@ -27,8 +36,10 @@ import java.util.Objects;
 * @createDate 2025-07-29 14:19:10
 */
 @Service
+@RequiredArgsConstructor
 public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, PlatformUser>
     implements PlatformUserService{
+    private PlatformUserMapper platformUserMapper;
 
     @Override
     public Boolean add(PlatformUserDTO dto) {
@@ -40,7 +51,7 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
         }
         PlatformUser user = new PlatformUser();
         BeanUtil.copyProperties(dto,user);
-        user.setPassword(DigestUtil.md5Hex(dto.getPassword()));
+        user.setPassword(AESUtils.decrypt(dto.getPassword()));
         if(Objects.isNull(dto.getUserCode())){
             user.setUserCode(dto.getUserName()+"_" +RandomUtil.randomString(4));
         }
@@ -58,7 +69,7 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
         }
         PlatformUser user = new PlatformUser();
         BeanUtil.copyProperties(dto,user);
-        user.setPassword(DigestUtil.md5Hex(dto.getPassword()));
+        user.setPassword(AESUtils.decrypt(dto.getPassword()));
         updateById(user);
         return true;
     }
@@ -73,9 +84,12 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
     public PlatformUserVO getByUserName(String userName) {
         PlatformUser one = getOne(new LambdaQueryWrapper<PlatformUser>()
                 .eq(PlatformUser::getUserName, userName));
-        //todo 获取用户权限列表
+        Set<String> permission = platformUserMapper.selectPermission(userName);
         PlatformUserVO vo = new PlatformUserVO();
         BeanUtil.copyProperties(one,vo);
+        if(CollUtil.isNotEmpty(permission)){
+            vo.setUserScope(permission.stream().collect(Collectors.toList()));
+        }
         return vo;
     }
 

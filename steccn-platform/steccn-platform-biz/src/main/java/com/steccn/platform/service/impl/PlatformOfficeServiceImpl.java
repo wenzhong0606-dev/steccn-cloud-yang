@@ -1,6 +1,7 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.oa.constant.OaConstant;
@@ -34,6 +35,10 @@ public class PlatformOfficeServiceImpl extends ServiceImpl<PlatformOfficeMapper,
                 throw new BusinessException("父级节点不存在");
             }
         }
+        PlatformOffice one = getOne(new LambdaQueryWrapper<PlatformOffice>().eq(PlatformOffice::getOfficeCode, dto.getOfficeCode()),false);
+        if(Objects.nonNull(one)){
+            throw new BusinessException("编码重复");
+        }
         PlatformOffice model = new PlatformOffice();
         BeanUtil.copyProperties(dto,model);
         save(model);
@@ -55,6 +60,8 @@ public class PlatformOfficeServiceImpl extends ServiceImpl<PlatformOfficeMapper,
         }
         PlatformOffice model = new PlatformOffice();
         BeanUtil.copyProperties(dto,model);
+        //编码无法修改
+        model.setOfficeCode(null);
         updateById(model);
         return true;
     }

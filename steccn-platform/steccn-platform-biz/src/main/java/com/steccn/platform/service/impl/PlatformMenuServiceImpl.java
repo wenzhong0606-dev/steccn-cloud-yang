@@ -1,0 +1,168 @@
+package com.steccn.platform.service.impl;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.domain.PlatformMenu;
+import com.steccn.platform.domain.PlatformOffice;
+import com.steccn.platform.domain.PlatformRoleMenu;
+import com.steccn.platform.domain.PlatformUserRole;
+import com.steccn.platform.dto.PlatformMenuDTO;
+import com.steccn.platform.dto.PlatformOfficeDTO;
+import com.steccn.platform.mapper.PlatformRoleMenuMapper;
+import com.steccn.platform.mapper.PlatformUserRoleMapper;
+import com.steccn.platform.service.PlatformMenuService;
+import com.steccn.platform.mapper.PlatformMenuMapper;
+import com.steccn.platform.vo.PlatformMenuVO;
+import com.steccn.platform.vo.PlatformOfficeVO;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+* @author Admin
+* @description 针对表【platform_menu(菜单表)】的数据库操作Service实现
+* @createDate 2025-08-05 13:32:56
+*/
+@Service
+@RequiredArgsConstructor
+public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, PlatformMenu>
+    implements PlatformMenuService{
+    private final PlatformUserRoleMapper platformUserRoleMapper;
+    private final PlatformRoleMenuMapper platformRoleMenuMapper;
+
+    @Override
+    public Boolean add(PlatformMenuDTO dto) {
+        if(Objects.isNull(dto.getParentId())){
+            dto.setParentId(OaConstant.NO);
+        }else {
+            PlatformMenu byId = getById(dto.getParentId());
+            if(Objects.isNull(byId)){
+                throw new BusinessException("父级节点不存在");
+            }
+        }
+        PlatformMenu one = getOne(new LambdaQueryWrapper<PlatformMenu>().eq(PlatformMenu::getMenuCode, dto.getMenuCode()),false);
+        if(Objects.nonNull(one)){
+            throw new BusinessException("编码重复");
+        }
+        PlatformMenu model = new PlatformMenu();
+        BeanUtil.copyProperties(dto,model);
+        save(model);
+        return true;
+    }
+
+    @Override
+    public Boolean update(PlatformMenuDTO dto) {
+        if(Objects.isNull(dto.getId())){
+            throw new BusinessException("主键id不能为空");
+        }
+        if(Objects.isNull(dto.getParentId())){
+            dto.setParentId(OaConstant.NO);
+        }else {
+            PlatformMenu byId = getById(dto.getParentId());
+            if(Objects.isNull(byId)){
+                throw new BusinessException("父级节点不存在");
+            }
+        }
+        PlatformMenu model = new PlatformMenu();
+        BeanUtil.copyProperties(dto,model);
+        //编码无法修改
+        model.setMenuCode(null);
+        updateById(model);
+        return true;
+    }
+
+    @Override
+    public Boolean deleteById(Set<Integer> ids) {
+        removeByIds(ids);
+        return true;
+    }
+
+    @Override
+    public PlatformMenuVO getTreeById(Integer id) {
+        List<PlatformMenu> list = list();
+        List<PlatformMenuVO> results = BeanUtil.copyToList(list, PlatformMenuVO.class);
+        PlatformMenuVO platformOfficeVO = buildSubTree(results, id);
+        return platformOfficeVO;
+    }
+
+    @Override
+    public List<PlatformMenuVO> getTreeList() {
+
+        List<PlatformMenu> list = list();
+        List<PlatformMenuVO> data = BeanUtil.copyToList(list, PlatformMenuVO.class);
+        List<PlatformMenuVO> parent = data.stream().filter(v -> v.getParentId().equals(OaConstant.NO))
+                .sorted(Comparator.comparing(PlatformMenuVO::getSort, Comparator.nullsLast(Integer::compareTo)))
+                .collect(Collectors.toList());
+
+        List<PlatformMenuVO> results = Lists.newArrayList();
+        parent.forEach(tmp->{
+            PlatformMenuVO platformOfficeVO = buildSubTree(data, tmp.getId());
+            results.add(platformOfficeVO);
+        });
+        return results;
+    }
+
+    @Override
+    public List<PlatformMenuVO> getUserTreeList() {
+        List<PlatformUserRole> platformUserRoles = platformUserRoleMapper.selectList(new LambdaQueryWrapper<PlatformUserRole>()
+                .eq(PlatformUserRole::getUserId, SecurityUtils.getUser().getUserId()));
+        List<PlatformMenu> list = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(platformUserRoles)){
+            List<PlatformRoleMenu> platformRoleMenus = platformRoleMenuMapper.selectList(new LambdaQueryWrapper<PlatformRoleMenu>()
+                    .in(PlatformRoleMenu::getRoleId, platformUserRoles.stream().map(PlatformUserRole::getRoleId).collect(Collectors.toSet())));
+            if(CollUtil.isNotEmpty(platformRoleMenus)){
+                list = listByIds(platformRoleMenus.stream().map(PlatformRoleMenu::getMenuId).collect(Collectors.toSet()));
+            }
+        }
+        List<PlatformMenuVO> results = Lists.newArrayList();
+        if(CollUtil.isEmpty(list)){
+            return results;
+        }
+        List<PlatformMenuVO> data = BeanUtil.copyToList(list, PlatformMenuVO.class);
+        List<PlatformMenuVO> parent = data.stream().filter(v -> v.getParentId().equals(OaConstant.NO))
+                .sorted(Comparator.comparing(PlatformMenuVO::getSort, Comparator.nullsLast(Integer::compareTo)))
+                .collect(Collectors.toList());
+        parent.forEach(tmp->{
+            PlatformMenuVO platformOfficeVO = buildSubTree(data, tmp.getId());
+            results.add(platformOfficeVO);
+        });
+        return Collections.emptyList();
+    }
+
+    public static PlatformMenuVO buildSubTree(List<PlatformMenuVO> allNodes, Integer parentId) {
+        PlatformMenuVO root = allNodes.stream()
+                .filter(node -> node.getId().equals(parentId))
+                .findFirst()
+                .orElse(null);
+
+        if (root == null) return null;
+
+        buildChildren(root, allNodes);
+        return root;
+    }
+
+    private static void buildChildren(PlatformMenuVO parent, List<PlatformMenuVO> allNodes) {
+        List<PlatformMenuVO> children = allNodes.stream()
+                .filter(node -> Objects.equals(node.getParentId(), parent.getId()))
+                .sorted(Comparator.comparing(PlatformMenuVO::getSort, Comparator.nullsLast(Integer::compareTo)))
+                .collect(Collectors.toList());
+
+        for (PlatformMenuVO child : children) {
+            buildChildren(child, allNodes); // 递归构建子节点
+        }
+        parent.setChildren(children);
+    }
+}
+
+
+
+

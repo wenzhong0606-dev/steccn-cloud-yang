@@ -2,8 +2,11 @@ package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.platform.domain.PlatformUserRoleDTO;
 import com.steccn.platform.dto.PlatformRoleDTO;
+import com.steccn.platform.dto.PlatformRoleMenuDTO;
 import com.steccn.platform.dto.PlatformUserDTO;
+import com.steccn.platform.service.PlatformRoleMenuService;
 import com.steccn.platform.service.PlatformRoleService;
 import com.steccn.platform.service.PlatformUserService;
 import com.steccn.platform.vo.PlatformRoleVO;
@@ -27,6 +30,7 @@ import javax.validation.Valid;
 @RequestMapping("/platform/role")
 public class PlatformRoleController {
     private final PlatformRoleService platformRoleService;
+    private final PlatformRoleMenuService platformRoleMenuService;
 
     @PostMapping()
     @ApiOperation(value = "新增角色")
@@ -58,6 +62,12 @@ public class PlatformRoleController {
     @ApiOperation(value = "绑定角色分页")
     public R<Page<PlatformRoleVO>> bindPageList(@RequestBody PlatformRoleDTO dto) {
         return R.success(platformRoleService.bindPageList(dto));
+    }
+
+    @PostMapping("/menu")
+    @ApiOperation(value = "绑定菜单")
+    public R<Boolean> bind(@Valid @RequestBody PlatformRoleMenuDTO dto) {
+        return R.success(platformRoleMenuService.bind(dto));
     }
 
 }

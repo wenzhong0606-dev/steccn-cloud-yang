@@ -71,6 +71,7 @@ public class PlatformUserVO {
      */
     private List<String> userScope;
 
+
     /**
      * 状态（0正常 1删除 2停用 3冻结）
      */

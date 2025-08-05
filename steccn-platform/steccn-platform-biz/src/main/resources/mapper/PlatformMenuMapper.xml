@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.PlatformMenuMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.PlatformMenu">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="parentId" column="parent_id" jdbcType="INTEGER"/>
+            <result property="menuName" column="menu_name" jdbcType="VARCHAR"/>
+            <result property="menuCode" column="menu_code" jdbcType="VARCHAR"/>
+            <result property="routerPath" column="router_path" jdbcType="VARCHAR"/>
+            <result property="componentPath" column="component_path" jdbcType="VARCHAR"/>
+            <result property="showFlag" column="show_flag" jdbcType="TINYINT"/>
+            <result property="sortNum" column="sort_num" jdbcType="INTEGER"/>
+            <result property="menuType" column="menu_type" jdbcType="TINYINT"/>
+            <result property="permission" column="permission" jdbcType="VARCHAR"/>
+            <result property="menuUsage" column="menu_usage" jdbcType="TINYINT"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,parent_id,menu_name,
+        menu_code,router_path,component_path,
+        show_flag,sort_num,menu_type,
+        permission,menu_usage,create_by,
+        create_name,create_date,update_by,
+        update_name,update_date,remarks,
+        del_flag
+    </sql>
+</mapper>
