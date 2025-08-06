@@ -69,15 +69,15 @@ public class LoginService {
      */
     public R<SteccnTokenVO> login(String username, String password, String clientNo, Integer loginStatus, String checkKey, String checkCode) {
         //校验验证码
-        if (StrUtil.isNotBlank(checkKey) && StrUtil.isNotBlank(checkCode) && !checkCodeService.verify(checkKey, checkCode)) {
-            throw new BusinessException("验证码错误，请重新输入");
-        }
+//        if (StrUtil.isNotBlank(checkKey) && StrUtil.isNotBlank(checkCode) && !checkCodeService.verify(checkKey, checkCode)) {
+//            throw new BusinessException("验证码错误，请重新输入");
+//        }
         //校验阈值
-        String redisKey = "LOGIN_FAIL_COUNT:" + username;
-        Long expire = redisTemplate.opsForValue().get(redisKey);
-        if (Objects.nonNull(expire) && expire >= FAIL_LOGIN_MAX_COUNT) {
-            throw new BusinessException("账号已被锁定，请"+ FAIL_LOGIN_MAX_TIME +"分钟后再试");
-        }
+//        String redisKey = "LOGIN_FAIL_COUNT:" + username;
+//        Long expire = redisTemplate.opsForValue().get(redisKey);
+//        if (Objects.nonNull(expire) && expire >= FAIL_LOGIN_MAX_COUNT) {
+//            throw new BusinessException("账号已被锁定，请"+ FAIL_LOGIN_MAX_TIME +"分钟后再试");
+//        }
         //1.定义变量
         //自己系统的token返回
         Object token = null;
@@ -141,18 +141,18 @@ public class LoginService {
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             //失败次数+1
-            redisTemplate.opsForValue().increment(redisKey);
-            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
+//            redisTemplate.opsForValue().increment(redisKey);
+//            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
             throw new BusinessException(e.getLocalizedMessage());
         }
         if (flag) {
             //删除
-            redisTemplate.delete(redisKey);
+//            redisTemplate.delete(redisKey);
             return R.success(steccnTokenVO);
         } else {
             //失败次数+1
-            redisTemplate.opsForValue().increment(redisKey);
-            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
+//            redisTemplate.opsForValue().increment(redisKey);
+//            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
             return R.failure("用户名密码错误");
         }
     }

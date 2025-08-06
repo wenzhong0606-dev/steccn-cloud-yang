@@ -9,6 +9,8 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaUserDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.feign.RemotePlatformUserFeignApi;
+import com.steccn.platform.vo.PlatformUserVO;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.sales.feign.RemoteSaleFeignApi;
@@ -46,6 +48,9 @@ public class MyUserDetailsService implements UserDetailsService {
     @Autowired
     private RemoteSaleFeignApi remoteSaleFeignApi;
 
+    @Autowired
+    private RemotePlatformUserFeignApi remotePlatformUserFeignApi;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         if(username.contains("$sales")){
@@ -61,19 +66,17 @@ public class MyUserDetailsService implements UserDetailsService {
                     desPassword,
                     AuthorityUtils.createAuthorityList("admin"));
         }else {
-            R<OaUserDTO> r = oaInfoService.loadByUsername(username);
-            if (Objects.isNull(r) || ResultCode.SUCCESS.getCode() != r.getCode()) {
+            PlatformUserVO r = remotePlatformUserFeignApi.userInfoByUserName(username).getData();
+            if (Objects.isNull(r.getUserName())) {
                 throw new UsernameNotFoundException("查无此人");
             }
-            OaUserDTO userDTO = r.getData();
-            MessScopeVO scopeVO = remoteMessFeignApi.getScope(username);
-            List<String> scope = scopeVO.getStringList();
+            List<String> scope = r.getUserScope();
             String[] permissionArray =  scope.toArray(new String[scope.size()]);
-            stringRedisTemplate.opsForValue().set(userDTO.getUsername(), JSON.toJSONString(permissionArray));
-            return new SteccnUser(userDTO.getUserId(),
-                    userDTO.getName(),
-                    userDTO.getUsername(),
-                    userDTO.getPassword(),
+            stringRedisTemplate.opsForValue().set(r.getUserName(), JSON.toJSONString(permissionArray));
+            return new SteccnUser(r.getId(),
+                    r.getName(),
+                    r.getUserName(),
+                    r.getPassword(),
                     AuthorityUtils.createAuthorityList("admin"));
         }
     }

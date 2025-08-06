@@ -9,13 +9,18 @@ import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.util.AESUtils;
+import com.steccn.platform.domain.PlatformMenu;
 import com.steccn.platform.domain.PlatformRole;
 import com.steccn.platform.domain.PlatformUser;
 import com.steccn.platform.domain.PlatformUserRole;
 import com.steccn.platform.dto.PlatformUserDTO;
+import com.steccn.platform.mapper.PlatformMenuMapper;
+import com.steccn.platform.mapper.PlatformRoleMenuMapper;
 import com.steccn.platform.service.PlatformRoleMenuService;
 import com.steccn.platform.service.PlatformUserRoleService;
 import com.steccn.platform.service.PlatformUserService;
@@ -40,6 +45,7 @@ import java.util.stream.Collectors;
 public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, PlatformUser>
     implements PlatformUserService{
     private PlatformUserMapper platformUserMapper;
+    private PlatformMenuMapper platformMenuMapper;
 
     @Override
     public Boolean add(PlatformUserDTO dto) {
@@ -84,11 +90,21 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
     public PlatformUserVO getByUserName(String userName) {
         PlatformUser one = getOne(new LambdaQueryWrapper<PlatformUser>()
                 .eq(PlatformUser::getUserName, userName));
-        Set<String> permission = platformUserMapper.selectPermission(userName);
+        Set<String> permission = Sets.newHashSet();
+        if(userName.equals("system")){
+            List<PlatformMenu> platformMenus = platformMenuMapper.selectList(new LambdaQueryWrapper<PlatformMenu>()
+                    .select(PlatformMenu::getPermission)
+                    .eq(PlatformMenu::getMenuType, 1));
+            permission = platformMenus.stream().map(PlatformMenu::getPermission).collect(Collectors.toSet());
+        }else {
+            permission = platformUserMapper.selectPermission(userName);
+        }
         PlatformUserVO vo = new PlatformUserVO();
         BeanUtil.copyProperties(one,vo);
         if(CollUtil.isNotEmpty(permission)){
             vo.setUserScope(permission.stream().collect(Collectors.toList()));
+        }else {
+            vo.setUserScope(Lists.newArrayList());
         }
         return vo;
     }

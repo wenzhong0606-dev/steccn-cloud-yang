@@ -26,9 +26,9 @@ import java.util.Set;
 public class PlatformUserFeignController {
     private final PlatformUserService platformUserService;
 
-    @ApiOperation(value = "根据code获取content的配置")
+    @ApiOperation(value = "获取用户信息")
     @GetMapping("/userName")
-    public R<PlatformUserVO> contentByType(@RequestParam("userName") String userName) {
+    public R<PlatformUserVO> userInfoByUserName(@RequestParam("userName") String userName) {
         return R.success(platformUserService.getByUserName(userName));
     }
 }
