@@ -69,7 +69,7 @@ public class PlatformUserDTO extends BasePageDTO {
     private String avatar;
 
     /**
-     * 状态（0正常 1删除 2停用 3冻结）
+     * 状态（0正常 1停用）
      */
     private Integer status;
 
@@ -82,4 +82,9 @@ public class PlatformUserDTO extends BasePageDTO {
      * 岗位id
      */
     private Integer postId;
+
+    /**
+     * 备注
+     */
+    private String remark;
 }

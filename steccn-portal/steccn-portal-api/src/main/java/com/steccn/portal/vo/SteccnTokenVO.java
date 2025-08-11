@@ -10,12 +10,20 @@ import java.io.Serializable;
 @Data
 @ApiModel("凯盛token")
 public class SteccnTokenVO implements Serializable {
+    @ApiModelProperty("用户id")
+    private Long userId;
 
     @ApiModelProperty("用户名")
     private String username;
 
     @ApiModelProperty("用户名")
     private String usercode;
+
+    @ApiModelProperty("部门id")
+    private Integer officeId;
+
+    @ApiModelProperty("岗位id")
+    private Integer postId;
 
     @ApiModelProperty("部门id")
     private Integer departmentId;

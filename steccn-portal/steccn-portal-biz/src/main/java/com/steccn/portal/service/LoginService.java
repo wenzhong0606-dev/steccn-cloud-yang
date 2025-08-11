@@ -1,6 +1,7 @@
 package com.steccn.portal.service;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.SecureUtil;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -11,7 +12,9 @@ import com.steccn.oa.dto.OaUserInfo;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysUserClientRefDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemotePlatformUserFeignApi;
 import com.steccn.platform.feign.RemoteSysUserClientFeignApi;
+import com.steccn.platform.vo.PlatformUserVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.portal.constant.TokenConstant;
 import com.steccn.portal.dto.LoginMesUserInfoDTO;
@@ -46,6 +49,7 @@ public class LoginService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final CheckCodeService checkCodeService;
     private final RedisTemplate<String, Long> redisTemplate;
+    private final RemotePlatformUserFeignApi remotePlatformUserFeignApi;
     /**
      * 失败登录最大次数
      */
@@ -109,25 +113,32 @@ public class LoginService {
             steccnTokenVO.setExpiresIn(Long.valueOf(String.valueOf(map.get(TokenConstant.STR_EXPIRES_IN))));
             steccnTokenVO.setScope(map.get(TokenConstant.STR_SCOPE));
             steccnTokenVO.setUsername(username);
-            R<OaUserInfo> oaUserInfoRes = oaInfoService.getOaUserInfo(username);
-            if (Objects.isNull(oaUserInfoRes) || ResultCode.SUCCESS.getCode() != oaUserInfoRes.getCode()) {
-                log.error("获取用户信息失败 -> {}", oaUserInfoRes);
-                throw new BusinessException("获取用户信息失败");
-            }
-            OaUserInfo oaUserInfo = oaUserInfoRes.getData();
-            steccnTokenVO.setDepartment(oaUserInfo.getDepartmentName());
-            steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
-            steccnTokenVO.setRealName(oaUserInfo.getName());
-            steccnTokenVO.setOaUserId(oaUserInfo.getOaUserId());
+//            R<OaUserInfo> oaUserInfoRes = oaInfoService.getOaUserInfo(username);
+//            if (Objects.isNull(oaUserInfoRes) || ResultCode.SUCCESS.getCode() != oaUserInfoRes.getCode()) {
+//                log.error("获取用户信息失败 -> {}", oaUserInfoRes);
+//                throw new BusinessException("获取用户信息失败");
+//            }
+//            OaUserInfo oaUserInfo = oaUserInfoRes.getData();
+//            steccnTokenVO.setDepartment(oaUserInfo.getDepartmentName());
+//            steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
+//            steccnTokenVO.setRealName(oaUserInfo.getName());
+//            steccnTokenVO.setOaUserId(oaUserInfo.getOaUserId());
+            PlatformUserVO r = remotePlatformUserFeignApi.userInfoByUserName(username).getData();
+            steccnTokenVO.setUserId(r.getId());
+            steccnTokenVO.setRealName(r.getName());
+            steccnTokenVO.setHeadImage(r.getAvatar());
+            steccnTokenVO.setUsercode(r.getUserCode());
+            steccnTokenVO.setOfficeId(r.getOfficeId());
+            steccnTokenVO.setPostId(r.getPostId());
 
-            LoginMesUserInfoDTO userInfoStr = remotePortalMesFeignApi.getUserCode(username);
-            if (Objects.nonNull(userInfoStr)) {
-                steccnTokenVO.setUsercode(userInfoStr.getUserCode());
-                if (StrUtil.isNotBlank(userInfoStr.getOfficeCode())) {
-                    Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(userInfoStr.getOfficeCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                    steccnTokenVO.setDepartmentId(officeMap.getOrDefault(userInfoStr.getOfficeCode(), new SysOfficeVO()).getId());
-                }
-            }
+//            LoginMesUserInfoDTO userInfoStr = remotePortalMesFeignApi.getUserCode(username);
+//            if (Objects.nonNull(userInfoStr)) {
+//                steccnTokenVO.setUsercode(userInfoStr.getUserCode());
+//                if (StrUtil.isNotBlank(userInfoStr.getOfficeCode())) {
+//                    Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(userInfoStr.getOfficeCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//                    steccnTokenVO.setDepartmentId(officeMap.getOrDefault(userInfoStr.getOfficeCode(), new SysOfficeVO()).getId());
+//                }
+//            }
             //将用户和clientNo绑定起来,用于push消息
             if (StrUtil.isNotBlank(clientNo)) {
                 SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();

@@ -45,7 +45,7 @@ public class PlatformPostController {
         return R.success(platformPostService.delete(id));
     }
 
-    @PostMapping()
+    @PostMapping("/page")
     @ApiOperation(value = "岗位分页")
     public R<Page<PlatformPostVO>> pageList(@RequestBody PlatformPostDTO dto) {
         return R.success(platformPostService.pageList(dto));

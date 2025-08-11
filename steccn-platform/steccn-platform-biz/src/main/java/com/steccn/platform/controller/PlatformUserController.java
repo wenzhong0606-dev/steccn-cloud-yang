@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.util.AESUtils;
 import com.steccn.common.vo.R;
 import com.steccn.platform.domain.PlatformUserRoleDTO;
 import com.steccn.platform.dto.OaProcessPushDTO;
@@ -39,6 +40,12 @@ public class PlatformUserController {
         return R.success(platformUserService.add(dto));
     }
 
+    @PostMapping("/en")
+    @ApiOperation(value = "获取密码加密")
+    public R<String> enPass(@Valid @RequestBody PlatformUserDTO dto) {
+        return R.success(AESUtils.encrypt(dto.getPassword()));
+    }
+
     @PutMapping()
     @ApiOperation(value = "修改用户")
     public R<Boolean> update(@Valid @RequestBody PlatformUserDTO dto) {
@@ -47,6 +54,7 @@ public class PlatformUserController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除用户")
+    @PreAuthorize("hasAuthority('platform:user:delete')")
     public R<Boolean> update(@PathVariable("id")Long id) {
         return R.success(platformUserService.delete(id));
     }
@@ -59,6 +67,7 @@ public class PlatformUserController {
 
     @PostMapping("/pageList")
     @ApiOperation(value = "用户分页")
+    @PreAuthorize("hasAuthority('platform:user:list')")
     public R<Page<PlatformUserVO>> pageList(@RequestBody PlatformUserDTO dto) {
         return R.success(platformUserService.pageList(dto));
     }

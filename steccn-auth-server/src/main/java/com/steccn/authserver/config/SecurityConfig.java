@@ -50,10 +50,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 if (StrUtil.isBlank(encodedPassword)) {
                     throw new IllegalArgumentException("rawPassword is blank");
                 }
-                //适配销售系统逻辑
-                if(rawPassword.length()>50){
-                    return encodedPassword.equals(rawPassword);
-                }
                 return encodedPassword.equalsIgnoreCase(SecureUtil.md5((String) rawPassword));
             }
         };

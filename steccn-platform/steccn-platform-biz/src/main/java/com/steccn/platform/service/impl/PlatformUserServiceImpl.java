@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -13,7 +14,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.util.AESUtils;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.platform.domain.PlatformMenu;
 import com.steccn.platform.domain.PlatformRole;
 import com.steccn.platform.domain.PlatformUser;
@@ -29,6 +32,7 @@ import com.steccn.platform.vo.PlatformUserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -44,8 +48,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, PlatformUser>
     implements PlatformUserService{
-    private PlatformUserMapper platformUserMapper;
-    private PlatformMenuMapper platformMenuMapper;
+    private final PlatformUserMapper platformUserMapper;
+    private final PlatformMenuMapper platformMenuMapper;
 
     @Override
     public Boolean add(PlatformUserDTO dto) {
@@ -53,19 +57,18 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
                 .eq(PlatformUser::getUserName, dto.getUserName())
                 .last("limit 1"));
         if(Objects.nonNull(one)){
-            throw new BusinessException("登录名重复");
+            throw new BusinessException("用户名重复");
         }
         PlatformUser user = new PlatformUser();
         BeanUtil.copyProperties(dto,user);
-        user.setPassword(AESUtils.decrypt(dto.getPassword()));
-        if(Objects.isNull(dto.getUserCode())){
-            user.setUserCode(dto.getUserName()+"_" +RandomUtil.randomString(4));
-        }
+        user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        user.setUserCode(dto.getUserName()+"_" +RandomUtil.randomString(4));
         save(user);
         return true;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(PlatformUserDTO dto) {
         if(Objects.isNull(dto.getId())){
             throw new BusinessException("数据Id不能为空");
@@ -75,13 +78,22 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
         }
         PlatformUser user = new PlatformUser();
         BeanUtil.copyProperties(dto,user);
-        user.setPassword(AESUtils.decrypt(dto.getPassword()));
+        //编码无法修改
+        user.setUserCode(null);
+        user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
         updateById(user);
+        List<PlatformUser> list = list(new LambdaQueryWrapper<PlatformUser>().eq(PlatformUser::getUserName, dto.getUserName()));
+        if(CollUtil.isNotEmpty(list)&&list.size()!=1){
+            throw new BusinessException("用户名重复");
+        }
         return true;
     }
 
     @Override
     public Boolean delete(Long id) {
+        if(id.equals(OaConstant.NUM_1.longValue())){
+            throw new BusinessException("超级管理员无法删除");
+        }
         removeById(id);
         return true;
     }
@@ -95,7 +107,9 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
             List<PlatformMenu> platformMenus = platformMenuMapper.selectList(new LambdaQueryWrapper<PlatformMenu>()
                     .select(PlatformMenu::getPermission)
                     .eq(PlatformMenu::getMenuType, 1));
-            permission = platformMenus.stream().map(PlatformMenu::getPermission).collect(Collectors.toSet());
+            if(CollUtil.isNotEmpty(platformMenus)){
+                permission = platformMenus.stream().map(PlatformMenu::getPermission).collect(Collectors.toSet());
+            }
         }else {
             permission = platformUserMapper.selectPermission(userName);
         }

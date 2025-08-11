@@ -52,7 +52,7 @@ public class PlatformRoleController {
         return R.success(platformRoleService.delete(id));
     }
 
-    @PostMapping()
+    @PostMapping("/page")
     @ApiOperation(value = "角色分页")
     public R<Page<PlatformRoleVO>> pageList(@RequestBody PlatformRoleDTO dto) {
         return R.success(platformRoleService.pageList(dto));

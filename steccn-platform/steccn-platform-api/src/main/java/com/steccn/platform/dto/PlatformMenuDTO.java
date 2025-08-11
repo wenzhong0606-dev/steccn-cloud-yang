@@ -70,4 +70,9 @@ public class PlatformMenuDTO {
      * 菜单用途(0web 1pc)
      */
     private Integer menuUsage;
+
+    /**
+     * 备注
+     */
+    private String remarks;
 }

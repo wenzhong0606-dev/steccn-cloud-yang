@@ -31,19 +31,21 @@ public class PlatformMenuController {
     private final PlatformMenuService platformMenuService;
 
     @PostMapping()
-    @ApiOperation(value = "目录机构")
+    @ApiOperation(value = "新增菜单")
+    @PreAuthorize("hasAuthority('platform:menu:add')")
     public R<Boolean> add(@Valid @RequestBody PlatformMenuDTO dto) {
         return R.success(platformMenuService.add(dto));
     }
 
     @PutMapping()
-    @ApiOperation(value = "修改机构")
+    @ApiOperation(value = "修改菜单")
+    @PreAuthorize("hasAuthority('platform:menu:update')")
     public R<Boolean> update(@Valid @RequestBody PlatformMenuDTO dto) {
         return R.success(platformMenuService.update(dto));
     }
 
     @PostMapping("/delete")
-    @ApiOperation(value = "删除机构")
+    @ApiOperation(value = "删除菜单")
     public R<Boolean> delete(@RequestBody Set<Integer> ids) {
         return R.success(platformMenuService.deleteById(ids));
     }
@@ -63,6 +65,7 @@ public class PlatformMenuController {
 
     @GetMapping("/{id}")
     @ApiOperation(value = "获取该节点下的树")
+    @PreAuthorize("hasAuthority('platform:menu:all')")
     public R<PlatformMenuVO> parent(@PathVariable("id") Integer id) {
         return R.success(platformMenuService.getTreeById(id));
     }
