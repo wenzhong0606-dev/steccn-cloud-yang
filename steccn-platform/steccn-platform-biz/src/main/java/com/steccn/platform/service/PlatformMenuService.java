@@ -4,6 +4,7 @@ import com.steccn.platform.domain.PlatformMenu;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.PlatformMenuDTO;
 import com.steccn.platform.dto.PlatformOfficeDTO;
+import com.steccn.platform.dto.PlatformRoleMenuDTO;
 import com.steccn.platform.vo.PlatformMenuVO;
 import com.steccn.platform.vo.PlatformOfficeVO;
 
@@ -54,4 +55,10 @@ public interface PlatformMenuService extends IService<PlatformMenu> {
      * @return
      */
     List<PlatformMenuVO> getUserTreeList();
+
+    /**
+     * 获取所有节点
+     * @return
+     */
+    List<PlatformMenuVO> getBindTreeList(PlatformRoleMenuDTO dto);
 }

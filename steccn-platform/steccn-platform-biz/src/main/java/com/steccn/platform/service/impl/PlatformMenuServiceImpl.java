@@ -2,7 +2,9 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
@@ -13,18 +15,21 @@ import com.steccn.platform.domain.PlatformRoleMenu;
 import com.steccn.platform.domain.PlatformUserRole;
 import com.steccn.platform.dto.PlatformMenuDTO;
 import com.steccn.platform.dto.PlatformOfficeDTO;
+import com.steccn.platform.dto.PlatformRoleMenuDTO;
 import com.steccn.platform.mapper.PlatformRoleMenuMapper;
 import com.steccn.platform.mapper.PlatformUserRoleMapper;
 import com.steccn.platform.service.PlatformMenuService;
 import com.steccn.platform.mapper.PlatformMenuMapper;
 import com.steccn.platform.vo.PlatformMenuVO;
 import com.steccn.platform.vo.PlatformOfficeVO;
+import com.steccn.platform.vo.PlatformRoleVO;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -138,6 +143,20 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
         return Collections.emptyList();
     }
 
+    @Override
+    public List<PlatformMenuVO> getBindTreeList(PlatformRoleMenuDTO dto) {
+        Assert.notNull(dto.getRoleId(),"角色id不能为空");
+        List<PlatformMenuVO> treeList = getTreeList();
+        //找到用户绑定的角色
+        List<PlatformRoleMenu> list = platformRoleMenuMapper.selectList(new LambdaQueryWrapper<PlatformRoleMenu>()
+                .eq(PlatformRoleMenu::getRoleId, dto.getRoleId()));
+        if(CollUtil.isNotEmpty(list)){
+            Map<Integer, PlatformRoleMenu> collect = list.stream().collect(Collectors.toMap(PlatformRoleMenu::getMenuId, Function.identity()));
+            traverseMenuList(treeList,collect);
+        }
+        return treeList;
+    }
+
     public static PlatformMenuVO buildSubTree(List<PlatformMenuVO> allNodes, Integer parentId) {
         PlatformMenuVO root = allNodes.stream()
                 .filter(node -> node.getId().equals(parentId))
@@ -160,6 +179,19 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
             buildChildren(child, allNodes); // 递归构建子节点
         }
         parent.setChildren(children);
+    }
+
+    public void traverseMenuList(List<PlatformMenuVO> menuList,Map<Integer, PlatformRoleMenu> collect) {
+        for (PlatformMenuVO menu : menuList) {
+            // 这里可以处理当前节点
+            if(Objects.nonNull(collect.get(menu.getId()))){
+                menu.setIsBind(1);
+            }
+            // 如果有子菜单则递归
+            if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
+                traverseMenuList(menu.getChildren(),collect);
+            }
+        }
     }
 }
 

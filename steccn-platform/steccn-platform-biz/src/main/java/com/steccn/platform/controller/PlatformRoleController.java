@@ -48,12 +48,14 @@ public class PlatformRoleController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除用户")
+    @PreAuthorize("hasAuthority('platform:role:update')")
     public R<Boolean> update(@PathVariable("id")Long id) {
         return R.success(platformRoleService.delete(id));
     }
 
     @PostMapping("/page")
     @ApiOperation(value = "角色分页")
+    @PreAuthorize("hasAuthority('platform:role:all')")
     public R<Page<PlatformRoleVO>> pageList(@RequestBody PlatformRoleDTO dto) {
         return R.success(platformRoleService.pageList(dto));
     }

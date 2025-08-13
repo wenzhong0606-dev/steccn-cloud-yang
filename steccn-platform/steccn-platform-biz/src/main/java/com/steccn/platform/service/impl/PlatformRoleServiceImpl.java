@@ -82,13 +82,20 @@ public class PlatformRoleServiceImpl extends ServiceImpl<PlatformRoleMapper, Pla
                 .eq(Objects.nonNull(dto.getStatus()), PlatformRole::getStatus, dto.getStatus())
                 .orderByDesc(PlatformRole::getSort));
         Page resPage = new Page<>(dto.getCurrent(), dto.getSize());
+        List<PlatformRoleVO> resultList = Lists.newArrayList();
+        page.getRecords().forEach(tmp->{
+            PlatformRoleVO vo = new PlatformRoleVO();
+            BeanUtil.copyProperties(tmp,vo);
+            resultList.add(vo);
+        });
         BeanUtils.copyProperties(page, resPage);
+        resPage.setRecords(resultList);
         return resPage;
     }
 
     @Override
     public Page<PlatformRoleVO> bindPageList(PlatformRoleDTO dto) {
-        Assert.isNull(dto.getUserId(),"用户id不能为空");
+        Assert.notNull(dto.getUserId(),"用户id不能为空");
         Page<PlatformRoleVO> platformRoleVOPage = pageList(dto);
         List<PlatformRoleVO> results = Lists.newArrayList();
         //找到用户绑定的角色

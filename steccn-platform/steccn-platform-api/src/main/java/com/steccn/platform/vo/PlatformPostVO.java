@@ -34,4 +34,9 @@ public class PlatformPostVO {
      * 状态（0正常 1停用）
      */
     private Integer status;
+
+    /**
+     * 备注
+     */
+    private String remarks;
 }

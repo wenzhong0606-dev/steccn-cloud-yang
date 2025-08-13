@@ -41,4 +41,6 @@ public class PlatformPostDTO extends BasePageDTO {
      * 状态（0正常 1停用）
      */
     private Integer status;
+
+    private String remarks;
 }

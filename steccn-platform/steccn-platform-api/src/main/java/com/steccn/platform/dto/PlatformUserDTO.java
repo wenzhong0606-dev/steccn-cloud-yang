@@ -86,5 +86,5 @@ public class PlatformUserDTO extends BasePageDTO {
     /**
      * 备注
      */
-    private String remark;
+    private String remarks;
 }

@@ -1,12 +1,16 @@
 package com.steccn.platform.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.PlatformMenuDTO;
 import com.steccn.platform.dto.PlatformOfficeDTO;
+import com.steccn.platform.dto.PlatformRoleDTO;
+import com.steccn.platform.dto.PlatformRoleMenuDTO;
 import com.steccn.platform.service.PlatformMenuService;
 import com.steccn.platform.service.PlatformOfficeService;
 import com.steccn.platform.vo.PlatformMenuVO;
 import com.steccn.platform.vo.PlatformOfficeVO;
+import com.steccn.platform.vo.PlatformRoleVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +64,7 @@ public class PlatformMenuController {
     @GetMapping("/user")
     @ApiOperation(value = "获取权限相关的树")
     public R<List<PlatformMenuVO>> listUserData() {
-        return R.success(platformMenuService.getTreeList());
+        return R.success(platformMenuService.getUserTreeList());
     }
 
     @GetMapping("/{id}")
@@ -68,5 +72,11 @@ public class PlatformMenuController {
     @PreAuthorize("hasAuthority('platform:menu:all')")
     public R<PlatformMenuVO> parent(@PathVariable("id") Integer id) {
         return R.success(platformMenuService.getTreeById(id));
+    }
+
+    @PostMapping("/bind")
+    @ApiOperation(value = "绑定菜单分页")
+    public R<List<PlatformMenuVO>> bindPageList(@RequestBody PlatformRoleMenuDTO dto) {
+        return R.success(platformMenuService.getBindTreeList(dto));
     }
 }

@@ -68,5 +68,10 @@ public class PlatformMenuVO {
      */
     private Integer menuUsage;
 
+    /**
+     * 是否绑定0未绑定 1已绑定
+     */
+    private Integer isBind;
+
     private List<PlatformMenuVO> children;
 }
