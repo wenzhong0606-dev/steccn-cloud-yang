@@ -69,7 +69,7 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
         if(Objects.isNull(dto.getId())){
             throw new BusinessException("主键id不能为空");
         }
-        if(Objects.isNull(dto.getParentId())){
+        if(Objects.isNull(dto.getParentId())||dto.getParentId().equals(OaConstant.NO)){
             dto.setParentId(OaConstant.NO);
         }else {
             PlatformMenu byId = getById(dto.getParentId());
