@@ -31,11 +31,6 @@ public class PlatformMenu implements Serializable {
     private String menuName;
 
     /**
-     * 菜单编码
-     */
-    private String menuCode;
-
-    /**
      * 路由路径
      */
     private String routerPath;

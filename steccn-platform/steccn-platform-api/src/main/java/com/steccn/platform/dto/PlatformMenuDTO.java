@@ -31,12 +31,6 @@ public class PlatformMenuDTO {
     private String menuName;
 
     /**
-     * 菜单编码
-     */
-    @NotBlank(message = "菜单编码不能为空")
-    private String menuCode;
-
-    /**
      * 路由路径
      */
     private String routerPath;

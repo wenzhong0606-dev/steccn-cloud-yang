@@ -54,10 +54,10 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
                 throw new BusinessException("父级节点不存在");
             }
         }
-        PlatformMenu one = getOne(new LambdaQueryWrapper<PlatformMenu>().eq(PlatformMenu::getMenuCode, dto.getMenuCode()),false);
-        if(Objects.nonNull(one)){
-            throw new BusinessException("编码重复");
-        }
+//        PlatformMenu one = getOne(new LambdaQueryWrapper<PlatformMenu>().eq(PlatformMenu::getMenuCode, dto.getMenuCode()),false);
+//        if(Objects.nonNull(one)){
+//            throw new BusinessException("编码重复");
+//        }
         PlatformMenu model = new PlatformMenu();
         BeanUtil.copyProperties(dto,model);
         save(model);
@@ -80,7 +80,7 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
         PlatformMenu model = new PlatformMenu();
         BeanUtil.copyProperties(dto,model);
         //编码无法修改
-        model.setMenuCode(null);
+//        model.setMenuCode(null);
         updateById(model);
         return true;
     }

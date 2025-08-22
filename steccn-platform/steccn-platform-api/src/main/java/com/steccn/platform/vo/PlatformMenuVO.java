@@ -31,7 +31,7 @@ public class PlatformMenuVO {
     /**
      * 菜单编码
      */
-    private String menuCode;
+//    private String menuCode;
 
     /**
      * 路由路径
