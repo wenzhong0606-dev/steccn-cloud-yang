@@ -871,6 +871,7 @@ public class WmsReportServiceImpl implements WmsReportService {
             groupByValue = groupByValue.stream().filter(v -> v.getStatus().equals("已确认")).collect(Collectors.toList());
             //相同车间，相同id的物料进行累加
             if(CollUtil.isNotEmpty(groupByValue)){
+                receiptNos.addAll(groupByValue.stream().flatMap(s->s.getReceiptCode().stream()).collect(Collectors.toList()));
                 groupByValue = groupByValue.stream()
                         // 过滤掉 null 或关键字段缺失的项
                         .filter(vo -> vo != null
@@ -879,7 +880,7 @@ public class WmsReportServiceImpl implements WmsReportService {
                                 && stringSysOfficeVOMap.get(vo.getProductionLineName()) != null
                                 && stringSysOfficeVOMap.get(vo.getProductionLineName()).getParentCode() != null)
                         // 按 materialId + parentCode 分组
-                        .collect(Collectors.groupingBy(vo -> vo.getMaterialId() + "_" + stringSysOfficeVOMap.get(vo.getProductionLineName()).getParentCode()))
+                        .collect(Collectors.groupingBy(vo -> vo.getMaterialId() + "_" + stringSysOfficeVOMap.get(vo.getProductionLineName()).getParentCode() +"_"+vo.getWarehouseName()))
                         // 对每组进行合并
                         .values().stream()
                         .map(groupList -> {
@@ -947,7 +948,7 @@ public class WmsReportServiceImpl implements WmsReportService {
 //                }
                             erpCommonSaveDetails.add(erpCommonSaveDetail);
                             //加入入库单号
-                            receiptNos.addAll(wmsInventoryDaySheetVO.getReceiptCode());
+//                            receiptNos.addAll(wmsInventoryDaySheetVO.getReceiptCode());
                         }else {
                             //产线为空的情况
                             WmsInventoryDaySheetDTO detailDTO = new WmsInventoryDaySheetDTO();
@@ -960,8 +961,8 @@ public class WmsReportServiceImpl implements WmsReportService {
                                 continue;
                             }
                             //加入入库单号
-                            receiptNos.addAll(wmsInventoryDaySheetCaseVOS.stream()
-                                    .map(WmsInventoryDaySheetCaseVO::getCode).collect(Collectors.toSet()));
+//                            receiptNos.addAll(wmsInventoryDaySheetCaseVOS.stream()
+//                                    .map(WmsInventoryDaySheetCaseVO::getCode).collect(Collectors.toSet()));
                             // 使用 Map 聚合相同的产线
                             Map<String, BigDecimal> quantityMap = wmsInventoryDaySheetCaseVOS.stream()
                                     .collect(Collectors.groupingBy(
