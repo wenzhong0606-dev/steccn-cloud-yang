@@ -129,6 +129,10 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
 
     @Override
     public List<PlatformMenuVO> getUserTreeList() {
+        if(SecurityUtils.getUser().getUsername().equals("system")){
+            List<PlatformMenuVO> treeList = getTreeList();
+            return treeList;
+        }
         List<PlatformUserRole> platformUserRoles = platformUserRoleMapper.selectList(new LambdaQueryWrapper<PlatformUserRole>()
                 .eq(PlatformUserRole::getUserId, SecurityUtils.getUser().getUserId()));
         List<PlatformMenu> list = Lists.newArrayList();
@@ -151,7 +155,7 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
             PlatformMenuVO platformOfficeVO = buildSubTree(data, tmp.getId());
             results.add(platformOfficeVO);
         });
-        return Collections.emptyList();
+        return results;
     }
 
     @Override
