@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.PlatformRoleDTO;
 import com.steccn.platform.vo.PlatformRoleVO;
 
+import java.util.List;
+
 /**
 * @author Admin
 * @description 针对表【platform_role(角色表)】的数据库操作Service
@@ -45,5 +47,5 @@ public interface PlatformRoleService extends IService<PlatformRole> {
      * @param dto
      * @return
      */
-    Page<PlatformRoleVO> bindPageList(PlatformRoleDTO dto);
+    List<PlatformRoleVO> bindPageList(PlatformRoleDTO dto);
 }

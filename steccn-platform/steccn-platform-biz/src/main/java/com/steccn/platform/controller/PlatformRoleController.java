@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 类说明
@@ -62,7 +63,7 @@ public class PlatformRoleController {
 
     @PostMapping("/bind")
     @ApiOperation(value = "绑定角色分页")
-    public R<Page<PlatformRoleVO>> bindPageList(@RequestBody PlatformRoleDTO dto) {
+    public R<List<PlatformRoleVO>> bindPageList(@RequestBody PlatformRoleDTO dto) {
         return R.success(platformRoleService.bindPageList(dto));
     }
 

@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -94,27 +95,32 @@ public class PlatformRoleServiceImpl extends ServiceImpl<PlatformRoleMapper, Pla
     }
 
     @Override
-    public Page<PlatformRoleVO> bindPageList(PlatformRoleDTO dto) {
+    public List<PlatformRoleVO> bindPageList(PlatformRoleDTO dto) {
         Assert.notNull(dto.getUserId(),"用户id不能为空");
-        Page<PlatformRoleVO> platformRoleVOPage = pageList(dto);
+//        Page<PlatformRoleVO> platformRoleVOPage = pageList(dto);
         List<PlatformRoleVO> results = Lists.newArrayList();
         //找到用户绑定的角色
         List<PlatformUserRole> list = platformUserRoleService.list(new LambdaQueryWrapper<PlatformUserRole>()
                 .eq(PlatformUserRole::getUserId, dto.getUserId()));
         if(CollUtil.isNotEmpty(list)){
-            Map<Integer, PlatformUserRole> collect = list.stream().collect(Collectors.toMap(PlatformUserRole::getRoleId, Function.identity()));
-            platformRoleVOPage.getRecords().forEach(tmp->{
-                PlatformRoleVO vo = new PlatformRoleVO();
-                BeanUtil.copyProperties(tmp,vo);
-                if(Objects.nonNull(collect.get(tmp.getId()))){
-                    vo.setIsBind(1);
-                }
-                results.add(vo);
-            });
-            platformRoleVOPage.setRecords(results);
+            Set<Integer> roleIds = list.stream().map(PlatformUserRole::getRoleId).collect(Collectors.toSet());
+            List<PlatformRole> platformRoles = listByIds(roleIds);
+            results = BeanUtil.copyToList(platformRoles,PlatformRoleVO.class);
+//            Map<Integer, PlatformUserRole> collect = list.stream().collect(Collectors.toMap(PlatformUserRole::getRoleId, Function.identity()));
+//            platformRoleVOPage.getRecords().forEach(tmp->{
+//                PlatformRoleVO vo = new PlatformRoleVO();
+//                BeanUtil.copyProperties(tmp,vo);
+//                if(Objects.nonNull(collect.get(tmp.getId()))){
+//                    vo.setIsBind(1);
+//                }else {
+//                    vo.setIsBind(0);
+//                }
+//                results.add(vo);
+//            });
+//            platformRoleVOPage.setRecords(results);
 
         }
-        return platformRoleVOPage;
+        return results;
     }
 
 

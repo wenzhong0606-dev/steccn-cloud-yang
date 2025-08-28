@@ -146,15 +146,17 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
     @Override
     public List<PlatformMenuVO> getBindTreeList(PlatformRoleMenuDTO dto) {
         Assert.notNull(dto.getRoleId(),"角色id不能为空");
-        List<PlatformMenuVO> treeList = getTreeList();
+        List<PlatformMenuVO> resultList = getTreeList();
         //找到用户绑定的角色
         List<PlatformRoleMenu> list = platformRoleMenuMapper.selectList(new LambdaQueryWrapper<PlatformRoleMenu>()
                 .eq(PlatformRoleMenu::getRoleId, dto.getRoleId()));
         if(CollUtil.isNotEmpty(list)){
-            Map<Integer, PlatformRoleMenu> collect = list.stream().collect(Collectors.toMap(PlatformRoleMenu::getMenuId, Function.identity()));
-            traverseMenuList(treeList,collect);
+//            Map<Integer, PlatformRoleMenu> collect = list.stream().collect(Collectors.toMap(PlatformRoleMenu::getMenuId, Function.identity()));
+//            traverseMenuList(treeList,collect);
+            List<PlatformMenu> platformMenus = listByIds(list.stream().map(PlatformRoleMenu::getMenuId).collect(Collectors.toSet()));
+            resultList = BeanUtil.copyToList(platformMenus, PlatformMenuVO.class);
         }
-        return treeList;
+        return resultList;
     }
 
     public static PlatformMenuVO buildSubTree(List<PlatformMenuVO> allNodes, Integer parentId) {
@@ -186,6 +188,8 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
             // 这里可以处理当前节点
             if(Objects.nonNull(collect.get(menu.getId()))){
                 menu.setIsBind(1);
+            }else {
+                menu.setIsBind(0);
             }
             // 如果有子菜单则递归
             if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
