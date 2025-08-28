@@ -61,4 +61,10 @@ public interface PlatformMenuService extends IService<PlatformMenu> {
      * @return
      */
     List<PlatformMenuVO> getBindTreeList(PlatformRoleMenuDTO dto);
+
+    /**
+     * 获取青州DCS的url
+     * @return
+     */
+    String getDcsUrl(Integer id);
 }

@@ -79,4 +79,10 @@ public class PlatformMenuController {
     public R<List<PlatformMenuVO>> bindPageList(@RequestBody PlatformRoleMenuDTO dto) {
         return R.success(platformMenuService.getBindTreeList(dto));
     }
+
+    @GetMapping("/dcs/{id}")
+    @ApiOperation(value = "获取访问dcs的url")
+    public R<String> dcsUrl(@PathVariable("id") Integer id) {
+        return R.success(platformMenuService.getDcsUrl(id));
+    }
 }

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.platform.constant.DcsConstant;
 import com.steccn.platform.domain.PlatformMenu;
 import com.steccn.platform.domain.PlatformOffice;
 import com.steccn.platform.domain.PlatformRoleMenu;
@@ -28,9 +29,19 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import java.security.*;
+import java.util.Date;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.binary.Base64;
+import java.net.URLEncoder;
 
 /**
 * @author Admin
@@ -146,7 +157,7 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
     @Override
     public List<PlatformMenuVO> getBindTreeList(PlatformRoleMenuDTO dto) {
         Assert.notNull(dto.getRoleId(),"角色id不能为空");
-        List<PlatformMenuVO> resultList = getTreeList();
+        List<PlatformMenuVO> resultList = Lists.newArrayList();
         //找到用户绑定的角色
         List<PlatformRoleMenu> list = platformRoleMenuMapper.selectList(new LambdaQueryWrapper<PlatformRoleMenu>()
                 .eq(PlatformRoleMenu::getRoleId, dto.getRoleId()));
@@ -157,6 +168,16 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
             resultList = BeanUtil.copyToList(platformMenus, PlatformMenuVO.class);
         }
         return resultList;
+    }
+
+    @Override
+    public String getDcsUrl(Integer id) {
+        DcsConstant.DCS1 byId = DcsConstant.DCS1.getById(id);
+        if(Objects.isNull(byId)){
+            throw new BusinessException("对应的画面不存在");
+        }
+        String signedUrl = getSignedUrl(byId.getPageId(), SecurityUtils.getUser().getUsername());
+        return signedUrl;
     }
 
     public static PlatformMenuVO buildSubTree(List<PlatformMenuVO> allNodes, Integer parentId) {
@@ -196,6 +217,43 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
                 traverseMenuList(menu.getChildren(),collect);
             }
         }
+    }
+
+    public static String getSignedUrl(String pageID,String username){
+        Date date = new Date();
+        Long time = date.getTime();
+        String token = "ff39a4e926204771ae1e064f3229be6a";
+//        String pageID = "efb7b37a2060402192f98c2a44f3****";
+//        String username = "any";// 第三方平台的当前用户名
+        String op = "readonly"; // 第三方平台自定义的权限信息
+        String stringToSign = pageID + "|" + String.valueOf(time) + "|" + username + "|" + op;
+        String signature = HMACSHA256(stringToSign.getBytes(), token.getBytes());
+        String url = "http://60.171.128.8:82/static/topv/public/viewer/"+pageID+"?time="+time+"&username="+username+"&op="+op+"&signature="+ signature;
+        return url;
+    }
+
+    /**
+     * 利用Java原生的摘要实现SHA256加密
+     * @param str 加密后的报文
+     * @return
+     */
+    public static String HMACSHA256(byte[] data, byte[] key)
+    {
+        try  {
+            SecretKeySpec signingKey = new SecretKeySpec(key, "HmacSHA256");
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(signingKey);
+            return URLEncoder.encode(byte2Base64(mac.doFinal(data)));
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static String byte2Base64(byte[] bytes){
+        return Base64.encodeBase64String(bytes);
     }
 }
 

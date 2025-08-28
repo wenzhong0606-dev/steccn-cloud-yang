@@ -1,6 +1,7 @@
 package com.steccn.platform.controller.feign;
 
 import com.steccn.common.vo.R;
+import com.steccn.platform.service.PlatformUserMacService;
 import com.steccn.platform.service.PlatformUserService;
 import com.steccn.platform.vo.PlatformUserVO;
 import io.swagger.annotations.Api;
@@ -25,10 +26,17 @@ import java.util.Set;
 @RequestMapping("/feign/platform/user")
 public class PlatformUserFeignController {
     private final PlatformUserService platformUserService;
+    private final PlatformUserMacService platformUserMacService;
 
     @ApiOperation(value = "获取用户信息")
     @GetMapping("/userName")
     public R<PlatformUserVO> userInfoByUserName(@RequestParam("userName") String userName) {
         return R.success(platformUserService.getByUserName(userName));
+    }
+
+    @ApiOperation(value = "获取用户信息")
+    @GetMapping("/compareMac")
+    public R<Boolean> compareMac(@RequestParam("userId") Long userId,@RequestParam("macAddress") String macAddress) {
+        return R.success(platformUserMacService.compareMac(userId,macAddress));
     }
 }

@@ -45,14 +45,15 @@ public class LoginController {
                                   @RequestParam(value = "clientNo", required = false) String clientNo,
                                   @RequestParam(value = "loginStatus", required = false) Integer loginStatus,
                                   @RequestParam(value = "checkKey", required = false) String checkKey,
-                                  @RequestParam(value = "checkCode", required = false) String checkCode) {
+                                  @RequestParam(value = "checkCode", required = false) String checkCode,
+                                  @RequestParam(value = "macAddress") String macAddress) {
         String decryptPassword;
         try {
             decryptPassword = AESUtils.decrypt(password);
         } catch (Exception e) {
             throw new BusinessException("密码解密失败");
         }
-        return loginService.login(username, decryptPassword, clientNo, loginStatus, checkKey, checkCode);
+        return loginService.login(username, decryptPassword, clientNo, loginStatus, checkKey, checkCode,macAddress);
     }
 
     /**

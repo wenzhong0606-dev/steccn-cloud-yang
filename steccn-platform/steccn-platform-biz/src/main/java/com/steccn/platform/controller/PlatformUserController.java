@@ -6,6 +6,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.domain.PlatformUserRoleDTO;
 import com.steccn.platform.dto.OaProcessPushDTO;
 import com.steccn.platform.dto.PlatformUserDTO;
+import com.steccn.platform.service.PlatformUserMacService;
 import com.steccn.platform.service.PlatformUserRoleService;
 import com.steccn.platform.service.PlatformUserService;
 import com.steccn.platform.vo.PlatformUserVO;
@@ -31,6 +32,7 @@ import javax.validation.Valid;
 public class PlatformUserController {
     private final PlatformUserService platformUserService;
     private final PlatformUserRoleService platformUserRoleService;
+    private final PlatformUserMacService platformUserMacService;
 
 
     @PostMapping()
@@ -70,6 +72,13 @@ public class PlatformUserController {
     @PreAuthorize("hasAuthority('platform:user:list')")
     public R<Page<PlatformUserVO>> pageList(@RequestBody PlatformUserDTO dto) {
         return R.success(platformUserService.pageList(dto));
+    }
+
+    @GetMapping("/clearMac/{id}")
+    @ApiOperation(value = "清除用户mac地址")
+    @PreAuthorize("hasAuthority('platform:user:clearMac')")
+    public R<Boolean> clearMac(@PathVariable("id")Long userId) {
+        return R.success(platformUserMacService.clearMac(userId));
     }
 
 

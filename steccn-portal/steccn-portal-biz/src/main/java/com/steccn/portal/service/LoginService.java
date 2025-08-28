@@ -71,7 +71,7 @@ public class LoginService {
      * @param clientNo 移动端唯一标识
      * @return
      */
-    public R<SteccnTokenVO> login(String username, String password, String clientNo, Integer loginStatus, String checkKey, String checkCode) {
+    public R<SteccnTokenVO> login(String username, String password, String clientNo, Integer loginStatus, String checkKey, String checkCode,String macAddress) {
         //校验验证码
 //        if (StrUtil.isNotBlank(checkKey) && StrUtil.isNotBlank(checkCode) && !checkCodeService.verify(checkKey, checkCode)) {
 //            throw new BusinessException("验证码错误，请重新输入");
@@ -91,6 +91,7 @@ public class LoginService {
         Map<String, String> map;
         //成功标识【全部成功才算成功】
         boolean flag = Boolean.FALSE;
+        boolean macFlag = Boolean.FALSE;
         try {
             //2.调用自己系统的获取token信息
             try {
@@ -130,6 +131,7 @@ public class LoginService {
             steccnTokenVO.setUsercode(r.getUserCode());
             steccnTokenVO.setOfficeId(r.getOfficeId());
             steccnTokenVO.setPostId(r.getPostId());
+            macFlag = remotePlatformUserFeignApi.compareMac(r.getId(), macAddress).getData();
 
 //            LoginMesUserInfoDTO userInfoStr = remotePortalMesFeignApi.getUserCode(username);
 //            if (Objects.nonNull(userInfoStr)) {
@@ -155,6 +157,9 @@ public class LoginService {
 //            redisTemplate.opsForValue().increment(redisKey);
 //            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
             throw new BusinessException(e.getLocalizedMessage());
+        }
+        if(!macFlag){
+            return R.failure("非常用设备登录,请联系管理员");
         }
         if (flag) {
             //删除
