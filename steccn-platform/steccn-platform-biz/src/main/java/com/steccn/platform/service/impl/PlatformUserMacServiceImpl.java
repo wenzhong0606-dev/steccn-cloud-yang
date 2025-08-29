@@ -34,7 +34,7 @@ public class PlatformUserMacServiceImpl extends ServiceImpl<PlatformUserMacMappe
             return true;
         }
         //一个用户只允许两个设备登录
-        if(CollUtil.isEmpty(list) || list.size()<2){
+        if(CollUtil.isEmpty(list) || list.size()<1){
             PlatformUserMac model = new PlatformUserMac();
             model.setUserId(userId);
             model.setMacAddress(macAddress);
