@@ -28,6 +28,10 @@ public class PlatformUserMacServiceImpl extends ServiceImpl<PlatformUserMacMappe
 
     @Override
     public Boolean compareMac(Long userId,String macAddress) {
+        //超级管理员可以任意登录
+        if(userId.equals(1L)){
+            return true;
+        }
         List<PlatformUserMac> list = list(new LambdaQueryWrapper<PlatformUserMac>()
                 .eq(PlatformUserMac::getUserId, userId));
         if(CollUtil.isNotEmpty(list)&&list.size()==1&&list.get(0).getMacAddress().equals(macAddress)){
