@@ -30,6 +30,9 @@ public class PlatformUserMacServiceImpl extends ServiceImpl<PlatformUserMacMappe
     public Boolean compareMac(Long userId,String macAddress) {
         List<PlatformUserMac> list = list(new LambdaQueryWrapper<PlatformUserMac>()
                 .eq(PlatformUserMac::getUserId, userId));
+        if(CollUtil.isNotEmpty(list)&&list.size()==1&&list.get(0).getMacAddress().equals(macAddress)){
+            return true;
+        }
         //一个用户只允许两个设备登录
         if(CollUtil.isEmpty(list) || list.size()<2){
             PlatformUserMac model = new PlatformUserMac();
