@@ -131,6 +131,9 @@ public class LoginService {
             steccnTokenVO.setUsercode(r.getUserCode());
             steccnTokenVO.setOfficeId(r.getOfficeId());
             steccnTokenVO.setPostId(r.getPostId());
+            if(StrUtil.isBlank(macAddress)){
+                throw new BusinessException("mac地址为空,请联系管理员");
+            }
             macFlag = remotePlatformUserFeignApi.compareMac(r.getId(), macAddress).getData();
 
 //            LoginMesUserInfoDTO userInfoStr = remotePortalMesFeignApi.getUserCode(username);
