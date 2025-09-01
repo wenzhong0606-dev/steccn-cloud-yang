@@ -142,14 +142,14 @@ public class LoginService {
 //                }
 //            }
             //将用户和clientNo绑定起来,用于push消息
-            if (StrUtil.isNotBlank(clientNo)) {
-                SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
-                sysUserClientRefDTO.setClientNo(clientNo);
-                sysUserClientRefDTO.setUserId(steccnTokenVO.getOaUserId().longValue());
-                sysUserClientRefDTO.setUsername(steccnTokenVO.getUsername());
-                Boolean aBoolean = FeignOptional.of(() -> remoteSysUserClientFeignApi.bind(sysUserClientRefDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                log.info("移动端绑定结果 -> {}", aBoolean);
-            }
+//            if (StrUtil.isNotBlank(clientNo)) {
+//                SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
+//                sysUserClientRefDTO.setClientNo(clientNo);
+//                sysUserClientRefDTO.setUserId(steccnTokenVO.getOaUserId().longValue());
+//                sysUserClientRefDTO.setUsername(steccnTokenVO.getUsername());
+//                Boolean aBoolean = FeignOptional.of(() -> remoteSysUserClientFeignApi.bind(sysUserClientRefDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//                log.info("移动端绑定结果 -> {}", aBoolean);
+//            }
             flag = Boolean.TRUE;
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
