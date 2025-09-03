@@ -91,4 +91,9 @@ public class PlatformUserVO {
      * 岗位id
      */
     private Integer postId;
+
+    /**
+     * mac地址
+     */
+    private List<String> macAddress;
 }
