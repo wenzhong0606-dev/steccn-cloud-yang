@@ -23,4 +23,29 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
+
+    <select id="selectAncestors" parameterType="java.util.Set" resultType="java.lang.Integer">
+        WITH RECURSIVE ancestors AS (
+        -- 初始：多个叶子节点
+        SELECT id, parent_id
+        FROM platform_menu
+        WHERE id IN
+        <foreach collection="leafIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+
+        UNION ALL
+
+        -- 递归往上查父节点
+        SELECT t.id, t.parent_id
+        FROM platform_menu t
+        INNER JOIN ancestors a ON t.id = a.parent_id
+        )
+        SELECT DISTINCT id
+        FROM ancestors
+        WHERE id NOT IN
+        <foreach collection="leafIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

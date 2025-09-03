@@ -3,6 +3,10 @@ package com.steccn.platform.mapper;
 import com.steccn.platform.domain.PlatformRoleMenu;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author Admin
@@ -12,7 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface PlatformRoleMenuMapper extends BaseMapper<PlatformRoleMenu> {
-
+    List<Integer> selectAncestors(@Param("leafIds") Set<Integer> leafIds);
 }
 
 

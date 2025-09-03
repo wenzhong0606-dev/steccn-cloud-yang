@@ -83,6 +83,11 @@ public class PlatformUserVO {
     private Integer officeId;
 
     /**
+     * 设备数量
+     */
+    private Integer deviceNum;
+
+    /**
      * 岗位id
      */
     private Integer postId;

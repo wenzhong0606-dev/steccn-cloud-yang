@@ -84,6 +84,11 @@ public class PlatformUserDTO extends BasePageDTO {
     private Integer postId;
 
     /**
+     * 设备数量
+     */
+    private Integer deviceNum;
+
+    /**
      * 备注
      */
     private String remarks;

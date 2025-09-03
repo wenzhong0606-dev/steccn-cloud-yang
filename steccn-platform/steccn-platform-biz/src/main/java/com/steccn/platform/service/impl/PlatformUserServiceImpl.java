@@ -80,7 +80,10 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
         BeanUtil.copyProperties(dto,user);
         //编码无法修改
         user.setUserCode(null);
-        user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        PlatformUser byId = getById(dto.getId());
+        if(!byId.getPassword().equals(dto.getPassword())){
+            user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        }
         updateById(user);
         List<PlatformUser> list = list(new LambdaQueryWrapper<PlatformUser>().eq(PlatformUser::getUserName, dto.getUserName()));
         if(CollUtil.isNotEmpty(list)&&list.size()!=1){

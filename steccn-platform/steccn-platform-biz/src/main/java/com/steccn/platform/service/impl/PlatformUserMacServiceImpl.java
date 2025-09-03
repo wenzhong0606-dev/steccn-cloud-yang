@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
 * @author Admin
@@ -34,11 +35,14 @@ public class PlatformUserMacServiceImpl extends ServiceImpl<PlatformUserMacMappe
         }
         List<PlatformUserMac> list = list(new LambdaQueryWrapper<PlatformUserMac>()
                 .eq(PlatformUserMac::getUserId, userId));
-        if(CollUtil.isNotEmpty(list)&&list.size()==1&&list.get(0).getMacAddress().equals(macAddress)){
-            return true;
-        }
+        //获取用户设备的数量
+        PlatformUser platformUser = platformUserMapper.selectById(userId);
+//        if(CollUtil.isNotEmpty(list)&&list.size()==1&&list.get(0).getMacAddress().equals(macAddress)){
+//            return true;
+//        }
         //一个用户只允许两个设备登录
-        if(CollUtil.isEmpty(list) || list.size()<1){
+        if(CollUtil.isEmpty(list) || (list.size()<platformUser.getDeviceNum()
+                &&!list.stream().map(PlatformUserMac::getMacAddress).collect(Collectors.toSet()).contains(macAddress))){
             PlatformUserMac model = new PlatformUserMac();
             model.setUserId(userId);
             model.setMacAddress(macAddress);
