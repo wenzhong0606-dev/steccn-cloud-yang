@@ -93,6 +93,25 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
     }
 
     @Override
+    public Boolean updatePassword(PlatformUserDTO dto) {
+        if(Objects.isNull(dto.getId())){
+            throw new BusinessException("数据Id不能为空");
+        }
+        if(!SecurityUtils.getUser().getUserId().equals(dto.getId())&&!SecurityUtils.getUser().getUsername().equals("system")){
+            throw new BusinessException("只有本人才能修改账号数据");
+        }
+        if(StrUtil.isBlank(dto.getPassword())){
+            throw new BusinessException("密码不能为空");
+        }
+        PlatformUser user = new PlatformUser();
+        BeanUtil.copyProperties(dto,user);
+        //编码无法修改
+        user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        updateById(user);
+        return true;
+    }
+
+    @Override
     public Boolean delete(Long id) {
         if(id.equals(OaConstant.NUM_1.longValue())){
             throw new BusinessException("超级管理员无法删除");

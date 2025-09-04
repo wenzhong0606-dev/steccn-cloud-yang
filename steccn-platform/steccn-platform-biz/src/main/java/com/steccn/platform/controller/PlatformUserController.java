@@ -54,6 +54,12 @@ public class PlatformUserController {
         return R.success(platformUserService.update(dto));
     }
 
+    @PutMapping("/password")
+    @ApiOperation(value = "修改密码")
+    public R<Boolean> updatePassWord(@RequestBody PlatformUserDTO dto) {
+        return R.success(platformUserService.updatePassword(dto));
+    }
+
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除用户")
     @PreAuthorize("hasAuthority('platform:user:delete')")
