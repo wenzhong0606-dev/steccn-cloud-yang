@@ -24,14 +24,29 @@ public class IotTrendGroupDetail implements Serializable {
     private Long id;
 
     /**
-     * 名称
+     * 趋势组id
      */
     private Integer trendId;
+
+    /**
+     * 名称
+     */
+    private String name;
 
     /**
      * 设备id
      */
     private String deviceId;
+
+    /**
+     * y轴名称
+     */
+    private String yName;
+
+    /**
+     * 排序
+     */
+    private Integer sort;
 
     /**
      * 测点id

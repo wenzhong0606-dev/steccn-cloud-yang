@@ -1,7 +1,5 @@
-package com.steccn.platform.dto;
+package com.steccn.platform.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -10,38 +8,37 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
- * Iot趋势组DTO
+ * 类说明
  *
  * @author AndrewLuo
- * @date 2025/11/12
+ * @date 2025/11/13
  */
 @Data
-public class IotTrendDTO {
-    @NotNull(message = "趋势组Id不能为空")
+public class IotTrendDetailVO {
     private Integer trendId;
 
     /**
      * 设备id
      */
-    @NotBlank(message = "设备id不能为空")
     private String deviceId;
 
     /**
      * 测点id
      */
-    @NotBlank(message = "测点id不能为空")
     private String pointId;
 
     /**
      * 聚合规则
      */
-    @NotEmpty(message = "")
     private List<String> aggregations;
+
+    /**
+     * y轴名称
+     */
+    private String yName;
 
     /**
      * 排序
      */
-    @NotNull(message = "排序不能为空")
     private Integer sort;
-
 }

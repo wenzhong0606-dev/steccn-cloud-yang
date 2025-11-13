@@ -3,11 +3,14 @@ package com.steccn.platform.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.IotDeviceDTO;
+import com.steccn.platform.dto.IotTrendDetailDTO;
 import com.steccn.platform.dto.OaProcessPushDTO;
 import com.steccn.platform.service.IotQueryService;
+import com.steccn.platform.service.IotTrendGroupDetailService;
 import com.steccn.platform.service.IotTrendGroupService;
 import com.steccn.platform.vo.IotIdNameVO;
 import com.steccn.platform.vo.IotPointVO;
+import com.steccn.platform.vo.IotTrendDetailVO;
 import com.steccn.platform.vo.IotTrendGroupVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +34,7 @@ import java.util.List;
 public class IotDataController {
     private final IotQueryService iotQueryService;
     private final IotTrendGroupService iotTrendGroupService;
+    private final IotTrendGroupDetailService iotTrendGroupDetailService;
 
     @GetMapping("/eqp/group")
     @ApiOperation(value = "获取设备分组信息")
@@ -66,5 +70,17 @@ public class IotDataController {
     @ApiOperation(value = "删除趋势组")
     public R<Boolean> deleteTrend(@PathVariable("id")Integer id) {
         return R.success(iotTrendGroupService.deleteGroup(id));
+    }
+
+    @PostMapping("/trend/detail/save")
+    @ApiOperation(value = "新增趋势组详情")
+    public R<Boolean> addTrendDetail(@RequestBody @Valid List<IotTrendDetailDTO> dto) {
+        return R.success(iotTrendGroupDetailService.saveInfo(dto));
+    }
+
+    @GetMapping("/trend/detail/{id}")
+    @ApiOperation(value = "查询趋势组详情")
+    public R<List<IotTrendDetailVO>> listTrendInfo(@PathVariable("id")Integer id) {
+        return R.success(iotTrendGroupDetailService.infos(id));
     }
 }

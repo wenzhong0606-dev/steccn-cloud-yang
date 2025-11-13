@@ -2,6 +2,7 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.IotTrendGroupDetail;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author Admin
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-11-12 16:06:04
 * @Entity com.steccn.platform.domain.IotTrendGroupDetail
 */
+@Mapper
 public interface IotTrendGroupDetailMapper extends BaseMapper<IotTrendGroupDetail> {
 
 }

@@ -1,12 +1,16 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.platform.domain.IotTrendGroup;
+import com.steccn.platform.domain.IotTrendGroupDetail;
+import com.steccn.platform.mapper.IotTrendGroupDetailMapper;
 import com.steccn.platform.service.IotTrendGroupService;
 import com.steccn.platform.mapper.IotTrendGroupMapper;
 import com.steccn.platform.vo.IotPointVO;
 import com.steccn.platform.vo.IotTrendGroupVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,8 +21,10 @@ import java.util.List;
 * @createDate 2025-11-12 14:02:30
 */
 @Service
+@RequiredArgsConstructor
 public class IotTrendGroupServiceImpl extends ServiceImpl<IotTrendGroupMapper, IotTrendGroup>
     implements IotTrendGroupService{
+    private final IotTrendGroupDetailMapper iotTrendGroupDetailMapper;
 
     @Override
     public Boolean add(String name) {
@@ -38,6 +44,8 @@ public class IotTrendGroupServiceImpl extends ServiceImpl<IotTrendGroupMapper, I
     @Override
     public Boolean deleteGroup(Integer id) {
         removeById(id);
+        iotTrendGroupDetailMapper.delete(new LambdaQueryWrapper<IotTrendGroupDetail>()
+                .eq(IotTrendGroupDetail::getTrendId,id));
         return true;
     }
 }

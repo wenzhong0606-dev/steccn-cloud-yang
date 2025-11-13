@@ -2,6 +2,10 @@ package com.steccn.platform.service;
 
 import com.steccn.platform.domain.IotTrendGroupDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.IotTrendDetailDTO;
+import com.steccn.platform.vo.IotTrendDetailVO;
+
+import java.util.List;
 
 /**
 * @author Admin
@@ -9,5 +13,17 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2025-11-12 16:06:04
 */
 public interface IotTrendGroupDetailService extends IService<IotTrendGroupDetail> {
+    /**
+     * 保存趋势组点位信息
+     * @param dto
+     * @return
+     */
+    Boolean saveInfo(List<IotTrendDetailDTO> dto);
 
+    /**
+     * 信息点位
+     * @param id
+     * @return
+     */
+    List<IotTrendDetailVO> infos(Integer id);
 }

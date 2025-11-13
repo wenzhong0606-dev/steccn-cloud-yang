@@ -67,11 +67,6 @@ public class IotTrendGroup implements Serializable {
     private String remarks;
 
     /**
-     * 排序
-     */
-    private Integer sort;
-
-    /**
      * 是否删除标识：0否 1是
      */
     @TableField(fill = FieldFill.INSERT)
