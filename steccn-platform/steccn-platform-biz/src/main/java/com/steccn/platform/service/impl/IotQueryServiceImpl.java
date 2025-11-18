@@ -25,6 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +101,8 @@ public class IotQueryServiceImpl implements IotQueryService {
 
     @Override
     public List<IotDataQueryVO> queryPointData(IotDataQueryDTO dto) {
+        dto.setStart(toUTC(dto.getStart(),"Asia/Shanghai"));
+        dto.setEnd(toUTC(dto.getEnd(),"Asia/Shanghai"));
         String body = HttpRequest.post(url + "/iot/api/v1/data/query")
                 .addHeaders(header)
                 .body(JSONUtil.toJsonStr(dto))
@@ -129,5 +135,19 @@ public class IotQueryServiceImpl implements IotQueryService {
             throw new RuntimeException(e);
         }
         return list;
+    }
+
+    /**
+     * 将本地时间字符串（例如中国东八区）转换成 UTC ISO8601 字符串
+     *
+     * @param localTimeStr 例如 "2025-11-18 05:40:22"
+     * @param localZoneId  本地时区，例如 "Asia/Shanghai"
+     * @return UTC ISO8601 字符串，例如 "2025-11-17T21:40:22.000Z"
+     */
+    public static String toUTC(String localTimeStr, String localZoneId) {
+        LocalDateTime ldt = LocalDateTime.parse(localTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        ZonedDateTime zdt = ldt.atZone(ZoneId.of(localZoneId));
+        ZonedDateTime utc = zdt.withZoneSameInstant(ZoneId.of("UTC"));
+        return utc.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX"));
     }
 }
