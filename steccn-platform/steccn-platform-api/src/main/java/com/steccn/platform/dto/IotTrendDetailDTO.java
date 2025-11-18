@@ -51,7 +51,7 @@ public class IotTrendDetailDTO {
     /**
      * 排序
      */
-    @NotNull(message = "排序不能为空")
+//    @NotNull(message = "排序不能为空")
     private Integer sort;
 
 }

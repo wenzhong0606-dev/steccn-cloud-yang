@@ -33,6 +33,11 @@ public class IotTrendDetailVO {
     private List<String> aggregations;
 
     /**
+     * 显示名称
+     */
+    private String name;
+
+    /**
      * y轴名称
      */
     private String yName;

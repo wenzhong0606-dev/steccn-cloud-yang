@@ -1,7 +1,9 @@
 package com.steccn.platform.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.platform.dto.IotDataQueryDTO;
 import com.steccn.platform.dto.IotDeviceDTO;
+import com.steccn.platform.vo.IotDataQueryVO;
 import com.steccn.platform.vo.IotIdNameVO;
 import com.steccn.platform.vo.IotPointVO;
 
@@ -33,4 +35,11 @@ public interface IotQueryService {
      * @return
      */
     Page<IotPointVO> queryPointInfo(IotDeviceDTO dto);
+
+    /**
+     *
+     * @param dto
+     * @return
+     */
+    List<IotDataQueryVO> queryPointData(IotDataQueryDTO dto);
 }

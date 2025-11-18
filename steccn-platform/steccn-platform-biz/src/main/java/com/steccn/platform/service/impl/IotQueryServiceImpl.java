@@ -1,18 +1,26 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.IotDataQueryDTO;
 import com.steccn.platform.dto.IotDeviceDTO;
 import com.steccn.platform.feign.RemoteIotFeignApi;
 import com.steccn.platform.service.IotQueryService;
+import com.steccn.platform.vo.IotDataQueryVO;
 import com.steccn.platform.vo.IotIdNameVO;
 import com.steccn.platform.vo.IotPointVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -85,5 +93,41 @@ public class IotQueryServiceImpl implements IotQueryService {
         result.setCurrent(dto.getCurrent());
         result.setTotal(JSONObject.parseObject(body).getJSONObject("data").getLongValue("total"));
         return result;
+    }
+
+    @Override
+    public List<IotDataQueryVO> queryPointData(IotDataQueryDTO dto) {
+        String body = HttpRequest.post(url + "/iot/api/v1/data/query")
+                .addHeaders(header)
+                .body(JSONUtil.toJsonStr(dto))
+                .timeout(50000)
+                .execute()
+                .body();
+        // Jackson 反序列化
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = null;
+        try {
+            root = mapper.readTree(body);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 获取 results 数组
+        JsonNode resultsNode = root
+                .get("data")
+                .get("results");
+
+        List<IotDataQueryVO> list = Lists.newArrayList();
+
+        // 转成目标类 List<IotDataQueryVO>
+        try {
+            list = mapper.readValue(
+                    resultsNode.toString(),
+                    mapper.getTypeFactory().constructCollectionType(List.class, IotDataQueryVO.class)
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return list;
     }
 }
