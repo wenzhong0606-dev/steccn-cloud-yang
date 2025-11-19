@@ -7,6 +7,8 @@ import com.steccn.platform.vo.IotDataQueryVO;
 import com.steccn.platform.vo.IotIdNameVO;
 import com.steccn.platform.vo.IotPointVO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -42,4 +44,12 @@ public interface IotQueryService {
      * @return
      */
     List<IotDataQueryVO> queryPointData(IotDataQueryDTO dto);
+
+    /**
+     * 导出数据
+     * @param response
+     * @param dto
+     * @throws IOException
+     */
+    void excelExportData(HttpServletResponse response,List<IotDataQueryDTO> dto) throws IOException;
 }

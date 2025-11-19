@@ -11,12 +11,15 @@ import com.steccn.platform.service.IotTrendGroupDetailService;
 import com.steccn.platform.service.IotTrendGroupService;
 import com.steccn.platform.vo.*;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -86,5 +89,11 @@ public class IotDataController {
     @ApiOperation(value = "数据查询")
     public R<List<IotDataQueryVO>> dataQuery(@RequestBody IotDataQueryDTO dto) {
         return R.success(iotQueryService.queryPointData(dto));
+    }
+
+    @ApiModelProperty("Excel导出")
+    @GetMapping("/trend/data/export")
+    public void exportData(HttpServletResponse response,@RequestBody List<IotDataQueryDTO> dto) throws IOException {
+        iotQueryService.excelExportData(response,dto);
     }
 }
