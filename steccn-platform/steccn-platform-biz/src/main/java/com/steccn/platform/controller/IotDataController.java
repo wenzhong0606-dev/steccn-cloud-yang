@@ -92,7 +92,7 @@ public class IotDataController {
     }
 
     @ApiModelProperty("Excel导出")
-    @GetMapping("/trend/data/export")
+    @PostMapping("/trend/data/export")
     public void exportData(HttpServletResponse response,@RequestBody List<IotDataQueryDTO> dto) throws IOException {
         iotQueryService.excelExportData(response,dto);
     }
