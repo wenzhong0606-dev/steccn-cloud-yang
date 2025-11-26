@@ -1,5 +1,6 @@
 package com.steccn.platform.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
@@ -29,6 +30,8 @@ import org.springframework.util.MultiValueMap;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -151,6 +154,21 @@ public class IotQueryServiceImpl implements IotQueryService {
             );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+        for (IotDataQueryVO vo : list) {
+            List<Map<String, Object>> valuesList = vo.getValues();
+            if(CollUtil.isNotEmpty(valuesList)){
+                for (Map<String, Object> map : valuesList) {
+                    for (Map.Entry<String, Object> entry : map.entrySet()) {
+                        Object valueObj = entry.getValue();
+                        if (valueObj instanceof Number) {
+                            BigDecimal bd = new BigDecimal(((Number) valueObj).doubleValue());
+                            bd = bd.setScale(2, RoundingMode.HALF_UP);
+                            entry.setValue(bd.doubleValue()); // 保留两位小数
+                        }
+                    }
+                }
+            }
         }
         return list;
     }
