@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 数采平台查询相关
@@ -69,6 +70,8 @@ public class IotQueryServiceImpl implements IotQueryService {
     public List<IotIdNameVO> queryEqpGroup() {
         String body = HttpUtil.createGet(url + "/iot/api/v1/device_group/for_display").addHeaders(header).execute().body();
         List<IotIdNameVO> result = JSONObject.parseObject(body).getJSONArray("data").toJavaList(IotIdNameVO.class);
+        //定制需求,只显示该装置
+        result = result.stream().filter(v->v.getId().equals("d2qgb1s91a2oav9cn7i0")).collect(Collectors.toList());
         return result;
     }
 
