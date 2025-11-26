@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.PlatformMenuDTO;
 import com.steccn.platform.dto.PlatformOfficeDTO;
@@ -63,6 +64,7 @@ public class PlatformMenuController {
 
     @GetMapping("/user")
     @ApiOperation(value = "获取权限相关的树")
+    @SysLog("获取树菜单")
     public R<List<PlatformMenuVO>> listUserData() {
         return R.success(platformMenuService.getUserTreeList());
     }
@@ -82,6 +84,7 @@ public class PlatformMenuController {
 
     @GetMapping("/dcs/{id}")
     @ApiOperation(value = "获取访问dcs的url")
+    @SysLog("获取访问dcs的url")
     public R<String> dcsUrl(@PathVariable("id") Integer id) {
         return R.success(platformMenuService.getDcsUrl(id));
     }

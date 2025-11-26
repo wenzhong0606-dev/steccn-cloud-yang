@@ -169,6 +169,16 @@ public class PlatformMenuServiceImpl extends ServiceImpl<PlatformMenuMapper, Pla
 //            Map<Integer, PlatformRoleMenu> collect = list.stream().collect(Collectors.toMap(PlatformRoleMenu::getMenuId, Function.identity()));
 //            traverseMenuList(treeList,collect);
             List<PlatformMenu> platformMenus = listByIds(list.stream().map(PlatformRoleMenu::getMenuId).collect(Collectors.toSet()));
+            //根据前端需求只需要返回所有的叶子节点
+            Set<Integer> parentIds = platformMenus.stream()
+                    .map(PlatformMenu::getParentId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            // 叶子节点：不是任何节点的 parentId
+            platformMenus = platformMenus.stream()
+                    .filter(menu -> !parentIds.contains(menu.getId()))
+                    .collect(Collectors.toList());
             resultList = BeanUtil.copyToList(platformMenus, PlatformMenuVO.class);
         }
         return resultList;

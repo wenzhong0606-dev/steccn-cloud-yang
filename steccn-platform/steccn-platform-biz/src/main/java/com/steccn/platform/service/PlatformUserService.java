@@ -28,6 +28,13 @@ public interface PlatformUserService extends IService<PlatformUser> {
     Boolean update(PlatformUserDTO dto);
 
     /**
+     * 修改密码
+     * @param dto
+     * @return
+     */
+    Boolean updatePassword(PlatformUserDTO dto);
+
+    /**
      * 删除用户
      * @param id
      * @return

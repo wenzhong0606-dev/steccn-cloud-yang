@@ -17,13 +17,11 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.util.AESUtils;
 import com.steccn.oa.constant.OaConstant;
-import com.steccn.platform.domain.PlatformMenu;
-import com.steccn.platform.domain.PlatformRole;
-import com.steccn.platform.domain.PlatformUser;
-import com.steccn.platform.domain.PlatformUserRole;
+import com.steccn.platform.domain.*;
 import com.steccn.platform.dto.PlatformUserDTO;
 import com.steccn.platform.mapper.PlatformMenuMapper;
 import com.steccn.platform.mapper.PlatformRoleMenuMapper;
+import com.steccn.platform.mapper.PlatformUserMacMapper;
 import com.steccn.platform.service.PlatformRoleMenuService;
 import com.steccn.platform.service.PlatformUserRoleService;
 import com.steccn.platform.service.PlatformUserService;
@@ -35,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +49,7 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
     implements PlatformUserService{
     private final PlatformUserMapper platformUserMapper;
     private final PlatformMenuMapper platformMenuMapper;
+    private final PlatformUserMacMapper platformUserMacMapper;
 
     @Override
     public Boolean add(PlatformUserDTO dto) {
@@ -80,12 +80,34 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
         BeanUtil.copyProperties(dto,user);
         //编码无法修改
         user.setUserCode(null);
-        user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        PlatformUser byId = getById(dto.getId());
+        if(!byId.getPassword().equals(dto.getPassword())){
+            user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        }
         updateById(user);
         List<PlatformUser> list = list(new LambdaQueryWrapper<PlatformUser>().eq(PlatformUser::getUserName, dto.getUserName()));
         if(CollUtil.isNotEmpty(list)&&list.size()!=1){
             throw new BusinessException("用户名重复");
         }
+        return true;
+    }
+
+    @Override
+    public Boolean updatePassword(PlatformUserDTO dto) {
+        if(Objects.isNull(dto.getId())){
+            throw new BusinessException("数据Id不能为空");
+        }
+        if(!SecurityUtils.getUser().getUserId().equals(dto.getId())&&!SecurityUtils.getUser().getUsername().equals("system")){
+            throw new BusinessException("只有本人才能修改账号数据");
+        }
+        if(StrUtil.isBlank(dto.getPassword())){
+            throw new BusinessException("密码不能为空");
+        }
+        PlatformUser user = new PlatformUser();
+        BeanUtil.copyProperties(dto,user);
+        //编码无法修改
+        user.setPassword(SecureUtil.md5(AESUtils.decrypt(dto.getPassword())));
+        updateById(user);
         return true;
     }
 
@@ -133,7 +155,28 @@ public class PlatformUserServiceImpl extends ServiceImpl<PlatformUserMapper, Pla
                 .eq(Objects.nonNull(dto.getOfficeId()), PlatformUser::getOfficeId, dto.getOfficeId())
                 .eq(Objects.nonNull(dto.getPostId()), PlatformUser::getPostId, dto.getPostId()));
         Page resPage = new Page<PlatformUserVO>(dto.getCurrent(), dto.getSize());
+        //添加mac地址
+        List<PlatformUserVO> results = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(page.getRecords())){
+            Set<Long> collect = page.getRecords().stream().map(PlatformUser::getId).collect(Collectors.toSet());
+            List<PlatformUserMac> platformUserMacs = platformUserMacMapper.selectList(new LambdaQueryWrapper<PlatformUserMac>()
+                    .in(PlatformUserMac::getUserId, collect));
+            Map<Long, List<String>> userMacList = platformUserMacs.stream()
+                    .collect(Collectors.groupingBy(
+                            PlatformUserMac::getUserId,                              // key
+                            Collectors.mapping(PlatformUserMac::getMacAddress,       // value 映射
+                                    Collectors.toList())                  // 收集成 List
+                    ));
+            page.getRecords().forEach(tmp->{
+                PlatformUserVO vo = new PlatformUserVO();
+                BeanUtil.copyProperties(tmp,vo);
+                vo.setMacAddress(userMacList.get(vo.getId()));
+                results.add(vo);
+            });
+
+        }
         BeanUtils.copyProperties(page, resPage);
+        resPage.setRecords(results);
         return resPage;
     }
 }

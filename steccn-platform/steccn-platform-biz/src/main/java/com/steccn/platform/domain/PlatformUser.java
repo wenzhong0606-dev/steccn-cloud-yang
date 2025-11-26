@@ -26,6 +26,11 @@ public class PlatformUser implements Serializable {
     private String userCode;
 
     /**
+     * 设备数量
+     */
+    private Integer deviceNum;
+
+    /**
      * 登录账号
      */
     private String userName;
