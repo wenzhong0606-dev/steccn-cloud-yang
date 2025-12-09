@@ -14,6 +14,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -57,6 +58,7 @@ public class IotDataController {
 
     @GetMapping("/trend/add")
     @ApiOperation(value = "新增趋势组")
+    @PreAuthorize("hasAuthority('platform:iot:trend')")
     public R<Boolean> addTrend(@RequestParam("name")String name) {
         return R.success(iotTrendGroupService.add(name));
     }
@@ -68,12 +70,14 @@ public class IotDataController {
     }
 
     @DeleteMapping("/trend/{id}")
+    @PreAuthorize("hasAuthority('platform:iot:trend')")
     @ApiOperation(value = "删除趋势组")
     public R<Boolean> deleteTrend(@PathVariable("id")Integer id) {
         return R.success(iotTrendGroupService.deleteGroup(id));
     }
 
     @PostMapping("/trend/detail/save")
+    @PreAuthorize("hasAuthority('platform:iot:trend')")
     @ApiOperation(value = "新增趋势组详情")
     public R<Boolean> addTrendDetail(@RequestBody @Valid List<IotTrendDetailDTO> dto) {
         return R.success(iotTrendGroupDetailService.saveInfo(dto));
