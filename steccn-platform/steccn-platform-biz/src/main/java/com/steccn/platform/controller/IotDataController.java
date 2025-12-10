@@ -2,10 +2,8 @@ package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.platform.dto.IotDataQueryDTO;
-import com.steccn.platform.dto.IotDeviceDTO;
-import com.steccn.platform.dto.IotTrendDetailDTO;
-import com.steccn.platform.dto.OaProcessPushDTO;
+import com.steccn.platform.dto.*;
+import com.steccn.platform.service.IotAlertService;
 import com.steccn.platform.service.IotQueryService;
 import com.steccn.platform.service.IotTrendGroupDetailService;
 import com.steccn.platform.service.IotTrendGroupService;
@@ -36,6 +34,7 @@ public class IotDataController {
     private final IotQueryService iotQueryService;
     private final IotTrendGroupService iotTrendGroupService;
     private final IotTrendGroupDetailService iotTrendGroupDetailService;
+    private final IotAlertService iotAlertService;
 
     @GetMapping("/eqp/group")
     @ApiOperation(value = "获取设备分组信息")
@@ -95,5 +94,11 @@ public class IotDataController {
     @PostMapping("/trend/data/export")
     public void exportData(HttpServletResponse response,@RequestBody List<IotDataQueryDTO> dto) throws IOException {
         iotQueryService.excelExportData(response,dto);
+    }
+
+    @ApiModelProperty("保存报警规则")
+    @PostMapping("/alert/save")
+    public R<Boolean> saveAlert(@RequestBody @Valid IotAlertDTO dto) {
+        return R.success(iotAlertService.addAlert(dto));
     }
 }
