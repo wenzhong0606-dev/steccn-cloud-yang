@@ -43,4 +43,10 @@ public interface IotAlertService extends IService<IotAlert> {
      * @return
      */
     Page<IotAlertVO> listInfo(BasePageDTO dto);
+
+    /**
+     *
+     * @return
+     */
+    Boolean deleteInfo(Integer id);
 }

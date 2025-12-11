@@ -96,6 +96,12 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
         resPage.setRecords(results);
         return resPage;
     }
+
+    @Override
+    public Boolean deleteInfo(Integer id) {
+        removeById(id);
+        return true;
+    }
 }
 
 

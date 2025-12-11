@@ -121,4 +121,10 @@ public class IotDataController {
         return R.success(iotAlertService.listInfo(dto));
     }
 
+    @ApiModelProperty("修改报警规则")
+    @DeleteMapping("/alert/{id}")
+    public R<Boolean> deleteAlert(@PathVariable("id") Integer id) {
+        return R.success(iotAlertService.deleteInfo(id));
+    }
+
 }
