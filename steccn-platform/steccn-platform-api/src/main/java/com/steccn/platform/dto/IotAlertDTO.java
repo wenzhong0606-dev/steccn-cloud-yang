@@ -16,6 +16,11 @@ import java.util.List;
 @Data
 public class IotAlertDTO {
     /**
+     * 修改
+     */
+    private Integer id;
+
+    /**
      * 名称
      */
     private String name;
@@ -52,7 +57,7 @@ public class IotAlertDTO {
      * 时间间隔
      */
     @NotNull(message = "时间间隔不能为空")
-    private Integer interval;
+    private Integer intervalSec;
 
     /**
      * 接收人

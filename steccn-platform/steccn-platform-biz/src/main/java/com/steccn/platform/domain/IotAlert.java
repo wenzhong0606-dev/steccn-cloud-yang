@@ -22,7 +22,7 @@ public class IotAlert implements Serializable {
      * id
      */
     @TableId(type = IdType.AUTO)
-    private Long id;
+    private Integer id;
 
     /**
      * 名称
@@ -57,7 +57,7 @@ public class IotAlert implements Serializable {
     /**
      * 时间间隔
      */
-    private Integer interval;
+    private Integer intervalSec;
 
     /**
      * 上次报警时间

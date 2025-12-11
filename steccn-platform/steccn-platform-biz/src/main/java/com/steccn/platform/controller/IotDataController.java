@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.*;
 import com.steccn.platform.service.IotAlertService;
@@ -97,8 +98,27 @@ public class IotDataController {
     }
 
     @ApiModelProperty("保存报警规则")
-    @PostMapping("/alert/save")
+    @PostMapping("/alert")
     public R<Boolean> saveAlert(@RequestBody @Valid IotAlertDTO dto) {
         return R.success(iotAlertService.addAlert(dto));
     }
+
+    @ApiModelProperty("修改报警规则")
+    @PutMapping("/alert")
+    public R<Boolean> updateAlert(@RequestBody @Valid IotAlertDTO dto) {
+        return R.success(iotAlertService.updateAlert(dto));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @GetMapping("/alert/{id}")
+    public R<IotAlertVO> updateAlert(@PathVariable("id") Integer id) {
+        return R.success(iotAlertService.getOneInfo(id));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @PostMapping("/alert/page")
+    public R<Page<IotAlertVO>> listAlert(@RequestBody BasePageDTO dto) {
+        return R.success(iotAlertService.listInfo(dto));
+    }
+
 }
