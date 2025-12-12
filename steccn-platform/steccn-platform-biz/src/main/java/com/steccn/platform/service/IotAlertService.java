@@ -49,4 +49,6 @@ public interface IotAlertService extends IService<IotAlert> {
      * @return
      */
     Boolean deleteInfo(Integer id);
+
+    Boolean alertInfo();
 }

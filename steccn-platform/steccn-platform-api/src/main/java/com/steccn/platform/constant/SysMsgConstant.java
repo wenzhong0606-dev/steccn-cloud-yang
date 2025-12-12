@@ -72,6 +72,7 @@ public interface SysMsgConstant {
         SAFETY_STOCK_ALARM(35, "安全库存告警", MsgCategoryEnum.SYS_REMIND.code, "【%s】%s可用库存低于安全库存", 0),
         SPOT_CHECK_RATE_ALARM(36, "点检完成率超标告警", MsgCategoryEnum.SYS_REMIND.code, "【%s】%s点检完成率为%s%%，%s于%s限值%s%%", 0),
         DEEP_REPORT_WORK_FINISH_NUM_ALARM(37, "报工完成量告警", MsgCategoryEnum.SYS_REMIND.code, "【%s%s】【%s】【%s】报工累计加工数为%s，%s于%s限值%s", 0),
+        IOT_WARN(38, "测点超限告警", MsgCategoryEnum.SYS_REMIND.code, "%s超限,当前值:%s,上限值:%s,下限值%s", 0),
         ;
 
         private Integer code;
