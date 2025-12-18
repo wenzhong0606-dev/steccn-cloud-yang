@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.*;
-import com.steccn.platform.service.IotAlertService;
-import com.steccn.platform.service.IotQueryService;
-import com.steccn.platform.service.IotTrendGroupDetailService;
-import com.steccn.platform.service.IotTrendGroupService;
+import com.steccn.platform.service.*;
 import com.steccn.platform.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
@@ -36,6 +33,7 @@ public class IotDataController {
     private final IotTrendGroupService iotTrendGroupService;
     private final IotTrendGroupDetailService iotTrendGroupDetailService;
     private final IotAlertService iotAlertService;
+    private final IotAlertRecordService iotAlertRecordService;
 
     @GetMapping("/eqp/group")
     @ApiOperation(value = "获取设备分组信息")
@@ -125,6 +123,12 @@ public class IotDataController {
     @DeleteMapping("/alert/{id}")
     public R<Boolean> deleteAlert(@PathVariable("id") Integer id) {
         return R.success(iotAlertService.deleteInfo(id));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @PostMapping("/alert/record/page")
+    public R<Page<IotAlertRecordVO>> listAlertRecord(@RequestBody IotAlertRecordDTO dto) {
+        return R.success(iotAlertRecordService.listInfo(dto));
     }
 
 }

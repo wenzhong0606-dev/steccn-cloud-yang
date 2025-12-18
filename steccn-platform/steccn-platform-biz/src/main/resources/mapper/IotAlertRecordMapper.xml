@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.IotAlertRecordMapper">
+
+<!--    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.IotAlertRecord">-->
+<!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
+<!--            <result property="alertId" column="alert_id" jdbcType="INTEGER"/>-->
+<!--            <result property="content" column="content" jdbcType="VARCHAR"/>-->
+<!--            <result property="receiverName" column="receiver_name" jdbcType="OTHER"/>-->
+<!--            <result property="alertTime" column="alert_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
+<!--    </resultMap>-->
+
+<!--    <sql id="Base_Column_List">-->
+<!--        id,alert_id,content,-->
+<!--        receiver_name,alert_time,del_flag-->
+<!--    </sql>-->
+</mapper>

@@ -15,17 +15,15 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.IotAlert;
+import com.steccn.platform.domain.IotAlertRecord;
 import com.steccn.platform.domain.PlatformUser;
 import com.steccn.platform.domain.PlatformUserMac;
 import com.steccn.platform.dto.IotAlertDTO;
 import com.steccn.platform.dto.IotDataQueryDTO;
 import com.steccn.platform.dto.IotDataQueryDetailDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
-import com.steccn.platform.service.IotAlertService;
+import com.steccn.platform.service.*;
 import com.steccn.platform.mapper.IotAlertMapper;
-import com.steccn.platform.service.IotQueryService;
-import com.steccn.platform.service.PlatformUserService;
-import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.vo.IotAlertVO;
 import com.steccn.platform.vo.IotDataQueryVO;
 import com.steccn.platform.vo.PlatformUserVO;
@@ -56,6 +54,7 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
     private final PlatformUserService platformUserService;
     private final IotQueryService iotQueryService;
     private final SysMsgService sysMsgService;
+    private final IotAlertRecordService iotAlertRecordService;
 
     @Override
     public Boolean addAlert(IotAlertDTO dto) {
@@ -93,7 +92,6 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
     public Page<IotAlertVO> listInfo(BasePageDTO dto) {
         Page<IotAlert> page = page(new Page<>(dto.getCurrent(), dto.getSize()));
         Page resPage = new Page<IotAlertVO>(dto.getCurrent(), dto.getSize());
-        //添加mac地址
         List<IotAlertVO> results = Lists.newArrayList();
         if(CollUtil.isNotEmpty(page.getRecords())){
             Set<Long> collect = page.getRecords().stream().flatMap(v->v.getReceiver().stream()).collect(Collectors.toSet());
@@ -165,6 +163,13 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
                                 sysMsgDTO.setContent(String.format(content, tmp.getName(),o.toString(),tmp.getUpValue(),tmp.getDownValue()));
                                 sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
                                 sysMsgService.sendMsg(sysMsgDTO);
+                                //保存记录
+                                IotAlertRecord recordModel = new IotAlertRecord();
+                                recordModel.setAlertId(tmp.getId());
+                                recordModel.setContent(sysMsgDTO.getContent());
+                                recordModel.setAlertTime(now);
+                                recordModel.setReceiver(tmp.getReceiver());
+                                iotAlertRecordService.save(recordModel);
                             }else if(Objects.nonNull(tmp.getDownValue())
                                     && tmp.getUpValue().compareTo(new BigDecimal(o.toString())) > 0){
                                 //发送消息
@@ -177,6 +182,13 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
                                 sysMsgDTO.setContent(String.format(content, tmp.getName(),o.toString(),tmp.getUpValue(),tmp.getDownValue()));
                                 sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
                                 sysMsgService.sendMsg(sysMsgDTO);
+                                //保存报警记录
+                                IotAlertRecord recordModel = new IotAlertRecord();
+                                recordModel.setAlertId(tmp.getId());
+                                recordModel.setContent(sysMsgDTO.getContent());
+                                recordModel.setAlertTime(now);
+                                recordModel.setReceiver(tmp.getReceiver());
+                                iotAlertRecordService.save(recordModel);
                             }
                         }
                     }
