@@ -2,6 +2,8 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,7 +40,12 @@ public class IotAlertRecordServiceImpl extends ServiceImpl<IotAlertRecordMapper,
 
     @Override
     public Page<IotAlertRecordVO> listInfo(IotAlertRecordDTO dto) {
-        Page<IotAlertRecord> page = page(new Page<>(dto.getCurrent(), dto.getSize()));
+        Page<IotAlertRecord> page = page(new Page<>(dto.getCurrent(), dto.getSize()),
+                new LambdaQueryWrapper<IotAlertRecord>()
+                        .le(Objects.nonNull(dto.getEndTime()),IotAlertRecord::getAlertTime,dto.getEndTime())
+                        .gt(Objects.nonNull(dto.getStartTime()),IotAlertRecord::getAlertTime,dto.getStartTime())
+                        .like(StrUtil.isNotBlank(dto.getName()),IotAlertRecord::getAlertName,dto.getName()));
+
         Page resPage = new Page<IotAlertRecordVO>(dto.getCurrent(), dto.getSize());
         List<IotAlertRecordVO> results = Lists.newArrayList();
         if(CollUtil.isNotEmpty(page.getRecords())){
@@ -49,9 +57,9 @@ public class IotAlertRecordServiceImpl extends ServiceImpl<IotAlertRecordMapper,
                 IotAlertRecordVO vo = new IotAlertRecordVO();
                 BeanUtil.copyProperties(tmp,vo);
                 List<String> userNames = Lists.newArrayList();
-                tmp.getReceiver().forEach(v->{
-                    userNames.add(userMap.get(v).getName());
-                });
+                for(Object v:tmp.getReceiver()){
+                    userNames.add(userMap.get(Long.parseLong(v.toString())).getName());
+                }
                 vo.setReceiverName(userNames);
                 results.add(vo);
             });

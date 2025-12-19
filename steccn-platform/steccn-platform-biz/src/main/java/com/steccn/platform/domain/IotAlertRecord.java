@@ -29,6 +29,11 @@ public class IotAlertRecord implements Serializable {
     private Integer alertId;
 
     /**
+     * 报警名称
+     */
+    private String alertName;
+
+    /**
      * 内容
      */
     private String content;

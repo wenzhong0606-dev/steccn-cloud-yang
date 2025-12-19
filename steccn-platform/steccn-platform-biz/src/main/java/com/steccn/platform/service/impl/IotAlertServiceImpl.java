@@ -30,16 +30,14 @@ import com.steccn.platform.vo.PlatformUserVO;
 import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -122,13 +120,14 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
     }
 
     @Override
+//    @Scheduled(fixedDelay = 5000)
     public Boolean alertInfo() {
         LocalDateTime now = LocalDateTime.now();
         List<IotAlert> list = list();
         if(CollUtil.isNotEmpty(list)){
             for(IotAlert tmp:list){
                 //如果秒数小于时间间隔,则无需报警
-                long seconds = Duration.between(now, tmp.getAlertTime()).getSeconds();
+                long seconds = Duration.between(tmp.getAlertTime(),now).getSeconds();
                 if(seconds >= tmp.getIntervalSec()){
                     //是否有上下限
                     IotDataQueryDTO dataDto = new IotDataQueryDTO();
@@ -148,17 +147,21 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
                     if(CollUtil.isNotEmpty(iotDataQueryVOS.get(0).getValues())){
                         Map<String, Object> valueMap = iotDataQueryVOS.get(0).getValues().get(iotDataQueryVOS.get(0).getValues().size() - 1);
                         Object o = valueMap.get(tmp.getAggregations());
+                        //发送消息
+                        Set<Long> userIds = new HashSet<>();
+                        for(Object v:tmp.getReceiver()){
+                            userIds.add(Long.parseLong(v.toString()));
+                        }
                         //判断是否为数字
                         if(Objects.nonNull(o) && o.toString().matches("-?\\d+(\\.\\d+)?")){
                             //判断上限，上限比o小了
                             if(Objects.nonNull(tmp.getUpValue())
                                     && tmp.getUpValue().compareTo(new BigDecimal(o.toString())) < 0){
-                                //发送消息
                                 SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
                                 sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.IOT_WARN.getCode());
                                 sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.IOT_WARN.getTitle());
                                 sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.IOT_WARN.getWarnFlag());
-                                sysMsgDTO.setUserList(Sets.newHashSet(tmp.getReceiver()));
+                                sysMsgDTO.setUserList(userIds);
                                 String content = SysMsgConstant.MsgTypeEnum.IOT_WARN.getTemplate();
                                 sysMsgDTO.setContent(String.format(content, tmp.getName(),o.toString(),tmp.getUpValue(),tmp.getDownValue()));
                                 sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
@@ -166,6 +169,7 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
                                 //保存记录
                                 IotAlertRecord recordModel = new IotAlertRecord();
                                 recordModel.setAlertId(tmp.getId());
+                                recordModel.setAlertName(tmp.getName());
                                 recordModel.setContent(sysMsgDTO.getContent());
                                 recordModel.setAlertTime(now);
                                 recordModel.setReceiver(tmp.getReceiver());
@@ -177,7 +181,7 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
                                 sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.IOT_WARN.getCode());
                                 sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.IOT_WARN.getTitle());
                                 sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.IOT_WARN.getWarnFlag());
-                                sysMsgDTO.setUserList(Sets.newHashSet(tmp.getReceiver()));
+                                sysMsgDTO.setUserList(userIds);
                                 String content = SysMsgConstant.MsgTypeEnum.IOT_WARN.getTemplate();
                                 sysMsgDTO.setContent(String.format(content, tmp.getName(),o.toString(),tmp.getUpValue(),tmp.getDownValue()));
                                 sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
@@ -185,6 +189,7 @@ public class IotAlertServiceImpl extends ServiceImpl<IotAlertMapper, IotAlert>
                                 //保存报警记录
                                 IotAlertRecord recordModel = new IotAlertRecord();
                                 recordModel.setAlertId(tmp.getId());
+                                recordModel.setAlertName(tmp.getName());
                                 recordModel.setContent(sysMsgDTO.getContent());
                                 recordModel.setAlertTime(now);
                                 recordModel.setReceiver(tmp.getReceiver());

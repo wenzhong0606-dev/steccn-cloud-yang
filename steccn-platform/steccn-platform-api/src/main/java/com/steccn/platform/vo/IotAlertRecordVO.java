@@ -28,6 +28,11 @@ public class IotAlertRecordVO {
     private Integer alertId;
 
     /**
+     * 名称
+     */
+    private String alertName;
+
+    /**
      * 内容
      */
     private String content;

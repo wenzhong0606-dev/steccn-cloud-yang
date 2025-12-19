@@ -131,4 +131,10 @@ public class IotDataController {
         return R.success(iotAlertRecordService.listInfo(dto));
     }
 
+    @ApiModelProperty("修改报警规则")
+    @GetMapping("/alert/test")
+    public R<Boolean> test() {
+        return R.success(iotAlertService.alertInfo());
+    }
+
 }
