@@ -1,14 +1,10 @@
 package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.vo.R;
-import com.steccn.platform.dto.IotDataQueryDTO;
-import com.steccn.platform.dto.IotDeviceDTO;
-import com.steccn.platform.dto.IotTrendDetailDTO;
-import com.steccn.platform.dto.OaProcessPushDTO;
-import com.steccn.platform.service.IotQueryService;
-import com.steccn.platform.service.IotTrendGroupDetailService;
-import com.steccn.platform.service.IotTrendGroupService;
+import com.steccn.platform.dto.*;
+import com.steccn.platform.service.*;
 import com.steccn.platform.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
@@ -37,6 +33,8 @@ public class IotDataController {
     private final IotQueryService iotQueryService;
     private final IotTrendGroupService iotTrendGroupService;
     private final IotTrendGroupDetailService iotTrendGroupDetailService;
+    private final IotAlertService iotAlertService;
+    private final IotAlertRecordService iotAlertRecordService;
 
     @GetMapping("/eqp/group")
     @ApiOperation(value = "获取设备分组信息")
@@ -100,4 +98,47 @@ public class IotDataController {
     public void exportData(HttpServletResponse response,@RequestBody List<IotDataQueryDTO> dto) throws IOException {
         iotQueryService.excelExportData(response,dto);
     }
+
+    @ApiModelProperty("保存报警规则")
+    @PostMapping("/alert")
+    public R<Boolean> saveAlert(@RequestBody @Valid IotAlertDTO dto) {
+        return R.success(iotAlertService.addAlert(dto));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @PutMapping("/alert")
+    public R<Boolean> updateAlert(@RequestBody @Valid IotAlertDTO dto) {
+        return R.success(iotAlertService.updateAlert(dto));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @GetMapping("/alert/{id}")
+    public R<IotAlertVO> updateAlert(@PathVariable("id") Integer id) {
+        return R.success(iotAlertService.getOneInfo(id));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @PostMapping("/alert/page")
+    public R<Page<IotAlertVO>> listAlert(@RequestBody BasePageDTO dto) {
+        return R.success(iotAlertService.listInfo(dto));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @DeleteMapping("/alert/{id}")
+    public R<Boolean> deleteAlert(@PathVariable("id") Integer id) {
+        return R.success(iotAlertService.deleteInfo(id));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @PostMapping("/alert/record/page")
+    public R<Page<IotAlertRecordVO>> listAlertRecord(@RequestBody IotAlertRecordDTO dto) {
+        return R.success(iotAlertRecordService.listInfo(dto));
+    }
+
+    @ApiModelProperty("修改报警规则")
+    @GetMapping("/alert/test")
+    public R<Boolean> test() {
+        return R.success(iotAlertService.alertInfo());
+    }
+
 }

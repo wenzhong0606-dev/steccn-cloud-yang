@@ -1,5 +1,6 @@
 package com.steccn.platform.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
@@ -29,6 +30,8 @@ import org.springframework.util.MultiValueMap;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -37,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 数采平台查询相关
@@ -69,6 +73,8 @@ public class IotQueryServiceImpl implements IotQueryService {
     public List<IotIdNameVO> queryEqpGroup() {
         String body = HttpUtil.createGet(url + "/iot/api/v1/device_group/for_display").addHeaders(header).execute().body();
         List<IotIdNameVO> result = JSONObject.parseObject(body).getJSONArray("data").toJavaList(IotIdNameVO.class);
+        //定制需求,只显示该装置
+        result = result.stream().filter(v->v.getId().equals("d2qgb1s91a2oav9cn7i0")).collect(Collectors.toList());
         return result;
     }
 
@@ -148,6 +154,21 @@ public class IotQueryServiceImpl implements IotQueryService {
             );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+        for (IotDataQueryVO vo : list) {
+            List<Map<String, Object>> valuesList = vo.getValues();
+            if(CollUtil.isNotEmpty(valuesList)){
+                for (Map<String, Object> map : valuesList) {
+                    for (Map.Entry<String, Object> entry : map.entrySet()) {
+                        Object valueObj = entry.getValue();
+                        if (valueObj instanceof Number) {
+                            BigDecimal bd = new BigDecimal(((Number) valueObj).doubleValue());
+                            bd = bd.setScale(2, RoundingMode.HALF_UP);
+                            entry.setValue(bd.doubleValue()); // 保留两位小数
+                        }
+                    }
+                }
+            }
         }
         return list;
     }

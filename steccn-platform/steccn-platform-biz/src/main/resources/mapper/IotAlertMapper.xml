@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.IotAlertMapper">
+
+<!--    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.IotAlert">-->
+<!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
+<!--            <result property="name" column="name" jdbcType="VARCHAR"/>-->
+<!--            <result property="deviceId" column="device_id" jdbcType="VARCHAR"/>-->
+<!--            <result property="pointId" column="point_id" jdbcType="VARCHAR"/>-->
+<!--            <result property="aggregations" column="aggregations" jdbcType="VARCHAR"/>-->
+<!--            <result property="downValue" column="down_value" jdbcType="DECIMAL"/>-->
+<!--            <result property="upValue" column="up_value" jdbcType="DECIMAL"/>-->
+<!--            <result property="interval" column="interval" jdbcType="INTEGER"/>-->
+<!--            <result property="alertTime" column="alert_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="receiver" column="receiver" jdbcType="OTHER"/>-->
+<!--            <result property="createBy" column="create_by" jdbcType="BIGINT"/>-->
+<!--            <result property="createName" column="create_name" jdbcType="VARCHAR"/>-->
+<!--            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>-->
+<!--            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>-->
+<!--            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>-->
+<!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
+<!--    </resultMap>-->
+
+<!--    <sql id="Base_Column_List">-->
+<!--        id,name,device_id,-->
+<!--        point_id,aggregations,down_value,-->
+<!--        up_value,interval,alert_time,-->
+<!--        receiver,create_by,create_name,-->
+<!--        create_time,update_by,update_name,-->
+<!--        update_time,remarks,del_flag-->
+<!--    </sql>-->
+</mapper>

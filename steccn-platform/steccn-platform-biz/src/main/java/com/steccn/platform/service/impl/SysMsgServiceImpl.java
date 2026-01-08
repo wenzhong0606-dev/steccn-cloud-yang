@@ -110,23 +110,23 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         } catch (Exception e) {
             log.error("消息推送异常 -> {}", e.getLocalizedMessage());
         }
-        try {
-            //调用接口
-            sysMsgDTO.getUserList().forEach(ele -> {
-                poolExecutor.execute(() -> {
-                    SysMobilePushDTO sysMobilePushDTO = new SysMobilePushDTO();
-                    sysMobilePushDTO.setCategory(msgPushDTO.getMsgCategory());
-                    sysMobilePushDTO.setType(msgPushDTO.getMsgType());
-                    sysMobilePushDTO.setTitle(msgPushDTO.getTitle());
-                    sysMobilePushDTO.setContent(msgPushDTO.getContent());
-                    sysMobilePushDTO.setWarnFlag(msgPushDTO.getWarnFlag());
-                    sysMobilePushDTO.setUserId(ele);
-                    sysMobilePushService.push(sysMobilePushDTO);
-                });
-            });
-        } catch (Exception e) {
-            log.error("消息push异常 -> {}", e.getLocalizedMessage());
-        }
+//        try {
+//            //调用接口
+//            sysMsgDTO.getUserList().forEach(ele -> {
+//                poolExecutor.execute(() -> {
+//                    SysMobilePushDTO sysMobilePushDTO = new SysMobilePushDTO();
+//                    sysMobilePushDTO.setCategory(msgPushDTO.getMsgCategory());
+//                    sysMobilePushDTO.setType(msgPushDTO.getMsgType());
+//                    sysMobilePushDTO.setTitle(msgPushDTO.getTitle());
+//                    sysMobilePushDTO.setContent(msgPushDTO.getContent());
+//                    sysMobilePushDTO.setWarnFlag(msgPushDTO.getWarnFlag());
+//                    sysMobilePushDTO.setUserId(ele);
+//                    sysMobilePushService.push(sysMobilePushDTO);
+//                });
+//            });
+//        } catch (Exception e) {
+//            log.error("消息push异常 -> {}", e.getLocalizedMessage());
+//        }
         return Boolean.TRUE;
     }
 
