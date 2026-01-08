@@ -56,7 +56,7 @@ public class IotDataController {
 
     @GetMapping("/trend/add")
     @ApiOperation(value = "新增趋势组")
-    @PreAuthorize("hasAuthority('platform:iot:trend')")
+    @PreAuthorize("hasAuthority('platform:iot:trend:add')")
     public R<Boolean> addTrend(@RequestParam("name")String name) {
         return R.success(iotTrendGroupService.add(name));
     }
@@ -68,14 +68,14 @@ public class IotDataController {
     }
 
     @DeleteMapping("/trend/{id}")
-    @PreAuthorize("hasAuthority('platform:iot:trend')")
+    @PreAuthorize("hasAuthority('platform:iot:trend:delete')")
     @ApiOperation(value = "删除趋势组")
     public R<Boolean> deleteTrend(@PathVariable("id")Integer id) {
         return R.success(iotTrendGroupService.deleteGroup(id));
     }
 
     @PostMapping("/trend/detail/save")
-    @PreAuthorize("hasAuthority('platform:iot:trend')")
+    @PreAuthorize("hasAuthority('platform:iot:trend:view')")
     @ApiOperation(value = "新增趋势组详情")
     public R<Boolean> addTrendDetail(@RequestBody @Valid List<IotTrendDetailDTO> dto) {
         return R.success(iotTrendGroupDetailService.saveInfo(dto));
