@@ -74,7 +74,7 @@ public class IotQueryServiceImpl implements IotQueryService {
         String body = HttpUtil.createGet(url + "/iot/api/v1/device_group/for_display").addHeaders(header).execute().body();
         List<IotIdNameVO> result = JSONObject.parseObject(body).getJSONArray("data").toJavaList(IotIdNameVO.class);
         //定制需求,只显示该装置
-        result = result.stream().filter(v->!v.getId().equals("d2qgb1s91a2oav9cn7i0")).collect(Collectors.toList());
+        result = result.stream().filter(v->v.getId().equals("d2qgb1s91a2oav9cn7i0")).collect(Collectors.toList());
         return result;
     }
 
