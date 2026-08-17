@@ -29,7 +29,8 @@ public interface DcsConstant {
         ELECTRIC(11, "电气系统","cocsrvc91a2t9h1r7vkg"),
         LIQUID(12, "液化精馏系统","coc96ck91a2t9h1r7vig"),
         BOILER(13, "锅炉工艺","clvti3pmn3dmns1fb49g"),
-        ELECTROLYSIS(14,"电催化装置","d2q0sg491a2oav9cn7gg");
+        ELECTROLYSIS(14,"电催化装置","d2q0sg491a2oav9cn7gg"),
+        ELECTROLYSIS2(15,"电催化装置","d6t4j4491a2oav9cnmkg");;
 
 
         private Integer id;
