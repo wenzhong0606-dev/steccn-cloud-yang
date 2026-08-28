@@ -163,6 +163,12 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+        <!--多数据源-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+            <version>4.3.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

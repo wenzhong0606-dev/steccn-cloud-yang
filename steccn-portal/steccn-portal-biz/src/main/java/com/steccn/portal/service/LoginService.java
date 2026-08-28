@@ -175,4 +175,112 @@ public class LoginService {
             return R.failure("用户名密码错误");
         }
     }
+
+    public R<SteccnTokenVO> login2(String username, String password, String clientNo, Integer loginStatus, String checkKey, String checkCode,String macAddress) {
+        //校验验证码
+//        if (StrUtil.isNotBlank(checkKey) && StrUtil.isNotBlank(checkCode) && !checkCodeService.verify(checkKey, checkCode)) {
+//            throw new BusinessException("验证码错误，请重新输入");
+//        }
+        //校验阈值
+//        String redisKey = "LOGIN_FAIL_COUNT:" + username;
+//        Long expire = redisTemplate.opsForValue().get(redisKey);
+//        if (Objects.nonNull(expire) && expire >= FAIL_LOGIN_MAX_COUNT) {
+//            throw new BusinessException("账号已被锁定，请"+ FAIL_LOGIN_MAX_TIME +"分钟后再试");
+//        }
+        //新系统userName
+        username = username + "$newPlatform";
+        //1.定义变量
+        //自己系统的token返回
+        Object token = null;
+        //返回vo
+        SteccnTokenVO steccnTokenVO = null;
+        //自己系统返回的token以map接收数据
+        Map<String, String> map;
+        //成功标识【全部成功才算成功】
+        boolean flag = Boolean.FALSE;
+        boolean macFlag = Boolean.FALSE;
+        try {
+            //2.调用自己系统的获取token信息
+            try {
+                if (Objects.nonNull(loginStatus) && 1 == loginStatus) {
+                    token = remoteTokenApi.getTempToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_TEMP, TokenConstant.SCOPE);
+                } else {
+                    token = remoteTokenApi.getToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_ID, TokenConstant.SCOPE);
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("用户名密码错误");
+            }
+            username = username.split("\\$")[0];
+            //2.1map接受token的数据
+            map = (Map<String, String>) token;
+            //2.2定义返回vo并且组装token的数据
+            steccnTokenVO = new SteccnTokenVO();
+            steccnTokenVO.setAccessToken(map.get(TokenConstant.STR_ACCESS_TOKEN));
+            steccnTokenVO.setTokenType(map.get(TokenConstant.STR_TOKEN_TYPE));
+            steccnTokenVO.setRefreshToken(map.get(TokenConstant.STR_REFRESH_TOKEN));
+            steccnTokenVO.setExpiresIn(Long.valueOf(String.valueOf(map.get(TokenConstant.STR_EXPIRES_IN))));
+            steccnTokenVO.setScope(map.get(TokenConstant.STR_SCOPE));
+            steccnTokenVO.setUsername(username);
+//            R<OaUserInfo> oaUserInfoRes = oaInfoService.getOaUserInfo(username);
+//            if (Objects.isNull(oaUserInfoRes) || ResultCode.SUCCESS.getCode() != oaUserInfoRes.getCode()) {
+//                log.error("获取用户信息失败 -> {}", oaUserInfoRes);
+//                throw new BusinessException("获取用户信息失败");
+//            }
+//            OaUserInfo oaUserInfo = oaUserInfoRes.getData();
+//            steccnTokenVO.setDepartment(oaUserInfo.getDepartmentName());
+//            steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
+//            steccnTokenVO.setRealName(oaUserInfo.getName());
+//            steccnTokenVO.setOaUserId(oaUserInfo.getOaUserId());
+            PlatformUserVO r = remotePlatformUserFeignApi.userInfoByUserName(username).getData();
+            steccnTokenVO.setUserId(r.getId());
+            steccnTokenVO.setRealName(r.getName());
+            steccnTokenVO.setHeadImage(r.getAvatar());
+            steccnTokenVO.setUsercode(r.getUserCode());
+            steccnTokenVO.setOfficeId(r.getOfficeId());
+            steccnTokenVO.setPostId(r.getPostId());
+//            if(StrUtil.isBlank(macAddress)){
+//                throw new BusinessException("mac地址为空,请联系管理员");
+//            }
+//            macFlag = remotePlatformUserFeignApi.compareMac(r.getId(), macAddress).getData();
+
+//            LoginMesUserInfoDTO userInfoStr = remotePortalMesFeignApi.getUserCode(username);
+//            if (Objects.nonNull(userInfoStr)) {
+//                steccnTokenVO.setUsercode(userInfoStr.getUserCode());
+//                if (StrUtil.isNotBlank(userInfoStr.getOfficeCode())) {
+//                    Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(Sets.newHashSet(userInfoStr.getOfficeCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//                    steccnTokenVO.setDepartmentId(officeMap.getOrDefault(userInfoStr.getOfficeCode(), new SysOfficeVO()).getId());
+//                }
+//            }
+            //将用户和clientNo绑定起来,用于push消息
+//            if (StrUtil.isNotBlank(clientNo)) {
+//                SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
+//                sysUserClientRefDTO.setClientNo(clientNo);
+//                sysUserClientRefDTO.setUserId(steccnTokenVO.getOaUserId().longValue());
+//                sysUserClientRefDTO.setUsername(steccnTokenVO.getUsername());
+//                Boolean aBoolean = FeignOptional.of(() -> remoteSysUserClientFeignApi.bind(sysUserClientRefDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//                log.info("移动端绑定结果 -> {}", aBoolean);
+//            }
+            flag = Boolean.TRUE;
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            //失败次数+1
+//            redisTemplate.opsForValue().increment(redisKey);
+//            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
+            throw new BusinessException(e.getLocalizedMessage());
+        }
+//        if(!macFlag){
+//            return R.failure("非常用设备登录,请联系管理员");
+//        }
+        if (flag) {
+            //删除
+//            redisTemplate.delete(redisKey);
+            return R.success(steccnTokenVO);
+        } else {
+            //失败次数+1
+//            redisTemplate.opsForValue().increment(redisKey);
+//            redisTemplate.expire(redisKey, Duration.ofMinutes(FAIL_LOGIN_MAX_TIME));
+            return R.failure("用户名密码错误");
+        }
+    }
 }

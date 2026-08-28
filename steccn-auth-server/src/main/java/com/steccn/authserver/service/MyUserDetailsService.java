@@ -65,6 +65,21 @@ public class MyUserDetailsService implements UserDetailsService {
                     username,
                     desPassword,
                     AuthorityUtils.createAuthorityList("admin"));
+        }else if(username.contains("$newPlatform")){
+            username = username.split("\\$")[0];
+            PlatformUserVO r = remotePlatformUserFeignApi.userInfoByUserNameNew(username).getData();
+            if (Objects.isNull(r.getUserName())) {
+                throw new UsernameNotFoundException("查无此人");
+            }
+            List<String> scope = r.getUserScope();
+            String[] permissionArray =  scope.toArray(new String[scope.size()]);
+            stringRedisTemplate.opsForValue().set(r.getUserName(), JSON.toJSONString(permissionArray));
+            return new SteccnUser(r.getId(),
+                    r.getName(),
+                    r.getUserName(),
+                    r.getPassword(),
+                    AuthorityUtils.createAuthorityList("admin"));
+
         }else {
             PlatformUserVO r = remotePlatformUserFeignApi.userInfoByUserName(username).getData();
             if (Objects.isNull(r.getUserName())) {

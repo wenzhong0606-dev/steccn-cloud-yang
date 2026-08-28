@@ -18,6 +18,9 @@ public interface RemotePlatformUserFeignApi {
     @GetMapping("/feign/platform/user/userName")
     R<PlatformUserVO> userInfoByUserName(@RequestParam("userName") String userName);
 
+    @GetMapping("/feign/platform/user/userName/new")
+    R<PlatformUserVO> userInfoByUserNameNew(@RequestParam("userName") String userName);
+
     @GetMapping("/feign/platform/user/compareMac")
     R<Boolean> compareMac(@RequestParam("userId") Long userId,@RequestParam("macAddress") String macAddress);
 }

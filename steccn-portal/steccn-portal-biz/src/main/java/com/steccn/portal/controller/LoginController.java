@@ -56,6 +56,24 @@ public class LoginController {
         return loginService.login(username, decryptPassword, clientNo, loginStatus, checkKey, checkCode,macAddress);
     }
 
+    @GetMapping("/login2")
+    @ApiOperation(value = "登录方法")
+    public R<SteccnTokenVO> login2(@RequestParam("username") String username,
+                                  @RequestParam("password") String password,
+                                  @RequestParam(value = "clientNo", required = false) String clientNo,
+                                  @RequestParam(value = "loginStatus", required = false) Integer loginStatus,
+                                  @RequestParam(value = "checkKey", required = false) String checkKey,
+                                  @RequestParam(value = "checkCode", required = false) String checkCode,
+                                  @RequestParam(value = "macAddress") String macAddress) {
+        String decryptPassword;
+        try {
+            decryptPassword = AESUtils.decrypt(password);
+        } catch (Exception e) {
+            throw new BusinessException("密码解密失败");
+        }
+        return loginService.login2(username, decryptPassword, clientNo, loginStatus, checkKey, checkCode,macAddress);
+    }
+
     /**
      * 退出登录
      *

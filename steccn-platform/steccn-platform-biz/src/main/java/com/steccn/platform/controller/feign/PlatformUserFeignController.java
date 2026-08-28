@@ -1,5 +1,6 @@
 package com.steccn.platform.controller.feign;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.PlatformUserMacService;
 import com.steccn.platform.service.PlatformUserService;
@@ -31,6 +32,13 @@ public class PlatformUserFeignController {
     @ApiOperation(value = "获取用户信息")
     @GetMapping("/userName")
     public R<PlatformUserVO> userInfoByUserName(@RequestParam("userName") String userName) {
+        return R.success(platformUserService.getByUserName(userName));
+    }
+
+    @ApiOperation(value = "获取用户信息")
+    @DS("slave")
+    @GetMapping("/userName/new")
+    public R<PlatformUserVO> userInfoByUserNameNew(@RequestParam("userName") String userName) {
         return R.success(platformUserService.getByUserName(userName));
     }
 
