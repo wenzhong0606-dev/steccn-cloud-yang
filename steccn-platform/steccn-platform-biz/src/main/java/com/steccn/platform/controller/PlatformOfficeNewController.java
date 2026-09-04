@@ -24,7 +24,7 @@ import java.util.Set;
 @RestController
 @RequiredArgsConstructor
 @DS("slave")
-@RequestMapping("/platform/office/new")
+@RequestMapping("/platform/new/office")
 public class PlatformOfficeNewController {
     private final PlatformOfficeService platformOfficeService;
 

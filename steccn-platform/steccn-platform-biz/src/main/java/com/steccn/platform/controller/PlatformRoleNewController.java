@@ -27,7 +27,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @DS("slave")
-@RequestMapping("/platform/role/new")
+@RequestMapping("/platform/new/role")
 public class PlatformRoleNewController {
     private final PlatformRoleService platformRoleService;
     private final PlatformRoleMenuService platformRoleMenuService;

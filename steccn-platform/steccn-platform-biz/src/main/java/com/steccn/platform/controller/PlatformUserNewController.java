@@ -28,7 +28,7 @@ import javax.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @DS("slave")
-@RequestMapping("/platform/user/new")
+@RequestMapping("/platform/new/user")
 public class PlatformUserNewController {
     private final PlatformUserService platformUserService;
     private final PlatformUserRoleService platformUserRoleService;

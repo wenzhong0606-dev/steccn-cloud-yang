@@ -21,7 +21,7 @@ import javax.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @DS("slave")
-@RequestMapping("/platform/post/new")
+@RequestMapping("/platform/new/post")
 public class PlatformPostNewController {
     private final PlatformPostService platformPostService;
 
