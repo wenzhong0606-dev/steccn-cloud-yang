@@ -27,7 +27,7 @@ import java.util.Set;
 @RestController
 @RequiredArgsConstructor
 @DS("slave")
-@RequestMapping("/platform/menu/new")
+@RequestMapping("/platform/new/menu")
 public class PlatformMenuNewController {
     private final PlatformMenuService platformMenuService;
 
