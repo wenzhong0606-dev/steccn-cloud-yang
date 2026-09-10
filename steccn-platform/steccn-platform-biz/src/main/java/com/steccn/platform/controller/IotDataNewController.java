@@ -1,5 +1,6 @@
 package com.steccn.platform.controller;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.vo.R;
@@ -26,6 +27,7 @@ import java.util.List;
  */
 @Api("iot平台控制器")
 @RestController
+@DS("slave")
 @RequiredArgsConstructor
 @RequestMapping("/platform/new/iot")
 public class IotDataNewController {
