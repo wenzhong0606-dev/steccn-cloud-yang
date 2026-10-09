@@ -32,6 +32,7 @@
         <module>steccn-mes</module>
         <module>steccn-dp</module>
         <module>steccn-sales</module>
+        <module>steccn-eam</module>
     </modules>
 
     <properties>
@@ -193,6 +194,18 @@
             <dependency>
                 <groupId>com.steccn</groupId>
                 <artifactId>steccn-mes-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!-- steccn-eam-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-eam-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!-- steccn-eam-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-eam-biz</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
             <!-- steccn-dp-api-->
