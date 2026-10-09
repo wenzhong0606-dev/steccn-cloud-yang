@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "WMS (UTF-8)",
+            "request": "launch",
+            "mainClass": "com.steccn.wms.WmsApplication",
+            "projectName": "steccn-wms-biz",
+            "vmArgs": "-Dfile.encoding=UTF-8",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "java",
+            "name": "EAM (UTF-8)",
+            "request": "launch",
+            "mainClass": "SteccnEamApplication",
+            "projectName": "steccn-eam-biz",
+            "vmArgs": "-Dfile.encoding=UTF-8",
+            "console": "integratedTerminal"
+        }
+    ]
+}

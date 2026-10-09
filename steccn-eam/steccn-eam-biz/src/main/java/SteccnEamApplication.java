@@ -9,7 +9,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 /**
  * @author AndrewLuo
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.steccn.eam")
 @EnableDiscoveryClient
 @EnableOpenApi
 @EnableScheduling

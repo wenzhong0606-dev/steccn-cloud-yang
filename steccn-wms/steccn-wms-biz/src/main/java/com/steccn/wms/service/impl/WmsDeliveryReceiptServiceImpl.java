@@ -72,7 +72,6 @@ import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsReportWarehouseVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 import com.steccn.wms.vo.*;
-import com.sun.javafx.css.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
