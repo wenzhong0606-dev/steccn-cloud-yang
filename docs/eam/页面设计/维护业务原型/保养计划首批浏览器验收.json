@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-11",
+  "scope": "local JSON mock prototype",
+  "userExistingRecordsModified": false,
+  "isolatedBrowserFlow": [
+    "create",
+    "save",
+    "submit",
+    "approve-by-P04",
+    "preview",
+    "pause",
+    "resume",
+    "revise-V2",
+    "preview-effective-V1",
+    "failed-save-preserves-input"
+  ],
+  "viewports": [
+    {
+      "width": 1366,
+      "height": 768,
+      "listTableHeight": 394
+    },
+    {
+      "width": 1024,
+      "height": 600,
+      "detailMainHeight": 544,
+      "detailContentHeight": 2172
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "listTableHeight": 244,
+      "detailMainHeight": 788,
+      "detailContentHeight": 3635,
+      "documentWidth": 390
+    }
+  ],
+  "navigation": {
+    "equipment": "EQ-001",
+    "returnTab": "maintenance",
+    "view": "mobile",
+    "passed": true
+  },
+  "notImplemented": [
+    "task-generation",
+    "task-execution",
+    "task-acceptance",
+    "archive-new-plan-aggregation"
+  ],
+  "componentChecks": [
+    "maintenance-list",
+    "archive-repair",
+    "equipment",
+    "inspection-list",
+    "check-list"
+  ]
+}

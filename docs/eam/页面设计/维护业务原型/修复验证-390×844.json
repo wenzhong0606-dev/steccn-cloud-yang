@@ -1,0 +1,229 @@
+[
+  {
+    "filters": [
+      84
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "abnormal-events",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "acceptance",
+    "tableHeights": [
+      38
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "asset-files",
+    "tableHeights": []
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "catalog",
+    "tableHeights": []
+  },
+  {
+    "filters": [
+      60
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "check-list",
+    "tableHeights": [
+      191
+    ]
+  },
+  {
+    "filters": [
+      84
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "defect-list",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [
+      84
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "abnormal-events",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "device",
+    "tableHeights": []
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "equipment-templates",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "equipment",
+    "tableHeights": [
+      806
+    ]
+  },
+  {
+    "filters": [
+      84
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "failure-events",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "functional-locations",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [
+      84
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "hazards",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "history",
+    "tableHeights": []
+  },
+  {
+    "filters": [
+      60
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "inspection-list",
+    "tableHeights": [
+      191
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "inspection",
+    "tableHeights": []
+  },
+  {
+    "filters": [
+      84
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "order-list",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "order",
+    "tableHeights": []
+  },
+  {
+    "filters": [
+      60
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "plan-list",
+    "tableHeights": [
+      191
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "plans",
+    "tableHeights": []
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "platform",
+    "tableHeights": []
+  },
+  {
+    "filters": [
+      60
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "route-list",
+    "tableHeights": [
+      185
+    ]
+  },
+  {
+    "filters": [
+      60
+    ],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "standard-list",
+    "tableHeights": [
+      268
+    ]
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "standards",
+    "tableHeights": []
+  },
+  {
+    "filters": [],
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "workbench",
+    "tableHeights": []
+  }
+]

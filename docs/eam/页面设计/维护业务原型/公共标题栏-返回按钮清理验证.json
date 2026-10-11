@@ -1,0 +1,226 @@
+[
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "abnormal-events",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "acceptance",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc",
+      "equipment.html?view=pc"
+    ],
+    "page": "asset-files",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "catalog",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "check-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "defect-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "abnormal-events",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "device",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "equipment-templates",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "equipment",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "failure-events",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "functional-locations",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "hazards",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc",
+      "equipment.html?view=pc"
+    ],
+    "page": "history",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "inspection-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "inspection",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "order-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "order",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "plan-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "plans",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [],
+    "page": "platform",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "route-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "standard-list",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "standards",
+    "returns": []
+  },
+  {
+    "component": 1,
+    "links": [
+      "platform.html?view=pc",
+      "workbench.html?view=pc"
+    ],
+    "page": "workbench",
+    "returns": []
+  }
+]

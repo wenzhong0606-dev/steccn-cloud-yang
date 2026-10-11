@@ -1,0 +1,896 @@
+[
+  {
+    "heights": [
+      21.200000762939453,
+      25.600000381469727,
+      25.600000381469727,
+      25.600000381469727,
+      25.600000381469727,
+      25.600000381469727,
+      25.600000381469727
+    ],
+    "overflow": false,
+    "page": "inspection-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "check-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "order-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "abnormal-events",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "defect-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "failure-events",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "hazards",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "plan-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "route-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "standard-list",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "equipment-templates",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "functional-locations",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "equipment",
+    "size": [
+      1366,
+      768
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "inspection-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "check-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "order-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "abnormal-events",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "defect-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "failure-events",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "hazards",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "plan-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "route-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "standard-list",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "equipment-templates",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "functional-locations",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "equipment",
+    "size": [
+      1024,
+      600
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "inspection-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "check-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "order-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "abnormal-events",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "defect-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "failure-events",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "hazards",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "plan-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "route-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "standard-list",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "equipment-templates",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "functional-locations",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  },
+  {
+    "heights": [
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "overflow": false,
+    "page": "equipment",
+    "size": [
+      390,
+      844
+    ],
+    "tools": [
+      "import",
+      "export",
+      "refresh",
+      "columns"
+    ]
+  }
+]

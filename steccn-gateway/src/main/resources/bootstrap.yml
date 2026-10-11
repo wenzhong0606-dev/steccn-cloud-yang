@@ -1,5 +1,5 @@
 server:
-  port: 19001
+  port: 9001
 
 spring:
   application:
@@ -8,11 +8,11 @@ spring:
     nacos:
       discovery:
         server-addr: 192.168.16.194:8848
-        namespace: pre
+        namespace: yang
       config:
         server-addr: 192.168.16.194:8848
         file-extension: yaml
         shared-configs:
           - data-id: application.yaml
             refresh: true
-        namespace: pre
+        namespace: yang

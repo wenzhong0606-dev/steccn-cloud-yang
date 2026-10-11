@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-11",
+  "type": "local-browser-read-only",
+  "checks": [
+    {
+      "flow": "PC archive -> scoped list -> WO-2001 detail -> archive",
+      "equipment": "EQ-001",
+      "tab": "repair",
+      "detailVersion": 5,
+      "archiveRows": 4,
+      "result": "passed"
+    },
+    {
+      "flow": "mobile archive -> list -> detail -> archive",
+      "viewport": [
+        390,
+        844
+      ],
+      "equipment": "EQ-001",
+      "tab": "repair",
+      "view": "mobile",
+      "listDocumentWidth": 390,
+      "detailDocumentWidth": 390,
+      "result": "passed"
+    },
+    {
+      "flow": "module menu -> work orders",
+      "url": "order-list.html?view=mobile",
+      "contextCount": 0,
+      "result": "passed"
+    },
+    {
+      "flow": "create work dialog",
+      "selectedEquipment": "1#混合机",
+      "submission": false,
+      "result": "preselection passed; cancelled"
+    }
+  ],
+  "pending": [
+    "cross-device create submission",
+    "all-role business mutation loop"
+  ],
+  "userRecordsModified": false
+}

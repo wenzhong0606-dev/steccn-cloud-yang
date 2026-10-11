@@ -1,0 +1,26 @@
+[
+  {
+    "flow": {
+      "tab": "work",
+      "page": "inspection-list"
+    },
+    "url": "http://127.0.0.1:8765/pages/inspection-list.html?view=pc&equipment=EQ-001&returnEquipment=EQ-001&returnTab=work",
+    "returnHref": "device.html?equipment=EQ-001&tab=work&view=pc"
+  },
+  {
+    "flow": {
+      "tab": "failure",
+      "page": "failure-events"
+    },
+    "url": "http://127.0.0.1:8765/pages/failure-events.html?view=pc&equipment=EQ-001&returnEquipment=EQ-001&returnTab=failure",
+    "returnHref": "device.html?equipment=EQ-001&tab=failure&view=pc"
+  },
+  {
+    "flow": {
+      "tab": "repair",
+      "page": "order-list"
+    },
+    "url": "http://127.0.0.1:8765/pages/order-list.html?view=pc&equipment=EQ-001&returnEquipment=EQ-001&returnTab=repair",
+    "returnHref": "device.html?equipment=EQ-001&tab=repair&view=pc"
+  }
+]

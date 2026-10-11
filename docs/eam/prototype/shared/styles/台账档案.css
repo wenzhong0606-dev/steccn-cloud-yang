@@ -1,0 +1,174 @@
+body[data-page="equipment"] .title { margin-bottom:16px; }
+body[data-page="equipment"] .equipment-layout { gap:16px; grid-template-columns:200px minmax(0,1fr); }
+body[data-page="equipment"] .tree { padding:16px; }
+.ledger-results { padding:16px; }
+.ledger-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.ledger-toolbar h2 { margin:0; }
+.ledger-filters .field { margin:0; gap:4px; }
+.ledger-menu { position:absolute; right:0; top:100%; z-index:15; width:170px; padding:4px; background:var(--bs-card-bg); border:1px solid var(--bs-border-color); border-radius:var(--bs-border-radius-sm); box-shadow:var(--shadow-lg); }
+.ledger-menu button { display:block; width:100%; text-align:left; border:0; }
+.ledger-pagination { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-top:12px; color:var(--bs-secondary-color); font-size:13px; }
+.ledger-pagination button { min-height:32px; padding:4px 8px; }
+body[data-page="equipment"] .table-wrapper { overflow:visible; }
+@media (max-width:1024px) {
+body[data-page="equipment"] .equipment-layout { grid-template-columns:1fr; }
+body[data-page="equipment"] .tree { max-height:190px; overflow:auto; }
+}
+@media (min-width:761px) and (max-width:1200px) {
+body[data-page="equipment"] .table-wrapper { overflow-x:auto; padding-bottom:120px; margin-bottom:-100px; }
+}
+@media (max-width:760px) {
+.ledger-filters .field:first-child { grid-column:1/-1; }
+.ledger-menu { position:static; }
+.ledger-pagination { flex-wrap:wrap; }
+}
+.mobile-preview[data-page="equipment"] .equipment-layout { grid-template-columns:1fr; }
+.mobile-preview .ledger-filters .field:first-child { grid-column:1/-1; }
+.mobile-preview .ledger-menu { position:static; }
+#ledger-tree-panel>summary { font-size:18px; font-weight:600; margin-bottom:12px; cursor:pointer; }
+main>[data-panel] { background:var(--bs-card-bg); padding:var(--spacing-lg); border:1px solid var(--bs-border-color); border-radius:var(--bs-border-radius); }
+body[data-page="device"] .archive-pagehead { display:flex; justify-content:space-between; align-items:center; gap:var(--spacing-md); margin-bottom:var(--spacing-sm); }
+.archive-pagehead h1 { font-size:24px; margin:0 0 4px; }
+.archive-pagehead p { margin:0; }
+.archive-demo-strip { display:flex; justify-content:space-between; gap:var(--spacing-md); font-size:var(--font-xs); color:var(--bs-body-secondary-color); margin-bottom:var(--spacing-sm); }
+.archive-summary { display:grid; grid-template-columns:72px minmax(0,1fr); align-items:center; gap:var(--spacing-md); background:var(--bs-card-bg); padding:var(--spacing-md); border:1px solid var(--bs-border-color); border-radius:var(--bs-border-radius); margin-bottom:var(--spacing-md); }
+.archive-summary img { width:72px; height:60px; object-fit:contain; border-radius:var(--bs-border-radius-sm); }
+.archive-identity-line { display:flex; gap:var(--spacing-md); flex-wrap:wrap; align-items:center; font-size:var(--font-sm); color:var(--bs-secondary-color); margin-bottom:var(--spacing-sm); }
+.archive-identity-line b { color:var(--bs-body-color); }
+.archive-status-strip { display:flex; gap:var(--spacing-md); flex-wrap:wrap; font-size:var(--font-xs); color:var(--bs-secondary-color); }
+.archive-workspace { display:grid; grid-template-columns:164px minmax(0,1fr); gap:var(--spacing-md); align-items:start; }
+.archive-nav { background:var(--bs-card-bg); border:1px solid var(--bs-border-color); border-radius:var(--bs-border-radius); padding:8px; max-height:calc(100vh - 270px); overflow-y:auto; position:sticky; top:80px; }
+.archive-nav .tabs { display:flex; flex-direction:column; gap:2px; margin:0; border:0; overflow:visible; }
+.archive-nav .tabs button { text-align:left; padding:7px 12px; min-height:34px; border:0; border-radius:var(--bs-border-radius-sm); font-size:var(--font-sm); background:transparent; }
+.archive-nav .tabs button.active { background:var(--color-primary-soft); color:var(--bs-primary); font-weight:600; }
+.archive-content { background:var(--bs-card-bg); border:1px solid var(--bs-border-color); border-radius:var(--bs-border-radius); padding:var(--spacing-md); min-width:0; }
+.archive-content-head { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--bs-border-color); padding-bottom:12px; margin-bottom:16px; }
+.archive-content-head h2 { font-size:var(--font-lg); margin:0; }
+.archive-content .sectionhead h3 { margin:0; font-size:var(--font-md); }
+.archive-content .sectionhead { margin-bottom:12px; }
+.archive-content button { min-height:32px; padding:5px 10px; }
+.archive-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px 24px; margin:0; }
+.archive-facts dt { color:var(--bs-body-secondary-color); font-size:var(--font-xs); margin-bottom:4px; }
+.archive-facts dd { margin:0; font-size:var(--font-md); overflow-wrap:anywhere; }
+#archive-loading { background:var(--color-primary-soft); color:var(--bs-primary); padding:12px; border-radius:var(--bs-border-radius-sm); margin-bottom:12px; }
+#archive-record-dialog .archive-facts { grid-template-columns:1fr 1fr; margin:16px 0; }
+@media (max-width:1200px) {
+.archive-workspace { grid-template-columns:140px minmax(0,1fr); gap:12px; }
+.archive-facts { grid-template-columns:1fr 1fr; }
+}
+@media (max-width:760px) {
+.archive-workspace { grid-template-columns:1fr; }
+.archive-nav { display:flex; gap:16px; overflow-x:auto; max-height:none; position:static; }
+.archive-nav .tabs { flex-direction:row; }
+.archive-nav .tabs button { white-space:nowrap; min-height:44px; }
+.archive-pagehead { flex-wrap:wrap; }
+.archive-demo-strip { flex-wrap:wrap; }
+.archive-summary { grid-template-columns:52px minmax(0,1fr); padding:12px; }
+.archive-summary img { width:52px; height:52px; }
+.archive-status-strip { gap:8px; }
+.archive-content button { min-height:44px; }
+#archive-record-dialog .archive-facts { grid-template-columns:1fr; }
+}
+.mobile-preview .archive-workspace { grid-template-columns:1fr; }
+.mobile-preview .archive-nav { display:flex; gap:16px; overflow-x:auto; max-height:none; position:static; }
+.mobile-preview .archive-nav .tabs { flex-direction:row; }
+.mobile-preview .archive-nav .tabs button { white-space:nowrap; min-height:44px; }
+.mobile-preview .archive-content button { min-height:44px; }
+
+
+#ledger-metrics-panel>summary {font-size:13px;color:var(--color-text-secondary);cursor:pointer;margin-bottom:8px;}
+@media(min-width:761px) {body:not(.mobile-preview) #ledger-metrics-panel>summary {display:none;}}
+@media(max-width:760px) {.ledger-toolbar h2 {font-size:18px;} .ledger-results {padding:12px;} .ledger-toolbar .actions {gap:6px;} body[data-page="equipment"] .tree {padding:10px 12px;} #ledger-tree-panel>summary {font-size:15px;margin:0;} }
+.mobile-preview #ledger-tree-panel>summary {font-size:15px;margin:0;}
+.mobile-preview .ledger-results {padding:12px;}
+.mobile-preview .ledger-toolbar h2 {font-size:18px;}
+
+/* 高度由外壳分配：标题及页脚不进入内部滚动区。 */
+body[data-page="equipment"] main,body[data-page="device"] main {display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+body[data-page="equipment"] main>.breadcrumb,body[data-page="equipment"] main>.title,body[data-page="equipment"] main>.page-footer {flex:none;}
+body[data-page="equipment"] .equipment-layout {flex:1;min-height:0;align-items:stretch;}
+body[data-page="equipment"] .tree {display:flex;min-height:0;max-height:none;overflow:hidden;}
+#ledger-tree-panel {display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;}
+#ledger-tree-panel>summary,#ledger-tree-panel>.field,#ledger-tree-panel>.tree-footer {flex:none;}
+#dynamic-tree {flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;}
+.tree-footer {margin:12px 0 0;padding-top:12px;border-top:1px solid var(--color-border);}
+.ledger-results {display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.ledger-toolbar,#ledger-metrics-panel,.ledger-pagination,#empty-search {flex:none;}
+body[data-page="equipment"] .ledger-results>.table-wrapper {flex:1;min-height:0;overflow:auto;padding-bottom:0;margin-bottom:0;}
+.ledger-pagination {padding-top:10px;border-top:1px solid var(--color-border);}
+.page-footer {margin:8px 0 0;}
+body[data-page="device"] .archive-pagehead,body[data-page="device"] .archive-demo-strip,body[data-page="device"] .archive-summary {flex:none;}
+body[data-page="device"] .archive-workspace {flex:1;min-height:0;align-items:stretch;}
+.archive-nav {position:static;max-height:none;overflow:auto;min-height:0;}
+.archive-content {display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.archive-content-head,#archive-loading {flex:none;}
+#archive-panels-mount {flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;}
+.archive-summary {padding:12px 16px;grid-template-columns:64px minmax(0,1fr);}
+.archive-summary img {width:64px;height:56px;}
+.archive-nav-group {margin-bottom:14px;}
+.archive-nav-group>summary h3 {font-size:12px;color:var(--color-text-muted);padding:6px 10px;}
+.archive-kpis {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px;}
+.archive-kpis>div {display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-subtle);}
+.archive-kpis span {font-size:12px;color:var(--color-text-secondary);}
+.archive-kpis strong {font-size:26px;line-height:1.15;color:var(--color-text);}
+.archive-kpis .btn {padding:0;min-height:24px;border:0;background:transparent;color:var(--color-primary);font-size:12px;}
+[data-panel="overview"] .archive-facts {padding:16px;border:1px solid var(--color-border);border-radius:var(--radius-md);gap:16px;}
+@media(max-width:1024px) {body[data-page="equipment"] .equipment-layout {grid-template-rows:auto minmax(0,1fr);} body[data-page="equipment"] .tree {max-height:180px;} body[data-page="equipment"] main,body[data-page="device"] main {padding-bottom:76px;}}
+@media(max-width:760px) {.archive-workspace {grid-template-rows:auto minmax(0,1fr);} .archive-nav {max-height:110px;} .archive-kpis {grid-template-columns:1fr 1fr;gap:8px;} .archive-kpis>div {padding:10px;} .archive-facts {grid-template-columns:1fr 1fr;} .archive-content {padding:12px;} .archive-demo-strip {display:none;} body[data-page="device"] main>p:last-child {margin:6px 0;}}
+.mobile-preview[data-page="equipment"] .equipment-layout,.mobile-preview .archive-workspace {grid-template-rows:auto minmax(0,1fr);}
+.mobile-preview[data-page="equipment"] .tree {max-height:180px;}
+.mobile-preview .archive-nav {max-height:110px;}
+.mobile-preview .archive-kpis {grid-template-columns:1fr 1fr;}
+@media(max-width:760px) {body[data-page="equipment"] main>.title {margin-bottom:8px;} body[data-page="equipment"] .ledger-toolbar {margin-bottom:8px;} .archive-summary {margin-bottom:8px;} .archive-kpis strong {font-size:22px;}}
+@media(max-width:760px) {
+ .archive-pagehead h1 {font-size:20px;} .archive-pagehead {gap:8px;} .archive-pagehead p {font-size:12px;}
+ .archive-summary {grid-template-columns:40px minmax(0,1fr);padding:10px;gap:8px;}
+ .archive-summary img {width:40px;height:40px;}
+ .archive-identity-line {font-size:12px;gap:4px 10px;margin-bottom:4px;}
+ .archive-status-strip {font-size:11px;gap:4px 8px;}
+ .archive-nav {max-height:64px;padding:4px;gap:8px;}
+ .archive-nav-group {margin:0;} .archive-nav-group>summary {display:none;}
+ .archive-nav .tabs button {padding:6px 10px;}
+ .archive-content-head {margin-bottom:12px;padding-bottom:8px;}
+}
+.mobile-preview .archive-summary {grid-template-columns:40px minmax(0,1fr);padding:10px;gap:8px;}
+.mobile-preview .archive-identity-line {font-size:12px;gap:4px 10px;margin-bottom:4px;}
+.mobile-preview .archive-status-strip {font-size:11px;gap:4px 8px;}
+.mobile-preview .archive-nav {max-height:64px;}
+.mobile-preview .archive-nav-group>summary {display:none;}
+
+/* 移动树默认可见，为滚动节点分配明确高度，避免auto行塌缩。 */
+@media(max-width:1024px) {body[data-page="equipment"] .tree:has(#ledger-tree-panel[open]) {height:220px;max-height:220px;} .tree-footer {display:none;} #ledger-tree-panel>.field {margin:8px 0;} }
+.mobile-preview[data-page="equipment"] .tree:has(#ledger-tree-panel[open]) {height:220px;max-height:220px;}
+.mobile-preview .tree-footer {display:none;}
+@media(max-width:1024px) {#ledger-tree-panel>.field {flex-direction:row;align-items:center;gap:8px;margin:8px 0;} #ledger-tree-panel>.field select {flex:1;width:auto;} }
+.mobile-preview #ledger-tree-panel>.field {flex-direction:row;align-items:center;gap:8px;margin:8px 0;}
+.mobile-preview #ledger-tree-panel>.field select {flex:1;width:auto;}
+
+#ledger-tree-panel>div:first-child,#tree-search {flex:none;}
+@media(max-width:1024px) {body[data-page="equipment"] .tree {height:200px;max-height:200px;}}
+.mobile-preview[data-page="equipment"] .tree {height:200px;max-height:200px;}
+
+#ledger-tree-panel>.input-group {flex:none;}
+
+/* 窄侧栏输入可收缩，避免原生控件固有宽度挤出同行按钮。 */
+#tree-search {width:1%;min-width:0;}
+#tree-search {flex:1 1 auto;}
+
+/* device.html 档案工作区内联样式迁移（原页内 <style>，仅 device 使用） */
+.archive-panel-source{margin:0 0 10px;font-size:12px}
+.archive-nav-group>summary{list-style:none;cursor:pointer}
+.archive-nav-group>summary::-webkit-details-marker{display:none}
+.archive-nav-group>summary h3{margin:0}
+
+/* 档案列表沿用共享组件，仅约束滚动容器布局。 */
+#archive-panels-mount:has(>[data-panel]:not([hidden])>[data-record-domain]) {display:flex;overflow:hidden;}
+#archive-panels-mount>[data-panel]:not([hidden]):has(>[data-record-domain]) {display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;}
+[data-record-domain] {display:flex;flex-direction:column;min-height:0;min-width:0;flex:1;}
+[data-record-domain]>.list-panel-header,[data-record-domain]>.list-pagination,[data-record-domain]>.load-status,[data-record-domain]>.archive-panel-source {flex:none;}
+[data-record-domain]>.table-wrapper {flex:1;min-height:0;overflow:auto;}
+
+/* 专业视图仅约束布局，控件沿用 Bootstrap；收起后保留表格空间。 */
+.archive-business-view {flex:none;max-height:150px;overflow:auto;}
+.archive-business-view svg {display:block;width:100%;height:90px;}
+@media (max-height:650px) {.archive-business-view {max-height:110px;}}

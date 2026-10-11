@@ -1,0 +1,2 @@
+/* 兼容旧入口；页面统一引用 style.css。 */
+@import url("./style.css");

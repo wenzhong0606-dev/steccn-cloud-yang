@@ -1,0 +1,140 @@
+{
+  "version": "2026-10-10-maintenance-v1",
+  "stage": "planned_models",
+  "implemented": false,
+  "objects": {
+    "discovery": [
+      "draft",
+      "submitted",
+      "triaged",
+      "archived",
+      "void"
+    ],
+    "defect": [
+      "open",
+      "in_progress",
+      "pending_verification",
+      "risk_accepted",
+      "closed",
+      "void"
+    ],
+    "failure": [
+      "reported",
+      "confirmed",
+      "restored",
+      "verified",
+      "closed",
+      "void"
+    ],
+    "hazard": [
+      "open",
+      "rectifying",
+      "pending_review",
+      "closed",
+      "void"
+    ],
+    "work_order": [
+      "draft",
+      "approved",
+      "assigned",
+      "executing",
+      "paused",
+      "technical_complete",
+      "accepted",
+      "closed",
+      "cancelled"
+    ],
+    "maintenance_task": [
+      "pending",
+      "executing",
+      "submitted",
+      "verified",
+      "blocked",
+      "closed",
+      "cancelled"
+    ],
+    "plan": [
+      "draft",
+      "reviewing",
+      "published",
+      "suspended",
+      "retired"
+    ],
+    "restriction": [
+      "active",
+      "pending_release",
+      "released"
+    ]
+  },
+  "rules": [
+    {
+      "id": "BR01",
+      "sourceRule": "R01"
+    },
+    {
+      "id": "BR02",
+      "sourceRule": "R02"
+    },
+    {
+      "id": "BR03",
+      "sourceRule": "R03"
+    },
+    {
+      "id": "BR04",
+      "sourceRule": "R04"
+    },
+    {
+      "id": "BR05",
+      "sourceRule": "R05"
+    },
+    {
+      "id": "BR06",
+      "sourceRule": "R06"
+    },
+    {
+      "id": "BR07",
+      "sourceRule": "R07"
+    },
+    {
+      "id": "BR08",
+      "sourceRule": "R08"
+    },
+    {
+      "id": "BR09",
+      "sourceRule": "R09"
+    },
+    {
+      "id": "BR10",
+      "sourceRule": "R10"
+    },
+    {
+      "id": "BR11",
+      "sourceRule": "R11"
+    },
+    {
+      "id": "BR12",
+      "sourceRule": "R12"
+    }
+  ],
+  "menuIds": [
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M07",
+    "M08",
+    "R04",
+    "T06"
+  ],
+  "invariants": [
+    "work_close_does_not_close_problem",
+    "risk_accepted_is_not_terminal",
+    "per_problem_verification",
+    "professional_release_is_independent",
+    "published_snapshot_is_immutable"
+  ],
+  "documents": [
+    "维护业务对象流程与关闭规则基线.md",
+    "维护业务页面模型候选数据与验收矩阵.md"
+  ]
+}

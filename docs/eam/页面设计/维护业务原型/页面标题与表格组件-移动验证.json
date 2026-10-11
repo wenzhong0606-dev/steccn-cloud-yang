@@ -1,0 +1,252 @@
+[
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "abnormal-events",
+    "tables": [
+      {
+        "h": 185,
+        "status": "暂无数据"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "acceptance",
+    "tables": [
+      {
+        "h": 36,
+        "status": "暂无数据"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "asset-files",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "catalog",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "check-list",
+    "tables": [
+      {
+        "h": 185,
+        "status": "已展示 · 当前页2条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "defect-list",
+    "tables": [
+      {
+        "h": 185,
+        "status": "暂无数据"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "abnormal-events",
+    "tables": [
+      {
+        "h": 185,
+        "status": "暂无数据"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "device",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "equipment-templates",
+    "tables": [
+      {
+        "h": 185,
+        "status": "已展示 · 当前页1条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "equipment",
+    "tables": [
+      {
+        "h": 770,
+        "status": "已展示 · 当前页10条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "failure-events",
+    "tables": [
+      {
+        "h": 199,
+        "status": "已展示 · 当前页2条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "functional-locations",
+    "tables": [
+      {
+        "h": 185,
+        "status": "已展示 · 当前页1条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "hazards",
+    "tables": [
+      {
+        "h": 185,
+        "status": "暂无数据"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "history",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "inspection-list",
+    "tables": [
+      {
+        "h": 185,
+        "status": "已展示 · 当前页2条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "inspection",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "order-list",
+    "tables": [
+      {
+        "h": 185,
+        "status": "暂无数据"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "order",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "plan-list",
+    "tables": [
+      {
+        "h": 185,
+        "status": "已展示 · 当前页2条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "plans",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "platform",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "route-list",
+    "tables": [
+      {
+        "h": 185,
+        "status": "已展示 · 当前页1条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "standard-list",
+    "tables": [
+      {
+        "h": 219,
+        "status": "已展示 · 当前页3条"
+      }
+    ],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "standards",
+    "tables": [],
+    "titleDirection": "column"
+  },
+  {
+    "breadcrumbWidth": 356,
+    "overflow": false,
+    "page": "workbench",
+    "tables": [],
+    "titleDirection": "column"
+  }
+]

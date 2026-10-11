@@ -1,0 +1,54 @@
+[
+  {
+    "page": "inspection-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "check-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "order-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "abnormal-events",
+    "columnsOpened": true
+  },
+  {
+    "page": "defect-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "failure-events",
+    "columnsOpened": true
+  },
+  {
+    "page": "hazards",
+    "columnsOpened": true
+  },
+  {
+    "page": "plan-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "route-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "standard-list",
+    "columnsOpened": true
+  },
+  {
+    "page": "equipment-templates",
+    "columnsOpened": true
+  },
+  {
+    "page": "functional-locations",
+    "columnsOpened": true
+  },
+  {
+    "page": "equipment",
+    "columnsOpened": true
+  }
+]

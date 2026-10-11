@@ -1,0 +1,144 @@
+body[data-problem-kind] main {min-width:0}
+.problem-heading {margin-bottom:16px}
+.problem-heading h1 {font-size:26px}
+.problem-metrics {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.problem-metrics>div {background:var(--color-surface,#fff);border:1px solid var(--color-border,#dde3ed);border-radius:8px;padding:12px 16px;color:var(--color-text-secondary,#667085);font-size:13px}
+.problem-metrics strong {display:block;font-size:24px;color:var(--color-text,#202939);margin-top:4px}
+.problem-list {padding:16px}
+.problem-toolbar {display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.problem-toolbar>input {flex:1;min-width:180px}
+.problem-toolbar select {width:auto;max-width:180px}
+.problem-toolbar label {white-space:nowrap;font-size:13px}
+.problem-toolbar input[type=checkbox],#triage-fields input[type=checkbox] {width:auto;min-height:0}
+.problem-list .data-table {min-width:860px}
+.problem-list .data-table td {padding:12px 10px;vertical-align:top}
+.problem-list .data-table td:first-child {width:30%;max-width:340px}
+.problem-list .data-table small {display:block;margin-top:4px;color:var(--color-text-secondary,#667085)}
+.problem-list .data-table button {padding:4px 10px;min-height:30px}
+.problem-list .row-link {background:none;border:0;padding:0;text-align:left;color:var(--color-primary,#4554c9)}
+.problem-list .row-link strong {display:block;margin-bottom:4px}
+.problem-dialog {width:min(780px,calc(100vw - 32px));max-height:85dvh;overflow:auto;padding:24px}
+.problem-dialog-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.problem-dialog h2 {font-size:20px}
+.problem-dialog h3 {font-size:15px;margin:18px 0 8px}
+.problem-status {margin:12px 0}
+.problem-facts {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;margin:16px 0}
+.problem-facts dt {font-size:12px;color:var(--color-text-secondary,#667085)}
+.problem-facts dd {margin:4px 0 0;overflow-wrap:anywhere}
+.problem-evidence {white-space:pre-wrap;background:var(--color-bg,#f4f6fa);border-radius:8px;padding:12px;overflow-wrap:anywhere}
+.problem-form-grid {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.problem-dialog textarea {min-height:90px;resize:vertical}
+.problem-error {color:var(--color-danger,#b42318)}
+.problem-dialog .actions {margin-top:18px}
+.problem-dialog fieldset {border:1px solid var(--color-border,#dde3ed);border-radius:8px;padding:12px}
+.problem-dialog fieldset>label {margin-right:16px}
+@media (max-width:700px) {
+.problem-metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.problem-toolbar>input {flex-basis:100%;min-width:0}
+.problem-form-grid,.problem-facts {grid-template-columns:1fr}
+.problem-list {padding:12px}
+.problem-dialog {padding:16px}
+.problem-heading {align-items:flex-start}
+.problem-heading h1 {font-size:22px}
+}
+.mobile-preview .problem-metrics {grid-template-columns:1fr 1fr}
+.mobile-preview .problem-form-grid,.mobile-preview .problem-facts {grid-template-columns:1fr}
+.mobile-preview .problem-toolbar>input {flex-basis:100%}
+.mobile-preview .problem-toolbar {align-items:flex-start}
+.problem-dialog-heading>button {flex-shrink:0;white-space:nowrap}
+.problem-dialog .actions {flex-wrap:wrap}
+@media (max-width:700px) {
+.problem-list .data-table {min-width:0}
+.problem-list .data-table td:first-child {width:auto;max-width:none;display:block}
+.problem-list .data-table td:first-child::before {display:block;margin-bottom:6px}
+.problem-list .row-link {width:100%}
+.problem-list .data-table td {padding:8px 0}
+.problem-list .data-table td:nth-child(2),.problem-list .data-table td:nth-child(6) {display:block;text-align:left}
+.problem-list .data-table td:nth-child(2)::before,.problem-list .data-table td:nth-child(6)::before {display:block;margin-bottom:4px}
+}
+.mobile-preview .problem-list .data-table {min-width:0}
+.mobile-preview .problem-list .data-table td:first-child {width:auto;max-width:none;display:block}
+.mobile-preview .problem-list .data-table td:first-child::before {display:block;margin-bottom:6px}
+.mobile-preview .problem-list .row-link {width:100%}
+.mobile-preview .problem-list .data-table td {padding:8px 0}
+.mobile-preview .problem-list .data-table td:nth-child(2),.mobile-preview .problem-list .data-table td:nth-child(6) {display:block;text-align:left}
+.mobile-preview .problem-list .data-table td:nth-child(2)::before,.mobile-preview .problem-list .data-table td:nth-child(6)::before {display:block;margin-bottom:4px}
+.problem-list td:last-child button {margin:3px 6px 3px 0;white-space:nowrap}
+
+.work-heading {margin-bottom:16px}
+.work-heading h1 {font-size:26px}
+.work-list {padding:16px}
+.work-list .data-table {min-width:780px}
+.work-list .data-table td:first-child {width:32%;max-width:360px}
+.work-list .data-table td {vertical-align:top;padding:12px 10px}
+.work-list .data-table small {display:block;color:var(--color-text-secondary);margin-top:5px}
+.work-list input[type=checkbox],.problem-dialog input[type=checkbox] {width:auto;min-height:0}
+.work-list .data-table button:not(.work-link) {min-height:30px;padding:4px 10px}
+.work-selection {padding:12px 16px;margin-bottom:16px;display:flex;gap:16px;align-items:center}
+.work-selection .field {min-width:240px;flex:1}
+.work-selection p {flex:1}
+.work-summary-top {display:flex;gap:16px;justify-content:space-between}
+.work-summary-top h2 {font-size:22px}
+.work-summary .problem-facts {grid-template-columns:repeat(4,minmax(0,1fr))}
+.work-section-title {display:flex;gap:16px;justify-content:space-between;align-items:center}
+.work-outcomes {min-width:850px}
+.work-outcomes td {vertical-align:top}
+.work-outcomes textarea {min-height:76px;min-width:180px;max-width:100%;resize:vertical}
+.work-outcomes select {min-width:170px}
+.work-outcomes input {min-width:190px}
+.work-outcomes .work-link {display:block}
+.work-candidates {max-height:280px;overflow:auto;margin:8px 0}
+#execution-fields {border:0;padding:0}
+#execution-fields textarea {min-height:90px}
+.work-summary .actions button[hidden] {display:none}
+@media (max-width:700px) {
+.work-heading h1 {font-size:22px}
+.work-selection,.work-summary-top,.work-section-title {display:block}
+.work-summary .problem-facts {grid-template-columns:1fr 1fr}
+.work-list .data-table,.work-outcomes {min-width:0}
+.work-list .data-table td:first-child {width:auto;max-width:none;display:block}
+.work-list .data-table td:first-child::before {display:block;margin-bottom:6px}
+.work-list .data-table td {padding:8px 0}
+.work-outcomes td {display:block;text-align:left}
+.work-outcomes td::before {display:block;margin-bottom:6px}
+.work-outcomes input,.work-outcomes textarea,.work-outcomes select {width:100%;min-width:0}
+.work-outcomes .problem-badge {margin-top:8px}
+.work-selection .field {min-width:0}
+.work-list {padding:12px}
+}
+.mobile-preview .work-heading h1 {font-size:22px}
+.mobile-preview .work-selection,.mobile-preview .work-summary-top,.mobile-preview .work-section-title {display:block}
+.mobile-preview .work-summary .problem-facts {grid-template-columns:1fr 1fr}
+.mobile-preview .work-list .data-table,.mobile-preview .work-outcomes {min-width:0}
+.mobile-preview .work-list .data-table td:first-child {width:auto;max-width:none;display:block}
+.mobile-preview .work-list .data-table td:first-child::before {display:block;margin-bottom:6px}
+.mobile-preview .work-list .data-table td {padding:8px 0}
+.mobile-preview .work-outcomes td {display:block;text-align:left}
+.mobile-preview .work-outcomes td::before {display:block;margin-bottom:6px}
+.mobile-preview .work-outcomes input,.mobile-preview .work-outcomes textarea,.mobile-preview .work-outcomes select {width:100%;min-width:0}
+.mobile-preview .work-selection .field {min-width:0}
+#hazard-facts {grid-template-columns:repeat(2,minmax(0,1fr))}
+#hazard-facts dd {overflow-wrap:anywhere}
+
+/* SVG 线性图标（Bootstrap 无对应组件） */
+.icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}/* 最终响应式约束：页面列宽不得覆盖卡片化的容器宽度。 */
+@media(max-width:760px) {
+ .data-table:not([data-mobile="scroll"]) {min-width:0;width:100%;}
+ .data-table:not([data-mobile="scroll"]) td {min-width:0;max-width:100%;overflow-wrap:anywhere;}
+ body[data-page="equipment"] .table-wrapper {overflow-x:auto;}
+}
+.mobile-preview .data-table:not([data-mobile="scroll"]) {min-width:0;width:100%;}
+.mobile-preview .data-table:not([data-mobile="scroll"]) td {min-width:0;max-width:100%;overflow-wrap:anywhere;}
+
+/* 操作列保持一行，更多浮层位于滚动容器之外的视觉层级。 */
+.data-table .row-actions {white-space:nowrap;min-width:174px;vertical-align:middle;}
+.data-table .row-actions>.btn,.data-table .row-actions>details {display:inline-flex;vertical-align:middle;margin:0 3px 0 0;flex:none;}
+.data-table .row-actions .btn {white-space:nowrap;min-height:30px;padding:4px 8px;font-size:13px;}
+.row-more {position:relative;}
+.row-more>summary {white-space:nowrap;cursor:pointer;padding:4px 8px;font-size:13px;min-height:30px;}
+.row-more>summary::marker {content:'';}
+.row-more .row-action-menu,.ledger-more .ledger-menu {position:fixed;left:var(--menu-left);top:var(--menu-top);right:auto;z-index:1085;width:170px;margin:0;padding:6px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);}
+.row-action-menu>.btn {display:flex;width:100%;justify-content:flex-start;border:0;text-align:left;}
+@media(max-width:760px) {.data-table .row-actions {min-width:0;display:flex;justify-content:flex-end;flex-wrap:nowrap;} .data-table .row-actions .btn,.row-more>summary {min-height:44px;}}
+.mobile-preview .data-table .row-actions {min-width:0;display:flex;justify-content:flex-end;flex-wrap:nowrap;}
+.mobile-preview .data-table .row-actions .btn,.mobile-preview .row-more>summary {min-height:44px;}

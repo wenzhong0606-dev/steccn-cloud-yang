@@ -1,0 +1,402 @@
+[
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/workbench.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/standards.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/standard-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/route-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/platform.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/plans.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/plan-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/order.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/order-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/inspection.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/inspection-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/history.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/hazards.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/functional-locations.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/failure-events.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/equipment.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/equipment-templates.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/device.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/abnormal-events.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/defect-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/check-list.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/catalog.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/asset-files.html",
+    "tables": 0,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/acceptance.html",
+    "tables": 2,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 712,
+    "overflow": false,
+    "page": "/pages/abnormal-events.html",
+    "tables": 1,
+    "width": 1366
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/workbench.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/standards.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/standard-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/route-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/platform.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/plans.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/plan-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/order.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/order-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/inspection.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/inspection-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/history.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/hazards.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/functional-locations.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/failure-events.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/equipment.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/equipment-templates.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/device.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/abnormal-events.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/defect-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/check-list.html",
+    "tables": 1,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/catalog.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/asset-files.html",
+    "tables": 0,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/acceptance.html",
+    "tables": 2,
+    "width": 390
+  },
+  {
+    "legacyTables": 0,
+    "mainHeight": 788,
+    "overflow": false,
+    "page": "/pages/abnormal-events.html",
+    "tables": 1,
+    "width": 390
+  }
+]

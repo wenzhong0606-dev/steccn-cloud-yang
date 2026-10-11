@@ -1,0 +1,252 @@
+[
+  {
+    "page": "abnormal-events",
+    "title": [
+      "异常事件中心"
+    ],
+    "filterFamily": "problem-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "acceptance",
+    "title": [
+      "技术验收与业务关闭"
+    ],
+    "filterFamily": "field/form",
+    "tables": 2,
+    "inlineStyle": 0,
+    "cards": 6
+  },
+  {
+    "page": "asset-files",
+    "title": [
+      "设备图片与文件"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 2
+  },
+  {
+    "page": "catalog",
+    "title": [
+      "首批原型范围"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "check-list",
+    "title": [
+      "专项检查列表"
+    ],
+    "filterFamily": "list-filters",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "defect-list",
+    "title": [
+      "缺陷台账"
+    ],
+    "filterFamily": "problem-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "defect",
+    "title": [
+      "异常上报与缺陷处置"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 2
+  },
+  {
+    "page": "device",
+    "title": [
+      "\n                    设备档案\n                  "
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 2
+  },
+  {
+    "page": "equipment-templates",
+    "title": [
+      "分类与参数模板"
+    ],
+    "filterFamily": "ledger-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "equipment",
+    "title": [
+      "设备台账"
+    ],
+    "filterFamily": "ledger-toolbar",
+    "tables": 1,
+    "inlineStyle": 3,
+    "cards": 2
+  },
+  {
+    "page": "failure-events",
+    "title": [
+      "故障事件"
+    ],
+    "filterFamily": "problem-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "functional-locations",
+    "title": [
+      "功能位置管理"
+    ],
+    "filterFamily": "ledger-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "hazards",
+    "title": [
+      "隐患协同"
+    ],
+    "filterFamily": "problem-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "history",
+    "title": [
+      "设备履历与原始记录"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "inspection-list",
+    "title": [
+      "点检任务列表"
+    ],
+    "filterFamily": "list-filters",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "inspection",
+    "title": [
+      "点检与专项检查"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 2
+  },
+  {
+    "page": "order-list",
+    "title": [
+      "维修工单"
+    ],
+    "filterFamily": "problem-toolbar",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "order",
+    "title": [
+      "维修执行与工单详情"
+    ],
+    "filterFamily": "field/form",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 5
+  },
+  {
+    "page": "plan-list",
+    "title": [
+      "点检计划列表"
+    ],
+    "filterFamily": "list-filters",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "plans",
+    "title": [
+      "点检计划"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 3
+  },
+  {
+    "page": "platform",
+    "title": [
+      "平台工作空间"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 3
+  },
+  {
+    "page": "route-list",
+    "title": [
+      "点检路线列表"
+    ],
+    "filterFamily": "list-filters",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "standard-list",
+    "title": [
+      "点检标准列表"
+    ],
+    "filterFamily": "list-filters",
+    "tables": 1,
+    "inlineStyle": 0,
+    "cards": 1
+  },
+  {
+    "page": "standards",
+    "title": [
+      "点检标准与设备适用"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 2
+  },
+  {
+    "page": "workbench",
+    "title": [
+      "角色工作台"
+    ],
+    "filterFamily": "field/form",
+    "tables": 0,
+    "inlineStyle": 0,
+    "cards": 6
+  }
+]

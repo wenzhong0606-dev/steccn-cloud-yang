@@ -1,0 +1,723 @@
+[
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "查看异常"
+      },
+      {
+        "disabled": false,
+        "text": "查看保养"
+      },
+      {
+        "disabled": false,
+        "text": "查看资料"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "设备基本信息",
+      "组织与位置",
+      "采购与投运"
+    ],
+    "panel": "overview",
+    "tab": "overview",
+    "tableRows": [],
+    "text": "当前未闭环异常\n                          \n                          0\n                          \n                            查看异常\n                          \n                        \n                        \n                          \n                            维护策略与记录\n                          \n                          3\n                          \n                            查看保养\n                          \n                        \n                        \n                          \n                            档案资料\n                          \n                          3\n                          \n                            查看资料\n                          \n                        \n                      \n                      \n                        \n                          设备基本信息\n                        \n                        设备分类生产设备 / 混合机型号规格MX-2400制造商示例机械有限公司序列号MX20240318资产编号AS-2024-018投用日期2024-03-18\n                      \n                      \n                        \n                          组织与位置\n                        \n                        设备负责人赵工使用部门原料生产部管理部门设备动力部维修班组机械维修班"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "变更生命周期"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "生命周期",
+      "运行状态",
+      "健康状态",
+      "计量状态",
+      "使用许可",
+      "状态操作与使用限制",
+      "暂无使用限制记录"
+    ],
+    "panel": "state",
+    "tab": "state",
+    "tableRows": [],
+    "text": "生命周期在用来源设备台账更新时间2026-10-10 08:00运行状态运行来源运行信号更新时间2026-10-10 08:00健康状态正常来源异常与故障记录更新时间2026-10-10 08:00计量状态不适用来源设备用途登记更新时间2026-10-10 08:00使用许可可用来源专业限制更新时间2026-10-10 08:00\n                      \n                        \n                          \n                            状态操作与使用限制\n                          \n                          \n                            变更生命周期\n                          \n                        \n                        共 0 条暂无使用限制记录此设备尚未关联该领域记录。第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "分类与参数模板"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "技术参数记录"
+    ],
+    "panel": "parameters",
+    "tab": "parameters",
+    "tableRows": [
+      4
+    ],
+    "text": "技术参数记录\n                        \n                        \n                          \n                            分类与参数模板\n                          \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 15:06:25共 4 条已展示 · 当前页4条参数名称参数值 / 单位值类型模板版本操作额定功率PAR-MX-0175 kW额定值MIXER-V3详情有效容积PAR-MX-022.4 m³设计值MIXER-V3详情主轴转速PAR-MX-0335 r/min额定值MIXER-V3详情轴承温度范围PAR-MX-040～75 °C允许范围MIXER-V3详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "维护结构"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "设备结构记录",
+      "暂无设备结构记录"
+    ],
+    "panel": "structure",
+    "tab": "structure",
+    "tableRows": [],
+    "text": "设备结构记录\n                        \n                        \n                          \n                            维护结构\n                          \n                        \n                      \n                      数据来源：— · 更新时间：2026-10-10 08:00共 0 条暂无设备结构记录此设备尚未关联该领域记录。第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "功能位置管理"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "位置与安装记录"
+    ],
+    "panel": "installation",
+    "tab": "installation",
+    "tableRows": [
+      2
+    ],
+    "text": "位置与安装记录\n                        \n                        \n                          \n                            功能位置管理\n                          \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 2 条已展示 · 当前页2条安装事件执行日期功能位置验收单据操作首次安装INS-0012024-03-15FP-MIX-01ACC-001详情传动组件重新安装INS-0022026-09-18FP-MIX-01ACC-002详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "点检任务"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "点检记录"
+    ],
+    "panel": "work",
+    "tab": "work",
+    "tableRows": [
+      4
+    ],
+    "text": "点检记录\n                        \n                        \n                          \n                            点检任务\n                          \n                        \n                      \n                      数据来源：点检任务 · 更新时间：2026-10-10 08:00:00共 4 条已展示 · 当前页4条记录 / 名称业务内容关联与依据操作点检任务INS-20261010-001待执行 / 李敏2026-10-10 08:00—20:00 / 标准 V1.2详情点检任务INS-2待执行 / 李敏2026-10-13 08:00 / 标准 V1.3详情日常点检计划IP-001每天08:00 / 路线 ROUTE-MIX-01 / 原料点检岗、李敏标准 STD-MX-V3 / 计划多岗位或人员 / 任务单一主责详情已完成点检记录IR-0012026-10-09 08:10 / 责任人李敏 / 已完成温度67.5 °C / 润滑正常 / 防护完好 / IP-001详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "保养记录"
+    ],
+    "panel": "maintenance",
+    "tab": "maintenance",
+    "tableRows": [
+      3
+    ],
+    "text": "保养记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 3 条已展示 · 当前页3条策略 / 记录周期 / 日期岗位 / 主责下次到期操作润滑保养计划PM-001每30天原料维修岗 / 王强2026-10-25详情润滑保养记录PMR-0012026-09-25王强已完成详情传动检查计划PM-002每90天机械维修岗2026-12-17详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "异常与缺陷"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "故障记录"
+    ],
+    "panel": "failure",
+    "tab": "failure",
+    "tableRows": [
+      3
+    ],
+    "text": "故障记录\n                        \n                        \n                          \n                            异常与缺陷\n                          \n                        \n                      \n                      数据来源：异常与缺陷 · 更新时间：2026-10-10 08:00:00共 3 条已展示 · 当前页3条故障描述发生时间停机 / h处置状态操作回归：专项检查方法需要调整AR-0012026-10-10T08:00待核实已关闭详情轴承温升异常FLT-0012026-09-18 09:102已关闭详情防护罩紧固件松动FLT-0022026-08-120已关闭详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "维修工单"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "维修记录"
+    ],
+    "panel": "repair",
+    "tab": "repair",
+    "tableRows": [
+      2
+    ],
+    "text": "维修记录\n                        \n                        \n                          \n                            维修工单\n                          \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 2 条已展示 · 当前页2条维修内容执行日期执行人工单状态操作更换驱动端轴承REP-0012026-09-18王强已关闭详情防护罩紧固REP-0022026-08-12王强已关闭详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "设备BOM记录"
+    ],
+    "panel": "bom",
+    "tab": "bom",
+    "tableRows": [
+      3
+    ],
+    "text": "设备BOM记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 3 条已展示 · 当前页3条物料名称物料编码数量 / 单位装配部位操作驱动端轴承BOM-001MAT-62081 件驱动端轴承详情传动皮带BOM-002MAT-BELT-24002 条传动组件详情润滑脂BOM-003MAT-GREASE-EP20.5 kg润滑系统详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "更换与寿命记录"
+    ],
+    "panel": "replacement",
+    "tab": "replacement",
+    "tableRows": [
+      1
+    ],
+    "text": "更换与寿命记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00在装实例BRG-20260918累计使用200 h剩余寿命7800 h目标 8000 h · 安装基准 10000 h · 数据时间 2026-10-10 08:00共 1 条已展示 · 当前页1条更换部位更换日期原件序列号新件序列号维修工单操作驱动端轴承更换RPL-0012026-09-18BRG-20240315BRG-20260918REP-001详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "测点与计量器记录"
+    ],
+    "panel": "meters",
+    "tab": "meters",
+    "tableRows": [
+      2
+    ],
+    "text": "测点与计量器记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 2 条已展示 · 当前页2条测点 / 计量器归属部位最新值数据质量操作驱动端轴承温度PT-TEMP-01驱动端轴承68.2 °CGOOD详情设备累计运行小时CTR-HOURS-01设备整机10200 hGOOD详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "运行监测记录"
+    ],
+    "panel": "trend",
+    "tab": "trend",
+    "tableRows": [
+      3
+    ],
+    "text": "运行监测记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 3 条已展示 · 当前页3条采样时间轴承温度 / °C运行小时 / h数据质量操作2026-10-10 07:00READ-00167.810199GOOD详情2026-10-10 07:30READ-0026810199.5GOOD详情2026-10-10 08:00READ-00368.210200GOOD详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "安全合规记录"
+    ],
+    "panel": "risk",
+    "tab": "risk",
+    "tableRows": [
+      2
+    ],
+    "text": "安全合规记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 2 条已展示 · 当前页2条记录 / 名称业务内容关联与依据操作机械旋转与夹伤风险RISK-001防护罩闭合 / 检修隔离上锁 / 作业前验证2026-09-18 / 安全人员吴工 / 示例评估详情安装验收证据CERT-001ACC-001 / 2024-03-15 / 合格非测量用途：校准不适用；特种设备适用性待专业确认详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "资产成本记录"
+    ],
+    "panel": "cost",
+    "tab": "cost",
+    "tableRows": [
+      2
+    ],
+    "text": "资产成本记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 2 条已展示 · 当前页2条费用项目金额 / CNY核算日期来源凭证操作采购原值COST-001185,000.002024-03-18FIN-DEMO-001详情REP-001维修费用COST-002780.002026-09-30REP-001详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "上传设备图片"
+      },
+      {
+        "disabled": false,
+        "text": "上传3D模型"
+      },
+      {
+        "disabled": false,
+        "text": "设备外观（示意）"
+      },
+      {
+        "disabled": false,
+        "text": "轴承部位（示意）"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "图片与可选模型"
+    ],
+    "panel": "media",
+    "tab": "media",
+    "tableRows": [],
+    "text": "图片与可选模型\n                      \n                      \n                        \n                          上传设备图片\n                        \n                        \n                          上传3D模型\n                        \n                      \n                      设备外观（示意）轴承部位（示意）\n                      暂无上传图片；示例设备显示2张可轮播示意图\n                      \n                        \n                          打开3D概念示意\n                        \n                        \n                          \n                            \n                              MX-2400\n                            \n                          \n                        \n                        \n                          旋转角度\n                          \n                          \n                          \n                            定位轴承部位\n                          \n                          \n                            CSS立体概念示意，尚未接入GLB/glTF渲染；无模型时图片/部位列表可用。"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "查看内容"
+      },
+      {
+        "disabled": false,
+        "text": "下载原文件"
+      },
+      {
+        "disabled": false,
+        "text": "上传技术文档"
+      },
+      {
+        "disabled": false,
+        "text": "适用点检标准"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "受控技术资料"
+    ],
+    "panel": "documents",
+    "tab": "documents",
+    "tableRows": [],
+    "text": "设备说明示例.txt / V1.2技术文档 / 示例内容查看内容下载原文件\n                        \n                          受控技术资料\n                        \n                        \n                          上传技术文档\n                        \n                        \n                          \n                            适用点检标准"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": false,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "生命周期记录"
+    ],
+    "panel": "history",
+    "tab": "history",
+    "tableRows": [
+      8
+    ],
+    "text": "生命周期记录\n                        \n                        \n                        \n                      \n                      数据来源：业务操作 · 更新时间：2026-10-10 12:51:13共 22 条已展示 · 当前页8条记录 / 名称业务内容关联与依据操作移除附件关联，保留记录EV-19周平 / 2026/10/10 12:51:13原型验证结束，移除测试图片关联，保留审计详情移除附件关联，保留记录EV-18周平 / 2026/10/10 12:51:05原型验证结束，移除测试图片关联，保留审计详情改派待执行点检任务EV-17周平 / 2026/10/10 12:40:35原型验收：当班替岗详情按到期项目组生成任务（去重）EV-16周平 / 2026/10/10 12:40:13来源对象 INS-2详情审核启用计划EV-15周平 / 2026/10/10 12:39:58来源对象 2详情起草路线与频次计划EV-14赵工 / 2026/10/10 12:39:46来源对象 2详情设置设备主图EV-13赵工 / 2026/10/10 11:32:57来源对象 FILE-4详情添加设备附件元数据（未上传）EV-12赵工 / 2026/10/10 11:29:30来源对象 FILE-4详情第 1 / 3 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "关联业务记录"
+    ],
+    "panel": "related",
+    "tab": "related",
+    "tableRows": [
+      2
+    ],
+    "text": "关联业务记录\n                        \n                        \n                        \n                      \n                      数据来源：档案登记 · 更新时间：2026-10-10 08:00:00共 2 条已展示 · 当前页2条记录 / 名称业务内容关联与依据操作故障到维修与更换LINK-001FLT-001 → REP-001 → RPL-001 → ACC-002来源：本页只读历史样本，查看详情不进入执行流程详情保养到完成记录LINK-002PM-001 → PMR-001原料维修岗 / 完成责任人王强 / 已验收详情第 1 / 1 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": false,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "变更审计记录"
+    ],
+    "panel": "audit",
+    "tab": "audit",
+    "tableRows": [
+      8
+    ],
+    "text": "变更审计记录\n                        \n                        \n                        \n                      \n                      数据来源：参数维护 · 更新时间：2026-10-10 15:06:25共 22 条已展示 · 当前页8条记录 / 名称业务内容关联与依据操作技术参数修改AUD-d504b4c5-558d-4f57-82e3-23fa386761cf75 kW → 75 kW原型交互验收：核对额定功率并保存版本 / 赵工详情移除附件关联，保留记录EV-19周平 / 2026/10/10 12:51:13原型验证结束，移除测试图片关联，保留审计详情移除附件关联，保留记录EV-18周平 / 2026/10/10 12:51:05原型验证结束，移除测试图片关联，保留审计详情改派待执行点检任务EV-17周平 / 2026/10/10 12:40:35原型验收：当班替岗详情按到期项目组生成任务（去重）EV-16周平 / 2026/10/10 12:40:13来源对象 INS-2详情审核启用计划EV-15周平 / 2026/10/10 12:39:58来源对象 2详情起草路线与频次计划EV-14赵工 / 2026/10/10 12:39:46来源对象 2详情设置设备主图EV-13赵工 / 2026/10/10 11:32:57来源对象 FILE-4详情第 1 / 3 页 · 每页8条上一页下一页"
+  },
+  {
+    "buttons": [
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": false,
+        "text": "详情"
+      },
+      {
+        "disabled": true,
+        "text": "上一页"
+      },
+      {
+        "disabled": true,
+        "text": "下一页"
+      }
+    ],
+    "errors": [],
+    "headings": [
+      "档案完整性记录"
+    ],
+    "panel": "completeness",
+    "tab": "completeness",
+    "tableRows": [
+      4
+    ],
+    "text": "档案完整性记录\n                        \n                        \n                        \n                      \n                      数据来源：基础校验 · 更新时间：2026-10-10 08:00共 4 条已展示 · 当前页4条记录 / 名称业务内容关联与依据操作设备编码code已维护基础字段规则 V1 / 完整PRD规则待配置详情设备名称name已维护基础字段规则 V1 / 完整PRD规则待配置详情型号规格model已维护基础字段规则 V1 / 完整PRD规则待配置详情设备负责人ownerId已维护基础字段规则 V1 / 完整PRD规则待配置详情第 1 / 1 页 · 每页8条上一页下一页"
+  }
+]

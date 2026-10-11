@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-11",
+  "environment": "localhost异步JSON模拟接口；独立临时浏览器会话，无真实后端",
+  "flows": [
+    "MP-002 V1选择2026-10-31生成MT-0001",
+    "主管指定P03主责+P12协作",
+    "P03安全许可确认开工",
+    "异常项目/证据/工时45分钟/试运行暂存",
+    "创建保养发现AB-1005并保留task/item/version结构化来源",
+    "提交pending_acceptance 数据V6；关联发现未关闭",
+    "任务列表详情、弹窗高级筛选、取消状态表内空态、共0条分页",
+    "审计第二页按钮可达",
+    "MT-0002进入提交失败场景，暂存返回模拟提交失败；证据/试运行输入保留，状态仍执行中"
+  ],
+  "sizes": [
+    {
+      "width": 1366,
+      "height": 768,
+      "documentWidth": 1366,
+      "mainHeight": 712,
+      "mainScroll": 2075
+    },
+    {
+      "width": 1024,
+      "height": 600,
+      "documentWidth": 1024,
+      "detailMainHeight": 544,
+      "detailMainScroll": 2092,
+      "listTableHeight": 160,
+      "listPagerBottom": 434.8
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "documentWidth": 390,
+      "detailMainHeight": 788,
+      "detailMainScroll": 2603,
+      "tableWidths": [
+        322,
+        322
+      ],
+      "tableScrollWidths": [
+        512,
+        596
+      ],
+      "lastAuditPageBottom": 723.05,
+      "mainBottom": 844
+    }
+  ],
+  "consoleErrors": [],
+  "evidence": [
+    "保养任务列表桌面验收.png",
+    "保养任务待验收桌面验收.png",
+    "保养任务移动端验收.png",
+    "保养任务失败保留输入验收.png"
+  ],
+  "automated": "127/127 Node本地测试通过，包含新增12项任务规则/接口测试",
+  "notClaimed": [
+    "真实后端",
+    "独立保养验收完成",
+    "已开工终止审核",
+    "档案同源保养任务聚合",
+    "真实调度",
+    "跨mock数据库原子事务"
+  ],
+  "failurePreserved": {
+    "error": "模拟提交失败；输入已保留",
+    "evidence": "失败保留输入 IMG-MT-002",
+    "trial": "失败场景下保留的试运行输入",
+    "status": "执行中"
+  },
+  "cleanup": "独立临时验收页已关闭，viewport已重置"
+}

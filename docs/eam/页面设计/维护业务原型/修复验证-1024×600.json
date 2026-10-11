@@ -1,0 +1,277 @@
+[
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "abnormal-events",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "acceptance",
+    "tables": [
+      {
+        "height": 38,
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "asset-files",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "catalog",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "check-list",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 2
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "defect-list",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "abnormal-events",
+    "tables": [
+      {
+        "height": 689,
+        "rows": 8
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "archive",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "device",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "equipment-templates",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 1
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "ledger",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "equipment",
+    "tables": [
+      {
+        "height": 800,
+        "rows": 10
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "failure-events",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "functional-locations",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 1
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "hazards",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "history",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "inspection-list",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 2
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "inspection",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "order-list",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "order",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "plan-list",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 2
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "plans",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "platform",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "platform",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "route-list",
+    "tables": [
+      {
+        "height": 160,
+        "rows": 1
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "list",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "standard-list",
+    "tables": [
+      {
+        "height": 200,
+        "rows": 3
+      }
+    ]
+  },
+  {
+    "h1": "22px",
+    "layout": "detail",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "standards",
+    "tables": []
+  },
+  {
+    "h1": "22px",
+    "layout": "workbench",
+    "mainScroll": "auto",
+    "overflow": false,
+    "page": "workbench",
+    "tables": []
+  }
+]

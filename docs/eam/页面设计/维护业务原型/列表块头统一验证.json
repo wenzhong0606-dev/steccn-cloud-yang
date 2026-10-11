@@ -1,0 +1,93 @@
+[
+  {
+    "groups": 1,
+    "header": "点检任务清单筛选条件维护生成计划",
+    "overflow": false,
+    "page": "inspection-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "专项检查清单筛选条件申请临时检查",
+    "overflow": false,
+    "page": "check-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "维修工单清单筛选条件刷新创建工单",
+    "overflow": false,
+    "page": "order-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "异常事件清单筛选条件刷新上报异常",
+    "overflow": false,
+    "page": "abnormal-events",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "缺陷清单筛选条件刷新登记缺陷线索",
+    "overflow": false,
+    "page": "defect-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "故障事件清单筛选条件刷新登记故障线索",
+    "overflow": false,
+    "page": "failure-events",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "隐患清单筛选条件刷新登记隐患线索",
+    "overflow": false,
+    "page": "hazards",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "点检计划清单筛选条件起草新计划版本",
+    "overflow": false,
+    "page": "plan-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "点检路线清单筛选条件维护路线配置",
+    "overflow": false,
+    "page": "route-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "点检标准清单筛选条件起草新标准版本",
+    "overflow": false,
+    "page": "standard-list",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "设备分类清单新增草稿",
+    "overflow": false,
+    "page": "equipment-templates",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "功能位置清单新增草稿",
+    "overflow": false,
+    "page": "functional-locations",
+    "pageCommands": 0
+  },
+  {
+    "groups": 1,
+    "header": "设备清单\n\n\n\n\n0\n\n\n\n新增设备",
+    "overflow": false,
+    "page": "equipment",
+    "pageCommands": 0
+  }
+]

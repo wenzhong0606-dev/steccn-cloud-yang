@@ -1,0 +1,106 @@
+[
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "inspection-list",
+    "table": [
+      191
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "check-list",
+    "table": [
+      191
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "order-list",
+    "table": [
+      185
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "abnormal-events",
+    "table": [
+      700
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "defect-list",
+    "table": [
+      185
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "failure-events",
+    "table": [
+      203
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "hazards",
+    "table": [
+      185
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "plan-list",
+    "table": [
+      191
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "route-list",
+    "table": [
+      185
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "standard-list",
+    "table": [
+      268
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "equipment-templates",
+    "table": [
+      185
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "functional-locations",
+    "table": [
+      185
+    ]
+  },
+  {
+    "headWidth": 330.3999938964844,
+    "overflow": false,
+    "page": "equipment",
+    "table": [
+      806
+    ]
+  }
+]

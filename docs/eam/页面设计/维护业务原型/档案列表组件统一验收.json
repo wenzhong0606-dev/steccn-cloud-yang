@@ -1,0 +1,82 @@
+{
+  "filters": [
+    {
+      "page": "equipment",
+      "dialog": "高级筛选\n生命周期\n全部\n草稿\n待报废\n在用\n停用\n已报废\n健康状态\n全部\n未知\n正常\n待确认\n故障\n重要等级\n全部\n关键\n一般\n制造商\n全部\n示例动力设备有限公司\n示例工业装备制造有限公司\n示例机械有限公司\n\n未应用筛选。\n\n重置\n取消\n应用筛选"
+    },
+    {
+      "page": "inspection-list",
+      "dialog": "高级筛选\n业务状态\n全部状态\n待执行\n仅与我相关\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "check-list",
+      "dialog": "高级筛选\n业务状态\n全部状态\n已取消\n已完成\n仅与我相关\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "plan-list",
+      "dialog": "高级筛选\n业务状态\n全部状态\n历史版本\n已发布\n仅与我相关\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "route-list",
+      "dialog": "高级筛选\n业务状态\n全部状态\n已发布\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "standard-list",
+      "dialog": "高级筛选\n业务状态\n全部状态\n历史版本\n已发布\n草稿\n仅与我相关\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "equipment-templates",
+      "dialog": "高级筛选\n业务状态\n全部状态\n草稿\n待审核\n已发布\n停用\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "functional-locations",
+      "dialog": "高级筛选\n业务状态\n全部状态\n草稿\n待审核\n已发布\n停用\n重置筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "abnormal-events",
+      "dialog": "高级筛选\n业务状态\n全部状态\n待分诊\n已分诊\n已归档\n草稿\n优先级\n全部优先级\n高\n中\n低\n 我的责任\n清除\n取消\n应用筛选"
+    },
+    {
+      "page": "defect-list",
+      "dialog": "高级筛选\n业务状态\n全部状态\n待处置\n处置中\n待验证\n已关闭\n优先级\n全部优先级\n高\n中\n低\n 我的责任\n清除\n取消\n应用筛选"
+    },
+    {
+      "page": "failure-events",
+      "dialog": "高级筛选\n业务状态\n全部状态\n故障已确认\n已恢复待复核\n已关闭\n优先级\n全部优先级\n高\n中\n低\n 我的责任\n清除\n取消\n应用筛选"
+    },
+    {
+      "page": "hazards",
+      "dialog": "高级筛选\n治理权威来源\n全部来源\nEAM治理\n外部权威\n清除筛选\n取消\n应用筛选"
+    },
+    {
+      "page": "order-list",
+      "dialog": "高级筛选\n工单状态\n全部状态\n草稿待审核\n已审核待派工\n待开工\n执行中\n已暂停\n待技术验收\n已验收待业务关闭\n已关闭\n已终止\n 我的指派\n清除筛选\n取消\n应用筛选"
+    }
+  ],
+  "sizes": [
+    {
+      "footerVisible": true,
+      "height": 600,
+      "tableHeight": 98,
+      "width": 1366
+    },
+    {
+      "footerVisible": true,
+      "height": 768,
+      "tableHeight": 258,
+      "width": 1366
+    },
+    {
+      "footerVisible": true,
+      "height": 1080,
+      "tableHeight": 554,
+      "width": 1920
+    },
+    {
+      "footerVisible": true,
+      "height": 844,
+      "tableHeight": 138,
+      "width": 390
+    }
+  ]
+}

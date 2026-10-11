@@ -1,0 +1,1707 @@
+{
+  "date": "2026-10-11",
+  "phase": "候选记录，所有页面模型完成后统一正式设计",
+  "objects": {
+    "设备": "eam_equipment: id,tenant_id,organization_id,code,name,model,location_id,location_path,owner_person_id,criticality,manufacturer,serial_no,commissioned_date,lifecycle,revision,created_by/at,updated_by/at",
+    "部位": "eam_equipment_part: id,equipment_id,code,name,parent_id,revision,updated_by/at",
+    "状态": "eam_equipment_state: id,equipment_id,dimension,value,source,observed_at,received_at; eam_use_restriction: id,equipment_id,report_id,scope,reason,status,established_by/at,released_by/at,release_reason",
+    "文件": "eam_file: id,storage_key,original_name,mime_type,size_bytes,checksum,scan_status,upload_status; eam_file_link: id,file_id,object_type,object_id,category,revision,is_primary,status,linked_by/at,removed_by/at,remove_reason; eam_file_access_policy: id,object_type,object_id,classification,view_permission,download_permission; eam_file_access_log: id,file_id,action,actor_id,allowed,reason,accessed_at; eam_file_batch: id,equipment_id,category,status,requested_count,total_bytes,initiated_by/at,committed_at,aborted_at; eam_upload_session: id,batch_id,file_id,size_bytes,checksum,status,expires_at",
+    "任务": "eam_inspection_task: id,equipment_id,plan_version_id,assignee_id,window_start/end,status,generation_key,revision,cancelled_by/at,cancel_reason; eam_task_item_snapshot: id,task_id,standard_version_id,part_id,item_code,method,unit,lower_limit,upper_limit,required; eam_task_assignment_snapshot: task_id,binding_refs,resolved_person_ids,chosen_person_id,assignment_policy,roster_version,resolved_at; eam_task_collaborator: task_id,person_id,responsibility; reassigned_by/at,revision；改派审计保存previous_assignee,reason,invalidated_draft_snapshot",
+    "结果": "eam_inspection_draft: id,task_id,author_id,payload,revision,saved_at; eam_inspection_result: id,task_id,executed_by/at,received_at,exception,evidence_refs,submission_revision; eam_inspection_result_item: id,result_id,item_code,value,unit,conclusion",
+    "检查": "eam_special_check: id,equipment_id,report_id,method,snapshot,assignee_id,status,conclusion,opinion,evidence_refs,executed_by/at,cancelled_by/at,cancel_reason,revision",
+    "异常": "eam_abnormal_report: id,equipment_id,part_id,part_name_snapshot,source,source_id,severity,intent,description,evidence_refs,observed_at,received_at,reporter_id,status,confirmed,triage_by/at,closure_reason,closed_by/at,withdrawn_by/at,withdraw_reason,revision; eam_report_draft: id,equipment_id,author_id,payload,saved_at,revision",
+    "工单": "eam_work_order: id,equipment_id,title,scope,scope_type,permit_id,priority,due_at,status,created_by/at,approved_by/at,assignee_id,execution_version,revision; eam_work_problem: order_id,problem_type,problem_id; eam_residual_arrangement: order_id,problem_type,id,followup_order_id,owner_id,due_at,control,control_until,approved_by/at; 同设备问题多对多关联，活动同范围去重",
+    "执行": "eam_work_execution: id,order_id,revision,executor_id,started_at,completed_at,diagnosis,measures,trial,labor_minutes,material_ref,safety_snapshot; eam_work_problem_outcome: execution_id,problem_type,problem_id,problem_revision,result,evidence_refs,restored_at; 技术完成冻结版本，验收退回另起版本",
+    "验收": "eam_technical_acceptance: id,order_id,execution_id,execution_revision,reviewer_id,decision,trial_confirmed,opinion,reviewed_at; eam_work_closure: order_id,closed_by/at,reason; 技术验收、业务关闭、逐问题验证分离",
+    "标准": "eam_standard: id,code,name,equipment_class_id,status; eam_standard_version: id,standard_id,revision,status,author_id,approved_by/at,disabled_by/at,disable_reason; eam_standard_item: id,version_id,part_type_id,item_code,value_type,unit,method,lower_limit,upper_limit,required",
+    "路线": "eam_inspection_route: id,code,name,organization_id,status,revision; eam_route_node: id,route_id,equipment_id,part_id,standard_version_id,sequence,estimated_duration",
+    "计划": "eam_inspection_plan: id,code,name,route_id,status; eam_plan_version: id,plan_id,revision,frequency,calendar_id,window_start/end,author_id,approved_by/at,status,disabled_by/at,disable_reason; eam_plan_item_group: id,version_id,item_ids,frequency_rule; eam_plan_assignment_binding: id,plan_version_id,binding_type,person_id,position_id,organization_id,valid_from/to; eam_plan_version补充: assignment_policy(pool/per_person),fallback_policy,qualification_rule",
+    "审计": "eam_audit_event: id,tenant_id,organization_id,object_type,object_id,command,actor_id,role_snapshot,before/after,reason,event_time,received_at,revision",
+    "平台": "复用平台身份/组织/角色/菜单授权，不另建EAM用户或角色表；工作台与列表是查询投影，不按页面建表；岗位和在岗人员引用平台岗位/组织/任职主数据，岗位不等于权限角色",
+    "参数模板": "候选分类/模板/参数定义/版本：id,code,name,parameter_code,name,type,unit,min,max,required_stage,status,revision,author,approved_by/at；完整多参数与模板组合待补",
+    "保养关联": "候选保养策略/计划/记录：id,equipment_id,strategy_version_id,cycle,trigger_type,window,next_due,task_id,result,status,executor_id,completed_at；由保养模块管理",
+    "BOM关联": "候选设备BOM/安装实例：equipment_id,version,material_ref,part_id,quantity,unit,serialized_instance_id,valid_from/to,replaced_by_event；物料归仓储",
+    "安装更换": "候选安装/移位/更换事件：equipment_id,old_location_id,new_location_id,old_instance_id,new_instance_id,effective_at,recorded_at,source_order_id,executor_id,reviewer_id；设备ID历史不覆盖",
+    "成本关联": "候选资产映射/费用投影：equipment_id,financial_asset_ref,source_doc_ref,cost_type,amount,currency,tax_basis,posted_at；财务金额为来源投影",
+    "测点关联": "候选设备测点映射：id,equipment_id,part_id,external_point_ref,unit,quality,observed_at,received_at；运行数据由数采提供",
+    "功能位置": "候选functional_location：id,parent_id,code,name,site_ref,process_unit,area,floor,coordinate,status,revision；installation_period：equipment_id,location_id,installed_at,dismantled_at,parent_equipment_id,source_order_id,revision；当前位置为关系投影，槽位不自动恢复",
+    "完整性": "候选完整性规则/结果/豁免：rule_version,rule_id,object_ref,applicability,severity,result,evidence_refs,checked_at,exemption_reason,approved_by/at；当前仅基础字段演示，完整分母未实施",
+    "关联业务": "候选设备业务关系：equipment_id,object_type/id,relation_kind,source_system,linked_by/at,unlinked_by/at,reason；源对象授权过滤",
+    "发现": "候选discovery: id,equipment_id,source/source_id,legacy_report_id,description,part,priority,reporter_id,owner_id,occurred_at,evidence,emergency_action,status,version; triage_decision: id,discovery_id,reason,actor_id,version; discovery_problem_link: discovery_id,problem_type,problem_id；发现与问题多对多，原证据保留",
+    "独立缺陷": "候选defect: id,equipment_id,description,part,priority,status,owner_id,due_at,version; problem_verification: problem_type/id,executor_id,reviewer_id,decision,evidence,reason,reviewed_at；验证者独立、工单不得覆盖状态",
+    "故障事件": "候选failure_event: id,equipment_id,failure_mode,impact,failed_at,restored_at,status,owner_id,version; failure_interval: event_id,type,start_at,end_at,correction_reason；恢复与独立复核分开",
+    "问题审计": "候选problem_audit: object_type/id,action,actor_id,reason,before_snapshot,after_snapshot,occurred_at,version; idempotency_record: actor_id,key,payload_hash,response_id；原子保存与版本检查",
+    "隐患": "eam_hazard: id,equipment_id,description,part_id,priority,major,assessment_required,authority,external_id,external_revision,owner_id,due_at,status,rectifier_id,evidence_refs,revision; eam_hazard_assessment: hazard_id,classification,basis,assessed_by/at; eam_hazard_control: hazard_id,description,evidence_refs,valid_until,confirmed_by; eam_hazard_review: hazard_id,decision,reason,evidence_refs,reviewer_id,reviewed_at; eam_authority_receipt: hazard_id,external_id,external_revision,status,evidence_refs,received_at; 使用限制复用状态对象，关闭不等于放行",
+    "保养计划": "候选maintenance_plan/plan_revision/plan_item/plan_assignee：id,code,name,equipment_id,organization,status,revision,plan_version,active_version,active_status,trigger_type,interval/unit,anchor_date,timezone,window_before/after,assignment_mode,primary_person_id,assignment_valid_from/to,bindings,items,snapshot,submitted_by,approved_by/at；任务生成下一批",
+    "保养审核": "eam_maintenance_submission: id,task_id,execution_version,results_snapshot,labor_minutes,material_ref,trial,evidence_refs,participants,submitted_by/at; eam_maintenance_acceptance: id,task_id,execution_version,submission_snapshot,decision,reason,items_verified,trial_verified,evidence_refs,residual_review,reviewer_id,role,reviewed_at; eam_maintenance_termination: id,task_id,revision,execution_version,status,execution_snapshot,participants,requested_by/at,reason,completed_work,residual_risk,control_measures,followup,owner_id,due_date,evidence_refs; eam_maintenance_termination_review: id,request_id,revision,decision,confirmed,reviewer_id,reviewed_at,reason",
+    "保养任务": "候选maintenance_task: id,code,name,equipment_id,plan_id,plan_version,version_window_key,occurrence_key,scheduled_at,window_start/end,status,revision,execution_version,snapshot,binding_refs,resolved_people,primary_person_id,collaborator_ids,started_at,cancel_reason；task_assignment: task_id,primary_person_id,collaborator_ids,binding_refs,resolved_people,assigned_by/at,reason；唯一任务日期不可被计划修订覆盖",
+    "保养执行": "候选maintenance_execution: task_id,execution_version,labor_minutes,material_ref,trial,safety_snapshot,submission_snapshot,submitted_by/at；maintenance_item_result: task_id,item_id,conclusion,value,evidence,followup,actor_id,recorded_at；maintenance_anomaly_link: task_id,item_id,execution_version,key,payload_signature,status,discovery_id,error；maintenance_generation_request: key,actor_id,payload,response；审计沿用before/after"
+  },
+  "apiGroups": {
+    "platform": [
+      {
+        "method": "GET",
+        "path": "平台既有菜单/身份服务（沿用）",
+        "request": "当前登录会话",
+        "response": "authorizedModules,organization,roles",
+        "role": "已认证用户"
+      }
+    ],
+    "workbench": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/workbench",
+        "request": "roleContext,organizationId",
+        "response": "metrics,queues,quickLinks,dataAsOf",
+        "role": "各角色按组织/实际指派过滤"
+      }
+    ],
+    "equipment": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/equipment",
+        "request": "page,size,q,lifecycle,health,locationId",
+        "response": "items,total,page,size",
+        "role": "授权设备范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/equipment",
+        "request": "code,name,model,locationId,ownerId,criticality,manufacturer,serial,commissionedDate",
+        "response": "id,revision,lifecycle=draft",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/equipment/{id}",
+        "request": "id",
+        "response": "equipment,revision",
+        "role": "授权设备范围"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/equipment/{id}",
+        "request": "revision,editableFields,reason",
+        "response": "equipment,revision",
+        "role": "工程师/主管；非报废"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/equipment/{id}",
+        "request": "revision,reason",
+        "response": "deletedId,auditId",
+        "role": "工程师/主管；仅无引用草稿"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/equipment/{id}/lifecycle-transitions",
+        "request": "revision,target,reason,approvalRef",
+        "response": "status,revision,auditId",
+        "role": "生命周期授权角色"
+      }
+    ],
+    "parts": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/equipment/{id}/parts",
+        "request": "id",
+        "response": "treeNodes",
+        "role": "授权设备范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/equipment/{id}/parts",
+        "request": "code,name,parentId",
+        "response": "partId,revision",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/parts/{id}",
+        "request": "revision,name,code,parentId",
+        "response": "part,revision",
+        "role": "工程师/主管；防跨设备/成环"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/parts/{id}",
+        "request": "revision,reason",
+        "response": "deletedId,auditId",
+        "role": "工程师/主管；无引用/子部位"
+      }
+    ],
+    "files": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/equipment/{id}/files",
+        "request": "category,q,page,size,status",
+        "response": "items,total",
+        "role": "授权对象范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/files/upload-sessions",
+        "request": "objectType,objectId,category,name,mimeType,size,checksum,batchId,category",
+        "response": "uploadSessionId,serverAllocatedTarget,expiresAt,uploadConstraints,maxBytes,allowedFormats,batchTotalLimit",
+        "role": "对象维护角色"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/eam/v1/files/upload-sessions/{id}/content",
+        "request": "文件流/分片号/校验值",
+        "response": "receivedBytes,uploadStatus",
+        "role": "会话授权者"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/files/upload-sessions/{id}/complete",
+        "request": "checksum,revision,isPrimary",
+        "response": "stagedFileId,scanStatus,previewState；设备关联待批次统一提交",
+        "role": "对象维护角色"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/files/{id}/preview",
+        "request": "id",
+        "response": "authorizedPreviewUrl,expiresAt,format",
+        "role": "授权且安全扫描通过"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/file-links/{id}",
+        "request": "revision,reason",
+        "response": "removedLinkId,auditId",
+        "role": "对象维护角色；关联解除留痕"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/files/{id}/preview-ticket",
+        "request": "fileId,objectId,revision",
+        "response": "shortLivedPreviewUrl,expiresAt,previewStatus",
+        "role": "资料查看权限+设备数据范围+有效关联；安全转换"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/files/{id}/download-ticket",
+        "request": "fileId,objectId,revision",
+        "response": "shortLivedDownloadUrl,expiresAt,originalName",
+        "role": "独立下载权限；受控资料范围校验并记录下载审计"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/eam/v1/equipment/{id}/primary-image",
+        "request": "fileLinkId,equipmentRevision",
+        "response": "primaryImageLink,revision",
+        "role": "台账资料维护权限；有效设备图片，原子唯一主图"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/equipment/{id}/file-batches",
+        "request": "category,files[{name,size,mime,revision}],equipmentRevision",
+        "response": "batchId,uploadSessions,limits",
+        "role": "资料维护权限；整批名称/版本及容量校验"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/file-batches/{id}/complete",
+        "request": "stagedFileIds,revision",
+        "response": "fileLinks,primaryImageLink,batchStatus",
+        "role": "全批扫描通过；关联原子提交，失败不产生部分关联"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/file-batches/{id}",
+        "request": "revision,reason",
+        "response": "aborted,temporaryCleanupStatus",
+        "role": "本人/资料管理员未提交批次；清理临时上传"
+      }
+    ],
+    "tasks": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-tasks",
+        "request": "page,size,q,status,equipmentId,assigneeId,window",
+        "response": "items,total",
+        "role": "点检按指派；主管按组织"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-tasks/{id}",
+        "request": "id",
+        "response": "task,itemSnapshots,result,draft,revision",
+        "role": "授权任务范围"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/eam/v1/inspection-tasks/{id}/draft",
+        "request": "revision,itemValues,exception,evidenceRefs",
+        "response": "draftId,revision,savedAt",
+        "role": "指派执行人"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/inspection-tasks/{id}/draft",
+        "request": "revision,reason",
+        "response": "deletedDraftId,auditId",
+        "role": "草稿作者"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-tasks/{id}/results",
+        "request": "revision,itemValues,exception,evidenceRefs,idempotencyKey",
+        "response": "resultId,reportId?,status",
+        "role": "指派执行人"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-tasks/{id}/cancellation",
+        "request": "revision,reason",
+        "response": "status,auditId",
+        "role": "工程师/主管；未执行"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-tasks/{id}/reassignment",
+        "request": "assigneeId,revision,reason",
+        "response": "task,revision,previousAssignee,invalidatedDraft",
+        "role": "派工权限；仅待执行，在候选范围且资格有效；重复人员同窗检查"
+      }
+    ],
+    "checks": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/special-checks",
+        "request": "page,size,q,status,equipmentId,reportId,assigneeId",
+        "response": "items,total",
+        "role": "授权检查范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/special-checks",
+        "request": "equipmentId,reportId?,reason,method,assigneeId",
+        "response": "checkId,status,revision",
+        "role": "临时申请/分诊授权角色"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/special-checks/{id}",
+        "request": "id",
+        "response": "check,snapshot,evidenceRefs,revision",
+        "role": "授权检查范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/special-checks/{id}/conclusions",
+        "request": "revision,conclusion,opinion,evidenceRefs",
+        "response": "status,reportStatus,restrictionId?",
+        "role": "指派人/工程师"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/special-checks/{id}/cancellation",
+        "request": "revision,reason",
+        "response": "checkStatus,sourceReportStatus",
+        "role": "工程师/主管"
+      }
+    ],
+    "reports": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/abnormal-reports",
+        "request": "page,size,q,status,severity,equipmentId,source",
+        "response": "items,total",
+        "role": "授权范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/abnormal-reports",
+        "request": "equipmentId,partId,severity,intent,description,observedAt,evidenceRefs",
+        "response": "reportId,status,restrictionId?,revision",
+        "role": "现场授权上报角色"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/abnormal-reports/{id}",
+        "request": "id",
+        "response": "report,checks,orders,restrictions,revision",
+        "role": "授权范围"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/abnormal-reports/{id}",
+        "request": "revision,description,severity,evidenceRefs,reason",
+        "response": "report,revision",
+        "role": "本人未受理非紧急人工报告"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/abnormal-reports/{id}/withdrawal",
+        "request": "revision,reason",
+        "response": "status=withdrawn,auditId",
+        "role": "本人；同上"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/eam/v1/report-drafts/{id}",
+        "request": "equipmentId,payload,revision",
+        "response": "draftId,revision,savedAt",
+        "role": "草稿作者"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/report-drafts/{id}",
+        "request": "revision,reason",
+        "response": "deletedDraftId,auditId",
+        "role": "草稿作者"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/abnormal-reports/{id}/triage",
+        "request": "revision,target,opinion,assigneeId,scope",
+        "response": "checkId?/orderId?/restrictionId?,status",
+        "role": "主管/工程师"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/abnormal-reports/{id}/professional-conclusion",
+        "request": "revision,opinion,evidenceRefs",
+        "response": "status,auditId",
+        "role": "对应专业角色"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/report-drafts/{id}",
+        "request": "id,当前登录人",
+        "response": "payload,revision,savedAt",
+        "role": "本人草稿，按组织范围校验"
+      }
+    ],
+    "orders": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/work-orders",
+        "request": "page,size,q,status,equipmentId,assigneeId,priority",
+        "response": "items,total",
+        "role": "内部/外包仅授权指派；主管组织范围"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/work-orders/{id}",
+        "request": "id",
+        "response": "order,executions,acceptances,revision",
+        "role": "授权工单范围"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/work-orders/{id}",
+        "request": "revision,assigneeId,scope,reason",
+        "response": "order,revision",
+        "role": "主管/工程师；开工前"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/work-orders/{id}/executions",
+        "request": "revision,isolation,guard,qualificationRef",
+        "response": "executionId,executionRevision,status",
+        "role": "指派执行人"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/executions/{id}/completion",
+        "request": "revision,diagnosis,repair,trial,laborSeconds,materialRefs",
+        "response": "status=awaiting",
+        "role": "实际执行人"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/executions/{id}/withdrawal",
+        "request": "revision,reason",
+        "response": "status,immutableExecutionVersion",
+        "role": "本人；未验收"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/work-orders/{id}/state-transitions",
+        "request": "revision,target,pauseReason?,restorationEvidence?",
+        "response": "status,revision,auditId",
+        "role": "按状态/角色授权"
+      }
+    ],
+    "acceptance": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/acceptances/pending",
+        "request": "page,size,equipmentId",
+        "response": "items,total",
+        "role": "验收授权角色"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/work-orders/{id}/acceptances",
+        "request": "id",
+        "response": "executionVersions,acceptanceHistory",
+        "role": "授权范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/executions/{id}/acceptances",
+        "request": "executionRevision,decision,restored,trialConfirmed,defectVerified,opinion",
+        "response": "acceptanceId,orderStatus,reportStatus",
+        "role": "主管/工程师；禁止同人自验收"
+      }
+    ],
+    "standards": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-standards",
+        "request": "page,size,q,status,equipmentClassId",
+        "response": "items,total",
+        "role": "授权标准范围"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-standards/{id}/versions/{revision}",
+        "request": "id,revision",
+        "response": "version,items,approval,readonly",
+        "role": "授权标准范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-standards/{id}/drafts",
+        "request": "copyFromRevision?,name,items,method",
+        "response": "draftId,revision",
+        "role": "工程师"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/standard-drafts/{id}",
+        "request": "revision,items,method",
+        "response": "draft,revision",
+        "role": "草稿作者"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/standard-drafts/{id}",
+        "request": "revision,reason",
+        "response": "deletedDraftId,auditId",
+        "role": "草稿作者"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/standard-drafts/{id}/publication",
+        "request": "revision,opinion",
+        "response": "versionId,status",
+        "role": "主管/质量；不可自审"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/standard-versions/{id}/deactivation",
+        "request": "revision,reason",
+        "response": "status,auditId",
+        "role": "授权标准维护角色"
+      }
+    ],
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-routes",
+        "request": "page,size,q,status",
+        "response": "items,total",
+        "role": "授权路线范围"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-routes/{id}",
+        "request": "id",
+        "response": "route,orderedNodes,revision",
+        "role": "授权路线范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-routes",
+        "request": "code,name,nodes",
+        "response": "routeId,revision",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/inspection-routes/{id}",
+        "request": "revision,name,nodes,reason",
+        "response": "route,revision",
+        "role": "路线维护角色"
+      }
+    ],
+    "plans": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-plans",
+        "request": "page,size,q,status,routeId",
+        "response": "items,total",
+        "role": "授权计划范围"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/inspection-plans/{id}/versions/{revision}",
+        "request": "id,revision",
+        "response": "planVersion,groups,route,approval",
+        "role": "授权计划范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-plans/{id}/drafts",
+        "request": "copyFromRevision?,routeId,frequency,windows,bindingType,personIds[],positionIds[],assignmentPolicy",
+        "response": "draftId,revision",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/eam/v1/plan-drafts/{id}",
+        "request": "revision,routeId,frequency,windows,assigneeId",
+        "response": "draft,revision",
+        "role": "草稿作者"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/eam/v1/plan-drafts/{id}",
+        "request": "revision,reason",
+        "response": "deletedDraftId,auditId",
+        "role": "草稿作者"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/plan-drafts/{id}/publication",
+        "request": "revision,opinion",
+        "response": "versionId,status",
+        "role": "独立批准人"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/plan-versions/{id}/deactivation",
+        "request": "revision,reason",
+        "response": "status,auditId",
+        "role": "计划维护角色"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-plans/{id}/task-generation",
+        "request": "planRevision,businessDate,idempotencyKey",
+        "response": "createdIds,existingIds,skippedGroups",
+        "role": "主管/工程师"
+      }
+    ],
+    "history": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/equipment/{id}/history",
+        "request": "page,size,eventType,from,to,objectId",
+        "response": "items,total",
+        "role": "授权设备范围"
+      },
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/audit-events/{id}",
+        "request": "id",
+        "response": "actor,reason,before,after,sourceRefs",
+        "role": "审核/工程师按字段授权"
+      }
+    ],
+    "device": [
+      {
+        "method": "GET",
+        "path": "/api/eam/v1/equipment/{id}/overview",
+        "request": "id,includeTabs",
+        "response": "equipment,states,pendingWork,costDataAvailability,asOf",
+        "role": "授权设备范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/restrictions/{id}/release",
+        "request": "revision,opinion,evidenceRefs",
+        "response": "status,releasedBy,releaseAt",
+        "role": "安全/计量等对应专业角色"
+      }
+    ],
+    "assignment": [
+      {
+        "method": "GET",
+        "path": "平台岗位/任职查询（复用）",
+        "request": "organizationId,asOf,page,size",
+        "response": "positions,activeMembers,rosterRevision",
+        "role": "岗位数据范围"
+      },
+      {
+        "method": "POST",
+        "path": "/api/eam/v1/inspection-plans/{id}/assignment-preview",
+        "request": "planRevision,window,bindingType,personIds,positionIds,assignmentPolicy",
+        "response": "deduplicatedCandidates,qualificationBlocks,rosterRevision,expectedTasks",
+        "role": "计划维护/派工权限；不创建任务"
+      }
+    ],
+    "master-equipment-templates": [
+      {
+        "method": "GET",
+        "path": "/eam/equipment-templates",
+        "request": "search,page,size",
+        "response": "分页配置及版本",
+        "role": "组织范围内查询"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/equipment-templates",
+        "request": "draft,reason",
+        "response": "id,revision",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "PUT",
+        "path": "/eam/equipment-templates/{id}",
+        "request": "draft,revision,reason",
+        "response": "revision",
+        "role": "草稿维护者"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/equipment-templates/{id}/submit",
+        "request": "revision,reason",
+        "response": "待审核版本",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/equipment-templates/{id}/review",
+        "request": "decision,revision,reason",
+        "response": "发布或退回版本",
+        "role": "独立审核人"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/equipment-templates/{id}/disable",
+        "request": "revision,reason",
+        "response": "停用状态",
+        "role": "主管/工程师；引用检查"
+      },
+      {
+        "method": "DELETE",
+        "path": "/eam/equipment-templates/{id}",
+        "request": "revision,reason",
+        "response": "删除结果",
+        "role": "无引用草稿"
+      }
+    ],
+    "archive-expanded": [
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/parameters",
+        "request": "equipment_id,page,size,from,to",
+        "response": "模板版本/参数值/设计额定及范围",
+        "role": "设备范围授权；成本字段单独授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/maintenance",
+        "request": "equipment_id,page,size,from,to",
+        "response": "保养策略/计划/记录",
+        "role": "设备范围授权；成本字段单独授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/failures",
+        "request": "equipment_id,page,size,from,to",
+        "response": "故障事件/工单/停机记录",
+        "role": "设备范围授权；成本字段单独授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/bom",
+        "request": "equipment_id,page,size,from,to",
+        "response": "BOM版本/物料引用/替换记录",
+        "role": "设备范围授权；成本字段单独授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/installation-events",
+        "request": "equipment_id,page,size,from,to",
+        "response": "安装/移位/更换及位置快照",
+        "role": "设备范围授权；成本字段单独授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/costs",
+        "request": "equipment_id,page,size,from,to",
+        "response": "财务映射/来源费用",
+        "role": "设备范围授权；成本字段单独授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/measurement-points",
+        "request": "equipment_id,page,size,from,to",
+        "response": "测点映射/最新值/质量及时间",
+        "role": "设备范围授权；成本字段单独授权"
+      }
+    ],
+    "archive-prd": [
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/state-history",
+        "request": "equipment_id,page,size,range",
+        "response": "多维状态及时间质量来源",
+        "role": "设备范围/本域授权；审计脱敏"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/meters",
+        "request": "equipment_id,page,size,range",
+        "response": "累计量读数/更正来源",
+        "role": "设备范围/本域授权；审计脱敏"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/related-business",
+        "request": "equipment_id,page,size,range",
+        "response": "授权关联业务分页",
+        "role": "设备范围/本域授权；审计脱敏"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/audit-history",
+        "request": "equipment_id,page,size,range",
+        "response": "字段前后值/原因/结果/trace_id",
+        "role": "设备范围/本域授权；审计脱敏"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/equipment/{id}/completeness",
+        "request": "equipment_id,page,size,range",
+        "response": "规则版本/适用项/结果/修复目标",
+        "role": "设备范围/本域授权；审计脱敏"
+      }
+    ],
+    "functional-location": [
+      {
+        "method": "GET",
+        "path": "/eam/functional-locations",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/functional-locations",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      },
+      {
+        "method": "PUT",
+        "path": "/eam/functional-locations/{id}",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/functional-locations/{id}/submit",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/functional-locations/{id}/review",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/functional-locations/{id}/disable",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      },
+      {
+        "method": "DELETE",
+        "path": "/eam/functional-locations/{id}",
+        "request": "fields,revision,reason,request_id",
+        "response": "位置/版本/结果及校验明细",
+        "role": "工程师/主管维护，审核实际人员独立；组织范围"
+      }
+    ],
+    "discoveriesV1": [
+      {
+        "method": "GET",
+        "path": "/eam/discoveries",
+        "request": "filters,page,size",
+        "response": "发现列表投影",
+        "role": "范围授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/discoveries/{id}",
+        "request": "id",
+        "response": "发现、关联及审计",
+        "role": "范围授权"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/discoveries",
+        "request": "设备、现象、发生时间、证据、幂等键",
+        "response": "新发现及version",
+        "role": "现场授权"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/discoveries/{id}/triage",
+        "request": "expectedVersion,types,existingId,ownerId,dueAt,failureMode,impact,reason",
+        "response": "分诊与独立问题关联",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/discoveries/{id}/archive",
+        "request": "expectedVersion,reason,evidence",
+        "response": "已归档发现及核实证据/人员/时间",
+        "role": "工程师/班组长；未关联问题的高优先级拒绝，关联问题须全部关闭；不改变问题状态"
+      }
+    ],
+    "defectsV1": [
+      {
+        "method": "GET",
+        "path": "/eam/defects",
+        "request": "filters,page,size",
+        "response": "缺陷投影",
+        "role": "范围授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/defects/{id}",
+        "request": "id",
+        "response": "缺陷与发现关联",
+        "role": "范围授权"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/defects/{id}/submit-verification",
+        "request": "expectedVersion,reason,evidence",
+        "response": "待验证缺陷",
+        "role": "授权处置人"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/defects/{id}/verify",
+        "request": "expectedVersion,decision,reason,evidence",
+        "response": "关闭或退回",
+        "role": "独立工程师/主管"
+      }
+    ],
+    "failuresV1": [
+      {
+        "method": "GET",
+        "path": "/eam/failure-events",
+        "request": "filters,page,size",
+        "response": "故障列表投影",
+        "role": "范围授权"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/failure-events/{id}",
+        "request": "id",
+        "response": "故障与恢复区间",
+        "role": "范围授权"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/failure-events/{id}/restore",
+        "request": "expectedVersion,restoredAt,reason,evidence",
+        "response": "恢复待复核",
+        "role": "技术授权"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/failure-events/{id}/verify",
+        "request": "expectedVersion,decision,reason,evidence",
+        "response": "独立关闭或退回",
+        "role": "独立工程师/主管"
+      }
+    ],
+    "workV2": [
+      {
+        "method": "GET",
+        "path": "/eam/work-orders",
+        "request": "过滤/分页/稳定排序",
+        "response": "工单投影、逐问题关系、允许动作",
+        "role": "授权范围；执行人员仅本人指派"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/work-orders/{id}",
+        "request": "id",
+        "response": "工单、执行版本、逐项结果、验收、审计",
+        "role": "授权范围"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders",
+        "request": "equipmentId,title,scope,scopeType,permitId,problemRefs,dueAt,reason,idempotencyKey",
+        "response": "草稿工单",
+        "role": "工程师/班组长；活动同范围去重"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/work-order-candidates",
+        "request": "equipmentId",
+        "response": "非关闭独立问题引用",
+        "role": "建单授权范围"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/work-config",
+        "request": "设备/专业范围",
+        "response": "字典、许可、人员资格及权威回执评审样本",
+        "role": "评审模拟；正式许可资格来自受控系统"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/approve",
+        "request": "expectedVersion,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；独立建单人审核"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/assign",
+        "request": "expectedVersion,assigneeId,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；工程师/班组长"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/start",
+        "request": "expectedVersion,isolation,guard,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；指派维修人员；资格许可风险控制有效"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/save",
+        "request": "expectedVersion,diagnosis,measures,trial,laborMinutes,materialRef,outcomes",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；指派执行人草稿"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/complete",
+        "request": "expectedVersion,diagnosis,measures,trial,laborMinutes,outcomes含每个问题版本/结果/证据/恢复时间",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；指派执行人；逐项唯一完整"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/accept",
+        "request": "expectedVersion,decision,trialConfirmed,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；独立执行人的工程师/班组长；问题版本与隐患分类校验"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/close",
+        "request": "expectedVersion,residuals含真实已审核后续单/主责/期限/控制有效期,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；已验收；重大未权威关闭拦截"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/pause",
+        "request": "expectedVersion,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；指派执行人"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/work-orders/{id}/cancel",
+        "request": "expectedVersion,siteRestored,evidence,reason",
+        "response": "原子更新工单及受影响问题，审计",
+        "role": "角色/状态约束；未业务验收工单；已开工须现场恢复"
+      }
+    ],
+    "hazardsV1": [
+      {
+        "method": "GET",
+        "path": "/eam/hazards",
+        "request": "筛选/分页",
+        "response": "隐患分类、权威、控制、期限、限制、动作",
+        "role": "授权范围"
+      },
+      {
+        "method": "GET",
+        "path": "/eam/hazards/{id}",
+        "request": "id",
+        "response": "隐患、核实、复查、回执及审计",
+        "role": "授权范围"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/hazards/{id}/assess",
+        "request": "expectedVersion,reason,classification,evidence",
+        "response": "隐患状态/控制/限制/回执及审计",
+        "role": "安全核实一般/重大风险"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/hazards/{id}/control",
+        "request": "expectedVersion,reason,control,evidence,validUntil",
+        "response": "隐患状态/控制/限制/回执及审计",
+        "role": "安全人员，控制未过期"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/hazards/{id}/submit",
+        "request": "expectedVersion,reason,evidence",
+        "response": "隐患状态/控制/限制/回执及审计",
+        "role": "主责/工程师/班组长；已核实本地一般隐患"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/hazards/{id}/review",
+        "request": "expectedVersion,reason,decision,evidence",
+        "response": "隐患状态/控制/限制/回执及审计",
+        "role": "独立安全人员；本地一般隐患"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/hazards/{id}/release",
+        "request": "expectedVersion,reason,evidence",
+        "response": "隐患状态/控制/限制/回执及审计",
+        "role": "独立安全人员；隐患关闭后独立放行"
+      },
+      {
+        "method": "POST",
+        "path": "/eam/hazards/{id}/sync",
+        "request": "expectedVersion,reason,receiptId",
+        "response": "隐患状态/控制/限制/回执及审计",
+        "role": "管理员模拟预定义EHS权威回执；非真实连接"
+      }
+    ],
+    "maintenancePlansV1": [
+      {
+        "method": "GET",
+        "path": "/maintenance/config",
+        "request": "合法角色/人员会话",
+        "response": "设备主数据投影、人员/岗位JSON、草稿默认值、周期与工厂时区",
+        "role": "合法EAM人员"
+      },
+      {
+        "method": "GET",
+        "path": "/maintenance/plans",
+        "request": "equipmentId,status,unit,keyword,page,pageSize",
+        "response": "items,total,page,pageSize,actions,canCreate,nextWindow",
+        "role": "合法EAM人员"
+      },
+      {
+        "method": "GET",
+        "path": "/maintenance/plans/{id}",
+        "request": "id",
+        "response": "计划、项目、人员范围、版本快照、审计、actions",
+        "role": "合法EAM人员"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/plans",
+        "request": "草稿字段,idempotencyKey",
+        "response": "新草稿与revision",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "PATCH",
+        "path": "/maintenance/plans/{id}",
+        "request": "草稿字段,expectedRevision",
+        "response": "新revision",
+        "role": "工程师/主管，仅草稿"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/plans/{id}/{action}",
+        "request": "submit/approve/reject/pause/resume/terminate/revise,expectedRevision,reason",
+        "response": "状态/版本/审计",
+        "role": "维护授权及独立审批授权"
+      },
+      {
+        "method": "GET",
+        "path": "/maintenance/plans/{id}/generation-preview",
+        "request": "from,to",
+        "response": "items,total,timezone,generated=false",
+        "role": "合法EAM人员，仅有效发布版"
+      }
+    ],
+    "maintenanceTasksV1": [
+      {
+        "method": "GET",
+        "path": "/maintenance/tasks",
+        "request": "equipmentId/status/mine/keyword/page/pageSize",
+        "response": "授权items/total/actions",
+        "role": "授权EAM人员，维修/外包仅参与任务"
+      },
+      {
+        "method": "GET",
+        "path": "/maintenance/tasks/{id}",
+        "request": "任务ID",
+        "response": "快照/执行/关联/审计/candidatePeople/actions",
+        "role": "授权读取"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/plans/{id}/generate",
+        "request": "activeVersion/expectedRevision/windowKeys/reason/idempotencyKey",
+        "response": "created/existing任务引用",
+        "role": "工程师/主管"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/assign",
+        "request": "expectedRevision/primaryPersonId/collaboratorIds/reason",
+        "response": "任务及派工审计",
+        "role": "主管"
+      },
+      {
+        "method": "GET",
+        "path": "/maintenance/tasks/{id}/start-check",
+        "request": "任务ID",
+        "response": "当前资格/设备/许可检查",
+        "role": "授权读取"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/{start|pause|resume|cancel}",
+        "request": "expectedRevision/reason/confirmed/permitId",
+        "response": "任务/安全快照/审计",
+        "role": "主责；恢复或未开工取消按主管授权"
+      },
+      {
+        "method": "PATCH",
+        "path": "/maintenance/tasks/{id}/execution",
+        "request": "expectedRevision/executionVersion/results/laborMinutes/materialRef/trial",
+        "response": "执行人员快照及任务",
+        "role": "主责及协作"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/discoveries",
+        "request": "expectedRevision/executionVersion/itemId/description/occurredAt/priority/evidence/idempotencyKey",
+        "response": "结构化发现引用与关联状态",
+        "role": "主责及协作"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/anomaly-links/{id}/retry",
+        "request": "expectedRevision/executionVersion",
+        "response": "原发现关联重试，不重复创建",
+        "role": "主责及协作"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/submit",
+        "request": "expectedRevision/executionVersion/reason",
+        "response": "冻结提交及pending_acceptance",
+        "role": "任务主责"
+      }
+    ],
+    "maintenanceClosureV1": [
+      {
+        "method": "GET",
+        "path": "/maintenance/reviews",
+        "request": "type,equipmentId,mine,keyword,page,pageSize",
+        "response": "items,total,actions",
+        "role": "授权范围且独立审核角色"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/acceptance",
+        "request": "expectedRevision,executionVersion,reason；验收决定与证据/终止风险安排/terminationRevision与审核决定",
+        "response": "task,revision,actions,immutable history",
+        "role": "独立审核者；终止申请为主责或主管"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/request-termination",
+        "request": "expectedRevision,executionVersion,reason；验收决定与证据/终止风险安排/terminationRevision与审核决定",
+        "response": "task,revision,actions,immutable history",
+        "role": "独立审核者；终止申请为主责或主管"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/review-termination",
+        "request": "expectedRevision,executionVersion,reason；验收决定与证据/终止风险安排/terminationRevision与审核决定",
+        "response": "task,revision,actions,immutable history",
+        "role": "独立审核者；终止申请为主责或主管"
+      }
+    ]
+  },
+  "pages": [
+    {
+      "id": "platform",
+      "title": "平台模块入口",
+      "objects": [
+        "平台"
+      ],
+      "apiGroups": [
+        "platform"
+      ],
+      "scope": "复用已有系统平台入口，不另建业务CRUD。"
+    },
+    {
+      "id": "workbench",
+      "title": "角色工作台",
+      "objects": [
+        "平台",
+        "任务",
+        "异常",
+        "工单",
+        "状态"
+      ],
+      "apiGroups": [
+        "workbench",
+        "workV2",
+        "hazardsV1"
+      ],
+      "scope": "聚合投影；13角色不同队列，统计口径仅当前会话。；本批工单、异常、隐患队列经JSON异步接口聚合，点检/标准沿用既有会话模型。"
+    },
+    {
+      "id": "equipment",
+      "title": "设备台账",
+      "objects": [
+        "设备",
+        "部位",
+        "文件",
+        "审计"
+      ],
+      "apiGroups": [
+        "equipment",
+        "parts",
+        "files"
+      ],
+      "scope": "多设备资料CRUD；完整业务流程目前只EQ-001。"
+    },
+    {
+      "id": "device",
+      "title": "设备全景档案",
+      "objects": [
+        "设备",
+        "部位",
+        "状态",
+        "文件",
+        "任务",
+        "异常",
+        "工单",
+        "执行",
+        "验收",
+        "审计",
+        "参数模板",
+        "保养关联",
+        "BOM关联",
+        "安装更换",
+        "成本关联",
+        "测点关联",
+        "功能位置",
+        "完整性",
+        "关联业务",
+        "保养审核"
+      ],
+      "apiGroups": [
+        "device",
+        "equipment",
+        "parts",
+        "files",
+        "history",
+        "archive-expanded",
+        "archive-prd",
+        "maintenanceClosureV1"
+      ],
+      "scope": "设备档案布局与业务呈现重做：紧凑身份状态摘要、6组21入口、业务列与寿命指标、搜索分页、来源详情。页面读取通过JS预定义JSON与Promise模拟接口，支持读取中/空态/失败/权限；参数修改及审计、生命周期变更和专业放行沿用模拟规则；图片/文档本机维护保留。BOM装拆、完整保养和正式审批等来源业务CRUD仍待专业模型实现，正式服务未接入。详见设备档案重设计目录中的布局重做与模拟接口规范。；独立验收/退回新执行版本/终止审核/档案同源聚合"
+    },
+    {
+      "id": "inspection",
+      "title": "点检与专项执行",
+      "objects": [
+        "任务",
+        "结果",
+        "检查",
+        "异常",
+        "文件",
+        "审计"
+      ],
+      "apiGroups": [
+        "tasks",
+        "checks"
+      ],
+      "scope": "执行详情，结果完成只读；列表独立。"
+    },
+    {
+      "id": "defect",
+      "title": "异常报告详情",
+      "objects": [
+        "异常",
+        "检查",
+        "工单",
+        "状态",
+        "文件",
+        "审计"
+      ],
+      "apiGroups": [
+        "reports"
+      ],
+      "scope": "上报、草稿、编辑撤回、分诊；紧急限制独立。"
+    },
+    {
+      "id": "order",
+      "title": "维修执行详情",
+      "objects": [
+        "工单",
+        "执行",
+        "验收",
+        "独立缺陷",
+        "故障事件",
+        "隐患",
+        "审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "workV2",
+        "hazardsV1"
+      ],
+      "scope": "本批JSON异步接口改造：草稿审核/指派、安全开工、逐问题结果、冻结执行版本、独立技术验收与业务关闭。验收只送问题验证；残留必须有真实已审核后续单与有效控制；禁止已验收终止绕过。页面命令绑定对象及版本，失败保留表单。"
+    },
+    {
+      "id": "acceptance",
+      "title": "维修验收",
+      "objects": [
+        "工单",
+        "执行",
+        "验收",
+        "独立缺陷",
+        "故障事件",
+        "隐患",
+        "审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "workV2",
+        "hazardsV1"
+      ],
+      "scope": "本批JSON异步接口改造：草稿审核/指派、安全开工、逐问题结果、冻结执行版本、独立技术验收与业务关闭。验收只送问题验证；残留必须有真实已审核后续单与有效控制；禁止已验收终止绕过。页面命令绑定对象及版本，失败保留表单。"
+    },
+    {
+      "id": "history",
+      "title": "设备履历",
+      "objects": [
+        "审计",
+        "设备"
+      ],
+      "apiGroups": [
+        "history"
+      ],
+      "scope": "设备台账内详情/子操作页，无独立菜单；多图缩略图/主图/轮播、本机PDF文本预览与按演示权限下载；Office转换/模型渲染/真实文件鉴权待接入。"
+    },
+    {
+      "id": "catalog",
+      "title": "原型范围目录",
+      "objects": [
+        "平台"
+      ],
+      "apiGroups": [],
+      "scope": "评审目录，无独立业务接口。"
+    },
+    {
+      "id": "standards",
+      "title": "点检标准详情",
+      "objects": [
+        "标准",
+        "审计"
+      ],
+      "apiGroups": [
+        "standards"
+      ],
+      "scope": "本批固定三项目的版本维护，历史版本只读。"
+    },
+    {
+      "id": "plans",
+      "title": "点检计划",
+      "objects": [
+        "路线",
+        "计划",
+        "任务",
+        "标准",
+        "审计"
+      ],
+      "apiGroups": [
+        "routes",
+        "plans",
+        "assignment"
+      ],
+      "scope": "计划可绑定多人员/多岗位或组合；候选池派工或逐人执行；任务单一主责任人、候选快照与个人幂等键。当前岗位成员/资格为模拟来源，多设备路线/真实排班后续。"
+    },
+    {
+      "id": "inspection-list",
+      "title": "点检任务列表",
+      "objects": [
+        "任务",
+        "平台"
+      ],
+      "apiGroups": [
+        "tasks",
+        "tasks"
+      ],
+      "scope": "分页搜索、状态与本人筛选→任务详情。；待执行任务可在冻结候选范围改派，原因/版本必填并留痕。"
+    },
+    {
+      "id": "check-list",
+      "title": "专项检查列表",
+      "objects": [
+        "检查",
+        "异常"
+      ],
+      "apiGroups": [
+        "checks"
+      ],
+      "scope": "来源和执行人可见；取消记录与新任务编号独立。"
+    },
+    {
+      "id": "defect-list",
+      "title": "异常与缺陷列表",
+      "objects": [
+        "独立缺陷",
+        "发现",
+        "问题审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "defectsV1",
+        "discoveriesV1"
+      ],
+      "scope": "独立缺陷列表、详情、处置证据与独立验证；不执行旧工单验收联动关闭。风险接受/重开/工单关联待下一批；详细边界见维护原型交付记录。；入口修复：列表显示下一步/详情/工单创建；异常显式归档须留证；缺陷/故障/隐患线索登记打开发现表单，授权人员提交后进入核实分诊，生成独立问题。跨页action=triage定位表单，不仅跳转列表。"
+    },
+    {
+      "id": "order-list",
+      "title": "维修工单列表",
+      "objects": [
+        "工单",
+        "执行",
+        "验收",
+        "独立缺陷",
+        "故障事件",
+        "隐患",
+        "审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "workV2",
+        "hazardsV1"
+      ],
+      "scope": "本批JSON异步接口改造：草稿审核/指派、安全开工、逐问题结果、冻结执行版本、独立技术验收与业务关闭。验收只送问题验证；残留必须有真实已审核后续单与有效控制；禁止已验收终止绕过。页面命令绑定对象及版本，失败保留表单。"
+    },
+    {
+      "id": "standard-list",
+      "title": "点检标准列表",
+      "objects": [
+        "标准",
+        "平台"
+      ],
+      "apiGroups": [
+        "standards"
+      ],
+      "scope": "当前/历史/草稿清单；正式应独立标准头与版本。"
+    },
+    {
+      "id": "route-list",
+      "title": "点检路线列表",
+      "objects": [
+        "路线",
+        "计划"
+      ],
+      "apiGroups": [
+        "routes"
+      ],
+      "scope": "当前展示单示例路线；正式多路线有独立头与节点。"
+    },
+    {
+      "id": "plan-list",
+      "title": "点检计划列表",
+      "objects": [
+        "计划",
+        "路线",
+        "任务"
+      ],
+      "apiGroups": [
+        "plans",
+        "assignment"
+      ],
+      "scope": "计划可绑定多人员/多岗位或组合；候选池派工或逐人执行；任务单一主责任人、候选快照与个人幂等键。当前岗位成员/资格为模拟来源，多设备路线/真实排班后续。"
+    },
+    {
+      "id": "asset-files",
+      "title": "设备图片与文件",
+      "objects": [
+        "文件",
+        "设备",
+        "审计"
+      ],
+      "apiGroups": [
+        "files",
+        "equipment"
+      ],
+      "scope": "设备台账内详情/子操作页，无独立菜单；多图缩略图/主图/轮播、本机PDF文本预览与按演示权限下载；Office转换/模型渲染/真实文件鉴权待接入。"
+    },
+    {
+      "id": "equipment-templates",
+      "title": "分类与参数模板",
+      "scope": "基础维护原型切片：草稿增改删、查询、提交及独立审核发布/退回、停用；模板单参数、位置单槽位；完整多参数组合/位置树/装拆/台账绑定待后续。会话本地模拟。",
+      "objects": [
+        "参数模板",
+        "审计"
+      ],
+      "apiGroups": [
+        "master-equipment-templates"
+      ]
+    },
+    {
+      "id": "functional-locations",
+      "title": "功能位置管理",
+      "scope": "恢复独立位置主数据维护：查询、草稿增改删、提交、独立发布/退回、停用、父关系禁环及引用检查；装拆关系与设备绑定未接入，不恢复槽位。",
+      "objects": [
+        "功能位置",
+        "审计"
+      ],
+      "apiGroups": [
+        "functional-location"
+      ]
+    },
+    {
+      "id": "abnormal-events",
+      "title": "异常事件中心",
+      "objects": [
+        "发现",
+        "独立缺陷",
+        "故障事件",
+        "问题审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "discoveriesV1",
+        "defectsV1"
+      ],
+      "scope": "发现提交、分诊、关联已有缺陷或新建缺陷/故障、无问题归档；详情及审计。证据为文本/受控编号，附件上传、隐患协同、草稿CRUD暂未实现。；入口修复：列表显示下一步/详情/工单创建；异常显式归档须留证；缺陷/故障/隐患线索登记打开发现表单，授权人员提交后进入核实分诊，生成独立问题。跨页action=triage定位表单，不仅跳转列表。"
+    },
+    {
+      "id": "failure-events",
+      "title": "故障事件",
+      "objects": [
+        "故障事件",
+        "发现",
+        "问题审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "failuresV1"
+      ],
+      "scope": "故障列表详情、恢复时间与证据、独立复核通过/退回；故障通过分诊创建。运行信号写回、区间修正、单独登记故障待后续批次。；入口修复：列表显示下一步/详情/工单创建；异常显式归档须留证；缺陷/故障/隐患线索登记打开发现表单，授权人员提交后进入核实分诊，生成独立问题。跨页action=triage定位表单，不仅跳转列表。"
+    },
+    {
+      "id": "hazards",
+      "title": "隐患协同",
+      "objects": [
+        "隐患",
+        "工单",
+        "状态",
+        "审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "hazardsV1",
+        "workV2"
+      ],
+      "scope": "隐患列表、详情、风险分类核实、控制有效期、整改提交、独立安全复查、限制独立放行；EHS权威示例仅接收预定义回执，禁止本地审批关闭。；入口修复：列表显示下一步/详情/工单创建；异常显式归档须留证；缺陷/故障/隐患线索登记打开发现表单，授权人员提交后进入核实分诊，生成独立问题。跨页action=triage定位表单，不仅跳转列表。"
+    },
+    {
+      "id": "maintenance-plan-list",
+      "title": "保养计划列表",
+      "objects": [
+        "保养计划",
+        "保养审核",
+        "平台"
+      ],
+      "apiGroups": [
+        "maintenancePlansV1"
+      ],
+      "scope": "列表关键词/弹窗高级筛选、分页、权限范围导出、列设置、刷新、新增；导入禁用"
+    },
+    {
+      "id": "maintenance-plan",
+      "title": "保养计划详情",
+      "objects": [
+        "保养计划",
+        "保养审核",
+        "平台"
+      ],
+      "apiGroups": [
+        "maintenancePlansV1",
+        "maintenanceTasksV1"
+      ],
+      "scope": "草稿维护、项目、岗位/人员多选及有效期、独立发布审核、暂停/恢复/终止、修订、有效版本窗口预览；选定发布窗口生成任务，历史补发须理由"
+    },
+    {
+      "id": "maintenance-task-list",
+      "title": "保养任务列表",
+      "objects": [
+        "保养任务",
+        "保养执行",
+        "保养计划",
+        "发现",
+        "审计",
+        "平台",
+        "保养审核"
+      ],
+      "apiGroups": [
+        "maintenanceTasksV1",
+        "maintenancePlansV1",
+        "discoveriesV1",
+        "maintenanceClosureV1"
+      ],
+      "scope": "授权列表/弹窗筛选/分页/导出/列设置/刷新；从计划生成；进入详情派工；独立验收/退回新执行版本/终止审核/档案同源聚合"
+    },
+    {
+      "id": "maintenance-task",
+      "title": "保养任务详情",
+      "objects": [
+        "保养任务",
+        "保养执行",
+        "保养计划",
+        "发现",
+        "审计",
+        "平台",
+        "保养审核"
+      ],
+      "apiGroups": [
+        "maintenanceTasksV1",
+        "maintenancePlansV1",
+        "discoveriesV1",
+        "maintenanceClosureV1"
+      ],
+      "scope": "派工/开工/暂停恢复/暂存/保养发现/关联重试/提交待验收；快照/审计/内部表格分页；独立验收/退回新执行版本/终止审核/档案同源聚合"
+    },
+    {
+      "id": "maintenance-acceptance",
+      "title": "保养验收与审核",
+      "objects": [
+        "保养任务",
+        "保养执行",
+        "保养审核",
+        "审计",
+        "平台"
+      ],
+      "apiGroups": [
+        "maintenanceTasksV1",
+        "maintenanceClosureV1"
+      ],
+      "scope": "同源待验收/终止待审核队列，授权范围和独立人员限制，共用筛选表格分页，详情静态表单提交"
+    }
+  ]
+}

@@ -1,0 +1,594 @@
+[
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 38
+      }
+    ],
+    "height": 768,
+    "page": "/pages/abnormal-events.html",
+    "tables": [
+      {
+        "h": 238,
+        "scroll": 689
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      },
+      {
+        "heading": false,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/acceptance.html",
+    "tables": [
+      {
+        "h": 235,
+        "scroll": 235
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/asset-files.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/catalog.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 81
+      }
+    ],
+    "height": 768,
+    "page": "/pages/check-list.html",
+    "tables": [
+      {
+        "h": 230,
+        "scroll": 230
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 38
+      }
+    ],
+    "height": 768,
+    "page": "/pages/defect-list.html",
+    "tables": [
+      {
+        "h": 238,
+        "scroll": 238
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 38
+      }
+    ],
+    "height": 768,
+    "page": "/pages/abnormal-events.html",
+    "tables": [
+      {
+        "h": 238,
+        "scroll": 689
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/device.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "24px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/equipment-templates.html",
+    "tables": [
+      {
+        "h": 328,
+        "scroll": 328
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/equipment.html",
+    "tables": [
+      {
+        "h": 293,
+        "scroll": 800
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 38
+      }
+    ],
+    "height": 768,
+    "page": "/pages/failure-events.html",
+    "tables": [
+      {
+        "h": 238,
+        "scroll": 238
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/functional-locations.html",
+    "tables": [
+      {
+        "h": 328,
+        "scroll": 328
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": false,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 38
+      }
+    ],
+    "height": 768,
+    "page": "/pages/hazards.html",
+    "tables": [
+      {
+        "h": 238,
+        "scroll": 238
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/history.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 81
+      }
+    ],
+    "height": 768,
+    "page": "/pages/inspection-list.html",
+    "tables": [
+      {
+        "h": 230,
+        "scroll": 230
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      },
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/inspection.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": false,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 38
+      }
+    ],
+    "height": 768,
+    "page": "/pages/order-list.html",
+    "tables": [
+      {
+        "h": 238,
+        "scroll": 238
+      }
+    ],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": false,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/order.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "26px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 81
+      }
+    ],
+    "height": 768,
+    "page": "/pages/plan-list.html",
+    "tables": [
+      {
+        "h": 230,
+        "scroll": 230
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/plans.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/platform.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 81
+      }
+    ],
+    "height": 768,
+    "page": "/pages/route-list.html",
+    "tables": [
+      {
+        "h": 230,
+        "scroll": 230
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 81
+      }
+    ],
+    "height": 768,
+    "page": "/pages/standard-list.html",
+    "tables": [
+      {
+        "h": 230,
+        "scroll": 230
+      }
+    ],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [
+      {
+        "heading": true,
+        "padding": "16px"
+      },
+      {
+        "heading": true,
+        "padding": "16px"
+      }
+    ],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/standards.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  },
+  {
+    "cards": [],
+    "filters": [],
+    "height": 768,
+    "page": "/pages/workbench.html",
+    "tables": [],
+    "title": [
+      {
+        "size": "22px",
+        "weight": "500"
+      }
+    ],
+    "width": 1366
+  }
+]

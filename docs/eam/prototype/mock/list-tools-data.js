@@ -1,0 +1,2 @@
+/* 列表工具的预定义JSON配置；图标由共享UI组件统一维护。 */
+window.EAM_LIST_TOOLS_JSON={pages:{'equipment':{source:'equipmentRecords'},'inspection-list':{source:'tasks'},'check-list':{source:'checks'},'plan-list':{source:'plans'},'route-list':{source:'routes'},'standard-list':{source:'standards'},'equipment-templates':{source:'templates'},'functional-locations':{source:'locations'},'abnormal-events':{endpoint:'discoveries'},'defect-list':{endpoint:'defects'},'failure-events':{endpoint:'failures'},'hazards':{endpoint:'hazards'},'order-list':{endpoint:'work-orders'}}};

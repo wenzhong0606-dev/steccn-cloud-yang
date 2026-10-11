@@ -1,0 +1,528 @@
+{
+  "date": "2026-10-10",
+  "status": "设计基线，不是已实施",
+  "functionalLocationDecision": "本轮用户确认恢复独立管理；不自动恢复槽位对象",
+  "viewIdNamespace": "PRD-A01..A25，与菜单A编号独立",
+  "views": [
+    {
+      "id": "A01",
+      "name": "设备档案列表",
+      "target": "equipment",
+      "layout": "紧凑列表/高级筛选/列设置/批量预览",
+      "objects": "设备、用户视图",
+      "candidateCommands": "query/list/summary",
+      "rules": "授权范围过滤，树与筛选同一查询",
+      "acceptance": "名称/编码定位→详情→保留查询返回"
+    },
+    {
+      "id": "A02",
+      "name": "新建设备档案",
+      "target": "equipment-create",
+      "layout": "六步向导/草稿/确认",
+      "objects": "设备、参数、适用关系",
+      "candidateCommands": "create-draft/validate/submit",
+      "rules": "按阶段必填，未安装未投运可草稿",
+      "acceptance": "上一步保留值、保存失败定位字段"
+    },
+    {
+      "id": "A03",
+      "name": "编辑设备档案",
+      "target": "equipment-edit",
+      "layout": "分组PATCH/变更影响",
+      "objects": "设备版本、参数版本",
+      "candidateCommands": "impact/patch",
+      "rules": "状态/装拆/BOM不能普通编辑",
+      "acceptance": "409差异→重载/重新确认"
+    },
+    {
+      "id": "A04",
+      "name": "批量导入与校验",
+      "target": "equipment-import",
+      "layout": "模板/预校验/行级错误/执行结果",
+      "objects": "导入批次、暂存行",
+      "candidateCommands": "import/template/validate/commit",
+      "rules": "匹配ID/受控编号，范围与幂等",
+      "acceptance": "修正错误→复校验→执行结果可核对"
+    },
+    {
+      "id": "A05",
+      "name": "设备档案详情",
+      "target": "device",
+      "layout": "六区域/十导航组",
+      "objects": "设备聚合",
+      "candidateCommands": "archive/summary",
+      "rules": "唯一设备ID，来源失败局部重试",
+      "acceptance": "页签刷新恢复、非授权设备不显示示例"
+    },
+    {
+      "id": "A06",
+      "name": "设备基本信息",
+      "target": "device?tab=overview",
+      "layout": "overview",
+      "objects": "设备主数据/责任关系",
+      "candidateCommands": "query/patch/impact",
+      "rules": "ID稳定、旧码历史，日期异常说明",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A07",
+      "name": "技术参数",
+      "target": "device?tab=parameters",
+      "layout": "parameters",
+      "objects": "参数定义/模板/值版本",
+      "candidateCommands": "query/validate/compare/submit",
+      "rules": "模板发布不可改旧版本，实时值分离",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A08",
+      "name": "设备结构",
+      "target": "device?tab=structure",
+      "layout": "structure",
+      "objects": "设备层级有效关系",
+      "candidateCommands": "query/adjust/impact",
+      "rules": "禁环/双挂/越组织，生效历史",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A09",
+      "name": "功能位置与安装履历",
+      "target": "device?tab=installation",
+      "layout": "installation",
+      "objects": "功能位置/安装期间/位置事件",
+      "candidateCommands": "query/install/dismantle/move",
+      "rules": "父子位置与设备关系独立，安装期间冲突检查",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A10",
+      "name": "设备状态",
+      "target": "device?tab=state",
+      "layout": "state",
+      "objects": "多维状态/来源/限制",
+      "candidateCommands": "query/transition/source",
+      "rules": "未知/陈旧不等正常，不因故障报废",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A11",
+      "name": "点检档案",
+      "target": "device?tab=work",
+      "layout": "work",
+      "objects": "标准适用/计划/任务/结果",
+      "candidateCommands": "query/bind/temporary-task",
+      "rules": "任务冻结标准/频次，异常分诊闭环",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A12",
+      "name": "保养档案",
+      "target": "device?tab=maintenance",
+      "layout": "maintenance",
+      "objects": "保养策略/计划/任务/结果",
+      "candidateCommands": "query/bind/create-task/adjust-cycle",
+      "rules": "无计量来源不计算剩余小时",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A13",
+      "name": "故障档案",
+      "target": "device?tab=failure",
+      "layout": "failure",
+      "objects": "故障/缺陷/停机/分析",
+      "candidateCommands": "query/report/triage/close",
+      "rules": "故障与工单多对多，停机时间去重",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A14",
+      "name": "维修档案",
+      "target": "device?tab=repair",
+      "layout": "repair",
+      "objects": "工单/执行版本/验收",
+      "candidateCommands": "query/create/dispatch/execute/accept",
+      "rules": "执行人与验收人独立、不能档案直接改状态",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A15",
+      "name": "设备BOM",
+      "target": "device?tab=bom",
+      "layout": "bom",
+      "objects": "BOM版本/行/物料引用",
+      "candidateCommands": "query/compare/change-version",
+      "rules": "定义数量不等装机实例",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A16",
+      "name": "备件更换履历",
+      "target": "device?tab=replacement",
+      "layout": "replacement",
+      "objects": "装机实例/更换/去向/寿命延期",
+      "candidateCommands": "query/replace/extension/impact",
+      "rules": "更换与领退料来源一致，只影响匹配策略",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A17",
+      "name": "测点与计量器",
+      "target": "device?tab=meters",
+      "layout": "meters",
+      "objects": "点位映射/累计量读数/更正",
+      "candidateCommands": "query/bind/correct-reading",
+      "rules": "复用点位、累计量回绕/重置/修正有来源",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A18",
+      "name": "运行监测",
+      "target": "device?tab=trend",
+      "layout": "trend",
+      "objects": "时序读数/质量/事件",
+      "candidateCommands": "query/latest/trend/events",
+      "rules": "图表单位可比，数据时间质量可见",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A19",
+      "name": "安全与合规",
+      "target": "device?tab=risk",
+      "layout": "risk",
+      "objects": "适用要求/证书/检验/整改",
+      "candidateCommands": "query/inspection/rectification/release",
+      "rules": "按类型/地区适用，专业限制独立解除",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A20",
+      "name": "资产与成本",
+      "target": "device?tab=cost",
+      "layout": "cost",
+      "objects": "财务映射/来源费用/质保",
+      "candidateCommands": "query/map-asset/cost-details",
+      "rules": "权威财务金额，币种税口径，敏感授权",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A21",
+      "name": "文档资料",
+      "target": "device?tab=documents",
+      "layout": "documents",
+      "objects": "文件/版本/授权关联",
+      "candidateCommands": "query/upload/preview/download",
+      "rules": "多图主图/轮播，查看下载独立授权",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A22",
+      "name": "生命周期履历",
+      "target": "device?tab=history",
+      "layout": "history",
+      "objects": "生命周期事件/历史快照",
+      "candidateCommands": "query/events/source",
+      "rules": "历史快照不被当前值覆盖",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A23",
+      "name": "关联业务",
+      "target": "device?tab=related",
+      "layout": "related",
+      "objects": "跨模块关联与来源单据",
+      "candidateCommands": "query/link/unlink",
+      "rules": "只链接授权对象，解除保留历史",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A24",
+      "name": "变更历史与审计",
+      "target": "device?tab=audit",
+      "layout": "audit",
+      "objects": "变更/审计事件/脱敏",
+      "candidateCommands": "query/diff/audit",
+      "rules": "脱敏，业务履历和操作审计分开",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    },
+    {
+      "id": "A25",
+      "name": "档案完整性检查",
+      "target": "device?tab=completeness",
+      "layout": "completeness",
+      "objects": "规则版本/适用项/检查结果",
+      "candidateCommands": "query/check/exemption",
+      "rules": "分母仅适用规则，关键项阻断，豁免留证据",
+      "acceptance": "成功/失败/无权限/空态/冲突及来源跳转按本域验证"
+    }
+  ],
+  "regions": [
+    "D01｜设备基本信息区",
+    "D02｜设备技术参数区",
+    "D03｜设备结构与层级区",
+    "D04｜功能位置与安装信息区",
+    "D05｜设备状态与健康区",
+    "D06｜设备点检档案区",
+    "D07｜设备保养档案区",
+    "D08｜故障与缺陷档案区",
+    "D09｜维修档案区",
+    "D10｜设备 BOM 区",
+    "D11｜备件更换与寿命区",
+    "D12｜测点、计量器与运行监测区",
+    "D13｜安全、检验与合规区",
+    "D14｜资产、成本与供应商区",
+    "D15｜文档资料、生命周期与审计区"
+  ],
+  "modals": [
+    [
+      "M01",
+      "设备选择器",
+      "搜索设备、分类、状态、位置",
+      "返回设备 ID"
+    ],
+    [
+      "M02",
+      "设备分类选择器",
+      "分类树、类型、型号",
+      "更新分类选择"
+    ],
+    [
+      "M03",
+      "功能位置选择器",
+      "功能位置树、安装约束",
+      "返回位置 ID"
+    ],
+    [
+      "M04",
+      "组织人员选择器",
+      "部门、负责人、班组",
+      "返回组织或人员"
+    ],
+    [
+      "M05",
+      "设备图片管理",
+      "上传、裁剪、预览、删除",
+      "更新附件关联"
+    ],
+    [
+      "M06",
+      "技术参数编辑",
+      "参数组、值、单位、校验",
+      "保存参数变更"
+    ],
+    [
+      "M07",
+      "设备状态变更",
+      "目标状态、原因、关联单据",
+      "执行受控转换"
+    ],
+    [
+      "M08",
+      "设备结构调整",
+      "原父级、新父级、生效时间",
+      "执行结构变更"
+    ],
+    [
+      "M09",
+      "设备安装",
+      "设备、位置、安装时间、责任人",
+      "生成安装履历"
+    ],
+    [
+      "M10",
+      "设备拆卸/移位",
+      "原位置、新位置、原因、时间",
+      "生成拆装/移位履历"
+    ],
+    [
+      "M11",
+      "点检标准绑定",
+      "标准版本、适用条件、差异配置",
+      "建立适用关系"
+    ],
+    [
+      "M12",
+      "保养策略绑定",
+      "策略、周期、计量器",
+      "更新策略关联"
+    ],
+    [
+      "M13",
+      "故障报告",
+      "故障现象、等级、位置、照片",
+      "创建故障事件"
+    ],
+    [
+      "M14",
+      "维修工单创建",
+      "工单类型、任务、负责人",
+      "创建关联工单"
+    ],
+    [
+      "M15",
+      "BOM 明细",
+      "物料、数量、位置、版本",
+      "查看或申请修改"
+    ],
+    [
+      "M16",
+      "备件更换",
+      "原件、新件、数量、工单、去向",
+      "创建更换事务"
+    ],
+    [
+      "M17",
+      "备件延期使用",
+      "复检结果、风险、延期依据",
+      "提交延期审批"
+    ],
+    [
+      "M18",
+      "测点绑定",
+      "点位选择、归属、映射规则",
+      "建立测点关系"
+    ],
+    [
+      "M19",
+      "计量器读数更正",
+      "原读数、新读数、依据",
+      "受控更正读数"
+    ],
+    [
+      "M20",
+      "文件上传",
+      "分类、版本、文件、描述",
+      "建立文档关联"
+    ],
+    [
+      "M21",
+      "历史版本比较",
+      "两个版本的差异",
+      "查看差异，不直接修改"
+    ],
+    [
+      "M22",
+      "档案导出",
+      "导出范围、格式、权限提示",
+      "生成档案文件"
+    ],
+    [
+      "M23",
+      "设备报废申请",
+      "原因、处置方式、风险、审批",
+      "发起报废流程"
+    ],
+    [
+      "M24",
+      "档案完整性检查",
+      "缺失字段、规则结果、修复入口",
+      "定位相应维护页面"
+    ]
+  ],
+  "scenarios": [
+    {
+      "id": "S01",
+      "scenario": "1 查看设备",
+      "mapping": "A01→A05→各域",
+      "expected": "非授权ID拒绝；返回保留过滤排序分页",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S02",
+      "scenario": "2 定位子设备",
+      "mapping": "A08→A05",
+      "expected": "切换实体不串父设备数据；环/双挂拒绝",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S03",
+      "scenario": "3 设备移位",
+      "mapping": "A09/M10→A22",
+      "expected": "审批不改位置；执行原子变更，旧工单仍原位置快照",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S04",
+      "scenario": "4 点检异常",
+      "mapping": "A11→A13→A14",
+      "expected": "疑似先检查，明确维修分流；重复提交不重建工单",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S05",
+      "scenario": "5 保养到期",
+      "mapping": "A12→任务→结果",
+      "expected": "无来源剩余量未知；完成仅更新适用策略",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S06",
+      "scenario": "6 设备故障",
+      "mapping": "A10/A13→A14",
+      "expected": "多对多支持；工单关闭不自动关闭未验证故障",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S07",
+      "scenario": "7 备件更换",
+      "mapping": "A15/A16/M16",
+      "expected": "只改BOM不等更换；事务失败保留旧装机",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S08",
+      "scenario": "8 寿命延期",
+      "mapping": "A16/M17",
+      "expected": "审批前不延长，拒绝保留原约束，实际人员独立审批",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S09",
+      "scenario": "9 参数变化",
+      "mapping": "A07/M06/M21",
+      "expected": "批量校验、影响预览、旧值保留，冲突不覆盖",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S10",
+      "scenario": "10 设备改造",
+      "mapping": "A03→申请→验收→A22",
+      "expected": "未验收不冒充已完成，来源可追溯",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S11",
+      "scenario": "11 设备报废",
+      "mapping": "A10/M23→A22",
+      "expected": "检查有效限制/工单/装机去向；有历史不物理删除",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S12",
+      "scenario": "12 查看历史",
+      "mapping": "A22/A24→原单据",
+      "expected": "当前值不改历史，草稿删除看快照，越权脱敏",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S13",
+      "scenario": "13 状态异常",
+      "mapping": "R03→A10/A13/A18",
+      "expected": "陈旧未知不正常；允许查看异常源，原单失败可重试",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S14",
+      "scenario": "14 设备换装",
+      "mapping": "A08/A09→A16/A22",
+      "expected": "位号可不变；历史工单归旧实体，新实体周期独立",
+      "status": "待分批实现及验收"
+    },
+    {
+      "id": "S15",
+      "scenario": "15 档案不完整",
+      "mapping": "A01/A25→修复→复查",
+      "expected": "豁免需依据，不适用不入分母，未投运不要求运行小时",
+      "status": "待分批实现及验收"
+    }
+  ]
+}

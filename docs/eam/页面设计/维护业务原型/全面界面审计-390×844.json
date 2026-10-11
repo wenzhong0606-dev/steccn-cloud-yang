@@ -1,0 +1,357 @@
+[
+  {
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 128
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/abnormal-events.html",
+    "tables": [
+      {
+        "h": 30,
+        "scroll": 38
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/acceptance.html",
+    "tables": [
+      {
+        "h": 245,
+        "scroll": 245
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/asset-files.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/catalog.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 206
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/check-list.html",
+    "tables": [
+      {
+        "h": 75,
+        "scroll": 191
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 128
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/defect-list.html",
+    "tables": [
+      {
+        "h": 30,
+        "scroll": 369
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 128
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/abnormal-events.html",
+    "tables": [
+      {
+        "h": 30,
+        "scroll": 700
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/device.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/equipment-templates.html",
+    "tables": [
+      {
+        "h": 309,
+        "scroll": 309
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/equipment.html",
+    "tables": [
+      {
+        "h": 85,
+        "scroll": 806
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 128
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/failure-events.html",
+    "tables": [
+      {
+        "h": 30,
+        "scroll": 38
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/functional-locations.html",
+    "tables": [
+      {
+        "h": 327,
+        "scroll": 327
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 88
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/hazards.html",
+    "tables": [
+      {
+        "h": 89,
+        "scroll": 207
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/history.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 206
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/inspection-list.html",
+    "tables": [
+      {
+        "h": 75,
+        "scroll": 191
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/inspection.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "problem-toolbar",
+        "h": 88
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/order-list.html",
+    "tables": [
+      {
+        "h": 89,
+        "scroll": 89
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/order.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 206
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/plan-list.html",
+    "tables": [
+      {
+        "h": 75,
+        "scroll": 191
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/plans.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/platform.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 154
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/route-list.html",
+    "tables": [
+      {
+        "h": 127,
+        "scroll": 127
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [
+      {
+        "cls": "list-filters",
+        "h": 206
+      }
+    ],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "hidden",
+    "page": "/pages/standard-list.html",
+    "tables": [
+      {
+        "h": 75,
+        "scroll": 268
+      }
+    ],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/standards.html",
+    "tables": [],
+    "width": 390
+  },
+  {
+    "filters": [],
+    "height": 844,
+    "horizontal": false,
+    "mainOverflow": "auto",
+    "page": "/pages/workbench.html",
+    "tables": [],
+    "width": 390
+  }
+]

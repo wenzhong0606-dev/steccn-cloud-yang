@@ -30,3 +30,7 @@ steccn-cloud.iml
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+steccn-gateway/src/main/resources/bootstrap.yml
+steccn-wms/steccn-wms-biz/src/main/resources/bootstrap.yaml
+steccn-gateway/src/main/resources/bootstrap.yml
+steccn-wms/steccn-wms-biz/src/main/resources/bootstrap.yaml

@@ -1,0 +1,251 @@
+[
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "abnormal-events",
+    "tables": [
+      {
+        "bottom": 618.9250183105469,
+        "h": 227
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "acceptance",
+    "tables": [
+      {
+        "bottom": 244.90000534057617,
+        "h": 38
+      }
+    ]
+  },
+  {
+    "footer": [
+      835.4000015258789
+    ],
+    "mainBottom": 768,
+    "page": "asset-files",
+    "tables": []
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "catalog",
+    "tables": []
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "check-list",
+    "tables": [
+      {
+        "bottom": 618.9250030517578,
+        "h": 223
+      }
+    ]
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "defect-list",
+    "tables": [
+      {
+        "bottom": 618.9250183105469,
+        "h": 227
+      }
+    ]
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "abnormal-events",
+    "tables": [
+      {
+        "bottom": 618.9250183105469,
+        "h": 227
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "device",
+    "tables": []
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "equipment-templates",
+    "tables": [
+      {
+        "bottom": 660.8250122070312,
+        "h": 312
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "equipment",
+    "tables": [
+      {
+        "bottom": 642.0250244140625,
+        "h": 308
+      }
+    ]
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "failure-events",
+    "tables": [
+      {
+        "bottom": 618.9250183105469,
+        "h": 227
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "functional-locations",
+    "tables": [
+      {
+        "bottom": 660.8250122070312,
+        "h": 312
+      }
+    ]
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "hazards",
+    "tables": [
+      {
+        "bottom": 618.9250183105469,
+        "h": 227
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "history",
+    "tables": []
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "inspection-list",
+    "tables": [
+      {
+        "bottom": 618.9250030517578,
+        "h": 223
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "inspection",
+    "tables": []
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "order-list",
+    "tables": [
+      {
+        "bottom": 618.9250183105469,
+        "h": 227
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "order",
+    "tables": []
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "plan-list",
+    "tables": [
+      {
+        "bottom": 618.9250030517578,
+        "h": 223
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "plans",
+    "tables": []
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "platform",
+    "tables": []
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "route-list",
+    "tables": [
+      {
+        "bottom": 618.9250030517578,
+        "h": 223
+      }
+    ]
+  },
+  {
+    "footer": [
+      660.8249893188477
+    ],
+    "mainBottom": 768,
+    "page": "standard-list",
+    "tables": [
+      {
+        "bottom": 618.9250030517578,
+        "h": 223
+      }
+    ]
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "standards",
+    "tables": []
+  },
+  {
+    "footer": [],
+    "mainBottom": 768,
+    "page": "workbench",
+    "tables": []
+  }
+]

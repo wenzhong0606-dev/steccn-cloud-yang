@@ -1,0 +1,402 @@
+[
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "workbench",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "standards",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "standard-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "route-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "platform",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "plans",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "plan-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "order",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "order-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "inspection",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "inspection-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "history",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "hazards",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "functional-locations",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "failure-events",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "equipment",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "equipment-templates",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "device",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "abnormal-events",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "defect-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "check-list",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "catalog",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "asset-files",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "acceptance",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "abnormal-events",
+    "width": 1366
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "workbench",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "standards",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "standard-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "route-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "platform",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "plans",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "plan-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "order",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "order-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "inspection",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "inspection-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "history",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "hazards",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "functional-locations",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "failure-events",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "equipment",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "equipment-templates",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "device",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "abnormal-events",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "defect-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "check-list",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "catalog",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "asset-files",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "acceptance",
+    "width": 390
+  },
+  {
+    "header": "rgb(21, 41, 67)",
+    "main": true,
+    "orphans": 0,
+    "overflow": false,
+    "page": "abnormal-events",
+    "width": 390
+  }
+]

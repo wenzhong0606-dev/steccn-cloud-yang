@@ -1,0 +1,565 @@
+{
+  "emptyChecks": [
+    {
+      "name": "equipment",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 9,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "inspection-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "check-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "plan-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "route-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "standard-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "equipment-templates",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 4,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "functional-locations",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 4,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "abnormal-events",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 7,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "defect-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 7,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "failure-events",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 7,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "hazards",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    },
+    {
+      "name": "order-list",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "status": [
+        "暂无数据"
+      ],
+      "tables": [
+        {
+          "columns": 6,
+          "component": "data-table",
+          "state": "暂无数据请调整筛选条件或刷新列表。"
+        }
+      ]
+    }
+  ],
+  "tableInventory": [
+    {
+      "name": "abnormal-events",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 8,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "acceptance",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 1,
+          "component": "data-table",
+          "status": "load-status"
+        },
+        {
+          "bodyRows": 1,
+          "component": "data-table",
+          "state": "empty",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "asset-files",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "catalog",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "check-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 2,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "defect-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 4,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "defect",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 8,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "device",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "equipment-templates",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 1,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "equipment",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 10,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "failure-events",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 2,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "functional-locations",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 1,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "hazards",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 2,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "history",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "inspection-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 2,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "inspection",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "order-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 2,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "order",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 1,
+          "component": "data-table",
+          "state": "empty",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "plan-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 2,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "plans",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "platform",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "route-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 1,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "standard-list",
+      "externalEmpty": [],
+      "tables": [
+        {
+          "bodyRows": 3,
+          "component": "data-table",
+          "status": "load-status"
+        }
+      ]
+    },
+    {
+      "name": "standards",
+      "externalEmpty": [],
+      "tables": []
+    },
+    {
+      "name": "workbench",
+      "externalEmpty": [],
+      "tables": []
+    }
+  ],
+  "archiveChecks": [
+    {
+      "key": "parameters",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "structure",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "installation",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "work",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "maintenance",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "failure",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "repair",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "bom",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "replacement",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "meters",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "trend",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "risk",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "cost",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "history",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "related",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "audit",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    },
+    {
+      "key": "completeness",
+      "component": "data-table",
+      "pager": "共 0 条 · 第 1 / 1 页上一页下一页",
+      "state": "暂无数据请调整筛选条件或刷新列表。"
+    }
+  ],
+  "responsive": [
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "mainOverflow": "hidden",
+      "pager": "共 1 条 · 第 1 / 1 页上一页下一页",
+      "rect": {
+        "bottom": 660.8249893188477,
+        "top": 618.9249877929688
+      },
+      "viewport": 1366
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 600
+      },
+      "documentWidth": 1024,
+      "mainOverflow": "auto",
+      "pager": "共 1 条 · 第 1 / 1 页上一页下一页",
+      "rect": {
+        "bottom": 434.7999954223633,
+        "top": 392.8999938964844
+      },
+      "viewport": 1024
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "mainOverflow": "auto",
+      "pager": "共 1 条 · 第 1 / 1 页上一页下一页",
+      "rect": {
+        "bottom": 532.9000053405762,
+        "top": 476.1000061035156
+      },
+      "viewport": 390
+    }
+  ],
+  "paginationCheck": "设备台账12条：第一页切第二页，再返回第一页"
+}
