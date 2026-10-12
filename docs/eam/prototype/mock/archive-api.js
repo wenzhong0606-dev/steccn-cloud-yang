@@ -16,12 +16,14 @@ window.EAM_ARCHIVE_JSON = {
     maintenance:[['name','策略 / 记录'],['frequency','周期 / 日期'],['assignee','岗位 / 主责'],['dueAt','下次到期']]
   },
   trendConfig:{'EQ-001':{pointId:'PT-TEMP-01',name:'驱动端轴承温度',unit:'°C',metric:'temperature',upper:75,thresholdSource:'MIXER-V3 / PAR-MX-04',quality:'GOOD'}},
+  counterTrendConfig:{'EQ-001':{pointId:'CTR-HOURS-01',name:'设备累计运行小时',unit:'h',metric:'hours',quality:'GOOD'}},
   structured: {
     'PAR-MX-01':{kind:'额定值',template:'MIXER-V3'},'PAR-MX-02':{kind:'设计值',template:'MIXER-V3'},'PAR-MX-03':{kind:'额定值',template:'MIXER-V3'},'PAR-MX-04':{kind:'允许范围',template:'MIXER-V3'},
     'BOM-001':{material:'MAT-6208',quantity:'1 件',part:'驱动端轴承'},'BOM-002':{material:'MAT-BELT-2400',quantity:'2 条',part:'传动组件'},'BOM-003':{material:'MAT-GREASE-EP2',quantity:'0.5 kg',part:'润滑系统'},
     'RPL-001':{installedAt:'2026-09-18',oldSerial:'BRG-20240315',newSerial:'BRG-20260918',order:'REP-001'},
     'PT-TEMP-01':{part:'驱动端轴承',reading:'68.2 °C',quality:'GOOD'},'CTR-HOURS-01':{part:'设备整机',reading:'10200 h',quality:'GOOD'},
-    'EVT-001':{eventAt:'2024-03-15 08:00'},'EVT-002':{eventAt:'2024-03-18 08:00'},'EVT-003':{eventAt:'2026-09-18 11:10'},
+    'EVT-001':{milestone:true,eventAt:'2024-03-15 08:00',actor:'赵工',sourceId:'ACC-001',impact:'设备采购验收合格'},'EVT-002':{milestone:true,eventAt:'2024-03-18 08:00',sourceId:'USE-001',impact:'首次投用，生命周期在用'},'EVT-003':{milestone:true,eventAt:'2026-09-18 11:10',sourceId:'REP-001 / ACC-002',impact:'轴承更换，维修验收后恢复'},
+    'AUD-001':{eventAt:'2026-09-20',actor:'赵工',sourceId:'PM-001-V2',before:{润滑周期:'45天'},after:{润滑周期:'30天'}},'AUD-002':{eventAt:'2026-07-01',actor:'赵工',sourceId:'TRACE-DEMO-002',before:{参数模板:'MIXER-V2'},after:{参数模板:'MIXER-V3'}},
     'READ-001':{eventAt:'2026-10-10 07:00',temperature:67.8,hours:10199,quality:'GOOD'},'READ-002':{eventAt:'2026-10-10 07:30',temperature:68,hours:10199.5,quality:'GOOD'},'READ-003':{eventAt:'2026-10-10 08:00',temperature:68.2,hours:10200,quality:'GOOD'},
     'COST-001':{amount:185000,accountingAt:'2024-03-18',voucher:'FIN-DEMO-001'},'COST-002':{amount:780,accountingAt:'2026-09-30',voucher:'REP-001'},
     'INS-001':{eventAt:'2024-03-15',position:'FP-MIX-01',acceptance:'ACC-001'},'INS-002':{eventAt:'2026-09-18',position:'FP-MIX-01',acceptance:'ACC-002'},
@@ -71,7 +73,7 @@ window.EamArchiveApi = (()=>{
       if(!body.content?.trim()||!body.reason?.trim())throw Error('参数值和变更原因必填');
       const definition=EamArchiveRules.json.parameters[row.id],typed=EamArchiveRules.validate(definition,body.content);
       const before=row.content;let beforeTyped=null;try{beforeTyped=EamArchiveRules.validate(definition,before);}catch{}row.content=body.content.trim();row.typed=typed;row.revision++;row.updatedAt=new Date().toLocaleString('sv-SE');
-      db.domains[id].audit ||= [];db.domains[id].audit.unshift({id:'AUD-'+crypto.randomUUID(),name:'技术参数修改',objectId:row.id,before:{content:before,typed:beforeTyped},after:{content:row.content,typed:clone(typed)},templateVersion:definition.template,content:before+' → '+row.content,evidence:body.reason+' / '+EamDomain.personName(s.person),source:'参数维护',updatedAt:row.updatedAt,revision:1});save();
+      db.domains[id].audit ||= [];db.domains[id].audit.unshift({id:'AUD-'+crypto.randomUUID(),name:'技术参数修改',objectId:row.id,sourceId:row.id,actor:EamDomain.personName(s.person),reason:body.reason,eventAt:row.updatedAt,before:{content:before,typed:beforeTyped},after:{content:row.content,typed:clone(typed)},templateVersion:definition.template,content:before+' → '+row.content,evidence:body.reason+' / '+EamDomain.personName(s.person),source:'参数维护',updatedAt:row.updatedAt,revision:1});save();
       return {code:200,data:clone(row)};
     }
     if(method==='POST'&&domain==='lifecycle'){
@@ -91,7 +93,7 @@ window.EamArchiveApi = (()=>{
       if(domain==='media')return {code:200,data:{items:clone(scenario==='empty'?[]:[...(db.media[id]||[]).map(f=>({...f,equipmentId:id,isSample:true})),...s.assetFiles.filter(f=>f.equipmentId===id)] )}};
       if(domain==='cost'&&!['engineer','manager','auditor'].includes(s.role))throw Object.assign(new Error('当前角色无成本查看权限'),{code:'FORBIDDEN'});
       let rows=clone(db.domains[id]?.[domain]||[]);
-      const eventRows=s.events.filter(e=>EamProduct.eventEquipment({...e,details:e.details||{}})===id).map((e,i)=>({id:e.id||'SESSION-'+i,name:e.text||e.command||'业务操作',eventAt:e.time,before:e.details?.before,after:e.details?.after,content:(e.actor||'')+' / '+EamProduct.time(e.time),evidence:e.details?.reason||e.details?.opinion||'来源对象 '+(e.objectId||e.command||'业务记录'),updatedAt:e.time||'',source:'业务操作',revision:1}));
+      const eventRows=s.events.filter(e=>EamProduct.eventEquipment({...e,details:e.details||{}})===id).map((e,i)=>({id:e.id||'SESSION-'+i,name:e.text||e.command||'业务操作',eventAt:e.time,actor:e.actor,objectId:e.objectId,sourceId:e.objectId,action:e.command,before:e.details?.before,after:e.details?.after,content:(e.actor||'')+' / '+EamProduct.time(e.time),evidence:e.details?.reason||e.details?.opinion||'来源对象 '+(e.objectId||e.command||'业务记录'),updatedAt:e.time||'',source:'业务操作',revision:1}));
       if(['history','audit'].includes(domain))rows=(pmProjection?.history||[]).concat(eventRows,rows);
       if(domain==='structure')rows=s.parts.filter(x=>x.equipmentId===id).map(x=>({id:x.id,name:x.name,content:x.code,code:x.code,parentId:x.parentId||'',evidence:'父部位 '+(x.parentId||'根'),source:'设备结构',updatedAt:'—',revision:1}));
       if(id==='EQ-001'&&domain==='failure')rows=s.reports.map(x=>({id:x.id,name:x.description,content:EamProduct.label(x.status),status:EamProduct.label(x.status),eventAt:x.observedAt||'—',downtime:'待核实',evidence:'异常报告',source:'异常与缺陷',updatedAt:x.observedAt||'—',revision:1,target:'defect',query:{report:x.id}})).concat(rows);
@@ -117,6 +119,7 @@ window.EamArchiveApi = (()=>{
       }
       rows=rows.map(x=>({...x,...(db.structured[x.id]||{})}));
       if(domain==='failure')rows=rows.map(row=>({...row,kind:row.kind||'failures',objectType:row.objectType||'历史故障',priorityLabel:row.priorityLabel||'未记录'}));
+      if(['audit','history'].includes(domain)){rows=rows.map(row=>({...row,sourceId:row.sourceId||row.objectId}));if(domain==='history')rows=rows.filter(row=>typeof EamArchiveTraceRules!=='undefined'?EamArchiveTraceRules.business(row):row.milestone||typeof row.before==='string'&&['draft','active','stopped','pending_scrap','scrapped'].includes(row.before)&&['draft','active','stopped','pending_scrap','scrapped'].includes(row.after)&&row.before!==row.after||row.before?.status!==row.after?.status&&row.before?.status!==undefined);}
       if(['audit','history'].includes(domain))rows.sort((a,b)=>(Date.parse(b.eventAt||b.updatedAt)||0)-(Date.parse(a.eventAt||a.updatedAt)||0));
       if(domain==='parameters')rows.forEach(x=>{x.content=x.content.split(' / ')[0];x.definition=clone(EamArchiveRules.json.parameters[x.id]||null);x.valueType=x.definition?.type==='range'?'数值范围':x.definition?.type==='number'?'数值':'未定义';try{x.typed=EamArchiveRules.validate(x.definition,x.content);}catch(error){x.validationError=error.message;}});
       if(domain==='replacement')rows=rows.filter(x=>x.id!=='LIFE-001');
@@ -124,7 +127,7 @@ window.EamArchiveApi = (()=>{
       const ts=rows.map(r=>Date.parse(r.updatedAt)).filter(t=>!isNaN(t)).sort((a,b)=>b-a);
       const panelAsOf=ts.length?new Date(ts[0]).toLocaleString('sv-SE'):EAM_ARCHIVE_DEMO.asOf;
       const panelSource=[...new Set(rows.map(row=>row.source).filter(Boolean))].join('、')||'—';
-      return {code:200,data:{items:rows,total:rows.length,columns:db.schemas[domain]||[['name','记录 / 名称'],['content','业务内容'],['evidence','关联与依据']],trend:domain==='trend'?clone(db.trendConfig[id]||null):null,lifetime:domain==='replacement'&&scenario!=='empty'?clone(db.lifetime[id]||null):null,source:panelSource,asOf:panelAsOf}};
+      return {code:200,data:{items:rows,total:rows.length,columns:db.schemas[domain]||[['name','记录 / 名称'],['content','业务内容'],['evidence','关联与依据']],trend:domain==='trend'?clone(db.trendConfig[id]||null):null,trendPoints:domain==='trend'?clone([db.trendConfig[id],db.counterTrendConfig[id]].filter(Boolean)):[],trendState:domain==='trend'?{status:scenario==='stale'?'stale':'demo',asOf:EAM_ARCHIVE_DEMO.asOf}:null,lifetime:domain==='replacement'&&scenario!=='empty'?clone(db.lifetime[id]||null):null,source:panelSource,asOf:panelAsOf}};
     }
     const profile=db.profiles[id]||{};
     const states=clone(db.stateSources);const life=id==='EQ-001'?s.lifecycle:equipment.lifecycle;

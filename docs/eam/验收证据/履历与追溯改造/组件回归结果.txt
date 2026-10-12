@@ -1,0 +1,12 @@
+
+> eam-component-tests@1.0.0 test
+> node 运行组件测试.cjs
+
+_pilot-test.mjs · 结果: 21 通过 / 0 失败
+_form-dialog-test.mjs · Form/Dialog 结果: 29 通过 / 0 失败
+_card-test.mjs · Card 契约: 12 通过 / 0 失败
+_tabs-test.mjs · Tabs 契约: 17 通过 / 0 失败
+_migration-test.mjs · 迁移回归结果: 19 通过 / 0 失败
+_batch-migration-test.mjs · 批量迁移冒烟结果: 92 通过 / 0 失败
+../组件闭环回归测试.cjs · # tests 10
+真实页面回归.cjs · 真实页面回归：30通过 / 0失败

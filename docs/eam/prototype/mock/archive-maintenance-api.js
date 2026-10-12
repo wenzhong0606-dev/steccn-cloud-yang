@@ -12,7 +12,7 @@
   }
   for(const row of records){const actor=row.assigneeId||row.executorId;row.executor=people.rows?.find(person=>person.id===actor)?.name||actor||'—';row.eventAt=row.execution?.completedAt||row.occurredAt||row.createdAt||'—';}
   const restrictions=records.filter(row=>row.restriction).map(row=>({...row,id:'LIMIT-'+row.id,name:row.restriction.reason,content:row.restriction.status==='active'?'有效限制':'已解除',status:row.restriction.status,evidence:'限制范围 '+row.restriction.scope,canRelease:false}));
-  const history=[...audit.values()].map(entry=>{const row=records.find(r=>r.id===entry.objectId);return {...row,id:'AUD-'+entry.objectId+'-'+entry.version+'-'+entry.action,name:config.actionLabels[entry.action]||entry.action,content:(entry.before?.status||'新建')+' → '+(entry.after?.status||'—'),evidence:entry.reason||'—',updatedAt:entry.at,revision:entry.version};});
+  const history=[...audit.values()].map(entry=>{const row=records.find(r=>r.id===entry.objectId);return {...row,id:'AUD-'+entry.objectId+'-'+entry.version+'-'+entry.action,name:config.actionLabels[entry.action]||entry.action,before:entry.before,after:entry.after,actor:people.rows?.find(p=>p.id===entry.actorId)?.name||entry.actorId,reason:entry.reason,action:entry.action,sourceId:entry.objectId,eventAt:entry.at,content:(entry.before?.status||'新建')+' → '+(entry.after?.status||'—'),evidence:entry.reason||'—',updatedAt:entry.at,revision:entry.version};});
   const person=id=>people.rows?.find(p=>p.id===id)?.name||id||'未记录';
   for(const row of records){
    row.objectType=kinds[row.kind][0];row.query.equipment=equipmentId;

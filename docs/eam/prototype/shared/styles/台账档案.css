@@ -211,3 +211,21 @@ body[data-page="device"].archive-media-open .archive-workspace {flex:none;align-
 
 .archive-media-stage.archive-media-empty {height:160px;}
 #media-sample-gallery img {width:140px;height:84px;object-fit:contain;}
+
+/* 监测以完整主图为中心，与原始数据互切；不叠加微型摘要曲线。 */
+.archive-trend-chart {display:block;width:100%;height:320px;min-width:0;}
+body[data-page="device"].archive-trend-open main {overflow:auto;}
+body[data-page="device"].archive-trend-open .archive-workspace {flex:none;align-items:start;}
+.archive-trend-open .archive-content {display:block;overflow:visible;}
+.archive-trend-open #archive-panels-mount {overflow:visible;}
+.archive-trend-open .archive-nav {max-height:calc(100dvh - 150px);position:sticky;top:0;}
+.archive-trend-open [data-record-domain="trend"] {display:block;min-width:0;}
+.archive-trend-open [data-record-domain="trend"]>.table-wrapper {height:auto;max-height:none;min-height:0;}
+@media(max-width:760px) {.archive-trend-chart {height:280px;}.archive-trend-open .archive-nav {position:static;max-height:96px;}.archive-trend-open .archive-workspace {grid-template-rows:auto auto;}}
+body[data-page="device"].archive-trace-open main {overflow:auto;}
+body[data-page="device"].archive-trace-open .archive-workspace {flex:none;align-items:start;}
+body[data-page="device"].archive-trace-open .archive-content,body[data-page="device"].archive-trace-open #archive-panels-mount {display:block;overflow:visible;}
+body[data-page="device"].archive-trace-open [data-record-domain] {display:block;min-width:0;}
+body[data-page="device"].archive-trace-open .table-responsive {overflow-x:auto;}
+body[data-page="device"].archive-trace-open table {min-width:620px;}
+@media(max-width:760px){body[data-page="device"].archive-trace-open .archive-workspace{grid-template-rows:auto auto;}}

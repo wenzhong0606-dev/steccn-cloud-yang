@@ -35,6 +35,12 @@
   for(const section of sections){const card=document.createElement('section');card.className='card mb-3';const title=document.createElement('h3');title.className='card-header h6 mb-0';title.textContent=section.title;const body=document.createElement('dl');body.className='card-body row mb-0';
    for(const [label,value]of section.fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.className='col-sm-4';dd.className='col-sm-8 text-break';dt.textContent=label;dd.textContent=value===null||value===undefined||value===''?'来源未提供':String(value);body.append(dt,dd);}card.append(title,body);host.append(card);
   }
+  if(domain==='audit'&&typeof EamArchiveTraceRules!=='undefined'){
+   const section=document.createElement('section');section.className='card mb-3';const heading=document.createElement('h3');heading.className='card-header h6';heading.textContent='字段差异';section.append(heading);
+   const changes=EamArchiveTraceRules.diff(row.before,row.after);
+   if(!changes.length){const note=document.createElement('p');note.className='card-body text-secondary';note.textContent='来源未提供可核对的字段差异。';section.append(note);}
+   else {const wrap=document.createElement('div');wrap.className='table-responsive';const table=document.createElement('table');table.className='table table-sm';table.setAttribute('aria-label','字段差异');const head=document.createElement('thead'),tr=document.createElement('tr');for(const text of ['字段','变更前','变更后']){const th=document.createElement('th');th.textContent=text;tr.append(th);}head.append(tr);table.append(head);const body=document.createElement('tbody');for(const change of changes){const tr=document.createElement('tr');for(const key of ['field','before','after']){const td=document.createElement('td');td.textContent=change[key];tr.append(td);}body.append(tr);}table.append(body);wrap.append(table);section.append(wrap);}host.append(section);
+  }
   const note=document.createElement('p');note.className='small text-secondary';note.textContent='只读来源投影；执行、验收、终止和限制解除由来源流程处理。历史样本不作为当前业务闭环证据。';host.append(note);
  }
  return {views,matches,columns,controls,details};
