@@ -1,0 +1,33 @@
+PASS abnormal-events.html · 实际脚本/片段初始化
+PASS acceptance.html · 实际脚本/片段初始化
+PASS asset-files.html · 实际脚本/片段初始化
+PASS catalog.html · 实际脚本/片段初始化
+PASS check-list.html · 实际脚本/片段初始化
+PASS defect-list.html · 实际脚本/片段初始化
+PASS defect.html · 实际脚本/片段初始化
+PASS device.html · 实际脚本/片段初始化
+PASS equipment-templates.html · 实际脚本/片段初始化
+PASS 设备台账真实业务双实例隔离
+PASS equipment.html · 实际脚本/片段初始化
+PASS failure-events.html · 实际脚本/片段初始化
+PASS functional-locations.html · 实际脚本/片段初始化
+PASS hazards.html · 实际脚本/片段初始化
+PASS history.html · 实际脚本/片段初始化
+PASS inspection-list.html · 实际脚本/片段初始化
+PASS inspection.html · 实际脚本/片段初始化
+PASS maintenance-acceptance.html · 实际脚本/片段初始化
+PASS maintenance-plan-list.html · 实际脚本/片段初始化
+PASS maintenance-plan.html · 实际脚本/片段初始化
+PASS maintenance-task-list.html · 实际脚本/片段初始化
+PASS maintenance-task.html · 实际脚本/片段初始化
+PASS order-list.html · 实际脚本/片段初始化
+PASS order.html · 实际脚本/片段初始化
+PASS plan-list.html · 实际脚本/片段初始化
+PASS plans.html · 实际脚本/片段初始化
+PASS platform.html · 实际脚本/片段初始化
+PASS route-list.html · 实际脚本/片段初始化
+PASS standard-list.html · 实际脚本/片段初始化
+PASS standards.html · 实际脚本/片段初始化
+PASS workbench.html · 实际脚本/片段初始化
+PASS 无图片设备档案保持媒体占位和独立状态
+真实页面回归：30通过 / 0失败

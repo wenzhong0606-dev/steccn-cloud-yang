@@ -3,7 +3,7 @@ window.EAM_ARCHIVE_JSON = {
   media: {'EQ-001':[{id:'SAMPLE-1',name:'设备外观（示意）',revision:'V1',category:'image',status:'active',previewUrl:'../assets/mixer.svg'},{id:'SAMPLE-2',name:'轴承部位（示意）',revision:'V1',category:'image',status:'active',previewUrl:'../assets/mixer-detail.svg'},{id:'SAMPLE-DOC',name:'设备说明示例.txt',revision:'V1.2',category:'document',status:'active',previewUrl:'../assets/设备说明示例.txt'}]},
   profiles: {'EQ-001':{classification:'生产设备 / 混合机',department:'原料生产部',management:'设备动力部',team:'机械维修班',assetCode:'AS-2024-018',functionalPosition:'FP-MIX-01',image:'../assets/mixer.svg',supplier:'示例机械有限公司',purchaseContract:'DEMO-PO-001',acceptanceDate:'2024-03-15',acceptanceCode:'ACC-001',warrantyUntil:'2025-03-14',designLife:'15 年'}},
   schemas: {
-    completeness:[['name','检查项'],['status','检查结果'],['evidence','适用规则 / 校验说明']],
+    completeness:[['group','检查领域'],['name','检查项'],['status','检查结果'],['evidence','适用规则 / 校验说明']],
     parameters:[['name','参数名称'],['content','参数值 / 单位'],['kind','参数性质'],['valueType','数据类型'],['template','模板版本']],
     bom:[['name','物料名称'],['material','物料编码'],['quantity','数量 / 单位'],['part','装配部位']],
     replacement:[['name','更换部位'],['installedAt','更换日期'],['oldSerial','原件序列号'],['newSerial','新件序列号'],['order','维修工单']],
@@ -108,7 +108,9 @@ window.EamArchiveApi = (()=>{
         for(const row of rows){let invalid='';const value=String(equipment[row.field]||'');if(row.status==='通过'){if(row.field==='ownerId'&&!EamArchiveRules.json.ownerOptions.some(option=>option.value===value))invalid='设备负责人不在当前可选人员范围';if(row.field==='commissionedAt'&&(!/^\d{4}-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value))||new Date(value).toISOString().slice(0,10)!==value))invalid='投用日期不是有效日历日期';if(row.field==='code'&&s.equipmentRecords.some(other=>other.id!==id&&other.code?.toLowerCase()===value.toLowerCase()))invalid='设备编码重复';}if(invalid){row.status='待修正';row.content='待修正';row.evidence=invalid;row.canRepair=equipment.lifecycle!=='scrapped'&&['engineer','supervisor'].includes(s.role);}}
         for(const parameter of db.domains[id]?.parameters||[]){let status='通过',evidence='参数类型、单位、精度及范围校验通过';try{EamArchiveRules.validate(EamArchiveRules.json.parameters[parameter.id],parameter.content);}catch(error){status='待修正';evidence=error.message;}rows.push({id:'CHECK-'+parameter.id,name:parameter.name,content:status,status,evidence,source:'参数模板校验',updatedAt:parameter.updatedAt,revision:parameter.revision,repairTab:'parameters'});}
         for(const row of rows)if(row.canRepair)row.requiredRepairs=rows.filter(other=>other.field&&other.status==='待补录'&&other.id!==row.id&&EamArchiveRules.json.fields.some(([key,,stage])=>key===other.field&&stage==='always')).map(other=>({field:other.field,name:other.name,options:other.options}));
-        rows.push({id:'TEMPLATE',name:'参数模板适用关系',content:db.domains[id]?.parameters?.length?'演示模板 MIXER-V3':'待配置',status:db.domains[id]?.parameters?.length?'通过':'待配置',evidence:'当前模板仅适用于示例混合机；其他设备须独立配置适用关系',source:'模板适用检查',updatedAt:'—',revision:1,target:'equipment-templates',query:{}});
+        const files=[...(db.media[id]||[]).map(file=>({...file,equipmentId:id,isSample:true})),...s.assetFiles.filter(file=>file.equipmentId===id)].map(file=>({...file}));
+        for(const file of files.filter(file=>file.status==='active'&&!file.isSample&&file.localContent)){try{if(typeof EamFiles!=='undefined'){const blob=await EamFiles.get(file);file.contentVerified=blob.size>0;}}catch{file.contentVerified=false;}}
+        rows=EamArchiveRules.complete(rows,{equipment:{...(db.profiles[id]||{}),...equipment},parameters:db.domains[id]?.parameters||[],definitions:EamArchiveRules.json.parameters,binding:db.templateBindings?.[id],files,meters:[db.trendConfig[id],db.counterTrendConfig[id]].filter(Boolean)});
       }
       if(projection){
         if(['failure','repair','risk','related'].includes(domain)){
@@ -127,7 +129,10 @@ window.EamArchiveApi = (()=>{
       const ts=rows.map(r=>Date.parse(r.updatedAt)).filter(t=>!isNaN(t)).sort((a,b)=>b-a);
       const panelAsOf=ts.length?new Date(ts[0]).toLocaleString('sv-SE'):EAM_ARCHIVE_DEMO.asOf;
       const panelSource=[...new Set(rows.map(row=>row.source).filter(Boolean))].join('、')||'—';
-      return {code:200,data:{items:rows,total:rows.length,columns:db.schemas[domain]||[['name','记录 / 名称'],['content','业务内容'],['evidence','关联与依据']],trend:domain==='trend'?clone(db.trendConfig[id]||null):null,trendPoints:domain==='trend'?clone([db.trendConfig[id],db.counterTrendConfig[id]].filter(Boolean)):[],trendState:domain==='trend'?{status:scenario==='stale'?'stale':'demo',asOf:EAM_ARCHIVE_DEMO.asOf}:null,lifetime:domain==='replacement'&&scenario!=='empty'?clone(db.lifetime[id]||null):null,source:panelSource,asOf:panelAsOf}};
+      const completeness=domain==='completeness'?{...EamArchiveRules.completeSummary(rows,new Date().toISOString()),classification:equipment.classification||db.profiles[id]?.classification||'未提供',lifecycle:db.stateLabels[equipment.lifecycle]||'未知'}:null;
+      if(completeness)rows=rows.map(row=>({...row,checkedAt:completeness.checkedAt,detailSections:[{title:'检查依据与适用口径',fields:[['检查领域',row.group],['检查结果',row.status==='待补录'?'缺失':row.status],['适用性',({required:'明确适用必需项',optional:'不适用或非必需项',unknown:'适用条件尚未核验'})[row.applicability]],['规则版本',row.ruleVersion],['检查时间',completeness.checkedAt],['设备分类',completeness.classification],['生命周期',completeness.lifecycle],['来源依据',row.evidence],['来源版本',row.revision],['当前字段值',row.currentValue]]}]}));
+      if(completeness&&scenario!=='empty')sessionStorage.setItem('eam-completeness-last:'+id+':'+s.role,JSON.stringify({equipmentId:id,...completeness,items:rows}));
+      return {code:200,data:{items:rows,total:rows.length,columns:db.schemas[domain]||[['name','记录 / 名称'],['content','业务内容'],['evidence','关联与依据']],trend:domain==='trend'?clone(db.trendConfig[id]||null):null,trendPoints:domain==='trend'?clone([db.trendConfig[id],db.counterTrendConfig[id]].filter(Boolean)):[],trendState:domain==='trend'?{status:scenario==='stale'?'stale':'demo',asOf:EAM_ARCHIVE_DEMO.asOf}:null,completeness,lifetime:domain==='replacement'&&scenario!=='empty'?clone(db.lifetime[id]||null):null,source:panelSource,asOf:panelAsOf}};
     }
     const profile=db.profiles[id]||{};
     const states=clone(db.stateSources);const life=id==='EQ-001'?s.lifecycle:equipment.lifecycle;

@@ -229,3 +229,5 @@ body[data-page="device"].archive-trace-open [data-record-domain] {display:block;
 body[data-page="device"].archive-trace-open .table-responsive {overflow-x:auto;}
 body[data-page="device"].archive-trace-open table {min-width:620px;}
 @media(max-width:760px){body[data-page="device"].archive-trace-open .archive-workspace{grid-template-rows:auto auto;}}
+
+.archive-trace-open [data-record-domain="completeness"]>.table-wrapper{height:auto;max-height:none;min-height:0;}@media(max-width:760px){.archive-check-code{display:none!important;}}

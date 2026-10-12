@@ -4,7 +4,7 @@
 @import url("./styles/令牌.css?v=20261011-closure4") layer(tokens);
 @import url("./styles/公共组件.css?v=20261011-closure4") layer(components);
 @import url("./styles/应用布局.css?v=20261011-closure4") layer(layout);
-@import url("./styles/台账档案.css?v=20261012-trace1") layer(pages);
+@import url("./styles/台账档案.css?v=20261012-complete1") layer(pages);
 @import url("./styles/问题工单.css?v=20261011-closure4") layer(pages);
 
 @import url("./styles/全页面统一.css?v=20261011-closure4") layer(pages);
