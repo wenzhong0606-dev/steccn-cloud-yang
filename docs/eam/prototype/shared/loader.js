@@ -13,6 +13,10 @@ window.Eam ||= {};
   const pending=new WeakMap();
   const cache = new Map(); // src -> Promise<string>
   async function fetchText(src) {
+    // 组件依赖 fetch()，file:// 下浏览器会阻止本地跨文件请求；必须使用 HTTP(S) 静态服务。
+    if (location.protocol === 'file:') {
+      throw new Error('当前通过 file:// 打开页面，浏览器禁止读取本地HTML组件。请在 prototype 目录双击“启动原型服务.cmd”，然后通过 http://127.0.0.1:8765/ 访问；或使用 VS Code Live Server。');
+    }
     if (cache.has(src)) return cache.get(src);
     const p = fetch(src, { cache: 'no-store' })
       .then((r) => {
@@ -21,7 +25,8 @@ window.Eam ||= {};
       })
       .catch((err) => {
         cache.delete(src); // 关键：失败清缓存，重试才会真正重新请求
-        throw err;
+        const detail = err?.message || String(err);
+        throw new Error('组件请求失败：' + src + '（' + detail + '）。请确认静态服务正在运行、组件URL可访问，并查看浏览器 Network/Console。');
       });
     cache.set(src, p);
     return p;
