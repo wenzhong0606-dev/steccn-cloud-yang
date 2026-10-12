@@ -1,1 +1,113 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>保养任务 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head><body data-page="maintenance-task-list" data-layout="list"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div class="breadcrumb" id="breadcrumb"></div><div class="title work-heading"><div><h1>保养任务</h1><p class="text-secondary small">计划窗口 · 个人派工 · 执行送验收</p></div></div><section class="card" data-component="list-panel"><div class="list-panel-header" data-component="list-toolbar"><h2 class="business-panel-title">保养任务清单</h2><div class="list-panel-tools"><div class="input-group input-group-sm" data-component="filter-bar"><input id="mt-search" class="form-control" aria-label="搜索保养任务" placeholder="任务名称或编号"><button class="btn btn-outline-secondary btn-sm" data-filter-toggle="mt-options">高级筛选</button></div><button id="mt-import" disabled class="btn btn-outline-secondary btn-sm">导入</button><button id="mt-export" class="btn btn-outline-secondary btn-sm">导出</button><button id="mt-columns" class="btn btn-outline-secondary btn-sm">列设置</button><button id="mt-refresh" class="btn btn-outline-secondary btn-sm">刷新</button><button id="mt-plans" class="btn btn-primary btn-sm">从计划生成</button></div></div><div id="mt-options" class="filter-options" hidden><select id="mt-status" aria-label="任务状态"><option value="">全部状态</option></select><select id="mt-equipment" aria-label="设备"><option value="">全部设备</option></select><select id="mt-mine" aria-label="参与范围"><option value="">权限范围任务</option><option value="1">我参与的任务</option></select><button type="button">清除筛选</button></div><p id="mt-load" role="status">正在读取…</p><div class="table-wrapper"><table class="data-table"><thead><tr><th>任务 / 编号</th><th>设备</th><th>来源计划</th><th>执行窗口</th><th>主责 / 协作</th><th>状态</th><th>操作</th></tr></thead><tbody id="mt-rows"></tbody></table></div><div id="mt-pagination" class="list-pagination"></div></section><dialog id="mt-column-dialog" class="problem-dialog"><h2>列设置</h2><div id="mt-column-options"></div><button id="mt-column-close" class="btn btn-outline-secondary btn-sm">关闭</button></dialog><p class="text-secondary small my-3">任务由已发布计划的选定窗口生成；完工提交进入待独立验收。</p></main></div><div id="mobile-nav"></div><script src="../mock/data.js"></script><script src="../shared/product.js"></script><script src="../shared/maintenance.js"></script><script src="../shared/domain.js"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js"></script><script src="../mock/maintenance-data.js"></script><script src="../mock/maintenance-rules.js"></script><script src="../mock/maintenance-closure-rules.js"></script><script src="../mock/maintenance-task-rules.js"></script><script src="../mock/maintenance-task-api.js"></script><script src="../mock/problem-data.js"></script><script src="../mock/work-data.js"></script><script src="../mock/work-rules.js"></script><script src="../mock/problem-api.js?v=20261011-mc1"></script><script src="../mock/maintenance-api.js?v=20261011-mc1"></script><script src="../mock/list-tools-data.js"></script><script src="../scripts/maintenance-task-list.js"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>保养任务 · 设备管理</title>
+  <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="maintenance-task-list" data-layout="list">
+  <div id="platform-header"></div>
+  <div class="shell">
+    <aside id="module-nav"></aside>
+    <main>
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="title work-heading" data-component="page-header" data-component-src="../components/page-header.html" data-component-required="true" data-component-scope="page">
+        <template data-fill="head">
+          <div>
+            <h1>保养任务</h1>
+            <p class="text-secondary small">计划窗口 · 个人派工 · 执行送验收</p>
+          </div>
+        </template>
+      </div>
+      <section class="card" data-component="list-panel" data-component-src="../components/list-panel.html" data-component-required="true" data-component-scope="page">
+        <template data-fill="head">
+          <h2 class="business-panel-title">保养任务清单</h2>
+          <div class="list-panel-tools">
+            <div data-component="filter-bar" data-component-src="../components/filter-bar.html" data-component-required="true">
+              <template data-fill="body">
+                <input id="mt-search" class="form-control" aria-label="搜索保养任务" placeholder="任务名称或编号">
+                <button class="btn btn-outline-secondary btn-sm" data-filter-toggle="mt-options">高级筛选</button>
+              </template>
+            </div>
+            <button id="mt-import" disabled="" class="btn btn-outline-secondary btn-sm">导入</button>
+            <button id="mt-export" class="btn btn-outline-secondary btn-sm">导出</button>
+            <button id="mt-columns" class="btn btn-outline-secondary btn-sm">列设置</button>
+            <button id="mt-refresh" class="btn btn-outline-secondary btn-sm">刷新</button>
+            <button id="mt-plans" class="btn btn-primary btn-sm">从计划生成</button>
+          </div>
+        </template>
+        <template data-fill="body">
+          <div id="mt-options" class="filter-options" hidden="">
+            <select id="mt-status" aria-label="任务状态">
+              <option value="">全部状态</option>
+            </select>
+            <select id="mt-equipment" aria-label="设备">
+              <option value="">全部设备</option>
+            </select>
+            <select id="mt-mine" aria-label="参与范围">
+              <option value="">权限范围任务</option>
+              <option value="1">我参与的任务</option>
+            </select>
+            <button type="button">清除筛选</button>
+          </div>
+          <p id="mt-load" role="status">正在读取…</p>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>任务 / 编号</th>
+                  <th>设备</th>
+                  <th>来源计划</th>
+                  <th>执行窗口</th>
+                  <th>主责 / 协作</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="mt-rows"></tbody>
+            </table>
+          </div>
+        </template>
+        <template data-fill="footer">
+          <div id="mt-pagination" data-component="pagination" data-component-src="../components/pagination.html" data-component-required="true">
+            <template data-fill="body"></template>
+          </div>
+        </template>
+      </section>
+      <dialog id="mt-column-dialog" class="problem-dialog" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2>列设置</h2></template><template data-fill="body">
+
+        <div id="mt-column-options"></div><button id="mt-column-close" class="btn btn-outline-secondary btn-sm">关闭</button>
+      </template></dialog>
+      <p class="text-secondary small my-3">任务由已发布计划的选定窗口生成；完工提交进入待独立验收。</p>
+    </main>
+  </div>
+  <div id="mobile-nav"></div>
+  <script src="../shared/loader.js?v=20261011-closure4"></script>
+  <script src="../mock/data.js"></script>
+  <script src="../shared/product.js"></script>
+  <script src="../shared/maintenance.js"></script>
+  <script src="../shared/domain.js"></script>
+  <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/form.js?v=20261011-closure4"></script>
+  <script src="../shared/components.js?v=20261011-closure4"></script>
+  <script src="../shared/navigation.js?v=20261011-mc1"></script>
+  <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+  <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+  <script src="../shared/ui.js?v=20261011-closure4"></script>
+  <script src="../mock/maintenance-data.js?v=20261011-window1"></script>
+  <script src="../mock/maintenance-rules.js"></script>
+  <script src="../mock/maintenance-closure-rules.js?v=20261011-qa1"></script>
+  <script src="../mock/maintenance-task-rules.js?v=20261011-window1"></script>
+  <script src="../mock/maintenance-task-api.js?v=20261011-window1"></script>
+  <script src="../mock/problem-data.js"></script>
+  <script src="../mock/work-data.js?v=20261011-ap1"></script>
+  <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+  <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+  <script src="../mock/maintenance-api.js?v=20261011-ap1"></script>
+  <script src="../mock/list-tools-data.js"></script>
+  <script src="../scripts/maintenance-task-list.js?v=20261011-closure4"></script>
+
+
+</body></html>

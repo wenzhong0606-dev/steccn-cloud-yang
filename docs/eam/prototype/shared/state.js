@@ -1,5 +1,7 @@
 /* 会话状态/安全文本绑定；模拟数据不上传。旧v2演示不兼容，改用独立v3键。 */
-window.Eam = (() => {
+/* 合并式初始化：扩展 window.Eam（由 loader.js 预建基础命名空间），保留全部 18 个导出成员，
+ * 不再用 window.Eam = IIFE() 覆盖，避免抹掉 loader 的加载器 API。 */
+(function () {
   const key='eam-demo-v3';let s=EamDomain.initial();
   try {const stored=JSON.parse(sessionStorage.getItem(key)||'null');if(stored?.schema===3)s={...s,...stored};} catch {}
   if(window.EAM_EQUIPMENT_SAMPLES&&!s.equipmentSamplesV1){for(const e of EAM_EQUIPMENT_SAMPLES.equipment)if(!s.equipmentRecords.some(x=>x.id===e.id||x.code===e.code))s.equipmentRecords.push(structuredClone(e));for(const p of EAM_EQUIPMENT_SAMPLES.parts)if(s.equipmentRecords.some(e=>e.id===p.equipmentId)&&!s.parts.some(x=>x.id===p.id))s.parts.push(structuredClone(p));s.equipmentSamplesV1=true;}
@@ -24,5 +26,6 @@ window.Eam = (() => {
   const ensureToast=()=>{if(document.getElementById('toast'))return;const el=document.createElement('div');el.id='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.append(el);};
   const ensureConfirm=()=>{if(document.getElementById('confirm-dialog'))return;const d=document.createElement('dialog');d.id='confirm-dialog';d.setAttribute('aria-labelledby','confirm-title');const title=document.createElement('h2');title.id='confirm-title';const message=document.createElement('p');message.id='confirm-message';const reason=document.createElement('textarea');reason.id='confirm-reason';const err=document.createElement('p');err.id='confirm-error';err.setAttribute('role','alert');const actions=document.createElement('div');actions.className='actions';const cancel=document.createElement('button');cancel.id='confirm-cancel';cancel.type='button';cancel.textContent='取消';const submit=document.createElement('button');submit.id='confirm-submit';submit.type='button';submit.className='btn btn-sm btn-primary';submit.textContent='确认';actions.append(cancel,submit);d.append(title,message,field('操作原因 *',reason),err,actions);document.body.append(d);};
   ensureToast();ensureConfirm();
-  return {s,key,save,role,person,message,go,run,text,value,checked,row,attach,confirm,can,field,card};
+  const ns = window.Eam || (window.Eam = {});
+  Object.assign(ns, { s, key, save, role, person, message, go, run, text, value, checked, row, attach, confirm, can, field, card, ensureToast, ensureConfirm });
 })();

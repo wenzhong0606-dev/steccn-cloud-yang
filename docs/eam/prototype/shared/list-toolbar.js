@@ -1,3 +1,5 @@
+/* 组件就绪后执行 */
+Eam.registerInit(async function(){
 /* 统一列表标题栏组件：只增强组件插槽，不拼装业务页面。 */
 (()=>{
  const page=document.body.dataset.page;if(!EAM_LIST_TOOLS_JSON.pages[page])return;
@@ -19,3 +21,5 @@
  if(busy)return;busy=true;button.disabled=true;try{if(action==='export'){const result=await EamListToolsApi.request('GET','/list-tools/export',{page});const url=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=page+'-导出.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);Eam.message('已导出权限范围内'+result.rows.length+'条（JSON，不限当前分页）');}else if(action==='refresh'){await EamListToolsApi.request('GET','/list-tools/export',{page});if(typeof button.onclick==='function')await button.onclick(event);else location.reload();}}catch(e){Eam.message(e.message);}finally{busy=false;button.disabled=false;}},true);
  const importButton=tools.querySelector('[data-list-tool=import]');if(importButton){importButton.disabled=!Eam.can(['engineer','supervisor']);if(importButton.disabled)importButton.title='当前角色没有导入权限';}
 })();
+
+});

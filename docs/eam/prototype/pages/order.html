@@ -1,7 +1,137 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>维修执行与工单详情 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head><body data-page="order" data-layout="detail"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div class="breadcrumb" id="breadcrumb"></div><div class="title work-heading"><div><h1>维修执行与工单详情</h1><p class="text-secondary small">每个问题逐项记录；验收不会自动关闭问题或解除限制</p></div><div class="actions"><button data-page="order-list" type="button">工单列表</button><button id="order-refresh" type="button">重新读取（放弃未保存输入）</button></div></div>
-<section class="card work-selection"><label class="field">选择工单<select id="order-selector"><option value="">请选择工单</option></select></label><p id="order-read-status" role="status" class="text-secondary">正在读取…</p></section>
-<div id="order-content" hidden><section class="card work-summary"><div class="work-summary-top"><div><p id="order-number" class="text-secondary"></p><h2 id="order-title"></h2><p id="order-scope" class="text-secondary"></p></div><div id="order-status"></div></div><dl class="problem-facts" id="order-facts"></dl><div id="order-actions" class="actions"><button type="button" data-command="approve">独立审核</button><button type="button" data-command="assign">派工 / 改派</button><button type="button" data-command="start" class="btn btn-primary">安全确认并开工</button><button type="button" data-command="accept" class="btn btn-primary">独立技术验收</button><button type="button" data-command="close" class="btn btn-primary">工单业务关闭</button><button type="button" data-command="pause">暂停作业</button><button type="button" data-command="cancel">终止工单</button></div><p id="order-permission-note" class="text-secondary"></p></section>
-<section class="card"><div class="work-section-title"><h2>关联问题与逐项处理结果</h2><p id="outcome-mode" class="text-secondary"></p></div><div class="table-wrapper"><table class="data-table work-outcomes"><thead><tr><th>问题 / 当前状态</th><th>本次处理结论</th><th>逐项证据</th><th>功能恢复时间</th></tr></thead><tbody id="outcome-rows"></tbody></table></div><p class="text-secondary">“已处理”表示提交验证。未解决项需后续安排；故障恢复时间与试运行证据必须可追溯。</p></section>
-<section class="card"><h2>执行与试运行</h2><form id="execution-form"><fieldset id="execution-fields"><div class="problem-form-grid"><label class="field">诊断 / 原因 *<textarea id="execution-diagnosis" maxlength="2000"></textarea></label><label class="field">维修措施 *<textarea id="execution-measures" maxlength="2000"></textarea></label><label class="field">试运行方法与结果 *<textarea id="execution-trial" maxlength="2000"></textarea></label><div><label class="field">实际工时（分钟） *<input id="execution-labor" type="number" min="0.1" step="0.1"></label><label class="field">领退料单据引用<input id="execution-material" maxlength="200"></label></div></div></fieldset><div class="actions"><button id="save-execution" type="button">保存执行草稿</button><button id="complete-execution" type="button" class="btn btn-primary">提交逐项完工</button></div><p id="execution-error" class="problem-error" role="alert"></p></form></section>
-<section class="card"><h2>执行版本、验收与审计</h2><div id="execution-history"></div><div id="order-audit"></div></section></div>
-<dialog id="work-command-dialog" class="problem-dialog" aria-labelledby="work-command-title"><h2 id="work-command-title"></h2><p id="work-command-context" class="text-secondary"></p><form id="work-command-form"><label id="assign-field" class="field" hidden>指派执行人 *<select id="assign-person"></select></label><fieldset id="safety-fields" hidden><legend>安全确认 *</legend><p id="permit-summary" class="text-secondary"></p><label><input id="safe-isolation" type="checkbox"> 已按现场规程确认隔离</label><label><input id="safe-guard" type="checkbox"> 已确认作业防护</label></fieldset><fieldset id="accept-fields" hidden><legend>独立技术验收</legend><label class="field">验收决定<select id="accept-decision"><option value="pass">技术验收通过，逐项送验证</option><option value="return">退回返工，保留执行版本</option></select></label><label><input id="trial-confirmed" type="checkbox"> 已核实试运行证据</label><p class="text-secondary">关联问题状态和证据在后台再次校验；执行人不能验收自己。</p></fieldset><fieldset id="residual-fields" hidden><legend>残留问题后续安排</legend><div id="residual-list"></div><p class="text-secondary">后续工单须已审核且关联同一问题，控制有效期覆盖后续期限。重大隐患残留阻止关闭。</p></fieldset><label id="site-restored-field" hidden><input id="site-restored" type="checkbox"> 终止前已确认现场恢复</label><label id="command-evidence-field" class="field" hidden>现场恢复证据 *<textarea id="command-evidence" maxlength="2000"></textarea></label><label class="field">操作意见 / 依据 *<textarea id="command-reason" required maxlength="2000"></textarea></label><p id="command-error" class="problem-error" role="alert"></p><div class="actions"><button id="command-cancel" type="button">取消</button><button id="command-submit" class="btn btn-primary" type="submit">确认提交</button></div></form></dialog><p class="text-secondary small my-4">模型评审 · JSON异步模拟接口；未接真实业务服务</p></main></div><div id="mobile-nav"></div><script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js"></script><script src="../shared/maintenance.js"></script><script src="../shared/domain.js"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../mock/problem-data.js"></script><script src="../mock/work-data.js"></script><script src="../mock/work-rules.js"></script><script src="../mock/problem-api.js"></script><script src="../scripts/work-ui.js"></script><script src="../scripts/work-order-page.js"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>维修执行与工单详情 · 设备管理</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="order" data-layout="detail">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title work-heading" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>维修执行与工单详情</h1>
+                    <p class="text-secondary small">每个问题逐项记录；验收不会自动关闭问题或解除限制</p>
+                </div>
+                <div class="actions"><button data-page="order-list" type="button">工单列表</button><button id="order-refresh" type="button">重新读取（放弃未保存输入）</button></div>
+            </template></div>
+            <section class="card work-selection"><label class="field">选择工单<select id="order-selector">
+                        <option value="">请选择工单</option>
+                    </select></label>
+                <p id="order-read-status" role="status" class="text-secondary">正在读取…</p>
+            </section>
+            <div id="order-content" hidden="">
+                <section class="card work-summary">
+                    <div class="work-summary-top">
+                        <div>
+                            <p id="order-number" class="text-secondary"></p>
+                            <h2 id="order-title"></h2>
+                            <p id="order-scope" class="text-secondary"></p>
+                        </div>
+                        <div id="order-status"></div>
+                    </div>
+                    <dl class="problem-facts" id="order-facts"></dl>
+                    <section id="order-approval-panel" hidden class="border rounded p-3 mb-3"><h3 class="business-panel-title">外部终止审批</h3><p id="order-approval-summary" class="small"></p><div class="input-group input-group-sm"><span class="input-group-text">模拟外部结果</span><select id="order-approval-sample" class="form-select"><option value="pending">待审批</option><option value="approved">通过</option><option value="rejected">驳回</option><option value="withdrawn">撤回</option><option value="failure">服务失败</option></select><button id="order-approval-refresh" type="button" class="btn btn-outline-primary">获取审批结果</button></div><p id="order-approval-error" class="small text-danger mb-0" role="status"></p></section><section id="order-followup-panel" hidden class="border rounded p-3 mb-3"><h3 class="business-panel-title">终止后的逐问题承接</h3><div id="order-followups"></div><p class="small text-secondary mb-0">问题状态与设备限制仍独立跟踪；点击进入处置，不能以终止代替关闭。</p></section>
+<div id="order-actions" class="actions"><button type="button" data-command="approve">独立审核</button><button type="button" data-command="assign">派工 /
+                            改派</button><button type="button" data-command="start" class="btn btn-primary">安全确认并开工</button><button type="button" data-command="accept" class="btn btn-primary">独立技术验收</button><button type="button" data-command="close" class="btn btn-primary">工单业务关闭</button><button type="button" data-command="pause">暂停作业</button><button type="button" data-command="cancel">申请终止工单</button>
+                    </div>
+                    <p id="order-permission-note" class="text-secondary"></p>
+                </section>
+                <section class="card">
+                    <div class="work-section-title">
+                        <h2>关联问题与逐项处理结果</h2>
+                        <p id="outcome-mode" class="text-secondary"></p>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table work-outcomes">
+                            <thead>
+                                <tr>
+                                    <th>问题 / 当前状态</th>
+                                    <th>本次处理结论</th>
+                                    <th>逐项证据</th>
+                                    <th>功能恢复时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="outcome-rows"></tbody>
+                        </table>
+                    </div>
+                    <p class="text-secondary">“已处理”表示提交验证。未解决项需后续安排；故障恢复时间与试运行证据必须可追溯。</p>
+                </section>
+                <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>执行与试运行</h2></template><template data-fill="body">
+
+                    <form id="execution-form">
+                        <fieldset id="execution-fields">
+                            <div class="problem-form-grid"><label class="field">诊断 / 原因 *<textarea id="execution-diagnosis" maxlength="2000"></textarea></label><label class="field">维修措施 *<textarea id="execution-measures" maxlength="2000"></textarea></label><label class="field">试运行方法与结果 *<textarea id="execution-trial" maxlength="2000"></textarea></label>
+                                <div><label class="field">实际工时（分钟） *<input id="execution-labor" type="number" min="0.1" step="0.1"></label><label class="field">领退料单据引用<input id="execution-material" maxlength="200"></label></div>
+                            </div>
+                        </fieldset>
+                        <div class="actions"><button id="save-execution" type="button">保存执行草稿</button><button id="complete-execution" type="button" class="btn btn-primary">提交逐项完工</button></div>
+                        <p id="execution-error" class="problem-error" role="alert"></p>
+                    </form>
+                </template></section>
+                <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>执行版本、验收与审计</h2></template><template data-fill="body">
+
+                    <div id="execution-history"></div>
+                    <div id="order-audit"></div>
+                </template></section>
+            </div>
+            <dialog id="work-command-dialog" class="problem-dialog" aria-labelledby="work-command-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="work-command-title"></h2></template><template data-fill="body">
+
+                <p id="work-command-context" class="text-secondary"></p>
+                <form id="work-command-form"><label id="assign-field" class="field" hidden="">指派执行人 *<select id="assign-person"></select></label>
+                    <fieldset id="safety-fields" hidden="">
+                        <legend>安全确认 *</legend>
+                        <p id="permit-summary" class="text-secondary"></p><label><input id="safe-isolation" type="checkbox"> 已按现场规程确认隔离</label><label><input id="safe-guard" type="checkbox">
+                            已确认作业防护</label>
+                    </fieldset>
+                    <fieldset id="accept-fields" hidden="">
+                        <legend>独立技术验收</legend><label class="field">验收决定<select id="accept-decision">
+                                <option value="pass">技术验收通过，逐项送验证</option>
+                                <option value="return">退回返工，保留执行版本</option>
+                            </select></label><label><input id="trial-confirmed" type="checkbox"> 已核实试运行证据</label>
+                        <p class="text-secondary">关联问题状态和证据在后台再次校验；执行人不能验收自己。</p>
+                    </fieldset>
+                    <fieldset id="residual-fields" hidden="">
+                        <legend>残留问题后续安排</legend>
+                        <div id="residual-list"></div>
+                        <p class="text-secondary">业务关闭必须引用已审核后续工单；终止也可由问题责任人直接承接。后续工单须关联同一问题，控制有效期覆盖后续期限。重大隐患残留阻止关闭。</p>
+                    </fieldset><label id="site-restored-field" hidden=""><input id="site-restored" type="checkbox">
+                        终止前已确认现场恢复</label><label id="command-evidence-field" class="field" hidden="">现场恢复证据 *<textarea id="command-evidence" maxlength="2000"></textarea></label><label class="field">操作意见 / 依据
+                        *<textarea id="command-reason" required="" maxlength="2000"></textarea></label>
+                    <p id="command-error" class="problem-error" role="alert"></p>
+                    <div class="actions"><button id="command-cancel" type="button">取消</button><button id="command-submit" class="btn btn-primary" type="submit">确认提交</button></div>
+                </form>
+            </template></dialog>
+            <p class="text-secondary small my-4">模型评审 · JSON异步模拟接口；未接真实业务服务</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js"></script>
+    <script src="../shared/maintenance.js"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../mock/problem-data.js"></script>
+    <script src="../mock/work-data.js?v=20261011-ap1"></script>
+    <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+    <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+    <script src="../scripts/work-ui.js?v=20261011-closure4"></script>
+    <script src="../scripts/work-order-page.js?v=20261011-qa1"></script>
+
+
+</body></html>

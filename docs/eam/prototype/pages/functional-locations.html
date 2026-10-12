@@ -1,2 +1,91 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>功能位置管理 · 设备管理原型</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head><body data-page="functional-locations" data-layout="list"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div id="breadcrumb" class="breadcrumb"></div><div class="title"><div><h1>功能位置管理</h1><p class="text-secondary small">设备主数据 · 配置与版本维护</p></div></div><section class="card" data-component="list-panel"><div class="list-panel-header" data-component="list-toolbar"><h2 class="business-panel-title">功能位置清单</h2><div class="list-panel-tools"><div class="input-group input-group-sm list-search-group" data-component="filter-bar"><input id="master-search" type="search" class="form-control" placeholder="搜索编码 / 名称" aria-label="搜索编码或名称"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="master-filters">筛选条件</button></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="refresh" data-label="刷新" aria-label="刷新" title="刷新">刷新</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="master-new" class="btn btn-sm btn-primary">新增草稿</button></div></div><div id="master-filters" class="filter-options" hidden><select id="master-status" class="form-select" aria-label="业务状态"><option value="">全部状态</option><option value="draft">草稿</option><option value="pending">待审核</option><option value="published">已发布</option><option value="stopped">停用</option></select><button type="button" class="btn btn-sm btn-outline-secondary">重置筛选</button></div><div class="table-wrapper"><table class="data-table"><thead><tr><th scope="col">位置</th><th scope="col">配置</th><th scope="col">版本 / 状态</th><th scope="col">操作</th></tr></thead><tbody id="master-list"></tbody></table></div><div id="master-pagination" class="list-pagination"></div><p id="master-empty" hidden>暂无记录，请新增草稿或清除筛选。</p></section><p class="text-secondary small my-4">功能位置草稿维护与独立审核切片；设备安装期间、装拆及原位置迁移待后续接入，不直接修改设备当前安装位置。</p><dialog id="master-dialog"><h2 id="master-title">维护草稿</h2><form id="master-form"><div class="form-grid"><label class="field">位置编码 *<input id="master-code" required maxlength="64"></label><label class="field">位置名称 *<input id="master-name" required maxlength="100"></label><label class="field">父位置<select id="master-parent"></select></label><label class="field">厂区 *<input id="master-site" required maxlength="100"></label><label class="field">工艺单元<input id="master-process" maxlength="100"></label><label class="field">区域 / 楼层<input id="master-area" maxlength="100"></label><label class="field">位置说明 / 坐标<input id="master-coordinate" maxlength="200"></label><label class="field">变更原因 *<input id="master-reason" required maxlength="200"></label></div><p id="master-error" class="text-danger small mt-2" role="alert"></p><div class="actions"><button id="master-save" type="submit" class="btn btn-sm btn-primary">保存草稿</button><button id="master-close" type="button">关闭</button></div></form></dialog><dialog id="list-tools-dialog" aria-labelledby="list-tools-title"><h2 id="list-tools-title"></h2><div id="list-tools-body"></div><p id="list-tools-status" role="status" class="small text-secondary"></p><div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden>确认</button></div></dialog></main></div><div id="mobile-nav"></div><script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script><script src="../scripts/functional-location.js?v=20261011-table-state3"></script>
-<script src="../mock/list-tools-data.js"></script><script src="../mock/list-tools-api.js"></script><script src="../shared/list-toolbar.js?v=20261011-filter3"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>功能位置管理 · 设备管理原型</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="functional-locations" data-layout="list">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div id="breadcrumb" class="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>功能位置管理</h1>
+                    <p class="text-secondary small">设备主数据 · 配置与版本维护</p>
+                </div>
+            </template></div>
+            <section class="card" data-component="list-panel" data-component-src="../components/list-panel.html" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                    <h2 class="business-panel-title">功能位置清单</h2>
+                    <div class="list-panel-tools">
+                        <div class="list-search-group" data-component="filter-bar" data-component-src="../components/filter-bar.html" data-component-required="true"><template data-fill="body"><input id="master-search" type="search" class="form-control" placeholder="搜索编码 / 名称" aria-label="搜索编码或名称"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="master-filters">筛选条件</button></template></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="refresh" data-label="刷新" aria-label="刷新" title="刷新">刷新</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="master-new" class="btn btn-sm btn-primary">新增草稿</button>
+                    </div>
+                </template><template data-fill="body">
+
+                <div id="master-filters" class="filter-options" hidden=""><select id="master-status" class="form-select" aria-label="业务状态">
+                        <option value="">全部状态</option>
+                        <option value="draft">草稿</option>
+                        <option value="pending">待审核</option>
+                        <option value="published">已发布</option>
+                        <option value="stopped">停用</option>
+                    </select><button type="button" class="btn btn-sm btn-outline-secondary">重置筛选</button></div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">位置</th>
+                                <th scope="col">配置</th>
+                                <th scope="col">版本 / 状态</th>
+                                <th scope="col">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-list"></tbody>
+                    </table>
+                </div>
+
+                <p id="master-empty" hidden="">暂无记录，请新增草稿或清除筛选。</p>
+            </template><template data-fill="footer"><div id="master-pagination" class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body"></template></div></template></section>
+            <p class="text-secondary small my-4">功能位置草稿维护与独立审核切片；设备安装期间、装拆及原位置迁移待后续接入，不直接修改设备当前安装位置。</p>
+            <dialog id="master-dialog" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="master-title">维护草稿</h2></template><template data-fill="body">
+
+                <form id="master-form">
+                    <div class="form-grid"><label class="field">位置编码 *<input id="master-code" required="" maxlength="64"></label><label class="field">位置名称 *<input id="master-name" required="" maxlength="100"></label><label class="field">父位置<select id="master-parent"></select></label><label class="field">厂区 *<input id="master-site" required="" maxlength="100"></label><label class="field">工艺单元<input id="master-process" maxlength="100"></label><label class="field">区域 / 楼层<input id="master-area" maxlength="100"></label><label class="field">位置说明 / 坐标<input id="master-coordinate" maxlength="200"></label><label class="field">变更原因 *<input id="master-reason" required="" maxlength="200"></label></div>
+                    <p id="master-error" class="text-danger small mt-2" role="alert"></p>
+                    <div class="actions"><button id="master-save" type="submit" class="btn btn-sm btn-primary">保存草稿</button><button id="master-close" type="button">关闭</button></div>
+                </form>
+            </template></dialog>
+            <dialog id="list-tools-dialog" aria-labelledby="list-tools-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="list-tools-title"></h2></template><template data-fill="body">
+
+                <div id="list-tools-body"></div>
+                <p id="list-tools-status" role="status" class="small text-secondary"></p>
+                <div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden="">确认</button></div>
+            </template></dialog>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+    <script src="../scripts/functional-location.js?v=20261011-closure4"></script>
+    <script src="../mock/list-tools-data.js"></script>
+    <script src="../mock/list-tools-api.js"></script>
+    <script src="../shared/list-toolbar.js?v=20261011-closure4"></script>
+
+
+</body></html>

@@ -1,2 +1,102 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>保养计划 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head><body data-page="maintenance-plan-list" data-layout="list"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div class="breadcrumb" id="breadcrumb"></div><div class="title work-heading"><div><h1>保养计划</h1><p class="text-secondary small">时间规则 · 人员范围 · 独立发布审核</p></div></div>
-<section class="card" data-component="list-panel"><div class="list-panel-header" data-component="list-toolbar"><h2 class="business-panel-title">保养计划清单</h2><div class="list-panel-tools"><div class="input-group input-group-sm" data-component="filter-bar"><input id="pm-search" class="form-control" aria-label="搜索保养计划" placeholder="计划名称或编号"><button class="btn btn-sm btn-outline-secondary" data-filter-toggle="pm-options">筛选条件</button></div><button id="pm-import" class="btn btn-sm btn-outline-secondary" disabled title="本批尚未实现导入校验与审批">导入</button><button id="pm-export" class="btn btn-sm btn-outline-secondary" aria-label="导出权限范围计划">导出</button><button id="pm-columns" class="btn btn-sm btn-outline-secondary">列设置</button><button id="pm-refresh" class="btn btn-sm btn-outline-secondary">刷新</button><button id="pm-create" class="btn btn-sm btn-primary">新增计划</button></div></div><div id="pm-options" class="filter-options" hidden><select id="pm-status" aria-label="计划状态"><option value="">全部状态</option><option value="draft">草稿</option><option value="pending_review">待审核</option><option value="published">已发布</option><option value="paused">已暂停</option><option value="terminated">已终止</option></select><select id="pm-equipment" aria-label="设备"><option value="">全部设备</option></select><select id="pm-unit" aria-label="周期单位"><option value="">全部周期</option><option value="day">日</option><option value="week">周</option><option value="month">月</option></select><button type="button">清除筛选</button></div><p id="pm-load" role="status">正在读取…</p><div class="table-wrapper"><table class="data-table"><thead><tr><th>计划 / 编号</th><th>设备</th><th>周期</th><th>人员范围</th><th>主责策略</th><th>版本 / 状态</th><th>下一计划窗口</th><th>操作</th></tr></thead><tbody id="pm-rows"></tbody></table></div><div id="pm-pagination" class="list-pagination"></div></section><dialog id="pm-columns-dialog" class="problem-dialog" aria-labelledby="pm-columns-title"><h2 id="pm-columns-title">列设置</h2><div id="pm-column-options"></div><button id="pm-column-close" class="btn btn-outline-secondary btn-sm">关闭</button></dialog><p class="text-secondary small my-3">模拟接口原型 · 已发布计划可选择窗口生成保养任务</p></main></div><div id="mobile-nav"></div><script src="../mock/data.js"></script><script src="../shared/product.js"></script><script src="../shared/maintenance.js"></script><script src="../shared/domain.js"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js"></script><script src="../mock/maintenance-data.js"></script><script src="../mock/maintenance-rules.js"></script><script src="../mock/maintenance-closure-rules.js"></script><script src="../mock/maintenance-task-rules.js"></script><script src="../mock/maintenance-task-api.js"></script><script src="../mock/problem-data.js"></script><script src="../mock/work-data.js"></script><script src="../mock/work-rules.js"></script><script src="../mock/problem-api.js?v=20261011-mc1"></script><script src="../mock/maintenance-api.js?v=20261011-mc1"></script><script src="../mock/list-tools-data.js"></script><script src="../scripts/maintenance-plan-list.js"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>保养计划 · 设备管理</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="maintenance-plan-list" data-layout="list">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title work-heading" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>保养计划</h1>
+                    <p class="text-secondary small">时间规则 · 人员范围 · 独立发布审核</p>
+                </div>
+            </template></div>
+            <section class="card" data-component="list-panel" data-component-src="../components/list-panel.html" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                    <h2 class="business-panel-title">保养计划清单</h2>
+                    <div class="list-panel-tools">
+                        <div class="" data-component="filter-bar" data-component-src="../components/filter-bar.html" data-component-required="true"><template data-fill="body"><input id="pm-search" class="form-control" aria-label="搜索保养计划" placeholder="计划名称或编号"><button class="btn btn-sm btn-outline-secondary" data-filter-toggle="pm-options">筛选条件</button>
+                        </template></div><button id="pm-import" class="btn btn-sm btn-outline-secondary" disabled="" title="本批尚未实现导入校验与审批">导入</button><button id="pm-export" class="btn btn-sm btn-outline-secondary" aria-label="导出权限范围计划">导出</button><button id="pm-columns" class="btn btn-sm btn-outline-secondary">列设置</button><button id="pm-refresh" class="btn btn-sm btn-outline-secondary">刷新</button><button id="pm-create" class="btn btn-sm btn-primary">新增计划</button>
+                    </div>
+                </template><template data-fill="body">
+
+                <div id="pm-options" class="filter-options" hidden=""><select id="pm-status" aria-label="计划状态">
+                        <option value="">全部状态</option>
+                        <option value="draft">草稿</option>
+                        <option value="pending_review">待审核</option>
+                        <option value="published">已发布</option>
+                        <option value="paused">已暂停</option>
+                        <option value="terminated">已终止</option>
+                    </select><select id="pm-equipment" aria-label="设备">
+                        <option value="">全部设备</option>
+                    </select><select id="pm-unit" aria-label="周期单位">
+                        <option value="">全部周期</option>
+                        <option value="day">日</option>
+                        <option value="week">周</option>
+                        <option value="month">月</option>
+                    </select><button type="button">清除筛选</button></div>
+                <p id="pm-load" role="status">正在读取…</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>计划 / 编号</th>
+                                <th>设备</th>
+                                <th>周期</th>
+                                <th>人员范围</th>
+                                <th>主责策略</th>
+                                <th>版本 / 状态</th>
+                                <th>下一计划窗口</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pm-rows"></tbody>
+                    </table>
+                </div>
+
+            </template><template data-fill="footer"><div id="pm-pagination" class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body"></template></div></template></section>
+            <dialog id="pm-columns-dialog" class="problem-dialog" aria-labelledby="pm-columns-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="pm-columns-title">列设置</h2></template><template data-fill="body">
+
+                <div id="pm-column-options"></div><button id="pm-column-close" class="btn btn-outline-secondary btn-sm">关闭</button>
+            </template></dialog>
+            <p class="text-secondary small my-3">模拟接口原型 · 已发布计划可选择窗口生成保养任务</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js"></script>
+    <script src="../shared/product.js"></script>
+    <script src="../shared/maintenance.js"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../mock/maintenance-data.js?v=20261011-window1"></script>
+    <script src="../mock/maintenance-rules.js"></script>
+    <script src="../mock/maintenance-closure-rules.js?v=20261011-qa1"></script>
+    <script src="../mock/maintenance-task-rules.js?v=20261011-window1"></script>
+    <script src="../mock/maintenance-task-api.js?v=20261011-window1"></script>
+    <script src="../mock/problem-data.js"></script>
+    <script src="../mock/work-data.js?v=20261011-ap1"></script>
+    <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+    <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+    <script src="../mock/maintenance-api.js?v=20261011-ap1"></script>
+    <script src="../mock/list-tools-data.js"></script>
+    <script src="../scripts/maintenance-plan-list.js?v=20261011-closure4"></script>
+
+
+</body></html>

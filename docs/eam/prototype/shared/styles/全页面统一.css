@@ -3,6 +3,12 @@
 .business-list-page>.breadcrumb,.business-list-page>.title,.business-list-page>.problem-metrics {flex:none;}
 .business-list-page>.business-list-panel {flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:16px;}
 .business-list-panel>.table-wrapper {flex:1;min-height:0;overflow:auto;}
+/* 外部列表片段保留三区布局；只让主体数据区滚动。 */
+.business-list-panel>.list-panel,.ledger-results>.list-panel {display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.list-panel>.list-panel-body {display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.list-panel-body>.table-wrapper {flex:1;min-height:160px;overflow:auto;}
+.list-panel>.list-panel-header,.list-panel>.list-panel-footer {flex:none;}
+.list-panel-body>.list-summary,.list-panel-body>[role=status] {flex:none;}
 .business-list-panel>.problem-toolbar,.business-list-panel>.list-pagination,.business-list-panel>[role=status] {flex:none;}
 .list-pagination {display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--color-border);font-size:13px;}
 .list-pagination>div {display:flex;gap:8px;}
@@ -10,7 +16,7 @@
 .problem-toolbar>.form-control {flex:1;min-width:140px;}
 .problem-toolbar>.form-select {width:auto;max-width:200px;}
 .problem-toolbar>label {display:flex;align-items:center;gap:6px;white-space:nowrap;}
-main .card:not(.business-list-panel):not(.tree):not(.ledger-results):not(.stat-card) {padding:16px;}
+main .card:not([data-component="card"]):not(.business-list-panel):not(.tree):not(.ledger-results):not(.stat-card) {padding:16px;}
 main .card h2,main .sectionhead h2 {font-size:16px;margin-bottom:12px;}
 .problem-metrics {gap:12px;margin-bottom:16px;}
 .problem-metrics>div {border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);padding:12px 16px;color:var(--color-text-secondary);font-size:12px;}
@@ -40,6 +46,9 @@ body[data-layout=detail] main {overflow:auto;}
  body[data-layout] main {display:block;height:100%;overflow:auto;padding-bottom:80px;}
  body[data-layout=list] main>.business-list-panel {display:flex;flex:none;overflow:visible;height:auto;}
  body[data-layout=list] .business-list-panel>.table-wrapper {flex:none;height:auto;min-height:160px;max-height:none;overflow:auto;}
+ .business-list-panel>.list-panel,.ledger-results>.list-panel {flex:none;overflow:visible;height:auto;}
+ .list-panel>.list-panel-body {flex:none;overflow:visible;}
+ .list-panel-body>.table-wrapper {flex:none;height:auto;max-height:55dvh;overflow:auto;}
  body[data-layout=ledger] .equipment-layout {height:auto;min-height:0;align-items:start;}
  body[data-layout=ledger] .ledger-results {height:auto;overflow:visible;}
  body[data-layout=ledger] .ledger-results>.table-wrapper {flex:none;height:auto;min-height:200px;max-height:none;}
@@ -52,6 +61,8 @@ body[data-layout=detail] main {overflow:auto;}
 }
 body.mobile-preview[data-layout] main {display:block;overflow:auto;padding-bottom:80px;}
 body.mobile-preview .business-list-panel,body.mobile-preview .ledger-results {height:auto;overflow:visible;}
+body.mobile-preview .list-panel,body.mobile-preview .list-panel-body {flex:none;height:auto;overflow:visible;}
+body.mobile-preview .list-panel-body>.table-wrapper {flex:none;max-height:55dvh;overflow:auto;}
 body.mobile-preview .business-list-panel>.table-wrapper,body.mobile-preview .ledger-results>.table-wrapper {height:auto;flex:none;min-height:200px;max-height:none;}
 body.mobile-preview .equipment-layout,body.mobile-preview .archive-workspace {height:auto;}
 body.mobile-preview .archive-content,body.mobile-preview #archive-panels-mount {overflow:visible;}
@@ -121,3 +132,10 @@ body[data-layout=archive] [data-record-domain]>.table-wrapper {min-height:0;max-
 body[data-layout=archive].mobile-preview main {overflow:auto;}
 body[data-layout=archive].mobile-preview .archive-workspace {flex:none;min-height:300px;}
 body[data-layout=archive].mobile-preview [data-record-domain]>.table-wrapper {flex:none;height:220px;min-height:160px;overflow:auto;}
+
+/* 通用卡片的间距由Bootstrap header/body承担。 */
+main section.card[data-component="card"] {padding:0;}
+[data-component="card"]>.card-header h2 {margin:0;}
+
+/* 分页宿主填满页脚，计数左侧、换页右侧。 */
+.list-panel-footer [data-component-src$="/pagination.html"] {width:100%;min-width:0;}

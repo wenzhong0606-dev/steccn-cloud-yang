@@ -235,7 +235,7 @@ dialog .form-grid .field {
     z-index:var(--z-toast);
     max-width:min(600px,90vw);
     background:var(--bs-dark);
-    color:#fff;
+    color:var(--color-on-primary);
     padding:12px 20px;
     border-radius:var(--bs-border-radius);
     box-shadow:var(--shadow-lg);
@@ -258,9 +258,10 @@ main[data-state="loading"] h1::before {
 
 
 /* Bootstrap 组件的局部变量须在组件本身映射。 */
+main[data-component-booting] {pointer-events:none;}
 .card { --bs-card-bg:var(--color-surface); --bs-card-border-color:var(--color-border); }
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; }
-.btn-primary { --bs-btn-bg:var(--color-primary); --bs-btn-border-color:var(--color-primary); --bs-btn-hover-bg:var(--color-primary-hover); --bs-btn-hover-border-color:var(--color-primary-hover); --bs-btn-active-bg:var(--color-primary-hover); --bs-btn-active-border-color:var(--color-primary-hover); --bs-btn-disabled-bg:var(--color-primary); --bs-btn-disabled-border-color:var(--color-primary); --bs-btn-color:#fff; }
+.btn-primary { --bs-btn-bg:var(--color-primary); --bs-btn-border-color:var(--color-primary); --bs-btn-hover-bg:var(--color-primary-hover); --bs-btn-hover-border-color:var(--color-primary-hover); --bs-btn-active-bg:var(--color-primary-hover); --bs-btn-active-border-color:var(--color-primary-hover); --bs-btn-disabled-bg:var(--color-primary); --bs-btn-disabled-border-color:var(--color-primary); --bs-btn-color:var(--color-on-primary); }
 .btn-outline-primary { --bs-btn-color:var(--color-primary); --bs-btn-border-color:var(--color-primary); --bs-btn-hover-bg:var(--color-primary); --bs-btn-hover-border-color:var(--color-primary); --bs-btn-active-bg:var(--color-primary-hover); }
 .problem-badge { display:inline-block; padding:.35em .65em; border-radius:var(--radius-sm); font-size:12px; font-weight:600; color:var(--color-primary); background:var(--color-primary-soft); white-space:nowrap; }
 .problem-badge[data-state="closed"],.problem-badge[data-state="completed"],.problem-badge[data-state="normal"] { color:var(--color-success); background:var(--color-success-soft); }
@@ -270,4 +271,4 @@ main[data-state="loading"] h1::before {
 main h2 {font-size:20px;} main h3 {font-size:17px;}
 
 .stat-card.active {background:var(--color-primary-soft);color:var(--color-primary);}
-:root[data-theme="dark"] .btn-primary {--bs-btn-color:#152943;--bs-btn-hover-color:#152943;--bs-btn-active-color:#152943;}
+:root[data-theme="dark"] .btn-primary {--bs-btn-color:var(--color-on-primary-dark);--bs-btn-hover-color:var(--color-on-primary-dark);--bs-btn-active-color:var(--color-on-primary-dark);}

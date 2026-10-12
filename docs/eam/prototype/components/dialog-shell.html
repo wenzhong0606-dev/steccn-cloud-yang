@@ -1,0 +1,12 @@
+<!-- dialog-shell.html · 弹窗外壳（仅结构，无内嵌业务脚本） -->
+<!-- 标题 h2 为静态结构，不属任何可填充 region，故与 header 同级（避免被 header 填充时 replaceChildren 清除） -->
+<!-- 业务头部 / 表单 / 操作栏经页面 <template data-fill="header|body|footer"> 注入对应 [data-region]；aria-labelledby 关联本标题 id -->
+<!-- 新建弹窗须显式 Eam.Dialog.enhance(el)（无自动扫描）以写入标题文本并绑定提交守卫 -->
+<dialog class="eam-dialog" data-component="dialog-shell" aria-labelledby="dialog-shell-title">
+  <div class="dialog-shell">
+    <h2 id="dialog-shell-title" class="dialog-shell-title"></h2>
+    <div class="dialog-shell-header" data-region="header"></div>
+    <form class="dialog-shell-form" data-region="body"></form>
+    <div class="dialog-shell-actions" data-region="footer"></div>
+  </div>
+</dialog>

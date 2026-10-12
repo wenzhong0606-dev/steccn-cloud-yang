@@ -1,6 +1,100 @@
-<!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>设备图片与文件 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head>
-<body data-page="asset-files" data-layout="detail"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div id="breadcrumb" class="breadcrumb"></div><div class="title"><div><p class="text-primary small fw-semibold">设备管理 · 资料中心</p><h1>设备图片与文件</h1><p class="text-secondary small">按设备维护图片、技术文档和3D模型，版本与移除记录可追溯</p></div></div>
-<div class="columns asset-layout"><section class="card"><h2>上传入口</h2><p class="text-secondary">选择设备 → 选择分类与文件 → 检查预览与目标 → 保存关联</p><form id="upload-form"><label class="field">所属设备 *<select id="upload-equipment"></select></label><div class="form-grid"><label class="field">文件分类 *<select id="upload-category"><option value="image">设备图片</option><option value="document">技术文档</option><option value="model">3D模型</option></select></label><label class="field">资料版本 *<input id="upload-revision" value="V1" maxlength="30" required></label></div><label class="field upload-box">选择图片 / 文档 / 模型 *<input id="upload-file" type="file" multiple required><span id="upload-help" class="text-secondary"></span></label><div id="upload-preview" class="file-preview"><p>尚未选择文件</p></div><label class="field">拟议存储目标（待正式文件服务分配）<input id="upload-target" readonly></label><p id="upload-error" class="text-danger small mt-2" role="alert"></p><div class="actions"><button id="upload-save" type="submit" class="btn btn-primary">保存设备资料（本机演示）</button><button id="upload-clear" type="button">清空选择</button></div></form><p class="alert alert-info">文件内容仅保存在当前浏览器本机，可再次预览及按演示权限下载，未上传服务器。PDF/文本可预览，Office格式需要正式转换服务；模型查看器待接入。</p></section>
-<section class="card"><div class="sectionhead"><h2>设备文件清单</h2><span id="file-count" class="text-secondary"></span></div><label class="field">按名称搜索<input id="file-search" placeholder="说明书 / 主图 / 模型"></label><label class="field">文件分类筛选<select id="file-filter"><option value="">全部分类</option><option value="image">图片</option><option value="document">文档</option><option value="model">模型</option></select></label><label class="field">关联状态<select id="file-status"><option value="">全部状态</option><option value="active">有效关联</option><option value="removed">已移除</option></select></label><div id="file-list" class="record-list"></div><div id="file-empty" class="empty-state"><h3>这台设备尚无维护文件</h3><p>通过左侧上传入口添加；示例插图不属于上传记录。</p></div><div class="list-pagination"><span id="file-page-info"></span><div><button id="file-prev">上一页</button><button id="file-next">下一页</button></div></div></section></div><p class="text-secondary small my-4">模型评审 · 文件服务与真实存储路径尚未实施</p></main></div><div id="mobile-nav"></div><dialog id="file-viewer" class="file-viewer-dialog" aria-labelledby="viewer-title"><div class="sectionhead"><h2 id="viewer-title"></h2><button id="viewer-close" type="button" aria-label="关闭文件查看器">关闭</button></div><div id="viewer-content" class="viewer-content"></div><p id="viewer-error" role="alert"></p><div class="actions"><button id="viewer-prev" type="button">上一张</button><span id="viewer-counter"></span><button id="viewer-next" type="button">下一张</button><button id="viewer-download" type="button">下载原文件</button></div><p class="text-secondary">下载需要独立授权；本机原型文件不经过真实文件服务。</p></dialog>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script><script src="../shared/file-store.js?v=20261010"></script><script src="../shared/file-viewer.js?v=20261010"></script><script src="../scripts/asset-files.js?v=20261010"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>设备图片与文件 · 设备管理</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="asset-files" data-layout="detail">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div id="breadcrumb" class="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <p class="text-primary small fw-semibold">设备管理 · 资料中心</p>
+                    <h1>设备图片与文件</h1>
+                    <p class="text-secondary small">按设备维护图片、技术文档和3D模型，版本与移除记录可追溯</p>
+                </div>
+            </template></div>
+            <div class="columns asset-layout">
+                <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>上传入口</h2></template><template data-fill="body">
+
+                    <p class="text-secondary">选择设备 → 选择分类与文件 → 检查预览与目标 → 保存关联</p>
+                    <form id="upload-form"><label class="field">所属设备 *<select id="upload-equipment"></select></label>
+                        <div class="form-grid"><label class="field">文件分类 *<select id="upload-category">
+                                    <option value="image">设备图片</option>
+                                    <option value="document">技术文档</option>
+                                    <option value="model">3D模型</option>
+                                </select></label><label class="field">资料版本 *<input id="upload-revision" value="V1" maxlength="30" required=""></label></div><label class="field upload-box">选择图片 / 文档 / 模型
+                            *<input id="upload-file" type="file" multiple="" required=""><span id="upload-help" class="text-secondary"></span></label>
+                        <div id="upload-preview" class="file-preview">
+                            <p>尚未选择文件</p>
+                        </div><label class="field">拟议存储目标（待正式文件服务分配）<input id="upload-target" readonly=""></label>
+                        <p id="upload-error" class="text-danger small mt-2" role="alert"></p>
+                        <div class="actions"><button id="upload-save" type="submit" class="btn btn-primary">保存设备资料（本机演示）</button><button id="upload-clear" type="button">清空选择</button></div>
+                    </form>
+                    <p class="alert alert-info">
+                        文件内容仅保存在当前浏览器本机，可再次预览及按演示权限下载，未上传服务器。PDF/文本可预览，Office格式需要正式转换服务；模型查看器待接入。</p>
+                </template></section>
+                <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><div class="sectionhead">
+                        <h2>设备文件清单</h2><span id="file-count" class="text-secondary"></span>
+                    </div></template><template data-fill="body">
+                    <label class="field">按名称搜索<input id="file-search" placeholder="说明书 / 主图 / 模型"></label><label class="field">文件分类筛选<select id="file-filter">
+                            <option value="">全部分类</option>
+                            <option value="image">图片</option>
+                            <option value="document">文档</option>
+                            <option value="model">模型</option>
+                        </select></label><label class="field">关联状态<select id="file-status">
+                            <option value="">全部状态</option>
+                            <option value="active">有效关联</option>
+                            <option value="removed">已移除</option>
+                        </select></label>
+                    <div id="file-list" class="record-list"></div>
+                    <div id="file-empty" class="empty-state">
+                        <h3>这台设备尚无维护文件</h3>
+                        <p>通过左侧上传入口添加；示例插图不属于上传记录。</p>
+                    </div>
+                    <div class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body"><span id="file-page-info"></span>
+                        <div><button id="file-prev">上一页</button><button id="file-next">下一页</button></div>
+                    </template></div>
+                </template></section>
+            </div>
+            <p class="text-secondary small my-4">模型评审 · 文件服务与真实存储路径尚未实施</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <dialog id="file-viewer" class="file-viewer-dialog" aria-labelledby="viewer-title">
+        <div class="sectionhead">
+            <h2 id="viewer-title"></h2><button id="viewer-close" type="button" aria-label="关闭文件查看器">关闭</button>
+        </div>
+        <div id="viewer-content" class="viewer-content"></div>
+        <p id="viewer-error" role="alert"></p>
+        <div class="actions"><button id="viewer-prev" type="button">上一张</button><span id="viewer-counter"></span><button id="viewer-next" type="button">下一张</button><button id="viewer-download" type="button">下载原文件</button>
+        </div>
+        <p class="text-secondary">下载需要独立授权；本机原型文件不经过真实文件服务。</p>
+    </dialog>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+    <script src="../shared/file-store.js?v=20261010"></script>
+    <script src="../shared/file-viewer.js?v=20261010"></script>
+    <script src="../scripts/asset-files.js?v=20261011-closure4"></script>
+
+
+</body></html>

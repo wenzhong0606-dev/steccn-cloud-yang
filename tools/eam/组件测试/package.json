@@ -1,0 +1,16 @@
+{
+  "name": "eam-component-tests",
+  "version": "1.0.0",
+  "description": "EAM组件契约与真实JSON页面回归",
+  "main": "index.js",
+  "scripts": {
+    "test": "node 运行组件测试.cjs",
+    "test:pages": "node 真实页面回归.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jsdom": "^24.1.3"
+  }
+}

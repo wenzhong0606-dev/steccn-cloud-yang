@@ -1,0 +1,136 @@
+Browser tab: 15, Title: "1#混合机 · 设备档案", URL: "http://127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=documents".
+0 AXWebArea 1#混合机 · 设备档案, URL: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=documents
+	1 link Description: 跳到业务内容, Value: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=documents#main-content
+	2 container
+		3 text S
+		4 text STECCN  企业协同平台
+		5 button (expanded) 模块菜单, ID: nav-toggle, Secondary Actions: Collapse
+		6 checkbox 切换移动端, Value: 0, ID: view-toggle
+		7 button (collapsed) 演示设置, Secondary Actions: Expand
+			8 text 演示设置
+	9 container module-nav
+		10 heading 设备管理, Value: 2
+			11 text 设备管理
+		12 container
+			13 heading 工作入口, Value: 3
+				14 text 工作入口
+			15 button 角色工作台
+			16 heading 设备资产, Value: 3
+				17 text 设备资产
+			18 button 设备台账
+			19 button 功能位置管理
+			20 heading 日常维护, Value: 3
+				21 text 日常维护
+			22 button 点检任务
+			23 button 专项检查
+			24 button 保养任务
+			25 button 保养验收
+			26 heading 异常处置, Value: 3
+				27 text 异常处置
+			28 button 异常事件中心
+			29 button 缺陷台账
+			30 button 故障事件
+			31 button 隐患协同
+			32 heading 维修闭环, Value: 3
+				33 text 维修闭环
+			34 button 维修工单
+			35 button 待验收
+			36 heading 基础配置, Value: 3
+				37 text 基础配置
+			38 button 保养计划
+			39 button 分类与参数模板
+			40 button 点检标准
+			41 button 点检路线
+			42 button 点检计划
+		43 button ← 返回平台
+	44 container main-content
+		45 heading 1#混合机 · 设备档案, Value: 1, ID: device-name
+			46 text 1#混合机 · 设备档案
+		47 text TC2_YL1_PL_01 / 原料二车间/配料线
+		48 container 面包屑导航
+			49 content list
+				50 link Description: 系统平台, Value: 127.0.0.1:8765/pages/platform.html?view=pc
+				51 container
+					52 text /
+					53 link Description: 设备管理, Value: 127.0.0.1:8765/pages/workbench.html?view=pc
+				54 container
+					55 text /
+					56 link Description: 设备台账, Value: 127.0.0.1:8765/pages/equipment.html?view=pc
+				57 container
+					58 text / 设备全景档案
+		59 container
+			60 image Description: 设备外观, ID: archive-photo
+			61 text MX-2400
+			62 text 负责人 赵工
+			63 text 序列号 MX20240318
+			64 container archive-status-strip
+				65 text 生命周期  在用 运行状态  运行 健康状态  故障待复核 计量状态  不适用 使用许可  限制使用
+		66 container Description: 设备档案导航, ID: archive-nav-mount
+			67 container
+				68 button (expanded) 设备总览, Secondary Actions: Collapse
+					69 heading 设备总览, Value: 3
+						70 text 设备总览
+				71 tab group
+					72 tab (selectable, settable, boolean) 概况, Value: 0, ID: tab-overview-1
+					73 tab (selectable, settable, boolean) 状态与许可, Value: 0, ID: tab-state-3
+			74 container
+				75 button (expanded) 技术与结构, Secondary Actions: Collapse
+					76 heading 技术与结构, Value: 3
+						77 text 技术与结构
+				78 tab group
+					79 tab (selectable, settable, boolean) 技术参数, Value: 0, ID: tab-parameters-5
+					80 tab (selectable, settable, boolean) 设备结构, Value: 0, ID: tab-structure-7
+					81 tab (selectable, settable, boolean) 位置与安装, Value: 0, ID: tab-installation-9
+			82 container
+				83 button (expanded) 维护与可靠性, Secondary Actions: Collapse
+					84 heading 维护与可靠性, Value: 3
+						85 text 维护与可靠性
+				86 tab group
+					87 tab (selectable, settable, boolean) 点检, Value: 0, ID: tab-work-11
+					88 tab (selectable, settable, boolean) 保养, Value: 0, ID: tab-maintenance-13
+					89 tab (selectable, settable, boolean) 故障, Value: 0, ID: tab-failure-15
+					90 tab (selectable, settable, boolean) 维修, Value: 0, ID: tab-repair-17
+			91 container
+				92 button (expanded) 备件与运行, Secondary Actions: Collapse
+					93 heading 备件与运行, Value: 3
+						94 text 备件与运行
+				95 tab group
+					96 tab (selectable, settable, boolean) 设备BOM, Value: 0, ID: tab-bom-19
+					97 tab (selectable, settable, boolean) 更换与寿命, Value: 0, ID: tab-replacement-21
+					98 tab (selectable, settable, boolean) 测点与计量器, Value: 0, ID: tab-meters-23
+					99 tab (selectable, settable, boolean) 运行监测, Value: 0, ID: tab-trend-25
+			100 container
+				101 button (expanded) 合规与资产, Secondary Actions: Collapse
+					102 heading 合规与资产, Value: 3
+						103 text 合规与资产
+				104 tab group
+					105 tab (selectable, settable, boolean) 安全合规, Value: 0, ID: tab-risk-27
+					106 tab (selectable, settable, boolean) 资产成本, Value: 0, ID: tab-cost-29
+			107 container
+				108 button (expanded) 资料与履历, Secondary Actions: Collapse
+					109 heading 资料与履历, Value: 3
+						110 text 资料与履历
+				111 tab group
+					112 tab (selectable, settable, boolean) 图片与3D, Value: 0, ID: tab-media-31
+					113 tab (selected, settable, boolean) 文档资料, Value: 1, ID: tab-documents-33
+					114 tab (selectable, settable, boolean) 生命周期, Value: 0, ID: tab-history-35
+					115 tab (selectable, settable, boolean) 关联业务, Value: 0, ID: tab-related-37
+					116 tab (selectable, settable, boolean) 变更审计, Value: 0, ID: tab-audit-39
+					117 tab (selectable, settable, boolean) 档案完整性, Value: 0, ID: tab-completeness-41
+		199 container
+			200 heading 文档资料, Value: 2, ID: archive-view-title
+				203 text 文档资料
+			202 button 刷新, ID: archive-refresh
+			204 container Description: 文档资料, ID: panel-documents-34
+				205 container device-documents
+					206 text 设备说明示例.txt / V1.2
+					207 text 技术文档 / 示例内容
+					208 button 查看内容
+					209 button (disabled) 下载原文件, Help: 需要设备资料下载权限
+				210 heading 受控技术资料, Value: 3
+					211 text 受控技术资料
+				212 button (disabled) 上传技术文档, ID: upload-device-document
+				213 button 适用点检标准
+		198 text 设备管理 · 设备档案
+
+The focused UI element is 113 tab (selected, settable, boolean) 文档资料, Value: 1, ID: tab-documents-33

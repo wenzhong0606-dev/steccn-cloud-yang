@@ -1,3 +1,5 @@
+/* 组件就绪后执行 */
+Eam.registerInit(async function(){
 (()=>{
  if(!document.getElementById('standard-upper'))return;const s=Eam.s;
  Eam.text('standard-info',s.standard.revision+' / '+(s.standard.status==='published'?'已发布':'已停用')+' / 上限 '+s.standard.upper+'°C / 方法 '+s.standard.method+' / 审核人 '+EamDomain.personName(s.standard.approvedBy));
@@ -23,3 +25,5 @@
  if(document.getElementById('standard-method'))document.getElementById('standard-method').value=selected.record?.method??'';
  document.querySelectorAll('main input,main select,main textarea,main button:not([data-page])').forEach(el=>el.disabled=true);}
 })();
+
+});

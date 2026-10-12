@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-11",
+  "date": "2026-10-12",
   "phase": "候选记录，所有页面模型完成后统一正式设计",
   "objects": {
     "设备": "eam_equipment: id,tenant_id,organization_id,code,name,model,location_id,location_path,owner_person_id,criticality,manufacturer,serial_no,commissioned_date,lifecycle,revision,created_by/at,updated_by/at",
@@ -35,7 +35,8 @@
     "保养计划": "候选maintenance_plan/plan_revision/plan_item/plan_assignee：id,code,name,equipment_id,organization,status,revision,plan_version,active_version,active_status,trigger_type,interval/unit,anchor_date,timezone,window_before/after,assignment_mode,primary_person_id,assignment_valid_from/to,bindings,items,snapshot,submitted_by,approved_by/at；任务生成下一批",
     "保养审核": "eam_maintenance_submission: id,task_id,execution_version,results_snapshot,labor_minutes,material_ref,trial,evidence_refs,participants,submitted_by/at; eam_maintenance_acceptance: id,task_id,execution_version,submission_snapshot,decision,reason,items_verified,trial_verified,evidence_refs,residual_review,reviewer_id,role,reviewed_at; eam_maintenance_termination: id,task_id,revision,execution_version,status,execution_snapshot,participants,requested_by/at,reason,completed_work,residual_risk,control_measures,followup,owner_id,due_date,evidence_refs; eam_maintenance_termination_review: id,request_id,revision,decision,confirmed,reviewer_id,reviewed_at,reason",
     "保养任务": "候选maintenance_task: id,code,name,equipment_id,plan_id,plan_version,version_window_key,occurrence_key,scheduled_at,window_start/end,status,revision,execution_version,snapshot,binding_refs,resolved_people,primary_person_id,collaborator_ids,started_at,cancel_reason；task_assignment: task_id,primary_person_id,collaborator_ids,binding_refs,resolved_people,assigned_by/at,reason；唯一任务日期不可被计划修订覆盖",
-    "保养执行": "候选maintenance_execution: task_id,execution_version,labor_minutes,material_ref,trial,safety_snapshot,submission_snapshot,submitted_by/at；maintenance_item_result: task_id,item_id,conclusion,value,evidence,followup,actor_id,recorded_at；maintenance_anomaly_link: task_id,item_id,execution_version,key,payload_signature,status,discovery_id,error；maintenance_generation_request: key,actor_id,payload,response；审计沿用before/after"
+    "保养执行": "候选maintenance_execution: task_id,execution_version,labor_minutes,material_ref,trial,safety_snapshot,submission_snapshot,submitted_by/at；maintenance_item_result: task_id,item_id,conclusion,value,evidence,followup,actor_id,recorded_at；maintenance_anomaly_link: task_id,item_id,execution_version,key,payload_signature,status,discovery_id,error；maintenance_generation_request: key,actor_id,payload,response；审计沿用before/after",
+    "保养提前开工授权": "候选maintenance_early_start_application: id,task_id,application_revision,execution_version,requested_by/at,requested_start_at,effective_until,reason,evidence_refs,primary_person_id,collaborator_ids_snapshot,window_start/end_snapshot,external_instance_id,status,result_version,decision_source,consumed_by/at；逐次申请及外部回执历史保留。maintenance_execution.safety_snapshot补充early_start_instance_id,overdue_reason,checked_on；正式表结构后续统一设计。"
   },
   "apiGroups": {
     "platform": [
@@ -1166,13 +1167,13 @@
         "method": "GET",
         "path": "/maintenance/tasks/{id}/start-check",
         "request": "任务ID",
-        "response": "当前资格/设备/许可检查",
+        "response": "当前资格/设备/许可检查 /执行窗口/提前授权/overdue/checkedOn/earlyStartInstanceId",
         "role": "授权读取"
       },
       {
         "method": "POST",
         "path": "/maintenance/tasks/{id}/{start|pause|resume|cancel}",
-        "request": "expectedRevision/reason/confirmed/permitId",
+        "request": "expectedRevision/reason/confirmed/permitId / overdueReason（逾期start/resume必填）",
         "response": "任务/安全快照/审计",
         "role": "主责；恢复或未开工取消按主管授权"
       },
@@ -1234,6 +1235,29 @@
         "response": "task,revision,actions,immutable history",
         "role": "独立审核者；终止申请为主责或主管"
       }
+    ],
+    "maintenanceEarlyStartV1": [
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/request-early-start",
+        "request": "expectedRevision/requestedStartAt/effectiveUntil/reason/evidence",
+        "response": "任务/earlyStart/earlyStartRequests/actions",
+        "role": "主责或主管，窗口前且未终止"
+      },
+      {
+        "method": "GET",
+        "path": "/maintenance/tasks/{id}/early-start-result",
+        "request": "instanceId/sample（模拟参数）",
+        "response": "预定义外部回执/status/resultVersion/applicationRevision",
+        "role": "主管/经理"
+      },
+      {
+        "method": "POST",
+        "path": "/maintenance/tasks/{id}/apply-early-start-result",
+        "request": "expectedRevision/instanceId/applicationRevision/sample（模拟参数）",
+        "response": "任务/外部授权/消费审计，重复回执幂等",
+        "role": "主管/经理"
+      }
     ]
   },
   "pages": [
@@ -1256,14 +1280,16 @@
         "任务",
         "异常",
         "工单",
-        "状态"
+        "状态",
+        "保养提前开工授权"
       ],
       "apiGroups": [
         "workbench",
         "workV2",
-        "hazardsV1"
+        "hazardsV1",
+        "maintenanceEarlyStartV1"
       ],
-      "scope": "聚合投影；13角色不同队列，统计口径仅当前会话。；本批工单、异常、隐患队列经JSON异步接口聚合，点检/标准沿用既有会话模型。"
+      "scope": "聚合投影；13角色不同队列，统计口径仅当前会话。；本批工单、异常、隐患队列经JSON异步接口聚合，点检/标准沿用既有会话模型。；执行窗口、提前外部授权及逾期原因校验"
     },
     {
       "id": "equipment",
@@ -1677,15 +1703,17 @@
         "发现",
         "审计",
         "平台",
-        "保养审核"
+        "保养审核",
+        "保养提前开工授权"
       ],
       "apiGroups": [
         "maintenanceTasksV1",
         "maintenancePlansV1",
         "discoveriesV1",
-        "maintenanceClosureV1"
+        "maintenanceClosureV1",
+        "maintenanceEarlyStartV1"
       ],
-      "scope": "派工/开工/暂停恢复/暂存/保养发现/关联重试/提交待验收；快照/审计/内部表格分页；独立验收/退回新执行版本/终止审核/档案同源聚合"
+      "scope": "派工/开工/暂停恢复/暂存/保养发现/关联重试/提交待验收；快照/审计/内部表格分页；独立验收/退回新执行版本/终止审核/档案同源聚合；执行窗口、提前外部授权及逾期原因校验"
     },
     {
       "id": "maintenance-acceptance",

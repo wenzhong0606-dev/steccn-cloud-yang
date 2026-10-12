@@ -1,0 +1,260 @@
+Browser tab: 14, Title: "混合机月度润滑保养 · 保养任务", URL: "http://127.0.0.1:8765/pages/maintenance-task.html?view=pc&id=MT-0001&equipment=EQ-001".
+1 AXWebArea 混合机月度润滑保养 · 保养任务, URL: 127.0.0.1:8765/pages/maintenance-task.html?view=pc&id=MT-0001&equipment=EQ-001
+	13 link Description: 跳到业务内容, Value: 127.0.0.1:8765/pages/maintenance-task.html?view=pc&id=MT-0001&equipment=EQ-001#main-content
+	2 container
+		3 text S
+		4 text STECCN  企业协同平台
+		14 button (expanded) 模块菜单, ID: nav-toggle, Secondary Actions: Collapse
+		5 checkbox 切换移动端, Value: 0, ID: view-toggle
+		6 button (collapsed) 演示设置, Secondary Actions: Expand
+			7 text 演示设置
+	228 container module-nav
+		229 heading 设备管理, Value: 2
+			230 text 设备管理
+		231 container
+			232 heading 工作入口, Value: 3
+				233 text 工作入口
+			234 button 角色工作台
+			235 heading 设备资产, Value: 3
+				236 text 设备资产
+			237 button 设备台账
+			238 button 功能位置管理
+			239 heading 日常维护, Value: 3
+				240 text 日常维护
+			241 button 点检任务
+			242 button 专项检查
+			243 button 保养任务
+			244 button 保养验收
+			245 heading 异常处置, Value: 3
+				246 text 异常处置
+			247 button 异常事件中心
+			248 button 缺陷台账
+			249 button 故障事件
+			250 button 隐患协同
+			251 heading 维修闭环, Value: 3
+				252 text 维修闭环
+			253 button 维修工单
+			254 button 待验收
+			255 heading 基础配置, Value: 3
+				256 text 基础配置
+			257 button 保养计划
+			258 button 分类与参数模板
+			259 button 点检标准
+			260 button 点检路线
+			261 button 点检计划
+		262 button ← 返回平台
+	15 container main-content
+		16 heading 混合机月度润滑保养, Value: 1, ID: mt-title
+			17 text 混合机月度润滑保养
+		18 text 计划窗口 · 个人派工 · 执行送验收
+		19 container 面包屑导航
+			20 content list
+				21 link Description: 系统平台, Value: 127.0.0.1:8765/pages/platform.html?view=pc
+				22 container
+					263 text /
+					24 link Description: 设备管理, Value: 127.0.0.1:8765/pages/workbench.html?view=pc
+				25 container
+					264 text /
+					27 link Description: 保养任务, Value: 127.0.0.1:8765/pages/maintenance-task-list.html?view=pc
+				28 container
+					265 text / 保养任务详情
+		30 text 已读取任务 · 数据V4
+		31 container
+			32 heading 任务与计划快照, Value: 2
+				33 text 任务与计划快照
+			34 text 执行中
+			35 definition list mt-summary
+				36 container 任务编号
+					37 text 任务编号
+				38 text PMT-0001
+				39 container 设备
+					40 text 设备
+				41 text 1#混合机
+				42 container 来源计划
+					43 text 来源计划
+				44 text PM-2026-002 · 发布V1
+				45 container 执行窗口
+					46 text 执行窗口
+				47 text 2026-10-31 至 2026-11-03
+				48 container 主责人员
+					49 text 主责人员
+				50 text 王强
+				51 container 协作人员
+					52 text 协作人员
+				53 text 无
+				54 container 提前开工授权
+					55 text 提前开工授权
+				56 text 外部通过 · 授权有效 · EXT-EARLY-MT-0001-1 · 2026-10-11 至 2026-10-12
+				57 container 版本
+					58 text 版本
+				59 text 数据V4 / 执行V1
+			60 container mt-actions
+				61 button 暂停执行
+				62 button 提交完工待验收
+				63 button 申请终止
+			64 text 已开工任务仅可申请终止，不能直接取消。
+		65 container
+			66 heading 当前安全检查, Value: 2
+				67 text 当前安全检查
+			68 button 复核条件, ID: mt-safety-refresh
+			69 container mt-safety
+				70 container
+					71 text 通过 执行窗口或有效提前开工授权
+				72 container
+					73 text 通过 设备在用
+				74 container
+					75 text 通过 主责当前资格有效
+				76 container
+					77 text 通过 协作人员当前资格有效
+				78 container
+					79 text 通过 计划人员范围仍有效
+				80 container
+					81 text 通过 专业许可与隔离控制有效
+			82 text 许可 PERMIT-EQ-001 · 停机挂牌与能量隔离 / 确认旋转部件防护 / 作业后恢复防护并试运行 · 检查日期 2026-10-11
+		83 container mt-execution-form
+			84 container mt-execution-fields
+				85 container
+					86 heading 逐项执行记录, Value: 2
+						87 text 逐项执行记录
+					88 container mt-items
+						89 heading 驱动端轴承润滑 · 必填, Value: 3
+							90 text 驱动端轴承润滑 · 必填
+						91 text 驱动端轴承 / 按润滑规程补充润滑脂 / 无泄漏且试运转无异响
+						92 container
+							93 text 执行结论
+							94 pop up button (collapsed, settable) 执行结论, Value: 未记录, Secondary Actions: Expand
+								95 menu
+									96 (selected) 未记录
+									97 正常 / 完成
+									98 异常
+						99 container
+							100 text 证据引用
+							101 text field (settable) 证据引用
+						102 container
+							103 text 遗留异常处置说明
+							104 text entry area (settable) 遗留异常处置说明
+						105 text 尚未记录
+						106 button 上报项目异常
+				107 container
+					108 heading 完工记录, Value: 2
+						109 text 完工记录
+					110 text 工时（分钟）
+					111 stepper (settable, integer) 工时（分钟）, Value: 0, ID: mt-labor
+					112 text 用料单引用
+					113 text field (settable) 用料单引用, ID: mt-material
+					114 text 试运行结论 *
+					115 text entry area (settable) 试运行结论 *, ID: mt-trial
+			116 button 暂存执行记录, ID: mt-save
+		117 container
+			118 heading 关联异常, Value: 2
+				119 text 关联异常
+			120 text 暂无数据
+			121 container 业务表格，可横向滚动
+				122 table
+					123 row
+						124 cell
+							125 text 项目
+						126 cell
+							127 text 发现编号
+						128 cell
+							129 text 关联状态
+						130 cell
+							131 text 反馈
+						132 cell
+							133 text 操作
+					134 row
+						135 cell
+							136 text 暂无数据
+							137 text 请调整筛选条件或刷新列表。
+			138 container mt-links-pagination
+				139 text 共 0 条 · 第 1 / 1 页
+				140 button (disabled) 上一页
+				141 button (disabled) 下一页
+		142 container
+			143 heading 执行与审核版本记录, Value: 2
+				144 text 执行与审核版本记录
+			145 text field (settable) Description: 搜索版本记录, ID: mc-history-search
+			146 text 暂无数据
+			147 container 业务表格，可横向滚动
+				148 table
+					149 row
+						150 cell
+							151 text 业务类型
+						152 cell
+							153 text 执行版本
+						154 cell
+							155 text 决定 / 状态
+						156 cell
+							157 text 人员
+						158 cell
+							159 text 时间
+						160 cell
+							161 text 意见
+						162 cell
+							163 text 操作
+					164 row
+						165 cell
+							166 text 暂无数据
+							167 text 请调整筛选条件或刷新列表。
+			168 container mc-history-pagination
+				169 text 共 0 条 · 第 1 / 1 页
+				170 button (disabled) 上一页
+				171 button (disabled) 下一页
+		172 container
+			173 heading 派工与操作审计, Value: 2
+				174 text 派工与操作审计
+			175 text 已展示 · 当前页4条
+			176 container 业务表格，可横向滚动
+				177 table
+					178 row
+						179 cell
+							180 text 时间
+						181 cell
+							182 text 人员
+						183 cell
+							184 text 操作
+						185 cell
+							186 text 原因
+					187 container mt-audit
+						188 row
+							189 cell
+								190 text 2026/10/12 08:26:47
+							191 cell
+								192 text 王强
+							193 cell
+								194 text 安全确认并开工
+							195 cell
+								196 text 保存执行数据
+						197 row
+							198 cell
+								199 text 2026/10/11 21:50:58
+							200 cell
+								201 text 周主管
+							202 cell
+								203 text 获取提前开工审批结果
+							204 cell
+								205 text 保存执行数据
+						206 row
+							207 cell
+								208 text 2026/10/11 21:50:36
+							209 cell
+								210 text 周主管
+							211 cell
+								212 text 申请提前开工
+							213 cell
+								214 text 计划停机窗口提前，申请提前执行
+						215 row
+							216 cell
+								217 text 2026/10/11 21:49:15
+							218 cell
+								219 text 周主管
+							220 cell
+								221 text 计划生成
+							222 cell
+								223 text 执行窗口修复验收
+			224 container mt-audit-pagination
+				225 text 共 4 条 · 第 1 / 1 页
+				226 button (disabled) 上一页
+				227 button (disabled) 下一页
+
+The focused UI element is 1 AXWebArea 混合机月度润滑保养 · 保养任务, URL: 127.0.0.1:8765/pages/maintenance-task.html?view=pc&id=MT-0001&equipment=EQ-001

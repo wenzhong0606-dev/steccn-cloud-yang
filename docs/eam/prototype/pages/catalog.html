@@ -1,16 +1,50 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>首批原型范围 · 设备管理原型</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5">
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>首批原型范围 · 设备管理原型</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
 </head>
+
 <body data-page="catalog" data-layout="detail">
-<div id="platform-header"></div>
-<div class="shell"><aside id="module-nav"></aside><main>
-<div class="breadcrumb" id="breadcrumb"></div>
-<div class="title"><div><h1>首批原型范围</h1><p class="text-secondary small">60个菜单入口 / 24份独立HTML；资料与履历集成设备台账</p></div></div>
-<section class="card"><h2>已提供独立HTML与模拟交互</h2><div class="actions"><button data-page="inspection-list">点检列表</button><button data-page="check-list">专项列表</button><button data-page="abnormal-events">异常事件中心</button><button data-page="defect-list">缺陷台账</button><button data-page="failure-events">故障事件</button><button data-page="order-list">工单列表</button><button data-page="standard-list">标准列表</button><button data-page="route-list">路线列表</button><button data-page="plan-list">计划列表</button></div><div class="actions"><button data-page="workbench">13角色工作台</button><button data-page="equipment">设备树/台账</button><button data-page="device">全景档案</button><button data-page="inspection">点检/专项检查</button><button data-page="defect">旧异常分流（历史切片）</button><button data-page="order">维修执行</button><button data-page="acceptance">版本验收</button><button data-page="standards">点检标准</button><button data-page="plans">路线/计划</button></div><p class="alert alert-info">计量检验、备件、IoT及分析等专业菜单完整页仍待后续批次。本批工作台提供专业队列摘要与记录处理切片。</p><p>3D仅概念示意，文件内容仅保存本机；资料与履历通过台账进入，业务命令只修改模拟数据；未连接数据库或业务HTTP API。</p></section>
-<p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
-</main></div><div id="mobile-nav"></div>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script>
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>首批原型范围</h1>
+                    <p class="text-secondary small">60个菜单入口 / 24份独立HTML；资料与履历集成设备台账</p>
+                </div>
+            </template></div>
+            <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>已提供独立HTML与模拟交互</h2></template><template data-fill="body">
+
+                <div class="actions"><button data-page="inspection-list">点检列表</button><button data-page="check-list">专项列表</button><button data-page="abnormal-events">异常事件中心</button><button data-page="defect-list">缺陷台账</button><button data-page="failure-events">故障事件</button><button data-page="order-list">工单列表</button><button data-page="standard-list">标准列表</button><button data-page="route-list">路线列表</button><button data-page="plan-list">计划列表</button></div>
+                <div class="actions"><button data-page="workbench">13角色工作台</button><button data-page="equipment">设备树/台账</button><button data-page="device">全景档案</button><button data-page="inspection">点检/专项检查</button><button data-page="defect">旧异常分流（历史切片）</button><button data-page="order">维修执行</button><button data-page="acceptance">版本验收</button><button data-page="standards">点检标准</button><button data-page="plans">路线/计划</button></div>
+                <p class="alert alert-info">计量检验、备件、IoT及分析等专业菜单完整页仍待后续批次。本批工作台提供专业队列摘要与记录处理切片。</p>
+                <p>3D仅概念示意，文件内容仅保存本机；资料与履历通过台账进入，业务命令只修改模拟数据；未连接数据库或业务HTTP API。</p>
+            </template></section>
+            <p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+
+
 </body></html>

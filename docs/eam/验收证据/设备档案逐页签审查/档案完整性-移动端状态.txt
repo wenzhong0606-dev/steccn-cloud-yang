@@ -1,0 +1,171 @@
+Browser tab: 15, Title: "1#混合机 · 设备档案", URL: "http://127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=completeness".
+0 AXWebArea 1#混合机 · 设备档案, URL: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=completeness
+	1 link Description: 跳到业务内容, Value: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=completeness#main-content
+	2 container
+		3 text S
+		4 text STECCN
+		5 button (collapsed) 模块菜单, ID: nav-toggle, Secondary Actions: Expand
+		6 checkbox 切换移动端, Value: 0, ID: view-toggle
+		7 button (collapsed) 演示设置, Secondary Actions: Expand
+			8 text 演示设置
+	44 container main-content
+		45 heading 1#混合机 · 设备档案, Value: 1, ID: device-name
+			46 text 1#混合机 · 设备档案
+		47 text TC2_YL1_PL_01 / 原料二车间/配料线
+		48 container 面包屑导航
+			49 content list
+				50 link Description: 系统平台, Value: 127.0.0.1:8765/pages/platform.html?view=pc
+				51 container
+					133 text /
+					53 link Description: 设备管理, Value: 127.0.0.1:8765/pages/workbench.html?view=pc
+				54 container
+					134 text /
+					56 link Description: 设备台账, Value: 127.0.0.1:8765/pages/equipment.html?view=pc
+				57 container
+					135 text / 设备全景档案
+		59 container
+			60 image Description: 设备外观, ID: archive-photo
+			61 text MX-2400
+			62 text 负责人 赵工
+			63 text 序列号 MX20240318
+			64 container archive-status-strip
+				65 text 生命周期  在用 运行状态  运行 健康状态  故障待复核 计量状态  不适用 使用许可  限制使用
+		66 container Description: 设备档案导航, ID: archive-nav-mount
+			136 tab group
+				137 tab (selectable, settable, boolean) 概况, Value: 0, ID: tab-overview-1
+				138 tab (selectable, settable, boolean) 状态与许可, Value: 0, ID: tab-state-3
+			139 tab group
+				140 tab (selectable, settable, boolean) 技术参数, Value: 0, ID: tab-parameters-5
+				141 tab (selectable, settable, boolean) 设备结构, Value: 0, ID: tab-structure-7
+				142 tab (selectable, settable, boolean) 位置与安装, Value: 0, ID: tab-installation-9
+			143 tab group
+				144 tab (selectable, settable, boolean) 点检, Value: 0, ID: tab-work-11
+				145 tab (selectable, settable, boolean) 保养, Value: 0, ID: tab-maintenance-13
+				146 tab (selectable, settable, boolean) 故障, Value: 0, ID: tab-failure-15
+				147 tab (selectable, settable, boolean) 维修, Value: 0, ID: tab-repair-17
+			148 tab group
+				149 tab (selectable, settable, boolean) 设备BOM, Value: 0, ID: tab-bom-19
+				150 tab (selectable, settable, boolean) 更换与寿命, Value: 0, ID: tab-replacement-21
+				151 tab (selectable, settable, boolean) 测点与计量器, Value: 0, ID: tab-meters-23
+				152 tab (selectable, settable, boolean) 运行监测, Value: 0, ID: tab-trend-25
+			153 tab group
+				154 tab (selectable, settable, boolean) 安全合规, Value: 0, ID: tab-risk-27
+				155 tab (selectable, settable, boolean) 资产成本, Value: 0, ID: tab-cost-29
+			156 tab group
+				157 tab (selectable, settable, boolean) 图片与3D, Value: 0, ID: tab-media-31
+				158 tab (selectable, settable, boolean) 文档资料, Value: 0, ID: tab-documents-33
+				159 tab (selectable, settable, boolean) 生命周期, Value: 0, ID: tab-history-35
+				160 tab (selectable, settable, boolean) 关联业务, Value: 0, ID: tab-related-37
+				161 tab (selectable, settable, boolean) 变更审计, Value: 0, ID: tab-audit-39
+				162 tab (selected, settable, boolean) 档案完整性, Value: 1, ID: tab-completeness-41
+		168 container Description: 档案完整性, ID: panel-completeness-42
+			169 heading 档案完整性清单, Value: 2
+				170 text 档案完整性清单
+			171 container
+				172 search text field (settable) 档案完整性搜索
+				173 button 高级筛选
+			174 button 刷新档案
+			175 text 数据来源：完整性规则 V2 · 更新时间：2026-10-10 08:00:00
+			176 text 已展示 · 当前页8条
+			177 container 业务表格，可横向滚动
+				178 table
+					179 row
+						180 cell
+							181 text 检查项
+						182 cell
+							183 text 检查结果
+						184 cell
+							185 text 适用规则 / 校验说明
+						186 cell
+							187 text 操作
+					188 row
+						189 cell
+							190 text 设备编码
+							191 text code
+						192 cell
+							193 text 通过
+						194 cell
+							195 text 全阶段基础字段
+						196 cell
+							197 button 查看设备编码详情
+					198 row
+						199 cell
+							200 text 设备名称
+							201 text name
+						202 cell
+							203 text 通过
+						204 cell
+							205 text 全阶段基础字段
+						206 cell
+							207 button 查看设备名称详情
+					208 row
+						209 cell
+							210 text 型号规格
+							211 text model
+						212 cell
+							213 text 通过
+						214 cell
+							215 text 全阶段基础字段
+						216 cell
+							217 button 查看型号规格详情
+					218 row
+						219 cell
+							220 text 所属位置
+							221 text location
+						222 cell
+							223 text 通过
+						224 cell
+							225 text 全阶段基础字段
+						226 cell
+							227 button 查看所属位置详情
+					228 row
+						229 cell
+							230 text 设备负责人
+							231 text ownerId
+						232 cell
+							233 text 通过
+						234 cell
+							235 text 全阶段基础字段
+						236 cell
+							237 button 查看设备负责人详情
+					238 row
+						239 cell
+							240 text 制造商
+							241 text manufacturer
+						242 cell
+							243 text 通过
+						244 cell
+							245 text 在用及后续阶段必填
+						246 cell
+							247 button 查看制造商详情
+					248 row
+						249 cell
+							250 text 序列号
+							251 text serial
+						252 cell
+							253 text 通过
+						254 cell
+							255 text 在用及后续阶段必填
+						256 cell
+							257 button 查看序列号详情
+					258 row
+						259 cell
+							260 text 投用日期
+							261 text commissionedAt
+						262 cell
+							263 text 通过
+						264 cell
+							265 text 在用及后续阶段必填
+						266 cell
+							267 button 查看投用日期详情
+			268 text 共 13 条 · 第 1 / 2 页
+			269 button (disabled) 上一页
+			270 button 下一页
+		132 text 设备管理 · 设备档案
+	163 container
+		164 button 工作台
+		165 button 任务
+		166 button 设备
+		167 button 异常
+
+The focused UI element is 162 tab (selected, settable, boolean) 档案完整性, Value: 1, ID: tab-completeness-41

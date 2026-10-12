@@ -17,7 +17,7 @@ menu_ids = re.findall(pattern, menu, re.M)
 catalog_ids = re.findall(pattern, catalog, re.M)
 if len(menu_ids) != 60 or len(set(menu_ids)) != 60 or menu_ids != catalog_ids:
     errors.append('菜单与总表编号/数量不一致')
-pages = list((root / 'prototype/pages').glob('*.html'))
+pages = [p for p in (root / 'prototype/pages').glob('*.html') if not p.stem.startswith('_')]
 registry = json.loads((root / '页面设计/页面记录/页面登记.json').read_text(encoding='utf-8'))
 registered = registry['pages']
 if {p.stem for p in pages} != {p['id'] for p in registered} or len(registered) != len({p['id'] for p in registered}):

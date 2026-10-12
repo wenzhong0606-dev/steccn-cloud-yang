@@ -1,0 +1,32 @@
+Browser tab: 15, Title: "1#混合机 · 设备档案", URL: "http://127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=repair".
+0 AXWebArea 1#混合机 · 设备档案, URL: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=repair
+	1 container 机械综合检修, ID: archive-record-dialog
+		2 container
+			3 heading 机械综合检修, Value: 2, ID: archive-record-title
+				4 text 机械综合检修
+			5 button 关闭, ID: archive-record-close
+		6 definition list archive-record-fields
+			7 container 记录编号
+				8 text 记录编号
+			9 text WO-2001
+			10 container 设备
+				11 text 设备
+			12 text TC2_YL1_PL_01
+			13 container 业务内容
+				14 text 业务内容
+			15 text 待开工
+			16 container 关联依据
+				17 text 关联依据
+			18 text —
+			19 container 数据来源
+				20 text 数据来源
+			21 text 维修工单
+			22 container 更新时间
+				23 text 更新时间
+			24 text —
+			25 container 记录版本
+				26 text 记录版本
+			27 text V1
+		28 button 打开来源单据, ID: archive-record-source
+
+The focused UI element is 5 button 关闭, ID: archive-record-close

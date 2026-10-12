@@ -1,4 +1,107 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>维修工单 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head><body data-page="order-list" data-layout="list"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div class="breadcrumb" id="breadcrumb"></div><div class="title work-heading"><div><h1>维修工单</h1><p class="text-secondary small">多问题处置 · 技术验收 · 独立业务关闭</p></div></div>
-<section class="problem-metrics"><div>范围工单<strong id="work-total">—</strong></div><div>执行 / 暂停<strong id="work-active">—</strong></div><div>待技术验收<strong id="work-review">—</strong></div><div>待业务关闭<strong id="work-close">—</strong></div></section>
-<section class="card work-list" data-component="list-panel"><div class="list-panel-header" data-component="list-toolbar"><h2 class="business-panel-title">维修工单清单</h2><div class="list-panel-tools"><div class="input-group input-group-sm list-search-group" data-component="filter-bar"><input id="work-search" aria-label="搜索工单编号或名称" placeholder="搜索工单编号或名称" class="form-control"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="list-filter-options" aria-controls="list-filter-options" aria-expanded="false">筛选条件</button></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="work-refresh" type="button" data-list-tool="refresh" data-label="刷新">刷新</button><button id="create-work" type="button" class="btn btn-sm btn-primary">创建工单</button></div></div><div class="filter-options" id="list-filter-options" hidden><select id="work-status" aria-label="工单状态"><option value="">全部状态</option></select><label><input id="work-mine" type="checkbox"> 我的指派</label><button id="work-clear" type="button">清除筛选</button></div><p id="work-load" class="text-secondary" role="status">正在读取…</p><div class="table-wrapper"><table class="data-table"><thead><tr><th>工单 / 范围</th><th>关联问题</th><th>执行人</th><th>状态</th><th>执行版本</th><th>操作</th></tr></thead><tbody id="work-rows"></tbody></table></div><div id="work-empty" class="empty-state" hidden>当前筛选暂无工单</div><div class="list-pagination"><span id="work-count"></span><div><button id="work-prev" type="button">上一页</button><button id="work-next" type="button">下一页</button></div></div></section>
-<dialog id="create-work-dialog" class="problem-dialog" aria-labelledby="create-work-title"><h2 id="create-work-title">创建问题处置工单</h2><form id="create-work-form"><div class="problem-form-grid"><label class="field">设备 *<select id="work-equipment"></select></label><label class="field">专业范围 *<select id="work-scope-type"></select></label><label class="field">作业许可引用 *<select id="work-permit"></select></label><label class="field">计划截止日期<input id="work-due" type="date"></label></div><label class="field">工单名称 *<input id="work-title" required maxlength="200"></label><label class="field">处置范围 *<input id="work-scope" required maxlength="500" placeholder="明确本次处置边界；同问题同范围禁止重复建单"></label><fieldset><legend>关联问题 *</legend><input id="candidate-search" aria-label="搜索候选问题" placeholder="搜索问题编号或现象"><div id="candidate-list" class="work-candidates"></div></fieldset><label class="field">建单依据 *<textarea id="work-reason" required maxlength="2000"></textarea></label><p id="work-create-error" class="problem-error" role="alert"></p><div class="actions"><button id="work-create-cancel" type="button">取消</button><button id="work-create-submit" class="btn btn-sm btn-primary" type="submit">保存草稿</button></div></form></dialog><p class="text-secondary small my-4">模型评审 · JSON异步模拟接口；未接真实业务服务</p><dialog id="list-tools-dialog" aria-labelledby="list-tools-title"><h2 id="list-tools-title"></h2><div id="list-tools-body"></div><p id="list-tools-status" role="status" class="small text-secondary"></p><div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden>确认</button></div></dialog></main></div><div id="mobile-nav"></div><script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js"></script><script src="../shared/maintenance.js"></script><script src="../shared/domain.js"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../mock/problem-data.js"></script><script src="../mock/work-data.js"></script><script src="../mock/work-rules.js"></script><script src="../mock/problem-api.js"></script><script src="../scripts/work-ui.js"></script><script src="../scripts/work-list.js?v=20261011-context3"></script><script src="../mock/list-tools-data.js"></script><script src="../mock/list-tools-api.js"></script><script src="../shared/list-toolbar.js?v=20261011-filter3"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>维修工单 · 设备管理</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="order-list" data-layout="list">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title work-heading" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>维修工单</h1>
+                    <p class="text-secondary small">多问题处置 · 技术验收 · 独立业务关闭</p>
+                </div>
+            </template></div>
+            <section class="problem-metrics">
+                <div>范围工单<strong id="work-total">—</strong></div>
+                <div>执行 / 暂停<strong id="work-active">—</strong></div>
+                <div>待技术验收<strong id="work-review">—</strong></div>
+                <div>待业务关闭<strong id="work-close">—</strong></div>
+            </section>
+            <section class="card work-list" data-component="list-panel" data-component-src="../components/list-panel.html" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                    <h2 class="business-panel-title">维修工单清单</h2>
+                    <div class="list-panel-tools">
+                        <div class="list-search-group" data-component="filter-bar" data-component-src="../components/filter-bar.html" data-component-required="true"><template data-fill="body"><input id="work-search" aria-label="搜索工单编号或名称" placeholder="搜索工单编号或名称" class="form-control"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="list-filter-options" aria-controls="list-filter-options" aria-expanded="false">筛选条件</button></template></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="work-refresh" type="button" data-list-tool="refresh" data-label="刷新">刷新</button><button id="create-work" type="button" class="btn btn-sm btn-primary">创建工单</button>
+                    </div>
+                </template><template data-fill="body">
+
+                <div class="filter-options" id="list-filter-options" hidden=""><select id="work-status" aria-label="工单状态">
+                        <option value="">全部状态</option>
+                    </select><label><input id="work-mine" type="checkbox"> 我的指派</label><button id="work-clear" type="button">清除筛选</button></div>
+                <p id="work-load" class="text-secondary" role="status">正在读取…</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>工单 / 范围</th>
+                                <th>关联问题</th>
+                                <th>执行人</th>
+                                <th>状态</th>
+                                <th>执行版本</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="work-rows"></tbody>
+                    </table>
+                </div>
+                <div id="work-empty" class="empty-state" hidden="">当前筛选暂无工单</div>
+
+            </template><template data-fill="footer"><div class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body"><span id="work-count"></span>
+                    <div><button id="work-prev" type="button">上一页</button><button id="work-next" type="button">下一页</button></div>
+                </template></div></template></section>
+            <dialog id="create-work-dialog" class="problem-dialog" aria-labelledby="create-work-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="create-work-title">创建问题处置工单</h2></template><template data-fill="body">
+
+                <form id="create-work-form">
+                    <div class="problem-form-grid"><label class="field">设备 *<select id="work-equipment"></select></label><label class="field">专业范围 *<select id="work-scope-type"></select></label><label class="field">作业许可引用 *<select id="work-permit"></select></label><label class="field">计划截止日期<input id="work-due" type="date"></label></div><label class="field">工单名称 *<input id="work-title" required="" maxlength="200"></label><label class="field">处置范围 *<input id="work-scope" required="" maxlength="500" placeholder="明确本次处置边界；同问题同范围禁止重复建单"></label>
+                    <fieldset>
+                        <legend>关联问题 *</legend><input id="candidate-search" aria-label="搜索候选问题" placeholder="搜索问题编号或现象">
+                        <div id="candidate-list" class="work-candidates"></div>
+                    </fieldset><label class="field">建单依据 *<textarea id="work-reason" required="" maxlength="2000"></textarea></label>
+                    <p id="work-create-error" class="problem-error" role="alert"></p>
+                    <div class="actions"><button id="work-create-cancel" type="button">取消</button><button id="work-create-submit" class="btn btn-sm btn-primary" type="submit">保存草稿</button></div>
+                </form>
+            </template></dialog>
+            <p class="text-secondary small my-4">模型评审 · JSON异步模拟接口；未接真实业务服务</p>
+            <dialog id="list-tools-dialog" aria-labelledby="list-tools-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="list-tools-title"></h2></template><template data-fill="body">
+
+                <div id="list-tools-body"></div>
+                <p id="list-tools-status" role="status" class="small text-secondary"></p>
+                <div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden="">确认</button></div>
+            </template></dialog>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js"></script>
+    <script src="../shared/maintenance.js"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../mock/problem-data.js"></script>
+    <script src="../mock/work-data.js?v=20261011-ap1"></script>
+    <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+    <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+    <script src="../scripts/work-ui.js?v=20261011-closure4"></script>
+    <script src="../scripts/work-list.js?v=20261011-closure4"></script>
+    <script src="../mock/list-tools-data.js"></script>
+    <script src="../mock/list-tools-api.js"></script>
+    <script src="../shared/list-toolbar.js?v=20261011-closure4"></script>
+
+
+</body></html>

@@ -1,3 +1,5 @@
+/* 组件就绪后执行 */
+Eam.registerInit(async function(){
 (()=>{
  if(!document.getElementById('route-name'))return;const s=Eam.s,context=EamProduct.selectVersion(s.plan,s.planDraft,s.planHistory,Object.fromEntries(new URLSearchParams(location.search))),p=context.record||s.plan;
  Eam.text('plan-info','当前计划 V'+s.plan.revision+' / '+({shift:'每班',daily:'每日',weekly:'每周'}[s.plan.frequency])+' / '+s.plan.time+' / '+s.plan.route+' / '+(s.plan.status==='published'?'已发布':'已停用'));
@@ -37,3 +39,5 @@
  if(document.getElementById('plan-person'))document.getElementById('plan-person').value=selected.record?.assignee??'';
  document.querySelectorAll('main input,main select,main textarea,main button:not([data-page])').forEach(el=>el.disabled=true);}
 })();
+
+});

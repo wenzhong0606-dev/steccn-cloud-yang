@@ -1,0 +1,8 @@
+<!-- list-panel.html · 列表容器内部骨架（仅结构） -->
+<!-- 外层 section.card 由页面 host 提供；本片段提供工具栏 / 主体 / 页脚三区域插槽 -->
+<!-- 业务内容经页面 <template data-fill="head|body|footer"> 注入对应 [data-region] -->
+<div class="list-panel" data-component="list-panel-inner">
+  <div class="list-panel-header" data-component="list-toolbar" data-region="head"></div>
+  <div class="list-panel-body" data-region="body"></div>
+  <div class="list-panel-footer" data-region="footer"></div>
+</div>

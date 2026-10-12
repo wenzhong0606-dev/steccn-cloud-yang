@@ -1,20 +1,49 @@
 /* 业务数据只经异步模拟接口；独立会话状态，不调用旧closeReport。 */
 (function(root){const seed=typeof module==='object'&&module.exports?require('./problem-data.js'):root.EAM_PROBLEM_JSON;
 const workSeed=typeof module==='object'&&module.exports?require('./work-data.js'):root.EAM_WORK_JSON;const workRules=typeof module==='object'&&module.exports?require('./work-rules.js'):root.EamWorkRules;
+const approvalSamples=typeof module==='object'&&module.exports?require('./approval-data.js'):root.EAM_APPROVAL_JSON;
+const actors=typeof module==='object'&&module.exports?require('../shared/domain.js').people:root.EamDomain.people;
 const copy=x=>JSON.parse(JSON.stringify(x));
 function createApi(options={}){let data={...copy(seed),...copy(workSeed)};const context=options.context||(()=>({role:'engineer',person:'P05',scenario:'normal'}));
 const storage=options.storage,key='eam-problems-v1';if(storage){try{const saved=JSON.parse(storage.getItem(key));if(saved?.schema===1)data={...data,...saved.data};}catch{}}
+data.workConfig.followupOwnerIds||=copy(workSeed.workConfig.followupOwnerIds);
 if(!data.people.some(p=>p.id==='P08'))data.people.push({id:'P08',name:'吴工'});if(!data.people.some(p=>p.id==='P12'))data.people.push({id:'P12',name:'外包张工'});
 for(const r of data.discoveries){if(r.priority==='urgent'){r.sourcePriority='urgent';r.priority='high';}r.source=({manual:'现场发现',inspection:'点检发现',special:'专项检查'})[r.source]||r.source;}
 const must=(ok,message)=>{if(!ok)throw new Error(message);};
-async function request(method,path,body={}){await new Promise(r=>setTimeout(r,options.delay??180));const ctx=context();must(ctx.role&&ctx.person&&ctx.scenario!=='forbidden','无访问权限');must(ctx.scenario!=='loading','仍在读取，请稍后重试');
-const [kind,id,action]=path.split('/').filter(Boolean);must(['discoveries','defects','failures','equipment','people','work-orders','hazards','work-config','work-order-candidates'].includes(kind),'接口不存在');
+async function request(method,path,body={}){await new Promise(r=>setTimeout(r,options.delay??180));const ctx=context();must(ctx.role&&ctx.person&&ctx.scenario!=='forbidden','无访问权限');must(actors.some(p=>p.id===ctx.person&&p.roles.includes(ctx.role)),'当前人员无该角色权限');const inScope=r=>!r.equipmentId||!ctx.equipmentIds||ctx.equipmentIds.includes(r.equipmentId);must(ctx.scenario!=='loading','仍在读取，请稍后重试');
+const [kind,id,action]=path.split('/').filter(Boolean);must(['discoveries','defects','failures','equipment','people','work-orders','hazards','work-config','work-order-candidates','approval-adapter'].includes(kind),'接口不存在');
 if(method==='GET'&&kind==='discoveries'&&options.legacyReports){for(const r of options.legacyReports()){const importedId='LEG-'+r.id;if(!data.discoveries.some(d=>d.id===importedId)){data.discoveries.push({id:importedId,equipmentId:r.equipmentId||'EQ-001',description:r.description,source:({manual:'现场发现',inspection:'点检发现',special:'专项检查'})[r.source]||r.source||'旧点检来源',sourceId:r.sourceId,legacyReportId:r.id,part:r.part,sourcePriority:r.severity,priority:r.severity==='urgent'?'high':r.severity||'medium',status:'submitted',ownerId:'P05',reporter:r.reporterId,occurredAt:r.observedAt||r.receivedAt,evidence:(r.evidence||'未记录额外证据')+'；旧报告引用 '+r.id+'；原结果保留。旧关闭结论不作为新问题验证。',links:[],version:1});}}if(storage)storage.setItem(key,JSON.stringify({schema:1,data}));}
-if(method==='GET'&&kind==='work-order-candidates')return {rows:['defects','failures','hazards'].flatMap(k=>data[k].filter(p=>p.status!=='closed').map(p=>({kind:k,...copy(p)})))};
-if(method==='GET'&&kind==='work-config')return copy(data.workConfig);
-if(method==='GET'&&['work-orders','hazards'].includes(kind)){let rows=kind==='work-orders'?data.workOrders:data.hazards;if(kind==='work-orders'&&['technician','contractor'].includes(ctx.role))rows=rows.filter(o=>o.assigneeId===ctx.person);if(ctx.scenario==='empty')rows=[];if(id){const r=rows.find(r=>r.id===id);must(r,'记录不存在或不在指派范围');return {...workRules.decorate(kind,r,data,ctx),audit:copy(data.audit.filter(a=>a.objectId===id))};}return {rows:rows.map(r=>workRules.decorate(kind,r,data,ctx)),audit:copy(data.audit)};}
-if(method==='GET'){const rows=ctx.scenario==='empty'?[]:data[kind];if(id){const record=rows.find(r=>r.id===id);must(record,'记录不存在');return copy(record);}return {rows:copy(rows),audit:copy(data.audit)};}
-must(ctx.scenario!=='failure','模拟提交失败，数据未保存');must(ctx.scenario!=='conflict','版本冲突，请重新读取');must(method==='POST','不支持该方法');
+if(kind==='approval-adapter'){
+ must(method==='GET'&&id==='instances','仅支持外部实例结果查询');const instance=action,a=data.workOrders.find(x=>x.terminationApproval?.instanceId===instance)?.terminationApproval;must(a,'审批实例不存在');const owner=data.workOrders.find(x=>x.terminationApproval?.instanceId===instance);must(!ctx.equipmentIds||ctx.equipmentIds.includes(owner.equipmentId),'设备范围不符');must(['engineer','supervisor'].includes(ctx.role)||owner.assigneeId===ctx.person,'无查看权限');const sample=approvalSamples[body.sample||'pending'];must(sample,'模拟回执不存在');must(sample.status!=='failure',sample.comment);return {...copy(sample),instanceId:instance,applicationRevision:a.applicationRevision,businessId:owner.id};
+}
+if(method==='GET'&&kind==='work-order-candidates')return {rows:['defects','failures','hazards'].flatMap(k=>data[k].filter(p=>inScope(p)&&p.status!=='closed').map(p=>({kind:k,...copy(p)})))};
+if(method==='GET'&&kind==='work-config'){const config=copy(data.workConfig);config.permits=config.permits.filter(inScope);config.executors=config.executors.filter(p=>!ctx.equipmentIds||p.equipmentIds.some(id=>ctx.equipmentIds.includes(id)));return config;}
+if(method==='GET'&&['work-orders','hazards'].includes(kind)){let rows=(kind==='work-orders'?data.workOrders:data.hazards).filter(inScope);if(kind==='work-orders'&&['technician','contractor'].includes(ctx.role))rows=rows.filter(o=>o.assigneeId===ctx.person);if(ctx.scenario==='empty')rows=[];if(id){const r=rows.find(r=>r.id===id);must(r,'记录不存在或不在设备/指派范围');return {...workRules.decorate(kind,r,data,ctx),audit:copy(data.audit.filter(a=>a.objectId===id&&inScope(a.after||a.before||{})))};}return {rows:rows.map(r=>workRules.decorate(kind,r,data,ctx)),audit:copy(data.audit.filter(a=>inScope(a.after||a.before||{})))};}
+if(method==='GET'){const rows=ctx.scenario==='empty'?[]:data[kind].filter(r=>kind==='equipment'?(!ctx.equipmentIds||ctx.equipmentIds.includes(r.id)):inScope(r));if(id){const record=rows.find(r=>r.id===id);must(record,'记录不存在或不在设备范围');return copy(record);}return {rows:copy(rows),audit:copy(data.audit.filter(a=>inScope(a.after||a.before||{})))};}
+must(ctx.scenario!=='failure','模拟提交失败，数据未保存');must(ctx.scenario!=='conflict','版本冲突，请重新读取');must(method==='POST','不支持该方法');const target=kind==='work-orders'?data.workOrders.find(r=>r.id===id):data[kind]?.find(r=>r.id===id);if(target)must(inScope(target),'记录不在设备范围');if(!id&&body.equipmentId)must(inScope(body),'设备范围不符');
+if(kind==='work-orders'&&['termination-applications','apply-approval-result'].includes(action)){
+ const next=copy(data),row=next.workOrders.find(x=>x.id===id);must(row,'工单不存在');must(['engineer','supervisor'].includes(ctx.role),'无申请或结果消费权限');must(!ctx.equipmentIds||ctx.equipmentIds.includes(row.equipmentId),'设备范围不符');
+ if(action==='termination-applications'){
+  if(row.terminationApproval?.idempotencyKey===body.idempotencyKey){must(row.terminationApproval.requestPayload===JSON.stringify(body),'幂等键内容不同');return workRules.decorate(kind,row,next,ctx);}
+  must(body.idempotencyKey,'申请幂等键必填');must(row.terminationApproval?.status!=='pending'&&(row.terminationApproval?.status!=='approved'||row.terminationApproval?.applyStatus==='blocked'),'已有未处理审批申请');
+  const probe=copy(next);workRules.command(probe,ctx,kind,id,'cancel',body);
+  const revision=(row.terminationApproval?.applicationRevision||0)+1;row.version++;
+  row.terminationApproval={applicationId:id+'-TERM-'+revision,instanceId:'EXT-'+id+'-'+revision,applicationRevision:revision,businessRevision:row.version,submittedBy:ctx.person,submittedAt:new Date().toISOString(),status:'pending',resultVersion:0,applyStatus:'pending',idempotencyKey:body.idempotencyKey,requestPayload:JSON.stringify(body),snapshot:copy(body)};
+ }else{
+  const a=row.terminationApproval;must(a&&body.instanceId===a.instanceId&&body.applicationRevision===a.applicationRevision,'审批实例或申请版本不匹配');
+  if(a.applyStatus==='applied')return workRules.decorate(kind,row,next,ctx);
+  const sample=approvalSamples[body.sample||'pending'];must(sample,'模拟回执不存在');must(sample.status!=='failure',sample.comment);must(sample.resultVersion>=a.resultVersion,'旧审批结果不能覆盖');
+  if(sample.resultVersion===a.resultVersion){must(sample.status===a.status,'同版本回执冲突');return workRules.decorate(kind,row,next,ctx);}
+  must(a.status==='pending','审批已结束，不能覆盖结果');Object.assign(a,{status:sample.status,resultVersion:sample.resultVersion,resultAt:new Date().toISOString(),comment:sample.comment});
+  if(sample.status==='approved'){
+   try{must(row.version===a.businessRevision,'申请后业务版本变化');const trial=copy(next);const applied=workRules.command(trial,ctx,kind,id,'cancel',{...a.snapshot,expectedVersion:row.version});applied.record.terminationApproval={...copy(a),applyStatus:'applied',appliedAt:new Date().toISOString()};commit(trial,applied.record,action,a.comment,ctx,applied.affected);return workRules.decorate(kind,applied.record,trial,ctx);}
+   catch(e){a.applyStatus='blocked';a.applyError=e.message;}
+  }else a.applyStatus=sample.status==='pending'?'pending':'not_required';
+ }
+ commit(next,row,action,body.reason||'获取外部审批结果',ctx);return workRules.decorate(kind,row,next,ctx);
+}
+if(kind==='work-orders'&&action==='cancel')throw new Error('请提交终止申请并获取外部审批结果');
+if(kind==='work-orders'&&data.workOrders.find(x=>x.id===id)?.terminationApproval&&['pending','approved'].includes(data.workOrders.find(x=>x.id===id).terminationApproval.status))throw new Error('终止审批处理中，冲突操作已锁定');
 if(['work-orders','hazards'].includes(kind)){const next=copy(data);const result=workRules.command(next,ctx,kind,id,action,body);if(!result.unchanged)commit(next,result.record,action||'create_work',body.reason,ctx,result.affected);return workRules.decorate(kind,result.record,next,ctx);}
 if(kind==='discoveries'&&!id&&(body.sourceType==='maintenance'||body.sourceTaskId||body.sourceItemId)){must(body.sourceType==='maintenance','保养来源类型无效');const resolver=options.maintenanceSource||(root.EamMaintenanceApi?(b=>root.EamMaintenanceApi.request('GET','/maintenance/tasks/'+encodeURIComponent(b.sourceTaskId))):null);must(resolver,'保养任务来源未接入');const task=await resolver(body);must(task&&task.equipmentId===body.equipmentId&&task.executionVersion===body.executionVersion&&task.snapshot.items.some(i=>i.id===body.sourceItemId)&&task.status==='in_progress'&&[task.primaryPersonId,...task.collaboratorIds].includes(ctx.person),'保养任务来源或执行权限不符');const sourceKey=[body.sourceTaskId,body.sourceItemId,body.executionVersion,body.idempotencyKey].join(':');const old=data.discoveries.find(d=>d.maintenanceSourceKey===sourceKey);if(old){must(old.maintenancePayload===JSON.stringify(body),'来源幂等键内容不同');return copy(old);}}
 const next=copy(data),list=next[kind],record=list.find(r=>r.id===id);const admin=['engineer','supervisor'].includes(ctx.role);

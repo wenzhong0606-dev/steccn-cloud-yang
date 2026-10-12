@@ -4,13 +4,17 @@ import re
 root=Path(__file__).resolve().parents[2]/'docs/eam/prototype'
 errors=[]
 styles=root/'shared/styles'
+entry=(root/'shared/style.css').read_text(encoding='utf-8')
 for path in styles.glob('*.css'):
     text=path.read_text(encoding='utf-8')
     if path.name!='令牌.css' and re.search(r'#[0-9a-fA-F]{3,8}\b|rgba?\(',text):errors.append(f'{path.name}: 颜色未引用Token')
-    if '!important' in text and not (path.name=='基础.css' and text.count('!important')==1 and re.search(r'\[hidden\]\s*\{\s*display\s*:\s*none\s*!important\s*;?\s*\}',text)):errors.append(f'{path.name}: 未批准important')
+    # 减少动态效果是可访问性规则，允许覆盖所有动画；除此之外仍禁止important。
+    checked=re.sub(r'@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{\s*\*\s*\{\s*animation-duration:\s*\.01ms\s*!important;\s*transition-duration:\s*\.01ms\s*!important;\s*\}\s*\}', '',text)
+    if '!important' in checked:errors.append(f'{path.name}: 未批准important')
     if text.count('{')!=text.count('}'):errors.append(f'{path.name}: 大括号不配对')
-    if '@layer ' not in text:errors.append(f'{path.name}: 未声明样式层')
+    if '@layer ' not in text and not re.search(r'@import\s+url\("\./styles/'+re.escape(path.name)+r'(?:\?[^"\)]*)?"\)\s+layer\(',entry):errors.append(f'{path.name}: 未声明样式层')
 for page in (root/'pages').glob('*.html'):
+    if page.stem.startswith('_'):continue
     html=page.read_text(encoding='utf-8')
     if len(re.findall(r'<link[^>]+rel="stylesheet"',html))!=1:errors.append(f'{page.name}: 非单一CSS入口')
     if '<style' in html or ' style=' in html:errors.append(f'{page.name}: 内联样式')

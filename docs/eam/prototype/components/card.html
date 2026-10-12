@@ -1,0 +1,9 @@
+<!-- 卡片内部骨架片段（Step 3 抽取）。
+     仅提供 head/body 两个插槽容器；由声明 data-component=card 的 section.card 宿主承载卡片外壳
+     （与 list-panel 同构：宿主带 section.card 壳，片段提供内部分区，避免双重 section.card 嵌套）。
+     借用全局 Bootstrap 的 .card-header / .card-body 样式，不创建 Shadow DOM。
+     页面业务内容经 <template data-fill="head|body"> 注入；卡片可声明 data-collapsible /
+     data-collapse-default="collapsed" 启用可折叠（由 Eam.Card.enhance 增强）。
+-->
+<header class="card-header" data-region="head"></header>
+<div class="card-body" data-region="body"></div>

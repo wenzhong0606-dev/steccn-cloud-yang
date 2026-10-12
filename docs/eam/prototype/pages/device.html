@@ -1,739 +1,830 @@
-<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>
-          设备档案 · 设备管理
-        </title>
-        <link rel="stylesheet" href="../shared/style.css?v=20261011-business4">
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>
+    设备档案 · 设备管理
+  </title>
+  <link rel="stylesheet" href="../shared/style.css?v=20261012-media1">
 </head>
-        <body data-page="device" data-layout="archive">
-          <div id="platform-header">
+
+<body data-page="device" data-layout="archive">
+  <div id="platform-header">
+  </div>
+  <div class="shell">
+    <aside id="module-nav">
+    </aside>
+    <main>
+      <div class="breadcrumb" id="breadcrumb">
+      </div>
+      <div class="archive-pagehead" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+        <div>
+          <h1 id="device-name">
+            设备档案
+          </h1>
+          <p id="device-location" class="text-secondary">
+            正在读取设备信息
+          </p>
+        </div>
+
+      </template></div>
+
+      <section class="archive-summary device-header">
+        <div class="archive-photo-slot">
+          <img id="archive-photo" src="../assets/mixer.svg" alt="设备外观">
+          <span id="archive-photo-empty" class="text-secondary small text-center" hidden>暂无图片</span>
+        </div>
+        <div>
+          <div class="archive-identity-line">
+            <b id="device-model">
+              —
+            </b>
+            <span id="device-owner">
+              —
+            </span>
+            <span id="device-serial">
+              —
+            </span>
           </div>
-          <div class="shell">
-            <aside id="module-nav">
-            </aside>
-            <main>
-              <div class="breadcrumb" id="breadcrumb">
-              </div>
-              <div class="archive-pagehead">
+          <div id="archive-status-strip" class="archive-status-strip">
+          </div>
+        </div>
+      </section>
+      <div id="archive-page-error" role="alert" hidden="">
+        <p id="archive-page-error-text">
+        </p>
+        <button id="archive-retry">
+          重新加载
+        </button>
+      </div>
+      <div class="archive-workspace" data-tabs-scope="">
+        <nav class="archive-nav" id="archive-nav-mount" aria-label="设备档案导航">
+          <details class="archive-nav-group" open="">
+            <summary>
+              <h3>设备总览</h3>
+            </summary>
+            <div class="tabs"><button type="button" data-tab="overview">概况</button><button type="button" data-tab="state">状态与许可</button></div>
+          </details>
+          <details class="archive-nav-group" open="">
+            <summary>
+              <h3>技术与结构</h3>
+            </summary>
+            <div class="tabs"><button type="button" data-tab="parameters">技术参数</button><button type="button" data-tab="structure">设备结构</button><button type="button" data-tab="installation">位置与安装</button></div>
+          </details>
+          <details class="archive-nav-group" open="">
+            <summary>
+              <h3>维护与可靠性</h3>
+            </summary>
+            <div class="tabs"><button type="button" data-tab="work">点检</button><button type="button" data-tab="maintenance">保养</button><button type="button" data-tab="failure">缺陷与故障</button><button type="button" data-tab="repair">维修</button></div>
+          </details>
+          <details class="archive-nav-group" open="">
+            <summary>
+              <h3>备件与运行</h3>
+            </summary>
+            <div class="tabs"><button type="button" data-tab="bom">设备BOM</button><button type="button" data-tab="replacement">更换与寿命</button><button type="button" data-tab="meters">测点与计量器</button><button type="button" data-tab="trend">运行监测</button></div>
+          </details>
+          <details class="archive-nav-group" open="">
+            <summary>
+              <h3>合规与资产</h3>
+            </summary>
+            <div class="tabs"><button type="button" data-tab="risk">安全合规</button><button type="button" data-tab="cost">资产成本</button></div>
+          </details>
+          <details class="archive-nav-group" open="">
+            <summary>
+              <h3>资料与履历</h3>
+            </summary>
+            <div class="tabs"><button type="button" data-tab="media">图片与3D</button><button type="button" data-tab="documents">文档资料</button><button type="button" data-tab="history">生命周期</button><button type="button" data-tab="related">关联业务</button><button type="button" data-tab="audit">变更审计</button><button type="button" data-tab="completeness">档案完整性</button></div>
+          </details>
+        </nav>
+        <section class="archive-content">
+          <div class="archive-content-head">
+            <h2 id="archive-view-title">
+              设备概况
+            </h2>
+            <button id="archive-refresh">
+              刷新
+            </button>
+          </div>
+          <div id="archive-loading" role="status" hidden="">
+            正在加载档案…
+          </div>
+          <div id="archive-panels-mount">
+            <div data-panel="overview">
+              <div class="archive-kpis">
                 <div>
-                  <h1 id="device-name">
-                    设备档案
-                  </h1>
-                  <p id="device-location" class="text-secondary">
-                    正在读取设备信息
-                  </p>
-                </div>
-                
-              </div>
-              
-              <section class="archive-summary device-header">
-                <img id="archive-photo" src="../assets/mixer.svg" alt="设备外观示意">
-                  <div>
-                    <div class="archive-identity-line">
-                      <b id="device-model">
-                        —
-                      </b>
-                      <span id="device-owner">
-                        —
-                      </span>
-                      <span id="device-serial">
-                        —
-                      </span>
-                    </div>
-                    <div id="archive-status-strip" class="archive-status-strip">
-                    </div>
-                  </div>
-                </section>
-                <div id="archive-page-error" role="alert" hidden>
-                  <p id="archive-page-error-text">
-                  </p>
-                  <button id="archive-retry">
-                    重新加载
-                  </button>
-                </div>
-                <div class="archive-workspace">
-<nav class="archive-nav" id="archive-nav-mount" aria-label="设备档案导航"><details class="archive-nav-group" open><summary><h3>设备总览</h3></summary><div class="tabs"><button type="button" data-tab="overview">概况</button><button type="button" data-tab="state">状态与许可</button></div></details>
-<details class="archive-nav-group" open><summary><h3>技术与结构</h3></summary><div class="tabs"><button type="button" data-tab="parameters">技术参数</button><button type="button" data-tab="structure">设备结构</button><button type="button" data-tab="installation">位置与安装</button></div></details>
-<details class="archive-nav-group" open><summary><h3>维护与可靠性</h3></summary><div class="tabs"><button type="button" data-tab="work">点检</button><button type="button" data-tab="maintenance">保养</button><button type="button" data-tab="failure">故障</button><button type="button" data-tab="repair">维修</button></div></details>
-<details class="archive-nav-group" open><summary><h3>备件与运行</h3></summary><div class="tabs"><button type="button" data-tab="bom">设备BOM</button><button type="button" data-tab="replacement">更换与寿命</button><button type="button" data-tab="meters">测点与计量器</button><button type="button" data-tab="trend">运行监测</button></div></details>
-<details class="archive-nav-group" open><summary><h3>合规与资产</h3></summary><div class="tabs"><button type="button" data-tab="risk">安全合规</button><button type="button" data-tab="cost">资产成本</button></div></details>
-<details class="archive-nav-group" open><summary><h3>资料与履历</h3></summary><div class="tabs"><button type="button" data-tab="media">图片与3D</button><button type="button" data-tab="documents">文档资料</button><button type="button" data-tab="history">生命周期</button><button type="button" data-tab="related">关联业务</button><button type="button" data-tab="audit">变更审计</button><button type="button" data-tab="completeness">档案完整性</button></div></details></nav>
-                  <section class="archive-content">
-                    <div class="archive-content-head">
-                      <h2 id="archive-view-title">
-                        设备概况
-                      </h2>
-                      <button id="archive-refresh">
-                        刷新
-                      </button>
-                    </div>
-                    <div id="archive-loading" role="status" hidden>
-                      正在加载档案…
-                    </div>
-<div id="archive-panels-mount">                    <div data-panel="overview">
-                      <div class="archive-kpis">
-                        <div>
-                          <span>
-                            当前未结事项
-                          </span>
-                          <strong id="archive-open-count">
-                            —
-                          </strong>
-                          <button data-page="defect-list">
-                            查看关联事项
-                          </button>
-                        </div>
-                        <div>
-                          <span>
-                            维护策略与记录
-                          </span>
-                          <strong id="archive-pm-count">
-                            —
-                          </strong>
-                          <button data-tab-target="maintenance">
-                            查看保养
-                          </button>
-                        </div>
-                        <div>
-                          <span>
-                            档案资料
-                          </span>
-                          <strong id="archive-file-count">
-                            —
-                          </strong>
-                          <button data-tab-target="documents">
-                            查看资料
-                          </button>
-                        </div>
-                      </div>
-                      <section class="archive-section">
-                        <h3>
-                          设备基本信息
-                        </h3>
-                        <dl id="archive-base" class="archive-facts">
-                        </dl>
-                      </section>
-                      <section class="archive-section">
-                        <h3>
-                          组织与位置
-                        </h3>
-                        <dl id="archive-organization" class="archive-facts">
-                        </dl>
-                      </section>
-                      <section class="archive-section">
-                        <h3>
-                          采购与投运
-                        </h3>
-                        <dl id="archive-procurement" class="archive-facts">
-                        </dl>
-                      </section>
-                    </div>
-                    <div data-panel="state" hidden>
-                      <div id="archive-state-cards" class="archive-state-grid">
-                      </div>
-                      <section class="archive-section">
-                        <div class="sectionhead">
-                          <h3>
-                            状态操作与使用限制
-                          </h3>
-                          <button id="archive-life-open">
-                            变更生命周期
-                          </button>
-                        </div>
-                        <div id="archive-restrictions">
-                        </div>
-                      </section>
-                    </div>
-                    <div data-panel="parameters" hidden><details class="archive-business-view border rounded p-2 mb-2" data-business-view="parameters" open><summary class="fw-semibold">参数校验摘要</summary><div class="archive-business-body mt-2" data-business-body="parameters"></div></details>
-                      <div class="sectionhead">
-                        <h3>
-                          技术参数记录
-                        </h3>
-                        <div class="actions">
-                          <button data-page="equipment-templates">
-                            分类与参数模板
-                          </button>
-                        </div>
-                      </div>
-                      <div data-record-domain="parameters">
-                      </div>
-                    </div>
-                    <div data-panel="structure" hidden><details class="archive-business-view border rounded p-2 mb-2" data-business-view="structure" open><summary class="fw-semibold">设备组成树</summary><div class="archive-business-body mt-2" data-business-body="structure"></div></details>
-                      <div class="sectionhead">
-                        <h3>
-                          设备结构记录
-                        </h3>
-                        <div class="actions">
-                          <button data-page="equipment">
-                            维护结构
-                          </button>
-                        </div>
-                      </div>
-                      <div data-record-domain="structure">
-                      </div>
-                    </div>
-                    <div data-panel="installation" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          位置与安装记录
-                        </h3>
-                        <div class="actions">
-                          <button data-page="functional-locations">
-                            功能位置管理
-                          </button>
-                        </div>
-                      </div>
-                      <div data-record-domain="installation">
-                      </div>
-                    </div>
-                    <div data-panel="work" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          点检记录
-                        </h3>
-                        <div class="actions">
-                          <button data-page="inspection-list">
-                            点检任务
-                          </button>
-                        </div>
-                      </div>
-                      <div data-record-domain="work">
-                      </div>
-                    </div>
-                    <div data-panel="maintenance" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          保养记录
-                        </h3>
-                        <div class="actions"><button data-page="maintenance-plan-list" class="btn btn-sm btn-outline-primary">管理保养计划</button><button data-page="maintenance-task-list" class="btn btn-sm btn-outline-primary">保养任务</button><button data-page="maintenance-acceptance" class="btn btn-sm btn-outline-primary">保养验收</button>
-                        </div>
-                      </div>
-                      <div data-record-domain="maintenance">
-                      </div>
-                    </div>
-                    <div data-panel="failure" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          故障记录
-                        </h3>
-                        <div class="actions">
-                          <button data-page="failure-events">
-                            故障事件中心
-                          </button>
-                        </div>
-                      </div>
-                      <div data-record-domain="failure">
-                      </div>
-                    </div>
-                    <div data-panel="repair" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          维修记录
-                        </h3>
-                        <div class="actions">
-                          <button data-page="order-list">
-                            维修工单
-                          </button>
-                        </div>
-                      </div>
-                      <div data-record-domain="repair">
-                      </div>
-                    </div>
-                    <div data-panel="bom" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          设备BOM记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="bom">
-                      </div>
-                    </div>
-                    <div data-panel="replacement" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          更换与寿命记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="replacement">
-                      </div>
-                    </div>
-                    <div data-panel="meters" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          测点与计量器记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="meters">
-                      </div>
-                    </div>
-                    <div data-panel="trend" hidden><details class="archive-business-view border rounded p-2 mb-2" data-business-view="trend" open><summary class="fw-semibold">测点趋势</summary><div class="archive-business-body mt-2" data-business-body="trend"></div></details>
-                      <div class="sectionhead">
-                        <h3>
-                          运行监测记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="trend">
-                      </div>
-                    </div>
-                    <div data-panel="risk" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          安全合规记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="risk">
-                      </div>
-                    </div>
-                    <div data-panel="cost" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          资产成本记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="cost">
-                      </div>
-                    </div>
-                    <div data-panel="history" hidden><details class="archive-business-view border rounded p-2 mb-2" data-business-view="history" open><summary class="fw-semibold">生命周期事件履历</summary><div class="archive-business-body mt-2" data-business-body="history"></div></details>
-                      <div class="sectionhead">
-                        <h3>
-                          生命周期记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="history">
-                      </div>
-                    </div>
-                    <div data-panel="related" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          关联业务记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="related">
-                      </div>
-                    </div>
-                    <div data-panel="audit" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          变更审计记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="audit">
-                      </div>
-                    </div>
-                    <div data-panel="completeness" hidden>
-                      <div class="sectionhead">
-                        <h3>
-                          档案完整性记录
-                        </h3>
-                        <div class="actions">
-                        </div>
-                      </div>
-                      <div data-record-domain="completeness">
-                      </div>
-                    </div>
-                    <div data-panel="media" hidden>
-                      <h3>
-                        图片与可选模型
-                      </h3>
-                      <div class="actions">
-                        <button id="upload-device-image" class="primary">
-                          上传设备图片
-                        </button>
-                        <button id="upload-device-model">
-                          上传3D模型
-                        </button>
-                      </div>
-                      <div id="device-gallery" class="image-gallery">
-                      </div>
-                      <p id="gallery-count" class="muted">
-                      </p>
-                      <details>
-                        <summary>
-                          打开3D概念示意
-                        </summary>
-                        <div class="model-scene">
-                          <div id="model-object" class="model-object">
-                            <span>
-                              MX-2400
-                            </span>
-                          </div>
-                        </div>
-                        <label class="field">
-                          旋转角度
-                          <input id="model-angle" type="range" min="-180" max="180" value="-25">
-                          </label>
-                          <button id="model-bearing">
-                            定位轴承部位
-                          </button>
-                          <p id="model-info">
-                            CSS立体概念示意，尚未接入GLB/glTF渲染；无模型时图片/部位列表可用。
-                          </p>
-                        </details>
-                      </div>
-                      <div data-panel="documents" hidden>
-                        <div id="device-documents" class="record-list">
-                        </div>
-                        <h3>
-                          受控技术资料
-                        </h3>
-                        <button id="upload-device-document">
-                          上传技术文档
-                        </button>
-                        <div class="actions">
-                          <button data-page="standards">
-                            适用点检标准
-                          </button>
-                        </div>
-                      </div></div>
-                    </section>
-                  </div>
-                  <p class="text-secondary small my-4">
-                    设备管理 · 设备档案
-                  </p>
-                </main>
-              </div>
-              <div id="mobile-nav">
-              </div>
-              <dialog id="file-viewer" class="file-viewer-dialog" aria-labelledby="viewer-title">
-                <div class="sectionhead">
-                  <h2 id="viewer-title">
-                  </h2>
-                  <button id="viewer-close" type="button" aria-label="关闭文件查看器">
-                    关闭
-                  </button>
-                </div>
-                <div id="viewer-content" class="viewer-content">
-                </div>
-                <p id="viewer-error" role="alert">
-                </p>
-                <div class="actions">
-                  <button id="viewer-prev" type="button">
-                    上一张
-                  </button>
-                  <span id="viewer-counter">
+                  <span>
+                    当前未结业务对象
                   </span>
-                  <button id="viewer-next" type="button">
-                    下一张
-                  </button>
-                  <button id="viewer-download" type="button">
-                    下载原文件
+                  <strong id="archive-open-count">
+                    —
+                  </strong>
+                  <button data-tab-target="related" data-view-target="pending">
+                    查看关联事项
                   </button>
                 </div>
-                <p class="text-secondary">
-                  下载需要独立授权；本机原型文件不经过真实文件服务。
-                </p>
-              </dialog>
-              <dialog id="asset-manager-dialog" class="asset-manager-dialog">
+                <div>
+                  <span>
+                    保养任务
+                  </span>
+                  <strong id="archive-pm-count">
+                    —
+                  </strong>
+                  <button data-tab-target="maintenance" data-view-target="tasks">
+                    查看保养
+                  </button>
+                </div>
+                <div>
+                  <span>
+                    技术文档
+                  </span>
+                  <strong id="archive-file-count">
+                    —
+                  </strong>
+                  <button data-tab-target="documents">
+                    查看资料
+                  </button>
+                </div>
+              </div>
+              <section class="archive-section">
+                <h3>
+                  设备基本信息
+                </h3>
+                <dl id="archive-base" class="archive-facts">
+                </dl>
+              </section>
+              <section class="archive-section">
+                <h3>
+                  组织与位置
+                </h3>
+                <dl id="archive-organization" class="archive-facts">
+                </dl>
+              </section>
+              <section class="archive-section">
+                <h3>
+                  采购与投运
+                </h3>
+                <dl id="archive-procurement" class="archive-facts">
+                </dl>
+              </section>
+            </div>
+            <div data-panel="state" hidden="">
+              <div id="archive-state-cards" class="archive-state-grid">
+              </div>
+              <section class="archive-section">
                 <div class="sectionhead">
-                  <h2>
-                    设备资料维护
-                  </h2>
-                  <button id="asset-manager-close" type="button">
-                    关闭资料维护
+                  <h3>
+                    状态操作与使用限制
+                  </h3>
+                  <button id="archive-life-open">
+                    变更生命周期
                   </button>
                 </div>
-                <div class="columns asset-layout">
-                  <section class="card">
-                    <h2>
-                      上传入口
-                    </h2>
-                    <p class="text-secondary">
-                      选择设备 → 选择分类与文件 → 检查预览与目标 → 保存关联
-                    </p>
-                    <form id="upload-form">
-                      <label class="field">
-                        所属设备 *
-                        <select id="upload-equipment">
-                        </select>
-                      </label>
-                      <div class="form-grid">
-                        <label class="field">
-                          文件分类 *
-                          <select id="upload-category">
-                            <option value="image">
-                              设备图片
-                            </option>
-                            <option value="document">
-                              技术文档
-                            </option>
-                            <option value="model">
-                              3D模型
-                            </option>
-                          </select>
-                        </label>
-                        <label class="field">
-                          资料版本 *
-                          <input id="upload-revision" value="V1" maxlength="30" required>
-                          </label>
-                        </div>
-                        <label class="field upload-box">
-                          选择图片 / 文档 / 模型 *
-                          <input id="upload-file" type="file" multiple required>
-                            <span id="upload-help" class="text-secondary">
-                            </span>
-                          </label>
-                          <div id="upload-preview" class="file-preview">
-                            <p>
-                              尚未选择文件
-                            </p>
-                          </div>
-                          <label class="field">
-                            拟议存储目标（待正式文件服务分配）
-                            <input id="upload-target" readonly>
-                            </label>
-                            <p id="upload-error" class="text-danger small mt-2" role="alert">
-                            </p>
-                            <div class="actions">
-                              <button id="upload-save" type="submit" class="btn btn-primary">
-                                保存设备资料（本机演示）
-                              </button>
-                              <button id="upload-clear" type="button">
-                                清空选择
-                              </button>
-                            </div>
-                          </form>
-                          <p class="alert alert-info">
-                            文件内容仅保存本机，可再次预览及按演示权限下载，未上传服务器。PDF/文本可预览，Office需转换服务；模型查看器待接入。
-                          </p>
-                        </section>
-                        <section class="card">
-                          <div class="sectionhead">
-                            <h2>
-                              设备文件清单
-                            </h2>
-                            <span id="file-count" class="text-secondary">
-                            </span>
-                          </div>
-                          <label class="field">
-                            按名称搜索
-                            <input id="file-search" placeholder="说明书 / 主图 / 模型">
-                            </label>
-                            <label class="field">
-                              文件分类筛选
-                              <select id="file-filter">
-                                <option value="">
-                                  全部分类
-                                </option>
-                                <option value="image">
-                                  图片
-                                </option>
-                                <option value="document">
-                                  文档
-                                </option>
-                                <option value="model">
-                                  模型
-                                </option>
-                              </select>
-                            </label>
-                            <label class="field">
-                              关联状态
-                              <select id="file-status">
-                                <option value="">
-                                  全部状态
-                                </option>
-                                <option value="active">
-                                  有效关联
-                                </option>
-                                <option value="removed">
-                                  已移除
-                                </option>
-                              </select>
-                            </label>
-                            <div id="file-list" class="record-list">
-                            </div>
-                            <div id="file-empty" class="empty-state">
-                              <h3>
-                                这台设备尚无维护文件
-                              </h3>
-                              <p>
-                                通过左侧上传入口添加；示例插图不属于上传记录。
-                              </p>
-                            </div>
-                            <div class="list-pagination">
-                              <span id="file-page-info">
-                              </span>
-                              <div>
-                                <button id="file-prev">
-                                  上一页
-                                </button>
-                                <button id="file-next">
-                                  下一页
-                                </button>
-                              </div>
-                            </div>
-                          </section>
-                        </div>
-                      </dialog>
-                      
-                      <dialog id="archive-record-dialog" aria-labelledby="archive-record-title">
-                        <div class="sectionhead">
-                          <h2 id="archive-record-title">
-                          </h2>
-                          <button id="archive-record-close">
-                            关闭
-                          </button>
-                        </div>
-                        <dl id="archive-record-fields" class="archive-facts">
-                        </dl>
-                        <div class="actions">
-                          <button id="archive-record-source">
-                            打开来源单据
-                          </button>
-                          <button id="archive-release-open" hidden>
-                            专业验证放行
-                          </button>
-                          <button id="archive-record-edit" class="btn btn-primary">
-                            修改参数值
-                          </button>
-                        </div>
-                      </dialog>
-                      <dialog id="archive-edit-dialog" aria-labelledby="archive-edit-title">
-                        <h2 id="archive-edit-title">
-                          修改技术参数
-                        </h2>
-                        <form id="archive-edit-form">
-                          <label class="field">
-                            参数值 / 范围下限 *
-                            <input id="archive-edit-value" type="number" required>
-                            </label>
-                            <label class="field" id="archive-edit-upper-field" hidden>范围上限 *<input id="archive-edit-upper" type="number"></label><p id="archive-edit-definition" class="small text-secondary"></p>
-<label class="field">
-                              变更原因 *
-                              <textarea id="archive-edit-reason" maxlength="500" required>
-                              </textarea>
-                            </label>
-                            <p id="archive-edit-error" role="alert">
-                            </p>
-                            <div class="actions">
-                              <button type="button" id="archive-edit-cancel">
-                                取消
-                              </button>
-                              <button type="submit" id="archive-edit-save" class="btn btn-primary">
-                                保存
-                              </button>
-                            </div>
-                          </form>
-                        </dialog>
-                        <dialog id="archive-repair-dialog" aria-labelledby="archive-repair-title"><h2 id="archive-repair-title">补录档案字段</h2><form id="archive-repair-form"><label class="field"><span id="archive-repair-label"></span><input id="archive-repair-value" required maxlength="200"><select id="archive-repair-owner" hidden disabled><option value="">请选择负责人</option></select></label><div id="archive-repair-required"></div><label class="field">补录原因 *<textarea id="archive-repair-reason" required maxlength="500"></textarea></label><p id="archive-repair-error" role="alert"></p><div class="actions"><button type="button" id="archive-repair-cancel">取消</button><button type="submit" id="archive-repair-save" class="btn btn-primary">保存并复查</button></div></form></dialog>
-<dialog id="archive-life-dialog" aria-labelledby="archive-life-title">
-                          <h2 id="archive-life-title">
-                            生命周期变更
-                          </h2>
-                          <form id="archive-life-form">
-                            <label class="field">
-                              目标状态
-                              <select id="archive-life-next">
-                                <option value="stopped">
-                                  停用
-                                </option>
-                                <option value="active">
-                                  恢复在用
-                                </option>
-                                <option value="pending_scrap">
-                                  申请报废
-                                </option>
-                                <option value="scrapped">
-                                  批准报废
-                                </option>
-                              </select>
-                            </label>
-                            <label class="field">
-                              变更原因 *
-                              <textarea id="archive-life-reason" required maxlength="500">
-                              </textarea>
-                            </label>
-                            <p id="archive-life-error" role="alert">
-                            </p>
-                            <div class="actions">
-                              <button type="button" id="archive-life-cancel">
-                                取消
-                              </button>
-                              <button type="submit" id="archive-life-save" class="btn btn-primary">
-                                确认变更
-                              </button>
-                            </div>
-                          </form>
-                        </dialog>
-                        <dialog id="archive-release-dialog" aria-labelledby="archive-release-title">
-                          <h2 id="archive-release-title">
-                            专业验证放行
-                          </h2>
-                          <form id="archive-release-form">
-                            <label class="field">
-                              验证依据 *
-                              <textarea id="archive-release-opinion" required maxlength="500">
-                              </textarea>
-                            </label>
-                            <p id="archive-release-error" role="alert">
-                            </p>
-                            <div class="actions">
-                              <button id="archive-release-cancel" type="button">
-                                取消
-                              </button>
-                              <button id="archive-release-save" type="submit" class="btn btn-primary">
-                                确认放行
-                              </button>
-                            </div>
-                          </form>
-                        </dialog>
-                        
-                        <script src="../mock/data.js?v=20261010">
-                        </script>
-                        <script src="../mock/archive-data.js?v=20261010">
-                        </script>
-                        <script src="../shared/product.js?v=20261010">
-                        </script>
-                        <script src="../shared/maintenance.js?v=20261010">
-                        </script>
-                        <script src="../shared/domain.js?v=20261010">
-                        </script>
-                        <script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3">
-                        </script>
-                        <script src="../mock/problem-data.js?v=20261011-2"></script>
-<script src="../mock/work-data.js?v=20261011-2"></script>
-<script src="../mock/work-rules.js?v=20261011-2"></script>
-<script src="../mock/problem-api.js?v=20261011-2"></script>
-<script src="../mock/maintenance-data.js?v=20261011-mc1"></script><script src="../mock/maintenance-rules.js?v=20261011-mc1"></script><script src="../mock/maintenance-closure-rules.js?v=20261011-mc1"></script><script src="../mock/maintenance-task-rules.js?v=20261011-mc1"></script><script src="../mock/maintenance-task-api.js?v=20261011-mc1"></script><script src="../mock/maintenance-api.js?v=20261011-mc1"></script><script src="../mock/maintenance-archive-api.js?v=20261011-mc1"></script><script src="../mock/archive-maintenance-api.js?v=20261011-2"></script>
-<script src="../mock/archive-rules.js?v=20261011-typed3"></script>
-<script src="../mock/archive-api.js?v=20261011-mc1">
-                        </script>
-                        <script src="../shared/navigation.js?v=20261011-mc1">
-                        </script>
-                        <script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2">
-                        </script>
-                        <script src="../shared/interactions.js?v=20261010">
-                        </script>
-                        <script src="../shared/file-store.js?v=20261010">
-                        </script>
-                        <script src="../shared/file-viewer.js?v=20261010">
-                        </script>
-                        <script src="../scripts/asset-files.js?v=20261010">
-                        </script>
-        
-                        <script src="../scripts/device-gallery.js?v=20261011-archive-fix2">
-                        </script>
-                        <script src="../scripts/archive-business-view.js?v=20261011-business4"></script><script src="../scripts/archive-page.js?v=20261011-filter3">
-                        </script>
-                      </body>
-                    </html>
+                <div id="archive-restrictions">
+                </div>
+              </section>
+            </div>
+            <div data-panel="parameters" hidden="">
+              <details class="archive-business-view border rounded p-2 mb-2" data-business-view="parameters" open="">
+                <summary class="fw-semibold">参数校验摘要</summary>
+                <div class="archive-business-body mt-2" data-business-body="parameters"></div>
+              </details>
+              <div class="sectionhead">
+                <h3>
+                  技术参数记录
+                </h3>
+                <div class="actions">
+                  <button data-page="equipment-templates">
+                    分类与参数模板
+                  </button>
+                </div>
+              </div>
+              <div data-record-domain="parameters">
+              </div>
+            </div>
+            <div data-panel="structure" hidden="">
+              <details class="archive-business-view border rounded p-2 mb-2" data-business-view="structure" open="">
+                <summary class="fw-semibold">设备组成树</summary>
+                <div class="archive-business-body mt-2" data-business-body="structure"></div>
+              </details>
+              <div class="sectionhead">
+                <h3>
+                  设备结构记录
+                </h3>
+                <div class="actions">
+                  <button data-page="equipment">
+                    维护结构
+                  </button>
+                </div>
+              </div>
+              <div data-record-domain="structure">
+              </div>
+            </div>
+            <div data-panel="installation" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  位置与安装记录
+                </h3>
+                <div class="actions">
+                  <button data-page="functional-locations">
+                    功能位置管理
+                  </button>
+                </div>
+              </div>
+              <div data-record-domain="installation">
+              </div>
+            </div>
+            <div data-panel="work" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  点检记录
+                </h3>
+                <div class="actions">
+                  <button data-page="inspection-list">
+                    点检任务
+                  </button>
+                </div>
+              </div>
+              <div data-record-domain="work">
+              </div>
+            </div>
+            <div data-panel="maintenance" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  保养记录
+                </h3>
+                <div class="actions"><button data-page="maintenance-plan-list" class="btn btn-sm btn-outline-primary">管理保养计划</button><button data-page="maintenance-task-list" class="btn btn-sm btn-outline-primary">保养任务</button><button data-page="maintenance-acceptance" class="btn btn-sm btn-outline-primary">保养验收</button>
+                </div>
+              </div>
+              <div data-record-domain="maintenance">
+              </div>
+            </div>
+            <div data-panel="failure" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  故障记录
+                </h3>
+                <div class="actions">
+                  <button data-page="failure-events">
+                    故障事件中心
+                  </button>
+                </div>
+              </div>
+              <div data-record-domain="failure">
+              </div>
+            </div>
+            <div data-panel="repair" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  维修记录
+                </h3>
+                <div class="actions">
+                  <button data-page="order-list">
+                    维修工单
+                  </button>
+                </div>
+              </div>
+              <div data-record-domain="repair">
+              </div>
+            </div>
+            <div data-panel="bom" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  设备BOM记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="bom">
+              </div>
+            </div>
+            <div data-panel="replacement" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  更换与寿命记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="replacement">
+              </div>
+            </div>
+            <div data-panel="meters" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  测点与计量器记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="meters">
+              </div>
+            </div>
+            <div data-panel="trend" hidden="">
+              <details class="archive-business-view border rounded p-2 mb-2" data-business-view="trend" open="">
+                <summary class="fw-semibold">测点趋势</summary>
+                <div class="archive-business-body mt-2" data-business-body="trend"></div>
+              </details>
+              <div class="sectionhead">
+                <h3>
+                  运行监测记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="trend">
+              </div>
+            </div>
+            <div data-panel="risk" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  安全合规记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="risk">
+              </div>
+            </div>
+            <div data-panel="cost" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  资产成本记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="cost">
+              </div>
+            </div>
+            <div data-panel="history" hidden="">
+              <details class="archive-business-view border rounded p-2 mb-2" data-business-view="history" open="">
+                <summary class="fw-semibold">生命周期事件履历</summary>
+                <div class="archive-business-body mt-2" data-business-body="history"></div>
+              </details>
+              <div class="sectionhead">
+                <h3>
+                  生命周期记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="history">
+              </div>
+            </div>
+            <div data-panel="related" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  关联业务记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="related">
+              </div>
+            </div>
+            <div data-panel="audit" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  变更审计记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="audit">
+              </div>
+            </div>
+            <div data-panel="completeness" hidden="">
+              <div class="sectionhead">
+                <h3>
+                  档案完整性记录
+                </h3>
+                <div class="actions">
+                </div>
+              </div>
+              <div data-record-domain="completeness">
+              </div>
+            </div>
+            <div data-panel="media" hidden="">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div class="nav nav-pills gap-2" aria-label="媒体类型">
+                  <button type="button" class="nav-link active" id="media-images-tab" aria-pressed="true" aria-controls="media-images-panel">设备图片</button>
+                  <button type="button" class="nav-link" id="media-models-tab" aria-pressed="false" aria-controls="media-models-panel">3D模型</button>
+                </div>
+                <button type="button" id="media-refresh" class="btn btn-sm btn-outline-secondary">刷新资源</button>
+              </div>
+              <p id="media-read-status" class="small text-secondary" role="status" aria-live="polite"></p>
+              <section id="media-images-panel" aria-label="设备图片">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                  <p id="gallery-count" class="small text-secondary mb-0"></p>
+                  <button type="button" id="upload-device-image" class="btn btn-sm btn-primary">上传设备图片</button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-lg-8">
+                    <div id="media-image-stage" class="archive-media-stage rounded border" aria-label="当前图片"></div>
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                      <button type="button" id="media-image-prev" class="btn btn-sm btn-outline-secondary">上一张</button>
+                      <button type="button" id="media-image-next" class="btn btn-sm btn-outline-secondary">下一张</button>
+                      <button type="button" id="media-image-open" class="btn btn-sm btn-outline-primary">放大查看</button>
+                      <button type="button" id="media-image-primary" class="btn btn-sm btn-outline-primary">设为主图</button>
+                      <button type="button" id="media-image-remove" class="btn btn-sm btn-outline-secondary">移除关联</button>
+                    </div>
+                    <p id="media-image-status" class="small mt-2" role="status" aria-live="polite"></p>
+                  </div>
+                  <div class="col-lg-4"><h3 class="h6">图片信息</h3><dl id="media-image-facts" class="small"></dl><div id="device-gallery" class="archive-media-thumbnails" aria-label="设备图片缩略图"></div></div>
+                </div>
+                <details class="border rounded p-2 mt-3" id="media-samples"><summary class="small">示意图片（非设备实拍）</summary><div id="media-sample-gallery" class="d-flex flex-wrap gap-2 mt-2"></div></details>
+              </section>
+              <section id="media-models-panel" hidden="" aria-label="3D模型">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                  <p id="media-model-count" class="small text-secondary mb-0"></p>
+                  <div class="d-flex gap-2"><button type="button" id="media-model-demo" class="btn btn-sm btn-outline-secondary">查看演示模型</button><button type="button" id="upload-device-model" class="btn btn-sm btn-primary">关联3D模型</button></div>
+                </div>
+                <div class="row g-3">
+                  <div class="col-lg-8">
+                    <div id="media-model-stage" class="archive-media-stage rounded border" aria-label="3D模型查看区"></div>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                      <button type="button" id="media-model-load" class="btn btn-sm btn-primary">加载模型</button>
+                      <button type="button" id="media-model-reset" class="btn btn-sm btn-outline-secondary" disabled="">重置视角</button>
+                      <button type="button" id="media-model-fullscreen" class="btn btn-sm btn-outline-secondary" disabled="">全屏查看</button>
+                      <button type="button" id="media-model-download" class="btn btn-sm btn-outline-secondary" disabled="">下载原文件</button>
+                      <button type="button" id="media-model-remove" class="btn btn-sm btn-outline-secondary" disabled="">移除关联</button>
+                    </div>
+                    <p id="media-model-status" class="small mt-2" role="status" aria-live="polite"></p>
+                    <p class="small text-secondary">拖动旋转、滚轮或双指缩放。选择版本仅用于查看，不代表审批生效。演示模型不属于当前设备资产。</p>
+                  </div>
+                  <aside class="col-lg-4"><h3 class="h6">模型版本与资源</h3><div id="media-model-list" class="list-group mb-3"></div><dl id="media-model-facts" class="small"></dl></aside>
+                </div>
+              </section>
+            </div>
+            <div data-panel="documents" hidden="">
+              <div id="device-documents" class="record-list">
+              </div>
+              <h3>
+                受控技术资料
+              </h3>
+              <button id="upload-device-document">
+                上传技术文档
+              </button>
+              <div class="actions">
+                <button data-page="standards">
+                  适用点检标准
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <p class="text-secondary small my-4">
+        设备管理 · 设备档案
+      </p>
+    </main>
+  </div>
+  <div id="mobile-nav">
+  </div>
+  <dialog id="file-viewer" class="file-viewer-dialog" aria-labelledby="viewer-title">
+    <div class="sectionhead">
+      <h2 id="viewer-title">
+      </h2>
+      <button id="viewer-close" type="button" aria-label="关闭文件查看器">
+        关闭
+      </button>
+    </div>
+    <div id="viewer-content" class="viewer-content">
+    </div>
+    <p id="viewer-error" role="alert">
+    </p>
+    <div class="actions">
+      <button id="viewer-prev" type="button">
+        上一张
+      </button>
+      <span id="viewer-counter">
+      </span>
+      <button id="viewer-next" type="button">
+        下一张
+      </button>
+      <button id="viewer-download" type="button">
+        下载原文件
+      </button>
+    </div>
+    <p class="text-secondary">
+      下载需要独立授权；本机原型文件不经过真实文件服务。
+    </p>
+  </dialog>
+  <dialog id="asset-manager-dialog" class="asset-manager-dialog">
+    <div class="sectionhead">
+      <h2>
+        设备资料维护
+      </h2>
+      <button id="asset-manager-close" type="button">
+        关闭资料维护
+      </button>
+    </div>
+    <div class="columns asset-layout">
+      <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>
+          上传入口
+        </h2></template><template data-fill="body">
+
+        <p class="text-secondary">
+          选择设备 → 选择分类与文件 → 检查预览与目标 → 保存关联
+        </p>
+        <form id="upload-form">
+          <label class="field">
+            所属设备 *
+            <select id="upload-equipment">
+            </select>
+          </label>
+          <div class="form-grid">
+            <label class="field">
+              文件分类 *
+              <select id="upload-category">
+                <option value="image">
+                  设备图片
+                </option>
+                <option value="document">
+                  技术文档
+                </option>
+                <option value="model">
+                  3D模型
+                </option>
+              </select>
+            </label>
+            <label class="field">
+              资料版本 *
+              <input id="upload-revision" value="V1" maxlength="30" required="">
+            </label>
+          </div>
+          <label class="field upload-box">
+            选择图片 / 文档 / 模型 *
+            <input id="upload-file" type="file" multiple="" required="">
+            <span id="upload-help" class="text-secondary">
+            </span>
+          </label>
+          <div id="upload-preview" class="file-preview">
+            <p>
+              尚未选择文件
+            </p>
+          </div>
+          <label class="field">
+            拟议存储目标（待正式文件服务分配）
+            <input id="upload-target" readonly="">
+          </label>
+          <p id="upload-error" class="text-danger small mt-2" role="alert">
+          </p>
+          <div class="actions">
+            <button id="upload-save" type="submit" class="btn btn-primary">
+              保存设备资料（本机演示）
+            </button>
+            <button id="upload-clear" type="button">
+              清空选择
+            </button>
+          </div>
+        </form>
+        <p class="alert alert-info">
+          文件内容仅保存本机，可再次预览及按演示权限下载，未上传服务器。PDF/文本可预览，Office需转换服务；模型查看器待接入。
+        </p>
+      </template></section>
+      <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><div class="sectionhead">
+          <h2>
+            设备文件清单
+          </h2>
+          <span id="file-count" class="text-secondary">
+          </span>
+        </div></template><template data-fill="body">
+
+        <label class="field">
+          按名称搜索
+          <input id="file-search" placeholder="说明书 / 主图 / 模型">
+        </label>
+        <label class="field">
+          文件分类筛选
+          <select id="file-filter">
+            <option value="">
+              全部分类
+            </option>
+            <option value="image">
+              图片
+            </option>
+            <option value="document">
+              文档
+            </option>
+            <option value="model">
+              模型
+            </option>
+          </select>
+        </label>
+        <label class="field">
+          关联状态
+          <select id="file-status">
+            <option value="">
+              全部状态
+            </option>
+            <option value="active">
+              有效关联
+            </option>
+            <option value="removed">
+              已移除
+            </option>
+          </select>
+        </label>
+        <div id="file-list" class="record-list">
+        </div>
+        <div id="file-empty" class="empty-state">
+          <h3>
+            这台设备尚无维护文件
+          </h3>
+          <p>
+            通过左侧上传入口添加；示例插图不属于上传记录。
+          </p>
+        </div>
+        <div class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body">
+          <span id="file-page-info">
+          </span>
+          <div>
+            <button id="file-prev">
+              上一页
+            </button>
+            <button id="file-next">
+              下一页
+            </button>
+          </div>
+        </template></div>
+      </template></section>
+    </div>
+  </dialog>
+
+  <dialog id="archive-record-dialog" aria-labelledby="archive-record-title">
+    <div class="sectionhead">
+      <h2 id="archive-record-title">
+      </h2>
+      <button id="archive-record-close">
+        关闭
+      </button>
+    </div>
+    <dl id="archive-record-fields" class="archive-facts">
+    </dl>
+    <div class="actions">
+      <button id="archive-record-source">
+        打开来源单据
+      </button>
+      <button id="archive-release-open" hidden="">
+        专业验证放行
+      </button>
+      <button id="archive-record-edit" class="btn btn-primary">
+        修改参数值
+      </button>
+    </div>
+  </dialog>
+  <dialog id="archive-edit-dialog" aria-labelledby="archive-edit-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="archive-edit-title">
+      修改技术参数
+    </h2></template><template data-fill="body">
+
+    <form id="archive-edit-form">
+      <label class="field">
+        参数值 / 范围下限 *
+        <input id="archive-edit-value" type="number" required="">
+      </label>
+      <label class="field" id="archive-edit-upper-field" hidden="">范围上限 *<input id="archive-edit-upper" type="number"></label>
+      <p id="archive-edit-definition" class="small text-secondary"></p>
+      <label class="field">
+        变更原因 *
+        <textarea id="archive-edit-reason" maxlength="500" required="">                              </textarea>
+      </label>
+      <p id="archive-edit-error" role="alert">
+      </p>
+      <div class="actions">
+        <button type="button" id="archive-edit-cancel">
+          取消
+        </button>
+        <button type="submit" id="archive-edit-save" class="btn btn-primary">
+          保存
+        </button>
+      </div>
+    </form>
+  </template></dialog>
+  <dialog id="archive-repair-dialog" aria-labelledby="archive-repair-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="archive-repair-title">补录档案字段</h2></template><template data-fill="body">
+
+    <form id="archive-repair-form"><label class="field"><span id="archive-repair-label"></span><input id="archive-repair-value" required="" maxlength="200"><select id="archive-repair-owner" hidden="" disabled="">
+          <option value="">请选择负责人</option>
+        </select></label>
+      <div id="archive-repair-required"></div><label class="field">补录原因 *<textarea id="archive-repair-reason" required="" maxlength="500"></textarea></label>
+      <p id="archive-repair-error" role="alert"></p>
+      <div class="actions"><button type="button" id="archive-repair-cancel">取消</button><button type="submit" id="archive-repair-save" class="btn btn-primary">保存并复查</button></div>
+    </form>
+  </template></dialog>
+  <dialog id="archive-life-dialog" aria-labelledby="archive-life-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="archive-life-title">
+      生命周期变更
+    </h2></template><template data-fill="body">
+
+    <form id="archive-life-form">
+      <label class="field">
+        目标状态
+        <select id="archive-life-next">
+          <option value="stopped">
+            停用
+          </option>
+          <option value="active">
+            恢复在用
+          </option>
+          <option value="pending_scrap">
+            申请报废
+          </option>
+          <option value="scrapped">
+            批准报废
+          </option>
+        </select>
+      </label>
+      <label class="field">
+        变更原因 *
+        <textarea id="archive-life-reason" required="" maxlength="500">                              </textarea>
+      </label>
+      <p id="archive-life-error" role="alert">
+      </p>
+      <div class="actions">
+        <button type="button" id="archive-life-cancel">
+          取消
+        </button>
+        <button type="submit" id="archive-life-save" class="btn btn-primary">
+          确认变更
+        </button>
+      </div>
+    </form>
+  </template></dialog>
+  <dialog id="archive-release-dialog" aria-labelledby="archive-release-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="archive-release-title">
+      专业验证放行
+    </h2></template><template data-fill="body">
+
+    <form id="archive-release-form">
+      <label class="field">
+        验证依据 *
+        <textarea id="archive-release-opinion" required="" maxlength="500">                              </textarea>
+      </label>
+      <p id="archive-release-error" role="alert">
+      </p>
+      <div class="actions">
+        <button id="archive-release-cancel" type="button">
+          取消
+        </button>
+        <button id="archive-release-save" type="submit" class="btn btn-primary">
+          确认放行
+        </button>
+      </div>
+    </form>
+  </template></dialog>
+
+  <script src="../mock/data.js?v=20261010">
+  </script>
+  <script src="../mock/archive-data.js?v=20261010">
+  </script>
+  <script src="../shared/product.js?v=20261010">
+  </script>
+  <script src="../shared/maintenance.js?v=20261010">
+  </script>
+  <script src="../shared/domain.js?v=20261010">
+  </script>
+  <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+  <script src="../shared/loader.js?v=20261011-closure4"></script>
+  <script src="../shared/state.js?v=20261011-context3">
+  </script>
+  <script src="../mock/problem-data.js?v=20261011-2"></script>
+  <script src="../mock/work-data.js?v=20261011-ap1"></script>
+  <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+  <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+  <script src="../mock/maintenance-data.js?v=20261011-window1"></script>
+  <script src="../mock/maintenance-rules.js?v=20261011-mc1"></script>
+  <script src="../mock/maintenance-closure-rules.js?v=20261011-qa1"></script>
+  <script src="../mock/maintenance-task-rules.js?v=20261011-window1"></script>
+  <script src="../mock/maintenance-task-api.js?v=20261011-window1"></script>
+  <script src="../mock/maintenance-api.js?v=20261011-ap1"></script>
+  <script src="../mock/maintenance-archive-api.js?v=20261012-media1"></script>
+  <script src="../mock/archive-maintenance-api.js?v=20261012-product1"></script>
+  <script src="../mock/archive-rules.js?v=20261011-typed3"></script>
+  <script src="../mock/archive-api.js?v=20261012-media1">
+  </script>
+  <script src="../shared/navigation.js?v=20261011-mc1">
+  </script>
+  <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+  <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+  <script src="../shared/form.js?v=20261011-closure4"></script>
+  <script src="../shared/components.js?v=20261011-closure4"></script>
+  <script src="../shared/ui.js?v=20261011-closure4">
+  </script>
+  <script src="../shared/interactions.js?v=20261011-closure4">
+  </script>
+  <script src="../shared/file-store.js?v=20261010">
+  </script>
+  <script src="../shared/file-viewer.js?v=20261012-media1">
+  </script>
+  <script src="../scripts/asset-files.js?v=20261012-media1">
+  </script>
+
+  <script src="../shared/archive-media-rules.js?v=20261012-media1"></script>
+  <script src="../shared/archive-model-viewer.js?v=20261012-media1"></script>
+  <script src="../scripts/archive-media-page.js?v=20261012-media1">
+  </script>
+  <script src="../scripts/archive-business-view.js?v=20261011-closure4"></script>
+  <script src="../shared/archive-domain-ui.js?v=20261012-product1"></script>
+  <script src="../scripts/archive-page.js?v=20261012-media1">
+  </script>
+
+
+</body></html>

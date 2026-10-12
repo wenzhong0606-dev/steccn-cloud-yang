@@ -2,8 +2,8 @@ body[data-problem-kind] main {min-width:0}
 .problem-heading {margin-bottom:16px}
 .problem-heading h1 {font-size:26px}
 .problem-metrics {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.problem-metrics>div {background:var(--color-surface,#fff);border:1px solid var(--color-border,#dde3ed);border-radius:8px;padding:12px 16px;color:var(--color-text-secondary,#667085);font-size:13px}
-.problem-metrics strong {display:block;font-size:24px;color:var(--color-text,#202939);margin-top:4px}
+.problem-metrics>div {background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;padding:12px 16px;color:var(--color-text-secondary);font-size:13px}
+.problem-metrics strong {display:block;font-size:24px;color:var(--color-text);margin-top:4px}
 .problem-list {padding:16px}
 .problem-toolbar {display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .problem-toolbar>input {flex:1;min-width:180px}
@@ -13,9 +13,9 @@ body[data-problem-kind] main {min-width:0}
 .problem-list .data-table {min-width:860px}
 .problem-list .data-table td {padding:12px 10px;vertical-align:top}
 .problem-list .data-table td:first-child {width:30%;max-width:340px}
-.problem-list .data-table small {display:block;margin-top:4px;color:var(--color-text-secondary,#667085)}
+.problem-list .data-table small {display:block;margin-top:4px;color:var(--color-text-secondary)}
 .problem-list .data-table button {padding:4px 10px;min-height:30px}
-.problem-list .row-link {background:none;border:0;padding:0;text-align:left;color:var(--color-primary,#4554c9)}
+.problem-list .row-link {background:none;border:0;padding:0;text-align:left;color:var(--color-primary)}
 .problem-list .row-link strong {display:block;margin-bottom:4px}
 .problem-dialog {width:min(780px,calc(100vw - 32px));max-height:85dvh;overflow:auto;padding:24px}
 .problem-dialog-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
@@ -23,14 +23,14 @@ body[data-problem-kind] main {min-width:0}
 .problem-dialog h3 {font-size:15px;margin:18px 0 8px}
 .problem-status {margin:12px 0}
 .problem-facts {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;margin:16px 0}
-.problem-facts dt {font-size:12px;color:var(--color-text-secondary,#667085)}
+.problem-facts dt {font-size:12px;color:var(--color-text-secondary)}
 .problem-facts dd {margin:4px 0 0;overflow-wrap:anywhere}
-.problem-evidence {white-space:pre-wrap;background:var(--color-bg,#f4f6fa);border-radius:8px;padding:12px;overflow-wrap:anywhere}
+.problem-evidence {white-space:pre-wrap;background:var(--color-bg);border-radius:8px;padding:12px;overflow-wrap:anywhere}
 .problem-form-grid {display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .problem-dialog textarea {min-height:90px;resize:vertical}
-.problem-error {color:var(--color-danger,#b42318)}
+.problem-error {color:var(--color-danger)}
 .problem-dialog .actions {margin-top:18px}
-.problem-dialog fieldset {border:1px solid var(--color-border,#dde3ed);border-radius:8px;padding:12px}
+.problem-dialog fieldset {border:1px solid var(--color-border);border-radius:8px;padding:12px}
 .problem-dialog fieldset>label {margin-right:16px}
 @media (max-width:700px) {
 .problem-metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}

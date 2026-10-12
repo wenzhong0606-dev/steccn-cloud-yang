@@ -1,13 +1,163 @@
-<!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>缺陷台账 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head>
-<body data-page="defect-list" data-problem-kind="defects" data-layout="list"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div class="breadcrumb" id="breadcrumb"></div>
-<div class="title problem-heading"><div><h1>缺陷台账</h1><p class="text-secondary small">技术偏离 · 责任跟踪 · 独立验证</p></div></div>
-<section class="problem-metrics" aria-label="范围统计"><div>范围记录<strong id="metric-total">—</strong></div><div>待处理<strong id="metric-pending">—</strong></div><div>高优先级未关闭<strong id="metric-high">—</strong></div><div>有期限且超期<strong id="metric-overdue">—</strong></div></section>
-<section class="card problem-list" data-component="list-panel"><div class="list-panel-header" data-component="list-toolbar"><h2 class="business-panel-title">缺陷清单</h2><div class="list-panel-tools"><div class="input-group input-group-sm list-search-group" data-component="filter-bar"><input id="search" aria-label="搜索编号、现象或部位" placeholder="搜索编号、现象或部位" class="form-control"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="list-filter-options" aria-controls="list-filter-options" aria-expanded="false">筛选条件</button></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="refresh" type="button" data-list-tool="refresh" data-label="刷新">刷新</button><button id="create-discovery" type="button" class="btn btn-sm btn-primary">登记缺陷线索</button></div></div><div class="filter-options" id="list-filter-options" hidden><select id="status-filter" aria-label="业务状态"><option value="">全部状态</option></select><select id="priority-filter" aria-label="优先级"><option value="">全部优先级</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select><label><input id="mine" type="checkbox"> 我的责任</label><button id="clear-filter" type="button">清除</button></div>
-<p id="load-status" class="text-secondary" role="status" aria-live="polite">正在读取…</p><div class="table-wrapper"><table class="data-table"><thead><tr><th>编号 / 现象</th><th>设备 / 部位</th><th>优先级</th><th>状态</th><th>责任人</th><th>发生时间 / 截止日期</th><th>操作</th></tr></thead><tbody id="problem-rows"></tbody></table></div>
-<div id="empty-state" class="empty-state" hidden><h2>暂无符合条件的记录</h2><p>调整筛选条件，或从异常事件中心记录新发现。</p></div><div class="list-pagination"><span id="page-count"></span><div><button id="previous" type="button">上一页</button><button id="next" type="button">下一页</button></div></div></section>
-<p class="text-secondary small my-4">模型评审 · 独立问题模拟接口；创建与下一步操作按角色、状态显示；业务读写经JSON模拟接口</p><dialog id="list-tools-dialog" aria-labelledby="list-tools-title"><h2 id="list-tools-title"></h2><div id="list-tools-body"></div><p id="list-tools-status" role="status" class="small text-secondary"></p><div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden>确认</button></div></dialog></main></div><div id="mobile-nav"></div>
-<dialog id="detail-dialog" class="problem-dialog" aria-labelledby="detail-title"><div class="problem-dialog-heading"><div><p id="detail-id" class="text-secondary"></p><h2 id="detail-title"></h2></div><button id="detail-close" type="button">关闭</button></div><div id="detail-status" class="problem-status"></div><dl id="detail-facts" class="problem-facts"></dl><section><h3>现场证据与处置记录</h3><p id="detail-evidence" class="problem-evidence"></p></section><section><h3>关联记录</h3><div id="detail-links" class="actions"></div></section><section><h3>操作审计</h3><div id="detail-audit"></div></section><div class="actions"><button id="detail-archive" type="button" hidden>核实并归档</button><button id="detail-create-work" type="button">创建处置工单</button><button id="detail-equipment" type="button">设备档案</button><button id="detail-action" type="button" class="btn btn-sm btn-primary"></button></div><p id="detail-readonly" class="text-secondary"></p></dialog>
-<dialog id="create-dialog" class="problem-dialog" aria-labelledby="create-title"><h2 id="create-title">记录异常发现</h2><form id="create-form"><div class="problem-form-grid"><label class="field">设备 *<select id="create-equipment" required></select></label><label class="field">发生时间 *<input id="create-time" type="datetime-local" required></label><label class="field">来源<select id="create-source"><option>现场发现</option><option>点检发现</option><option>保养发现</option><option>运行告警</option></select></label><label class="field">观察优先级<select id="create-priority"><option value="medium">中</option><option value="high">高</option><option value="low">低</option></select></label><label class="field">设备部位<input id="create-part" maxlength="100"></label><label class="field">已实施的紧急控制<input id="create-emergency" maxlength="500" placeholder="按现场规程实施，系统记录不等于隔离"></label></div><label class="field">异常现象 *<textarea id="create-description" required maxlength="1000" placeholder="描述现象、位置及影响，暂不要求判断原因"></textarea></label><label class="field">证据记录<textarea id="create-evidence" maxlength="1000" placeholder="填写观察、测量值或受控证据编号；本批不提供附件上传"></textarea></label><p id="create-error" role="alert" class="problem-error"></p><div class="actions"><button id="create-cancel" type="button">取消</button><button class="btn btn-sm btn-primary" type="submit">提交发现</button></div></form></dialog>
-<dialog id="action-dialog" class="problem-dialog" aria-labelledby="action-title"><h2 id="action-title"></h2><p id="action-context" class="text-secondary"></p><form id="action-form"><fieldset id="triage-fields" hidden><legend>分诊结果</legend><label><input id="triage-defect" type="checkbox"> 新建缺陷</label><label><input id="triage-failure" type="checkbox"> 新建故障事件</label><label><input id="triage-hazard" type="checkbox"> 新建隐患</label><label class="field">或关联已有活动缺陷<select id="existing-defect"><option value="">不关联</option></select></label><div class="problem-form-grid"><label class="field">问题责任人 *<select id="triage-owner"></select></label><label class="field">处置期限 *<input id="triage-due" type="date"></label><label class="field">失效模式（新建故障必填）<input id="failure-mode" maxlength="200"></label><label class="field">功能影响（新建故障必填）<input id="failure-impact" maxlength="300"></label></div><p class="text-secondary">可以同时登记缺陷与故障；无问题归档须说明依据。涉及安全隐患应按现场制度处理，隐患需由安全人员核实、独立复查。</p></fieldset><label id="restore-field" class="field" hidden>功能恢复时间 *<input id="restore-time" type="datetime-local"></label><label id="decision-field" class="field" hidden>验证决定<select id="verify-decision"><option value="pass">验证通过并关闭本问题</option><option value="return">验证不通过，退回处置</option></select></label><label class="field">操作意见 *<textarea id="action-reason" required maxlength="1000"></textarea></label><label id="evidence-field" class="field">处置 / 验证证据 *<textarea id="action-evidence" maxlength="1000" placeholder="填写复测记录、试运行结果或受控证据编号"></textarea></label><p id="action-error" class="problem-error" role="alert"></p><div class="actions"><button id="action-cancel" type="button">取消</button><button id="action-submit" class="btn btn-sm btn-primary" type="submit">确认提交</button></div></form></dialog>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js"></script><script src="../shared/maintenance.js"></script><script src="../shared/domain.js"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../mock/problem-data.js"></script><script src="../mock/work-data.js"></script><script src="../mock/work-rules.js"></script><script src="../mock/problem-api.js?v=20261010"></script><script src="../scripts/problem-page.js?v=20261011-context3"></script><script src="../mock/list-tools-data.js"></script><script src="../mock/list-tools-api.js"></script><script src="../shared/list-toolbar.js?v=20261011-filter3"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>缺陷台账 · 设备管理</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="defect-list" data-problem-kind="defects" data-layout="list">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title problem-heading" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>缺陷台账</h1>
+                    <p class="text-secondary small">技术偏离 · 责任跟踪 · 独立验证</p>
+                </div>
+            </template></div>
+            <section class="problem-metrics" aria-label="范围统计">
+                <div>范围记录<strong id="metric-total">—</strong></div>
+                <div>待处理<strong id="metric-pending">—</strong></div>
+                <div>高优先级未关闭<strong id="metric-high">—</strong></div>
+                <div>有期限且超期<strong id="metric-overdue">—</strong></div>
+            </section>
+            <section class="card problem-list" data-component="list-panel" data-component-src="../components/list-panel.html" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                    <h2 class="business-panel-title">缺陷清单</h2>
+                    <div class="list-panel-tools">
+                        <div class="list-search-group" data-component="filter-bar" data-component-src="../components/filter-bar.html" data-component-required="true"><template data-fill="body"><input id="search" aria-label="搜索编号、现象或部位" placeholder="搜索编号、现象或部位" class="form-control"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="list-filter-options" aria-controls="list-filter-options" aria-expanded="false">筛选条件</button></template></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="refresh" type="button" data-list-tool="refresh" data-label="刷新">刷新</button><button id="create-discovery" type="button" class="btn btn-sm btn-primary">登记缺陷线索</button>
+                    </div>
+                </template><template data-fill="body">
+
+                <div class="filter-options" id="list-filter-options" hidden=""><select id="status-filter" aria-label="业务状态">
+                        <option value="">全部状态</option>
+                    </select><select id="priority-filter" aria-label="优先级">
+                        <option value="">全部优先级</option>
+                        <option value="high">高</option>
+                        <option value="medium">中</option>
+                        <option value="low">低</option>
+                    </select><label><input id="mine" type="checkbox"> 我的责任</label><button id="clear-filter" type="button">清除</button></div>
+                <p id="load-status" class="text-secondary" role="status" aria-live="polite">正在读取…</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>编号 / 现象</th>
+                                <th>设备 / 部位</th>
+                                <th>优先级</th>
+                                <th>状态</th>
+                                <th>责任人</th>
+                                <th>发生时间 / 截止日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="problem-rows"></tbody>
+                    </table>
+                </div>
+                <div id="empty-state" class="empty-state" hidden="">
+                    <h2>暂无符合条件的记录</h2>
+                    <p>调整筛选条件，或从异常事件中心记录新发现。</p>
+                </div>
+
+            </template><template data-fill="footer"><div class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body"><span id="page-count"></span>
+                    <div><button id="previous" type="button">上一页</button><button id="next" type="button">下一页</button>
+                    </div>
+                </template></div></template></section>
+            <p class="text-secondary small my-4">模型评审 · 独立问题模拟接口；创建与下一步操作按角色、状态显示；业务读写经JSON模拟接口</p>
+            <dialog id="list-tools-dialog" aria-labelledby="list-tools-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="list-tools-title"></h2></template><template data-fill="body">
+
+                <div id="list-tools-body"></div>
+                <p id="list-tools-status" role="status" class="small text-secondary"></p>
+                <div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden="">确认</button></div>
+            </template></dialog>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <dialog id="detail-dialog" class="problem-dialog" aria-labelledby="detail-title">
+        <div class="problem-dialog-heading">
+            <div>
+                <p id="detail-id" class="text-secondary"></p>
+                <h2 id="detail-title"></h2>
+            </div><button id="detail-close" type="button">关闭</button>
+        </div>
+        <div id="detail-status" class="problem-status"></div>
+        <dl id="detail-facts" class="problem-facts"></dl>
+        <section>
+            <h3>现场证据与处置记录</h3>
+            <p id="detail-evidence" class="problem-evidence"></p>
+        </section>
+        <section>
+            <h3>关联记录</h3>
+            <div id="detail-links" class="actions"></div>
+        </section>
+        <section>
+            <h3>操作审计</h3>
+            <div id="detail-audit"></div>
+        </section>
+        <div class="actions"><button id="detail-archive" type="button" hidden="">核实并归档</button><button id="detail-create-work" type="button">创建处置工单</button><button id="detail-equipment" type="button">设备档案</button><button id="detail-action" type="button" class="btn btn-sm btn-primary"></button></div>
+        <p id="detail-readonly" class="text-secondary"></p>
+    </dialog>
+    <dialog id="create-dialog" class="problem-dialog" aria-labelledby="create-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="create-title">记录异常发现</h2></template><template data-fill="body">
+
+        <form id="create-form">
+            <div class="problem-form-grid"><label class="field">设备 *<select id="create-equipment" required=""></select></label><label class="field">发生时间 *<input id="create-time" type="datetime-local" required=""></label><label class="field">来源<select id="create-source">
+                        <option>现场发现</option>
+                        <option>点检发现</option>
+                        <option>保养发现</option>
+                        <option>运行告警</option>
+                    </select></label><label class="field">观察优先级<select id="create-priority">
+                        <option value="medium">中</option>
+                        <option value="high">高</option>
+                        <option value="low">低</option>
+                    </select></label><label class="field">设备部位<input id="create-part" maxlength="100"></label><label class="field">已实施的紧急控制<input id="create-emergency" maxlength="500" placeholder="按现场规程实施，系统记录不等于隔离"></label></div><label class="field">异常现象 *<textarea id="create-description" required="" maxlength="1000" placeholder="描述现象、位置及影响，暂不要求判断原因"></textarea></label><label class="field">证据记录<textarea id="create-evidence" maxlength="1000" placeholder="填写观察、测量值或受控证据编号；本批不提供附件上传"></textarea></label>
+            <p id="create-error" role="alert" class="problem-error"></p>
+            <div class="actions"><button id="create-cancel" type="button">取消</button><button class="btn btn-sm btn-primary" type="submit">提交发现</button></div>
+        </form>
+    </template></dialog>
+    <dialog id="action-dialog" class="problem-dialog" aria-labelledby="action-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="action-title"></h2></template><template data-fill="body">
+
+        <p id="action-context" class="text-secondary"></p>
+        <form id="action-form">
+            <fieldset id="triage-fields" hidden="">
+                <legend>分诊结果</legend><label><input id="triage-defect" type="checkbox"> 新建缺陷</label><label><input id="triage-failure" type="checkbox"> 新建故障事件</label><label><input id="triage-hazard" type="checkbox"> 新建隐患</label><label class="field">或关联已有活动缺陷<select id="existing-defect">
+                        <option value="">不关联</option>
+                    </select></label>
+                <div class="problem-form-grid"><label class="field">问题责任人 *<select id="triage-owner"></select></label><label class="field">处置期限 *<input id="triage-due" type="date"></label><label class="field">失效模式（新建故障必填）<input id="failure-mode" maxlength="200"></label><label class="field">功能影响（新建故障必填）<input id="failure-impact" maxlength="300"></label></div>
+                <p class="text-secondary">可以同时登记缺陷与故障；无问题归档须说明依据。涉及安全隐患应按现场制度处理，隐患需由安全人员核实、独立复查。</p>
+            </fieldset><label id="restore-field" class="field" hidden="">功能恢复时间 *<input id="restore-time" type="datetime-local"></label><label id="decision-field" class="field" hidden="">验证决定<select id="verify-decision">
+                    <option value="pass">验证通过并关闭本问题</option>
+                    <option value="return">验证不通过，退回处置</option>
+                </select></label><label class="field">操作意见 *<textarea id="action-reason" required="" maxlength="1000"></textarea></label><label id="evidence-field" class="field">处置 / 验证证据 *<textarea id="action-evidence" maxlength="1000" placeholder="填写复测记录、试运行结果或受控证据编号"></textarea></label>
+            <p id="action-error" class="problem-error" role="alert"></p>
+            <div class="actions"><button id="action-cancel" type="button">取消</button><button id="action-submit" class="btn btn-sm btn-primary" type="submit">确认提交</button></div>
+        </form>
+    </template></dialog>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js"></script>
+    <script src="../shared/maintenance.js"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../mock/problem-data.js"></script>
+    <script src="../mock/work-data.js?v=20261011-ap1"></script>
+    <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+    <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+    <script src="../scripts/problem-page.js?v=20261011-qa1"></script>
+    <script src="../mock/list-tools-data.js"></script>
+    <script src="../mock/list-tools-api.js"></script>
+    <script src="../shared/list-toolbar.js?v=20261011-closure4"></script>
+
+
+</body></html>

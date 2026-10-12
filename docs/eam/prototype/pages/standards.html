@@ -1,16 +1,63 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>点检标准与设备适用 · 设备管理原型</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5">
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>点检标准与设备适用 · 设备管理原型</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
 </head>
+
 <body data-page="standards" data-layout="detail">
-<div id="platform-header"></div>
-<div class="shell"><aside id="module-nav"></aside><main>
-<div class="breadcrumb" id="breadcrumb"></div>
-<div class="title"><div><h1>点检标准与设备适用</h1><p class="text-secondary small">逐项规则、审核发布、任务快照不被覆盖</p></div></div>
-<section class="card"><h2>当前发布版本</h2><p id="standard-info"></p><div class="row-item"><b>轴承温度 / TEMP-01</b><span>数值 °C / 上限规则</span></div><div class="row-item"><b>润滑 / LUBE-01</b><span>正常 / 异常，必检</span></div><div class="row-item"><b>防护 / GUARD-01</b><span>正常 / 异常，必检</span></div><p>适用：混合机 EQ-001，轴承/润滑/防护部位；现场检查需有效作业资格。</p><hr><h3>工程师起草新版本</h3><label class="field" for="standard-upper">轴承温度上限（°C） *<input id="standard-upper" type="number" value="80" placeholder=""></label><label class="field" for="standard-method">方法与判定要求 *<textarea id="standard-method" placeholder=""></textarea></label><div class="actions"><button id="save-standard">保存标准草稿</button><button id="publish-standard" class="btn btn-primary">审核并发布</button></div><p id="standard-draft"></p><p class="text-secondary">工程师起草，主管/质量人员发布；审核人不能是起草人。单位和3个项目在本批固定，属性模板/复杂项目配置后续展开。</p></section>
-<section class="card"><h2>版本维护与历史</h2><div class="actions"><button id="copy-standard">复制为新版本草稿</button><button id="discard-standard">删除本人草稿</button><button id="disable-standard">停用当前版本</button></div><p class="text-secondary">发布记录不删除；修订通过新版本完成。停用阻止新任务生成，已有任务保留快照。</p><div id="standard-history"></div></section><p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
-</main></div><div id="mobile-nav"></div>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script><script src="../scripts/standards.js?v=20261010"></script>
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>点检标准与设备适用</h1>
+                    <p class="text-secondary small">逐项规则、审核发布、任务快照不被覆盖</p>
+                </div>
+            </template></div>
+            <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>当前发布版本</h2></template><template data-fill="body">
+
+                <p id="standard-info"></p>
+                <div class="row-item"><b>轴承温度 / TEMP-01</b><span>数值 °C / 上限规则</span></div>
+                <div class="row-item"><b>润滑 / LUBE-01</b><span>正常 / 异常，必检</span></div>
+                <div class="row-item"><b>防护 / GUARD-01</b><span>正常 / 异常，必检</span></div>
+                <p>适用：混合机 EQ-001，轴承/润滑/防护部位；现场检查需有效作业资格。</p>
+                <hr>
+                <h3>工程师起草新版本</h3><label class="field" for="standard-upper">轴承温度上限（°C） *<input id="standard-upper" type="number" value="80" placeholder=""></label><label class="field" for="standard-method">方法与判定要求 *<textarea id="standard-method" placeholder=""></textarea></label>
+                <div class="actions"><button id="save-standard">保存标准草稿</button><button id="publish-standard" class="btn btn-primary">审核并发布</button></div>
+                <p id="standard-draft"></p>
+                <p class="text-secondary">工程师起草，主管/质量人员发布；审核人不能是起草人。单位和3个项目在本批固定，属性模板/复杂项目配置后续展开。</p>
+            </template></section>
+            <section class="card" data-component-src="../components/card.html" data-component="card" data-component-required="true"><template data-fill="head"><h2>版本维护与历史</h2></template><template data-fill="body">
+
+                <div class="actions"><button id="copy-standard">复制为新版本草稿</button><button id="discard-standard">删除本人草稿</button><button id="disable-standard">停用当前版本</button></div>
+                <p class="text-secondary">发布记录不删除；修订通过新版本完成。停用阻止新任务生成，已有任务保留快照。</p>
+                <div id="standard-history"></div>
+            </template></section>
+            <p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+    <script src="../scripts/standards.js?v=20261011-closure4"></script>
+
+
 </body></html>

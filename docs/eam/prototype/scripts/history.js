@@ -1,3 +1,5 @@
+/* 组件就绪后执行 */
+Eam.registerInit(async function(){
 (()=>{
  const list=document.getElementById('history-list');if(!list)return;const s=Eam.s;
  const pages={report:'defect',check:'inspection',order:'order',execution:'order',acceptance:'acceptance',task:'inspection',result:'inspection',standard:'standards',plan:'plans',equipment:'equipment',restriction:'device',part:'equipment',attachment:'equipment',reportDraft:'defect'};
@@ -6,3 +8,5 @@
  document.getElementById('history-type').onchange=render;document.getElementById('history-date').onchange=render;render();
  const event=s.events.find(e=>e.id===new URLSearchParams(location.search).get('source')&&EamProduct.eventEquipment(e)===(new URLSearchParams(location.search).get('equipment')||'EQ-001'));if(event)detail(event);
 })();
+
+});

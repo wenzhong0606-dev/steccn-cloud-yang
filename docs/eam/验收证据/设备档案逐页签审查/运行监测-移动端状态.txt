@@ -1,0 +1,135 @@
+Browser tab: 15, Title: "1#混合机 · 设备档案", URL: "http://127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=trend".
+0 AXWebArea 1#混合机 · 设备档案, URL: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=trend
+	1 link Description: 跳到业务内容, Value: 127.0.0.1:8765/pages/device.html?view=pc&equipment=EQ-001&tab=trend#main-content
+	2 container
+		3 text S
+		4 text STECCN
+		5 button (collapsed) 模块菜单, ID: nav-toggle, Secondary Actions: Expand
+		6 checkbox 切换移动端, Value: 0, ID: view-toggle
+		7 button (collapsed) 演示设置, Secondary Actions: Expand
+			8 text 演示设置
+	44 container main-content
+		45 heading 1#混合机 · 设备档案, Value: 1, ID: device-name
+			46 text 1#混合机 · 设备档案
+		47 text TC2_YL1_PL_01 / 原料二车间/配料线
+		48 container 面包屑导航
+			49 content list
+				50 link Description: 系统平台, Value: 127.0.0.1:8765/pages/platform.html?view=pc
+				51 container
+					133 text /
+					53 link Description: 设备管理, Value: 127.0.0.1:8765/pages/workbench.html?view=pc
+				54 container
+					134 text /
+					56 link Description: 设备台账, Value: 127.0.0.1:8765/pages/equipment.html?view=pc
+				57 container
+					135 text / 设备全景档案
+		59 container
+			60 image Description: 设备外观, ID: archive-photo
+			61 text MX-2400
+			62 text 负责人 赵工
+			63 text 序列号 MX20240318
+			64 container archive-status-strip
+				65 text 生命周期  在用 运行状态  运行 健康状态  故障待复核 计量状态  不适用 使用许可  限制使用
+		66 container Description: 设备档案导航, ID: archive-nav-mount
+			136 tab group
+				137 tab (selectable, settable, boolean) 概况, Value: 0, ID: tab-overview-1
+				138 tab (selectable, settable, boolean) 状态与许可, Value: 0, ID: tab-state-3
+			139 tab group
+				140 tab (selectable, settable, boolean) 技术参数, Value: 0, ID: tab-parameters-5
+				141 tab (selectable, settable, boolean) 设备结构, Value: 0, ID: tab-structure-7
+				142 tab (selectable, settable, boolean) 位置与安装, Value: 0, ID: tab-installation-9
+			143 tab group
+				144 tab (selectable, settable, boolean) 点检, Value: 0, ID: tab-work-11
+				145 tab (selectable, settable, boolean) 保养, Value: 0, ID: tab-maintenance-13
+				146 tab (selectable, settable, boolean) 故障, Value: 0, ID: tab-failure-15
+				147 tab (selectable, settable, boolean) 维修, Value: 0, ID: tab-repair-17
+			148 tab group
+				149 tab (selectable, settable, boolean) 设备BOM, Value: 0, ID: tab-bom-19
+				150 tab (selectable, settable, boolean) 更换与寿命, Value: 0, ID: tab-replacement-21
+				151 tab (selectable, settable, boolean) 测点与计量器, Value: 0, ID: tab-meters-23
+				152 tab (selected, settable, boolean) 运行监测, Value: 1, ID: tab-trend-25
+			153 tab group
+				154 tab (selectable, settable, boolean) 安全合规, Value: 0, ID: tab-risk-27
+				155 tab (selectable, settable, boolean) 资产成本, Value: 0, ID: tab-cost-29
+			156 tab group
+				157 tab (selectable, settable, boolean) 图片与3D, Value: 0, ID: tab-media-31
+				158 tab (selectable, settable, boolean) 文档资料, Value: 0, ID: tab-documents-33
+				159 tab (selectable, settable, boolean) 生命周期, Value: 0, ID: tab-history-35
+				160 tab (selectable, settable, boolean) 关联业务, Value: 0, ID: tab-related-37
+				161 tab (selectable, settable, boolean) 变更审计, Value: 0, ID: tab-audit-39
+				162 tab (selectable, settable, boolean) 档案完整性, Value: 0, ID: tab-completeness-41
+		168 container Description: 运行监测, ID: panel-trend-26
+			169 container
+				170 button (expanded) 测点趋势, Secondary Actions: Collapse
+					171 text 测点趋势
+				172 text 驱动端轴承温度 · PT-TEMP-01 · 单位 °C · 有效样本 3/3
+				173 container 驱动端轴承温度趋势；仅展示当前筛选范围内的有效采样
+				174 text 阈值依据：MIXER-V3 / PAR-MX-04；静态模拟采样，不代表实时信号。无效质量不绘入曲线，原记录保留在下表。
+			175 heading 运行监测清单, Value: 2
+				176 text 运行监测清单
+			177 container
+				178 search text field (settable) 运行监测搜索
+				179 button 高级筛选
+			180 button 刷新档案
+			181 text 数据来源：档案登记 · 更新时间：2026-10-10 08:00:00
+			182 text 已展示 · 当前页3条
+			183 container 业务表格，可横向滚动
+				184 table
+					185 row
+						186 cell
+							187 text 采样时间
+						188 cell
+							189 text 轴承温度 / °C
+						190 cell
+							191 text 运行小时 / h
+						192 cell
+							193 text 数据质量
+						194 cell
+							195 text 操作
+					196 row
+						197 cell
+							198 text 2026-10-10 07:00
+							199 text READ-001
+						200 cell
+							201 text 67.8
+						202 cell
+							203 text 10199
+						204 cell
+							205 text GOOD
+						206 cell
+							207 button 查看2026-10-10 07:00详情
+					208 row
+						209 cell
+							210 text 2026-10-10 07:30
+							211 text READ-002
+						212 cell
+							213 text 68
+						214 cell
+							215 text 10199.5
+						216 cell
+							217 text GOOD
+						218 cell
+							219 button 查看2026-10-10 07:30详情
+					220 row
+						221 cell
+							222 text 2026-10-10 08:00
+							223 text READ-003
+						224 cell
+							225 text 68.2
+						226 cell
+							227 text 10200
+						228 cell
+							229 text GOOD
+						230 cell
+							231 button 查看2026-10-10 08:00详情
+			232 text 共 3 条 · 第 1 / 1 页
+			233 button (disabled) 上一页
+			234 button (disabled) 下一页
+		132 text 设备管理 · 设备档案
+	163 container
+		164 button 工作台
+		165 button 任务
+		166 button 设备
+		167 button 异常
+
+The focused UI element is 152 tab (selected, settable, boolean) 运行监测, Value: 1, ID: tab-trend-25

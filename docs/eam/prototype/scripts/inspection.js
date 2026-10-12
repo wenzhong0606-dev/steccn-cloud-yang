@@ -1,3 +1,5 @@
+/* 组件就绪后执行 */
+Eam.registerInit(async function(){
 (()=>{
  if(!document.getElementById('temperature'))return;const s=Eam.s,params=new URLSearchParams(location.search);
  if(params.has('task')){s.activeTaskId=params.get('task');Eam.save();}
@@ -29,3 +31,5 @@
 
  const assignedHere=t.assignee===s.person&&Eam.can(['operator','inspector']);for(const id of ['save-draft','submit-inspection'])document.getElementById(id).disabled ||= !assignedHere;document.getElementById('submit-check').disabled ||= !(Eam.can(['engineer'])||(s.person===c?.assignee&&Eam.can(['inspector'])));document.getElementById('request-check').disabled=!Eam.can(['operator','inspector','engineer','supervisor']);
 })();
+
+});

@@ -1,9 +1,92 @@
-<!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>专项检查列表 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5"></head>
-<body data-page="check-list" data-layout="list"><div id="platform-header"></div><div class="shell"><aside id="module-nav"></aside><main><div class="breadcrumb" id="breadcrumb"></div>
-<div class="title"><div><h1>专项检查</h1><p class="text-secondary small">区分待执行、已取消与完成记录；来源异常可追溯</p></div></div>
-<div class="list-summary"><div><span>当前范围记录</span><strong id="list-total">—</strong></div><div><span>有效 / 待处理记录</span><strong id="list-pending">—</strong></div><p>本会话模拟数据 · 无数据不代表生产数量为零</p></div>
-<section class="card list-card" data-component="list-panel"><div class="list-panel-header" data-component="list-toolbar"><h2 class="business-panel-title">专项检查清单</h2><div class="list-panel-tools"><div class="input-group input-group-sm list-search-group" data-component="filter-bar"><input id="list-search" placeholder="搜索编号 / 名称 / 责任人" aria-label="搜索编号、名称或责任人" class="form-control"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="list-filter-options" aria-controls="list-filter-options" aria-expanded="false">筛选条件</button></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="refresh" data-label="刷新" aria-label="刷新" title="刷新">刷新</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="list-primary" class="btn btn-sm btn-primary">业务操作</button></div></div><div class="filter-options" id="list-filter-options" hidden><label class="field">业务状态<select id="list-status"><option value="">全部状态</option></select></label><label id="list-mine-label" class="field"><input id="list-mine" type="checkbox"> 仅与我相关</label><button id="list-reset">重置筛选</button></div>
-<div class="table-wrapper"><table class="data-table"><thead><tr><th>检查编号</th><th>设备/来源</th><th>执行人</th><th>检查方法</th><th>状态</th><th>操作</th></tr></thead><tbody id="list-rows"></tbody></table></div><div id="list-empty" class="empty-state" hidden><h2>当前筛选暂无记录</h2><p>可调整筛选，或通过右上角业务入口创建。</p></div><div class="list-pagination"><span id="list-count"></span><div><button id="list-prev">上一页</button><button id="list-next">下一页</button></div></div></section>
-<p class="text-secondary small my-4">模型评审 · 尚未接正式业务接口</p><dialog id="list-tools-dialog" aria-labelledby="list-tools-title"><h2 id="list-tools-title"></h2><div id="list-tools-body"></div><p id="list-tools-status" role="status" class="small text-secondary"></p><div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden>确认</button></div></dialog></main></div><div id="mobile-nav"></div>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script><script src="../shared/list.js?v=20261011-context3"></script><script src="../scripts/check-list.js?v=20261011-context3"></script><script src="../mock/list-tools-data.js"></script><script src="../mock/list-tools-api.js"></script><script src="../shared/list-toolbar.js?v=20261011-filter3"></script></body></html>
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>专项检查列表 · 设备管理</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
+</head>
+
+<body data-page="check-list" data-layout="list">
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>专项检查</h1>
+                    <p class="text-secondary small">区分待执行、已取消与完成记录；来源异常可追溯</p>
+                </div>
+            </template></div>
+            <div class="list-summary">
+                <div><span>当前范围记录</span><strong id="list-total">—</strong></div>
+                <div><span>有效 / 待处理记录</span><strong id="list-pending">—</strong></div>
+                <p>本会话模拟数据 · 无数据不代表生产数量为零</p>
+            </div>
+            <section class="card list-card" data-component="list-panel" data-component-src="../components/list-panel.html" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                    <h2 class="business-panel-title">专项检查清单</h2>
+                    <div class="list-panel-tools">
+                        <div class="list-search-group" data-component="filter-bar" data-component-src="../components/filter-bar.html" data-component-required="true"><template data-fill="body"><input id="list-search" placeholder="搜索编号 / 名称 / 责任人" aria-label="搜索编号、名称或责任人" class="form-control"><button type="button" class="btn btn-sm btn-outline-secondary" data-filter-toggle="list-filter-options" aria-controls="list-filter-options" aria-expanded="false">筛选条件</button></template></div><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="import" data-label="导入" aria-label="导入" title="导入">导入</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="export" data-label="导出权限范围数据" aria-label="导出权限范围数据" title="导出权限范围数据">导出权限范围数据</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="refresh" data-label="刷新" aria-label="刷新" title="刷新">刷新</button><button type="button" class="btn btn-sm btn-outline-secondary" data-list-tool="columns" data-label="列设置" aria-label="列设置" title="列设置">列设置</button><button id="list-primary" class="btn btn-sm btn-primary">业务操作</button>
+                    </div>
+                </template><template data-fill="body">
+
+                <div class="filter-options" id="list-filter-options" hidden=""><label class="field">业务状态<select id="list-status">
+                            <option value="">全部状态</option>
+                        </select></label><label id="list-mine-label" class="field"><input id="list-mine" type="checkbox"> 仅与我相关</label><button id="list-reset">重置筛选</button></div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>检查编号</th>
+                                <th>设备/来源</th>
+                                <th>执行人</th>
+                                <th>检查方法</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-rows"></tbody>
+                    </table>
+                </div>
+                <div id="list-empty" class="empty-state" hidden="">
+                    <h2>当前筛选暂无记录</h2>
+                    <p>可调整筛选，或通过右上角业务入口创建。</p>
+                </div>
+
+            </template><template data-fill="footer"><div class="pagination-host" data-component-src="../components/pagination.html" data-component-required="true" data-component="pagination"><template data-fill="body"><span id="list-count"></span>
+                    <div><button id="list-prev">上一页</button><button id="list-next">下一页</button></div>
+                </template></div></template></section>
+            <p class="text-secondary small my-4">模型评审 · 尚未接正式业务接口</p>
+            <dialog id="list-tools-dialog" aria-labelledby="list-tools-title" data-component-src="../components/dialog-content.html" data-component="dialog" data-component-required="true"><template data-fill="head"><h2 id="list-tools-title"></h2></template><template data-fill="body">
+
+                <div id="list-tools-body"></div>
+                <p id="list-tools-status" role="status" class="small text-secondary"></p>
+                <div class="actions"><button id="list-tools-close" type="button" class="btn btn-sm btn-outline-secondary">关闭</button><button id="list-tools-confirm" type="button" class="btn btn-sm btn-primary" hidden="">确认</button></div>
+            </template></dialog>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+    <script src="../shared/list.js?v=20261011-context3"></script>
+    <script src="../scripts/check-list.js?v=20261011-closure4"></script>
+    <script src="../mock/list-tools-data.js"></script>
+    <script src="../mock/list-tools-api.js"></script>
+    <script src="../shared/list-toolbar.js?v=20261011-closure4"></script>
+
+
+</body></html>

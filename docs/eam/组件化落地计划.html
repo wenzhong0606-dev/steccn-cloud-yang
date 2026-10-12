@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EAM 前端组件化落地计划（v5 · 含组件加载层与完整契约）</title>
+<style>
+  :root{
+    --bg:#f6f8fa; --surface:#fff; --ink:#1f2328; --muted:#656d76;
+    --line:#d0d7de; --brand:#0d6efd; --brand-weak:#e7f1ff;
+    --ok:#1a7f37; --ok-weak:#e6f4ea; --warn:#9a6700; --warn-weak:#fff8c5;
+    --bad:#cf222e; --bad-weak:#ffebe9; --radius:10px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1140px;margin:0 auto;padding:28px 20px 64px}
+  header.page{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:18px}
+  h1{margin:0 0 6px;font-size:23px}
+  .sub{color:var(--muted);font-size:13px}
+  h2{font-size:18px;margin:28px 0 10px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h3{font-size:15.5px;margin:18px 0 6px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin:12px 0}
+  .tree{background:#0d1117;color:#e6edf3;border-radius:8px;padding:13px 15px;font-family:var(--mono);font-size:12px;line-height:1.5;overflow:auto}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:10px 0}
+  .kpi div{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .kpi b{display:block;font-size:19px;color:var(--brand)} .kpi span{color:var(--muted);font-size:12px}
+  code{font-family:var(--mono);font-size:12.5px;background:#f0f3f6;padding:1px 5px;border-radius:5px;color:#24292f}
+  pre{background:#0d1117;color:#e6edf3;border-radius:8px;padding:13px 15px;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.5}
+  pre .c{color:#8b949e} pre .k{color:#ff7b72} pre .s{color:#a5d6ff}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--brand-weak);font-weight:600}
+  tr:nth-child(even) td{background:#fafbfc}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;margin-right:4px}
+  .t-p0{background:var(--bad-weak);color:var(--bad)} .t-p1{background:var(--warn-weak);color:var(--warn)}
+  .t-p2{background:var(--brand-weak);color:var(--brand)} .t-ok{background:var(--ok-weak);color:var(--ok)}
+  ul{margin:8px 0;padding-left:20px} li{margin:4px 0}
+  .note{background:var(--warn-weak);border-left:4px solid var(--warn);padding:10px 14px;border-radius:6px;margin:10px 0;font-size:13px}
+  .ok{background:var(--ok-weak);border-left:4px solid var(--ok);padding:10px 14px;border-radius:6px;margin:10px 0;font-size:13px}
+  .ev{color:var(--muted);font-size:12px}
+  .flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 11px;font-size:12.5px}
+  .step b{color:var(--brand)} .arrow{color:var(--muted)}
+  .principle{background:var(--brand-weak);border:1px solid var(--brand);border-radius:8px;padding:13px 16px;font-size:14px;margin:12px 0}
+  .fix{background:var(--bad-weak);border-left:4px solid var(--bad);padding:10px 14px;border-radius:6px;margin:10px 0;font-size:13px}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>EAM 前端组件化落地计划 <span class="tag t-p2">v5 · 含组件加载层与完整契约（试点已验证）</span></h1>
+  <div class="sub">在 v4 基础上，落实 v4 评审的 6 处必修/应补修正 + 3 处文档校正 + 保留 <code>data-component</code> 标记；并按"直接试点"建议完成设备台账 / 保养任务列表的首批接入，用 jsdom 真实运行时（21/21 通过）验证四项契约闭合。核心不变：组件结构写在独立 HTML，JS 只负责加载、增强、绑定数据与交互；不用 Shadow DOM；不把组件化等同于 JS 拼页面。</div>
+</header>
+
+<div class="card">
+  <h3>v4 → v5 修正与补充对照</h3>
+  <table>
+    <thead><tr><th>本轮输入（v4 评审 / 试点发现）</th><th>v5 处理</th><th>位置</th></tr></thead>
+    <tbody>
+      <tr><td><b>必修①</b>：全局 <code>inFlight:Set&lt;src&gt;</code> 会误判循环（两列表同时加载同一片段）</td><td class="ok">改为 <code>ancestorSrcs(host)</code> 按 DOM 祖先链检测；失败 Promise 须 <code>cache.delete(src)</code> 否则重试仍返回同一次失败</td><td>§1 API / §6</td></tr>
+      <tr><td><b>必修②</b>：加载与增强重复执行（§1/§5/重试示例重复）</td><td class="ok">唯一职责：loader 只负责<b>获取/填充/隔离</b>，bootstrap 协调<b>增强/绑定</b>；首次加载与重试走同一 <code>loadComponent</code> 流程</td><td>§1 / §5</td></tr>
+      <tr><td><b>必修③</b>：关闭弹窗就 <code>dispose</code> 破坏复用</td><td class="ok">普通关闭<b>保留实例</b>；仅移除/替换节点才 <code>Eam.dispose</code>；<code>dispose</code> 须清除 root 自身标记；提交中取消/Esc 明确</td><td>§7.4</td></tr>
+      <tr><td><b>必修④</b>：异步提交可能提前关闭（<code>method="dialog"</code> 默认提交）</td><td class="ok"><code>Eam.Dialog.submitGuard</code> 进入即<b>同步</b> <code>preventDefault()</code>，再校验/等接口，仅成功才 <code>dlg.close()</code></td><td>§7.4</td></tr>
+      <tr><td><b>必修⑤</b>：缺渐进迁移策略（未迁移页可能不再启动）</td><td class="ok">已迁移页走 <code>Eam.bootstrap</code>+<code>registerInit</code>；<b>未引入 loader 的页保持原立即执行、不受影响</b>；每页只启动一次（bootstrap 幂等）</td><td>§1 / §3</td></tr>
+      <tr><td><b>应补⑥</b>：填充规则静默忽略错误</td><td class="ok">未知/重复区域 <code>reportConfigError</code>（不静默）；可选区域显式声明；嵌套组件只处理自身实例模板</td><td>§2 / §6</td></tr>
+      <tr><td><b>维护点</b>：组件替换时保留 <code>data-component</code> 等既有标记</td><td class="ok">loader 插入骨架时<b>保留 host 既有 <code>data-component</code></b>（增强器依赖），仅追加加载来源与完成标记</td><td>§1</td></tr>
+      <tr><td><b>文档校正 A</b>：隐藏字段规则冲突</td><td class="ok">统一口径：<code>disabled</code>/显式 <code>data-collect-skip</code> 优先跳过；<code>type=hidden</code> 元数据正常收集；不适用区显式禁用/跳过</td><td>§7.2 / §9</td></tr>
+      <tr><td><b>文档校正 B</b>：首批矩阵事实偏差（保养任务列表有列设置弹窗）</td><td class="ok">登记为<b>暂不迁移例外</b>，不再写"本页无业务弹窗"</td><td>§12.2</td></tr>
+      <tr><td><b>文档校正 C</b>：结构/示例校正（§1 多余 <code>&lt;/div&gt;</code>；bootstrap 示例未调 pageInit、含未定义 api/render；submitGuard 归属）</td><td class="ok">§1 流程闭合已校正；bootstrap 示例调用 <code>pageInit</code> 且不引用未定义符号；submitGuard 统一归属 <code>Eam.Dialog</code></td><td>§1 / §8</td></tr>
+      <tr><td><b>试点新增修复 1</b>：bootstrap 并发重入导致片段双重插入</td><td class="ok">bootstrap 幂等：单一 Promise 合并，自动启动与显式调用并发只跑一次</td><td>§1 / §3</td></tr>
+      <tr><td><b>试点新增修复 2</b>：<code>dispose</code> 未清除 root 自身标记</td><td class="ok"><code>dispose(root)</code> 清除目标含 root 自身（root 即组件 host 时其 <code>data-component-src</code> 不在子孙结果内）</td><td>§1 API</td></tr>
+      <tr><td><b>试点新增修复 3</b>：<code>dialog-shell</code> 嵌套 region 被父 region 填充清除</td><td class="ok">标题 h2 提到与 <code>header</code> 同级（不再嵌套于 <code>data-region="header"</code> 内被 <code>replaceChildren</code> 清除）</td><td>components/dialog-shell.html</td></tr>
+      <tr><td><b>首批试点验证</b>：jsdom + 桩 fetch 真实运行时</td><td class="ok">21/21 通过：加载失败重试 / 同页双实例 / 弹窗二次打开 / 未迁移页面回归（详见 §16）</td><td>§16</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="principle">
+  <b>核心原则（不变）：</b>组件结构写在独立 HTML 片段中，JS 只负责<b>加载片段、增强行为、绑定数据与交互</b>。共享组件统一结构约定与行为，独立 HTML 负责页面布局与业务表单内容。不用 Shadow DOM（避免全局 Bootstrap 样式与 DOM 查询适配成本）。<b>不把每个字段拆成独立 HTML</b>——只抽取稳定重复结构（页头 / 列表容器 / 筛选条 / 分页 / 弹窗外壳），业务表单内容留在独立页面、复用统一表单行为。
+</div>
+
+<h2>1. 组件加载与初始化层</h2>
+<div class="card">
+  <h3>目录结构</h3>
+  <div class="tree">prototype/
+├─ components/              <span class="c"># 可复用 HTML 片段（只含结构，无整页 html/head/body，无内嵌业务脚本）</span>
+│  ├─ page-header.html      <span class="c"># 页头 + 面包屑外壳，business 标题经 data-fill 注入</span>
+│  ├─ list-panel.html       <span class="c"># 列表容器 + 工具栏 + 表格区 + 分页区（region: head/body/footer）</span>
+│  ├─ filter-bar.html       <span class="c"># 搜索 + 高级筛选触发（region: body）</span>
+│  ├─ pagination.html       <span class="c"># 上/下一页 + 计数（region: body）</span>
+│  └─ dialog-shell.html     <span class="c"># &lt;dialog aria-labelledby&gt; + 标题(与 header 同级) + form 外壳（region: header/body/footer）</span>
+├─ shared/                  <span class="c"># 加载器、行为增强、公共样式</span>
+├─ pages/                   <span class="c"># 独立业务页面（声明引用组件 + data-fill 业务内容）</span>
+├─ scripts/                 <span class="c"># 页面业务绑定（改为 init(root)）</span>
+└─ mock/                    <span class="c"># JSON 数据与模拟接口</span></div>
+  <h3>声明式引用（约定属性）</h3>
+  <pre>&lt;<span class="k">div</span> data-component-src=<span class="s">"../components/list-panel.html"</span>
+     data-instance=<span class="s">"maintenance-list"</span>
+     data-component-required=<span class="s">"true"</span>&gt;
+  <span class="c">&lt;!-- 业务内容用 template 注入，见 §2；data-component 等既有标记由原 host 保留 --&gt;</span>
+  &lt;<span class="k">template</span> data-fill=<span class="s">"body"</span>&gt; …列表业务结构… &lt;/<span class="k">template</span>&gt;
+&lt;/<span class="k">div</span>&gt;</pre>
+  <p class="ev"><code>data-component-src</code> 是本项目约定属性，浏览器不识别，由 <code>shared/loader.js</code> 处理。HTML <code>&lt;template&gt;</code> 仅承载片段、不提供外部文件自动引用，故用运行时 fetch 插入普通 DOM（非 Shadow DOM）。<code>data-component-required="true"</code> 标记该组件缺失会阻断对应业务初始化（见 §5）。loader 插入骨架时<b>保留 host 既有 <code>data-component</code></b> 等标记（增强器依赖），仅追加加载来源与完成标记。</p>
+  <h3>加载器 <code>shared/loader.js</code> API</h3>
+  <pre><span class="k">Eam</span>.loadComponents(root=document) → Promise&lt;Result&gt;  <span class="c">// 递归查找 data-component-src，fetch 片段，注入 root，标 data-component-loaded</span>
+<span class="k">Eam</span>.loadComponent(el) → Promise&lt;Instance&gt;           <span class="c">// 单实例重加载（首加载与重试共用，见 §5）</span>
+<span class="k">Eam</span>.fillRegions(root)                                <span class="c">// 将 host 内 [data-fill] 模板克隆进片段 [data-region]（§2，未知/重复区域报配置错）</span>
+<span class="k">Eam</span>.prefixIds(root, prefix)                         <span class="c">// 多实例：给 id 加前缀，同步 label[for]/aria-*/href="#…"（§6）</span>
+<span class="k">Eam</span>.bootstrap(root, pageInit) → Promise             <span class="c">// 唯一启动流程（幂等，§3）</span>
+<span class="k">Eam</span>.registerInit(fn)                                <span class="c">// 注册组件/模块的 init(root)，由 bootstrap 按序调用</span>
+<span class="k">Eam</span>.dispose(root)                                   <span class="c">// 移除/替换节点时清理：含 root 自身，清除 data-component-loaded/prefixed/configError 标记</span>
+<span class="k">Eam</span>.Dialog.submitGuard(form, onSubmit)              <span class="c">// 弹窗提交守卫：同步 preventDefault + busy + 仅成功关闭（§7.4）</span></pre>
+  <h3>加载顺序契约（加载器与协调器职责唯一）</h3>
+  <div class="flow">
+    <div class="step"><b>1</b> 加载组件（fetch+插入）</div><span class="arrow">→</span>
+    <div class="step"><b>2</b> 填充区域 + 前缀隔离</div><span class="arrow">→</span>
+    <div class="step"><b>3</b> 增强组件（bootstrap 协调）</div><span class="arrow">→</span>
+    <div class="step"><b>4</b> 绑定页面事件</div><span class="arrow">→</span>
+    <div class="step"><b>5</b> 页面自定义（接口/渲染在 pageInit 内）</div>
+  </div>
+  <div class="note"><b>职责边界（必修②）：</b>loader 只负责<b>获取 / 填充 / 隔离 / 失败重试 / 启动协调</b>，<b>不在 <code>loadComponent</code> 内做增强</b>；增强与业务绑定由 <code>Eam.bootstrap</code> 按序调用（<code>ui.init → pageHeader → 各 registerInit → pageInit</code>）。首次加载与重试走<b>同一 <code>loadComponent</code> 流程</b>，重试仅由页面监听 <code>eam:component-retry</code> 补做该实例增强/绑定，不重跑整页。</div>
+  <pre><span class="c">// shared/loader.js 内 bootstrap（已校正：调用 pageInit，不引用未定义符号；幂等）</span>
+<span class="k">let</span> bootPromise = <span class="k">null</span>;
+<span class="k">async function</span> bootstrap(root, pageInit){
+  <span class="k">if</span> (bootPromise) <span class="k">return</span> bootPromise;            <span class="c">// 幂等：自动启动与显式调用并发只跑一次（防片段双重插入）</span>
+  <span class="k">const</span> r = root || document;
+  bootPromise = (<span class="k">async</span> () =&gt; {
+    <span class="k">const</span> res = <span class="k">await</span> loadComponents(r);       <span class="c">// 1 加载 + 2 fill + prefix 已在内部完成</span>
+    <span class="k">if</span> (<span class="k">typeof</span> ns.ui?.init === <span class="s">'function'</span>) ns.ui.init(r);            <span class="c">// 3 增强</span>
+    <span class="k">if</span> (<span class="k">typeof</span> window.EamUiComponents?.pageHeader === <span class="s">'function'</span>) window.EamUiComponents.pageHeader(r);
+    <span class="k">for</span> (<span class="k">const</span> fn <span class="k">of</span> inits) <span class="k">await</span> fn(r, res);   <span class="c">// 3 增强 + 4 绑定（Card/Tabs/Dialog/pageInit）</span>
+    <span class="k">if</span> (<span class="k">typeof</span> pageInit === <span class="s">'function'</span>) <span class="k">await</span> pageInit(res); <span class="c">// 5 页面自定义（接口/渲染在 pageInit 内部完成）</span>
+    <span class="k">return</span> res;
+  })();
+  <span class="k">return</span> bootPromise;
+}</pre>
+  <h3>多实例与节点隔离</h3>
+  <ul>
+    <li><b>实例前缀</b>：<code>data-instance="x"</code> 时，片段内所有 <code>id</code> 重写为 <code>x-&lt;原id&gt;</code>，并同步 <code>label[for]</code>、<code>aria-labelledby</code>、<code>aria-controls</code>、<code>aria-describedby</code>、<code>aria-errormessage</code>、<code>href="#…"</code>（<code>Eam.prefixIds</code>，见 §6）。</li>
+    <li><b>根内查找</b>：组件 API 与页面绑定一律接收 <code>root</code>，用 <code>root.querySelector</code>，<b>不用全局 <code>getElementById</code></b>，避免跨实例命中。</li>
+    <li><b>推荐 <code>data-ref</code></b>：组件内部需被 JS 定位的节点优先用 <code>[data-ref="rows"]</code> 等稳定属性，而非依赖 <code>id</code>；<code>id</code> 仅用于 label / ARIA 关联（§6）。</li>
+  </ul>
+  <h3>循环引用检测（按 DOM 祖先链，非全局栈）</h3>
+  <ul>
+    <li><code>ancestorSrcs(host)</code> 收集 host 的 DOM 祖先链上所有 <code>data-component-src</code>；若自身 <code>src</code> 出现在祖先链中才是真循环（兄弟并发加载同一片段<b>不算</b>），中止并渲染错误。</li>
+    <li>失败请求须 <code>cache.delete(src)</code>，否则重试仍返回同一次失败 Promise（已验证：缺失片段重试修正 src 后可成功）。</li>
+  </ul>
+  <h3>加载失败</h3>
+  <ul>
+    <li><code>Eam.loadComponents</code> 捕获单实例 fetch 错误，在该节点渲染<b>错误 + 重试按钮</b>（调用 <code>Eam.loadComponent(el)</code> 重加载），<b>不留空白容器</b>（§5）。</li>
+  </ul>
+  <h3>重复初始化与清理</h3>
+  <ul>
+    <li>增强器可重复调用：先查 <code>root.dataset.enhanced</code> 或专属标记，已增强则跳过事件绑定（避免重复监听）。</li>
+    <li>移除实例（如 SPA 切页）<b>或替换节点</b>时调用 <code>Eam.dispose(root)</code>；普通关闭弹窗<b>不</b>调用（保留实例可再次打开）。<code>dispose</code> 清除 root 自身及其子孙的 <code>data-component-loaded/prefixed/configError</code> 标记（必修③ + 试点修复 2）。</li>
+  </ul>
+  <div class="note"><b>渐进迁移（必修⑤）：</b>页面<b>引入 <code>loader.js</code></b> 才走 <code>Eam.bootstrap</code> + <code>Eam.registerInit</code>；<b>未引入的页面保持原立即执行逻辑、不受污染</b>。每页只启动一次（bootstrap 幂等）。已迁移页保留原有数据/规则/导航/接口依赖。访问方式：项目预览服务器 <code>http://127.0.0.1:8765/</code>；fetch 片段需 http 协议，不能 <code>file://</code> 直接打开。</div>
+</div>
+
+<h2>2. 业务内容装入组件（填充契约）</h2>
+<div class="card">
+  <p>组件外壳（如 <code>list-panel.html</code> / <code>dialog-shell.html</code>）只含稳定结构；该组件的业务内容（列表业务区、表单字段、操作栏）由<b>页面</b>提供，通过 <code>&lt;template data-fill&gt;</code> 注入到外壳的 <code>[data-region]</code>。</p>
+  <h3>区域映射</h3>
+  <table>
+    <thead><tr><th>页面 <code>data-fill</code></th><th>组件 <code>[data-region]</code></th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><code>data-fill="head"</code></td><td><code>[data-region="head"]</code></td><td>表头 / 工具栏标题区（如 list-panel 的工具栏按钮组由页面注入）</td></tr>
+      <tr><td><code>data-fill="body"</code></td><td><code>[data-region="body"]</code></td><td>主内容：列表行容器 / 表单字段 / 弹窗正文（必填，若外壳有该区域）</td></tr>
+      <tr><td><code>data-fill="footer"</code></td><td><code>[data-region="footer"]</code></td><td>操作栏 / 页脚：提交 / 取消 / 计数（如 dialog-shell 的 actions）</td></tr>
+    </tbody>
+  </table>
+  <h3>移动还是克隆</h3>
+  <ul>
+    <li>采用<b>克隆注入</b>：<code>Eam.fillRegions</code> 对每个 <code>[data-fill]</code> 模板取其 <code>.content</code>（<code>&lt;template&gt;</code> 内容本身不渲染）克隆进对应 <code>[data-region]</code>。</li>
+    <li>模板保留在 host 节点（<code>&lt;template&gt;</code> 天然惰性），因此<b>重试 / dispose 后重新 init 可再次填充</b>，无需重新 fetch 片段。</li>
+    <li>从作者视角即"内容只写一处、出现在组件内"——不主张多份副本，故业务内容<b>不应</b>既在模板又在页面正文重复出现。</li>
+  </ul>
+  <h3>填充规则与边界（应补⑥：不静默忽略错误）</h3>
+  <ul>
+    <li>填充发生在 <code>prefixIds</code> <b>之前</b>：模板内业务节点携带的 <code>id</code> 一并被实例前缀改写，保证多实例隔离（§6）。</li>
+    <li><b>未知区域</b>：页面 <code>[data-fill="x"]</code> 但外壳无 <code>[data-region="x"]</code> → <code>reportConfigError</code>（渲染配置错误提示），<b>不静默跳过</b>。</li>
+    <li><b>重复区域</b>：多个 <code>[data-fill]</code> 指向同一 <code>[data-region]</code> → <code>reportConfigError</code>（不静默覆盖）。</li>
+    <li><b>可选区域</b>：外壳声明了 <code>[data-region]</code> 但页面未提供对应 <code>data-fill</code>，且非必需 → 留空（可选区域须在外壳中显式声明为可选）。</li>
+    <li><b>必需区域缺失</b>：外壳声明 <code>[data-required="true"]</code> 但页面未提供 <code>data-fill</code> → <code>reportConfigError</code>，等同于加载失败处理（§5）。</li>
+    <li><b>嵌套组件</b>：<code>fillRegions</code> 只处理<b>本实例自身</b>的 <code>[data-fill]</code> 与片段 <code>[data-region]</code>；嵌套片段新生出的 host 由 <code>loadComponents</code> 递归加载，各自独立填充。</li>
+    <li>业务表单字段<b>留在页面模板</b>，不抽成独立 HTML（遵循核心原则）；组件只提供表单外壳与统一行为。</li>
+  </ul>
+  <pre><span class="c">&lt;!-- 页面：list-panel 业务内容 --&gt;</span>
+&lt;<span class="k">div</span> data-component-src=<span class="s">"../components/list-panel.html"</span> data-instance=<span class="s">"mt"</span> data-component-required=<span class="s">"true"</span>&gt;
+  &lt;<span class="k">template</span> data-fill=<span class="s">"head"</span>&gt;&lt;<span class="k">h2</span> <span class="k">class</span>=<span class="s">"business-panel-title"</span>&gt;保养任务清单&lt;/<span class="k">h2</span>&gt;&lt;/<span class="k">template</span>&gt;
+  &lt;<span class="k">template</span> data-fill=<span class="s">"body"</span>&gt;
+    &lt;<span class="k">div</span> <span class="k">class</span>=<span class="s">"table-wrapper"</span>&gt;&lt;<span class="k">table</span> <span class="k">class</span>=<span class="s">"data-table"</span>&gt;…&lt;<span class="k">tbody</span> data-ref=<span class="s">"rows"</span>&gt;&lt;/<span class="k">tbody</span>&gt;&lt;/<span class="k">table</span>&gt;&lt;/<span class="k">div</span>&gt;
+  &lt;/<span class="k">template</span>&gt;
+  &lt;<span class="k">template</span> data-fill=<span class="s">"footer"</span>&gt;
+    &lt;<span class="k">button</span> <span class="k">class</span>=<span class="s">"btn btn-primary btn-sm"</span> data-ref=<span class="s">"create"</span>&gt;从计划生成&lt;/<span class="k">button</span>&gt;
+  &lt;/<span class="k">template</span>&gt;
+&lt;/<span class="k">div</span>&gt;</pre>
+</div>
+
+<h2>3. 初始化真正延后（唯一启动流程）</h2>
+<div class="card">
+  <p class="fix">问题：当前多个公共脚本与页面脚本在加载时立即扫描 DOM / 绑定节点；若页面改为"先加载组件片段"，这些立即执行代码会在片段插入前访问不存在的节点，导致报错或漏绑。</p>
+  <h3>需改造的"立即执行"点（实测）</h3>
+  <table>
+    <thead><tr><th>位置</th><th>当前行为</th><th>改为</th></tr></thead>
+    <tbody>
+      <tr><td><code>shared/ui.js</code></td><td>加载即 <code>decorate()</code> 全页按钮/输入样式 + <code>querySelectorAll('dialog')</code> 扫描加 a11y（第 8 行附近）</td><td>抽为 <code>Eam.ui.init(root)</code>；MutationObserver 保留（响应式安全），但<b>首轮全页扫描</b>由 bootstrap 在组件加载后调用</td></tr>
+      <tr><td><code>shared/page-table-components.js</code></td><td><code>pageHeader()</code> 自执行构建页头 + 面包屑</td><td>改为 <code>EamUiComponents.pageHeader(root)</code>（additive 导出），由 bootstrap 调用（页面声明 <code>data-component-src="page-header.html"</code> 后填充标题）</td></tr>
+      <tr><td><code>shared/state.js</code></td><td><code>ensureToast();ensureConfirm();</code> 自执行注入单例浮层</td><td>保留（注入 body 单例、无组件依赖）；或移入 bootstrap 末尾以确保 body 就绪</td></tr>
+      <tr><td>页面 <code>scripts/*.js</code>（如 <code>equipment.js</code>）</td><td>IIFE 末尾直接 <code>loadState();render();</code> 并立即 <code>getElementById('ledger-head')</code> 等</td><td>改为导出 <code>init(root)</code> 并 <code>Eam.registerInit</code>；由 bootstrap 在组件加载后调用，节点查询限定在 <code>root</code> 内</td></tr>
+    </tbody>
+  </table>
+  <h3>唯一启动流程（每页只启动一次）</h3>
+  <pre><span class="c">// 页面脚本尾部（不再立即执行渲染）</span>
+Eam.registerInit((root,res)=&gt;initLedger(root,res));   <span class="c">// 仅登记</span>
+<span class="c">// shared/loader.js 在 DOMContentLoaded 后自动 bootstrap(document)（幂等，见 §1）；顺序：</span>
+<span class="c">//   loadComponents → fillRegions → prefixIds → Eam.ui.init → EamUiComponents.pageHeader</span>
+<span class="c">//   → 各 registerInit（Card/Tabs/Dialog/pageInit）</span>
+<span class="c">// 未引入 loader.js 的页面：保持原立即执行，不受影响（渐进迁移，必修⑤）</span></pre>
+  <p class="ok">效果：组件片段插入并填充、前缀隔离完成后，增强与绑定才发生；页面脚本不再在片段加载前访问节点；每页启动一次。</p>
+</div>
+
+<h2>4. EamList 接口修正（实测）</h2>
+<div class="card">
+  <p class="fix">v3 误述：<code>EamList(records,{columns,actions})</code> 已支持。实测 <code>list.js</code> 并非如此——它是<b>全局固定 ID + 页面 DOM 表头</b>的单体实现，实例状态为闭包局部变量，不隔离。</p>
+  <h3>当前真实实现（<code>shared/list.js</code>）</h3>
+  <ul>
+    <li>固定 ID：<code>list-rows / list-search / list-status / list-mine / list-empty / list-count / list-prev / list-next / list-primary / list-reset / list-mine-label</code> 全部 <code>document.getElementById</code>。</li>
+    <li>表头来自页面：<code>[...document.querySelectorAll('thead th')].map(h=&gt;h.textContent)</code>，<b>非 options.columns</b>。</li>
+    <li>行操作来自 <code>record.actions</code>（数据驱动），操作单元格为固定逻辑。</li>
+    <li><code>options</code> 仅含 <code>primary / allowed / page / query / mine</code>（主按钮文案/权限），无列定义。</li>
+    <li>实例状态 <code>page</code> 为模块级闭包，<b>同页两个列表会串状态</b>。</li>
+    <li>注：<code>equipment.js</code> / <code>problem-page.js</code> 等<b>未使用</b> <code>EamList</code>，走各自自定义 render——这是另一处一致性缺口（见 §12 备注）。</li>
+  </ul>
+  <h3>改造项（列为待办，非现成能力）</h3>
+  <table>
+    <thead><tr><th>#</th><th>改造</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>L1</td><td>首参 <code>root</code></td><td><code>EamList(root, records, options)</code>；所有节点经 <code>root.querySelector</code>，不再全局 ID</td></tr>
+      <tr><td>L2</td><td>列定义 <code>options.columns</code></td><td><code>{key,label,cell?}</code> 优先；缺省回退页面 <code>thead</code>（兼容旧调用）</td></tr>
+      <tr><td>L3</td><td>实例状态隔离</td><td>用 <code>WeakMap&lt;root, {page}&gt;</code> 存分页状态，同页多列表互不串扰</td></tr>
+      <tr><td>L4</td><td>操作适配</td><td><code>options.actions(record)</code> 返回行操作按钮描述（或保留 <code>record.actions</code> 兼容）</td></tr>
+      <tr><td>L5</td><td>与片段组件对齐</td><td>渲染目标为 <code>list-panel.html</code> 的 <code>[data-region="body"]</code> 内 tbody（<code>data-ref="rows"</code>）</td></tr>
+    </tbody>
+  </table>
+  <p class="ev">本项在首批（设备台账 / 保养任务列表）中按需落地：保养任务列表可先接 <code>list-panel.html</code> 外壳 + 自定义 render（与现有 <code>maintenance-task-list.js</code> 一致），L1–L5 作为后续统一化改造项登记，不阻塞首批。</p>
+</div>
+
+<h2>5. 加载成功 / 失败 / 重试契约</h2>
+<div class="card">
+  <h3>返回实例状态</h3>
+  <pre><span class="c">// Eam.loadComponents 返回</span>
+{ ok:<span class="k">boolean</span>,
+  instances: Map&lt;hostEl, { src, status:<span class="s">'loaded'|'failed'</span>, error?, required:<span class="k">bool</span> }&gt;,
+  failed: hostEl[] }</pre>
+  <ul>
+    <li><b>单实例成功</b>：标 <code>data-component-loaded</code>；执行 fill（§2）+ prefixIds（§6）+ 该组件 <code>enhance(root)</code>。</li>
+    <li><b>单实例失败</b>：host 内渲染"加载失败 + 重试"；<code>status='failed'</code>；<b>不执行</b>该实例 enhance。</li>
+  </ul>
+  <h3>业务初始化门控</h3>
+  <ul>
+    <li>page <code>init(root,res)</code> 接收 <code>res</code>；若某 host 标 <code>data-component-required="true"</code> 且 <code>status==='failed'</code>，<b>跳过该区域业务 init</b>并记警告，但页面其余部分照常初始化。</li>
+    <li>判定"必需"：列表页的 <code>list-panel</code>、含表单提交页的 <code>dialog-shell</code> 应为 <code>required</code>；纯装饰组件（如 page-header）失败不阻断。</li>
+  </ul>
+  <h3>重试只补该实例（首加载与重试同一流程）</h3>
+  <pre><span class="c">// 失败 UI 的重试按钮：仅调用 loadComponent —— 与首次加载完全相同的流程（fetch缓存/填充/前缀隔离/标 loaded）</span>
+Eam.loadComponent(hostEl).then(inst =&gt; {
+  <span class="k">if</span> (inst.status === <span class="s">'loaded'</span>)
+    host_dispatch(hostEl, <span class="s">'eam:component-retry'</span>, { host: hostEl }); <span class="c">// 页面监听该事件，仅补该实例的增强/业务绑定</span>
+});
+<span class="c">// 不重跑整页 bootstrap，不重渲染其他实例（实测：缺失片段修正 src 后 status=loaded）</span></pre>
+  <p class="ok">契约：失败可恢复、重试最小闭环、不污染其他实例；首加载与重试共用 <code>loadComponent</code>，职责单一（必修②）。</p>
+</div>
+
+<h2>6. 嵌套加载与 ID 引用</h2>
+<div class="card">
+  <h3>防错</h3>
+  <ul>
+    <li><b>循环引用</b>：<code>ancestorSrcs(host)</code> 收集 host DOM 祖先链上的 <code>data-component-src</code>；若自身 <code>src</code> 在其中则中止报错。<b>兄弟并发加载同一片段不算循环</b>（已用 jsdom 实测：同页两 list-panel 并发加载 list-panel.html 互不误报）。</li>
+    <li><b>重复请求</b>：<code>cache:Map&lt;src,Promise&gt;</code>；相同 src 只 fetch 一次，多个实例共享同一片段文本（各自克隆进自身 root）；<b>失败时 <code>cache.delete(src)</code></b> 使重试真正重新请求。</li>
+    <li><b>重复前缀</b>：仅当 <code>!root.dataset.prefixed</code> 时执行 <code>prefixIds</code>，置标记防二次前缀导致 <code>x-x-id</code>。</li>
+  </ul>
+  <h3>ID 引用同步</h3>
+  <p><code>prefixIds</code> 除改写 <code>id</code> 本身，还要同步以下属性中的引用（将 <code>#id</code> 改为 <code>#{prefix}-id</code>）：</p>
+  <ul>
+    <li><code>label[for]</code>、<code>aria-labelledby</code>、<code>aria-controls</code>（v3 已含）</li>
+    <li><code>aria-describedby</code>、<code>aria-errormessage</code>、<code>href="#…"</code>（页面内锚点 / 错误关联）</li>
+  </ul>
+  <h3>查询约定</h3>
+  <ul>
+    <li>推荐组件 API / 页面绑定用 <code>root.querySelector('[data-ref="..."]')</code> 定位节点，<b>不依赖 id</b>。</li>
+    <li><code>id</code> 仅保留给 <code>label[for]</code> 与 ARIA 关联等可访问性用途；业务查询优先 <code>data-ref</code>。</li>
+  </ul>
+</div>
+
+<h2>7. 表单与弹窗完整契约（完整保留取值与生命周期）</h2>
+<div class="card">
+  <h3>7.1 字段取值类型（<code>Eam.Form.collect(form, root)</code>）</h3>
+  <table>
+    <thead><tr><th>控件</th><th>收集值类型</th><th>规则</th></tr></thead>
+    <tbody>
+      <tr><td>text / search / email / url / tel / date</td><td><code>string</code></td><td>trim 后返回；空为 <code>''</code></td></tr>
+      <tr><td>number</td><td><code>number | ''</code></td><td>有效返回 <code>Number</code>，空返回 <code>''</code>（不强制 0）</td></tr>
+      <tr><td>textarea</td><td><code>string</code></td><td>trim</td></tr>
+      <tr><td>select（单选）</td><td><code>string</code></td><td>选中 value；未选为 <code>''</code></td></tr>
+      <tr><td>select[multiple]</td><td><code>string[]</code></td><td>所有选中项</td></tr>
+      <tr><td>checkbox（单）</td><td><code>boolean</code></td><td>checked</td></tr>
+      <tr><td>radio（同名组）</td><td><code>string</code></td><td>选中项 value；无选中为 <code>''</code></td></tr>
+      <tr><td>checkbox（同名组 <code>data-multi</code>）</td><td><code>string[]</code></td><td>所有 checked value</td></tr>
+      <tr><td>file（<code>type=file</code>）</td><td><code>File[]</code></td><td>文件对象数组（原型仅取元数据，不真正上传）</td></tr>
+      <tr><td>重复字段（<code>[data-repeat]</code> 容器）</td><td><code>object[]</code></td><td>每行收集其命名子字段，返回行对象数组</td></tr>
+      <tr><td>hidden（id / revision / version）</td><td><code>string</code></td><td><b>收集</b>（见 §9，元数据必须带回）</td></tr>
+    </tbody>
+  </table>
+  <h3>7.2 跳过与例外（文档校正 A：skip/disabled 优先，hidden 正常收集）</h3>
+  <ul>
+    <li><code>disabled</code> 字段：跳过（浏览器默认不提交）。<b>优先级最高</b>。</li>
+    <li>显式 <code>data-collect-skip</code>：跳过（页面声明"当前不适用"）。</li>
+    <li><code>[hidden]</code> 容器内字段：跳过（整块不适用；不适用区须显式禁用/跳过，不得静默误收集）。</li>
+    <li><code>type=hidden</code>（id/revision/version）：<b>收集</b>（必要时序/乐观锁元数据，提交需带回）。</li>
+    <li>只读 <code>readonly</code>：<b>收集</b>（值可见且应回传，仅禁止编辑）。</li>
+    <li>安全边界：版本/权限校验由<b>接口</b>负责，前端 collect 不据 hidden 值做权限判断（§9）。</li>
+  </ul>
+  <h3>7.3 校验（<code>Eam.Form.validate(form, root)</code>）</h3>
+  <ul>
+    <li>原生 <code>required / pattern / min / max / type</code> + 自定义 <code>data-validate</code>。</li>
+    <li>失败标 <code>is-invalid</code> + <code>aria-invalid="true"</code>，错误文案写入关联 <code>[aria-errormessage]</code> 或 <code>.field-error</code> 节点。</li>
+  </ul>
+  <h3>7.4 弹窗生命周期（<code>Eam.Dialog</code> · 含 submitGuard，统一归属）</h3>
+  <table>
+    <thead><tr><th>阶段</th><th>行为</th></tr></thead>
+    <tbody>
+      <tr><td>open</td><td><code>showModal()</code>；聚焦首个可聚焦元素或 <code>[data-autofocus]</code>；锁定 body 滚动（关闭时恢复）；<code>aria-labelledby</code> 已在 shell；有 <code>aria-describedby</code> 则关联</td></tr>
+      <tr><td>submit</td><td><b><code>submitGuard</code> 进入即同步 <code>e.preventDefault()</code></b>（必修④，拦截 <code>method="dialog"</code> 默认关闭）；busy 守卫防重复提交；校验/接口完成且<b>结果成功才 <code>dlg.close()</code></b>，失败保留已输入内容</td></tr>
+      <tr><td>失败</td><td><b>不自动关闭</b>；保留已输入内容；显示内联错误；允许修正后重提</td></tr>
+      <tr><td>成功</td><td>关闭弹窗；焦点返回 opener（打开者）</td></tr>
+      <tr><td>取消 / Esc</td><td>Esc/取消按钮经统一关闭保护处理，不提交；若表单 dirty 则显示HTML退出确认，且非 <code>data-confirm-exit="false"</code>，先确认放弃。<b>提交中（busy）取消/Esc 须明确</b>：异步未完成时不关闭或提示（页面按需处理，必修③）</td></tr>
+      <tr><td>版本冲突</td><td>提交携带 <code>revision</code>；接口返回冲突（409 模拟）时显示冲突错误、<b>不关闭</b>，支持重新拉取后重提</td></tr>
+      <tr><td>关闭（普通）</td><td><code>close</code> 后<b>不 dispose</b>，实例保留可再次打开（必修③）；新建弹窗须<b>显式</b> <code>Eam.Dialog.enhance(el)</code>（无自动扫描，见 §3）</td></tr>
+      <tr><td>销毁（仅移除/替换）</td><td>节点被移除或替换（SPA 切页）才调用 <code>Eam.dispose(root)</code>，清除 <code>data-component-loaded/prefixed</code> 标记，允许后续重新加载（含 root 自身，试点修复 2）</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>8. 命名空间稳定初始化（修正点 B · submitGuard 归属统一）</h2>
+<div class="card">
+  <p class="fix">v3 隐患：§4 <code>Object.assign</code> 示例漏写 <code>key / role / person / message</code>，会丢失既有接口；且小写 <code>Eam.card</code> 与新增卡片增强器重名，后者会被覆盖。</p>
+  <p class="ok">修正：先建稳定基础命名空间；状态模块<b>合并全部</b>导出成员；新组件统一<b>大写</b>命名空间，与旧小写 helper 不冲突；<code>submitGuard</code> 统一归属 <code>Eam.Dialog</code>（文档校正 C）。</p>
+  <pre><span class="c">// shared/loader.js 顶部（最先加载）</span>
+window.Eam <span class="k">||=</span> {};   <span class="c">// 稳定基础命名空间：loadComponents/loadComponent/fillRegions/prefixIds/bootstrap/registerInit/dispose/Dialog.submitGuard</span>
+
+<span class="c">// shared/state.js 改为扩展而非覆盖，合并全部现有导出：</span>
+(()=&gt;{
+  <span class="k">const</span> ns = window.Eam <span class="k">||</span> (window.Eam = {});
+  <span class="c">// ... 原 IIFE 体 ...</span>
+  Object.assign(ns, {
+    s, key, save, role, person, message,        <span class="c">// ← v3 漏写的 4 个，必须保留</span>
+    go, run, text, value, checked, row,
+    attach, confirm, can, field, card,          <span class="c">// 旧小写 helper（field/card 仅内部/兼容用）</span>
+    ensureToast, ensureConfirm                   <span class="c">// 单例浮层</span>
+  });  <span class="c">// 只合并，不重赋值 window.Eam</span>
+})();
+
+<span class="c">// shared/form.js + shared/components.js：新增大写命名空间，安全追加，不覆盖旧 field/card</span>
+window.Eam.Form   = { collect, validate };            <span class="c">// 表单（submitGuard 不在此）</span>
+window.Eam.Card   = { enhance };                      <span class="c">// 卡片增强（大写，区别于 Eam.card）</span>
+window.Eam.Dialog = { open, enhance, close, submitGuard }; <span class="c">// 弹窗（submitGuard 统一归 Dialog，§7.4）</span>
+window.Eam.Tabs   = { enhance };                      <span class="c">// 页签</span></pre>
+  <p class="ev">加载顺序：loader.js → state.js（扩展 Eam）→ form.js / components.js（追加 Form/Card/Dialog/Tabs）→ ui.js（保留 observer，首轮扫描改 init）→ 页面脚本 registerInit。旧 <code>Eam.field/Eam.card</code> 小写 helper 仍可用（被 <code>ensureConfirm</code> 引用），新行为组件用大写命名空间，互不覆盖。</p>
+</div>
+
+<h2>9. 隐藏字段收集规则（文档校正 A · 显式口径）</h2>
+<div class="card">
+  <p class="ok">区分"隐藏元数据"与"当前不适用字段"：<code>type=hidden</code> 承载 id/revision 等必要信息，<b>必须收集</b>；<code>disabled</code> 与显式 <code>data-collect-skip</code> 跳过（与 §7.2 一致）。不适用区须<b>显式</b>禁用或跳过，不得静默误收集。</p>
+  <table>
+    <thead><tr><th>字段状态</th><th>collect 行为</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td><code>type=hidden</code>（id/revision/version）</td><td><b>收集</b></td><td>必要时序/乐观锁元数据，提交需带回</td></tr>
+      <tr><td><code>readonly</code></td><td>收集</td><td>值应回传，仅禁止编辑</td></tr>
+      <tr><td><code>disabled</code></td><td>跳过（最高优先）</td><td>浏览器默认不提交</td></tr>
+      <tr><td>显式 <code>data-collect-skip</code></td><td>跳过</td><td>页面声明"当前不适用"</td></tr>
+      <tr><td><code>[hidden]</code> 容器内字段</td><td>跳过</td><td>整块非适用，须显式声明</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><b>安全边界：</b>版本（revision）与权限（能否编辑/提交）由<b>接口校验</b>；前端 collect 只取值，不据 hidden 值做权限判断。客户端伪造 hidden 字段不提升权限。</div>
+</div>
+
+<h2>10. 依赖加载顺序（含加载层）</h2>
+<div class="card">
+  <ol>
+    <li><code>shared/loader.js</code>（最先，建 <code>window.Eam</code> 基础 + 加载器，幂等 bootstrap）</li>
+    <li><code>shared/state.js</code>（扩展 window.Eam，合并全部 18 成员）</li>
+    <li><code>shared/form.js</code> + <code>shared/components.js</code>（挂 <code>Eam.Form/Card/Dialog/Tabs</code>，安全追加；submitGuard 在 Dialog）</li>
+    <li><code>shared/ui.js</code>（样式 observer 保留；首轮全页扫描改为 <code>Eam.ui.init</code>）</li>
+    <li>页面 <code>scripts/*.js</code>：仅 <code>Eam.registerInit(fn)</code>；组件加载后由唯一 <code>Eam.bootstrap()</code> 调用（§3）</li>
+  </ol>
+</div>
+
+<h2>11. 实施顺序（首批 = 设备台账 + 保养任务列表）</h2>
+<div class="flow">
+  <div class="step"><b>1</b> 基线与组件契约 + 加载层</div><span class="arrow">→</span>
+  <div class="step"><b>2</b> Form/Field + Dialog 行为</div><span class="arrow">→</span>
+  <div class="step"><b>3</b> Card/Section + 片段抽取</div><span class="arrow">→</span>
+  <div class="step"><b>4</b> Tabs 行为</div><span class="arrow">→</span>
+  <div class="step"><b>5</b> 逐页迁移 + 验收矩阵</div>
+</div>
+<div class="card">
+  <table>
+    <thead><tr><th>步</th><th>关键交付</th><th>首批验证（采纳建议）</th></tr></thead>
+    <tbody>
+      <tr><td>1 基线+加载层</td><td>loader.js、components/ 片段、命名空间修正、隐藏字段规则、§2–§6 契约</td><td><b>设备台账(equipment)</b> 与 <b>保养任务列表(maintenance-task-list)</b>：验证 page-header / list-panel / filter-bar / pagination 的共同引用与多实例隔离</td></tr>
+      <tr><td>2 Form/Field+Dialog <span class="tag t-ok">已完成</span></td><td>form.js（<code>Eam.Form.collect/validate</code>）、components.js（<code>Eam.Dialog/Card/Tabs</code>）；<code>submitGuard</code> 由 loader 迁入 <code>Eam.Dialog</code>（§8 归属统一）</td><td>设备台账参数编辑弹窗已接入 <code>submitGuard</code>（行为不变）；§7 契约 29/29 运行时验证（§17）</td></tr>
+      <tr><td>3 Card/Section <span class="tag t-ok">已完成</span></td><td>components/card.html 片段（head/body 骨架，与 list-panel 同构：宿主带 section.card 壳）+ <code>Eam.Card.enhance</code>（幂等、可折叠、<code>data-collapse-default="collapsed"</code>）</td><td>card 组件双实例隔离 + 可折叠 + 不破坏既有 section.card（archive-section 整页迁移留 Step 5）；§17 Step 3 验证 12/12</td></tr>
+      <tr><td>4 Tabs <span class="tag t-ok">已完成</span></td><td>components.js（<code>Eam.Tabs.enhance</code> 增强）+ ui.js tab 装饰防御性修正</td><td>device（静态页签）/ inspection 的 tab 行为契约已在 pilot 页双实例验证（多实例隔离 + panel 配对 + 键盘导航）；§19 Step 4 验证 17/17</td></tr>
+      <tr><td>5 迁移+验收 <span class="tag t-ok">已完成</span></td><td>inspection/device 在 <code>ui.js</code> 之前接入 <code>loader.js</code>+<code>form.js</code>+<code>components.js</code>；tab/panel/dialog/Card 行为不回归；登记接入矩阵 + 记录既有特性</td><td>逐页接入矩阵（§12.3.1 + §12.3.2 批量 26 页）+ 完成条件（§14）+ 运行时验证（§20 迁移回归 19/19 + 批量迁移冒烟 92/92）；全量合计 190/190（§16/§17/§18/§19/§20）</td></tr>
+    </tbody>
+  </table>
+  <div class="note">首批只验证"标题 / 列表容器 / 筛选 / 分页"四类稳定片段的共同引用；业务弹窗与设备档案的迁移在通过后再做（与建议一致）。</div>
+</div>
+
+<h2>12. 组件迁移接入矩阵（首批详列 + 其余覆盖计划）</h2>
+<div class="card">
+  <h3>12.1 首批：设备台账 <code>pages/equipment.html</code></h3>
+  <table>
+    <thead><tr><th>组件</th><th>当前（旧调用）</th><th>目标（新调用）</th><th>required</th><th>例外 / 备注</th></tr></thead>
+    <tbody>
+      <tr><td>页头</td><td><code>&lt;div class="title"&gt;…&lt;h1&gt;设备台账&lt;/h1&gt;</code> 内联</td><td><code>data-component-src="../components/page-header.html"</code> + <code>&lt;template data-fill="head"&gt;</code> 注入标题</td><td>否</td><td>失败不阻断列表</td></tr>
+      <tr><td>列表容器</td><td><code>&lt;section class="card ledger-results"&gt;</code> 内联（含 table）</td><td><code>data-component-src="../components/list-panel.html"</code>；业务表体经 <code>data-fill="body"</code></td><td><b>是</b></td><td>equipment.js 用自定义 render（非 EamList），先行登记，L1–L5 后续统一（§4）</td></tr>
+      <tr><td>筛选条</td><td>search + <code>open-advanced-filter</code> 按钮组（内联）</td><td><code>data-component-src="../components/filter-bar.html"</code> + <code>data-fill="body"</code></td><td>否</td><td>高级筛选弹层（advanced-filter-dialog）保留页面内，例外登记</td></tr>
+      <tr><td>分页</td><td><code>ledger-pagination</code> 内联（previous/next/count）</td><td><code>data-component-src="../components/pagination.html"</code> + <code>data-fill="body"</code></td><td><b>是</b></td><td>—</td></tr>
+      <tr><td>弹窗</td><td><code>equipment-dialog</code>（form 内联字段）</td><td>保留内联表单，外套 <code>dialog-shell.html</code>（<code>data-fill="footer"</code> 注入操作栏）</td><td><b>是</b></td><td>字段留页面模板（核心原则）；§7 提交/版本冲突契约验证点</td></tr>
+    </tbody>
+  </table>
+  <h3>12.2 首批：保养任务列表 <code>pages/maintenance-task-list.html</code></h3>
+  <table>
+    <thead><tr><th>组件</th><th>当前（旧调用）</th><th>目标（新调用）</th><th>required</th><th>例外 / 备注</th></tr></thead>
+    <tbody>
+      <tr><td>列表容器</td><td><code>&lt;section class="card" data-component="list-panel"&gt;</code>（仅标记，无加载）</td><td>改为 <code>data-component-src="../components/list-panel.html"</code>；业务表体 <code>data-fill="body"</code></td><td><b>是</b></td><td>原 <code>data-component</code> 标记改为 <code>data-component-src</code></td></tr>
+      <tr><td>筛选条</td><td><code>&lt;div data-component="filter-bar"&gt;</code>（无加载）</td><td><code>data-component-src="../components/filter-bar.html"</code></td><td>否</td><td>—</td></tr>
+      <tr><td>分页</td><td><code>mt-pagination</code> 内联</td><td><code>data-component-src="../components/pagination.html"</code></td><td><b>是</b></td><td>—</td></tr>
+      <tr><td>页头</td><td>内联 <code>.title</code></td><td><code>page-header.html</code> 组件化</td><td>否</td><td>与 equipment 共用验证</td></tr>
+      <tr><td>弹窗</td><td>列设置弹窗 <code>mt-column-dialog</code></td><td><b>保留页面内（首批暂不迁移例外登记）</b></td><td>—</td><td>文档校正 B：本页有列设置弹窗，不写"无业务弹窗"；后续批次再迁移</td></tr>
+    </tbody>
+  </table>
+  <h3>12.3 其余页面覆盖计划</h3>
+  <ul>
+    <li>逐页迁移时，对每个页面每个组件记录：<b>旧调用 / 新调用 / 是否 required / 允许例外 / 验收状态</b>，汇入本矩阵（扩展表）。</li>
+    <li>范围不只 24 个 field 页 / 23 个 dialog 页：需覆盖<b>全部 30 个业务页的页头、列表容器、筛选条、分页、页签</b>，以及设备档案的 21 个静态页签（device.html）。<b>截至任务 59，30/30 业务页已全部接入 loader（§12.3.1 试点 2 页 + §12.3.2 批量 26 页 + 首批 equipment/maintenance-task-list 见 §12.1/§12.2），矩阵登记完成。</b></li>
+    <li>一致性缺口登记：<code>equipment.js</code> / <code>problem-page.js</code> 等未用 <code>EamList</code>，统一化列为后续改造（§4 L1–L5），不阻塞首批。</li>
+  </ul>
+  <h3>12.3.1 Step 5 已迁移页（inspection / device · loader 前置 ui.js）</h3>
+  <table>
+    <thead><tr><th>页面</th><th>接入方式</th><th>保留的既有行为</th><th>required / 例外</th><th>验收</th></tr></thead>
+    <tbody>
+      <tr><td><code>pages/inspection.html</code></td><td>在 <code>ui.js</code> 之前引入 <code>loader.js</code>+<code>form.js</code>+<code>components.js</code>（<code>loader.js</code> 置于 <code>state.js</code> 之前，form/components 紧随其后）</td><td>单组 <code>.tabs</code>（例行/专项）由 Eam.Tabs 统一增强点击、键盘与ARIA；ui/interactions不再重复绑定</td><td>—</td><td>§20 迁移回归 19/19</td></tr>
+      <tr><td><code>pages/device.html</code></td><td>同上（7 个 <code>.tabs</code> 组 + 8 个 <code>dialog</code> + archive-section 原生保留）</td><td>通用Tabs负责基础交互；archive-page专用适配负责跨组互斥、URL和数据加载</td><td>业务专用身份/导航/图表结构保留；通用卡片和弹窗片段已迁移</td><td>§20 迁移回归 19/19</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><b>既有特性（非迁移引入，已登记）：</b>真实 <code>shared/interactions.js</code> 的 tab <code>onclick</code> 为 <code>document.querySelectorAll('[data-panel]')</code> 全局切换，<b>非按组作用域</b>。device.html 有 7 个 <code>.tabs</code> 组共用 <code>data-panel</code>，迁移前即不具备"组间隔离"——点击某组 tab 会隐藏文档内所有其它 <code>data-panel</code>。Step 5 仅接入 loader、行为与原页面一致，<b>未引入回归、也未顺带重构</b>。该全局 handler 的按组作用域化列为后续优化，<b>不在本计划 Step 5 范围</b>（遵循用户"没必要继续扩大计划"）。</div>
+
+  <h3>12.3.2 批量迁移（其余 26 页 · loader 前置 domain.js · 任务 56–59）</h3>
+  <p class="ev">通过 <code>../../tools/eam/组件测试/_insert-loader.mjs</code> 以「<code>shared/domain.js</code> 为锚点」在每页脚本块统一插入 <code>loader.js</code>+<code>form.js</code>+<code>components.js</code>（三行带 <code>?v=</code> 缓存戳、缩进对齐，<b>不重复、不污染未迁移页</b>，满足必修⑤）。4 个试点页（device / equipment / inspection / maintenance-task-list）此前已按各自锚点接入，与本次 26 页合计 <b>30/30 业务页全部接入 loader</b>。</p>
+  <table>
+    <thead><tr><th>页面（26 个）</th><th>通用接入方式</th><th>验收</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>pages/abnormal-events.html</code>、<code>pages/acceptance.html</code>、<code>pages/asset-files.html</code>、<code>pages/catalog.html</code>、<code>pages/check-list.html</code>、<code>pages/defect-list.html</code>、<code>pages/defect.html</code>、<code>pages/equipment-templates.html</code>、<code>pages/failure-events.html</code>、<code>pages/functional-locations.html</code>、<code>pages/hazards.html</code>、<code>pages/history.html</code>、<code>pages/inspection-list.html</code>、<code>pages/maintenance-acceptance.html</code>、<code>pages/maintenance-plan-list.html</code>、<code>pages/maintenance-plan.html</code>、<code>pages/maintenance-task.html</code>、<code>pages/order-list.html</code>、<code>pages/order.html</code>、<code>pages/plan-list.html</code>、<code>pages/plans.html</code>、<code>pages/platform.html</code>、<code>pages/route-list.html</code>、<code>pages/standard-list.html</code>、<code>pages/standards.html</code>、<code>pages/workbench.html</code></td>
+        <td>在 <code>shared/domain.js</code> 之前插入 <code>loader.js</code>+<code>form.js</code>+<code>components.js</code>；<code>loader</code> 建立 <code>window.Eam</code> 基础并自动 bootstrap，<code>form/components</code> 在其后追加 <code>Eam.Form/Dialog/Card/Tabs</code>；<b>未引入 loader 的页保持原立即执行逻辑、不受影响</b></td>
+        <td>批量迁移冒烟 <code>../../tools/eam/组件测试/_batch-migration-test.mjs</code>（92/92）：静态标记 30/30（loader+form+components 存在/唯一/顺序正确）+ 共享分页 <code>if(!host)return;</code> 守卫（修复 <code>setting 'className'</code>）+ 每页 jsdom 代理冒烟（仅模块兼容证据）；真实JSON页面回归另见v6闭环记录</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note"><b>共享层修复（与批量迁移同批）：</b><code>shared/page-table-components.js</code> 的 <code>pagination(host)</code> 首行补 <code>if(!host)return;</code> 守卫——当某分页容器（<code>*-pagination</code>）在 DOM 缺失时，原 <code>host.className='list-pagination'</code> 会抛 <code>Cannot set properties of null (setting 'className')</code>。已用 jsdom 前后对照复现坐实（缺失 pager 时从「精确抛 className 错误」变为「0 错误」），30 页全受益。</div>
+</div>
+
+<h2>13. 验收矩阵</h2>
+<div class="card">
+  <h3>静态（辅助，不要求内联归零）</h3>
+  <ul>
+    <li><code>node --check</code> 脚本 0 错；HTML 严格解析（带闭合校验）确认片段标签平衡。</li>
+    <li>grep 仅查误删 / 重复加类；<b>不要求内联字段 / dialog 归零</b>（业务内容留在页面是允许的）。</li>
+  </ul>
+  <h3>组件加载层专项</h3>
+  <table>
+    <thead><tr><th>场景</th><th>预期</th></tr></thead>
+    <tbody>
+      <tr><td>组件加载</td><td>data-component-src 片段成功插入普通 DOM，标 data-component-loaded</td></tr>
+      <tr><td>区域填充</td><td>页面 <code>[data-fill]</code> 克隆进组件 <code>[data-region]</code>；未知/重复区域报配置错（不静默）；模板保留可重试</td></tr>
+      <tr><td>加载失败</td><td>节点显示错误 + 重试入口，无空白容器</td></tr>
+      <tr><td>重试最小闭环</td><td>重试只重加载该实例并派发事件补增强/绑定，不重跑整页</td></tr>
+      <tr><td>必需组件失败</td><td>对应区域业务 init 跳过，其余页面正常</td></tr>
+      <tr><td>多实例隔离</td><td>同页两个 list-panel 实例 ID 前缀不同，label/aria/href 引用同步，互不串扰</td></tr>
+      <tr><td>根内查找</td><td>组件 API 在 root 内 querySelector，全局 getElementById 不跨实例命中</td></tr>
+      <tr><td>重复初始化</td><td>增强器二次调用不重复绑定；dispose 后监听清理（含 root 标记清除）</td></tr>
+      <tr><td>嵌套/循环</td><td>祖先链检测循环（兄弟并发不算）；同 src 只 fetch 一次；失败清缓存；前缀只加一次</td></tr>
+      <tr><td>弹窗复用</td><td>关闭不 dispose，实例保留；移除/替换节点才 dispose 并清标记</td></tr>
+    </tbody>
+  </table>
+  <h3>业务回归（主）</h3>
+  <table>
+    <thead><tr><th>场景</th><th>预期</th></tr></thead>
+    <tbody>
+      <tr><td>隐藏元数据</td><td>id/revision 随表单收集并提交；权限/版本冲突由接口校验拦截</td></tr>
+      <tr><td>字段取值类型</td><td>checkbox→bool、多选→array、number→Number、file→File[]、重复→object[]（§7.1）</td></tr>
+      <tr><td>权限</td><td>无权限 tab/字段 disabled 且不提交</td></tr>
+      <tr><td>重复提交</td><td>busy 守卫拦截二次点击</td></tr>
+      <tr><td>错误重试</td><td>失败保留输入、可重试</td></tr>
+      <tr><td>版本冲突</td><td>提交带 revision；冲突不关闭、可重拉重提</td></tr>
+      <tr><td>异步提交提前关闭</td><td>submitGuard 同步 preventDefault，成功才关闭（必修④）</td></tr>
+      <tr><td>取消 / Esc / 脏数据离开</td><td>dirty 表单离开提示未保存；提交中取消/Esc 明确（必修③）</td></tr>
+      <tr><td>分页/筛选保留</td><td>切 tab 返回后状态保留</td></tr>
+      <tr><td>移动端/低高度</td><td>card-body 内部滚动；dialog 滚动/焦点恢复</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>14. 组件迁移完成条件（硬性判据）</h2>
+<div class="card">
+  <p class="ok">一个组件完成迁移，必须<b>同时满足</b>以下 6 条；任一条不满足即视为未完成、不关闭该组件迁移：</p>
+  <ol>
+    <li><b>HTML 片段唯一来源</b>：结构只存在于 <code>components/*.html</code>；页面仅声明 <code>data-component-src</code> + <code>data-fill</code>，无重复内联结构。</li>
+    <li><b>行为唯一入口</b>：增强 / 绑定只经组件 API（<code>Eam.Card.enhance</code> 等），页面内无重复扫描或重复绑定逻辑。</li>
+    <li><b>多实例互不影响</b>：前缀隔离 + root 内查找，同页多实例状态/ID/ARIA 互不串扰。</li>
+    <li><b>加载失败可恢复</b>：错误 + 重试入口；重试只补该实例、不污染其他实例。</li>
+    <li><b>旧调用已移除或登记例外</b>：接入矩阵记录旧调用→新调用；允许例外须显式登记并说明原因。</li>
+    <li><b>相关业务回归通过</b>：§13 业务回归中该组件对应场景全绿。</li>
+  </ol>
+</div>
+
+<h2>15. 回滚保护（文件快照，非 stash pop）</h2>
+<div class="card">
+  <p class="fix">v3 隐患：<code>git stash pop</code> 不会自动丢弃本批改动并恢复到批次前状态，可能合并或冲突；<code>git restore</code> 还原 Git 版本会丢批次前未提交改动。</p>
+  <p class="ok">修正：每批开始前对清单文件做<b>保留相对路径的文件快照</b>；记录本批新增文件；回退从快照恢复，清理快照与新增文件。</p>
+  <pre><span class="c"># 批次开始前：相对仓库根保存本批前状态（不碰其他文件）</span>
+mkdir -p .batch/&lt;batch&gt;
+<span class="k">for</span> f <span class="k">in</span> &lt;清单文件相对路径&gt;; <span class="k">do</span>
+  mkdir -p .batch/&lt;batch&gt;/$(dirname <span class="s">"$f"</span>)
+  [ -f <span class="s">"$f"</span> ] &amp;&amp; cp <span class="s">"$f"</span> .batch/&lt;batch&gt;/<span class="s">"$f"</span>   <span class="c"># 已存在→快照</span>
+<span class="k">done</span>
+<span class="c"># 记录本批将新增的文件（批次前不存在），写入 .batch/&lt;batch&gt;/NEW.txt</span>
+printf <span class="s">'%s\n'</span> &lt;新增文件相对路径&gt; &gt; .batch/&lt;batch&gt;/NEW.txt
+
+<span class="c"># 回退：从快照恢复已存在文件；新增文件按 NEW.txt 删除</span>
+<span class="k">for</span> f <span class="k">in</span> $(find .batch/&lt;batch&gt; -type f ! -name NEW.txt); <span class="k">do</span>
+  orig=${f#.batch/&lt;batch&gt;/}; cp <span class="s">"$f"</span> <span class="s">"$orig"</span>; <span class="k">done</span>
+<span class="k">while</span> read -r nf; <span class="k">do</span> [ -f <span class="s">"$nf"</span> ] &amp;&amp; rm -f <span class="s">"$nf"</span>; <span class="k">done</span> &lt; .batch/&lt;batch&gt;/NEW.txt
+
+<span class="c"># 批次验收通过后清理快照</span>
+rm -rf .batch/&lt;batch&gt;</pre>
+  <ul>
+    <li><b>禁止</b> <code>git reset --hard</code> / 全量 <code>git stash</code> / <code>git checkout .</code> / <code>git stash pop</code>。</li>
+    <li>快照只含本批清单文件与新增文件清单，天然保护 memory、报告、其他未跟踪改动。</li>
+    <li>快照目录 <code>.batch/</code> 不纳入提交（加入 <code>.gitignore</code> 或仅本地）。</li>
+  </ul>
+</div>
+
+<h2>16. 首批试点验证（真实运行时 · 契约闭合判据）</h2>
+<div class="card">
+  <p class="ok">按用户建议"修正后直接试点，用实际实现验证四项契约是否闭合"。采用 <b>jsdom + 桩 fetch（从磁盘读片段）</b> 真实执行 <code>shared/loader.js</code>，覆盖用户要求的四个场景；<b>21/21 全部通过</b>。</p>
+  <h3>验证文件</h3>
+  <ul>
+    <li><code>../../tools/eam/组件测试/_pilot-test.mjs</code>：jsdom 运行时测试（桩 fetch 读 <code>components/*.html</code>，<code>window.__EamNoAuto=true</code> 后显式 <code>Eam.bootstrap()</code>）。</li>
+    <li><code>pages/_loader-pilot.html</code>：人工浏览器验证页（同页双实例 / 失败重试 / 弹窗二次打开 / 未迁移回归链接）。</li>
+  </ul>
+  <h3>四项契约验证结果</h3>
+  <table>
+    <thead><tr><th>用户要求场景</th><th>结果</th><th>关键断言</th></tr></thead>
+    <tbody>
+      <tr><td>① 加载失败重试</td><td class="ok">通过</td><td>broken-host 标 <code>failed</code> + 渲染重试按钮；修正 src 后 <code>loadComponent</code> 成功（<code>cache.delete</code> 使重试真重请求）</td></tr>
+      <tr><td>② 同页双实例</td><td class="ok">通过</td><td>两 list-panel 实例 ID 前缀 <code>a-/b-</code> 不同；实时 DOM 无原始 <code>reuse-btn</code> 冲突；<code>prefixed</code> 标记置位；<code>for/aria/href</code> 引用同步</td></tr>
+      <tr><td>③ 弹窗二次打开</td><td class="ok">通过</td><td>dialog-shell 组件加载完成；关闭（普通）实例保留不 dispose；二次打开同一实例仍在；仅 <code>Eam.dispose</code> 才清除标记</td></tr>
+      <tr><td>④ 未迁移页面回归</td><td class="ok">通过</td><td>无 <code>data-component-src</code> 的既有节点（<code>#legacy-widget</code> 等）未被加载层触碰，id 未被加前缀，子节点/内容保留</td></tr>
+    </tbody>
+  </table>
+  <h3>试点中暴露并修复的真实缺陷（已合入 loader / 组件）</h3>
+  <ul>
+    <li><b>bootstrap 幂等（试点修复 1）</b>：自动启动与显式调用并发会双重插入片段（id 重复/前缀失效）。修复为单一 Promise 合并，每页只启动一次（呼应必修②/⑤）。</li>
+    <li><b>dispose 清 root 标记（试点修复 2）</b>：原 <code>dispose(root)</code> 只清子孙，root 自身标记残留。修复为清除目标含 root 自身（必修③）。</li>
+    <li><b>dialog-shell 嵌套 region（试点修复 3）</b>：标题 h2 原嵌套在 <code>data-region="header"</code> 内，被 <code>replaceChildren</code> 清除。修复为标题与 header 同级。</li>
+  </ul>
+  <div class="note"><b>原始 id 冲突的 jsdom 怪癖说明：</b>jsdom 文档级 <code>querySelectorAll</code> 会把 <code>&lt;template&gt;</code> 惰性内容计入实时树，且 <code>closest('template')</code> 跨模板边界返回 null；真实浏览器中模板内容惰性与实时查询无关。测试用 <code>inertNodes()</code> 显式排除模板内容以对齐真实浏览器行为，结论不变：<b>实时 DOM 无原始 id 冲突</b>。</div>
+  <p class="ev">人工浏览器验证（<code>http://127.0.0.1:8765/pages/_loader-pilot.html</code>）建议作为上线前补充确认；运行时契约已由 jsdom 实测闭合，可判定契约成立、无需继续扩大计划。</p>
+</div>
+
+<h2>17. Step 2 验证（Form/Dialog · 真实运行时契约闭合）</h2>
+<div class="card">
+  <p class="ok">按 §11 Step 2 落地 <code>shared/form.js</code> 与 <code>shared/components.js</code>，并以 <b>jsdom + 桩 DOM</b> 真实执行验证 §7 契约，<b>29/29 全部通过</b>。加载层契约（§16）仍 21/21 不受影响。</p>
+  <h3>新增模块</h3>
+  <ul>
+    <li><code>shared/form.js</code>：<code>Eam.Form.collect(form,root)</code> 按 §7.1 类型化取值（text 自动 trim / number→Number（空返回 ''）/ textarea / select / select[multiple]→string[] / checkbox→boolean / radio→选中值 / file→File[] / hidden 与 readonly 收集 / [data-repeat]→object[]）；按 §7.2/§9 跳过规则（<code>disabled</code> 最高优先、<code>data-collect-skip</code>、<code>[hidden]</code> 容器跳过）。<code>Eam.Form.validate(form,root)</code> 原生 required/pattern/min/max/type + 自定义 <code>data-validate</code>，失败标 <code>is-invalid</code>+<code>aria-invalid="true"</code> 并写错误文案（§7.3）。</li>
+    <li><code>shared/components.js</code>：<code>Eam.Dialog</code>（<code>open/close/enhance/enhanceAll/submitGuard</code>，<code>submitGuard</code> 同步 <code>preventDefault</code> + busy 守卫 + 仅成功关闭，从 loader 迁入，§8）、<code>Eam.Card.enhance</code>（幂等，可折叠）、<code>Eam.Tabs.enhance</code>（幂等，遇 <code>ui.js</code> 已装饰的 tablist 避让不重复绑定）。</li>
+    <li>loader.js bootstrap 在 pageHeader 之后、页面 init 之前调用 <code>Eam.Card.enhance / Eam.Tabs.enhance / Eam.Dialog.enhanceAll</code>（均 <code>?.</code> 保护），原 <code>ns.Dialog</code> 块已移除。</li>
+  </ul>
+  <h3>§7 契约验证结果（29/29）</h3>
+  <table>
+    <thead><tr><th>契约点</th><th>结果</th><th>关键断言</th></tr></thead>
+    <tbody>
+      <tr><td>Form.collect 类型化</td><td class="ok">通过</td><td>text trim、number→Number（空''）、checkbox→bool、radio→值、select[multiple]→[]、hidden/readonly 收集、[data-repeat]→object[]</td></tr>
+      <tr><td>Form.collect 跳过规则</td><td class="ok">通过</td><td>disabled 最高优先跳过、data-collect-skip 跳过、[hidden] 容器跳过；hidden/revision 仍收集（§9）</td></tr>
+      <tr><td>Form.validate</td><td class="ok">通过</td><td>必填空→false、标 is-invalid+aria-invalid；填值后→true 并清除标记</td></tr>
+      <tr><td>submitGuard 同步 preventDefault</td><td class="ok">通过</td><td>提交事件默认行为被同步阻止（先于任何 await），拦截 method="dialog" 默认关闭（§7.4 必修④）</td></tr>
+      <tr><td>submitGuard 成功关闭</td><td class="ok">通过</td><td>onSubmit 返回 true → 关闭弹窗；失败/抛错保留输入不关闭</td></tr>
+      <tr><td>submitGuard busy 守卫</td><td class="ok">通过</td><td>同步双提交仅触发 1 次 onSubmit；异步期间再次提交被拦截</td></tr>
+      <tr><td>submitGuard 版本冲突</td><td class="ok">通过</td><td>onSubmit 抛错（409 模拟）→ 不关闭、错误写入 [role=alert]/[aria-errormessage]</td></tr>
+    </tbody>
+  </table>
+  <h3>试点页接入（真实页面验证）</h3>
+  <ul>
+    <li><code>pages/equipment.html</code> 与 <code>pages/maintenance-task-list.html</code>：在 loader.js 后引入 form.js + components.js。</li>
+    <li><code>scripts/equipment.js</code>：#equipment-form 原内联 onsubmit 改为 <code>Eam.Dialog.submitGuard</code>，保留 <code>eq-*</code> 取值与 <code>revision</code> 回传，行为不变（仅成功关闭、失败保留）。</li>
+    <li><code>pages/_loader-pilot.html</code>：新增 §5 提交守卫演示（dialog-shell 组件 + 表单 + <code>data-submit-guard</code>），供上线前人工浏览器确认。</li>
+  </ul>
+  <p class="ev">验证文件：<code>../../tools/eam/组件测试/_form-dialog-test.mjs</code>（§7 契约 29/29）；<code>../../tools/eam/组件测试/_pilot-test.mjs</code>（加载层 21/21，未改动）。</p>
+</div>
+
+<h2>18. Step 3 验证（Card/Section · 真实运行时契约闭合）</h2>
+<div class="card">
+  <p class="ok">按 §11 Step 3 落地 <code>components/card.html</code> 片段与 <code>Eam.Card.enhance</code> 增强，并以 <b>jsdom + 桩 DOM</b> 真实执行验证 Card 契约，<b>12/12 全部通过</b>；加载层（21/21）与 Form/Dialog（29/29）不受影响。</p>
+  <h3>新增 / 增强</h3>
+  <ul>
+    <li><code>components/card.html</code>：卡片内部骨架片段，仅提供 <code>.card-header[data-region="head"]</code> 与 <code>.card-body[data-region="body"]</code> 两个插槽容器；<b>不含 section.card 外壳</b>，由声明 <code>data-component="card"</code> 的 <code>section.card</code> 宿主承载（与 list-panel 同构，避免双重 section.card 嵌套——v4 评审「嵌套组件」坑）。借用全局 Bootstrap 的 <code>.card-header/.card-body</code> 样式。</li>
+    <li><code>Eam.Card.enhance</code>：head/body 用 class 定位（不被 prefixIds 前缀化影响）；声明 <code>data-collapsible</code> 时头部 <code>role=button</code>+<code>tabindex=0</code>+<code>aria-expanded</code>，点击/Enter/空格切换 body 显隐；新增 <code>data-collapse-default="collapsed"</code> 初始折叠；仅对 <code>data-collapsible</code> 增强，其余 <code>section.card</code>（list-panel、设备导航树等）只打 <code>cardEnhanced</code> 标记、不改动业务结构；整体幂等。</li>
+    <li><code>pages/_loader-pilot.html</code>：新增场景 6（card 组件双实例 c1 可折叠 / c2 普通 + 含 id/for 验证前缀隔离），bootstrap 自动加载 + <code>Eam.Card.enhance</code> 验证。</li>
+  </ul>
+  <h3>Card 契约验证结果（12/12）</h3>
+  <table>
+    <thead><tr><th>契约点</th><th>结果</th><th>关键断言</th></tr></thead>
+    <tbody>
+      <tr><td>组件加载</td><td class="ok">通过</td><td>data-component-loaded 标记就位（loader 完成标记为 loaded，失败为 failed）</td></tr>
+      <tr><td>双实例前缀隔离</td><td class="ok">通过</td><td>c1-note→c1-c1-note、c2-note→c2-c2-note；for 同步；实时 DOM 无原始 id 冲突</td></tr>
+      <tr><td>可折叠 role/aria</td><td class="ok">通过</td><td>data-collapsible 头部 role=button、aria-expanded=true；点击/Enter/空格切换 body.hidden 与 aria-expanded</td></tr>
+      <tr><td>默认折叠</td><td class="ok">通过</td><td>data-collapse-default="collapsed" 初始 body.hidden=true、aria-expanded=false</td></tr>
+      <tr><td>普通卡片不误增强</td><td class="ok">通过</td><td>无 data-collapsible 的 c2 头部无 role（不被折叠逻辑改动）</td></tr>
+      <tr><td>不破坏既有 section.card</td><td class="ok">通过</td><td>既有业务卡片（无 data-collapsible）无 role/aria 注入，内容保留</td></tr>
+      <tr><td>增强幂等</td><td class="ok">通过</td><td>重复 enhance 不重复绑定事件、标记不变</td></tr>
+    </tbody>
+  </table>
+  <p class="ev">验证文件：<code>../../tools/eam/组件测试/_card-test.mjs</code>（Card 契约 12/12）。</p>
+  <div class="note"><b>边界说明：</b>设备档案 <code>device.html</code> 的 <code>section.archive-section</code>（§11 提及）整页迁移属 Step 5 逐页迁移范畴；Step 3 已验证 Card/Section 组件化能力可承接该形态，迁移时直接用 <code>data-component="card"</code> + <code>data-fill</code> 声明即可。</div>
+</div>
+
+<h2>19. Step 4 验证（Tabs 行为 · 真实运行时契约闭合）</h2>
+<div class="card">
+  <p class="ok">按 §11 Step 4 落地 <code>Eam.Tabs.enhance</code>（前缀/多实例/panel 配对/roving tabindex/键盘导航/初始显隐）并对 <code>shared/ui.js</code> tab 装饰做防御性修正，以 <b>jsdom + 桩 DOM</b> 真实执行验证 Tabs 契约，<b>17/17 全部通过</b>；加载层（21/21）、Form/Dialog（29/29）、Card（12/12）不受影响。</p>
+  <h3>真实缺陷修复</h3>
+  <ul>
+    <li><b>Eam.Tabs.enhance 硬编码 id 冲突</b>：原实现 <code>b.id='tab-'+name</code> 会覆盖 <code>prefixIds</code> 已前缀化的 id，且同页多 tab 组用同名 tab 时撞 id；<code>select()</code> 依赖固定 <code>document.getElementById('panel-'+name)</code> 与前缀化后的 panel id 冲突。修复：tab/panel <b>尊重已有 id（不覆盖）</b>、改用<b>全局唯一计数器</b>生成 id（多实例隔离）；panel 查找支持 <code>group.parentElement</code> 容器与 <code>document</code> 全局两种；<code>aria-controls/aria-labelledby</code> 指向 panel/tab 实际 id（可能已前缀化）；<code>select()</code> 用增强时记录的 <code>_panelId</code> 实际 id，不再依赖固定命名。</li>
+    <li><b>ui.js tab 装饰防御性修正</b>：<code>shared/ui.js</code> 第 5 行立即装饰所有 <code>.tabs</code>（服务未迁移页 device/inspection），原 <code>b.id='tab-'+name</code> 改为唯一计数 id（防同页多实例撞 id）、<code>panel.id</code> 尊重已有 id；保持"仅更新 aria-selected"行为，不与各页业务脚本的 panel 切换重复。引入 loader 的页面若同时引入 ui.js，ui.js 先设 <code>role=tablist</code>，<code>Eam.Tabs.enhance</code> 检测后避让跳过，无重复绑定。</li>
+  </ul>
+  <h3>新增 / 增强</h3>
+  <ul>
+    <li><code>Eam.Tabs.enhance</code>：roving tabindex（active=0 / 其他=-1）；点击 / 左右箭头 / Home / End 切换 active 与对应 panel 显隐；初始显隐与 active 同步；整体幂等（<code>role=tablist</code> 或 <code>tabsEnhanced</code> 标记防重复）。</li>
+    <li><code>pages/_loader-pilot.html</code>：新增场景 7（两个隔离 <code>.tabbed</code> 容器 a/b，各自含同名 <code>data-tab</code> + 对应 <code>data-panel</code>），bootstrap 自动 <code>Eam.Tabs.enhance</code> 验证；pilot 不引入 ui.js，由 enhance 权威增强。</li>
+  </ul>
+  <h3>Tabs 契约验证结果（17/17）</h3>
+  <table>
+    <thead><tr><th>契约点</th><th>结果</th><th>关键断言</th></tr></thead>
+    <tbody>
+      <tr><td>多实例 id 唯一（a/b 组）</td><td class="ok">通过</td><td>两组各 tab id 唯一（全局计数器 <code>_tabSeq</code>）</td></tr>
+      <tr><td>跨组 id 无冲突</td><td class="ok">通过</td><td>a 组与 b 组 id 互不重复</td></tr>
+      <tr><td>panel 实际 id 配对</td><td class="ok">通过</td><td><code>aria-controls</code> 指向存在 panel、<code>role=tabpanel</code>、<code>aria-labelledby=tab.id</code></td></tr>
+      <tr><td>active 初始态</td><td class="ok">通过</td><td>class active 的 tab <code>aria-selected=true</code>，对应 panel 不 hidden</td></tr>
+      <tr><td>初始显隐同步</td><td class="ok">通过</td><td>非 active panel <code>hidden=true</code></td></tr>
+      <tr><td>roving tabindex</td><td class="ok">通过</td><td>active=0、其他=-1</td></tr>
+      <tr><td>点击切换 active</td><td class="ok">通过</td><td>点击 special → active 切换</td></tr>
+      <tr><td>点击切换 panel 显隐</td><td class="ok">通过</td><td>点击 special → 其 panel 显示、另一 panel 隐藏</td></tr>
+      <tr><td>键盘 右箭头</td><td class="ok">通过</td><td>focus routine + ArrowRight → special active</td></tr>
+      <tr><td>键盘 Home / End</td><td class="ok">通过</td><td>Home→首 tab、End→末 tab active</td></tr>
+      <tr><td>既有无 panel 的 .tabs 安全</td><td class="ok">通过</td><td>无对应 panel 也 role=tablist、不抛错</td></tr>
+      <tr><td>尊重前缀化已有 id</td><td class="ok">通过</td><td>组件化加载后 prefixIds 已加前缀的 tab/panel，enhance 不覆盖</td></tr>
+      <tr><td>前缀 panel 配对</td><td class="ok">通过</td><td>前缀 panel 经 <code>aria-controls</code> 正确关联</td></tr>
+      <tr><td>增强幂等</td><td class="ok">通过</td><td>重复 enhance 标记不变、不重复绑定</td></tr>
+    </tbody>
+  </table>
+  <p class="ev">验证文件：<code>../../tools/eam/组件测试/_tabs-test.mjs</code>（Tabs 契约 17/17）。</p>
+  <div class="note"><b>边界说明：</b>device/inspection 未引入 loader（整页迁移属 Step 5），其 tab 由 <code>ui.js</code> 装饰（已做唯一 id 修正）+ 各页业务脚本负责；引入 loader 的页面（pilot）由 <code>Eam.Tabs.enhance</code> 权威增强（ui.js 因 <code>role=tablist</code> 已设而避让）。两套入口通过 <code>role=tablist</code> 互斥，符合 §8「避免两套增强重复绑定」原则。</div>
+</div>
+
+<h2>20. Step 5 验证（逐页迁移 · tab/panel/dialog/Card 不回归）</h2>
+<div class="card">
+  <p class="ok">按 §11 Step 5 与 §12.3.1，将 <code>pages/inspection.html</code> 与 <code>pages/device.html</code> 在 <code>ui.js</code> 之前接入 <code>loader.js</code>+<code>form.js</code>+<code>components.js</code>，并以 <b>jsdom + 桩 DOM</b> 真实执行（加载顺序同真实页面：loader → form → components → page-table-components → ui → interactions，<code>window.__EamNoAuto=true</code> 后显式 <code>Eam.bootstrap(document)</code>）验证迁移<b>不回归</b>，<b>19/19 全部通过</b>。加载层（21/21）、Form/Dialog（29/29）、Card（12/12）、Tabs（17/17）不受影响；批量迁移冒烟新增 92/92（§12.3.2）；<b>全量合计 190/190 绿</b>。</p>
+  <h3>迁移回归契约验证结果（19/19）</h3>
+  <table>
+    <thead><tr><th>契约点</th><th>结果</th><th>关键断言</th></tr></thead>
+    <tbody>
+      <tr><td>ui.js 装饰生效</td><td class="ok">通过</td><td>所有 <code>.tabs</code> 组被设 <code>role=tablist</code>（引入 loader 后 ui.js 仍立即装饰未迁移页签）</td></tr>
+      <tr><td>Eam.Tabs 避让</td><td class="ok">通过</td><td><code>role=tablist</code> 已设 → <code>Eam.Tabs.enhance</code> 不重复绑定（<code>dataset.tabsEnhanced</code> 未置）、保留 ui.js 的装饰</td></tr>
+      <tr><td>切 panel（active + hidden 同步）</td><td class="ok">通过</td><td>点击专项 tab → 其 panel 显示、例行 panel 隐藏；<code>active</code> 类与 <code>aria-selected</code> 同步更新（interactions.js 切 panel 行为不变）</td></tr>
+      <tr><td>全局 handler 行为保留</td><td class="ok">通过</td><td>点击 device 组 state tab → state panel 显示、overview panel 隐藏、active/aria 同步；与迁移前全局 <code>[data-panel]</code> 切换行为一致（§12.3.1 既有特性，未引入回归）</td></tr>
+      <tr><td>多组 id 无冲突</td><td class="ok">通过</td><td>两 <code>.tabs</code> 组各 tab id 唯一、不撞</td></tr>
+      <tr><td>Card 增强非破坏</td><td class="ok">通过</td><td>可折叠卡 <code>cardEnhanced=true</code>、header <code>role=button</code>、点击切 body 显隐；非折叠 <code>section.card</code> panel 仅打标不打 <code>hidden</code></td></tr>
+      <tr><td>Dialog 增强非破坏</td><td class="ok">通过</td><td>弹窗 <code>dialogEnhanced=true</code>；无 <code>data-submit-guard</code> 不接入 submitGuard（仅打标）</td></tr>
+    </tbody>
+  </table>
+  <h3>迁移实施要点</h3>
+  <ul>
+    <li><code>pages/inspection.html</code> 与 <code>pages/device.html</code>：在 <code>ui.js</code> 之前插入 <code>loader.js</code> + <code>form.js</code> + <code>components.js</code>（带 <code>?v=</code> 缓存戳，与全站一致）；<code>loader.js</code> 置于 <code>state.js</code> 之前、form/components 紧随其后，<code>ui.js</code> / <code>interactions.js</code> 保持其后，既有 tab→panel 逻辑完全保留。bootstrap 在 <code>DOMContentLoaded</code> 后统一执行，届时 form/components 已定义，增强器正常接管。</li>
+    <li>加载顺序遵循 §8「两套入口互斥」：ui.js 先装饰 <code>.tabs</code>（仅更新 <code>aria-selected</code>），<code>Eam.Tabs.enhance</code> 检测 <code>role=tablist</code> 已设即避让，无重复绑定、无 panel 切换权争抢。</li>
+    <li>Card/Dialog 增强为幂等非破坏性，既有 <code>section.card</code> / <code>dialog</code> 结构原样保留。</li>
+  </ul>
+  <p class="ev">验证文件：<code>../../tools/eam/组件测试/_migration-test.mjs</code>（迁移回归 19/19）+ 全量 <code>_pilot-test.mjs</code>(21) + <code>_form-dialog-test.mjs</code>(29) + <code>_card-test.mjs</code>(12) + <code>_tabs-test.mjs</code>(17) + <code>_migration-test.mjs</code>(19) + <code>_batch-migration-test.mjs</code>(92) = 190/190。</p>
+</div>
+
+<section class="box"><h2>21. v6 审核闭环与实际交付</h2><p>2026-10-11：C01—C11修复与公共结构迁移已实施。30个页头、16个列表容器、17个筛选条、23个分页、29个通用卡片、41个业务弹窗引用外部HTML。页签入口统一，页面控制器等组件就绪后启动；业务JSON/API规则保持原有边界。</p><p>验收采用组件契约、实际JSON页面回归与浏览器关键交互分层证据；旧92项宽容代理冒烟不等同业务验收。逐页接入、接口契约、例外和最终复跑结果统一查阅 <a href="组件化闭环交付与验收记录.md">组件化闭环交付与验收记录</a>；<a href="组件化落地完成度审核.md">历史审核与关闭入口</a>。</p><p>测试与依赖已迁入tools/eam/组件测试；JS模拟接口尚不是正式后端验收。下方历史验证章节保留原契约样本，当前行为以共享代码和v6交付记录为准。</p></section><footer>EAM 前端组件化落地计划 · v6 · 审核闭环与适用公共结构迁移；最终证据见交付与验收记录</footer>
+
+</div>
+</body>
+</html>

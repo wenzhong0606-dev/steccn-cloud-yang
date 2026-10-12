@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>设备档案页 · 页签分析报告</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1f2329; --muted:#6b7280; --line:#e5e7eb;
+    --brand:#2563eb; --brand-soft:#eff4ff; --ok:#15803d; --ok-soft:#ecfdf3;
+    --warn:#b45309; --warn-soft:#fffbeb; --bad:#b91c1c; --bad-soft:#fef2f2;
+    --chip:#eef2f7; --radius:10px; --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px;}
+  header h1{font-size:24px;margin:0 0 6px}
+  header .sub{color:var(--muted);font-size:13px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}
+  .meta span{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:12px;color:#374151}
+  h2{font-size:19px;margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px}
+  p{margin:8px 0}
+  code{background:#f1f5f9;padding:1px 6px;border-radius:6px;font-size:12.5px;color:#0f172a}
+  .note{background:var(--brand-soft);border:1px solid #dbeafe;border-radius:var(--radius);padding:12px 14px;font-size:13.5px;color:#1e3a8a}
+  /* summary table */
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:13px;box-shadow:var(--shadow)}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f8fafc;color:#475569;font-weight:600;font-size:12.5px;position:sticky;top:0}
+  tr:last-child td{border-bottom:none}
+  td .grp{color:var(--muted);font-size:12px}
+  .tag{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .t-ok{background:var(--ok-soft);color:var(--ok)}
+  .t-warn{background:var(--warn-soft);color:var(--warn)}
+  .t-bad{background:var(--bad-soft);color:var(--bad)}
+  .t-info{background:var(--brand-soft);color:var(--brand)}
+  /* tab cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin:14px 0;scroll-margin-top:12px}
+  .card .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .card .head .name{font-size:17px;font-weight:700}
+  .card .head .label{color:var(--muted);font-size:13px}
+  .card .head .verdict{margin-left:auto}
+  .card .row{display:grid;grid-template-columns:84px 1fr;gap:8px 12px;margin-top:8px}
+  .card .row .k{color:var(--muted);font-size:12.5px;padding-top:2px}
+  .card .row .v{font-size:13.5px}
+  .card ul{margin:6px 0 0;padding-left:18px}
+  .card li{margin:3px 0}
+  .findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+  .finding{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;font-size:13.5px}
+  .finding.warn{border-left-color:var(--warn)}
+  .finding.bad{border-left-color:var(--bad)}
+  .finding h4{margin:0 0 6px;font-size:14px}
+  .finding p{margin:0;color:#374151;font-size:13px}
+  a.toc{color:var(--brand);text-decoration:none}
+  .tocbar{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+  .tocbar a{background:var(--chip);border-radius:8px;padding:3px 9px;font-size:12px}
+  footer{color:var(--muted);font-size:12px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  @media (max-width:640px){.card .row{grid-template-columns:1fr}.card .row .k{padding-top:0}.meta span{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>设备档案页（<code>device.html</code>）页签分析报告</h1>
+  <div class="sub">逐页签分析「内容 / 布局 / 交互 / 合理性」，并标注交互机制的跨页签共性风险。</div>
+  <div class="meta">
+    <span>页面文件：pages/device.html（814 行）</span>
+    <span>页签总数：21</span>
+    <span>导航分组：6</span>
+    <span>面板挂载：#archive-panels-mount（单容器）</span>
+    <span>主控制器：scripts/archive-page.js</span>
+    <span>分析日期：2026-10-12</span>
+  </div>
+</header>
+
+<div class="note">
+  <b>整体交互机制（关键事实，带源码证据）</b><br>
+  ① 页签按钮位于左侧导航 <code>&lt;nav class="archive-nav"&gt;</code> 的 6 个 <code>.tabs</code> 组内；面板全部挂在右侧 <code>#archive-panels-mount</code> 的 <code>[data-panel]</code> 上（单面板容器）。<br>
+  ② 真正控制器是 <code>archive-page.js</code>：第 73–74 行对<b>全文档</b> <code>[data-tab]</code> / <code>[data-tab-target]</code> 绑定点击 → <code>selectTab()</code>；第 51 行 <code>selectTab</code> 用 <code>document.querySelectorAll('[data-tab]')</code> 全局切换 <code>active</code>/<code>aria-selected</code>/<code>tabIndex</code>、按 <code>data-panel</code> 显隐面板、写 <code>?tab=</code> 深链并 <code>loadPanel()</code> 拉数据。<br>
+  ③ 另有两套冗余/冲突 handler：<code>shared/interactions.js:10-13</code>（全局 <code>document.querySelectorAll('[data-tab]')</code> onclick 切换 active+显隐）与 <code>shared/ui.js:5</code>（把每个 <code>.tabs</code> 装饰成独立 <code>role=tablist</code>，每组独立方向键导航）。三者叠加 = 即上一轮登记的「全局 tab handler 作用域化」债务（本页因 tab 值唯一、无嵌套组而<b>功能正常</b>，但架构脆弱）。
+</div>
+
+<h2>一、21 页签汇总表</h2>
+<table>
+  <thead><tr><th>分组</th><th>页签</th><th>内容类型</th><th>布局要素</th><th>摘要组件</th><th>跨页跳转</th><th>合理性</th></tr></thead>
+  <tbody>
+    <tr><td class="grp">设备总览</td><td><b>overview</b><br>概况</td><td>聚合指标 + 基础信息</td><td>KPI 卡 ×3 + 3 个 dl 区块</td><td>—</td><td>defect-list / 切到 maintenance / 切到 documents</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">设备总览</td><td><b>state</b><br>状态与许可</td><td>状态卡 + 使用限制列表</td><td>状态卡网格 + 操作区</td><td>—</td><td>变更生命周期（弹窗）</td><td><span class="tag t-warn">⚠ 限制区渲染机制例外</span></td></tr>
+    <tr><td class="grp">技术与结构</td><td><b>parameters</b><br>技术参数</td><td>校验摘要 + 参数记录</td><td>details 摘要 + 记录表</td><td>✓ 参数校验摘要</td><td>equipment-templates</td><td><span class="tag t-ok">✓ 最完整</span></td></tr>
+    <tr><td class="grp">技术与结构</td><td><b>structure</b><br>设备结构</td><td>组成树 + 结构记录</td><td>details 摘要 + 记录表</td><td>✓ 设备组成树</td><td>equipment</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">技术与结构</td><td><b>installation</b><br>位置与安装</td><td>安装记录列表</td><td>仅 sectionhead + 记录表</td><td>—</td><td>functional-locations</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">维护与可靠性</td><td><b>work</b><br>点检</td><td>点检记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>inspection-list</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">维护与可靠性</td><td><b>maintenance</b><br>保养</td><td>保养记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>计划/任务/验收 3 入口</td><td><span class="tag t-ok">✓ 导流充分</span></td></tr>
+    <tr><td class="grp">维护与可靠性</td><td><b>failure</b><br>故障</td><td>故障记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>failure-events</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">维护与可靠性</td><td><b>repair</b><br>维修</td><td>维修记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>order-list</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">备件与运行</td><td><b>bom</b><br>设备BOM</td><td>BOM 记录列表</td><td>sectionhead（空 actions）+ 记录表</td><td>—</td><td>—</td><td><span class="tag t-warn">⚠ 偏薄</span></td></tr>
+    <tr><td class="grp">备件与运行</td><td><b>replacement</b><br>更换与寿命</td><td>寿命 KPI + 记录列表</td><td>寿命指标 + 记录表</td><td>—</td><td>—</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">备件与运行</td><td><b>meters</b><br>测点与计量器</td><td>测点记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>—</td><td><span class="tag t-warn">⚠ 偏薄</span></td></tr>
+    <tr><td class="grp">备件与运行</td><td><b>trend</b><br>运行监测</td><td>测点趋势 + 记录列表</td><td>details 摘要 + 记录表</td><td>✓ 测点趋势</td><td>—</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">合规与资产</td><td><b>risk</b><br>安全合规</td><td>合规记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>—</td><td><span class="tag t-warn">⚠ 偏薄</span></td></tr>
+    <tr><td class="grp">合规与资产</td><td><b>cost</b><br>资产成本</td><td>成本记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>—</td><td><span class="tag t-warn">⚠ 偏薄</span></td></tr>
+    <tr><td class="grp">资料与履历</td><td><b>media</b><br>图片与3D</td><td>图片画廊 + 3D 占位</td><td>画廊 + 上传 + CSS 3D</td><td>—</td><td>上传（EamOpenAssets）</td><td><span class="tag t-warn">⚠ 3D 为占位</span></td></tr>
+    <tr><td class="grp">资料与履历</td><td><b>documents</b><br>文档资料</td><td>受控资料列表</td><td>列表 + 上传 + 跨链</td><td>—</td><td>standards</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">资料与履历</td><td><b>history</b><br>生命周期</td><td>事件履历 + 记录列表</td><td>details 摘要 + 记录表</td><td>✓ 生命周期事件履历</td><td>—</td><td><span class="tag t-ok">✓ 合理</span></td></tr>
+    <tr><td class="grp">资料与履历</td><td><b>related</b><br>关联业务</td><td>关联记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>—</td><td><span class="tag t-warn">⚠ 偏薄</span></td></tr>
+    <tr><td class="grp">资料与履历</td><td><b>audit</b><br>变更审计</td><td>审计记录列表</td><td>sectionhead + 记录表</td><td>—</td><td>—</td><td><span class="tag t-warn">⚠ 偏薄</span></td></tr>
+    <tr><td class="grp">资料与履历</td><td><b>completeness</b><br>档案完整性</td><td>完整性记录 + 补录</td><td>记录表 + 补录动作</td><td>—</td><td>补录/查看参数/配置来源</td><td><span class="tag t-ok">✓ 含闭环</span></td></tr>
+  </tbody>
+</table>
+
+<h2>二、逐页签分析</h2>
+<div class="tocbar">
+  <a class="toc" href="#overview">overview</a><a class="toc" href="#state">state</a>
+  <a class="toc" href="#parameters">parameters</a><a class="toc" href="#structure">structure</a>
+  <a class="toc" href="#installation">installation</a><a class="toc" href="#work">work</a>
+  <a class="toc" href="#maintenance">maintenance</a><a class="toc" href="#failure">failure</a>
+  <a class="toc" href="#repair">repair</a><a class="toc" href="#bom">bom</a>
+  <a class="toc" href="#replacement">replacement</a><a class="toc" href="#meters">meters</a>
+  <a class="toc" href="#trend">trend</a><a class="toc" href="#risk">risk</a>
+  <a class="toc" href="#cost">cost</a><a class="toc" href="#media">media</a>
+  <a class="toc" href="#documents">documents</a><a class="toc" href="#history">history</a>
+  <a class="toc" href="#related">related</a><a class="toc" href="#audit">audit</a>
+  <a class="toc" href="#completeness">completeness</a>
+</div>
+
+<!-- ============ 设备总览 ============ -->
+<div class="card" id="overview">
+  <div class="head"><span class="name">overview</span><span class="label">概况 · 设备总览组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">3 个 KPI（当前未结事项 / 维护策略与记录 / 档案资料）+ 三段基础信息 <code>dl</code>：设备基本信息、组织与位置、采购与投运。数据由 <code>load()</code> 经 <code>facts()</code> 填充。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v"><code>.archive-kpis</code> 指标网格 + 3 个 <code>.archive-section</code>（<code>&lt;h3&gt;</code> + <code>.archive-facts</code> 定义列表）。结构清晰、阅读顺序合理。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v"><ul>
+    <li>页签切换：导航点击 → <code>selectTab</code>（全局）。</li>
+    <li>「查看关联事项」<code>data-page="defect-list"</code> → 跳转到缺陷列表页（跨页）。</li>
+    <li>「查看保养 / 查看资料」<code>data-tab-target</code> → 在<b>本页</b>切换到 maintenance / documents 页签。</li>
+  </ul></div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 概览页聚合关键指标 + 基础属性，导流到位。<br>⚠ 同一面板内混用两种跳转语义（<code>data-page</code> 跨页 vs <code>data-tab-target</code> 切页签），用户需自行区分「离开本页」与「切换本页视图」。建议统一为图标或文案提示。</div></div>
+</div>
+
+<div class="card" id="state">
+  <div class="head"><span class="name">state</span><span class="label">状态与许可 · 设备总览组</span><span class="verdict"><span class="tag t-warn">⚠ 渲染机制例外</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">顶部 <code>#archive-state-cards</code> 状态卡网格（各状态来源/更新时间）；下方「状态操作与使用限制」区：变更生命周期按钮 + <code>#archive-restrictions</code> 使用限制记录列表。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">状态卡网格 + sectionhead（标题 + 变更生命周期按钮）+ 限制列表容器。与其他「记录页签」结构不同，无统一的 <code>data-record-domain</code> 占位。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v"><ul>
+    <li>「变更生命周期」<code>#archive-life-open</code> → 弹窗 <code>archive-life-dialog</code> 提交 <code>POST domains/lifecycle</code>。</li>
+    <li>限制列表由 <code>load()</code> 内单独 <code>api('domains/restrictions')</code> + <code>renderRows(...,'restrictions')</code> 渲染（第 65 行），记录可「详情 / 解除限制」。</li>
+  </ul></div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 状态与许可集中呈现，且限制可在线解除，闭环完整。<br>⚠ 「使用限制」是独立 domain 却<b>内嵌在 state 面板</b>而非独立页签，渲染走单独 <code>api()</code> 调用而非统一的 <code>loadPanel()</code> 机制，与其它 16 个记录页签的填充路径不一致，增加维护成本。建议保持现状（聚合合理）但抽成共享渲染助手以消除双路径。</div></div>
+</div>
+
+<!-- ============ 技术与结构 ============ -->
+<div class="card" id="parameters">
+  <div class="head"><span class="name">parameters</span><span class="label">技术参数 · 技术与结构组</span><span class="verdict"><span class="tag t-ok">✓ 最完整</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">① <code>data-business-view="parameters"</code> 参数校验摘要（<code>archive-business-view.js</code> 渲染）；② 技术参数记录表（<code>data-record-domain="parameters"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">details 摘要（默认展开）+ sectionhead（标题 + 「分类与参数模板」跨链）+ 记录表。信息密度高且分层。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v"><ul>
+    <li>记录「详情」→ <code>openRecord</code> 弹窗；<code>domain==='parameters'</code> 时显示「编辑」→ <code>archive-edit-dialog</code> 按模板规则 <code>PATCH domains/parameters</code>（带范围/精度校验）。</li>
+    <li>「分类与参数模板」<code>data-page="equipment-templates"</code> 跨页。</li>
+  </ul></div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 唯一支持在线编辑的页签，含校验摘要，是信息架构最完整的范例。<br>⚠ 编辑走独立 <code>archive-edit-dialog</code>（非通用 record dialog），参数模板规则仅在演示层；若其它页签也需编辑，建议抽象为通用编辑组件。</div></div>
+</div>
+
+<div class="card" id="structure">
+  <div class="head"><span class="name">structure</span><span class="label">设备结构 · 技术与结构组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">① 设备组成树摘要（<code>data-business-view="structure"</code>）；② 设备结构记录表。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">details 摘要 + sectionhead（「维护结构」跨链）+ 记录表。与 parameters 同构。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情弹窗；「维护结构」<code>data-page="equipment"</code> 跨页到设备结构管理。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 组成树摘要 + 记录分离清晰，跨链合理。<br>⚠ 组成树摘要内容依赖 <code>archive-business-view</code>，若该 domain 无数据则 details 为空，需确认空态提示。</div></div>
+</div>
+
+<div class="card" id="installation">
+  <div class="head"><span class="name">installation</span><span class="label">位置与安装 · 技术与结构组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">位置与安装记录表（<code>data-record-domain="installation"</code>），无额外摘要。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（「功能位置管理」跨链）+ 记录表。结构最精简。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情弹窗；「功能位置管理」<code>data-page="functional-locations"</code> 跨页。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 纯记录型页签，结构与其他域一致，合理。<br>⚠ 相比 parameters/structure 缺摘要组件，信息密度偏低（但安装记录本身属性较少，可接受）。</div></div>
+</div>
+
+<!-- ============ 维护与可靠性 ============ -->
+<div class="card" id="work">
+  <div class="head"><span class="name">work</span><span class="label">点检 · 维护与可靠性组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">点检记录表（<code>data-record-domain="work"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（「点检任务」跨链）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；「点检任务」<code>data-page="inspection-list"</code> 跨页。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 档案视图（只读记录）+ 运营入口分离，合理。</div></div>
+</div>
+
+<div class="card" id="maintenance">
+  <div class="head"><span class="name">maintenance</span><span class="label">保养 · 维护与可靠性组</span><span class="verdict"><span class="tag t-ok">✓ 导流充分</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">保养记录表（<code>data-record-domain="maintenance"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead 含 <b>3 个</b>运营入口按钮（管理保养计划 / 保养任务 / 保养验收）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；3 个 <code>data-page</code> 跨页到计划/任务/验收。注意：overview 的「查看保养」用 <code>data-tab-target="maintenance"</code> 切回本页签，二者呼应。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 保养是核心业务，导流最充分，合理。多入口按钮建议分组或图标化以免 sectionhead 拥挤。</div></div>
+</div>
+
+<div class="card" id="failure">
+  <div class="head"><span class="name">failure</span><span class="label">故障 · 维护与可靠性组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">故障记录表（<code>data-record-domain="failure"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（「故障事件中心」跨链）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；「故障事件中心」<code>data-page="failure-events"</code> 跨页。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 结构一致，合理。</div></div>
+</div>
+
+<div class="card" id="repair">
+  <div class="head"><span class="name">repair</span><span class="label">维修 · 维护与可靠性组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">维修记录表（<code>data-record-domain="repair"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（「维修工单」跨链）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；「维修工单」<code>data-page="order-list"</code> 跨页。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 合理。与 failure 对称（故障→维修），信息架构整齐。</div></div>
+</div>
+
+<!-- ============ 备件与运行 ============ -->
+<div class="card" id="bom">
+  <div class="head"><span class="name">bom</span><span class="label">设备BOM · 备件与运行组</span><span class="verdict"><span class="tag t-warn">⚠ 偏薄</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">BOM 记录表（<code>data-record-domain="bom"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead 的 <code>.actions</code> 为<b>空</b> + 记录表。无任何摘要或跨链。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">仅记录详情弹窗。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 记录型页签本身合格。<br>⚠ 与其它同组页签（replacement 有寿命 KPI、trend 有趋势摘要）相比信息偏薄；BOM 通常关联「备件库存/更换记录」，缺跨链到备件或 replacement 的入口，用户体验断点。</div></div>
+</div>
+
+<div class="card" id="replacement">
+  <div class="head"><span class="name">replacement</span><span class="label">更换与寿命 · 备件与运行组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">寿命 KPI（在装实例/累计使用/剩余寿命，来自 <code>renderRows</code> 的 <code>display.lifetime</code>）+ 更换与寿命记录表。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 寿命指标块 + 记录表。比纯记录页签多一层指标。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 寿命指标 + 更换记录结合，对可靠性管理有价值，合理。</div></div>
+</div>
+
+<div class="card" id="meters">
+  <div class="head"><span class="name">meters</span><span class="label">测点与计量器 · 备件与运行组</span><span class="verdict"><span class="tag t-warn">⚠ 偏薄</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">测点/计量器记录表（<code>data-record-domain="meters"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 合格。<br>⚠ 计量器通常关联「检定/校准周期」，与 trend（运行监测）主题相邻却无互相跳转，建议补充到 trend 或 standards 的入口。</div></div>
+</div>
+
+<div class="card" id="trend">
+  <div class="head"><span class="name">trend</span><span class="label">运行监测 · 备件与运行组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">① 测点趋势摘要（<code>data-business-view="trend"</code>）；② 运行监测记录表。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">details 摘要 + sectionhead（空 actions）+ 记录表。与 parameters/structure 同构。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 趋势摘要提供监测概览，合理。<br>⚠ 摘要为图表类，需确认 <code>archive-business-view</code> 对无测点数据时的空态。</div></div>
+</div>
+
+<!-- ============ 合规与资产 ============ -->
+<div class="card" id="risk">
+  <div class="head"><span class="name">risk</span><span class="label">安全合规 · 合规与资产组</span><span class="verdict"><span class="tag t-warn">⚠ 偏薄</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">安全合规记录表（<code>data-record-domain="risk"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 合格。<br>⚠ 合规记录常需关联「标准/证照」，缺到 standards 或 documents 的入口，建议补充。</div></div>
+</div>
+
+<div class="card" id="cost">
+  <div class="head"><span class="name">cost</span><span class="label">资产成本 · 合规与资产组</span><span class="verdict"><span class="tag t-warn">⚠ 偏薄</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">资产成本记录表（<code>data-record-domain="cost"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 合格。<br>⚠ 成本与采购（overview 的采购与投运）、BOM 更换费用本可联动，目前各自孤立，分析价值未释放。</div></div>
+</div>
+
+<!-- ============ 资料与履历 ============ -->
+<div class="card" id="media">
+  <div class="head"><span class="name">media</span><span class="label">图片与3D · 资料与履历组</span><span class="verdict"><span class="tag t-warn">⚠ 3D 为占位</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v"><code>#device-gallery</code> 图片画廊 + 上传按钮（图片/3D 模型）+ <code>&lt;details&gt;</code> 内 CSS 3D 概念示意（旋转角度滑杆、定位轴承部位）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">标题 + 上传按钮 + 画廊 + 画廊计数 + 3D details（模型占位 + 滑杆 + 按钮 + 说明）。<b>与其它记录型页签结构差异最大</b>（非 <code>data-record-domain</code>）。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v"><ul>
+    <li>上传图片/模型 → <code>EamOpenAssets(cat)</code>（第 66 行绑定，受 <code>canEdit</code> 控制）。</li>
+    <li><code>#model-angle</code> 滑杆 → 实时旋转 CSS 模型；<code>#model-bearing</code> → 显示轴承部位文案。</li>
+    <li>画廊由 <code>window.EamArchiveGallery?.refresh()</code> 填充（第 68 行）。</li>
+  </ul></div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 图片上传/画廊交互完整，受权限控制。<br>⚠ 3D 为纯 CSS 占位（<code>model-info</code> 自述「尚未接入 GLB/glTF 渲染」），仅概念示意；若产品要求 3D 查看，此为未实现项。画廊空态（<code>#gallery-count</code>）需确认文案。</div></div>
+</div>
+
+<div class="card" id="documents">
+  <div class="head"><span class="name">documents</span><span class="label">文档资料 · 资料与履历组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v"><code>#device-documents</code> 受控技术资料列表 + 「上传技术文档」按钮 + 「适用点检标准」跨链。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">列表 + 标题 + 上传按钮 + 跨链。注意：列表容器在 sectionhead 之前（与记录型页签顺序略不同）。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">上传文档（<code>EamOpenAssets('document')</code>）；「适用点检标准」<code>data-page="standards"</code> 跨页。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 受控资料 + 上传 + 标准关联，闭环合理。</div></div>
+</div>
+
+<div class="card" id="history">
+  <div class="head"><span class="name">history</span><span class="label">生命周期 · 资料与履历组</span><span class="verdict"><span class="tag t-ok">✓ 合理</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">① 生命周期事件履历摘要（<code>data-business-view="history"</code>）；② 生命周期记录表。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">details 摘要 + sectionhead + 记录表。与 parameters/structure/trend 同构。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 履历摘要 + 明细，是设备「时间线」视图，合理且信息价值高。</div></div>
+</div>
+
+<div class="card" id="related">
+  <div class="head"><span class="name">related</span><span class="label">关联业务 · 资料与履历组</span><span class="verdict"><span class="tag t-warn">⚠ 偏薄</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">关联业务记录表（<code>data-record-domain="related"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 合格。<br>⚠ 「关联业务」本应汇总各域（保养/故障/维修/文档）的横向索引，目前仅是普通记录列表，未体现「聚合关联」价值，与命名预期略有落差。</div></div>
+</div>
+
+<div class="card" id="audit">
+  <div class="head"><span class="name">audit</span><span class="label">变更审计 · 资料与履历组</span><span class="verdict"><span class="tag t-warn">⚠ 偏薄</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">变更审计记录表（<code>data-record-domain="audit"</code>）。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 记录表。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">记录详情；无跨链。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 合格。<br>⚠ 审计记录通常需「对比变更前/后」「追溯到具体操作页签」，目前仅列表+详情，建议补充变更对象跳转。</div></div>
+</div>
+
+<div class="card" id="completeness">
+  <div class="head"><span class="name">completeness</span><span class="label">档案完整性 · 资料与履历组</span><span class="verdict"><span class="tag t-ok">✓ 含闭环</span></span></div>
+  <div class="row"><div class="k">内容</div><div class="v">档案完整性记录表（<code>data-record-domain="completeness"</code>），行内可触发补录。</div></div>
+  <div class="row"><div class="k">布局</div><div class="v">sectionhead（空 actions）+ 记录表。行操作较特殊（见交互）。</div></div>
+  <div class="row"><div class="k">交互</div><div class="v">行操作按记录类型分三种：<code>canRepair</code>→「补录」弹窗 <code>archive-repair-dialog</code>（<code>PATCH domains/base</code>）；<code>repairTab</code>→「查看参数」切到对应页签；<code>target</code>→「配置来源」跨页。形成「发现缺失→补录→重算完整性」闭环。</div></div>
+  <div class="row"><div class="k">合理性</div><div class="v">✓ 唯一带「反向补录」动作的页签，把档案质量治理落进界面，闭环设计最佳实践。<br>⚠ 补录/查看/配置三种动作语义不同但同为行按钮，建议用图标或分组区分。</div></div>
+</div>
+
+<h2>三、跨页签共性发现与优化建议</h2>
+<div class="findings">
+  <div class="finding bad">
+    <h4>① 全局 tab handler 三方叠加（已登记「作用域化」待办）</h4>
+    <p><code>archive-page.js:73</code>（全文档 <code>[data-tab]</code>）、<code>interactions.js:10-13</code>（全局）、<code>ui.js:5</code>（按 6 个 <code>.tabs</code> 组装饰为独立 tablist）三套 handler 并存。本页因 tab 值唯一、面板无嵌套组而<b>功能正常</b>，但 ui.js 把导航组当成独立 <code>role=tablist</code> 且方向键不跨组，ARIA 模型与「单面板」事实不符；任一页出现第二组同名/嵌套 tab 即串扰。建议：以 <code>archive-page.js</code> 的 <code>selectTab</code> 为唯一真相源，删除 interactions.js 的全局绑定，并让 ui.js 对「nav 型 tab」跳过装饰或改为单 tablist。</p>
+  </div>
+  <div class="finding">
+    <h4>② 记录型页签高度同质（一致性好）</h4>
+    <p>16 个页签共用 <code>loadPanel()</code>→<code>renderRows()</code>：搜索 + 状态/来源筛选 + 分页 + 详情弹窗，UX 高度一致，维护成本低。这是本页最稳健的设计。</p>
+  </div>
+  <div class="finding">
+    <h4>③ 摘要组件分布不均</h4>
+    <p>仅 parameters / structure / trend / history 4 个页签有 <code>data-business-view</code> 摘要；bom / meters / risk / cost / related / audit / installation / work / failure / repair / media / documents / completeness 共 13 个无摘要。建议评估是否为高价值页签（如 risk 合规、cost 成本）补摘要卡。</p>
+  </div>
+  <div class="finding warn">
+    <h4>④ 跨链缺失造成信息断点</h4>
+    <p>bom / meters / risk / cost / related / audit 6 个页签 <code>.actions</code> 为空，与其它域本可关联（BOM↔更换费用、计量器↔趋势、合规↔标准、审计↔各操作页签）却无入口。建议在相关页签补 1–2 个跨链，形成横向导航网。</p>
+  </div>
+  <div class="finding warn">
+    <h4>⑤ state 面板的 restrictions 渲染路径例外</h4>
+    <p>「使用限制」是独立 domain，却内嵌 state 面板并走单独 <code>api('domains/restrictions')</code>（第 65 行），未纳入统一 <code>loadPanel()</code>。建议抽为共享渲染助手，消除双路径。</p>
+  </div>
+  <div class="finding warn">
+    <h4>⑥ media 的 3D 为占位、且非记录型</h4>
+    <p>3D 仅 CSS 概念示意（未接 GLB/glTF）；media 面板结构与其余记录型页签差异大。若产品要求真 3D，需单独排期；否则建议明确标注「示意」以免误导。</p>
+  </div>
+  <div class="finding">
+    <h4>⑦ 深链与权限控制到位</h4>
+    <p><code>selectTab</code> 写 <code>?tab=</code> 并 <code>history.replaceState</code>（第 51、87 行），支持深链与刷新定位；上传/编辑受 <code>canEdit</code>/<code>canLifecycle</code>/<code>canRelease</code> 控制。这两点是本页的亮点。</p>
+  </div>
+</div>
+
+<footer>
+  分析方法：读取 <code>pages/device.html</code>（全部 21 个 <code>data-panel</code> 与 6 个导航 <code>.tabs</code> 组）、<code>scripts/archive-page.js</code>（控制器与 <code>selectTab</code>/<code>loadPanel</code>/<code>renderRows</code>）、<code>shared/interactions.js</code>、<code>shared/ui.js</code>，逐页签核对内容/布局/交互。合理性评级：✓ 合理 · ⚠ 可优化（非阻断）· ✗ 缺陷（本报告无 ✗ 项，本页功能无阻断性缺陷）。
+</footer>
+</div>
+</body>
+</html>

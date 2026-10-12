@@ -34,3 +34,6 @@ steccn-gateway/src/main/resources/bootstrap.yml
 steccn-wms/steccn-wms-biz/src/main/resources/bootstrap.yaml
 steccn-gateway/src/main/resources/bootstrap.yml
 steccn-wms/steccn-wms-biz/src/main/resources/bootstrap.yaml
+
+# EAM local component test dependencies
+tools/eam/组件测试/node_modules/

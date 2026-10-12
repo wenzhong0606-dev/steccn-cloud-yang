@@ -778,6 +778,9 @@ main h2 {font-size:16px;} main h3 {font-size:16px;}
 .mobile-preview .appbar .btn,.mobile-preview .appbar summary {min-height:36px;}
 @media print {html,body {height:auto;overflow:visible;display:block;} .shell {overflow:visible;display:block;} .shell>main {height:auto;overflow:visible;} }
 body:has(dialog[open]) .shell>main,body.nav-open .shell>main {overflow:hidden;}
+/* 底部导航占据独立空间，避免覆盖列表分页和表单操作。 */
+@media(max-width:1024px){.shell {margin-bottom:calc(56px + env(safe-area-inset-bottom));}}
+body.mobile-preview .shell {margin-bottom:calc(56px + env(safe-area-inset-bottom));}
 .archive-nav {top:16px;}
 @media(max-width:760px) {.appbar .controls {flex-wrap:wrap;}}
 

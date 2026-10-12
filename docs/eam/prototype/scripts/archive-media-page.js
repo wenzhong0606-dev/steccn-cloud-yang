@@ -1,0 +1,62 @@
+/* 设备相册、模型资源和文档；内容读取与业务元数据分离。 */
+Eam.registerInit(async function(){
+ if(!document.getElementById('media-image-stage'))return;
+ const $=id=>document.getElementById(id),eq=new URLSearchParams(location.search).get('equipment')||'EQ-001',rules=EamArchiveMediaRules;
+ let catalog={images:[],samples:[],models:[],documents:[],primary:null},imageId,modelId,selectedModel,readTicket=0,imageTicket=0,modelTicket=0,controller;
+ const urls=new Map(),node=(tag,text,cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};
+ const content=f=>!!(f.previewUrl||f.localContent),editable=f=>!f.isSample&&EamProduct.filePermission(Eam.s.role,'edit',f)&&Eam.s.equipmentRecords.find(e=>e.id===eq)?.lifecycle!=='scrapped';
+ function facts(host,f){host.replaceChildren();if(!f)return;for(const [label,value]of [['名称',f.name],['版本',f.revision],['关联设备',f.isSample?'演示资源，不属于设备实物':eq],['来源',f.isSample?'示意资源':f.localContent?'本机内容，未上传服务器':'仅有元数据'],['上传人',f.uploadedBy?EamDomain.personName(f.uploadedBy):null],['接收时间',f.receivedAt],['文件大小',f.size?(f.size/1024/1024).toFixed(2)+' MB':null]])host.append(node('dt',label,'text-secondary fw-normal'),node('dd',value||'未记录','text-break mb-2'));}
+ function disposeModel(){modelTicket++;controller?.dispose();controller=null;for(const id of ['media-model-reset','media-model-fullscreen'])$(id).disabled=true;$('media-model-stage').removeAttribute('aria-busy');}
+ function cleanup(){imageTicket++;disposeModel();for(const promise of urls.values())promise.then(url=>URL.revokeObjectURL(url)).catch(()=>{});urls.clear();}
+ function imageUrl(f){if(!urls.has(f.id))urls.set(f.id,EamFiles.get(f).then(blob=>URL.createObjectURL(blob)));return urls.get(f.id);}
+ function imageActions(f){$('media-image-prev').disabled=$('media-image-next').disabled=catalog.images.length<2;$('media-image-open').disabled=!f||!content(f);$('media-image-primary').disabled=!f||!!f.isPrimary||!editable(f);$('media-image-remove').disabled=!f||!editable(f);$('media-image-primary').textContent=f?.isPrimary?'当前主图':'设为主图';}
+ async function selectImage(id){
+  imageId=id;const f=catalog.images.find(f=>f.id===id),ticket=++imageTicket,stage=$('media-image-stage');stage.replaceChildren();imageActions(f);facts($('media-image-facts'),f);
+  for(const b of $('device-gallery').querySelectorAll('button')){b.classList.toggle('active',b.dataset.fileId===id);b.setAttribute('aria-pressed',String(b.dataset.fileId===id));}
+  if(!f){stage.append(node('p','暂无设备实拍图片，可按权限上传。','text-secondary m-3'));$('media-image-status').textContent='示意图片单独列示，不作为实拍或主图。';return;}
+  $('media-image-status').textContent='正在读取图片…';
+  try{const url=await imageUrl(f);if(ticket!==imageTicket)return;const img=node('img','');img.src=url;img.alt=f.name;img.onerror=()=>{if(ticket===imageTicket){stage.replaceChildren(node('p','图片内容损坏或无法解码，请重新关联。','text-danger m-3'));$('media-image-open').disabled=true;$('media-image-status').textContent='图片加载失败';}};stage.append(img);$('media-image-status').textContent=f.name+(f.isPrimary?' · 当前主图':'')+' · '+(catalog.images.findIndex(x=>x.id===id)+1)+' / '+catalog.images.length;}
+  catch(e){if(ticket===imageTicket){stage.append(node('p',e.message,'text-danger m-3'));$('media-image-status').textContent='图片内容不可用，请重新关联';$('media-image-open').disabled=true;}}
+ }
+ function selectModel(f){
+  disposeModel();selectedModel=f;modelId=f?.id;facts($('media-model-facts'),f);$('media-model-stage').replaceChildren(node('p',f?(content(f)?'点击“加载模型”查看所选版本':'仅有元数据，本机没有模型内容，请重新关联文件'):'当前设备尚未关联3D模型。','text-secondary m-3'));
+  $('media-model-status').textContent=f?(f.isSample?'演示模型，不代表当前设备结构':content(f)?'模型已选中，尚未加载':'仅有元数据，不能预览或推断模型已上传'):'无模型时继续使用设备图片与结构页签';
+  $('media-model-load').disabled=!f||!content(f);$('media-model-download').disabled=!f||f.isSample||!content(f)||!EamProduct.filePermission(Eam.s.role,'download',f);$('media-model-remove').disabled=!f||!editable(f);$('media-model-load').textContent='加载模型';
+  for(const b of $('media-model-list').querySelectorAll('button')){b.classList.toggle('active',b.dataset.fileId===modelId);b.setAttribute('aria-pressed',String(b.dataset.fileId===modelId));}
+ }
+ async function loadModel(){
+  const f=selectedModel;if(!f||!content(f))return;disposeModel();const ticket=modelTicket,stage=$('media-model-stage');stage.replaceChildren(node('p','正在读取并检查模型…','text-secondary m-3'));$('media-model-status').textContent='正在加载 '+f.name;$('media-model-load').disabled=true;stage.setAttribute('aria-busy','true');
+  try{const blob=await EamFiles.get(f);if(ticket!==modelTicket)return;await rules.inspect(blob,f.name);if(ticket!==modelTicket)return;const pending=document.createElement('div');const mounted=await EamArchiveModelViewer.mount(pending,blob,f);if(ticket!==modelTicket){mounted.dispose();return;}stage.replaceChildren(mounted.viewer);controller=mounted;await mounted.ready;if(ticket!==modelTicket)return;$('media-model-status').textContent=(f.isSample?'演示模型 · ':'')+f.name+' / '+f.revision+' · 加载完成，可旋转和缩放';$('media-model-reset').disabled=false;$('media-model-fullscreen').disabled=!stage.requestFullscreen;}
+  catch(e){if(ticket===modelTicket){controller?.dispose();controller=null;stage.replaceChildren(node('p',e.message,'text-danger m-3'));$('media-model-status').textContent=e.message;$('media-model-load').textContent='重试加载';}}
+  finally{if(ticket===modelTicket){stage.removeAttribute('aria-busy');$('media-model-load').disabled=false;}}
+ }
+ function remove(f){if(!f||!editable(f))return;Eam.confirm('移除设备资源关联',reason=>{if(!Eam.run('removeAssetFile',{id:f.id,reason}))return false;window.dispatchEvent(new Event('eam-files-changed'));return true;});}
+ function switchView(view){for(const key of ['images','models']){const active=key===view;$('media-'+key+'-panel').hidden=!active;$('media-'+key+'-tab').classList.toggle('active',active);$('media-'+key+'-tab').setAttribute('aria-pressed',String(active));}}
+ async function refresh(){
+  const ticket=++readTicket,previousModelId=modelId;cleanup();$('media-read-status').textContent='正在读取当前设备媒体资源…';$('media-read-status').setAttribute('aria-busy','true');for(const id of ['device-gallery','media-sample-gallery','media-model-list','device-documents'])$(id).replaceChildren();imageActions(null);selectModel(null);$('media-image-stage').replaceChildren(node('p','正在读取图片目录…','text-secondary m-3'));
+  try{
+   const response=await EamArchiveApi.request('GET','/equipment/'+encodeURIComponent(eq)+'/domains/media');if(ticket!==readTicket)return;if(response.code===202)return;
+   catalog=rules.catalog(response.data?.items||[],eq);$('gallery-count').textContent='设备图片 '+catalog.images.length+' 张 · 示意图片 '+catalog.samples.length+' 张';$('media-model-count').textContent='当前设备模型 '+catalog.models.length+' 个版本';
+   for(const f of catalog.images){const b=node('button','','btn btn-outline-secondary text-start');b.type='button';b.dataset.fileId=f.id;b.setAttribute('aria-label','选择图片 '+f.name);b.onclick=()=>selectImage(f.id);const img=node('img','');img.alt=f.name;b.append(img,node('span',f.name+(f.isPrimary?' · 主图':''),'small text-break'));$('device-gallery').append(b);imageUrl(f).then(url=>{if(ticket===readTicket)img.src=url;}).catch(()=>{if(ticket===readTicket)b.append(node('span','内容不可用','small text-danger'));});}
+   $('media-samples').hidden=!catalog.samples.length;for(const f of catalog.samples){const b=node('button',f.name+' · 示意','btn btn-sm btn-outline-secondary');b.type='button';b.onclick=()=>EamFileViewer.open(catalog.samples,catalog.samples.indexOf(f));$('media-sample-gallery').append(b);}
+   await selectImage(catalog.images.some(f=>f.id===imageId)?imageId:catalog.primary?.id||catalog.images[0]?.id);if(ticket!==readTicket)return;
+   const header=$('archive-photo'),empty=$('archive-photo-empty');
+   if(catalog.primary){try{const url=await imageUrl(catalog.primary);if(ticket!==readTicket)return;header.src=url;header.alt=catalog.primary.name+' · 设备主图';header.hidden=false;empty.hidden=true;}catch{if(ticket===readTicket){header.hidden=true;header.removeAttribute('src');empty.hidden=false;empty.textContent='主图内容不可用';}}}
+   else{header.hidden=true;header.removeAttribute('src');empty.hidden=false;empty.textContent='暂无指定主图';}
+   for(const f of catalog.models){const b=node('button',f.name+' / '+f.revision+' · '+(content(f)?'可加载':'仅有元数据'),'list-group-item list-group-item-action text-break');b.type='button';b.dataset.fileId=f.id;b.onclick=()=>selectModel(f);$('media-model-list').append(b);}
+   if(!catalog.models.length)$('media-model-list').append(node('p','尚无设备模型版本','small text-secondary mb-0'));selectModel(catalog.models.find(f=>f.id===previousModelId)||catalog.models[0]);
+   for(const f of catalog.documents){Eam.row($('device-documents'),f.name+' / '+f.revision,f.isSample?'示例内容':f.localContent?'本机内容，未上传':'仅元数据');for(const [title,action,handler]of [['查看内容','view',()=>EamFileViewer.open([f])],['下载原文件','download',()=>EamFileViewer.download(f)]]){const b=node('button',title,'btn btn-sm btn-outline-secondary');b.type='button';b.disabled=!EamProduct.filePermission(Eam.s.role,action,f);b.onclick=handler;$('device-documents').lastChild.append(b);}}
+   if(!catalog.documents.length)Eam.row($('device-documents'),'暂无技术文档','通过上传入口维护设备关联文件');$('media-read-status').textContent='当前设备 '+eq+' · 实拍、示意和模型分别展示；文件内容保存在本机';
+  }catch(e){if(ticket===readTicket){$('media-read-status').textContent='资源读取失败：'+e.message+'；可点击刷新资源重试';$('media-image-stage').replaceChildren(node('p','目录读取失败，未显示旧资源','text-danger m-3'));}}
+  finally{if(ticket===readTicket&&Eam.s.scenario!=='loading')$('media-read-status').removeAttribute('aria-busy');}
+ }
+ $('media-images-tab').onclick=()=>switchView('images');$('media-models-tab').onclick=()=>{switchView('models');$('media-models-tab').closest('[data-panel]').scrollIntoView({block:'start',behavior:'smooth'});};$('media-refresh').onclick=refresh;
+ const move=offset=>{const i=catalog.images.findIndex(f=>f.id===imageId);selectImage(catalog.images[(i+offset+catalog.images.length)%catalog.images.length]?.id);};
+ $('media-image-prev').onclick=()=>move(-1);$('media-image-next').onclick=()=>move(1);$('media-image-open').onclick=()=>EamFileViewer.open(catalog.images,catalog.images.findIndex(f=>f.id===imageId));
+ $('media-image-primary').onclick=async()=>{const f=catalog.images.find(f=>f.id===imageId);if(f&&editable(f)&&Eam.run('setPrimaryImage',{id:f.id}))await refresh();};$('media-image-remove').onclick=()=>remove(catalog.images.find(f=>f.id===imageId));
+ $('media-model-load').onclick=loadModel;$('media-model-remove').onclick=()=>remove(selectedModel);$('media-model-download').onclick=()=>EamFileViewer.download(selectedModel);$('media-model-reset').onclick=()=>controller&&EamArchiveModelViewer.reset(controller.viewer);
+ $('media-model-fullscreen').onclick=async()=>{try{await $('media-model-stage').requestFullscreen();}catch{$('media-model-status').textContent='浏览器未允许全屏，可继续在页面内查看';}};
+ $('media-model-demo').onclick=()=>{selectModel({id:'DEMO-MODEL',name:'设备组合示意.glb',revision:'演示V1',category:'model',status:'active',isSample:true,previewUrl:'../assets/media-demo.glb'});loadModel();};
+ async function openModel(id){document.querySelector('[data-tab="media"]').click();switchView('models');await refresh();const f=catalog.models.find(f=>f.id===id);if(!f){$('media-model-status').textContent='模型关联不存在或不属于当前设备';return;}selectModel(f);if(content(f))await loadModel();}
+ window.EamArchiveGallery={refresh,openModel};window.addEventListener('eam-files-changed',()=>window.dispatchEvent(new Event('eam-archive-files-updated')));window.addEventListener('pagehide',()=>{readTicket++;cleanup();});await refresh();const requestedModel=new URLSearchParams(location.search).get('model');if(requestedModel){switchView('models');const f=catalog.models.find(f=>f.id===requestedModel);if(f){selectModel(f);if(content(f))loadModel();}else $('media-model-status').textContent='模型关联不存在或不属于当前设备';}
+});

@@ -1,16 +1,73 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>角色工作台 · 设备管理原型</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5">
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>角色工作台 · 设备管理原型</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
 </head>
+
 <body data-page="workbench" data-layout="workbench">
-<div id="platform-header"></div>
-<div class="shell"><aside id="module-nav"></aside><main>
-<div class="breadcrumb" id="breadcrumb"></div>
-<div class="title"><div><h1>角色工作台</h1><p class="text-secondary small">按人员、角色和业务场景聚合</p></div></div>
-<div class="alert alert-info" id="role-note"></div><div class="grid"><section class="card metric"><span class="label" id="metric-label-0"></span><strong id="metric-0"></strong><small>模拟范围 / 当前设备</small></section><section class="card metric"><span class="label" id="metric-label-1"></span><strong id="metric-1"></strong><small>模拟范围 / 当前设备</small></section><section class="card metric"><span class="label" id="metric-label-2"></span><strong id="metric-2"></strong><small>模拟范围 / 当前设备</small></section><section class="card metric"><span class="label" id="metric-label-3"></span><strong id="metric-3"></strong><small>无来源指标显示—</small></section></div><div class="columns"><section class="card"><h2>当前角色工作队列</h2><div id="role-queue"></div></section><section class="card"><h2>角色作业指引</h2><p id="role-guide"></p><div id="role-links" class="actions"></div><h3>数据范围</h3><p class="text-secondary">原料二车间 / EQ-001。指标只来自本会话；跨组织权限与后端隔离尚未接入。</p></section></div>
-<p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
-</main></div><div id="mobile-nav"></div>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script><script src="../mock/problem-data.js"></script><script src="../mock/work-data.js"></script><script src="../mock/work-rules.js"></script><script src="../mock/problem-api.js"></script><script src="../scripts/workbench.js?v=20261010"></script>
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>角色工作台</h1>
+                    <p class="text-secondary small">按人员、角色和业务场景聚合</p>
+                </div>
+            </template></div>
+            <div class="alert alert-info" id="role-note"></div>
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-lg-3"><section class="card metric h-100"><span class="label" id="metric-label-0"></span><strong id="metric-0"></strong><small>按当前身份与设备范围</small></section></div>
+                <div class="col-6 col-lg-3"><section class="card metric h-100"><span class="label" id="metric-label-1"></span><strong id="metric-1"></strong><small>按当前身份与设备范围</small></section></div>
+                <div class="col-6 col-lg-3"><section class="card metric h-100"><span class="label" id="metric-label-2"></span><strong id="metric-2"></strong><small>按当前身份与设备范围</small></section></div>
+                <div class="col-6 col-lg-3"><section class="card metric h-100"><span class="label" id="metric-label-3"></span><strong id="metric-3"></strong><small>按当前身份与设备范围</small></section></div>
+            </div>
+            <section class="card business-list-panel" data-component-src="../components/list-panel.html" data-component="list-panel" data-component-required="true">
+              <template data-fill="head"><h2 class="business-panel-title">我的工作队列</h2><div class="d-flex flex-wrap align-items-center gap-2">
+                <div data-component-src="../components/filter-bar.html" data-component="filter-bar" data-component-required="true"><template data-fill="body"><input id="wb-search" class="form-control" placeholder="搜索设备、单号或责任人" aria-label="搜索待办"><select id="wb-group" class="form-select" aria-label="待办类型"><option value="">全部待办</option></select>
+                <button id="wb-refresh" type="button" class="btn btn-outline-secondary btn-sm" aria-label="刷新待办">刷新</button></template></div>
+              </div></template>
+              <template data-fill="body"><div class="table-wrapper"><table class="data-table"><thead><tr><th>业务 / 单号</th><th>设备 / 内容</th><th>责任人</th><th>期限</th><th>当前状态</th><th>操作</th></tr></thead><tbody id="role-queue"></tbody></table></div></template>
+              <template data-fill="footer"><div id="wb-pagination" class="pagination-host" data-component-src="../components/pagination.html" data-component="pagination" data-component-required="true"><template data-fill="body"></template></div></template>
+            </section>
+            <template id="wb-row"><tr><td data-cell="source"></td><td data-cell="title"></td><td data-cell="owner"></td><td data-cell="due"></td><td><span data-cell="status" class="badge text-bg-secondary"></span></td><td><button data-open type="button" class="btn btn-outline-primary btn-sm"></button></td></tr></template>
+            <p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+    <script src="../mock/problem-data.js"></script>
+    <script src="../mock/work-data.js?v=20261011-ap1"></script>
+    <script src="../mock/work-rules.js?v=20261011-ap1"></script>
+    <script src="../mock/approval-data.js"></script>
+    <script src="../mock/problem-api.js?v=20261011-qa1"></script>
+    <script src="../mock/maintenance-data.js?v=20261011-window1"></script>
+    <script src="../mock/maintenance-rules.js"></script>
+    <script src="../mock/maintenance-closure-rules.js?v=20261011-qa1"></script>
+    <script src="../mock/maintenance-task-rules.js?v=20261011-window1"></script>
+    <script src="../mock/maintenance-task-api.js?v=20261011-window1"></script>
+    <script src="../mock/maintenance-api.js"></script>
+    <script src="../mock/workbench-data.js?v=20261011-wb3"></script>
+    <script src="../mock/workbench-api.js?v=20261011-window1"></script>
+    <script src="../scripts/workbench.js?v=20261011-wb1"></script>
+
+
 </body></html>

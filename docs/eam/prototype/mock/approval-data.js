@@ -1,0 +1,2 @@
+/* 外部审批服务替身：仅预定义回执，不包含节点或审批人计算。 */
+(function(r){const data={pending:{status:'pending',resultVersion:1,comment:'外部服务正在审批'},approved:{status:'approved',resultVersion:2,comment:'外部审批通过'},rejected:{status:'rejected',resultVersion:2,comment:'外部审批驳回，请修改申请'},withdrawn:{status:'withdrawn',resultVersion:2,comment:'外部申请已撤回'},failure:{status:'failure',resultVersion:1,comment:'外部服务暂不可用'}};if(typeof module==='object'&&module.exports)module.exports=data;else r.EAM_APPROVAL_JSON=data;})(typeof window==='undefined'?globalThis:window);

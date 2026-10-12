@@ -1,16 +1,63 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>设备履历与原始记录 · 设备管理原型</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5">
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>设备履历与原始记录 · 设备管理原型</title>
+    <link rel="stylesheet" href="../shared/style.css?v=20261011-closure4">
 </head>
+
 <body data-page="history" data-layout="detail">
-<div id="platform-header"></div>
-<div class="shell"><aside id="module-nav"></aside><main>
-<div class="breadcrumb" id="breadcrumb"></div>
-<div class="title"><div><h1>设备履历与原始记录</h1><p class="text-secondary small">生命周期、任务、异常、执行与验收版本可追溯</p></div></div>
-<section class="card"><div class="filter-grid"><label class="field" for="history-type">事件类型<select id="history-type"><option value="">全部</option><option value="equipment">生命周期</option><option value="result">点检结果</option><option value="report">异常</option><option value="check">专项检查</option><option value="order">工单</option><option value="execution">维修执行</option><option value="acceptance">验收</option><option value="standard">标准</option><option value="plan">计划</option><option value="restriction">限制</option></select></label><label class="field" for="history-date">事件日期<input id="history-date" type="date" value="" placeholder=""></label></div><div id="history-list" class="timeline"></div><h3>来源记录与版本</h3><div id="source-detail"></div><p class="text-secondary">会话模拟记录可重置，不能等同不可篡改审计；正式证据源需后端授权。</p></section>
-<p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
-</main></div><div id="mobile-nav"></div>
-<script src="../mock/data.js?v=20261010"></script><script src="../shared/product.js?v=20261010"></script><script src="../shared/maintenance.js?v=20261010"></script><script src="../shared/domain.js?v=20261010"></script><script src="../shared/archive-context.js?v=20261011-mc1"></script><script src="../shared/state.js?v=20261011-context3"></script><script src="../shared/navigation.js?v=20261011-mc1"></script><script src="../shared/page-routes.js?v=20261011-mc1"></script><script src="../shared/page-table-components.js?v=20261011-filter3"></script><script src="../shared/ui.js?v=20261011-2"></script><script src="../shared/interactions.js?v=20261010"></script><script src="../scripts/history.js?v=20261010"></script>
+    <div id="platform-header"></div>
+    <div class="shell">
+        <aside id="module-nav"></aside>
+        <main>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="title" data-component-src="../components/page-header.html" data-component="page-header" data-component-required="true" data-component-scope="page"><template data-fill="head">
+                <div>
+                    <h1>设备履历与原始记录</h1>
+                    <p class="text-secondary small">生命周期、任务、异常、执行与验收版本可追溯</p>
+                </div>
+            </template></div>
+            <section class="card">
+                <div class="filter-grid"><label class="field" for="history-type">事件类型<select id="history-type">
+                            <option value="">全部</option>
+                            <option value="equipment">生命周期</option>
+                            <option value="result">点检结果</option>
+                            <option value="report">异常</option>
+                            <option value="check">专项检查</option>
+                            <option value="order">工单</option>
+                            <option value="execution">维修执行</option>
+                            <option value="acceptance">验收</option>
+                            <option value="standard">标准</option>
+                            <option value="plan">计划</option>
+                            <option value="restriction">限制</option>
+                        </select></label><label class="field" for="history-date">事件日期<input id="history-date" type="date" value="" placeholder=""></label></div>
+                <div id="history-list" class="timeline"></div>
+                <h3>来源记录与版本</h3>
+                <div id="source-detail"></div>
+                <p class="text-secondary">会话模拟记录可重置，不能等同不可篡改审计；正式证据源需后端授权。</p>
+            </section>
+            <p class="text-secondary small my-4">设备管理 / 模拟会话数据 / 未接业务后端</p>
+        </main>
+    </div>
+    <div id="mobile-nav"></div>
+    <script src="../mock/data.js?v=20261010"></script>
+    <script src="../shared/product.js?v=20261010"></script>
+    <script src="../shared/maintenance.js?v=20261010"></script>
+    <script src="../shared/loader.js?v=20261011-closure4"></script>
+
+    <script src="../shared/form.js?v=20261011-closure4"></script>
+
+    <script src="../shared/components.js?v=20261011-closure4"></script>
+
+    <script src="../shared/domain.js?v=20261010"></script>
+    <script src="../shared/archive-context.js?v=20261011-mc1"></script>
+    <script src="../shared/state.js?v=20261011-context3"></script>
+    <script src="../shared/navigation.js?v=20261011-mc1"></script>
+    <script src="../shared/page-routes.js?v=20261011-mc1"></script>
+    <script src="../shared/page-table-components.js?v=20261011-closure4"></script>
+    <script src="../shared/ui.js?v=20261011-closure4"></script>
+    <script src="../shared/interactions.js?v=20261011-closure4"></script>
+    <script src="../scripts/history.js?v=20261011-closure4"></script>
+
+
 </body></html>

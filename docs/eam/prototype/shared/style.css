@@ -1,12 +1,12 @@
 /* 固定版本本地 Bootstrap + 公共分层样式。 */
 @layer bootstrap, tokens, components, layout, pages;
 @import url("../vendor/bootstrap/bootstrap.min.css") layer(bootstrap);
-@import url("./styles/令牌.css") layer(tokens);
-@import url("./styles/公共组件.css?v=20261010-inputgroup") layer(components);
-@import url("./styles/应用布局.css") layer(layout);
-@import url("./styles/台账档案.css?v=20261011-business2") layer(pages);
-@import url("./styles/问题工单.css") layer(pages);
+@import url("./styles/令牌.css?v=20261011-closure4") layer(tokens);
+@import url("./styles/公共组件.css?v=20261011-closure4") layer(components);
+@import url("./styles/应用布局.css?v=20261011-closure4") layer(layout);
+@import url("./styles/台账档案.css?v=20261012-media1") layer(pages);
+@import url("./styles/问题工单.css?v=20261011-closure4") layer(pages);
 
-@import url("./styles/全页面统一.css?v=20261011-business3") layer(pages);
+@import url("./styles/全页面统一.css?v=20261011-closure4") layer(pages);
 
-@import url("./styles/页面表格组件.css?v=20261011-2") layer(pages);
+@import url("./styles/页面表格组件.css?v=20261011-closure4") layer(pages);

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>加载层验证 · 设备管理</title><link rel="stylesheet" href="../shared/style.css?v=20261011-5">
+</head>
+<body data-page="loader-pilot" data-layout="list">
+<div id="platform-header"></div>
+<div class="shell"><aside id="module-nav"></aside><main>
+<h1>组件加载层验证</h1>
+<p class="text-secondary small">打开本页用于人工验证：同页双实例隔离、加载失败重试、弹窗二次打开、未迁移页面回归（其余页面未引入 loader.js，不受影响）。</p>
+
+<h2 class="mt-4">1 · 同页双实例（前缀隔离）</h2>
+<p>两个 list-panel 实例分别 <code>data-instance="a"/"b"</code>，各自含 <code>id="reuse-btn"</code> 与 <code>id="rows"</code>，加载后应变为 <code>a-reuse-btn / b-reuse-btn</code>，互不串扰。</p>
+<section class="card" data-component="list-panel" data-component-src="../components/list-panel.html" data-instance="a">
+  <template data-fill="head"><h2>实例 A</h2><div class="list-panel-tools"><button id="reuse-btn" type="button" class="btn btn-sm btn-outline-secondary">A 按钮</button></div></template>
+  <template data-fill="body"><div class="table-wrapper"><table class="data-table"><thead><tr><th>名称</th></tr></thead><tbody id="rows"></tbody></table></div></template>
+</section>
+<section class="card" data-component="list-panel" data-component-src="../components/list-panel.html" data-instance="b">
+  <template data-fill="head"><h2>实例 B</h2><div class="list-panel-tools"><button id="reuse-btn" type="button" class="btn btn-sm btn-outline-secondary">B 按钮</button></div></template>
+  <template data-fill="body"><div class="table-wrapper"><table class="data-table"><thead><tr><th>名称</th></tr></thead><tbody id="rows"></tbody></table></div></template>
+</section>
+<pre id="pilot-instance" class="border rounded p-2 small">等待加载…</pre>
+
+<h2 class="mt-4">2 · 加载失败与重试</h2>
+<p>下例故意引用不存在的片段，应显示「组件加载失败 + 重试」；点「修正 src 并重试」会改为有效片段并仅补该实例。</p>
+<div class="card" data-component="list-panel" data-component-src="../components/__missing__.html" id="broken-host">
+  <template data-fill="head"><h2>会失败</h2></template>
+  <template data-fill="body"><p>占位</p></template>
+</div>
+<button id="fix-src" type="button" class="btn btn-sm btn-primary mt-2">修正 src 并重试</button>
+<pre id="pilot-retry" class="border rounded p-2 small">等待加载…</pre>
+
+<h2 class="mt-4">3 · 弹窗二次打开（关闭不 dispose）</h2>
+<p>打开 → 关闭 → 再次打开应能成功；实例保留，不重复绑定 / 不报错。</p>
+<button id="open-dlg" type="button" class="btn btn-sm btn-outline-secondary">打开弹窗</button>
+<button id="reopen-dlg" type="button" class="btn btn-sm btn-outline-secondary">关闭后再打开</button>
+<dialog id="reuse-dialog" aria-labelledby="reuse-title"><h2 id="reuse-title">可复用弹窗</h2><p>关闭后实例保留，可再次打开。</p><button id="close-dlg" type="button" class="btn btn-sm btn-outline-secondary">关闭</button></dialog>
+
+<h2 class="mt-4">4 · 未迁移页面回归</h2>
+<p>见 <a href="equipment.html">设备台账</a> 与 <a href="maintenance-task-list.html">保养任务列表</a> 已迁移页；其余页面（如 <a href="check-list.html">点检列表</a>）未引入 loader.js，应保持原行为。</p>
+
+<h2 class="mt-4">5 · 弹窗提交守卫（submitGuard · §7.4）</h2>
+<p>打开对话框 → 点「提交」：守卫进入即同步阻止默认关闭，busy 守卫防重复提交；成功才关闭、失败保留输入。下方表单用 <code>name</code> 字段，可由 <code>Eam.Form.collect</code> 类型化取值（hidden/revision 正常收集）。</p>
+<section class="card" data-component="dialog-shell" data-component-src="../components/dialog-shell.html" data-instance="sg" id="submit-guard-host">
+  <template data-fill="header"><span>提交守卫演示</span></template>
+  <template data-fill="body">
+    <form id="sg-form" data-submit-guard data-onsubmit="pilotSave">
+      <label class="field">名称 *<input name="name" required class="form-control form-control-sm"></label>
+      <label class="field">数量<input name="qty" type="number" class="form-control form-control-sm"></label>
+      <label class="field">启用<input name="enabled" type="checkbox" class="form-check-input"></label>
+      <input name="revision" type="hidden" value="3">
+      <label class="field">不适用项<input name="skipMe" data-collect-skip class="form-control form-control-sm" value="x"></label>
+      <p id="sg-status" role="alert" class="text-danger small"></p>
+      <div class="actions"><button type="submit" class="btn btn-primary btn-sm">提交</button></div>
+    </form>
+  </template>
+  <template data-fill="footer"></template>
+</section>
+<button id="open-sg" type="button" class="btn btn-sm btn-outline-secondary">打开提交守卫弹窗</button>
+<pre id="pilot-submit" class="border rounded p-2 small">等待提交…</pre>
+
+<h2 class="mt-4">6 · Card 组件（Step 3：片段抽取 + 可折叠 + 双实例隔离）</h2>
+<p>两个 card 组件实例 c1（可折叠）/ c2（普通），各自含 <code>id</code>+<code>for</code> 字段，加载后应前缀化为 <code>c1-c1-note / c2-c2-note</code> 等，互不串扰；c1 头部可点击折叠。</p>
+<section class="card" data-component="card" data-component-src="../components/card.html" data-instance="c1" data-collapsible>
+  <template data-fill="head"><h3>卡片一（可折叠）</h3></template>
+  <template data-fill="body"><label id="c1-note" for="c1-input">备注<textarea id="c1-input" class="form-control form-control-sm"></textarea></label></template>
+</section>
+<section class="card" data-component="card" data-component-src="../components/card.html" data-instance="c2">
+  <template data-fill="head"><h3>卡片二</h3></template>
+  <template data-fill="body"><label id="c2-note" for="c2-input">备注<textarea id="c2-input" class="form-control form-control-sm"></textarea></label></template>
+</section>
+<button id="toggle-c1" type="button" class="btn btn-sm btn-outline-secondary mt-2">折叠/展开 卡片一</button>
+<pre id="pilot-card" class="border rounded p-2 small">等待加载…</pre>
+
+<h2 class="mt-4">7 · Tabs 行为（Step 4：多实例隔离 + panel 配对 + 键盘导航）</h2>
+<p>两个独立 tab 容器 a/b，各自用同名 <code>data-tab</code>；加载后 id 应唯一（<code>tab-*-N</code>），对应 panel 正确配对（各自容器内查找）。点击切换 active 与 panel 显隐，方向键/Home/End 可导航。</p>
+<div class="tabbed" data-tabs-demo="a">
+  <div class="tabs"><button type="button" data-tab="routine" class="active">例行任务</button><button type="button" data-tab="special">专项检查</button></div>
+  <section class="card" data-panel="routine"><p>a 例行面板</p></section>
+  <section class="card" data-panel="special" hidden><p>a 专项面板</p></section>
+</div>
+<div class="tabbed" data-tabs-demo="b">
+  <div class="tabs"><button type="button" data-tab="routine" class="active">例行任务</button><button type="button" data-tab="special">专项检查</button></div>
+  <section class="card" data-panel="routine"><p>b 例行面板</p></section>
+  <section class="card" data-panel="special" hidden><p>b 专项面板</p></section>
+</div>
+<pre id="pilot-tabs" class="border rounded p-2 small">等待加载…</pre>
+
+</main></div><div id="mobile-nav"></div>
+<script src="../shared/loader.js?v=20261011-loader1"></script>
+<script src="../shared/form.js?v=20261011-form1"></script>
+<script src="../shared/components.js?v=20261011-comp1"></script>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  // 同步定义 submitGuard 的 onSubmit（须在 bootstrap 的 enhanceAll 之前存在，否则无法自动绑定）
+  window.Eam.pilotSave = async (fd, form) => {
+    const data = Eam.Form.collect(form); // 类型化取值（name 字段；hidden/revision 收集，skipMe 跳过）
+    const log = document.getElementById('pilot-submit');
+    if (log) log.textContent = '收集: ' + JSON.stringify(data);
+    // 模拟接口：revision 冲突（409）时抛错 → 不关闭、保留输入
+    if (data.revision === '3' && data.name === '冲突') throw new Error('版本冲突：记录已被他人修改，请重新拉取后重提');
+    if (!data.name) return false; // 必填未填 → 保留弹窗
+    await new Promise(r => setTimeout(r, 150)); // 模拟异步提交
+    return true; // 成功 → 关闭
+  };
+  const sgDialog = document.querySelector('#submit-guard-host dialog');
+  document.getElementById('open-sg').onclick = () => { if (sgDialog) Eam.Dialog.open(sgDialog); };
+
+  setTimeout(() => {
+    const log = (id, msg) => { const el = document.getElementById(id); if (el) el.textContent = msg; };
+    // 1 双实例
+    const aBtn = document.getElementById('a-reuse-btn'), bBtn = document.getElementById('b-reuse-btn');
+    const aRows = document.getElementById('a-rows'), bRows = document.getElementById('b-rows');
+    log('pilot-instance',
+      'a-reuse-btn=' + !!aBtn + ' b-reuse-btn=' + !!bBtn +
+      ' a-rows=' + !!aRows + ' b-rows=' + !!bRows +
+      '\n同 id 冲突: ' + (document.querySelectorAll('#reuse-btn').length > 0 ? '存在(失败)' : '无(通过)') +
+      '\n前缀标记: a.prefixed=' + (document.querySelector('[data-instance=a]').dataset.prefixed) +
+      ' b.prefixed=' + (document.querySelector('[data-instance=b]').dataset.prefixed));
+    // 2 失败
+    const broken = document.getElementById('broken-host');
+    log('pilot-retry', 'broken-host loaded=' + broken.dataset.componentLoaded + (broken.dataset.componentError ? ' err=' + broken.dataset.componentError : ''));
+    document.getElementById('fix-src').onclick = () => {
+      broken.dataset.componentSrc = '../components/list-panel.html';
+      delete broken.dataset.componentLoaded; delete broken.dataset.componentError;
+      window.Eam.loadComponent(broken).then(r => {
+        log('pilot-retry', '修正后重试 status=' + r.status + ' 仅补该实例，未重跑整页');
+      });
+    };
+    // 3 弹窗复用
+    const dlg = document.getElementById('reuse-dialog');
+    document.getElementById('open-dlg').onclick = () => dlg.showModal();
+    document.getElementById('close-dlg').onclick = () => dlg.close();
+    document.getElementById('reopen-dlg').onclick = () => { dlg.close(); dlg.showModal(); };
+    // 6 Card 组件（Step 3）
+    const c1Host = document.querySelector('[data-instance=c1]');
+    const c2Host = document.querySelector('[data-instance=c2]');
+    const c1Head = c1Host && c1Host.querySelector('.card-header');
+    const c2Head = c2Host && c2Host.querySelector('.card-header');
+    log('pilot-card',
+      'c1 组件加载=' + (c1Host && c1Host.dataset.componentLoaded) +
+      ' c2 组件加载=' + (c2Host && c2Host.dataset.componentLoaded) +
+      '\nc1-note(前缀)=' + !!document.getElementById('c1-c1-note') +
+      ' c2-note(前缀)=' + !!document.getElementById('c2-c2-note') +
+      ' c1-input(前缀)=' + !!document.getElementById('c1-c1-input') +
+      ' c2-input(前缀)=' + !!document.getElementById('c2-c2-input') +
+      '\n原始 id 冲突(#c1-note 裸 id)=' + (document.querySelectorAll('#c1-note').length > 0 ? '存在(失败)' : '无(通过)') +
+      '\nc1 可折叠 role=' + (c1Head && c1Head.getAttribute('role')) + ' aria-expanded=' + (c1Head && c1Head.getAttribute('aria-expanded')) +
+      ' c2 未折叠 role=' + (c2Head && (c2Head.getAttribute('role') || '无(正确)')));
+    document.getElementById('toggle-c1').onclick = () => { if (c1Head) c1Head.click(); };
+    // 7 Tabs（Step 4）
+    const collectTabs = (demo) => {
+      const container = document.querySelector('[data-tabs-demo="' + demo + '"]');
+      const group = container.querySelector('.tabs');
+      const tabBtns = [...group.querySelectorAll('[data-tab]')];
+      const ids = tabBtns.map((b) => b.id);
+      const panels = tabBtns.map((b) => document.getElementById(b.getAttribute('aria-controls')));
+      return { ids, tabBtns, panels, unique: new Set(ids).size === ids.length, paired: panels.every((p) => p && p.getAttribute('role') === 'tabpanel') };
+    };
+    const ta = collectTabs('a'), tb = collectTabs('b');
+    const noCross = !ta.ids.some((id) => tb.ids.includes(id));
+    ta.tabBtns[1].click();
+    const switched = ta.tabBtns[1].classList.contains('active') && !ta.panels[1].hidden && ta.panels[0].hidden;
+    ta.tabBtns[0].focus();
+    ta.tabBtns[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    const kbd = ta.tabBtns[1].classList.contains('active');
+    log('pilot-tabs',
+      'a ids 唯一=' + ta.unique + ' b ids 唯一=' + tb.unique +
+      '\n跨组 id 冲突=' + (noCross ? '无(通过)' : '存在(失败)') +
+      '\npanel 配对(tabpanel)=' + (ta.paired && tb.paired) +
+      '\n点击 a.special → active+panel 显隐=' + switched +
+      '\n键盘右箭头切换=' + kbd +
+      '\naria-selected 同步=' + (ta.tabBtns[1].getAttribute('aria-selected') === 'true'));
+  }, 300);
+});
+</script>
+</body></html>
