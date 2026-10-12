@@ -144,9 +144,17 @@
       if(action==='reject')need(p.opinion?.trim(),'验收退回原因必填');
       else {need(p.restored&&p.trialConfirmed,'请分别确认现场恢复与试运行');need(p.defectVerified,'必须验证关联缺陷处置');need(p.opinion?.trim(),'验收通过意见必填');}
       const a={id:'ACC-'+(s.acceptances.length+1),orderId:order.id,executionId:e.id,executionRevision:e.revision,reviewerId:actor.person,decision:action,opinion:p.opinion,restored:!!p.restored,trialConfirmed:!!p.trialConfirmed,defectVerified:!!p.defectVerified,reviewedAt:now};
-      s.acceptances.push(a);order.status=action==='reject'?'returned':'closed';e.status=action==='reject'?'returned':'accepted';
-      if(action==='accept')closeReport(s.reports.find(r=>r.id===order.reportId),p.opinion);
-      event(action==='reject'?'验收退回：'+p.opinion:'验收通过，关闭工单与关联异常','acceptance',a.id,a);
+      // 历史演示命令也必须遵守独立状态边界：技术验收不等于工单业务关闭，更不能替代异常/缺陷独立验证。
+      s.acceptances.push(a);order.status=action==='reject'?'returned':'accepted';e.status=action==='reject'?'returned':'accepted';
+      event(action==='reject'?'验收退回：'+p.opinion:'技术验收通过，工单待业务关闭；关联问题仍需独立验证','acceptance',a.id,a);
+    } else if(action==='closeOrder') {
+      // 旧单问题模型无法表达新模型的逐问题残留承接；仅允许已独立关闭来源异常的历史工单关闭。
+      permit(['supervisor','engineer']);need(order?.status==='accepted','仅已技术验收的工单可业务关闭');
+      const linked=s.reports.find(r=>r.id===order.reportId);
+      need(linked?.status==='closed','关联异常未独立关闭；请通过新维护业务流程逐问题验证并完成业务关闭');
+      need(p.reason?.trim(),'请填写业务关闭依据');
+      order.status='closed';order.closedBy=actor.person;order.closedAt=now;order.closeReason=p.reason;
+      event('历史工单业务关闭（来源异常已独立关闭）','order',order.id,{reason:p.reason});
     } else if(action==='releaseRestriction') {
       permit(['safety','metrology']);need(p.opinion?.trim(),'独立放行需证据/理由');const r=s.restrictions.find(r=>r.id===p.id&&r.status==='active');need(r,'无有效限制');need(!r.reportId||s.reports.find(x=>x.id===r.reportId)?.status==='closed','来源异常尚未处置闭环，不能放行');r.status='released';r.releasedBy=actor.person;r.releaseReason=p.opinion;event('专业使用限制解除','restriction',r.id,r);
     } else if(action==='saveStandard') {
