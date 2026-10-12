@@ -31,6 +31,9 @@ const wait=async predicate=>{for(let i=0;i<600;i++){if(predicate())return;await 
   d.querySelector('#media-model-list button[data-file-id="MODEL-GOOD"]').click();d.getElementById('media-model-load').click();await wait(()=>finishMount);
   d.querySelector('#media-model-list button[data-file-id="MODEL-META"]').click();finishMount();await new Promise(r=>setTimeout(r,20));
   assert.match(d.getElementById('media-model-stage').textContent,/仅有元数据/,'迟到的模型加载不得覆盖新选择');
+  w.Eam.s.scenario='failure';await w.EamArchiveGallery.refresh();
+  assert.equal(d.getElementById('media-image-next').disabled,true,'目录读取失败后不得通过下一张恢复旧资源');
+  assert.equal(d.getElementById('archive-photo').hidden,true,'失败后不得保留未核验旧主图');
   assert(!d.getElementById('device-documents').textContent.includes('MODEL-'));assert.deepEqual(errors,[]);
   console.log('PASS 媒体分组、指定主图回读、设备隔离、模型元数据/损坏状态及文档边界');
  }finally{w.close();}

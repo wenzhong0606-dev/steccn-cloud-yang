@@ -14,6 +14,7 @@ window.EamArchiveModelViewer=(()=>{
    viewer.addEventListener('load',()=>finish(),{once:true});viewer.addEventListener('error',()=>finish(Error('模型渲染失败：文件内容不完整或浏览器图形能力不可用')),{once:true});
    timer=setTimeout(()=>finish(Error('模型加载超时，请重试或使用较小模型')),45000);
   });
+  ready.catch(()=>{});
   viewer.src=url;
   return {viewer,ready,dispose:()=>{clearTimeout(timer);viewer.removeAttribute('src');viewer.remove();URL.revokeObjectURL(url);}};
  }

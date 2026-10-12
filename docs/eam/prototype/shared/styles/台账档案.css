@@ -203,3 +203,11 @@ body[data-page="device"].archive-media-open .archive-workspace {flex:none;align-
 .archive-media-open [data-panel="media"] {padding:0 12px 12px;min-width:0;}
 .archive-media-open [data-panel="media"] .row>* {min-width:0;}
 @media(max-width:760px) {.archive-media-open .archive-nav {position:static;max-height:96px;}.archive-media-open .archive-workspace {grid-template-rows:auto auto;}}
+
+.archive-media-stage {position:relative;}
+.media-fullscreen-close {display:none;position:absolute;top:12px;right:12px;z-index:2;}
+.archive-media-stage:fullscreen .media-fullscreen-close {display:block;}
+.archive-media-open [data-panel="media"] {scroll-margin-top:72px;}
+
+.archive-media-stage.archive-media-empty {height:160px;}
+#media-sample-gallery img {width:140px;height:84px;object-fit:contain;}
